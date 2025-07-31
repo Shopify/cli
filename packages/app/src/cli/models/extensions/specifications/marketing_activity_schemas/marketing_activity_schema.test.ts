@@ -1,6 +1,5 @@
 import {MarketingActivityExtensionSchema} from './marketing_activity_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('MarketingActivityExtensionSchema', () => {
   const config = {
@@ -53,15 +52,18 @@ describe('MarketingActivityExtensionSchema', () => {
           ...config,
           fields: ['not an object'],
         }),
-      ).toThrowError(
-        new zod.ZodError([
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
           {
-            message: 'Field must be an object',
-            code: zod.ZodIssueCode.custom,
-            path: ['fields', 0],
-          },
-        ]),
-      )
+            "message": "Field must be an object",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
 
     test('throws an error if no fields are defined', async () => {
@@ -71,19 +73,20 @@ describe('MarketingActivityExtensionSchema', () => {
           ...config,
           fields: [],
         }),
-      ).toThrowError(
-        new zod.ZodError([
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
           {
-            code: zod.ZodIssueCode.too_small,
-            minimum: 1,
-            type: 'array',
-            inclusive: true,
-            exact: false,
-            message: 'Array must contain at least 1 element(s)',
-            path: ['fields'],
-          },
-        ]),
-      )
+            "origin": "array",
+            "code": "too_small",
+            "minimum": 1,
+            "inclusive": true,
+            "path": [
+              "fields"
+            ],
+            "message": "Too small: expected array to have >=1 items"
+          }
+        ]]
+      `)
     })
 
     test('throws an error if field does not have ui_type', async () => {
@@ -98,15 +101,18 @@ describe('MarketingActivityExtensionSchema', () => {
             },
           ],
         }),
-      ).toThrowError(
-        new zod.ZodError([
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
           {
-            message: 'Field must have a ui_type',
-            code: zod.ZodIssueCode.custom,
-            path: ['fields', 0],
-          },
-        ]),
-      )
+            "message": "Field must have a ui_type",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
 
     test('throws an error if ui_type is not supported', async () => {
@@ -121,15 +127,18 @@ describe('MarketingActivityExtensionSchema', () => {
             },
           ],
         }),
-      ).toThrowError(
-        new zod.ZodError([
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
           {
-            message: 'Unknown ui_type for Field: not_a_ui_type',
-            code: zod.ZodIssueCode.custom,
-            path: ['fields', 0],
-          },
-        ]),
-      )
+            "message": "Unknown ui_type for Field: not_a_ui_type",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
 
     test('throws an error if the schema for the ui_type is invalid', async () => {
@@ -144,16 +153,18 @@ describe('MarketingActivityExtensionSchema', () => {
             },
           ],
         }),
-      ).toThrowError(
-        new zod.ZodError([
+      ).toThrowErrorMatchingInlineSnapshot(`
+        [ZodError: [
           {
-            message:
-              'Error found on Field "test_field": [\n  {\n    "code": "invalid_type",\n    "expected": "number",\n    "received": "boolean",\n    "path": [\n      "min_length"\n    ],\n    "message": "Expected number, received boolean"\n  }\n]',
-            code: zod.ZodIssueCode.custom,
-            path: ['fields', 0],
-          },
-        ]),
-      )
+            "message": "Error found on Field \\"test_field\\": [\\n  {\\n    \\"expected\\": \\"number\\",\\n    \\"code\\": \\"invalid_type\\",\\n    \\"path\\": [\\n      \\"min_length\\"\\n    ],\\n    \\"message\\": \\"Invalid input: expected number, received boolean\\"\\n  }\\n]",
+            "code": "custom",
+            "path": [
+              "fields",
+              0
+            ]
+          }
+        ]]
+      `)
     })
   })
 })

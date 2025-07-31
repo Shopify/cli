@@ -53,22 +53,23 @@ const paymentExtensionSpec = createExtensionSpecification({
   schema: PaymentsAppExtensionSchema,
   appModuleFeatures: (_) => [],
   deployConfig: async (config, _) => {
-    const target = config.targeting[0]?.target
+    const typedConfig = config as PaymentsAppExtensionConfigType
+    const target = typedConfig.targeting[0]?.target
     switch (target) {
       case OFFSITE_TARGET:
-        return offsitePaymentsAppExtensionDeployConfig(config as OffsitePaymentsAppExtensionConfigType)
+        return offsitePaymentsAppExtensionDeployConfig(typedConfig as OffsitePaymentsAppExtensionConfigType)
       case REDEEMABLE_TARGET:
-        return redeemablePaymentsAppExtensionDeployConfig(config as RedeemablePaymentsAppExtensionConfigType)
+        return redeemablePaymentsAppExtensionDeployConfig(typedConfig as RedeemablePaymentsAppExtensionConfigType)
       case CREDIT_CARD_TARGET:
-        return creditCardPaymentsAppExtensionDeployConfig(config as CreditCardPaymentsAppExtensionConfigType)
+        return creditCardPaymentsAppExtensionDeployConfig(typedConfig as CreditCardPaymentsAppExtensionConfigType)
       case CUSTOM_ONSITE_TARGET:
-        return customOnsitePaymentsAppExtensionDeployConfig(config as CustomOnsitePaymentsAppExtensionConfigType)
+        return customOnsitePaymentsAppExtensionDeployConfig(typedConfig as CustomOnsitePaymentsAppExtensionConfigType)
       case CUSTOM_CREDIT_CARD_TARGET:
         return customCreditCardPaymentsAppExtensionDeployConfig(
-          config as CustomCreditCardPaymentsAppExtensionConfigType,
+          typedConfig as CustomCreditCardPaymentsAppExtensionConfigType,
         )
       case CARD_PRESENT_TARGET:
-        return cardPresentPaymentsAppExtensionDeployConfig(config as CardPresentPaymentsAppExtensionConfigType)
+        return cardPresentPaymentsAppExtensionDeployConfig(typedConfig as CardPresentPaymentsAppExtensionConfigType)
       default:
         return {}
     }

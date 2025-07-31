@@ -29,12 +29,13 @@ const checkoutSpec = createExtensionSpecification({
     'generates_source_maps',
   ],
   deployConfig: async (config, directory) => {
+    const typedConfig = config as zod.infer<typeof CheckoutSchema>
     return {
-      extension_points: config.extension_points,
-      capabilities: config.capabilities,
-      metafields: config.metafields ?? [],
-      name: config.name,
-      settings: config.settings,
+      extension_points: typedConfig.extension_points,
+      capabilities: typedConfig.capabilities,
+      metafields: typedConfig.metafields ?? [],
+      name: typedConfig.name,
+      settings: typedConfig.settings,
       localization: await loadLocalesConfig(directory, 'checkout_ui'),
     }
   },

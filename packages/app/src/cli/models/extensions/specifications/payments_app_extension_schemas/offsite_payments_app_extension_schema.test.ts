@@ -4,7 +4,6 @@ import {
   offsitePaymentsAppExtensionDeployConfig,
 } from './offsite_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: OffsitePaymentsAppExtensionConfigType = {
   name: 'test extension',
@@ -50,17 +49,22 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: 'payments.offsite.render',
-          path: ['targeting', 0, 'target'],
-          message: 'Invalid literal value, expected "payments.offsite.render"',
-        },
-      ]),
-    )
+          "code": "invalid_value",
+          "values": [
+            "payments.offsite.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.offsite.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if no confirmation_callback_url is provided with supports oversell protection', async () => {
@@ -71,15 +75,17 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         supports_oversell_protection: true,
         confirmation_callback_url: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.custom,
-          message: 'Property required when supports_oversell_protection is true',
-          path: ['confirmation_callback_url'],
-        },
-      ]),
-    )
+          "code": "custom",
+          "path": [
+            "confirmation_callback_url"
+          ],
+          "message": "Property required when supports_oversell_protection is true"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -89,17 +95,20 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         ...config,
         buyer_label_translations: [{label: 'Translation without locale key'}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['buyer_label_translations', 0, 'locale'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "locale"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if supports_installments does not match supports_deferred_payments', async () => {
@@ -110,15 +119,15 @@ describe('OffsitePaymentsAppExtensionSchema', () => {
         supports_installments: true,
         supports_deferred_payments: false,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.custom,
-          message: 'supports_installments and supports_deferred_payments must be the same',
-          path: [],
-        },
-      ]),
-    )
+          "code": "custom",
+          "path": [],
+          "message": "supports_installments and supports_deferred_payments must be the same"
+        }
+      ]]
+    `)
   })
 })
 

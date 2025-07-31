@@ -24,13 +24,14 @@ const spec = createExtensionSpecification({
   schema: TaxCalculationsSchema,
   appModuleFeatures: (_) => ['bundling'],
   deployConfig: async (config, _) => {
+    const typedConfig = config as zod.infer<typeof TaxCalculationsSchema>
     return {
-      production_api_base_url: config.production_api_base_url,
-      benchmark_api_base_url: config.benchmark_api_base_url,
-      calculate_taxes_api_endpoint: config.calculate_taxes_api_endpoint,
-      metafields: config.metafields,
-      api_version: config.api_version,
-      metafield_identifiers: config.input?.metafield_identifiers,
+      production_api_base_url: typedConfig.production_api_base_url,
+      benchmark_api_base_url: typedConfig.benchmark_api_base_url,
+      calculate_taxes_api_endpoint: typedConfig.calculate_taxes_api_endpoint,
+      metafields: typedConfig.metafields,
+      api_version: typedConfig.api_version,
+      metafield_identifiers: typedConfig.input?.metafield_identifiers,
     }
   },
 })

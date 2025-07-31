@@ -6,7 +6,6 @@ import {
 } from './custom_credit_card_payments_app_extension_schema.js'
 import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   name: 'Custom CreditCard extension',
@@ -57,17 +56,22 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         targeting: [{...config.targeting[0]!, target: null}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          received: null,
-          code: zod.ZodIssueCode.invalid_literal,
-          expected: 'payments.custom-credit-card.render',
-          path: ['targeting', 0, 'target'],
-          message: 'Invalid literal value, expected "payments.custom-credit-card.render"',
-        },
-      ]),
-    )
+          "code": "invalid_value",
+          "values": [
+            "payments.custom-credit-card.render"
+          ],
+          "path": [
+            "targeting",
+            0,
+            "target"
+          ],
+          "message": "Invalid input: expected \\"payments.custom-credit-card.render\\""
+        }
+      ]]
+    `)
   })
 
   test('returns an error if buyer_label_translations has invalid format', async () => {
@@ -77,17 +81,20 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         buyer_label_translations: [{label: 'Translation without locale key'}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['buyer_label_translations', 0, 'locale'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "locale"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if encryption certificate fingerprint is not present', async () => {
@@ -98,17 +105,18 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
       CustomCreditCardPaymentsAppExtensionSchema.parse({
         ...rest,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: 'invalid_type',
-          expected: 'string',
-          received: 'undefined',
-          path: ['encryption_certificate_fingerprint'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "encryption_certificate_fingerprint"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('returns an error if checkout_payment_method_fields has too many fields', async () => {
@@ -118,19 +126,20 @@ describe('CustomCreditCardPaymentsAppExtensionSchema', () => {
         ...config,
         checkout_payment_method_fields: buildCheckoutPaymentMethodFields(MAX_CHECKOUT_PAYMENT_METHOD_FIELDS + 1),
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.too_big,
-          maximum: MAX_CHECKOUT_PAYMENT_METHOD_FIELDS,
-          type: 'array',
-          inclusive: true,
-          exact: false,
-          message: `The extension can't have more than ${MAX_CHECKOUT_PAYMENT_METHOD_FIELDS} checkout_payment_method_fields`,
-          path: ['checkout_payment_method_fields'],
-        },
-      ]),
-    )
+          "origin": "array",
+          "code": "too_big",
+          "maximum": 7,
+          "inclusive": true,
+          "path": [
+            "checkout_payment_method_fields"
+          ],
+          "message": "The extension can't have more than 7 checkout_payment_method_fields"
+        }
+      ]]
+    `)
   })
 })
 

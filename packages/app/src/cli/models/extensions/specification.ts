@@ -203,10 +203,17 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     parseConfigurationObject: (configurationObject: unknown) => {
       const parseResult = merged.schema.safeParse(configurationObject)
       if (!parseResult.success) {
+        // Map Zod errors to the expected format
+        // In Zod 4, errors are available as 'issues' not 'errors'
+        const errors = parseResult.error.issues.map((error) => ({
+          path: error.path,
+          message: error.message,
+          ...(error.code === 'custom' ? {code: error.code} : {}),
+        }))
         return {
           state: 'error',
           data: undefined,
-          errors: parseResult.error.errors,
+          errors,
         }
       }
       return {
@@ -256,7 +263,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
 ) {
   return createExtensionSpecification({
     identifier,
-    schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
+    schema: zod.any() as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: () => appModuleFeatures ?? [],
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)

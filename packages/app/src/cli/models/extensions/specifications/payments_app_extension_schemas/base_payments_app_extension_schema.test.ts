@@ -6,7 +6,6 @@ import {
   SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
 
 describe('BasePaymentsAppExtensionSchema', () => {
   const config = {
@@ -51,17 +50,18 @@ describe('BasePaymentsAppExtensionSchema', () => {
         ...config,
         payment_session_url: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['payment_session_url'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "payment_session_url"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -86,17 +86,18 @@ describe('BuyerLabelSchema', () => {
         ...config,
         buyer_label: 1,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'number',
-          path: ['buyer_label'],
-          message: 'Expected string, received number',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label"
+          ],
+          "message": "Invalid input: expected string, received number"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if buyer_label is too long', async () => {
@@ -106,19 +107,20 @@ describe('BuyerLabelSchema', () => {
         ...config,
         buyer_label: 'a'.repeat(60),
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.too_big,
-          maximum: 50,
-          type: 'string',
-          inclusive: true,
-          exact: false,
-          message: 'String must contain at most 50 character(s)',
-          path: ['buyer_label'],
-        },
-      ]),
-    )
+          "origin": "string",
+          "code": "too_big",
+          "maximum": 50,
+          "inclusive": true,
+          "path": [
+            "buyer_label"
+          ],
+          "message": "Too big: expected string to have <=50 characters"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if buyer_label_translations has an invalid format', async () => {
@@ -128,17 +130,20 @@ describe('BuyerLabelSchema', () => {
         ...config,
         buyer_label_translations: [{locale: 'en', text: 'invalid key'}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['buyer_label_translations', 0, 'label'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "buyer_label_translations",
+            0,
+            "label"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -163,17 +168,18 @@ describe('DeferredPaymentsSchema', () => {
         ...config,
         supports_installments: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'boolean',
-          received: 'undefined',
-          path: ['supports_installments'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_installments"
+          ],
+          "message": "Invalid input: expected boolean, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if no supports_deferred_payments is provided', async () => {
@@ -183,17 +189,18 @@ describe('DeferredPaymentsSchema', () => {
         ...config,
         supports_deferred_payments: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'boolean',
-          received: 'undefined',
-          path: ['supports_deferred_payments'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_deferred_payments"
+          ],
+          "message": "Invalid input: expected boolean, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -218,16 +225,18 @@ describe('ConfirmationSchema', () => {
         ...config,
         confirmation_callback_url: 'not-a-url',
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          validation: 'url',
-          code: zod.ZodIssueCode.invalid_string,
-          message: 'Invalid url',
-          path: ['confirmation_callback_url'],
-        },
-      ]),
-    )
+          "code": "invalid_format",
+          "format": "url",
+          "path": [
+            "confirmation_callback_url"
+          ],
+          "message": "Invalid URL"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if supports_3ds is not provided', async () => {
@@ -237,17 +246,18 @@ describe('ConfirmationSchema', () => {
         ...config,
         supports_3ds: undefined,
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'boolean',
-          received: 'undefined',
-          path: ['supports_3ds'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "boolean",
+          "code": "invalid_type",
+          "path": [
+            "supports_3ds"
+          ],
+          "message": "Invalid input: expected boolean, received undefined"
+        }
+      ]]
+    `)
   })
 })
 
@@ -257,17 +267,20 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{countries: ['US']}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.invalid_type,
-          expected: 'string',
-          received: 'undefined',
-          path: ['supported_buyer_contexts', 0, 'currency'],
-          message: 'Required',
-        },
-      ]),
-    )
+          "expected": "string",
+          "code": "invalid_type",
+          "path": [
+            "supported_buyer_contexts",
+            0,
+            "currency"
+          ],
+          "message": "Invalid input: expected string, received undefined"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if countries key provided but its an empty array', async () => {
@@ -275,19 +288,22 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{currency: 'USD', countries: []}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.too_small,
-          minimum: 1,
-          type: 'array',
-          inclusive: true,
-          exact: false,
-          message: 'Array must contain at least 1 element(s)',
-          path: ['supported_buyer_contexts', 0, 'countries'],
-        },
-      ]),
-    )
+          "origin": "array",
+          "code": "too_small",
+          "minimum": 1,
+          "inclusive": true,
+          "path": [
+            "supported_buyer_contexts",
+            0,
+            "countries"
+          ],
+          "message": "Too small: expected array to have >=1 items"
+        }
+      ]]
+    `)
   })
 
   test('throws an error if an unexpected key is present', async () => {
@@ -295,16 +311,21 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{currency: 'USD', random: 123}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.unrecognized_keys,
-          keys: ['random'],
-          path: ['supported_buyer_contexts', 0],
-          message: "Unrecognized key(s) in object: 'random'",
-        },
-      ]),
-    )
+          "code": "unrecognized_keys",
+          "keys": [
+            "random"
+          ],
+          "path": [
+            "supported_buyer_contexts",
+            0
+          ],
+          "message": "Unrecognized key: \\"random\\""
+        }
+      ]]
+    `)
   })
 
   test('throws an error if a mixture of currency and currency plus countries provided', async () => {
@@ -312,16 +333,17 @@ describe('SupportedBuyerContextSchema', async () => {
       SupportedBuyerContextsSchema.parse({
         supported_buyer_contexts: [{currency: 'USD'}, {currency: 'EUR', countries: ['DE']}],
       }),
-    ).toThrowError(
-      new zod.ZodError([
+    ).toThrowErrorMatchingInlineSnapshot(`
+      [ZodError: [
         {
-          code: zod.ZodIssueCode.custom,
-          message:
-            'Must all be defined with only a currency, or must all be defined with a currency plus countries -- a mixture of the two is not allowed',
-          path: ['supported_buyer_contexts'],
-        },
-      ]),
-    )
+          "code": "custom",
+          "path": [
+            "supported_buyer_contexts"
+          ],
+          "message": "Must all be defined with only a currency, or must all be defined with a currency plus countries -- a mixture of the two is not allowed"
+        }
+      ]]
+    `)
   })
 
   test('is valid if countries are not provided', async () => {

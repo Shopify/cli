@@ -261,6 +261,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
   path: 'shopify.app.development.toml',
   name: 'my app',
   client_id: '12345',
+  extension_directories: undefined,
   webhooks: {
     api_version: '2023-04',
   },
@@ -827,6 +828,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         pos: {
@@ -859,7 +862,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'application_url', 'embedded', 'pos', 'app_proxy', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -873,6 +876,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -950,7 +955,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'application_url', 'embedded', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -963,6 +968,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -1040,7 +1047,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'webhooks'],
         existingUpdatedFieldNames: ['application_url', 'embedded'],
         newFieldNames: [],
         deletedFieldNames: [],
@@ -1052,6 +1059,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         pos: {
@@ -1097,7 +1106,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['application_url', 'embedded'],
+        existingFieldNames: ['scopes', 'application_url', 'embedded'],
         existingUpdatedFieldNames: [],
         newFieldNames: ['name', 'webhooks', 'pos'],
         deletedFieldNames: [],
@@ -1109,6 +1118,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -1202,7 +1213,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        existingFieldNames: ['name', 'scopes', 'application_url', 'embedded', 'webhooks'],
         existingUpdatedFieldNames: [],
         newFieldNames: [],
         deletedFieldNames: ['pos'],
@@ -1672,6 +1683,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
+        scopes: '',
+        extension_directories: undefined,
         application_url: 'https://myapp.com',
         embedded: true,
         webhooks: {
@@ -1697,7 +1710,7 @@ describe('configExtensionsIdentifiersBreakdown', () => {
 
       // Then
       expect(result).toEqual({
-        existingFieldNames: [],
+        existingFieldNames: ['scopes'],
         existingUpdatedFieldNames: [],
         newFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
         deletedFieldNames: [],
@@ -1713,6 +1726,8 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         client_id: '12345',
         application_url: 'https://myapp.com',
         embedded: true,
+        scopes: '',
+        extension_directories: undefined,
         pos: {
           embedded: false,
         },

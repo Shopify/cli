@@ -7,7 +7,14 @@ import {BaseSchema} from '../../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const WebhooksConfigSchema = zod.object({
-  api_version: zod.string({required_error: 'String is required'}),
+  api_version: zod.string({
+    error: (issue) => {
+      if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+        return 'String is required'
+      }
+      return issue.message
+    },
+  }),
   privacy_compliance: zod
     .object({
       customer_deletion_url: WebhookSubscriptionUriValidation.optional(),

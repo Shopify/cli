@@ -30,12 +30,9 @@ const FlowTemplateExtensionSchema = BaseSchemaWithHandle.extend({
   description: zod.string().max(1024),
   template: zod.object({
     categories: zod.array(
-      zod.string().refine(
-        (category) => VALID_CATEGORIES.concat(FLOW_TEAM_CATEGORIES).includes(category),
-        (category) => ({
-          message: `${category} is not a valid category. Valid categories include: ${VALID_CATEGORIES.join(', ')}.`,
-        }),
-      ),
+      zod.string().refine((category) => VALID_CATEGORIES.concat(FLOW_TEAM_CATEGORIES).includes(category), {
+        message: `Invalid category. Valid categories include: ${VALID_CATEGORIES.join(', ')}.`,
+      }),
     ),
     module: zod.string(),
     require_app: zod.boolean().optional(),
@@ -50,17 +47,18 @@ const flowTemplateSpec = createExtensionSpecification({
   schema: FlowTemplateExtensionSchema,
   appModuleFeatures: (_) => ['ui_preview', 'bundling'],
   deployConfig: async (config, extensionPath) => {
+    const typedConfig = config as zod.infer<typeof FlowTemplateExtensionSchema>
     return {
-      template_handle: config.handle,
-      name: config.name,
-      description: config.description,
-      categories: config.template.categories,
-      require_app: config.template.require_app,
-      discoverable: config.template.discoverable,
-      allow_one_click_activate: config.template.allow_one_click_activate,
-      enabled: config.template.enabled,
-      definition: await loadWorkflow(extensionPath, config.template.module),
-      localization: await loadLocalesConfig(extensionPath, config.name),
+      template_handle: typedConfig.handle,
+      name: typedConfig.name,
+      description: typedConfig.description,
+      categories: typedConfig.template.categories,
+      require_app: typedConfig.template.require_app,
+      discoverable: typedConfig.template.discoverable,
+      allow_one_click_activate: typedConfig.template.allow_one_click_activate,
+      enabled: typedConfig.template.enabled,
+      definition: await loadWorkflow(extensionPath, typedConfig.template.module),
+      localization: await loadLocalesConfig(extensionPath, typedConfig.name ?? ''),
     }
   },
 })

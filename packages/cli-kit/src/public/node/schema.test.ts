@@ -42,17 +42,24 @@ describe('deepStrict', () => {
 describe('errorsToString', () => {
   test('returns the message formatted correctly', async () => {
     // Given
-    const zodErrors = [
+    const zodErrors: z.ZodIssue[] = [
       {
+        code: z.ZodIssueCode.custom,
         path: ['root_property'],
         message: 'root property error',
+        input: undefined,
       },
       {
+        code: z.ZodIssueCode.custom,
         path: ['section', 'property'],
         message: 'section property error',
+        input: undefined,
       },
       {
+        code: z.ZodIssueCode.custom,
         path: ['section', 'property_unkonwn'],
+        message: '',
+        input: undefined,
       },
     ]
 
@@ -61,7 +68,7 @@ describe('errorsToString', () => {
 
     // Then
     expect(result).toEqual(
-      'root_property: root property error\nsection.property: section property error\nsection.property_unkonwn: Unknow error',
+      'root_property: root property error\nsection.property: section property error\nsection.property_unkonwn: Unknown error',
     )
   })
 })

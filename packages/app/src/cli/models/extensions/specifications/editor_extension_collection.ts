@@ -35,11 +35,12 @@ const editorExtensionCollectionSpecification = createExtensionSpecification({
   schema: EditorExtensionCollectionSchema,
   appModuleFeatures: (_) => [],
   deployConfig: async (config, directory) => {
+    const typedConfig = config as EditorExtensionCollectionType
     return {
-      name: config.name,
-      handle: config.handle,
-      in_collection: config.inCollection,
-      localization: await loadLocalesConfig(directory, config.name),
+      name: typedConfig.name,
+      handle: typedConfig.handle,
+      in_collection: typedConfig.inCollection,
+      localization: await loadLocalesConfig(directory, typedConfig.name ?? ''),
     }
   },
 })

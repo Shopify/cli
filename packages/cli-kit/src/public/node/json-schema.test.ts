@@ -256,7 +256,7 @@ describe('jsonSchemaValidate', () => {
       return
     }
 
-    const zodErrors = zodParsed.error.errors.map((error) => ({path: error.path, message: error.message}))
+    const zodErrors = zodParsed.error.issues.map((error) => ({path: error.path, message: error.message}))
 
     const schemaParsed = jsonSchemaValidate(subject, contract, 'strip')
     expect(schemaParsed.state).toBe('error')
@@ -356,7 +356,7 @@ describe('jsonSchemaValidate', () => {
       },
       {
         path: ['root', 'nested', 'supplemental'],
-        message: 'Expected string, received number',
+        message: 'Invalid input: expected string, received number',
       },
     ])
   })
@@ -489,7 +489,7 @@ validations.min = false`)
           ],
         },
         {
-          "message": "Expected number, string, object, array, received boolean",
+          "message": "Invalid input: expected number, string, object, array, received boolean",
           "path": [
             "product",
             "metafields",

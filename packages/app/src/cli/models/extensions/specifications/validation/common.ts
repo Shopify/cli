@@ -12,7 +12,7 @@ export function removeTrailingSlash(arg: unknown): unknown {
   return typeof arg === 'string' && arg.endsWith('/') ? arg.replace(/\/+$/, '') : arg
 }
 
-export const WebhookSubscriptionUriValidation = zod.string({invalid_type_error: 'Value must be string'}).refine(
+export const WebhookSubscriptionUriValidation = zod.string({message: 'Value must be string'}).refine(
   (uri) => {
     if (uri.startsWith('/')) return true
 

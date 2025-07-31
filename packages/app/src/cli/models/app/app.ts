@@ -56,7 +56,14 @@ export const LegacyAppSchema = zod
     web_directories: zod.array(zod.string()).optional(),
     webhooks: zod
       .object({
-        api_version: zod.string({required_error: 'String is required'}),
+        api_version: zod.string({
+          error: (issue) => {
+            if (issue.code === 'invalid_type' && issue.received === 'undefined') {
+              return 'String is required'
+            }
+            return issue.message
+          },
+        }),
         subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
       })
       .optional(),
@@ -169,7 +176,7 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
   const {path, ...rest} = item
-  return isType(AppSchema.nonstrict(), rest)
+  return isType(AppSchema.passthrough(), rest)
 }
 
 /**

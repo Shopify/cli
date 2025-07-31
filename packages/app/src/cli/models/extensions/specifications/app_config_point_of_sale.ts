@@ -5,7 +5,14 @@ import {zod} from '@shopify/cli-kit/node/schema'
 const PosConfigurationSchema = BaseSchema.extend({
   pos: zod
     .object({
-      embedded: zod.boolean({invalid_type_error: 'Value must be Boolean'}),
+      embedded: zod.boolean({
+        error: (issue) => {
+          if (issue.code === 'invalid_type') {
+            return 'Value must be Boolean'
+          }
+          return issue.message
+        },
+      }),
     })
     .optional(),
 })

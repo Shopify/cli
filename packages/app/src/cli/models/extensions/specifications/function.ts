@@ -82,6 +82,7 @@ const functionSpec = createExtensionSpecification({
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function', 'bundling'],
   deployConfig: async (config, directory, apiKey) => {
+    const typedConfig = config as FunctionConfigType
     let inputQuery: string | undefined
     const moduleId = randomUUID()
     const inputQueryPath = joinPath(directory, 'input.graphql')
@@ -90,9 +91,9 @@ const functionSpec = createExtensionSpecification({
     }
 
     const targets =
-      config.targeting &&
+      typedConfig.targeting &&
       (await Promise.all(
-        config.targeting.map(async (config) => {
+        typedConfig.targeting.map(async (config) => {
           let inputQuery
 
           if (config.input_query) {
@@ -105,37 +106,37 @@ const functionSpec = createExtensionSpecification({
 
     let ui: UI | undefined
 
-    if (config.ui?.paths) {
+    if (typedConfig.ui?.paths) {
       ui = {
         app_bridge: {
-          details_path: config.ui.paths.details,
-          create_path: config.ui.paths.create,
+          details_path: typedConfig.ui.paths.details,
+          create_path: typedConfig.ui.paths.create,
         },
       }
     }
 
-    if (config.ui?.handle !== undefined) {
+    if (typedConfig.ui?.handle !== undefined) {
       ui = {
         ...ui,
-        ui_extension_handle: config.ui.handle,
+        ui_extension_handle: typedConfig.ui.handle,
       }
     }
 
     return {
-      title: config.name,
+      title: typedConfig.name,
       module_id: moduleId,
-      description: config.description,
+      description: typedConfig.description,
       app_key: apiKey,
-      api_type: config.type === 'function' ? undefined : config.type,
-      api_version: config.api_version,
+      api_type: typedConfig.type === 'function' ? undefined : typedConfig.type,
+      api_version: typedConfig.api_version,
       input_query: inputQuery,
-      input_query_variables: config.input?.variables
+      input_query_variables: typedConfig.input?.variables
         ? {
-            single_json_metafield: config.input.variables,
+            single_json_metafield: typedConfig.input.variables,
           }
         : undefined,
       ui,
-      enable_creation_ui: config.ui?.enable_create ?? true,
+      enable_creation_ui: typedConfig.ui?.enable_create ?? true,
       localization: await loadLocalesConfig(directory, 'function'),
       targets,
     }
