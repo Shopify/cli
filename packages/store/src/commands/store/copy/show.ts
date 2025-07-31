@@ -63,8 +63,10 @@ export default class Show extends BaseBDCommand {
     if (orgs.length == 1) {
       return {type: 'organization', id: orgs[0]!.id}
     } else {
-      const orgNames = orgs.map(org => org.name).join(',\n')
-      throw new Error(`Multiple organizations found:\n\n${orgNames}\n\nWe haven't implemented logic to handle this yet.`)
+      const orgNames = orgs.map((org) => org.name).join(',\n')
+      throw new Error(
+        `Multiple organizations found:\n\n${orgNames}\n\nWe haven't implemented logic to handle this yet.`,
+      )
     }
   }
 }

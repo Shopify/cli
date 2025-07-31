@@ -10,7 +10,7 @@ import {
 import {StoreIdentifier} from '../../../apis/organizations/index.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 import {Shop} from '../../../apis/admin/types.js'
-import { Organization } from '../../../apis/destinations/index.js'
+import {Organization} from '../../../apis/destinations/index.js'
 
 export class MockApiClient implements ApiClientInterface {
   private pollCount = 0
