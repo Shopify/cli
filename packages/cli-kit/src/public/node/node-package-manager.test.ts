@@ -36,10 +36,19 @@ vi.mock('./version.js')
 vi.mock('./system.js')
 vi.mock('latest-version')
 vi.mock('./is-global')
-vi.mock('./output.js')
 
 const mockedExec = vi.mocked(exec)
 const mockedCaptureOutput = vi.mocked(captureOutput)
+
+// Mock only outputDebug, not the entire output module
+vi.mock('./output.js', async () => {
+  const actual = await vi.importActual('./output.js')
+  return {
+    ...actual,
+    outputDebug: vi.fn(),
+  }
+})
+
 const mockedOutputDebug = vi.mocked(outputDebug)
 
 describe('installNPMDependenciesRecursively', () => {
