@@ -112,6 +112,7 @@
     "@shopify/app": "3.83.0",
     "@shopify/cli-kit": "3.83.0",
     "@shopify/plugin-cloudflare": "3.83.0",
+    "@shopify/plugin-ngrok": "3.83.0",
     "@shopify/plugin-did-you-mean": "3.83.0",
     "@shopify/theme": "3.83.0",
     "@shopify/store": "3.83.0",
@@ -203,14 +204,26 @@
         "target": "./dist/index.js",
         "identifier": "DidYouMeanHook"
       },
-      "tunnel_start": {
-        "target": "./dist/index.js",
-        "identifier": "TunnelStartHook"
-      },
-      "tunnel_provider": {
-        "target": "./dist/index.js",
-        "identifier": "TunnelProviderHook"
-      },
+      "tunnel_start": [
+        {
+          "target": "./dist/index.js",
+          "identifier": "CloudflareTunnelStartHook"
+        },
+        {
+          "target": "./dist/index.js",
+          "identifier": "NgrokTunnelStartHook"
+        }
+      ],
+      "tunnel_provider": [
+        {
+          "target": "./dist/index.js",
+          "identifier": "CloudflareTunnelProviderHook"
+        },
+        {
+          "target": "./dist/index.js",
+          "identifier": "NgrokTunnelStartHook"
+        }
+      ],
       "update": {
         "target": "./dist/index.js",
         "identifier": "PluginHook"

@@ -214,7 +214,7 @@ USAGE
   $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--localhost-port
     <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
     [--skip-dependencies-installation] [-s <value>] [--subscription-product-url <value>] [-t <value>]
-    [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
+    [--theme-app-extension-port <value>] [--use-ngrok |  | [--use-localhost | [--tunnel-url <value> | ]]] [--verbose]
 
 FLAGS
   -c, --config=<value>                    The name of the app configuration.
@@ -239,6 +239,7 @@ FLAGS
       --use-localhost                     Service entry point will listen to localhost. A tunnel won't be used. Will
                                           work for testing many app features, but not those that directly invoke your
                                           app (E.g: Webhooks)
+      --use-ngrok                         Use ngrok tunneling instead of Cloudflare tunneling.
       --verbose                           Increase the verbosity of the output.
 
 DESCRIPTION

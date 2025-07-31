@@ -1,10 +1,34 @@
-import {TunnelClient, TunnelStatusType} from '@shopify/cli-kit/node/plugins/tunnel'
+import {TUNNEL_PROVIDER} from './provider.js'
+import {
+  startTunnel,
+  TunnelError,
+  TunnelStartReturn,
+  TunnelStatusType,
+  TunnelClient,
+} from '@shopify/cli-kit/node/plugins/tunnel'
+import {err, ok} from '@shopify/cli-kit/node/result'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import ngrok from 'ngrok'
 
-export class NgrokTunnelClient implements TunnelClient {
+export default startTunnel({provider: TUNNEL_PROVIDER, action: hookStart})
+
+export async function hookStart(port: number): Promise<TunnelStartReturn> {
+  try {
+    const client = new TunnelClientInstance(port)
+    await client.startTunnel()
+    return ok(client)
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      const tunnelError = new TunnelError('unknown', error.message)
+      return err(tunnelError)
+    }
+    throw error
+  }
+}
+
+class TunnelClientInstance implements TunnelClient {
   port: number
-  provider = 'ngrok'
+  provider = TUNNEL_PROVIDER
 
   private currentStatus: TunnelStatusType = {status: 'not-started'}
   private ngrokUrl: string | undefined
@@ -41,13 +65,7 @@ export class NgrokTunnelClient implements TunnelClient {
       process.on('exit', cleanup)
     } catch (error) {
       let errorMessage = 'Failed to start ngrok tunnel'
-      let tryMessage = [
-        'You can run the command again, or try networking with Shopify via',
-        {command: '--use-localhost'},
-        'or',
-        {command: '--tunnel-url <custom tunnel>'},
-        '.',
-      ]
+      let tryMessage = whatToTry()
 
       if (error instanceof Error) {
         if (error.message.includes('authtoken')) {
@@ -84,4 +102,20 @@ export class NgrokTunnelClient implements TunnelClient {
       // Ignore errors during shutdown
     })
   }
+}
+
+function whatToTry() {
+  return [
+    'You can run the command again, or try networking with Shopify via',
+    {command: '--use-localhost'},
+    'or',
+    {command: '--tunnel-url <custom tunnel>'},
+    '.',
+    {
+      link: {
+        label: 'See documentation for details.',
+        url: 'https://shopify.dev/docs/apps/build/cli-for-apps/networking-options',
+      },
+    },
+  ]
 }

@@ -28,7 +28,6 @@ import {setAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
-import {NgrokTunnelClient} from './dev/ngrok-tunnel-client.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -90,9 +89,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
   } else if (tunnel.mode === 'ngrok') {
     const tunnelPort = await getAvailableTCPPort()
-    const ngrokClient = new NgrokTunnelClient(tunnelPort)
-    await ngrokClient.startTunnel()
-    tunnelClient = ngrokClient
+    tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'ngrok')
   }
 
   const remoteConfiguration = await fetchAppRemoteConfiguration(

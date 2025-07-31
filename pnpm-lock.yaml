@@ -172,6 +172,9 @@ importers:
       '@shopify/plugin-cloudflare':
         specifier: 3.83.0
         version: link:../plugin-cloudflare
+      '@shopify/plugin-ngrok':
+        specifier: 3.83.0
+        version: link:../plugin-ngrok
       '@shopify/polaris':
         specifier: 12.27.0
         version: 12.27.0(react-dom@18.3.1)(react@18.3.1)
@@ -220,9 +223,6 @@ importers:
       ignore:
         specifier: 6.0.2
         version: 6.0.2
-      ngrok:
-        specifier: ^5.0.0-beta.2
-        version: 5.0.0-beta.2
       proper-lockfile:
         specifier: 4.1.2
         version: 4.1.2
@@ -303,6 +303,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 3.83.0
         version: link:../plugin-did-you-mean
+      '@shopify/plugin-ngrok':
+        specifier: 3.83.0
+        version: link:../plugin-ngrok
       '@shopify/store':
         specifier: 3.83.0
         version: link:../store
@@ -691,6 +694,22 @@ importers:
       n-gram:
         specifier: 2.0.2
         version: 2.0.2
+    devDependencies:
+      '@vitest/coverage-istanbul':
+        specifier: ^3.1.4
+        version: 3.2.4(vitest@3.2.4)
+
+  packages/plugin-ngrok:
+    dependencies:
+      '@oclif/core':
+        specifier: 4.4.0
+        version: 4.4.0
+      '@shopify/cli-kit':
+        specifier: 3.83.0
+        version: link:../cli-kit
+      ngrok:
+        specifier: ^5.0.0-beta.2
+        version: 5.0.0-beta.2
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
@@ -13749,7 +13768,7 @@ packages:
       bl: 4.1.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
-      cli-spinners: 2.6.1
+      cli-spinners: 2.9.2
       is-interactive: 1.0.0
       log-symbols: 4.1.0
       strip-ansi: 6.0.1
