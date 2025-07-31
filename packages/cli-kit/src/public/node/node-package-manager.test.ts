@@ -30,6 +30,7 @@ import {outputDebug} from './output.js'
 import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('./version.js')
 vi.mock('./system.js')

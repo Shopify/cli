@@ -246,7 +246,7 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
         error instanceof Error ? error.message : String(error)
       }`,
     )
-    if (error instanceof Error && error.name !== 'BugError' && error.name !== 'AbortError') {
+    if (error instanceof Error && !(error instanceof BugError) && !(error instanceof AbortError)) {
       throw error
     }
   }
@@ -270,8 +270,17 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
         outputDebug(`Found .yarnrc.yml file, assuming Yarn Berry (v2+)`)
         return ['add']
       }
-      if (error instanceof Error && error.name !== 'BugError' && error.name !== 'AbortError') {
-        throw error
+      // For unexpected errors that aren't yarn command failures, rethrow
+      if (error instanceof Error && !(error instanceof BugError) && !(error instanceof AbortError)) {
+        // Allow yarn-related command failures to fall through to fallback
+        const isYarnCommandFailure =
+          error.message.toLowerCase().includes('yarn') ||
+          error.message.toLowerCase().includes('command') ||
+          error.message.toLowerCase().includes('failed') ||
+          error.message.toLowerCase().includes('not found')
+        if (!isYarnCommandFailure) {
+          throw error
+        }
       }
     }
   }
