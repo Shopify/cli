@@ -22,13 +22,12 @@ import {
   PackageManager,
   determineYarnInstallCommand,
 } from './node-package-manager.js'
-import {AbortError} from './error.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
 import {joinPath, dirname} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
-import {cacheClear} from '../../private/node/conf-store.js'
 import {outputDebug} from './output.js'
+import {cacheClear} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
@@ -117,7 +116,7 @@ describe('packageManagerFromUserAgent', () => {
 
 describe('install', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    // Mocks are cleared automatically by vitest
   })
 
   describe('non-yarn package managers', () => {
@@ -191,10 +190,13 @@ describe('install', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@3.6.4'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@3.6.4',
+          }),
+        )
 
         // When
         await installNodeModules({
@@ -214,15 +216,17 @@ describe('install', () => {
       })
     })
 
-
     test('uses install command when yarn v1 is detected via packageManager field', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@1.22.19'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@1.22.19',
+          }),
+        )
 
         // When
         await installNodeModules({
@@ -372,9 +376,12 @@ describe('install', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          packageManager: 'yarn@3.0.0'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            packageManager: 'yarn@3.0.0',
+          }),
+        )
         const mockStdout = {write: vi.fn()} as any
         const mockStderr = {write: vi.fn()} as any
 
@@ -401,9 +408,12 @@ describe('install', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          packageManager: 'yarn@2.4.3'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            packageManager: 'yarn@2.4.3',
+          }),
+        )
         const mockAbortController = new AbortController()
 
         // When
@@ -994,7 +1004,9 @@ describe('findUpAndReadPackageJson', () => {
       await mkdir(subDirectory)
 
       // When/Then
-      await expect(() => findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(FindUpAndReadPackageJsonNotFoundError)
+      await expect(() => findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
+        FindUpAndReadPackageJsonNotFoundError,
+      )
     })
   })
 })
@@ -1342,21 +1354,23 @@ describe('inferPackageManager', () => {
 
 describe('determineYarnInstallCommand', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    // Mocks are cleared automatically by vitest
   })
-
 
   describe('packageManager field detection', () => {
     test('returns ["add"] when package.json has packageManager field with yarn v2+', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@3.0.0'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@3.0.0',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1364,13 +1378,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["add"] when package.json has prerelease version yarn@4.0.0-beta.1', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@4.0.0-beta.1'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@4.0.0-beta.1',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1378,13 +1395,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["add"] when package.json has dist-tag yarn@next', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@next'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@next',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1392,13 +1412,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["add"] when package.json has dist-tag yarn@latest', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@latest'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@latest',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1406,13 +1429,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["add"] when package.json has dist-tag yarn@canary', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@canary'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@canary',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1420,13 +1446,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["add"] when package.json has coercible version yarn@4', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@4'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@4',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1434,13 +1463,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["install"] when package.json has coercible version yarn@1.22', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@1.22'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@1.22',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
@@ -1449,10 +1481,13 @@ describe('determineYarnInstallCommand', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Create package.json in root
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@3.6.4'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@3.6.4',
+          }),
+        )
 
         // Create subdirectory
         const subDir = joinPath(tmpDir, 'src', 'components')
@@ -1461,7 +1496,7 @@ describe('determineYarnInstallCommand', () => {
 
         // Call from subdirectory - should find root package.json
         const result = await determineYarnInstallCommand(subDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1469,13 +1504,16 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["add"] when package.json has packageManager field with yarn v2', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@2.4.3'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@2.4.3',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1483,17 +1521,19 @@ describe('determineYarnInstallCommand', () => {
     test('returns ["install"] when package.json has packageManager field with yarn v1', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@1.22.19'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@1.22.19',
+          }),
+        )
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
-
   })
 
   describe('yarn --version command detection', () => {
@@ -1501,28 +1541,31 @@ describe('determineYarnInstallCommand', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
         await writeFile(packageJsonPath, JSON.stringify({name: 'test-package'}))
-        
+
         mockedCaptureOutput.mockResolvedValueOnce('3.6.4')
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
-        expect(mockedCaptureOutput).toHaveBeenCalledWith('yarn', ['--version'], expect.objectContaining({
-          cwd: tmpDir
-        }))
+        expect(mockedCaptureOutput).toHaveBeenCalledWith(
+          'yarn',
+          ['--version'],
+          expect.objectContaining({
+            cwd: tmpDir,
+          }),
+        )
       })
     })
-
 
     test('returns ["install"] when yarn --version shows v1.x', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
         await writeFile(packageJsonPath, JSON.stringify({name: 'test-package'}))
-        
+
         mockedCaptureOutput.mockResolvedValueOnce('1.22.19')
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
@@ -1531,15 +1574,14 @@ describe('determineYarnInstallCommand', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
         await writeFile(packageJsonPath, JSON.stringify({name: 'test-package'}))
-        
+
         mockedCaptureOutput.mockRejectedValueOnce(new Error('spawn yarn ENOENT'))
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
-
   })
 
   describe('.yarnrc.yml file detection', () => {
@@ -1549,11 +1591,11 @@ describe('determineYarnInstallCommand', () => {
         const yarnrcPath = joinPath(tmpDir, '.yarnrc.yml')
         await writeFile(packageJsonPath, JSON.stringify({name: 'test-package'}))
         await writeFile(yarnrcPath, 'yarnPath: .yarn/releases/yarn-3.6.4.cjs')
-        
+
         mockedCaptureOutput.mockRejectedValueOnce(new Error('Command failed'))
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
       })
     })
@@ -1562,11 +1604,11 @@ describe('determineYarnInstallCommand', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
         await writeFile(packageJsonPath, JSON.stringify({name: 'test-package'}))
-        
+
         mockedCaptureOutput.mockRejectedValueOnce(new Error('Command failed'))
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
@@ -1577,49 +1619,58 @@ describe('determineYarnInstallCommand', () => {
         const yarnrcPath = joinPath(tmpDir, '.yarnrc.yml')
         await writeFile(packageJsonPath, JSON.stringify({name: 'test-package'}))
         await writeFile(yarnrcPath, 'yarnPath: .yarn/releases/yarn-3.6.4.cjs')
-        
+
         mockedCaptureOutput.mockRejectedValueOnce(new Error('spawn yarn ENOENT'))
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
   })
 
-
   describe('error handling and fallbacks', () => {
     test('falls back to yarn --version when packageManager has invalid semver yarn@invalid-version', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@invalid-version'
-        }))
-        
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@invalid-version',
+          }),
+        )
+
         mockedCaptureOutput.mockResolvedValueOnce('3.6.4')
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['add'])
-        expect(mockedCaptureOutput).toHaveBeenCalledWith('yarn', ['--version'], expect.objectContaining({
-          cwd: tmpDir
-        }))
+        expect(mockedCaptureOutput).toHaveBeenCalledWith(
+          'yarn',
+          ['--version'],
+          expect.objectContaining({
+            cwd: tmpDir,
+          }),
+        )
       })
     })
 
     test('falls back to yarn --version when packageManager has unknown tag yarn@unknown-tag', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@unknown-tag'
-        }))
-        
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@unknown-tag',
+          }),
+        )
+
         mockedCaptureOutput.mockResolvedValueOnce('1.22.19')
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
@@ -1629,7 +1680,7 @@ describe('determineYarnInstallCommand', () => {
         mockedCaptureOutput.mockRejectedValueOnce(new Error('Command failed'))
 
         const result = await determineYarnInstallCommand(tmpDir)
-        
+
         expect(result).toEqual(['install'])
       })
     })
@@ -1637,13 +1688,16 @@ describe('determineYarnInstallCommand', () => {
     test('logs debug information during detection process', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         const packageJsonPath = joinPath(tmpDir, 'package.json')
-        await writeFile(packageJsonPath, JSON.stringify({
-          name: 'test-package',
-          packageManager: 'yarn@3.6.4'
-        }))
+        await writeFile(
+          packageJsonPath,
+          JSON.stringify({
+            name: 'test-package',
+            packageManager: 'yarn@3.6.4',
+          }),
+        )
 
         await determineYarnInstallCommand(tmpDir)
-        
+
         expect(mockedOutputDebug).toHaveBeenCalledWith('Detected yarn v3.6.4 from packageManager field: yarn@3.6.4')
       })
     })

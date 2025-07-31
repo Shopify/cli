@@ -8,7 +8,13 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {SemVer, satisfies as semverSatisfies, coerce as semverCoerce, gte as semverGte, valid as semverValid} from 'semver'
+import {
+  SemVer,
+  satisfies as semverSatisfies,
+  coerce as semverCoerce,
+  gte as semverGte,
+  valid as semverValid,
+} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -194,7 +200,7 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
   if (!directory || typeof directory !== 'string') {
     throw new AbortError('Invalid directory parameter')
   }
-  
+
   if (!(await fileExists(directory))) {
     throw new AbortError(`Directory does not exist: ${directory}`)
   }
@@ -203,7 +209,7 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
     const {content: packageJsonContent} = await findUpAndReadPackageJson(directory)
     if (packageJsonContent.packageManager?.startsWith('yarn@')) {
       const versionPart = packageJsonContent.packageManager.replace(/^yarn@/, '')
-      
+
       // First check if it's a valid semver
       const validVersion = semverValid(versionPart)
       if (validVersion) {
@@ -211,26 +217,38 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
         outputDebug(`Detected yarn v${validVersion} from packageManager field: ${packageJsonContent.packageManager}`)
         return isYarnBerry ? ['add'] : ['install']
       }
-      
+
       // Handle known dist-tags explicitly
       if (['next', 'latest', 'canary', 'beta', 'rc'].includes(versionPart)) {
         outputDebug(`Detected yarn dist-tag '${versionPart}' - assuming modern Yarn (Berry)`)
-        return ['add'] // Modern yarn dist-tags likely mean Berry
+        // Modern yarn dist-tags likely mean Berry
+        return ['add']
       }
-      
+
       // Try coercion as fallback for partial versions like "4" or "4.0"
       const coercedVersion = semverCoerce(versionPart)
       if (coercedVersion) {
         const isYarnBerry = semverGte(coercedVersion, '2.0.0')
-        outputDebug(`Coerced yarn version ${coercedVersion.version} from packageManager field: ${packageJsonContent.packageManager}`)
+        outputDebug(
+          `Coerced yarn version ${coercedVersion.version} from packageManager field: ${packageJsonContent.packageManager}`,
+        )
         return isYarnBerry ? ['add'] : ['install']
       }
-      
+
       // Invalid/unknown version - log warning and continue to fallback
-      outputDebug(`Invalid yarn version in packageManager field: ${packageJsonContent.packageManager} - falling back to yarn --version detection`)
+      outputDebug(
+        `Invalid yarn version in packageManager field: ${packageJsonContent.packageManager} - falling back to yarn --version detection`,
+      )
     }
   } catch (error) {
-    outputDebug(`Failed to detect yarn version from packageManager field: ${error instanceof Error ? error.message : String(error)}`)
+    outputDebug(
+      `Failed to detect yarn version from packageManager field: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    )
+    if (error instanceof Error && error.name !== 'BugError' && error.name !== 'AbortError') {
+      throw error
+    }
   }
 
   try {
@@ -251,6 +269,9 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
       if (await fileExists(yarnrcPath)) {
         outputDebug(`Found .yarnrc.yml file, assuming Yarn Berry (v2+)`)
         return ['add']
+      }
+      if (error instanceof Error && error.name !== 'BugError' && error.name !== 'AbortError') {
+        throw error
       }
     }
   }
@@ -276,18 +297,18 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
     stderr: options.stderr,
     signal: options.signal,
   }
-  
+
   let args: string[]
   if (options.packageManager === 'yarn') {
     args = await determineYarnInstallCommand(options.directory)
   } else {
     args = ['install']
   }
-  
+
   if (options.args) {
     args = args.concat(options.args)
   }
-  
+
   await runWithTimer('cmd_all_timing_network_ms')(async () => {
     await exec(options.packageManager, args, execOptions)
   })
