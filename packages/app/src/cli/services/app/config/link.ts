@@ -22,12 +22,7 @@ import {
   appFromIdentifiers,
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
-import {
-  Flag,
-  DeveloperPlatformClient,
-  CreateAppOptions,
-  selectDeveloperPlatformClient,
-} from '../../../utilities/developer-platform-client.js'
+import {Flag, DeveloperPlatformClient, CreateAppOptions} from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
@@ -131,8 +126,6 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
   const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
   const appDirectory = possibleAppDirectory ?? options.directory
 
-  const defaultDeveloperPlatformClient = selectDeveloperPlatformClient()
-
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
     const remoteApp = await appFromIdentifiers({apiKey: options.apiKey})
@@ -145,13 +138,13 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     return {
       remoteApp,
       appDirectory,
-      developerPlatformClient: remoteApp.developerPlatformClient ?? defaultDeveloperPlatformClient,
+      developerPlatformClient: remoteApp.developerPlatformClient,
     }
   }
 
   const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
 
-  const developerPlatformClient = remoteApp.developerPlatformClient ?? defaultDeveloperPlatformClient
+  const developerPlatformClient = remoteApp.developerPlatformClient
 
   return {
     remoteApp,
