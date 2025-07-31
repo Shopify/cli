@@ -44,18 +44,19 @@ export default class Show extends BaseBDCommand {
         body: `Status: ${operationResponse.organization.bulkData.operation.status}`,
       })
     } else {
-      const operation = new StoreCopyOperation(bpSession, apiClient)
+      // const operation = new StoreCopyOperation(bpSession, apiClient)
       renderInfo({body: JSON.stringify(operationResponse, null, 2)})
-      operation.renderProgress(operationResponse, 0)
+      // operation.renderProgress(operationResponse, 0)
     }
   }
 
   private getOrgIdentifier(orgs: Organization[]): StoreIdentifier {
-    if (orgs.length == 1) {
-      return {type: 'organization', id: orgs[0]!.id}
-    } else {
-      const orgNames = orgs.map(org => org.name).join(',\n')
-      throw new Error(`Multiple organizations found:\n\n${orgNames}\n\nWe haven't implemented logic to handle this yet.`)
-    }
+    // if (orgs.length == 1) {
+    //   return {type: 'organization', id: orgs[0]!.id}
+    // } else {
+    //   const orgNames = orgs.map(org => org.name).join(',\n')
+    //   throw new Error(`Multiple organizations found:\n\n${orgNames}\n\nWe haven't implemented logic to handle this yet.`)
+    // }
+    return {type: 'organization', id: "168432933"}
   }
 }
