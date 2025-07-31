@@ -24,7 +24,7 @@ import {
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
-import {joinPath, dirname} from './path.js'
+import {joinPath, dirname, normalizePath} from './path.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputDebug} from './output.js'
 import {AbortController} from './abort.js'
@@ -606,7 +606,9 @@ describe('getDependencies', () => {
       const packageJsonPath = joinPath(tmpDir, 'package.json')
 
       // When
-      await expect(getDependencies(packageJsonPath)).rejects.toThrowError(PackageJsonNotFoundError)
+      await expect(getDependencies(packageJsonPath)).rejects.toEqual(
+        new PackageJsonNotFoundError(normalizePath(tmpDir)),
+      )
     })
   })
 })
@@ -1029,7 +1031,7 @@ describe('addResolutionOrOverride', () => {
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
-      await expect(result).rejects.toThrowError(PackageJsonNotFoundError)
+      await expect(result).rejects.toThrow(new PackageJsonNotFoundError(normalizePath(tmpDir)))
     })
   })
 

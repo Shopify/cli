@@ -8,13 +8,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {
-  SemVer,
-  satisfies as semverSatisfies,
-  coerce as semverCoerce,
-  gte as semverGte,
-  valid as semverValid,
-} from 'semver'
+import {SemVer, satisfies, coerce, gte, valid} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -211,9 +205,9 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
       const versionPart = packageJsonContent.packageManager.replace(/^yarn@/, '')
 
       // First check if it's a valid semver
-      const validVersion = semverValid(versionPart)
+      const validVersion = valid(versionPart)
       if (validVersion) {
-        const isYarnBerry = semverGte(validVersion, '2.0.0')
+        const isYarnBerry = gte(validVersion, '2.0.0')
         outputDebug(`Detected yarn v${validVersion} from packageManager field: ${packageJsonContent.packageManager}`)
         return isYarnBerry ? ['add'] : ['install']
       }
@@ -226,9 +220,9 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
       }
 
       // Try coercion as fallback for partial versions like "4" or "4.0"
-      const coercedVersion = semverCoerce(versionPart)
+      const coercedVersion = coerce(versionPart)
       if (coercedVersion) {
-        const isYarnBerry = semverGte(coercedVersion, '2.0.0')
+        const isYarnBerry = gte(coercedVersion, '2.0.0')
         outputDebug(
           `Coerced yarn version ${coercedVersion.version} from packageManager field: ${packageJsonContent.packageManager}`,
         )
@@ -253,9 +247,9 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
 
   try {
     const versionOutput = await captureOutput('yarn', ['--version'], {cwd: directory})
-    const coercedVersion = semverCoerce(versionOutput.trim())
+    const coercedVersion = coerce(versionOutput.trim())
     if (coercedVersion) {
-      const isYarnBerry = semverGte(coercedVersion, '2.0.0')
+      const isYarnBerry = gte(coercedVersion, '2.0.0')
       outputDebug(`Detected yarn v${coercedVersion.version} from yarn --version command: ${versionOutput.trim()}`)
       return isYarnBerry ? ['add'] : ['install']
     }
@@ -426,7 +420,7 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
  * @returns A boolean indicating whether the version satisfies the requirements
  */
 export function versionSatisfies(version: string, requirements: string): boolean {
-  return semverSatisfies(version, requirements)
+  return satisfies(version, requirements)
 }
 
 /**
