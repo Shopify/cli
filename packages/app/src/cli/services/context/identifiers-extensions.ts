@@ -7,7 +7,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   FlowModulesMap,
   getModulesToMigrate,
@@ -21,6 +21,7 @@ import {
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {SingleWebhookSubscriptionType} from '../../models/extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
@@ -58,6 +59,10 @@ export async function ensureExtensionsIds(
     AdminLinkModulesMap,
   )
 
+  // Migration is only supported in partners client
+  const clientName = options.developerPlatformClient.clientName
+  const migrationsClient = clientName === ClientName.Partners ? options.developerPlatformClient : new PartnersClient()
+
   let didMigrateDashboardExtensions = false
 
   if (uiExtensionsToMigrate.length > 0) {
@@ -67,7 +72,7 @@ export async function ensureExtensionsIds(
       uiExtensionsToMigrate,
       options.appId,
       remoteExtensions,
-      options.developerPlatformClient,
+      migrationsClient,
     )
     didMigrateDashboardExtensions = true
   }
@@ -79,7 +84,7 @@ export async function ensureExtensionsIds(
       flowExtensionsToMigrate,
       options.appId,
       dashboardExtensions,
-      options.developerPlatformClient,
+      migrationsClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -93,7 +98,7 @@ export async function ensureExtensionsIds(
       options.appId,
       'marketing_activity',
       dashboardExtensions,
-      options.developerPlatformClient,
+      migrationsClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -107,7 +112,7 @@ export async function ensureExtensionsIds(
       options.appId,
       'payments_extension',
       dashboardExtensions,
-      options.developerPlatformClient,
+      migrationsClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -121,7 +126,7 @@ export async function ensureExtensionsIds(
       options.appId,
       'subscription_link_extension',
       dashboardExtensions,
-      options.developerPlatformClient,
+      migrationsClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -135,7 +140,7 @@ export async function ensureExtensionsIds(
       options.appId,
       'admin_link',
       dashboardExtensions,
-      options.developerPlatformClient,
+      migrationsClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
