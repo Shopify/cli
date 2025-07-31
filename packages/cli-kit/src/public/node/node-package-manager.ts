@@ -8,7 +8,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {SemVer, satisfies, coerce, gte, valid} from 'semver'
+import {SemVer, satisfies as semverSatisfies, coerce, gte, valid} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -420,7 +420,7 @@ export function checkForCachedNewVersion(dependency: string, currentVersion: str
  * @returns A boolean indicating whether the version satisfies the requirements
  */
 export function versionSatisfies(version: string, requirements: string): boolean {
-  return satisfies(version, requirements)
+  return semverSatisfies(version, requirements)
 }
 
 /**

@@ -1017,7 +1017,7 @@ describe('findUpAndReadPackageJson', () => {
 
       // When/Then
       await expect(() => findUpAndReadPackageJson(subDirectory)).rejects.toThrowError(
-        FindUpAndReadPackageJsonNotFoundError,
+        new FindUpAndReadPackageJsonNotFoundError(subDirectory),
       )
     })
   })
