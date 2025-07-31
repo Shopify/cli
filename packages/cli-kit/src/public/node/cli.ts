@@ -15,11 +15,22 @@ interface RunCLIOptions {
   development: boolean
 }
 
-async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.versions) {
+const DEFAULT_MIN_NODE_VERSION = 18
+
+async function exitIfOldNodeVersion(moduleURL: string, versions: NodeJS.ProcessVersions = process.versions) {
   const nodeVersion = versions.node
   const nodeMajorVersion = Number(nodeVersion.split('.')[0])
 
-  const currentSupportedNodeVersion = 18
+  const {findUpAndReadPackageJson} = await import('./node-package-manager.js')
+  const {moduleDirectory} = await import('./path.js')
+
+  const packageJson = await findUpAndReadPackageJson(moduleDirectory(moduleURL))
+  const engines = (packageJson.content as {engines?: {node?: string}}).engines
+  const nodeRequirement = engines?.node ?? `>=${DEFAULT_MIN_NODE_VERSION}.0.0`
+
+  const versionMatch = nodeRequirement.match(/>=?(\d+)/)
+  const currentSupportedNodeVersion = versionMatch ? Number(versionMatch[1]) : DEFAULT_MIN_NODE_VERSION
+
   if (nodeMajorVersion < currentSupportedNodeVersion) {
     const {renderError} = await import('./ui.js')
     renderError({
@@ -86,7 +97,7 @@ export async function runCLI(
     await addInitToArgvWhenRunningCreateCLI(options, argv)
   }
   forceNoColor(argv, env)
-  await exitIfOldNodeVersion(versions)
+  await exitIfOldNodeVersion(options.moduleURL, versions)
   return launchCLI({moduleURL: options.moduleURL})
 }
 
