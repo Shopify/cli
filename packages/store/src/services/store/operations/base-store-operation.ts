@@ -37,7 +37,8 @@ export abstract class BaseStoreOperation {
   ): Promise<BulkDataOperationByIdResponse> {
     const operation = await renderProgressWithPolling(
       startOperation,
-      (operationId: string) => this.apiClient.pollBulkDataOperation(shopId, operationId, this.bpSession),
+      (operationId: string) =>
+        this.apiClient.pollBulkDataOperation({type: 'shop', id: shopId}, operationId, this.bpSession),
       renderProgress,
       () => initialMessage(source, target),
       (status, completedCount) => completionMessage(status, completedCount, source, target),

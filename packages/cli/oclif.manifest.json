@@ -4982,6 +4982,65 @@
       "strict": true,
       "summary": "Copy, export, or import store data"
     },
+    "store:copy:show": {
+      "aliases": [
+      ],
+      "args": {
+        "id": {
+          "description": "The ID of the copy operation to show",
+          "name": "id",
+          "required": true
+        }
+      },
+      "customPluginName": "@shopify/store",
+      "description": "Display detailed information about a specific store copy operation by ID.",
+      "flags": {
+        "mock": {
+          "allowNo": false,
+          "char": "m",
+          "description": "Use mock data instead of real API calls (for development).",
+          "env": "SHOPIFY_FLAG_MOCK",
+          "hidden": true,
+          "name": "mock",
+          "required": false,
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "no-prompt": {
+          "allowNo": false,
+          "char": "y",
+          "description": "Skip confirmation prompts.",
+          "env": "SHOPIFY_FLAG_YES",
+          "name": "no-prompt",
+          "required": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:copy:show",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Show information about a store copy operation"
+    },
     "theme:check": {
       "aliases": [
       ],

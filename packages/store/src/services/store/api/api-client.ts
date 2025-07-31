@@ -11,6 +11,7 @@ import {
   startBulkDataStoreExport,
   startBulkDataStoreImport,
   pollBulkDataOperation,
+  StoreIdentifier,
 } from '../../../apis/organizations/index.js'
 import {getShopDetails} from '../../../apis/admin/index.js'
 import {Shop} from '../../../apis/admin/types.js'
@@ -18,6 +19,7 @@ import {OperationError, ValidationError, ErrorCodes} from '../errors/errors.js'
 import {ensureAuthenticatedBusinessPlatform} from '@shopify/cli-kit/node/session'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ClientError} from 'graphql-request'
+import { fetchOrgs, Organization } from '../../../apis/destinations/index.js'
 
 export class ApiClient implements ApiClientInterface {
   async getStoreDetails(storeDomain: string): Promise<Shop> {
@@ -29,7 +31,7 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreCopy(
-    shopId: string,
+    identifier: StoreIdentifier,
     sourceShopDomain: string,
     targetShopDomain: string,
     resourceConfigs: ResourceConfigs,
@@ -37,7 +39,7 @@ export class ApiClient implements ApiClientInterface {
   ): Promise<BulkDataStoreCopyStartResponse> {
     try {
       return await startBulkDataStoreCopy(
-        shopId,
+        identifier,
         sourceShopDomain,
         targetShopDomain,
         resourceConfigs,
@@ -53,12 +55,12 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreExport(
-    shopId: string,
+    identifier: StoreIdentifier,
     sourceShopDomain: string,
     token: string,
   ): Promise<BulkDataStoreExportStartResponse> {
     try {
-      return await startBulkDataStoreExport(shopId, sourceShopDomain, token, this.createUnauthorizedHandler())
+      return await startBulkDataStoreExport(identifier, sourceShopDomain, token, this.createUnauthorizedHandler())
     } catch (error) {
       throw this.handleError(error, 'startBulkDataStoreExport', {
         storeName: sourceShopDomain,
@@ -67,7 +69,7 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreImport(
-    shopId: string,
+    identifier: StoreIdentifier,
     targetShopDomain: string,
     importUrl: string,
     resourceConfigs: ResourceConfigs,
@@ -75,7 +77,7 @@ export class ApiClient implements ApiClientInterface {
   ): Promise<BulkDataStoreImportStartResponse> {
     try {
       return await startBulkDataStoreImport(
-        shopId,
+        identifier,
         targetShopDomain,
         importUrl,
         resourceConfigs,
@@ -90,15 +92,19 @@ export class ApiClient implements ApiClientInterface {
   }
 
   async pollBulkDataOperation(
-    shopId: string,
+    identifier: StoreIdentifier,
     operationId: string,
     token: string,
   ): Promise<BulkDataOperationByIdResponse> {
     try {
-      return await pollBulkDataOperation(shopId, operationId, token, this.createUnauthorizedHandler())
+      return await pollBulkDataOperation(identifier, operationId, token, this.createUnauthorizedHandler())
     } catch (error) {
       throw this.handleError(error, 'pollBulkDataOperation')
     }
+  }
+
+  async fetchOrgs(token: string): Promise<Organization[]> {
+    return fetchOrgs(token, this.createUnauthorizedHandler())
   }
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {

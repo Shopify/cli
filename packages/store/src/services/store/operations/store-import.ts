@@ -90,7 +90,7 @@ export class StoreImportOperation extends BaseStoreOperation implements StoreOpe
     flags: FlagOptions,
   ): Promise<BulkDataOperationByIdResponse> {
     const importResponse: BulkDataStoreImportStartResponse = await this.apiClient.startBulkDataStoreImport(
-      apiShopId,
+      {type: 'shop', id: apiShopId},
       targetShopDomain,
       importUrl,
       parseResourceConfigFlags(flags.key as string[]),
@@ -103,6 +103,6 @@ export class StoreImportOperation extends BaseStoreOperation implements StoreOpe
     }
 
     const operationId = importResponse.bulkDataStoreImportStart.operation.id
-    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, this.bpSession)
+    return this.apiClient.pollBulkDataOperation({type: 'shop', id: apiShopId}, operationId, this.bpSession)
   }
 }

@@ -71,7 +71,7 @@ export class StoreExportOperation extends BaseStoreOperation implements StoreOpe
     sourceShopDomain: string,
   ): Promise<BulkDataOperationByIdResponse> {
     const exportResponse: BulkDataStoreExportStartResponse = await this.apiClient.startBulkDataStoreExport(
-      apiShopId,
+      {type: 'shop', id: apiShopId},
       sourceShopDomain,
       this.bpSession,
     )
@@ -82,6 +82,6 @@ export class StoreExportOperation extends BaseStoreOperation implements StoreOpe
     }
 
     const operationId = exportResponse.bulkDataStoreExportStart.operation.id
-    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, this.bpSession)
+    return this.apiClient.pollBulkDataOperation({type: 'shop', id: apiShopId}, operationId, this.bpSession)
   }
 }

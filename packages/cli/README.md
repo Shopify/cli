@@ -63,6 +63,7 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify store copy show ID`](#shopify-store-copy-show-id)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -1721,6 +1722,28 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify store copy show ID`
+
+Show information about a store copy operation
+
+```
+USAGE
+  $ shopify store copy show ID [--no-color] [-y] [--verbose]
+
+ARGUMENTS
+  ID  The ID of the copy operation to show
+
+FLAGS
+  -y, --no-prompt  Skip confirmation prompts.
+      --no-color   Disable color output.
+      --verbose    Increase the verbosity of the output.
+
+DESCRIPTION
+  Show information about a store copy operation
+
+  Display detailed information about a specific store copy operation by ID.
 ```
 
 ## `shopify theme check`

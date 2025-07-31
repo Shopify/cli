@@ -17,8 +17,10 @@ import {ResourceConfigs} from '../../lib/types.js'
 import {GraphQLVariables, graphqlRequest, CacheOptions, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {businessPlatformFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
+export type StoreIdentifier = {type: 'shop'; id: string} | {type: 'organization'; id: string}
+
 export async function organizationsRequest<T>(
-  shopId: string,
+  identifier: StoreIdentifier,
   query: string,
   token: string,
   variables?: GraphQLVariables,
@@ -27,8 +29,8 @@ export async function organizationsRequest<T>(
 ): Promise<T> {
   const api = 'BusinessPlatform'
   const fqdn = await businessPlatformFqdn()
-  const numericShopId = shopId.split('/').pop()
-  const url = `https://${fqdn}/organizations/api/unstable/shop/${numericShopId}/graphql`
+  const numericId = identifier.id.split('/').pop()
+  const url = `https://${fqdn}/organizations/api/unstable/${identifier.type}/${numericId}/graphql`
 
   return graphqlRequest<T>({
     token,
@@ -42,7 +44,7 @@ export async function organizationsRequest<T>(
 }
 
 export async function startBulkDataStoreCopy(
-  shopId: string,
+  identifier: StoreIdentifier,
   sourceShopDomain: string,
   targetShopDomain: string,
   resourceConfigs: ResourceConfigs,
@@ -70,7 +72,7 @@ export async function startBulkDataStoreCopy(
   }
 
   return organizationsRequest<BulkDataStoreCopyStartResponse>(
-    shopId,
+    identifier,
     bulkDataStoreCopyStartMutation,
     token,
     {
@@ -82,7 +84,7 @@ export async function startBulkDataStoreCopy(
 }
 
 export async function startBulkDataStoreExport(
-  shopId: string,
+  identifier: StoreIdentifier,
   sourceShopDomain: string,
   token: string,
   unauthorizedHandler?: UnauthorizedHandler,
@@ -94,7 +96,7 @@ export async function startBulkDataStoreExport(
   }
 
   return organizationsRequest<BulkDataStoreExportStartResponse>(
-    shopId,
+    identifier,
     bulkDataStoreExportStartMutation,
     token,
     {
@@ -106,7 +108,7 @@ export async function startBulkDataStoreExport(
 }
 
 export async function startBulkDataStoreImport(
-  shopId: string,
+  identifier: StoreIdentifier,
   targetShopDomain: string,
   importUrl: string,
   resourceConfigs: ResourceConfigs,
@@ -132,7 +134,7 @@ export async function startBulkDataStoreImport(
   }
 
   return organizationsRequest<BulkDataStoreImportStartResponse>(
-    shopId,
+    identifier,
     bulkDataStoreImportStartMutation,
     token,
     {
@@ -144,13 +146,13 @@ export async function startBulkDataStoreImport(
 }
 
 export async function pollBulkDataOperation(
-  shopId: string,
+  identifier: StoreIdentifier,
   operationId: string,
   token: string,
   unauthorizedHandler?: UnauthorizedHandler,
 ): Promise<BulkDataOperationByIdResponse> {
   return organizationsRequest<BulkDataOperationByIdResponse>(
-    shopId,
+    identifier,
     bulkDataOperationByIdQuery,
     token,
     {
