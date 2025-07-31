@@ -8,7 +8,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {SemVer, satisfies as semverSatisfies} from 'semver'
+import {SemVer, satisfies as semverSatisfies, coerce as semverCoerce, gte as semverGte, valid as semverValid} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -70,7 +70,7 @@ export class UnknownPackageManagerError extends AbortError {
  */
 export class PackageJsonNotFoundError extends AbortError {
   constructor(directory: string) {
-    super(outputContent`The directory ${outputToken.path(directory)} doesn't have a package.json.`)
+    super(`The directory ${directory} doesn't have a package.json.`)
   }
 }
 
@@ -82,7 +82,7 @@ export class PackageJsonNotFoundError extends AbortError {
  */
 export class FindUpAndReadPackageJsonNotFoundError extends BugError {
   constructor(directory: string) {
-    super(outputContent`Couldn't find a a package.json traversing directories from ${outputToken.path(directory)}`)
+    super(`Couldn't find a package.json traversing directories from ${directory}`)
   }
 }
 
@@ -190,69 +190,73 @@ export async function installNPMDependenciesRecursively(
   }
 }
 
-const yarnVersionCache = new Map<string, string[]>()
-
-export async function getYarnInstallCommand(directory: string): Promise<string[]> {
-  if (yarnVersionCache.has(directory)) {
-    return yarnVersionCache.get(directory)!
+export async function determineYarnInstallCommand(directory: string): Promise<string[]> {
+  if (!directory || typeof directory !== 'string') {
+    throw new AbortError('Invalid directory parameter')
   }
-
-  let result: string[] = ['install']
+  
+  if (!(await fileExists(directory))) {
+    throw new AbortError(`Directory does not exist: ${directory}`)
+  }
 
   try {
-    const packageJsonPath = joinPath(directory, 'package.json')
-    if (await fileExists(packageJsonPath)) {
-      try {
-        const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
-        if (packageJsonContent.packageManager && typeof packageJsonContent.packageManager === 'string') {
-          const packageManagerField = packageJsonContent.packageManager
-          if (packageManagerField.startsWith('yarn@')) {
-            const versionMatch = packageManagerField.match(/yarn@(\d+)\./)
-            if (versionMatch) {
-              const majorVersion = parseInt(versionMatch[1], 10)
-              if (majorVersion >= 2) {
-                result = ['add']
-                yarnVersionCache.set(directory, result)
-                return result
-              } else {
-                result = ['install']
-                yarnVersionCache.set(directory, result)
-                return result
-              }
-            }
-          }
-        }
-      } catch (error) {
+    const {content: packageJsonContent} = await findUpAndReadPackageJson(directory)
+    if (packageJsonContent.packageManager?.startsWith('yarn@')) {
+      const versionPart = packageJsonContent.packageManager.replace(/^yarn@/, '')
+      
+      // First check if it's a valid semver
+      const validVersion = semverValid(versionPart)
+      if (validVersion) {
+        const isYarnBerry = semverGte(validVersion, '2.0.0')
+        outputDebug(`Detected yarn v${validVersion} from packageManager field: ${packageJsonContent.packageManager}`)
+        return isYarnBerry ? ['add'] : ['install']
       }
-    }
-
-    try {
-      const versionOutput = await captureOutput('yarn', ['--version'], {cwd: directory})
-      const version = versionOutput.trim()
-      const versionMatch = version.match(/^(\d+)\./)
-      if (versionMatch) {
-        const majorVersion = parseInt(versionMatch[1], 10)
-        if (majorVersion >= 2) {
-          result = ['add']
-        } else {
-          result = ['install']
-        }
+      
+      // Handle known dist-tags explicitly
+      if (['next', 'latest', 'canary', 'beta', 'rc'].includes(versionPart)) {
+        outputDebug(`Detected yarn dist-tag '${versionPart}' - assuming modern Yarn (Berry)`)
+        return ['add'] // Modern yarn dist-tags likely mean Berry
       }
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('ENOENT')) {
-        result = ['install']
-      } else {
-        const yarnrcPath = joinPath(directory, '.yarnrc.yml')
-        if (await fileExists(yarnrcPath)) {
-          result = ['add']
-        }
+      
+      // Try coercion as fallback for partial versions like "4" or "4.0"
+      const coercedVersion = semverCoerce(versionPart)
+      if (coercedVersion) {
+        const isYarnBerry = semverGte(coercedVersion, '2.0.0')
+        outputDebug(`Coerced yarn version ${coercedVersion.version} from packageManager field: ${packageJsonContent.packageManager}`)
+        return isYarnBerry ? ['add'] : ['install']
       }
+      
+      // Invalid/unknown version - log warning and continue to fallback
+      outputDebug(`Invalid yarn version in packageManager field: ${packageJsonContent.packageManager} - falling back to yarn --version detection`)
     }
   } catch (error) {
+    outputDebug(`Failed to detect yarn version from packageManager field: ${error instanceof Error ? error.message : String(error)}`)
   }
 
-  yarnVersionCache.set(directory, result)
-  return result
+  try {
+    const versionOutput = await captureOutput('yarn', ['--version'], {cwd: directory})
+    const coercedVersion = semverCoerce(versionOutput.trim())
+    if (coercedVersion) {
+      const isYarnBerry = semverGte(coercedVersion, '2.0.0')
+      outputDebug(`Detected yarn v${coercedVersion.version} from yarn --version command: ${versionOutput.trim()}`)
+      return isYarnBerry ? ['add'] : ['install']
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('ENOENT')) {
+      outputDebug(`Yarn not available on system: ${error.message}`)
+      return ['install']
+    } else {
+      outputDebug(`Yarn --version command failed: ${error instanceof Error ? error.message : String(error)}`)
+      const yarnrcPath = joinPath(directory, '.yarnrc.yml')
+      if (await fileExists(yarnrcPath)) {
+        outputDebug(`Found .yarnrc.yml file, assuming Yarn Berry (v2+)`)
+        return ['add']
+      }
+    }
+  }
+
+  outputDebug(`All yarn version detection methods failed, falling back to 'install' command`)
+  return ['install']
 }
 
 interface InstallNodeModulesOptions {
@@ -275,7 +279,7 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
   
   let args: string[]
   if (options.packageManager === 'yarn') {
-    args = await getYarnInstallCommand(options.directory)
+    args = await determineYarnInstallCommand(options.directory)
   } else {
     args = ['install']
   }
@@ -466,6 +470,12 @@ export interface PackageJson {
    * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#private
    */
   private?: boolean
+
+  /**
+   * The packageManager attribute of the package.json.
+   * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#packagemanager
+   */
+  packageManager?: string
 }
 
 /**
