@@ -74,7 +74,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
+  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -186,7 +186,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
-    getDevSessionUpdateMessage: spec.getDevSessionUpdateMessage,
+    getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
   }
   const merged = {...defaults, ...spec}
 
@@ -231,7 +231,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
-  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
+  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
@@ -245,7 +245,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
-    getDevSessionUpdateMessage: spec.getDevSessionUpdateMessage,
+    getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
 }

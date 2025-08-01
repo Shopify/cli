@@ -46,7 +46,7 @@ const appAccessSpec = createConfigExtensionSpecification({
   identifier: AppAccessSpecIdentifier,
   schema: AppAccessSchema,
   transformConfig: AppAccessTransformConfig,
-  getDevSessionUpdateMessage: async (config) => {
+  getDevSessionUpdateMessages: async (config) => {
     const scopesString = config.access_scopes?.scopes
       ? config.access_scopes.scopes
           .split(',')
@@ -54,7 +54,7 @@ const appAccessSpec = createConfigExtensionSpecification({
           .join(', ')
       : config.access_scopes?.required_scopes?.join(', ')
 
-    return scopesString ? `Access scopes auto-granted: ${scopesString}` : `App has been installed`
+    return [scopesString ? `Access scopes auto-granted: ${scopesString}` : `App has been installed`]
   },
   patchWithAppDevURLs: (config, urls) => {
     if (urls.redirectUrlWhitelist) {

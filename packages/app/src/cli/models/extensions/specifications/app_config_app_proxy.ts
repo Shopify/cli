@@ -13,6 +13,8 @@ const AppProxySchema = BaseSchema.extend({
     .optional(),
 })
 
+export type AppProxyConfigType = zod.infer<typeof AppProxySchema>
+
 export const AppProxySpecIdentifier = 'app_proxy'
 
 const AppProxyTransformConfig: TransformationConfig = {
@@ -25,6 +27,12 @@ const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification(
   identifier: AppProxySpecIdentifier,
   schema: AppProxySchema,
   transformConfig: AppProxyTransformConfig,
+  getDevSessionUpdateMessages: async (config) => {
+    if (!config.app_proxy) {
+      return []
+    }
+    return [`Using URL: ${config.app_proxy.url}`, `Any changes to prefix and subpath will only apply to new installs`]
+  },
   patchWithAppDevURLs: (config, urls) => {
     if (urls.appProxy) {
       config.app_proxy = {

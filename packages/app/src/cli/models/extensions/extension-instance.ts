@@ -445,9 +445,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async getDevSessionUpdateMessage(): Promise<string | undefined> {
-    if (!this.specification.getDevSessionUpdateMessage) return undefined
-    return this.specification.getDevSessionUpdateMessage(this.configuration)
+  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
+    if (!this.specification.getDevSessionUpdateMessages) return undefined
+    return this.specification.getDevSessionUpdateMessages(this.configuration)
   }
 
   /**
