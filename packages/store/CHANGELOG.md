@@ -1,5 +1,11 @@
 # @shopify/store
 
+## 3.83.2
+
+### Patch Changes
+
+- @shopify/cli-kit@3.83.2
+
 ## 3.83.1
 
 ### Patch Changes
