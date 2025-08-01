@@ -78,6 +78,7 @@ export class DevSessionLogger {
     const extensionEvents = event.extensionEvents ?? []
     const messageArrays = await Promise.all(
       extensionEvents.map(async (eve) => {
+        // Don't log messages for deleted extensions
         if (eve.type === EventType.Deleted) return []
         const messages = await eve.extension.getDevSessionUpdateMessages()
         return messages?.map((message) => ({message, prefix: eve.extension.handle})) ?? []
