@@ -1,5 +1,5 @@
-mutation CreateAssetURL($sourceExtension: SourceExtension!) {
-  appRequestSourceUploadUrl(sourceExtension: $sourceExtension) {
+mutation CreateAssetURL($sourceExtension: SourceExtension!, $organizationId: ID!) {
+  appRequestSourceUploadUrl(sourceExtension: $sourceExtension, organizationId: $organizationId) {
     sourceUploadUrl
     userErrors {
       field
