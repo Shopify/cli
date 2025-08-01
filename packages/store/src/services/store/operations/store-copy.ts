@@ -1,76 +1,82 @@
+import {BaseStoreOperation} from './base-store-operation.js'
 import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
 import {confirmCopyPrompt} from '../../../prompts/confirm_copy.js'
-import {ApiClient} from '../api/api-client.js'
-import {ApiClientInterface} from '../types/api-client.js'
-import {BulkOperationTaskGenerator, BulkOperationContext} from '../utils/bulk-operation-task-generator.js'
-import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
 import {renderCopyInfo} from '../../../prompts/copy_info.js'
 import {renderCopyResult} from '../../../prompts/copy_result.js'
+import {renderExportProgress, renderImportProgress, isOperationComplete} from '../utils/bulk-operation-progress.js'
+import {ValidationError, ErrorCodes} from '../errors/errors.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import colors from '@shopify/cli-kit/node/colors'
 
-export class StoreCopyOperation implements StoreOperation {
+export class StoreCopyOperation extends BaseStoreOperation implements StoreOperation {
   fromArg: string | undefined
   toArg: string | undefined
-  private readonly apiClient: ApiClientInterface
-  private readonly bpSession: string
-
-  constructor(bpSession: string, apiClient?: ApiClientInterface) {
-    this.apiClient = apiClient ?? new ApiClient()
-    this.bpSession = bpSession
-  }
 
   async execute(fromStore: string, toStore: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
     this.toArg = toStore
 
-    const sourceShopDomain = await normalizeStoreFqdn(fromStore)
-    const targetShopDomain = await normalizeStoreFqdn(toStore)
+    const {domain: sourceShopDomain, id: sourceShopId} = await this.normalizeAndValidateShop(fromStore)
+    const {domain: targetShopDomain, id: targetShopId} = await this.normalizeAndValidateShop(toStore)
 
-    const apiShopId = await this.validateShops(sourceShopDomain, targetShopDomain)
+    await this.validateShopsNotSame(sourceShopId, targetShopId)
 
     if (!flags['no-prompt']) {
       if (!(await confirmCopyPrompt(sourceShopDomain, targetShopDomain))) {
         outputInfo('Exiting.')
-        process.exit(0)
+        return
       }
     }
 
     renderCopyInfo('Copy operation', sourceShopDomain, targetShopDomain)
 
-    const copyOperation = await this.copyDataWithProgress(
-      apiShopId,
+    const copyOperation = await this.executeWithProgress(
+      () => this.startCopyOperation(sourceShopId, sourceShopDomain, targetShopDomain, flags),
+      sourceShopId,
+      'copy',
+      (source, target) => `Starting copy operation from ${source} to ${target}...`,
+      (status, _completedCount, source, target) => {
+        if (status === 'failed') return 'Copy operation failed.'
+        return `Copy completed successfully! Data copied from ${source} to ${target}.`
+      },
+      this.renderProgress,
       sourceShopDomain,
       targetShopDomain,
-      this.bpSession,
-      flags,
     )
-
-    const status = copyOperation.organization.bulkData.operation.status
-    if (status === 'FAILED') {
-      throw new OperationError('copy', ErrorCodes.COPY_FAILED)
-    }
 
     renderCopyResult(sourceShopDomain, targetShopDomain, copyOperation)
   }
 
-  private async validateShops(sourceShopDomain: string, targetShopDomain: string): Promise<string> {
-    const sourceShop = await this.apiClient.getStoreDetails(sourceShopDomain)
-    const targetShop = await this.apiClient.getStoreDetails(targetShopDomain)
+  protected getFailureErrorCode() {
+    return ErrorCodes.COPY_FAILED
+  }
 
-    if (sourceShop.id === targetShop.id) {
-      throw new ValidationError(ErrorCodes.SAME_SHOP)
+  private readonly renderProgress = (operation: BulkDataOperationByIdResponse, dotCount: number): string => {
+    const storeOps = operation.organization.bulkData.operation.storeOperations
+    if (!storeOps || storeOps.length === 0) {
+      return ''
     }
 
-    return sourceShop.id
+    const [exportOp, importOp] = storeOps
+    const isExportComplete = exportOp && isOperationComplete(exportOp)
+
+    if (storeOps.length === 2 && isExportComplete) {
+      const importContent = renderImportProgress(
+        importOp?.completedObjectCount ?? 0,
+        importOp?.totalObjectCount ?? 0,
+        dotCount,
+      )
+      return `${colors.dim('Step 2 of 2')}\n\n${importContent}`
+    }
+
+    const exportContent = renderExportProgress(exportOp?.completedObjectCount ?? 0, dotCount)
+    return `${colors.dim('Step 1 of 2')}\n\n${exportContent}`
   }
 
   private async startCopyOperation(
-    bpSession: string,
     apiShopId: string,
     sourceShopDomain: string,
     targetShopDomain: string,
@@ -81,70 +87,21 @@ export class StoreCopyOperation implements StoreOperation {
       sourceShopDomain,
       targetShopDomain,
       parseResourceConfigFlags(flags.key as string[]),
-      bpSession,
+      this.bpSession,
     )
 
     if (!copyResponse.bulkDataStoreCopyStart.success) {
-      const errors = copyResponse.bulkDataStoreCopyStart.userErrors.map((error) => error.message).join(', ')
-      throw new OperationError('copy', ErrorCodes.BULK_OPERATION_FAILED, {
-        errors,
-        operationType: 'copy',
-      })
+      const errors = copyResponse.bulkDataStoreCopyStart.userErrors.map((error) => error.message)
+      this.handleOperationError('copy', errors)
     }
 
     const operationId = copyResponse.bulkDataStoreCopyStart.operation.id
-    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, bpSession)
+    return this.apiClient.pollBulkDataOperation(apiShopId, operationId, this.bpSession)
   }
 
-  private async copyDataWithProgress(
-    apiShopId: string,
-    sourceShopDomain: string,
-    targetShopDomain: string,
-    bpSession: string,
-    flags: FlagOptions,
-  ): Promise<BulkDataOperationByIdResponse> {
-    interface CopyContext extends BulkOperationContext {
-      sourceShopDomain: string
-      targetShopDomain: string
-      flags: FlagOptions
+  private async validateShopsNotSame(sourceId: string, targetId: string): Promise<void> {
+    if (sourceId === targetId) {
+      throw new ValidationError(ErrorCodes.SAME_SHOP)
     }
-
-    const taskGenerator = new BulkOperationTaskGenerator({
-      operationName: 'copy',
-    })
-
-    const tasks = taskGenerator.generateTasks<CopyContext>({
-      startOperation: async (ctx: CopyContext) => {
-        return this.startCopyOperation(
-          ctx.bpSession,
-          ctx.apiShopId,
-          ctx.sourceShopDomain,
-          ctx.targetShopDomain,
-          ctx.flags,
-        )
-      },
-      pollOperation: async (ctx: CopyContext) => {
-        const operationId = ctx.operation.organization.bulkData.operation.id
-        return this.apiClient.pollBulkDataOperation(ctx.apiShopId, operationId, ctx.bpSession)
-      },
-    })
-
-    const allTasks: Task<CopyContext>[] = [
-      {
-        title: 'Initializing',
-        task: async (ctx: CopyContext) => {
-          ctx.apiShopId = apiShopId
-          ctx.bpSession = bpSession
-          ctx.sourceShopDomain = sourceShopDomain
-          ctx.targetShopDomain = targetShopDomain
-          ctx.flags = flags
-          ctx.isComplete = false
-        },
-      },
-      ...tasks,
-    ]
-
-    const ctx: CopyContext = await renderTasks(allTasks)
-    return ctx.operation
   }
 }
