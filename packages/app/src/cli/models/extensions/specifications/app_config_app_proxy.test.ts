@@ -1,4 +1,4 @@
-import spec from './app_config_app_proxy.js'
+import spec, {type AppProxyConfigType} from './app_config_app_proxy.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {describe, expect, test} from 'vitest'
 
@@ -48,6 +48,39 @@ describe('app_config_app_proxy', () => {
           prefix: 'apps',
         },
       })
+    })
+  })
+
+  describe('getDevSessionUpdateMessages', () => {
+    test('should return both messages when app_proxy config is present', async () => {
+      // Given
+      const config: AppProxyConfigType = {
+        app_proxy: {
+          url: 'https://my-proxy.dev',
+          subpath: 'apps',
+          prefix: 'proxy',
+        },
+      }
+
+      // When
+      const result = await spec.getDevSessionUpdateMessages!(config)
+
+      // Then
+      expect(result).toEqual([
+        'Using URL: https://my-proxy.dev',
+        'Any changes to prefix and subpath will only apply to new installs',
+      ])
+    })
+
+    test('should return empty array when no app_proxy config is present', async () => {
+      // Given
+      const config: AppProxyConfigType = {}
+
+      // When
+      const result = await spec.getDevSessionUpdateMessages!(config)
+
+      // Then
+      expect(result).toEqual([])
     })
   })
 })

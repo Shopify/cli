@@ -177,6 +177,7 @@ describe('DevSessionLogger', () => {
         devUUID: '',
         localIdentifier: '',
         idEnvironmentVariableName: '',
+        handle: 'test-extension',
       } as unknown as ExtensionInstance
 
       const event: AppEvent = {
@@ -194,7 +195,7 @@ describe('DevSessionLogger', () => {
       await logger.logExtensionUpdateMessages(event)
       expect(output).toMatchInlineSnapshot(`
         [
-          "└  This has been updated.",
+          "[90m└ [39mThis has been updated.",
         ]
       `)
     })
@@ -206,6 +207,7 @@ describe('DevSessionLogger', () => {
         devUUID: '',
         localIdentifier: '',
         idEnvironmentVariableName: '',
+        handle: 'test-extension',
       } as unknown as ExtensionInstance
 
       const event: AppEvent = {

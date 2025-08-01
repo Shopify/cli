@@ -80,15 +80,16 @@ export class DevSessionLogger {
       extensionEvents.map(async (eve) => {
         if (eve.type === EventType.Deleted) return []
         const messages = await eve.extension.getDevSessionUpdateMessages()
-        return messages ?? []
+        return messages?.map((message) => ({message, prefix: eve.extension.handle})) ?? []
       }),
     )
     const messages = messageArrays.flat()
 
     const logPromises = messages.map((message, index) => {
-      const messageContent = outputContent`${outputToken.gray(index === messages.length - 1 ? '└ ' : '│ ')}${message}`
-        .value
-      return this.log(messageContent, 'app-preview')
+      const messageContent = outputContent`${outputToken.gray(index === messages.length - 1 ? '└ ' : '│ ')}${
+        message.message
+      }`.value
+      return this.log(messageContent, message.prefix)
     })
     await Promise.all(logPromises)
   }
