@@ -115,7 +115,7 @@
     "@shopify/plugin-did-you-mean": "3.83.1",
     "@shopify/theme": "3.83.1",
     "@shopify/store": "3.83.1",
-    "@shopify/cli-hydrogen": "10.0.1",
+    "@shopify/cli-hydrogen": "11.1.2",
     "@types/global-agent": "3.0.0",
     "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^3.1.4",
