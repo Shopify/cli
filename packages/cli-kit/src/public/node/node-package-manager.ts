@@ -194,31 +194,31 @@ function shouldRethrowError(error: unknown, isYarnCommand = false): boolean {
   if (!(error instanceof Error) || error instanceof BugError || error instanceof AbortError) {
     return false
   }
-  
+
   if (isYarnCommand) {
     // Check for specific error types that indicate yarn command failures
     const errorWithCode = error as Error & {code?: string; errno?: number; syscall?: string}
-    
+
     // ENOENT indicates yarn binary not found
     if (errorWithCode.code === 'ENOENT' || error.message.includes('ENOENT')) {
       return false
     }
-    
+
     // Command execution failures (non-zero exit codes)
     if (errorWithCode.code === 'EACCES' || errorWithCode.code === 'EPERM') {
       return false
     }
-    
+
     // Process execution errors from captureOutput
     if (errorWithCode.syscall && ['spawn', 'spawnSync'].includes(errorWithCode.syscall)) {
       return false
     }
-    
+
     // For any other errors during yarn command execution, assume they're yarn-related
     // and don't rethrow (let them fall through to fallback)
     return false
   }
-  
+
   return true
 }
 
