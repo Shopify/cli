@@ -190,6 +190,38 @@ export async function installNPMDependenciesRecursively(
   }
 }
 
+function shouldRethrowError(error: unknown, isYarnCommand = false): boolean {
+  if (!(error instanceof Error) || error instanceof BugError || error instanceof AbortError) {
+    return false
+  }
+  
+  if (isYarnCommand) {
+    // Check for specific error types that indicate yarn command failures
+    const errorWithCode = error as Error & {code?: string; errno?: number; syscall?: string}
+    
+    // ENOENT indicates yarn binary not found
+    if (errorWithCode.code === 'ENOENT' || error.message.includes('ENOENT')) {
+      return false
+    }
+    
+    // Command execution failures (non-zero exit codes)
+    if (errorWithCode.code === 'EACCES' || errorWithCode.code === 'EPERM') {
+      return false
+    }
+    
+    // Process execution errors from captureOutput
+    if (errorWithCode.syscall && ['spawn', 'spawnSync'].includes(errorWithCode.syscall)) {
+      return false
+    }
+    
+    // For any other errors during yarn command execution, assume they're yarn-related
+    // and don't rethrow (let them fall through to fallback)
+    return false
+  }
+  
+  return true
+}
+
 export async function determineYarnInstallCommand(directory: string): Promise<string[]> {
   if (!directory || typeof directory !== 'string') {
     throw new AbortError('Invalid directory parameter')
@@ -240,7 +272,7 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
         error instanceof Error ? error.message : String(error)
       }`,
     )
-    if (error instanceof Error && !(error instanceof BugError) && !(error instanceof AbortError)) {
+    if (shouldRethrowError(error)) {
       throw error
     }
   }
@@ -265,16 +297,8 @@ export async function determineYarnInstallCommand(directory: string): Promise<st
         return ['add']
       }
       // For unexpected errors that aren't yarn command failures, rethrow
-      if (error instanceof Error && !(error instanceof BugError) && !(error instanceof AbortError)) {
-        // Allow yarn-related command failures to fall through to fallback
-        const isYarnCommandFailure =
-          error.message.toLowerCase().includes('yarn') ||
-          error.message.toLowerCase().includes('command') ||
-          error.message.toLowerCase().includes('failed') ||
-          error.message.toLowerCase().includes('not found')
-        if (!isYarnCommandFailure) {
-          throw error
-        }
+      if (shouldRethrowError(error, true)) {
+        throw error
       }
     }
   }
