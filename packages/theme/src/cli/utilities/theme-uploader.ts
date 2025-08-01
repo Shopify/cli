@@ -237,8 +237,8 @@ function buildUploadJob(
 ): SyncJob {
   const filesToUpload = selectUploadableFiles(themeFileSystem, remoteChecksums)
 
-  recordEvent(`push:files-total:${filesToUpload.length}`)
-  recordEvent(`push:files-total-size:${filesToUpload.reduce((acc, file) => acc + (file.size ?? 0), 0)}`)
+  recordEvent(`upload-job:files-total:${filesToUpload.length}`)
+  recordEvent(`upload-job:files-total-size:${filesToUpload.reduce((acc, file) => acc + (file.size ?? 0), 0)}`)
 
   // Adjust unsyncedFileKeys to reflect only the files that are about to be uploaded
   themeFileSystem.unsyncedFileKeys.clear()
