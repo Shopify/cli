@@ -1,4 +1,5 @@
 import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
+import {prependApplicationUrl} from './validation/url_prepender.js'
 import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
@@ -56,10 +57,7 @@ const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
     }
     return {
       ...webhookConfig,
-      uri:
-        appUrl && webhookConfig.uri.startsWith('/')
-          ? `${removeTrailingSlash(appUrl)}${webhookConfig.uri}`
-          : webhookConfig.uri,
+      uri: prependApplicationUrl(webhookConfig.uri, appUrl),
     }
   },
   reverse: transformToWebhookSubscriptionConfig,

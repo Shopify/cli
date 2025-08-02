@@ -1,12 +1,22 @@
-import {validateUrl} from '../../app/validation/common.js'
-import {ExtensionSpecification, TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {prependApplicationUrl} from './validation/url_prepender.js'
+import {removeTrailingSlash} from './validation/common.js'
+import {validateRelativeUrl} from '../../app/validation/common.js'
+import {
+  ExtensionSpecification,
+  CustomTransformationConfig,
+  createConfigExtensionSpecification,
+} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
+import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppProxySchema = BaseSchema.extend({
   app_proxy: zod
     .object({
-      url: validateUrl(zod.string({invalid_type_error: 'Value must be a valid URL'})),
+      url: zod.preprocess(
+        removeTrailingSlash as (arg: unknown) => unknown,
+        validateRelativeUrl(zod.string({invalid_type_error: 'Value must be string'})),
+      ),
       subpath: zod.string({invalid_type_error: 'Value must be a string'}),
       prefix: zod.string({invalid_type_error: 'Value must be a string'}),
     })
@@ -17,10 +27,34 @@ export type AppProxyConfigType = zod.infer<typeof AppProxySchema>
 
 export const AppProxySpecIdentifier = 'app_proxy'
 
-const AppProxyTransformConfig: TransformationConfig = {
-  url: 'app_proxy.url',
-  subpath: 'app_proxy.subpath',
-  prefix: 'app_proxy.prefix',
+const AppProxyTransformConfig: CustomTransformationConfig = {
+  forward: (content, appConfiguration) => {
+    const appProxyConfig = content as {app_proxy?: {url: string; subpath: string; prefix: string}}
+
+    if (!appProxyConfig.app_proxy) {
+      return {}
+    }
+
+    let appUrl: string | undefined
+    if ('application_url' in appConfiguration) {
+      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+    }
+    return {
+      url: prependApplicationUrl(appProxyConfig.app_proxy.url, appUrl),
+      subpath: appProxyConfig.app_proxy.subpath,
+      prefix: appProxyConfig.app_proxy.prefix,
+    }
+  },
+  reverse: (content) => {
+    const proxyConfig = content as {url: string; subpath: string; prefix: string}
+    return {
+      app_proxy: {
+        url: proxyConfig.url,
+        subpath: proxyConfig.subpath,
+        prefix: proxyConfig.prefix,
+      },
+    }
+  },
 }
 
 const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
