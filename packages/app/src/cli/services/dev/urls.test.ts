@@ -599,7 +599,7 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const overridePath = '/my/custom/path'
 
-    const got = generateApplicationURLs(applicationUrl, overridePath)
+    const got = generateApplicationURLs(applicationUrl, {authCallbackPath: overridePath})
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -611,7 +611,7 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const overridePath = ['/my/custom/path1', '/my/custom/path2']
 
-    const got = generateApplicationURLs(applicationUrl, overridePath)
+    const got = generateApplicationURLs(applicationUrl, {authCallbackPath: overridePath})
 
     expect(got).toMatchObject({
       applicationUrl,
@@ -622,10 +622,13 @@ describe('generatePartnersURLs', () => {
   test('Returns app proxy section when receiving proxy fields', () => {
     const applicationUrl = 'http://my-base-url'
 
-    const got = generateApplicationURLs(applicationUrl, [], {
-      url: applicationUrl,
-      subpath: 'subpath',
-      prefix: 'prefix',
+    const got = generateApplicationURLs(applicationUrl, {
+      authCallbackPath: [],
+      proxyFields: {
+        url: applicationUrl,
+        subpath: 'subpath',
+        prefix: 'prefix',
+      },
     })
 
     expect(got).toMatchObject({
@@ -647,10 +650,13 @@ describe('generatePartnersURLs', () => {
     const applicationUrl = 'http://my-base-url'
     const proxyUrl = 'http://old-base-url/subpath'
 
-    const got = generateApplicationURLs(applicationUrl, [], {
-      url: proxyUrl,
-      subpath: 'subpath',
-      prefix: 'prefix',
+    const got = generateApplicationURLs(applicationUrl, {
+      authCallbackPath: [],
+      proxyFields: {
+        url: proxyUrl,
+        subpath: 'subpath',
+        prefix: 'prefix',
+      },
     })
 
     expect(got).toMatchObject({
@@ -665,6 +671,37 @@ describe('generatePartnersURLs', () => {
         proxySubPath: 'subpath',
         proxySubPathPrefix: 'prefix',
       },
+    })
+  })
+
+  test('Returns custom app URL when app_url_path is provided', () => {
+    const baseURL = 'http://my-base-url'
+    const appUrlPath = '/api/shopify'
+
+    const got = generateApplicationURLs(baseURL, {appUrlPath})
+
+    expect(got).toMatchObject({
+      applicationUrl: `${baseURL}${appUrlPath}`,
+      redirectUrlWhitelist: [
+        `${baseURL}/auth/callback`,
+        `${baseURL}/auth/shopify/callback`,
+        `${baseURL}/api/auth/callback`,
+      ],
+    })
+  })
+
+  test('Uses base URL when app_url_path is not provided', () => {
+    const baseURL = 'http://my-base-url'
+
+    const got = generateApplicationURLs(baseURL)
+
+    expect(got).toMatchObject({
+      applicationUrl: baseURL,
+      redirectUrlWhitelist: [
+        `${baseURL}/auth/callback`,
+        `${baseURL}/auth/shopify/callback`,
+        `${baseURL}/api/auth/callback`,
+      ],
     })
   })
 })
