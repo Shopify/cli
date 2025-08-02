@@ -87,6 +87,9 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
   if (tunnel.mode === 'auto') {
     const tunnelPort = await getAvailableTCPPort()
     tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'cloudflare')
+  } else if (tunnel.mode === 'ngrok') {
+    const tunnelPort = await getAvailableTCPPort()
+    tunnelClient = await startTunnelPlugin(commandOptions.commandConfig, tunnelPort, 'ngrok')
   }
 
   const remoteConfiguration = await fetchAppRemoteConfiguration(

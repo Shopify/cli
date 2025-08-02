@@ -1,0 +1,70 @@
+{
+  "name": "@shopify/plugin-ngrok",
+  "version": "3.83.0",
+  "packageManager": "pnpm@10.11.1",
+  "description": "Enables the creation of ngrok tunnels from `shopify app dev`, allowing previews from any device",
+  "keywords": [
+    "shopify",
+    "shopify-cli",
+    "shopify-partners",
+    "ngrok"
+  ],
+  "bugs": {
+    "url": "https://github.com/Shopify/cli/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/plugin-ngrok"
+  },
+  "license": "MIT",
+  "author": "Shopify",
+  "type": "module",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "exports": {
+    "./hooks/*": {
+      "import": "./dist/*.js",
+      "require": "./dist/*.d.js"
+    }
+  },
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "vitest": "vitest",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "dependencies": {
+    "@oclif/core": "4.4.0",
+    "@shopify/cli-kit": "3.83.0",
+    "ngrok": "^5.0.0-beta.2"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true
+}

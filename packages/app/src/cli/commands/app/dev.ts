@@ -116,6 +116,12 @@ If you're using the Ruby app template, then you need to complete the following s
         'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
+    'use-ngrok': Flags.boolean({
+      description: 'Use ngrok tunneling instead of Cloudflare tunneling.',
+      env: 'SHOPIFY_FLAG_USE_NGROK',
+      default: false,
+      exclusive: ['tunnel-url', 'use-localhost'],
+    }),
   }
 
   public static analyticsStopCommand(): string | undefined {
@@ -136,6 +142,7 @@ If you're using the Ruby app template, then you need to complete the following s
       useLocalhost: flags['use-localhost'],
       tunnelUrl: flags['tunnel-url'],
       localhostPort: flags['localhost-port'],
+      useNgrok: flags['use-ngrok'],
     })
 
     await addPublicMetadata(() => {

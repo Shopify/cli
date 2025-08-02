@@ -572,6 +572,17 @@
           "name": "use-localhost",
           "type": "boolean"
         },
+        "use-ngrok": {
+          "allowNo": false,
+          "description": "Use ngrok tunneling instead of Cloudflare tunneling.",
+          "env": "SHOPIFY_FLAG_USE_NGROK",
+          "exclusive": [
+            "tunnel-url",
+            "use-localhost"
+          ],
+          "name": "use-ngrok",
+          "type": "boolean"
+        },
         "verbose": {
           "allowNo": false,
           "description": "Increase the verbosity of the output.",
