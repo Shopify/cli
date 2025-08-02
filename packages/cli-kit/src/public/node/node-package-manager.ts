@@ -8,7 +8,7 @@ import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import latestVersion from 'latest-version'
-import {SemVer, satisfies as semverSatisfies} from 'semver'
+import {SemVer, satisfies as semverSatisfies, coerce, gte, valid} from 'semver'
 import type {Writable} from 'stream'
 import type {ExecOptions} from './system.js'
 
@@ -82,7 +82,7 @@ export class PackageJsonNotFoundError extends AbortError {
  */
 export class FindUpAndReadPackageJsonNotFoundError extends BugError {
   constructor(directory: string) {
-    super(outputContent`Couldn't find a a package.json traversing directories from ${outputToken.path(directory)}`)
+    super(outputContent`Couldn't find a package.json traversing directories from ${outputToken.path(directory)}`)
   }
 }
 
@@ -190,6 +190,123 @@ export async function installNPMDependenciesRecursively(
   }
 }
 
+function shouldRethrowError(error: unknown, isYarnCommand = false): boolean {
+  if (!(error instanceof Error) || error instanceof BugError || error instanceof AbortError) {
+    return false
+  }
+
+  if (isYarnCommand) {
+    // Check for specific error types that indicate yarn command failures
+    const errorWithCode = error as Error & {code?: string; errno?: number; syscall?: string}
+
+    // ENOENT indicates yarn binary not found
+    if (errorWithCode.code === 'ENOENT' || error.message.includes('ENOENT')) {
+      return false
+    }
+
+    // Command execution failures (non-zero exit codes)
+    if (errorWithCode.code === 'EACCES' || errorWithCode.code === 'EPERM') {
+      return false
+    }
+
+    // Process execution errors from captureOutput
+    if (errorWithCode.syscall && ['spawn', 'spawnSync'].includes(errorWithCode.syscall)) {
+      return false
+    }
+
+    // For any other errors during yarn command execution, assume they're yarn-related
+    // and don't rethrow (let them fall through to fallback)
+    return false
+  }
+
+  return true
+}
+
+export async function determineYarnInstallCommand(directory: string): Promise<string[]> {
+  if (!directory || typeof directory !== 'string') {
+    throw new AbortError('Invalid directory parameter')
+  }
+
+  if (!(await fileExists(directory))) {
+    throw new AbortError(`Directory does not exist: ${directory}`)
+  }
+
+  try {
+    const {content: packageJsonContent} = await findUpAndReadPackageJson(directory)
+    if (packageJsonContent.packageManager?.startsWith('yarn@')) {
+      const versionPart = packageJsonContent.packageManager.replace(/^yarn@/, '')
+
+      // First check if it's a valid semver
+      const validVersion = valid(versionPart)
+      if (validVersion) {
+        const isYarnBerry = gte(validVersion, '2.0.0')
+        outputDebug(`Detected yarn v${validVersion} from packageManager field: ${packageJsonContent.packageManager}`)
+        return isYarnBerry ? ['add'] : ['install']
+      }
+
+      // Handle known dist-tags explicitly
+      if (['next', 'latest', 'canary', 'beta', 'rc'].includes(versionPart)) {
+        outputDebug(`Detected yarn dist-tag '${versionPart}' - assuming modern Yarn (Berry)`)
+        // Modern yarn dist-tags likely mean Berry
+        return ['add']
+      }
+
+      // Try coercion as fallback for partial versions like "4" or "4.0"
+      const coercedVersion = coerce(versionPart)
+      if (coercedVersion) {
+        const isYarnBerry = gte(coercedVersion, '2.0.0')
+        outputDebug(
+          `Coerced yarn version ${coercedVersion.version} from packageManager field: ${packageJsonContent.packageManager}`,
+        )
+        return isYarnBerry ? ['add'] : ['install']
+      }
+
+      // Invalid/unknown version - log warning and continue to fallback
+      outputDebug(
+        `Invalid yarn version in packageManager field: ${packageJsonContent.packageManager} - falling back to yarn --version detection`,
+      )
+    }
+  } catch (error) {
+    outputDebug(
+      `Failed to detect yarn version from packageManager field: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    )
+    if (shouldRethrowError(error)) {
+      throw error
+    }
+  }
+
+  try {
+    const versionOutput = await captureOutput('yarn', ['--version'], {cwd: directory})
+    const coercedVersion = coerce(versionOutput.trim())
+    if (coercedVersion) {
+      const isYarnBerry = gte(coercedVersion, '2.0.0')
+      outputDebug(`Detected yarn v${coercedVersion.version} from yarn --version command: ${versionOutput.trim()}`)
+      return isYarnBerry ? ['add'] : ['install']
+    }
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('ENOENT')) {
+      outputDebug(`Yarn not available on system: ${error.message}`)
+      return ['install']
+    } else {
+      outputDebug(`Yarn --version command failed: ${error instanceof Error ? error.message : String(error)}`)
+      const yarnrcPath = joinPath(directory, '.yarnrc.yml')
+      if (await fileExists(yarnrcPath)) {
+        outputDebug(`Found .yarnrc.yml file, assuming Yarn Berry (v2+)`)
+        return ['add']
+      }
+      // For unexpected errors that aren't yarn command failures, rethrow
+      if (shouldRethrowError(error, true)) {
+        throw error
+      }
+    }
+  }
+
+  outputDebug(`All yarn version detection methods failed, falling back to 'install' command`)
+  return ['install']
+}
+
 interface InstallNodeModulesOptions {
   directory: string
   args?: string[]
@@ -207,10 +324,18 @@ export async function installNodeModules(options: InstallNodeModulesOptions): Pr
     stderr: options.stderr,
     signal: options.signal,
   }
-  let args = ['install']
+
+  let args: string[]
+  if (options.packageManager === 'yarn') {
+    args = await determineYarnInstallCommand(options.directory)
+  } else {
+    args = ['install']
+  }
+
   if (options.args) {
     args = args.concat(options.args)
   }
+
   await runWithTimer('cmd_all_timing_network_ms')(async () => {
     await exec(options.packageManager, args, execOptions)
   })
@@ -393,6 +518,12 @@ export interface PackageJson {
    * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#private
    */
   private?: boolean
+
+  /**
+   * The packageManager attribute of the package.json.
+   * https://docs.npmjs.com/cli/v9/configuring-npm/package-json#packagemanager
+   */
+  packageManager?: string
 }
 
 /**
