@@ -189,8 +189,8 @@ async function functionExtensionInit({
       title: 'Installing additional dependencies',
       task: async () => {
         // We need to run `npm install` once to setup the workspace correctly
-        if (app.usesWorkspaces && app.packageManager === 'npm') {
-          await installNodeModules({packageManager: 'npm', directory: app.directory})
+        if (app.usesWorkspaces && (app.packageManager === 'npm' || app.packageManager === 'pnpm')) {
+          await installNodeModules({packageManager: app.packageManager, directory: app.directory})
         }
 
         const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
