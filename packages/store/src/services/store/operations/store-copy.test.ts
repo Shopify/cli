@@ -14,16 +14,18 @@ import {renderCopyResult} from '../../../prompts/copy_result.js'
 import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreCopyStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
 vi.mock('../../../prompts/confirm_copy.js')
 vi.mock('../../../lib/resource-config.js')
-vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/copy_result.js')
+vi.mock('../../../prompts/async_operation_json.js')
+vi.mock('../../../prompts/async_operation_started.js')
 
 describe('StoreCopyOperation', () => {
   describe('Full integration tests', () => {
@@ -60,12 +62,6 @@ describe('StoreCopyOperation', () => {
 
       vi.mocked(confirmCopyPrompt).mockResolvedValue(true)
       vi.mocked(parseResourceConfigFlags).mockReturnValue({})
-
-      // Mock renderTasks to immediately return completed operation
-      vi.mocked(renderTasks).mockResolvedValue({
-        operation: mockCompletedOperation,
-        isComplete: true,
-      })
     })
 
     test('should instantiate with a mock API client', () => {
@@ -84,7 +80,7 @@ describe('StoreCopyOperation', () => {
     })
 
     test('should successfully copy data from source to target shop', async () => {
-      await operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      await operation.execute('source.myshopify.com', 'target.myshopify.com', {watch: true})
 
       expect(confirmCopyPrompt).toHaveBeenCalledWith('source.myshopify.com', 'target.myshopify.com')
       expect(renderCopyInfo).toHaveBeenCalledWith('Copy operation', 'source.myshopify.com', 'target.myshopify.com')
@@ -99,18 +95,26 @@ describe('StoreCopyOperation', () => {
       await operation.execute('source.myshopify.com', 'target.myshopify.com', {'no-prompt': true})
 
       expect(confirmCopyPrompt).not.toHaveBeenCalled()
+      expect(renderAsyncOperationStarted).toHaveBeenCalled()
+    })
+
+    test('renders copy result when --watch flag is provided', async () => {
+      await operation.execute('source.myshopify.com', 'target.myshopify.com', {watch: true})
       expect(renderCopyResult).toHaveBeenCalled()
+    })
+
+    test('renders result in json format when --json flag is provided', async () => {
+      await operation.execute('source.myshopify.com', 'target.myshopify.com', {json: true})
+      expect(renderAsyncOperationJson).toHaveBeenCalled()
     })
 
     test('should exit when user cancels confirmation', async () => {
       vi.mocked(confirmCopyPrompt).mockResolvedValue(false)
 
-      await expect(operation.execute('source.myshopify.com', 'target.myshopify.com', {})).rejects.toThrow(
-        'Process exit called',
-      )
+      const result = await operation.execute('source.myshopify.com', 'target.myshopify.com', {})
 
+      expect(result).toBeUndefined()
       expect(outputInfo).toHaveBeenCalledWith('Exiting.')
-      expect(process.exit).toHaveBeenCalledWith(0)
       expect(mockApiClient.startBulkDataStoreCopy).not.toHaveBeenCalled()
     })
 
@@ -132,18 +136,6 @@ describe('StoreCopyOperation', () => {
       }
       vi.mocked(parseResourceConfigFlags).mockReturnValue(mockResourceConfig)
 
-      // Mock renderTasks to execute the tasks so parseResourceConfigFlags is called
-      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-        const ctx: any = {}
-        for (const task of tasks) {
-          // eslint-disable-next-line no-await-in-loop
-          await task.task(ctx, task)
-        }
-        ctx.operation = mockCompletedOperation
-        ctx.isComplete = true
-        return ctx
-      })
-
       await operation.execute('source.myshopify.com', 'target.myshopify.com', {key: ['products:handle']})
 
       expect(parseResourceConfigFlags).toHaveBeenCalledWith(['products:handle'])
@@ -152,16 +144,6 @@ describe('StoreCopyOperation', () => {
     test('should throw error when copy operation fails to start', async () => {
       const failedResponse: BulkDataStoreCopyStartResponse = generateTestFailedStartResponse()
       mockApiClient.startBulkDataStoreCopy.mockResolvedValue(failedResponse)
-
-      // Mock renderTasks to execute the tasks so the error is thrown
-      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-        const ctx: any = {}
-        for (const task of tasks) {
-          // eslint-disable-next-line no-await-in-loop
-          await task.task(ctx, task)
-        }
-        return ctx
-      })
 
       const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
       await expect(promise).rejects.toThrow(OperationError)
@@ -178,12 +160,9 @@ describe('StoreCopyOperation', () => {
     test('should throw error when copy operation status is FAILED', async () => {
       const failedOperation: BulkDataOperationByIdResponse = generateTestOperationResponse('FAILED')
 
-      vi.mocked(renderTasks).mockResolvedValue({
-        operation: failedOperation,
-        isComplete: true,
-      })
+      mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
+      const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {watch: true})
       await expect(promise).rejects.toThrow(OperationError)
       await expect(promise).rejects.toMatchObject({
         operation: 'copy',
@@ -200,15 +179,6 @@ describe('StoreCopyOperation', () => {
       )
       mockApiClient.startBulkDataStoreCopy.mockRejectedValue(operationError)
 
-      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-        const ctx: any = {}
-        for (const task of tasks) {
-          // eslint-disable-next-line no-await-in-loop
-          await task.task(ctx, task)
-        }
-        return ctx
-      })
-
       const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
       await expect(promise).rejects.toThrow(OperationError)
       await expect(promise).rejects.toMatchObject({
@@ -221,15 +191,6 @@ describe('StoreCopyOperation', () => {
     test('should convert GraphQL ClientError to user-friendly error without request ID', async () => {
       const operationError = new OperationError('startBulkDataStoreCopy', ErrorCodes.GRAPHQL_API_ERROR)
       mockApiClient.startBulkDataStoreCopy.mockRejectedValue(operationError)
-
-      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-        const ctx: any = {}
-        for (const task of tasks) {
-          // eslint-disable-next-line no-await-in-loop
-          await task.task(ctx, task)
-        }
-        return ctx
-      })
 
       const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {})
       await expect(promise).rejects.toThrow(OperationError)
@@ -252,15 +213,6 @@ describe('StoreCopyOperation', () => {
       )
       mockApiClient.startBulkDataStoreCopy.mockRejectedValue(unauthorizedError)
 
-      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-        const ctx: any = {}
-        for (const task of tasks) {
-          // eslint-disable-next-line no-await-in-loop
-          await task.task(ctx, task)
-        }
-        return ctx
-      })
-
       const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {'no-prompt': true})
       await expect(promise).rejects.toThrow(OperationError)
       await expect(promise).rejects.toMatchObject({
@@ -279,15 +231,6 @@ describe('StoreCopyOperation', () => {
         'copy-request-ea-789',
       )
       mockApiClient.startBulkDataStoreCopy.mockRejectedValue(missingEAError)
-
-      vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-        const ctx: any = {}
-        for (const task of tasks) {
-          // eslint-disable-next-line no-await-in-loop
-          await task.task(ctx, task)
-        }
-        return ctx
-      })
 
       const promise = operation.execute('source.myshopify.com', 'target.myshopify.com', {'no-prompt': true})
       await expect(promise).rejects.toThrow(OperationError)

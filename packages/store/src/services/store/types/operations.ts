@@ -1,4 +1,5 @@
 import {FlagOptions} from '../../../lib/types.js'
+import {BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 
 export enum OperationMode {
   StoreCopy = 'STORE_COPY',
@@ -8,4 +9,5 @@ export enum OperationMode {
 
 export interface StoreOperation {
   execute(source: string, target: string, flags: FlagOptions): Promise<void>
+  renderProgress(operation: BulkDataOperationByIdResponse, animationIteration: number): string
 }
