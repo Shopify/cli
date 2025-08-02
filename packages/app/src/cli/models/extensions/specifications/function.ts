@@ -16,6 +16,13 @@ interface UI {
   ui_extension_handle?: string
 }
 
+interface UIExtension {
+  handle?: string
+  enable_create?: boolean
+  create?: string
+  details?: string
+}
+
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
 const FunctionExtensionSchema = BaseSchema.extend({
   build: zod.object({
@@ -31,16 +38,34 @@ const FunctionExtensionSchema = BaseSchema.extend({
   type: zod.string(),
   configuration_ui: zod.boolean().optional().default(true),
   ui: zod
-    .object({
-      enable_create: zod.boolean().optional(),
-      paths: zod
-        .object({
-          create: zod.string(),
-          details: zod.string(),
+    .union([
+      // Legacy single UI object format
+      zod.object({
+        enable_create: zod.boolean().optional(),
+        paths: zod
+          .object({
+            create: zod.string(),
+            details: zod.string(),
+          })
+          .optional(),
+        handle: zod.string().optional(),
+      }),
+      // New array format
+      zod.array(
+        zod.object({
+          handle: zod.string().optional(),
+          enable_create: zod.boolean().optional(),
+          create: zod.string().optional(),
+          details: zod.string().optional(),
+          paths: zod
+            .object({
+              create: zod.string(),
+              details: zod.string(),
+            })
+            .optional(),
         })
-        .optional(),
-      handle: zod.string().optional(),
-    })
+      )
+    ])
     .optional(),
   api_version: zod.string(),
   input: zod
@@ -103,21 +128,55 @@ const functionSpec = createExtensionSpecification({
         }),
       ))
 
-    let ui: UI | undefined
+    let ui: UI | UI[] | undefined
 
-    if (config.ui?.paths) {
-      ui = {
-        app_bridge: {
-          details_path: config.ui.paths.details,
-          create_path: config.ui.paths.create,
-        },
+    // Handle both legacy single UI object and new array format
+    if (Array.isArray(config.ui)) {
+      // New array format - support multiple UI extensions
+      ui = config.ui.map((uiExt) => {
+        const uiObj: UI = {}
+        
+        // Handle both direct create/details properties and nested paths object
+        if (uiExt.paths) {
+          uiObj.app_bridge = {
+            create_path: uiExt.paths.create,
+            details_path: uiExt.paths.details,
+          }
+        } else if (uiExt.create && uiExt.details) {
+          uiObj.app_bridge = {
+            create_path: uiExt.create,
+            details_path: uiExt.details,
+          }
+        }
+        
+        if (uiExt.handle) {
+          uiObj.ui_extension_handle = uiExt.handle
+        }
+        
+        return uiObj
+      }).filter(uiObj => Object.keys(uiObj).length > 0)
+
+      if (ui.length === 0) {
+        ui = undefined
+      } else if (ui.length === 1) {
+        ui = ui[0]
       }
-    }
+    } else if (config.ui) {
+      // Legacy single UI object format
+      if (config.ui.paths) {
+        ui = {
+          app_bridge: {
+            details_path: config.ui.paths.details,
+            create_path: config.ui.paths.create,
+          },
+        }
+      }
 
-    if (config.ui?.handle !== undefined) {
-      ui = {
-        ...ui,
-        ui_extension_handle: config.ui.handle,
+      if (config.ui.handle !== undefined) {
+        ui = {
+          ...ui,
+          ui_extension_handle: config.ui.handle,
+        }
       }
     }
 
@@ -135,7 +194,9 @@ const functionSpec = createExtensionSpecification({
           }
         : undefined,
       ui,
-      enable_creation_ui: config.ui?.enable_create ?? true,
+      enable_creation_ui: Array.isArray(config.ui) 
+        ? config.ui[0]?.enable_create ?? true 
+        : config.ui?.enable_create ?? true,
       localization: await loadLocalesConfig(directory, 'function'),
       targets,
     }

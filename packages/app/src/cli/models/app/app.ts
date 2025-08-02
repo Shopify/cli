@@ -462,13 +462,29 @@ export class App<
     this.validateWebhookLegacyFlowCompatibility()
 
     const functionExtensionsWithUiHandle = this.allExtensions.filter(
-      (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
+      (ext) => {
+        if (!ext.isFunctionExtension) return false
+        const functionConfig = ext.configuration as unknown as FunctionConfigType
+        if (Array.isArray(functionConfig.ui)) {
+          return functionConfig.ui.some(ui => ui.handle)
+        }
+        return functionConfig.ui?.handle
+      }
     ) as ExtensionInstance<FunctionConfigType>[]
 
     if (functionExtensionsWithUiHandle.length > 0) {
       const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
       if (errors) {
         throw new AbortError('Invalid function configuration', errors.join('\n'))
+      }
+    }
+
+    // Validate payment extensions don't have conflicting UI configurations
+    const paymentExtensions = this.allExtensions.filter((ext) => ext.type === 'payments_extension')
+    if (paymentExtensions.length > 0) {
+      const paymentErrors = validatePaymentExtensionsUIConfiguration(paymentExtensions)
+      if (paymentErrors) {
+        throw new AbortError('Invalid payment extension configuration', paymentErrors.join('\n'))
       }
     }
 
@@ -610,18 +626,51 @@ export function validateFunctionExtensionsWithUiHandle(
   const errors: string[] = []
 
   functionExtensionsWithUiHandle.forEach((extension) => {
-    const uiHandle = extension.configuration.ui!.handle!
+    const uiConfig = extension.configuration.ui!
+    const uiHandles: string[] = []
+    
+    if (Array.isArray(uiConfig)) {
+      uiConfig.forEach(ui => {
+        if (ui.handle) {
+          uiHandles.push(ui.handle)
+        }
+      })
+    } else if (uiConfig.handle) {
+      uiHandles.push(uiConfig.handle)
+    }
 
-    const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
-    if (!matchingExtension) {
-      errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
-    } else if (matchingExtension.type !== 'ui_extension') {
+    uiHandles.forEach(uiHandle => {
+      const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
+      if (!matchingExtension) {
+        errors.push(`[${extension.name}] - Local app must contain a ui_extension with handle '${uiHandle}'`)
+      } else if (matchingExtension.type !== 'ui_extension') {
+        errors.push(
+          `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
+        )
+      }
+    })
+  })
+
+  return errors.length > 0 ? errors : undefined
+}
+
+export function validatePaymentExtensionsUIConfiguration(
+  paymentExtensions: ExtensionInstance[],
+): string[] | undefined {
+  const errors: string[] = []
+  
+  paymentExtensions.forEach((extension) => {
+    const config = extension.configuration as any
+    
+    // Check if both ui_extension_handle and ui are configured
+    if (config.ui_extension_handle && config.ui) {
       errors.push(
-        `[${extension.name}] - Local app must contain one extension of type 'ui_extension' and handle '${uiHandle}'`,
+        `[${extension.handle}] - Payment extension has both 'ui_extension_handle' and '[[extensions.ui]]' configured. ` +
+        `Use either 'ui_extension_handle' for single UI extension or '[[extensions.ui]]' for multiple UI extensions, but not both.`
       )
     }
   })
-
+  
   return errors.length > 0 ? errors : undefined
 }
 

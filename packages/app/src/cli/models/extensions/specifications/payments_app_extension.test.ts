@@ -92,4 +92,134 @@ describe('PaymentsAppExtension', () => {
     })
     expect(parsed.state).toBe('error')
   })
+
+  describe('[[extensions.ui]] array support', () => {
+    test('handles legacy ui_extension_handle (backward compatibility)', async () => {
+      // Given
+      const customOnsiteConfig = {
+        ...config,
+        targeting: [{target: 'payments.custom-onsite.render'}],
+        ui_extension_handle: 'checkout-ui-extension',
+      }
+      
+      const customOnsiteExtension = await testPaymentsAppExtension({
+        dir: '/payments_app_extensions',
+        config: customOnsiteConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        customOnsiteExtension.directory = tmpDir
+
+        // When
+        const got = await customOnsiteExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(got.ui_extension_handle).toStrictEqual('checkout-ui-extension')
+      })
+    })
+
+    test('handles single UI extension in [[extensions.ui]] format', async () => {
+      // Given  
+      const singleUIConfig = {
+        ...config,
+        targeting: [{target: 'payments.custom-onsite.render'}],
+        ui: [{handle: 'checkout-ui-extension'}],
+      }
+      
+      const singleUIExtension = await testPaymentsAppExtension({
+        dir: '/payments_app_extensions',
+        config: singleUIConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        singleUIExtension.directory = tmpDir
+
+        // When
+        const got = await singleUIExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(got.ui).toStrictEqual({
+          ui_extension_handle: 'checkout-ui-extension',
+        })
+        expect(got.ui_extension_handle).toBeUndefined()
+      })
+    })
+
+    test('handles multiple UI extensions in [[extensions.ui]] format', async () => {
+      // Given
+      const multiUIConfig = {
+        ...config,
+        targeting: [{target: 'payments.redeemable.render'}],
+        balance_url: 'https://example.com/balance',
+        ui: [
+          {handle: 'redeemable-checkout-ui'},
+          {handle: 'redeemable-pos-ui'},
+        ],
+      }
+      
+      const multiUIExtension = await testPaymentsAppExtension({
+        dir: '/payments_app_extensions',
+        config: multiUIConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        multiUIExtension.directory = tmpDir
+
+        // When
+        const got = await multiUIExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        // Should use nested format with first UI extension handle
+        expect(got.ui).toStrictEqual({
+          ui_extension_handle: 'redeemable-checkout-ui',
+        })
+        expect(got.ui_extension_handle).toBeUndefined()
+      })
+    })
+
+    test('handles legacy [extensions.ui] single object format', async () => {
+      // Given
+      const legacyUIConfig = {
+        ...config,
+        targeting: [{target: 'payments.custom-credit-card.render'}],
+        multiple_capture: false,
+        encryption_certificate_fingerprint: 'test-fingerprint',
+        ui: {handle: 'legacy-ui-extension'},
+      }
+      
+      const legacyUIExtension = await testPaymentsAppExtension({
+        dir: '/payments_app_extensions',
+        config: legacyUIConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        legacyUIExtension.directory = tmpDir
+
+        // When
+        const got = await legacyUIExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(got.ui).toStrictEqual({
+          ui_extension_handle: 'legacy-ui-extension',
+        })
+        expect(got.ui_extension_handle).toBeUndefined()
+      })
+    })
+  })
 })

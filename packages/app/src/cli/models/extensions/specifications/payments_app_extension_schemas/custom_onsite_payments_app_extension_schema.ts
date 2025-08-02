@@ -26,6 +26,20 @@ export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSc
     supports_oversell_protection: zod.boolean().optional(),
     modal_payment_method_fields: zod.array(zod.object({})).optional(),
     ui_extension_handle: zod.string().optional(),
+    ui: zod
+      .union([
+        // Legacy single UI object format
+        zod.object({
+          handle: zod.string().optional(),
+        }),
+        // New array format
+        zod.array(
+          zod.object({
+            handle: zod.string().optional(),
+          })
+        )
+      ])
+      .optional(),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -106,7 +120,22 @@ export function customOnsiteDeployConfigToCLIConfig(
 export async function customOnsitePaymentsAppExtensionDeployConfig(
   config: CustomOnsitePaymentsAppExtensionConfigType,
 ): Promise<{[key: string]: unknown} | undefined> {
-  return {
+  // Handle UI extensions from both legacy ui_extension_handle and new ui array format
+  let uiExtensionHandle = config.ui_extension_handle
+  let useNestedUIFormat = false
+  
+  if (config.ui && !uiExtensionHandle) {
+    useNestedUIFormat = true
+    if (Array.isArray(config.ui)) {
+      // New array format - get handle from first UI extension
+      uiExtensionHandle = config.ui[0]?.handle
+    } else {
+      // Legacy single UI object format
+      uiExtensionHandle = config.ui.handle
+    }
+  }
+
+  const baseConfig = {
     api_version: config.api_version,
     start_payment_session_url: config.payment_session_url,
     start_refund_session_url: config.refund_session_url,
@@ -128,6 +157,21 @@ export async function customOnsitePaymentsAppExtensionDeployConfig(
     buyer_label_to_locale: config.buyer_label_translations,
     checkout_payment_method_fields: config.checkout_payment_method_fields,
     modal_payment_method_fields: config.modal_payment_method_fields,
-    ui_extension_handle: config.ui_extension_handle,
+  }
+
+  // When using [[extensions.ui]], return nested format like functions
+  if (useNestedUIFormat && uiExtensionHandle) {
+    return {
+      ...baseConfig,
+      ui: {
+        ui_extension_handle: uiExtensionHandle,
+      },
+    }
+  }
+
+  // For legacy ui_extension_handle, keep top-level format
+  return {
+    ...baseConfig,
+    ui_extension_handle: uiExtensionHandle,
   }
 }

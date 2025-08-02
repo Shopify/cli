@@ -305,4 +305,163 @@ describe('functionConfiguration', () => {
       expect(got.ui?.ui_extension_handle).toBeUndefined()
     })
   })
+
+  describe('array format support', () => {
+    test('handles single UI extension in array format', async () => {
+      // Given
+      const arrayConfig = {
+        ...config,
+        ui: [
+          {
+            handle: 'payments-extension-checkout-ui',
+            enable_create: false,
+            paths: {
+              create: '/create',
+              details: '/details/:id',
+            },
+          },
+        ],
+      }
+      
+      const arrayExtension = await testFunctionExtension({
+        dir: '/function',
+        config: arrayConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        arrayExtension.directory = tmpDir
+
+        // When
+        const got = await arrayExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(got.ui).toMatchObject({
+          ui_extension_handle: 'payments-extension-checkout-ui',
+          app_bridge: {
+            create_path: '/create',
+            details_path: '/details/:id',
+          },
+        })
+        expect(got.enable_creation_ui).toStrictEqual(false)
+      })
+    })
+
+    test('handles multiple UI extensions in array format', async () => {
+      // Given
+      const multiUIConfig = {
+        ...config,
+        ui: [
+          {
+            handle: 'payments-checkout-ui',
+          },
+          {
+            handle: 'payments-pos-ui',
+          },
+        ],
+      }
+      
+      const multiUIExtension = await testFunctionExtension({
+        dir: '/function',
+        config: multiUIConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        multiUIExtension.directory = tmpDir
+
+        // When
+        const got = await multiUIExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(Array.isArray(got.ui)).toBe(true)
+        expect(got.ui).toHaveLength(2)
+        expect(got.ui[0]).toMatchObject({ui_extension_handle: 'payments-checkout-ui'})
+        expect(got.ui[1]).toMatchObject({ui_extension_handle: 'payments-pos-ui'})
+        expect(got.enable_creation_ui).toStrictEqual(true) // default value from first UI
+      })
+    })
+
+    test('handles array format with direct create/details properties', async () => {
+      // Given
+      const directPropsConfig = {
+        ...config,
+        ui: [
+          {
+            handle: 'validation-settings-ui',
+            enable_create: true,
+            create: '/admin/create',
+            details: '/admin/details/:id',
+          },
+        ],
+      }
+      
+      const directPropsExtension = await testFunctionExtension({
+        dir: '/function',
+        config: directPropsConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        directPropsExtension.directory = tmpDir
+
+        // When
+        const got = await directPropsExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(got.ui).toMatchObject({
+          ui_extension_handle: 'validation-settings-ui',
+          app_bridge: {
+            create_path: '/admin/create',
+            details_path: '/admin/details/:id',
+          },
+        })
+        expect(got.enable_creation_ui).toStrictEqual(true)
+      })
+    })
+
+    test('filters out empty UI extensions from array', async () => {
+      // Given
+      const mixedConfig = {
+        ...config,
+        ui: [
+          {
+            handle: 'valid-ui',
+          },
+          {
+            // Empty UI extension - should be filtered out
+          },
+        ],
+      }
+      
+      const mixedExtension = await testFunctionExtension({
+        dir: '/function',
+        config: mixedConfig,
+      })
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        mixedExtension.directory = tmpDir
+
+        // When
+        const got = await mixedExtension.deployConfig({
+          apiKey,
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(got.ui).toMatchObject({ui_extension_handle: 'valid-ui'})
+        expect(Array.isArray(got.ui)).toBe(false) // Single valid UI, so not an array
+      })
+    })
+  })
 })
