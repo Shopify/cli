@@ -96,11 +96,11 @@ export async function migrateAppModules(
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const migratedIDs = await Promise.all(
-    extensionsToMigrate.map(({remote}) => migrateAppModule(appId, remote.id, type, developerPlatformClient)),
+    extensionsToMigrate.map(({remote}) => migrateAppModule(appId, remote.uuid, type, developerPlatformClient)),
   )
 
   return remoteExtensions
-    .filter((extension) => migratedIDs.includes(extension.id))
+    .filter((extension) => migratedIDs.includes(extension.uuid))
     .map((extension) => {
       return {
         ...extension,
