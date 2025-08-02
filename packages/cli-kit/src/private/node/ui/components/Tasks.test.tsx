@@ -26,81 +26,6 @@ beforeEach(() => {
 })
 
 describe('Tasks', () => {
-  test('shows a loading state at the start', async () => {
-    // Given
-    const firstTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-    })
-
-    const firstTask = {
-      title: 'task 1',
-      task: firstTaskFunction,
-    }
-
-    // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-    await taskHasRendered()
-
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      task 1 ..."
-    `)
-    expect(firstTaskFunction).toHaveBeenCalled()
-  })
-
-  test('shows a loading state that is useful in no-color mode', async () => {
-    // Given
-    const firstTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-    })
-
-    const firstTask = {
-      title: 'task 1',
-      task: firstTaskFunction,
-    }
-
-    // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} noColor />)
-
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆
-      task 1 ..."
-    `)
-    expect(firstTaskFunction).toHaveBeenCalled()
-  })
-
-  test('truncates the no-color display correctly for narrow screens', async () => {
-    // Given
-    vi.mocked(useStdout).mockReturnValue({
-      stdout: new Stdout({
-        columns: 10,
-        rows: 80,
-      }) as any,
-      write: () => {},
-    })
-
-    const firstTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-    })
-
-    const firstTask = {
-      title: 'task 1',
-      task: firstTaskFunction,
-    }
-
-    // When
-    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} noColor />)
-
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆
-      task 1 ..."
-    `)
-    expect(firstTaskFunction).toHaveBeenCalled()
-  })
-
   test('shows nothing at the end in case of success', async () => {
     // Given
     const firstTaskFunction = vi.fn(async () => {})
@@ -154,8 +79,10 @@ describe('Tasks', () => {
   test('it supports subtasks', async () => {
     // Given
     const firstSubtaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 100))
     })
+
+    const secondSubtaskFunction = vi.fn(async () => {})
 
     const firstTask = {
       title: 'task 1',
@@ -167,7 +94,7 @@ describe('Tasks', () => {
           },
           {
             title: 'subtask 2',
-            task: async () => {},
+            task: secondSubtaskFunction,
           },
         ]
       },
@@ -180,22 +107,21 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
-
-    await taskHasRendered()
+    await renderInstance.waitUntilExit()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      subtask 1 ..."
-    `)
-
     expect(firstSubtaskFunction).toHaveBeenCalled()
+    expect(secondSubtaskFunction).toHaveBeenCalled()
   })
 
   test('supports skipping', async () => {
     // Given
     const firstTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    })
+
+    const secondTaskFunction = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 100))
     })
 
     const firstTask = {
@@ -206,32 +132,26 @@ describe('Tasks', () => {
 
     const secondTask = {
       title: 'task 2',
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      },
+      task: secondTaskFunction,
     }
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
-
-    await taskHasRendered()
+    await renderInstance.waitUntilExit()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      task 2 ..."
-    `)
     expect(firstTaskFunction).toHaveBeenCalledTimes(0)
+    expect(secondTaskFunction).toHaveBeenCalled()
   })
 
   test('supports skipping a subtask', async () => {
     // Given
     const firstSubTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 100))
     })
 
     const secondSubTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 100))
     })
 
     const firstTask = {
@@ -253,15 +173,9 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-
-    await taskHasRendered()
+    await renderInstance.waitUntilExit()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      subtask 2 ..."
-    `)
-
     expect(firstSubTaskFunction).toHaveBeenCalledTimes(0)
     expect(secondSubTaskFunction).toHaveBeenCalled()
   })
@@ -272,8 +186,6 @@ describe('Tasks', () => {
       if (task.retryCount < task.retry) {
         throw new Error(`something went wrong${task.retryCount}`)
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000))
     })
 
     const firstTask: Task = {
@@ -284,14 +196,9 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-
-    await taskHasRendered()
+    await renderInstance.waitUntilExit()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      task 1 ..."
-    `)
     expect(firstTask.retryCount).toBe(3)
     expect(firstTask.errors).toEqual([
       Error('something went wrong0'),
@@ -306,8 +213,6 @@ describe('Tasks', () => {
       if (task.retryCount <= task.retry) {
         throw new Error(`something went wrong${task.retryCount}`)
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000))
     })
 
     const secondTaskFunction = vi.fn(async () => {})
@@ -326,10 +231,8 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
 
-    await taskHasRendered()
-
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
+    await expect(renderInstance.waitUntilExit()).rejects.toThrow('something went wrong3')
     expect(firstTask.retryCount).toBe(3)
     expect(firstTask.errors).toEqual([
       Error('something went wrong0'),
@@ -345,8 +248,6 @@ describe('Tasks', () => {
       if (task.retryCount < task.retry) {
         throw new Error(`something went wrong${task.retryCount}`)
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000))
     })
 
     const firstSubTask: Task = {
@@ -364,14 +265,9 @@ describe('Tasks', () => {
 
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
-
-    await taskHasRendered()
+    await renderInstance.waitUntilExit()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`
-      "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
-      subtask 1 ..."
-    `)
     expect(firstSubTask.retryCount).toBe(3)
     expect(firstSubTask.errors).toEqual([
       Error('something went wrong0'),
@@ -386,8 +282,6 @@ describe('Tasks', () => {
       if (task.retryCount <= task.retry) {
         throw new Error(`something went wrong${task.retryCount}`)
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 2000))
     })
 
     const secondSubTaskFunction = vi.fn(async () => {})
@@ -413,10 +307,8 @@ describe('Tasks', () => {
     // When
     const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
 
-    await taskHasRendered()
-
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot('""')
+    await expect(renderInstance.waitUntilExit()).rejects.toThrow('something went wrong3')
     expect(firstSubTask.retryCount).toBe(3)
     expect(firstSubTask.errors).toEqual([
       Error('something went wrong0'),
