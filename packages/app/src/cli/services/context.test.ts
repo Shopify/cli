@@ -575,6 +575,98 @@ describe('ensureDeployContext', () => {
     })
     unsetAppConfigValueSpy.mockRestore()
   })
+
+  test('sets didMigrateExtensionsToDevDash to true when app modules are missing registration IDs', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+
+    const activeAppVersion = {
+      appModuleVersions: [
+        {registrationId: 'id-1', registrationUuid: 'uuid-1', type: 'app_access', registrationTitle: 'module-1'},
+        {registrationId: '', registrationUuid: 'uuid-2', type: 'pos_ui_extension', registrationTitle: 'module-2'},
+        {
+          registrationId: 'id-3',
+          registrationUuid: 'uuid-3',
+          type: 'checkout_ui_extension',
+          registrationTitle: 'module-3',
+        },
+      ],
+    }
+
+    const developerPlatformClient = buildDeveloperPlatformClient({
+      supportsAtomicDeployments: true,
+      activeAppVersion: () => Promise.resolve(activeAppVersion),
+    })
+
+    // When
+    const result = await ensureDeployContext({
+      app,
+      remoteApp: APP2,
+      organization: ORG1,
+      reset: false,
+      force: false,
+      noRelease: false,
+      developerPlatformClient,
+      skipBuild: false,
+    })
+
+    // Then
+    expect(result.didMigrateExtensionsToDevDash).toBe(true)
+  })
+
+  test('sets didMigrateExtensionsToDevDash to false when all app modules have registration IDs', async () => {
+    // Given
+    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
+    const identifiers = {
+      app: APP2.apiKey,
+      extensions: {},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    }
+    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
+    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
+
+    const activeAppVersion = {
+      appModuleVersions: [
+        {registrationId: 'id-1', registrationUuid: 'uuid-1', type: 'app_access', registrationTitle: 'module-1'},
+        {registrationId: 'id-2', registrationUuid: 'uuid-2', type: 'pos_ui_extension', registrationTitle: 'module-2'},
+        {
+          registrationId: 'id-3',
+          registrationUuid: 'uuid-3',
+          type: 'checkout_ui_extension',
+          registrationTitle: 'module-3',
+        },
+      ],
+    }
+
+    const developerPlatformClient = buildDeveloperPlatformClient({
+      supportsAtomicDeployments: true,
+      activeAppVersion: () => Promise.resolve(activeAppVersion),
+    })
+
+    // When
+    const result = await ensureDeployContext({
+      app,
+      remoteApp: APP2,
+      organization: ORG1,
+      reset: false,
+      force: false,
+      noRelease: false,
+      developerPlatformClient,
+      skipBuild: false,
+    })
+
+    // Then
+    expect(result.didMigrateExtensionsToDevDash).toBe(false)
+  })
 })
 
 describe('ensureThemeExtensionDevContext', () => {

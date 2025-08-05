@@ -128,6 +128,11 @@ export async function ensureThemeExtensionDevContext(
   return registration
 }
 
+interface EnsureDeployContextResult {
+  identifiers: Identifiers
+  didMigrateExtensionsToDevDash: boolean
+}
+
 /**
  * Make sure there is a valid context to execute `deploy`
  * That means we have a valid session, organization and app.
@@ -140,7 +145,7 @@ export async function ensureThemeExtensionDevContext(
  * @param developerPlatformClient - The client to access the platform API
  * @returns The selected org, app and dev store
  */
-export async function ensureDeployContext(options: DeployOptions): Promise<Identifiers> {
+export async function ensureDeployContext(options: DeployOptions): Promise<EnsureDeployContextResult> {
   const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
@@ -160,7 +165,13 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ident
 
   await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})
 
-  return identifiers
+  // if the current active app version is missing user_identifiers in some app module, then we are migrating to dev dash
+  let didMigrateExtensionsToDevDash = false
+  if (developerPlatformClient.supportsAtomicDeployments && activeAppVersion) {
+    didMigrateExtensionsToDevDash = activeAppVersion.appModuleVersions.some((version) => !version.registrationId)
+  }
+
+  return {identifiers, didMigrateExtensionsToDevDash}
 }
 
 interface ShouldOrPromptIncludeConfigDeployOptions {
