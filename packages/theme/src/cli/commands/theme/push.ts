@@ -1,4 +1,4 @@
-import {themeFlags} from '../../flags.js'
+import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
@@ -43,6 +43,7 @@ export default class Push extends ThemeCommand {
   static flags = {
     ...globalFlags,
     ...themeFlags,
+    ...globFlags('upload'),
     ...jsonFlag,
     theme: Flags.string({
       char: 't',
@@ -68,18 +69,6 @@ export default class Push extends ThemeCommand {
       char: 'n',
       description: `Prevent deleting remote files that don't exist locally.`,
       env: 'SHOPIFY_FLAG_NODELETE',
-    }),
-    only: Flags.string({
-      char: 'o',
-      description: 'Push only the specified files (Multiple flags allowed).',
-      multiple: true,
-      env: 'SHOPIFY_FLAG_ONLY',
-    }),
-    ignore: Flags.string({
-      char: 'x',
-      description: 'Skip uploading the specified files (Multiple flags allowed).',
-      multiple: true,
-      env: 'SHOPIFY_FLAG_IGNORE',
     }),
     'allow-live': Flags.boolean({
       char: 'a',

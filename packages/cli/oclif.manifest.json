@@ -6393,7 +6393,7 @@
         },
         "ignore": {
           "char": "x",
-          "description": "Skip downloading the specified files (Multiple flags allowed).",
+          "description": "Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_IGNORE",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6426,7 +6426,7 @@
         },
         "only": {
           "char": "o",
-          "description": "Download only the specified files (Multiple flags allowed).",
+          "description": "Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ONLY",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6532,7 +6532,7 @@
         },
         "ignore": {
           "char": "x",
-          "description": "Skip uploading the specified files (Multiple flags allowed).",
+          "description": "Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_IGNORE",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6574,7 +6574,7 @@
         },
         "only": {
           "char": "o",
-          "description": "Push only the specified files (Multiple flags allowed).",
+          "description": "Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ONLY",
           "hasDynamicHelp": false,
           "multiple": true,
