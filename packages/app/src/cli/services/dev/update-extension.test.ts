@@ -43,6 +43,7 @@ describe('updateExtensionDraft()', () => {
         settings: {type: 'object'},
         type: 'web_pixel_extension',
         handle,
+        uid: 'uid1',
       } as any
 
       const mockExtension = await testUIExtension({

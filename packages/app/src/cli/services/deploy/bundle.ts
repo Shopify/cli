@@ -37,11 +37,13 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
             await extension.copyIntoBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
               bundleDirectory,
+              options.identifiers?.extensions[extension.localIdentifier],
             )
           } else {
             await extension.buildForBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
               bundleDirectory,
+              options.identifiers?.extensions[extension.localIdentifier],
             )
           }
         },

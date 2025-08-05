@@ -140,10 +140,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.isFunctionExtension ? 'index.wasm' : `${this.handle}.js`
   }
 
-  get outputFolderId() {
-    return this.uid
-  }
-
   constructor(options: {
     configuration: TConfiguration
     configurationPath: string
@@ -231,10 +227,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.buildValidation(this)
   }
 
-  async keepBuiltSourcemapsLocally(bundleDirectory: string): Promise<void> {
+  async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
     if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
-
-    const inputPath = joinPath(bundleDirectory, this.outputFolderId)
 
     const pathsToMove = await glob(`**/${this.handle}.js.map`, {
       cwd: inputPath,
@@ -254,6 +248,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+  }
+
+  getOutputFolderId(registrationUuid?: string | undefined) {
+    return this.configuration.uid ?? registrationUuid ?? this.handle
   }
 
   // UI Specific properties
@@ -362,10 +360,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string) {
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, registrationUuid?: string | undefined) {
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, registrationUuid)
     }
 
     await this.build(options)
@@ -373,14 +371,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       await bundleThemeExtension(this, options)
     }
 
-    await this.keepBuiltSourcemapsLocally(bundleDirectory)
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(registrationUuid))
+    await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
-  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string) {
+  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid: string | undefined) {
     const defaultOutputPath = this.outputPath
 
     if (this.features.includes('bundling')) {
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
     }
 
     const buildMode = this.buildMode(options)
@@ -399,8 +398,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  getOutputPathForDirectory(directory: string) {
-    const id = this.outputFolderId
+  getOutputPathForDirectory(directory: string, registrationUuid?: string | undefined) {
+    const id = this.getOutputFolderId(registrationUuid)
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
