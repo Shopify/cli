@@ -576,7 +576,7 @@ describe('ensureDeployContext', () => {
     unsetAppConfigValueSpy.mockRestore()
   })
 
-  test('sets didMigrateExtensionsToDevDash to true when app modules are missing registration UUIDs', async () => {
+  test('sets didMigrateExtensionsToDevDash to true when app modules are missing registration IDs', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
@@ -622,7 +622,7 @@ describe('ensureDeployContext', () => {
     expect(result.didMigrateExtensionsToDevDash).toBe(true)
   })
 
-  test('sets didMigrateExtensionsToDevDash to false when all app modules have registration UUIDs', async () => {
+  test('sets didMigrateExtensionsToDevDash to false when all app modules have registration IDs', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
     const identifiers = {
