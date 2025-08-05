@@ -1,6 +1,11 @@
 import {configurationFileNames, versions} from '../../constants.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {buildGraphqlTypes, PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '../function/build.js'
+import {
+  buildGraphqlTypes,
+  PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION,
+  PREFERRED_GRAPHQL_CODEGEN_CLI_PACKAGE_MAJOR_VERSION,
+  PREFERRED_GRAPHQL_CODEGEN_TYPESCRIPT_OPERATIONS_PACKAGE_MAJOR_VERSION,
+} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from '../extensions/common.js'
@@ -312,20 +317,16 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
-    dependencies.push({
-      name: '@shopify/shopify_function',
-      version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
-    })
-
-    // Add graphql-codegen dependencies for pnpm compatibility
     dependencies.push(
-      {name: 'graphql', version: '^16.10.0'},
-      {name: '@graphql-codegen/cli', version: '5.0.4'},
-      {name: '@graphql-codegen/typescript-operations', version: '4.6.1'},
-      {name: '@graphql-codegen/typed-document-node', version: '5.0.11'},
-      {name: '@graphql-codegen/add', version: '5.0.3'},
-      {name: '@graphql-codegen/near-operation-file-preset', version: '3.0.0'},
-      {name: 'graphql-codegen-typescript-operation-types', version: '2.0.1'},
+      {
+        name: '@shopify/shopify_function',
+        version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
+      },
+      {name: '@graphql-codegen/cli', version: `~${PREFERRED_GRAPHQL_CODEGEN_CLI_PACKAGE_MAJOR_VERSION}.0.0`},
+      {
+        name: '@graphql-codegen/typescript-operations',
+        version: `~${PREFERRED_GRAPHQL_CODEGEN_TYPESCRIPT_OPERATIONS_PACKAGE_MAJOR_VERSION}.0.0`,
+      },
     )
   }
   return dependencies

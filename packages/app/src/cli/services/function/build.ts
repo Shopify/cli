@@ -26,6 +26,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
+export const PREFERRED_GRAPHQL_CODEGEN_CLI_PACKAGE_MAJOR_VERSION = '5'
+export const PREFERRED_GRAPHQL_CODEGEN_TYPESCRIPT_OPERATIONS_PACKAGE_MAJOR_VERSION = '4'
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
