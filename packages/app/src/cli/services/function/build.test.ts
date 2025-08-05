@@ -43,7 +43,7 @@ const derivedDeps = {
   javyPlugin: PREFERRED_JAVY_PLUGIN_VERSION,
 }
 
-const app = testApp({dotenv: {variables: {VAR_FROM_ENV_FILE: 'env_file_var'}, path: ''}})
+const app = testApp({dotenv: {variables: {VAR_FROM_ENV_FILE: 'env_file_var'}, path: ''}, packageManager: 'npm'})
 
 beforeEach(async () => {
   stderr = {write: vi.fn()}

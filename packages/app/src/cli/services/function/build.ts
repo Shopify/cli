@@ -129,7 +129,22 @@ export async function buildGraphqlTypes(
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+    const packageManager = options.app.packageManager
+    let execArgs: string[]
+
+    switch (packageManager) {
+      case 'pnpm':
+      case 'yarn':
+      case 'bun':
+        execArgs = ['exec', 'graphql-code-generator', '--config', 'package.json']
+        break
+      case 'npm':
+      default:
+        execArgs = ['exec', '--', 'graphql-code-generator', '--config', 'package.json']
+        break
+    }
+
+    return exec(packageManager, execArgs, {
       cwd: fun.directory,
       stderr: options.stderr,
       signal: options.signal,

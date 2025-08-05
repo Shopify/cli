@@ -189,7 +189,7 @@ async function functionExtensionInit({
       title: 'Installing additional dependencies',
       task: async () => {
         // We need to run `npm install` once to setup the workspace correctly
-        if (app.usesWorkspaces && (app.packageManager === 'npm' || app.packageManager === 'pnpm')) {
+        if (app.usesWorkspaces && app.packageManager === 'npm') {
           await installNodeModules({packageManager: app.packageManager, directory: app.directory})
         }
 
@@ -316,6 +316,17 @@ export function getFunctionRuntimeDependencies(templateLanguage: string): Depend
       name: '@shopify/shopify_function',
       version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
     })
+
+    // Add graphql-codegen dependencies for pnpm compatibility
+    dependencies.push(
+      {name: 'graphql', version: '^16.10.0'},
+      {name: '@graphql-codegen/cli', version: '5.0.4'},
+      {name: '@graphql-codegen/typescript-operations', version: '4.6.1'},
+      {name: '@graphql-codegen/typed-document-node', version: '5.0.11'},
+      {name: '@graphql-codegen/add', version: '5.0.3'},
+      {name: '@graphql-codegen/near-operation-file-preset', version: '3.0.0'},
+      {name: 'graphql-codegen-typescript-operation-types', version: '2.0.1'},
+    )
   }
   return dependencies
 }
