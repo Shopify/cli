@@ -1,4 +1,4 @@
-import {selectFunctionRunPrompt} from './replay.js'
+import {selectFunctionRunPrompt} from './select-run.js'
 import {FunctionRunData} from '../../services/function/replay.js'
 import {describe, expect, vi, test} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
@@ -56,7 +56,7 @@ describe('selectFunctionRun', () => {
     vi.mocked(renderAutocompletePrompt).mockResolvedValue(RUN2)
 
     // When
-    const got = await selectFunctionRunPrompt(runs)
+    const got = await selectFunctionRunPrompt(runs, 'Which function run would you like to replay locally?')
 
     // Then
     expect(got).toEqual(RUN2)
@@ -74,7 +74,7 @@ describe('selectFunctionRun', () => {
     const runs: FunctionRunData[] = []
 
     // When
-    const got = await selectFunctionRunPrompt(runs)
+    const got = await selectFunctionRunPrompt(runs, 'Which function run would you like to replay locally?')
 
     // Then
     expect(got).toEqual(undefined)

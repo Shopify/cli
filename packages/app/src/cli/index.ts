@@ -12,6 +12,7 @@ import FunctionBuild from './commands/app/function/build.js'
 import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
+import FunctionTestgen from './commands/app/function/testgen.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
 import GenerateSchema from './commands/app/generate/schema.js'
@@ -52,6 +53,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:function:replay': FunctionReplay,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
+  'app:function:testgen': FunctionTestgen,
   'app:function:typegen': FunctionTypegen,
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
