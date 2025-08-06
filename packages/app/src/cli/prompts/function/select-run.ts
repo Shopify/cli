@@ -1,7 +1,7 @@
 import {FunctionRunData} from '../../services/function/replay.js'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 
-export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): Promise<FunctionRunData | undefined> {
+export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[], message: string): Promise<FunctionRunData | undefined> {
   if (functionRuns.length === 0) return undefined
   const toAnswer = (functionRun: FunctionRunData) => {
     return {
@@ -13,7 +13,7 @@ export async function selectFunctionRunPrompt(functionRuns: FunctionRunData[]): 
   const functionRunsList = functionRuns.map(toAnswer)
 
   const selectedRun = await renderAutocompletePrompt({
-    message: 'Which function run would you like to replay locally?',
+    message,
     choices: functionRunsList,
   })
   return selectedRun
