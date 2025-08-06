@@ -1,6 +1,6 @@
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
-import {publish, renderArgumentsWarning} from '../../services/publish.js'
+import {publish} from '../../services/publish.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
@@ -21,9 +21,6 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
 
   static description = this.descriptionWithoutMarkdown()
 
-  // Accept any number of args without naming them
-  static strict = false
-
   static flags = {
     ...globalFlags,
     ...themeFlags,
@@ -41,16 +38,7 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
 
   static multiEnvironmentsFlags = ['store', 'password', 'theme']
 
-  async command(flags: PublishFlags, adminSession: AdminSession) {
-    // Deprecated use of passing the theme id as an argument
-    // ex: `shopify theme publish <themeid>`
-    const positionalArgValue =
-      this.argv && this.argv.length > 0 && typeof this.argv[0] === 'string' ? this.argv[0] : undefined
-
-    if (!flags.theme && positionalArgValue) {
-      flags.theme = positionalArgValue
-      renderArgumentsWarning(positionalArgValue)
-    }
-    await publish(adminSession, flags)
+  async command(flags: PublishFlags, adminSession: AdminSession, multiEnvironment?: boolean) {
+    await publish(adminSession, flags, multiEnvironment)
   }
 }
