@@ -12,6 +12,7 @@
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
+* [`shopify app function testgen`](#shopify-app-function-testgen)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
@@ -463,6 +464,34 @@ DESCRIPTION
 
   This command uses the API type and version of your function, as defined in your extension TOML file, to generate the
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
+```
+
+## `shopify app function testgen`
+
+Generates test files from a function run log.
+
+```
+USAGE
+  $ shopify app function testgen [--client-id <value> | -c <value>] [-l <value>] [--no-color] [-o <value>] [--path
+    <value>] [--reset | ] [--verbose]
+
+FLAGS
+  -c, --config=<value>      The name of the app configuration.
+  -l, --log=<value>         Specifies a log identifier to generate test files from instead of selecting from a list. The
+                            identifier is provided in the output of `shopify app dev` and is the suffix of the log file
+                            name.
+  -o, --output-dir=<value>  Specifies the output directory for the test files. Defaults to "test-{identifier}".
+      --client-id=<value>   The Client ID of your app.
+      --no-color            Disable color output.
+      --path=<value>        The path to your function directory.
+      --reset               Reset all your settings.
+      --verbose             Increase the verbosity of the output.
+
+DESCRIPTION
+  Generates test files from a function run log.
+
+  Prompts users to select a function run log and generates test fixtures from it. These test cases based on real
+  function executions act as an E2E test suite for the function.
 ```
 
 ## `shopify app function typegen`
