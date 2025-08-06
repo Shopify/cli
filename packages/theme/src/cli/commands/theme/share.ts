@@ -1,6 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push, PushFlags} from '../../services/push.js'
+import {PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {getRandomName} from '@shopify/cli-kit/common/string'
@@ -39,6 +39,6 @@ export default class Share extends ThemeCommand {
       theme: getRandomName('creative'),
     }
 
-    await push(pushFlags)
+    // await push(pushFlags)
   }
 }
