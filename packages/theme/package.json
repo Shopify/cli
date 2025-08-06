@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.83.2",
+  "version": "3.83.3",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for building and publishing themes",
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@oclif/core": "4.4.0",
-    "@shopify/cli-kit": "3.83.2",
+    "@shopify/cli-kit": "3.83.3",
     "@shopify/theme-check-node": "3.19.0",
     "@shopify/theme-language-server-node": "2.17.3",
     "chokidar": "3.6.0",
