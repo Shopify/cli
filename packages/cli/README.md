@@ -2265,11 +2265,13 @@ FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
   -l, --live                    Pull theme files from your remote live theme.
   -n, --nodelete                Prevent deleting local files that don't exist remotely.
-  -o, --only=<value>...         Download only the specified files (Multiple flags allowed).
+  -o, --only=<value>...         Download only the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
-  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
@@ -2299,13 +2301,15 @@ FLAGS
   -j, --json                    Output the result as JSON.
   -l, --live                    Push theme files from your remote live theme.
   -n, --nodelete                Prevent deleting remote files that don't exist locally.
-  -o, --only=<value>...         Push only the specified files (Multiple flags allowed).
+  -o, --only=<value>...         Upload only the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
   -p, --publish                 Publish as the live theme after uploading.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
   -u, --unpublished             Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
