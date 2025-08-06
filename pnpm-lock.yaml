@@ -137,8 +137,8 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2
       tmp:
-        specifier: ^0.2.1
-        version: 0.2.3
+        specifier: ^0.2.4
+        version: 0.2.4
       ts-node:
         specifier: ^10.9.1
         version: 10.9.2(@types/node@18.19.70)(typescript@5.8.3)
@@ -8438,6 +8438,10 @@ packages:
     resolution: {integrity: sha512-nZD7m9iCPC5g0pYmcaxogYKggSfLsdxl8of3Q/oIbqCqLLIO9IAF0GWjX1z9NZRHPiXv8Wex4yDCaZsgEw0Y8w==}
     engines: {node: '>=14.14'}
 
+  tmp@0.2.4:
+    resolution: {integrity: sha512-UdiSoX6ypifLmrfQ/XfiawN6hkjSBpCjhKxxZcWlUUmoXLaCKQU0bx4HF/tdDK2uzRuchf1txGvrWBzYREssoQ==}
+    engines: {node: '>=14.14'}
+
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
@@ -12011,7 +12015,7 @@ snapshots:
       minimatch: 9.0.3
       nx: 21.1.2
       semver: 7.6.3
-      tmp: 0.2.3
+      tmp: 0.2.4
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
@@ -17332,7 +17336,7 @@ snapshots:
       semver: 7.6.3
       string-width: 4.2.3
       tar-stream: 2.2.0
-      tmp: 0.2.3
+      tmp: 0.2.4
       tree-kill: 1.2.2
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
@@ -18789,6 +18793,8 @@ snapshots:
       os-tmpdir: 1.0.2
 
   tmp@0.2.3: {}
+
+  tmp@0.2.4: {}
 
   to-regex-range@5.0.1:
     dependencies:
