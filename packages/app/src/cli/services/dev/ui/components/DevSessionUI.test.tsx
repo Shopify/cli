@@ -116,11 +116,11 @@ describe('DevSessionUI', () => {
     expect(output).toContain('(d) Dev status')
     expect(output).toContain('(a) App info')
     expect(output).toContain('(s) Store info')
-    expect(output).toContain('q to quit')
+    expect(output).toContain('(q) Quit')
 
     // Shortcuts and URLs should be visible
-    expect(output).toContain('Press g │ open GraphiQL')
-    expect(output).toContain('Press p │ preview in your browser')
+    expect(output).toContain('(g) Open GraphiQL')
+    expect(output).toContain('(p) Preview in your browser')
     expect(output).toContain('Preview URL: https://shopify.com')
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
@@ -306,11 +306,11 @@ describe('DevSessionUI', () => {
     expect(output).toContain('(d) Dev status')
     expect(output).toContain('(a) App info')
     expect(output).toContain('(s) Store info')
-    expect(output).toContain('q to quit')
+    expect(output).toContain('(q) Quit')
 
     // Shortcuts and URLs should be visible
-    expect(output).toContain('Press g │ open GraphiQL')
-    expect(output).toContain('Press p │ preview in your browser')
+    expect(output).toContain('(g) Open GraphiQL')
+    expect(output).toContain('(p) Preview in your browser')
     expect(output).toContain('Preview URL: https://shopify.com')
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
@@ -367,7 +367,7 @@ describe('DevSessionUI', () => {
       graphiqlURL: 'https://new-graphiql.shopify.com',
     })
 
-    await waitForContent(renderInstance, 'preview in your browser')
+    await waitForContent(renderInstance, 'Preview in your browser')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://new-preview-url.shopify.com')
@@ -392,8 +392,8 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Press p')
-    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Press g')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('(p)')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('(g)')
     expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Preview URL')
     expect(unstyled(renderInstance.lastFrame()!)).not.toContain('GraphiQL URL')
 
@@ -403,8 +403,8 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('Press p')
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('Press g')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('(p)')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('(g)')
     expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://shopify.com')
     expect(unstyled(renderInstance.lastFrame()!)).toContain('GraphiQL URL: https://graphiql.shopify.com')
     renderInstance.unmount()

@@ -70,7 +70,7 @@ describe('TabPanel', () => {
     expect(output).toContain('────────────────')
     expect(output).toContain('(a) First Tab')
     expect(output).toContain('(b) Second Tab')
-    expect(output).toContain('c Action Tab')
+    expect(output).toContain('(c) Action Tab')
 
     renderInstance.unmount()
   })
@@ -420,7 +420,7 @@ describe('TabPanel', () => {
 
     const output = unstyled(renderInstance.lastFrame()!)
     // Action tabs should be hidden when content width >= terminal columns
-    expect(output).not.toContain('q Quit')
+    expect(output).not.toContain('(q) Quit')
 
     renderInstance.unmount()
   })
@@ -456,7 +456,7 @@ describe('TabPanel', () => {
 
     const output = unstyled(renderInstance.lastFrame()!)
     // Action tabs should be visible when content fits
-    expect(output).toContain('q Quit')
+    expect(output).toContain('(q) Quit')
 
     renderInstance.unmount()
   })

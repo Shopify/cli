@@ -144,7 +144,7 @@ export const TabPanel: React.FunctionComponent<TabPanelProps> = ({tabs, initialA
           <Box flexGrow={1} justifyContent="flex-end">
             {actionTabs.map((tab, index) => (
               <Text wrap="truncate" key={tab.inputKey}>
-                {tab.inputKey} {tab.label}
+                ({tab.inputKey}) {tab.label}
                 {index < actionTabs.length - 1 && ' │ '}
               </Text>
             ))}

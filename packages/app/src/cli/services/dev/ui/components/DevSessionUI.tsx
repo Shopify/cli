@@ -150,13 +150,12 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
             <Box marginTop={1} flexDirection="column">
               {status.graphiqlURL && status.isReady ? (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
-                  your browser
+                  {figures.pointerSmall} <Text bold>(g)</Text> Open GraphiQL (Admin API) in your browser
                 </Text>
               ) : null}
               {status.isReady ? (
                 <Text>
-                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
+                  {figures.pointerSmall} <Text bold>(p)</Text> Preview in your browser
                 </Text>
               ) : null}
             </Box>
@@ -218,7 +217,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       ),
     },
     q: {
-      label: 'to quit',
+      label: 'Quit',
       action: async () => {
         abortController.abort()
       },
