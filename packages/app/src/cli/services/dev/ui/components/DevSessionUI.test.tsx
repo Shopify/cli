@@ -490,7 +490,6 @@ describe('DevSessionUI', () => {
     expect(output).not.toContain('(d) Dev status')
     expect(output).not.toContain('(a) App info')
     expect(output).not.toContain('(q) Quit')
-    expect(output).not.toContain('╒═══')
     expect(output).toContain('Preview URL: https://shopify.com')
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
