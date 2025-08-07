@@ -360,7 +360,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, registrationUuid?: string | undefined) {
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, registrationUuid?: string) {
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
       this.outputPath = this.getOutputPathForDirectory(bundleDirectory, registrationUuid)
