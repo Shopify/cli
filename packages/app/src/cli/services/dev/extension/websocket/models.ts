@@ -48,4 +48,8 @@ export interface LogPayload {
   type: string
   message: string
   extensionName: string
+  location: {
+    line: number
+    column: number
+  } | null
 }

@@ -6,6 +6,7 @@ import {
   OutgoingMessage,
   SetupWebSocketConnectionOptions,
 } from './models.js'
+import {getConsumer} from '../sourcemapping.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
@@ -39,7 +40,18 @@ export function getConnectionDoneHandler(wss: WebSocketServer, options: SetupWeb
   }
 }
 
-export function parseLogMessage(message: string): string {
+export function parseLogMessage(message: string, location: LogPayload['location']): string {
+  let locationSuffix = ''
+  if (location) {
+    const originalLocation = getConsumer()?.originalPositionFor({
+      line: location.line,
+      column: location.column,
+    })
+    if (originalLocation) {
+      locationSuffix = ` at ${originalLocation.source}:${originalLocation.line}:${originalLocation.column}`
+    }
+  }
+
   try {
     const parsed = JSON.parse(message)
 
@@ -58,7 +70,7 @@ export function parseLogMessage(message: string): string {
       })
       .join(' ')
 
-    return outputContent`${formatted}`.value
+    return outputContent`${formatted}${locationSuffix}`.value
   } catch (error) {
     // If parsing fails, return the original message
     if (error instanceof SyntaxError) {
@@ -74,8 +86,8 @@ const consoleTypeColors = {
   error: (text: string) => outputToken.errorText(text),
 } as const
 
-function getOutput({type, message}: LogPayload) {
-  const formattedMessage = parseLogMessage(message)
+function getOutput({type, message, location}: LogPayload) {
+  const formattedMessage = parseLogMessage(message, location)
 
   switch (type) {
     case 'debug':

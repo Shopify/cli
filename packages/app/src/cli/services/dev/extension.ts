@@ -8,6 +8,7 @@ import {
 } from './extension/payload/store.js'
 import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {buildCartURLIfNeeded} from './extension/utilities.js'
+import {initSourcemapConsumer} from './extension/sourcemapping.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -134,6 +135,9 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
   const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
+
+  outputDebug('Setting up the sourcemap consumer...', payloadOptions.stdout)
+  await initSourcemapConsumer()
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
