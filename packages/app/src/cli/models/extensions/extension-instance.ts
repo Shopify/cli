@@ -375,7 +375,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
-  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid: string | undefined) {
+  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
     const defaultOutputPath = this.outputPath
 
     if (this.features.includes('bundling')) {
