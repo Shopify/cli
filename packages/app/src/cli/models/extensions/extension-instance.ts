@@ -398,7 +398,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  getOutputPathForDirectory(directory: string, registrationUuid?: string | undefined) {
+  getOutputPathForDirectory(directory: string, registrationUuid?: string) {
     const id = this.getOutputFolderId(registrationUuid)
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
