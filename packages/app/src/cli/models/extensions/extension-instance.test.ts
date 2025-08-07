@@ -161,6 +161,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
           directory: outputPath,
           uid: 'uid1',
         })
+        const bundleInputPath = joinPath(bundleDirectory, extensionInstance.uid)
         const someDirPath = joinPath(bundleDirectory, 'wrongUID')
         const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
@@ -172,7 +173,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleInputPath)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
@@ -258,7 +259,7 @@ describe('build', async () => {
       }
 
       // When
-      await extension.copyIntoBundle(options, bundleDirectory)
+      await extension.copyIntoBundle(options, bundleDirectory, 'uuid')
 
       // Then
       const outputTomlPath = joinPath(extension.outputPath, 'shopify.extension.toml')

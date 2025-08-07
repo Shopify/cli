@@ -33,15 +33,18 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
       return {
         prefix: extension.localIdentifier,
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
+          const extensionIdentifier = options.identifiers?.extensions[extension.localIdentifier]
           if (options.skipBuild) {
             await extension.copyIntoBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
               bundleDirectory,
+              extensionIdentifier,
             )
           } else {
             await extension.buildForBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
               bundleDirectory,
+              extensionIdentifier,
             )
           }
         },

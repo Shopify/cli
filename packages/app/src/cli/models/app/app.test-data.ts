@@ -219,6 +219,7 @@ export async function testUIExtension(
     name: uiExtension?.name ?? 'test-ui-extension',
     type: uiExtension?.type ?? 'product_subscription',
     handle: uiExtension?.handle ?? 'test-ui-extension',
+    uid: uiExtension?.uid ?? undefined,
     metafields: [],
     capabilities: {
       block_progress: false,
