@@ -1611,4 +1611,136 @@ describe('appExtensionRegistrations', () => {
     expect(result.app.extensionRegistrations).toHaveLength(2)
     expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(2)
   })
+
+  test('includes activeVersion with config when config is present', async () => {
+    const configData = {name: 'Test Extension', enabled: true}
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-config',
+      registrationTitle: 'Extension With Config',
+      config: configData,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-config',
+      uuid: 'mock-uuid',
+      title: 'Extension With Config',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+      },
+    })
+  })
+
+  test('includes activeVersion with config and context when both are present', async () => {
+    const configData = {name: 'Test Extension', enabled: true}
+    const contextData = 'some-context-value'
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-config-and-context',
+      registrationTitle: 'Extension With Config And Context',
+      config: configData,
+      target: contextData,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-config-and-context',
+      uuid: 'mock-uuid',
+      title: 'Extension With Config And Context',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+        context: contextData,
+      },
+    })
+  })
+
+  test('excludes activeVersion when config is not present', async () => {
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-without-config',
+      registrationTitle: 'Extension Without Config',
+      config: undefined,
+      target: 'some-context',
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-without-config',
+      uuid: 'mock-uuid',
+      title: 'Extension Without Config',
+      type: 'ui_extension',
+      activeVersion: undefined,
+    })
+  })
+
+  test('includes only config when context is not present', async () => {
+    const configData = {name: 'Test Extension', enabled: false}
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-config-only',
+      registrationTitle: 'Extension With Config Only',
+      config: configData,
+      target: undefined,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-config-only',
+      uuid: 'mock-uuid',
+      title: 'Extension With Config Only',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+      },
+    })
+  })
+
+  test('handles empty config object correctly', async () => {
+    const configData = {}
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-empty-config',
+      registrationTitle: 'Extension With Empty Config',
+      config: configData,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-empty-config',
+      uuid: 'mock-uuid',
+      title: 'Extension With Empty Config',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+      },
+    })
+  })
 })
