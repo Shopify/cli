@@ -250,7 +250,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
-  getOutputFolderId(registrationUuid?: string | undefined) {
+  getOutputFolderId(registrationUuid?: string) {
     return this.configuration.uid ?? registrationUuid ?? this.handle
   }
 
