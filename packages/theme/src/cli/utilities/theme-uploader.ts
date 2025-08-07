@@ -7,12 +7,13 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Task} from '@shopify/cli-kit/node/ui'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 
 interface UploadOptions {
   nodelete?: boolean
   deferPartialWork?: boolean
   backgroundWorkCatch?: (error: Error) => never
+  multiEnvironment?: boolean
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -75,22 +76,35 @@ export function uploadTheme(
       if (options?.deferPartialWork) return
 
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
-      await renderTasksToStdErr(
-        createIntervalTask({
-          promise: uploadPromise,
-          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
-          timeout: 1000,
-        }),
-      )
+      if (options?.multiEnvironment) {
+        // Multi-environment mode: use simple output to avoid Ink conflicts
+        outputInfo('Uploading files to remote theme...')
+        await uploadPromise
+        outputInfo(`Uploaded files to remote theme ${getProgress(uploadProgress)}`)
 
-      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
-      await renderTasksToStdErr(
-        createIntervalTask({
-          promise: deletePromise,
-          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-          timeout: 1000,
-        }),
-      )
+        const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+        outputInfo('Cleaning your remote theme...')
+        await deletePromise
+        outputInfo(`Cleaned your remote theme ${getProgress(deleteProgress)}`)
+      } else {
+        // Single-environment mode: use existing Ink-based progress
+        await renderTasksToStdErr(
+          createIntervalTask({
+            promise: uploadPromise,
+            titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
+            timeout: 1000,
+          }),
+        )
+
+        const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+        await renderTasksToStdErr(
+          createIntervalTask({
+            promise: deletePromise,
+            titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
+            timeout: 1000,
+          }),
+        )
+      }
     },
   }
 }

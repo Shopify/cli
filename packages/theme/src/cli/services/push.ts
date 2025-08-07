@@ -32,6 +32,9 @@ interface PushOptions {
   ignore?: string[]
   only?: string[]
   environment?: string[]
+  multiEnvironment?: boolean
+  deferPartialWork?: boolean
+  backgroundWorkCatch?: (error: Error) => never
 }
 
 interface JsonOutput {
@@ -105,7 +108,7 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags, adminSession: AdminSession): Promise<void> {
+export async function push(flags: PushFlags & {multiEnvironment?: boolean}, adminSession: AdminSession): Promise<void> {
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -145,6 +148,7 @@ export async function push(flags: PushFlags, adminSession: AdminSession): Promis
     force,
     ignore: flags.ignore ?? [],
     only: flags.only ?? [],
+    multiEnvironment: flags.multiEnvironment ?? false,
   })
 }
 
@@ -159,13 +163,12 @@ async function executePush(theme: Theme, session: AdminSession, options: PushOpt
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
 
-  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
-    theme,
-    session,
-    themeChecksums,
-    themeFileSystem,
-    options,
-  )
+  const {uploadResults, renderThemeSyncProgress} = await uploadTheme(theme, session, themeChecksums, themeFileSystem, {
+    nodelete: options.nodelete,
+    deferPartialWork: options.deferPartialWork,
+    backgroundWorkCatch: options.backgroundWorkCatch,
+    multiEnvironment: options.multiEnvironment,
+  })
 
   await renderThemeSyncProgress()
 

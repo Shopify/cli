@@ -228,7 +228,9 @@ export default abstract class ThemeCommand extends Command {
         prefix: environment,
         action: async (stdout: Writable, stderr: Writable, _signal) => {
           try {
-            await this.command(flags, session, true, {stdout, stderr})
+            // Add multiEnvironment flag to indicate we're running in concurrent mode
+            const multiEnvFlags = {...flags, multiEnvironment: true}
+            await this.command(multiEnvFlags, session, true, {stdout, stderr})
 
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
