@@ -18,6 +18,22 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/tree-kill')
 
+const mocks = vi.hoisted(() => {
+  return {
+    useStdin: vi.fn(() => {
+      return {isRawModeSupported: true}
+    }),
+  }
+})
+
+vi.mock('@shopify/cli-kit/node/ink', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/ink')
+  return {
+    ...actual,
+    useStdin: mocks.useStdin,
+  }
+})
+
 let devSessionStatusManager: DevSessionStatusManager
 
 const initialStatus: DevSessionStatus = {
@@ -85,25 +101,28 @@ describe('DevSessionUI', () => {
 
     await frontendPromise
 
-    // Then
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │                   backend │ first backend message
-      00:00:00 │                   backend │ second backend message
-      00:00:00 │                   backend │ third backend message
-      00:00:00 │                  frontend │ first frontend message
-      00:00:00 │                  frontend │ second frontend message
-      00:00:00 │                  frontend │ third frontend message
+    // Then - check for key content without exact formatting
+    const output = unstyled(renderInstance.lastFrame()!)
 
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
+    // Process output should be visible
+    expect(output).toContain('backend │ first backend message')
+    expect(output).toContain('backend │ second backend message')
+    expect(output).toContain('backend │ third backend message')
+    expect(output).toContain('frontend │ first frontend message')
+    expect(output).toContain('frontend │ second frontend message')
+    expect(output).toContain('frontend │ third frontend message')
 
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
+    // Tab interface should be present
+    expect(output).toContain('(d) Dev status')
+    expect(output).toContain('(a) App info')
+    expect(output).toContain('(s) Store info')
+    expect(output).toContain('(q) Quit')
 
-      Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
-      "
-    `)
+    // Shortcuts and URLs should be visible
+    expect(output).toContain('(g) Open GraphiQL')
+    expect(output).toContain('(p) Preview in your browser')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
   })
@@ -225,22 +244,14 @@ describe('DevSessionUI', () => {
 
     await promise
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  A preview of your development changes is still available on                 │
-      │  mystore.myshopify.com.                                                      │
-      │                                                                              │
-      │  Run \`shopify app dev clean\` to restore the latest released version of your  │
-      │   app.                                                                       │
-      │                                                                              │
-      │  Learn more about app previews [0]                                           │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-      [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
-      "
-    `)
+    // Then - check final frame for key content without exact formatting
+    const finalOutput = unstyled(getLastFrameAfterUnmount(renderInstance)!)
+
+    // Info message should be present
+    expect(finalOutput).toContain('A preview of your development changes is still available')
+    expect(finalOutput).toContain('mystore.myshopify.com')
+    expect(finalOutput).toContain('shopify app dev clean')
+    expect(finalOutput).toContain('Learn more about app previews')
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -277,61 +288,53 @@ describe('DevSessionUI', () => {
 
     abortController.abort('something went wrong')
 
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │                   backend │ first backend message
-      00:00:00 │                   backend │ second backend message
-      00:00:00 │                   backend │ third backend message
+    // Then - check for key content without exact formatting
+    const output = unstyled(renderInstance.lastFrame()!)
 
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  A preview of your development changes is still available on                 │
-      │  mystore.myshopify.com.                                                      │
-      │                                                                              │
-      │  Run \`shopify app dev clean\` to restore the latest released version of your  │
-      │   app.                                                                       │
-      │                                                                              │
-      │  Learn more about app previews [0]                                           │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-      [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
+    // Process output should be visible
+    expect(output).toContain('backend │ first backend message')
+    expect(output).toContain('backend │ second backend message')
+    expect(output).toContain('backend │ third backend message')
 
+    // Info message should be present
+    expect(output).toContain('A preview of your development changes is still available')
+    expect(output).toContain('mystore.myshopify.com')
+    expect(output).toContain('shopify app dev clean')
+    expect(output).toContain('Learn more about app previews')
 
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
+    // Tab interface should be present
+    expect(output).toContain('(d) Dev status')
+    expect(output).toContain('(a) App info')
+    expect(output).toContain('(s) Store info')
+    expect(output).toContain('(q) Quit')
 
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
+    // Shortcuts and URLs should be visible
+    expect(output).toContain('(g) Open GraphiQL')
+    expect(output).toContain('(p) Preview in your browser')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
-      Preview URL: https://shopify.com
-      GraphiQL URL: https://graphiql.shopify.com
-
-
-      something went wrong"
-    `)
+    // Error message should be shown
+    expect(output).toContain('something went wrong')
 
     await promise
 
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │                   backend │ first backend message
-      00:00:00 │                   backend │ second backend message
-      00:00:00 │                   backend │ third backend message
+    // Then - check final frame for key content without exact formatting
+    const finalOutput = unstyled(getLastFrameAfterUnmount(renderInstance)!)
 
-      ╭─ info ───────────────────────────────────────────────────────────────────────╮
-      │                                                                              │
-      │  A preview of your development changes is still available on                 │
-      │  mystore.myshopify.com.                                                      │
-      │                                                                              │
-      │  Run \`shopify app dev clean\` to restore the latest released version of your  │
-      │   app.                                                                       │
-      │                                                                              │
-      │  Learn more about app previews [0]                                           │
-      │                                                                              │
-      ╰──────────────────────────────────────────────────────────────────────────────╯
-      [0] https://shopify.dev/beta/developer-dashboard/shopify-app-dev
+    // Process output should be visible
+    expect(finalOutput).toContain('backend │ first backend message')
+    expect(finalOutput).toContain('backend │ second backend message')
+    expect(finalOutput).toContain('backend │ third backend message')
 
+    // Info message should be present
+    expect(finalOutput).toContain('A preview of your development changes is still available')
+    expect(finalOutput).toContain('mystore.myshopify.com')
+    expect(finalOutput).toContain('shopify app dev clean')
+    expect(finalOutput).toContain('Learn more about app previews')
 
-      something went wrong"
-    `)
+    // Error message should be shown
+    expect(finalOutput).toContain('something went wrong')
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -364,7 +367,7 @@ describe('DevSessionUI', () => {
       graphiqlURL: 'https://new-graphiql.shopify.com',
     })
 
-    await waitForContent(renderInstance, 'preview in your browser')
+    await waitForContent(renderInstance, 'Preview in your browser')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://new-preview-url.shopify.com')
@@ -389,8 +392,8 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Press p')
-    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Press g')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('(p)')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('(g)')
     expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Preview URL')
     expect(unstyled(renderInstance.lastFrame()!)).not.toContain('GraphiQL URL')
 
@@ -400,8 +403,8 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // Then
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('Press p')
-    expect(unstyled(renderInstance.lastFrame()!)).toContain('Press g')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('(p)')
+    expect(unstyled(renderInstance.lastFrame()!)).toContain('(g)')
     expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://shopify.com')
     expect(unstyled(renderInstance.lastFrame()!)).toContain('GraphiQL URL: https://graphiql.shopify.com')
     renderInstance.unmount()
@@ -435,5 +438,64 @@ describe('DevSessionUI', () => {
     expect(abort).toHaveBeenCalledWith(new Error('Test error'))
 
     renderInstance.unmount()
+  })
+
+  test('shows app info when a is pressed', async () => {
+    // Given
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appURL="https://my-app.ngrok.io"
+        appName="My Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // When
+    await sendInputAndWait(renderInstance, 100, 'a')
+
+    // Then - info tab should be shown with app data
+    const output = renderInstance.lastFrame()!
+    expect(output).toContain('My Test App')
+    expect(output).toContain('https://my-app.ngrok.io')
+    expect(output).not.toContain('mystore.myshopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('shows non-interactive fallback when raw mode is not supported', async () => {
+    // Given - mock useStdin to return false for isRawModeSupported
+    mocks.useStdin.mockReturnValue({isRawModeSupported: false})
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        appName="Test App"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - should show Dev status tab content without interactive tabs
+    const output = renderInstance.lastFrame()!
+    expect(output).not.toContain('(d) Dev status')
+    expect(output).not.toContain('(a) App info')
+    expect(output).not.toContain('(q) Quit')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+
+    // Restore original mock for other tests
+    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
   })
 })

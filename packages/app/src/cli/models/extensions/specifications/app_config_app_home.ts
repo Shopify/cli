@@ -28,6 +28,9 @@ const appHomeSpec = createConfigExtensionSpecification({
   patchWithAppDevURLs: (config, urls) => {
     config.application_url = urls.applicationUrl
   },
+  getDevSessionUpdateMessages: async (config) => {
+    return [`Using URL: ${config.application_url}`]
+  },
 })
 
 export default appHomeSpec
