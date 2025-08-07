@@ -46,7 +46,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Copy completed',
+      headline: 'Copy completed.',
       body: ['Base message'],
       nextSteps: undefined,
     })
@@ -92,7 +92,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Copy completed',
+      headline: 'Copy completed.',
       body: ['Base message'],
       nextSteps: [['Download', {link: {label: 'result data', url: 'https://example.com/results'}}]],
     })
@@ -137,7 +137,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation)
 
     expect(renderWarning).toHaveBeenCalledWith({
-      headline: 'Copy completed with errors',
+      headline: 'Copy completed with errors.',
       body: ['Base message'],
       nextSteps: undefined,
     })
@@ -183,7 +183,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation)
 
     expect(renderWarning).toHaveBeenCalledWith({
-      headline: 'Copy completed with errors',
+      headline: 'Copy completed with errors.',
       body: ['Base message'],
       nextSteps: [['Download', {link: {label: 'result data', url: 'https://example.com/results'}}]],
     })
@@ -241,7 +241,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation, targetShop.domain)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Copy completed',
+      headline: 'Copy completed.',
       body: ['Base message'],
       nextSteps: [
         ['View', {link: {label: 'target shop', url: 'https://target-shop.myshopify.com'}}],
@@ -301,7 +301,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation, targetShop.domain)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Copy completed',
+      headline: 'Copy completed.',
       body: ['Base message'],
       nextSteps: [
         ['View', {link: {label: 'target shop', url: 'https://target-shop.myshopify.com'}}],
@@ -361,7 +361,7 @@ describe('renderOperationResult', () => {
     renderOperationResult([...baseMsg], operation, targetShop.domain)
 
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Copy completed',
+      headline: 'Copy completed.',
       body: ['Base message'],
       nextSteps: [['Download', {link: {label: 'result data', url: 'https://example.com/results'}}]],
     })
