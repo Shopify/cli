@@ -76,7 +76,7 @@ function isARetryableNetworkError(error: unknown): boolean {
       'ECONNABORTED',
       'ENOTFOUND',
       'ENETUNREACH',
-      'network socket disonnected',
+      'network socket disconnected',
       'ETIMEDOUT',
       'ECONNREFUSED',
       'EAI_FAIL',
