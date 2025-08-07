@@ -28,7 +28,7 @@ const mockedResult = {
 }
 
 const token = 'token'
-const Session: AdminSession = {token, storeFqdn: 'store'}
+const Session: AdminSession = {token, storeFqdn: 'store.myshopify.com'}
 
 describe('admin-graphql-api', () => {
   test('calls the graphql client twice: get api version and then execute the request', async () => {
@@ -83,7 +83,7 @@ describe('admin-graphql-api', () => {
       api: 'Admin',
       addedHeaders: {
         'X-Shopify-Access-Token': 'shptka_token',
-        'X-Shopify-Shop': 'store',
+        'X-Shopify-Shop': 'store.myshopify.com',
       },
       url: `https://${defaultThemeKitAccessDomain}/cli/admin/api/2022-01/graphql.json`,
       token: themeAccessToken,
@@ -131,7 +131,7 @@ describe('admin-rest-api', () => {
     await admin.restRequest('GET', '/themes', Session)
 
     // Then
-    expect(spyFetch).toHaveBeenLastCalledWith('https://store/admin/api/unstable/themes.json', {
+    expect(spyFetch).toHaveBeenLastCalledWith('https://store.myshopify.com/admin/api/unstable/themes.json', {
       headers,
       method: 'GET',
     })
@@ -164,7 +164,7 @@ describe('admin-rest-api', () => {
         headers: {
           'Content-Type': 'application/json',
           'X-Shopify-Access-Token': 'shptka_token',
-          'X-Shopify-Shop': 'store',
+          'X-Shopify-Shop': 'store.myshopify.com',
         },
         method: 'GET',
       },
