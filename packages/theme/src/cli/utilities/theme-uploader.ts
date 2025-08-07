@@ -30,7 +30,26 @@ type FileBatch = ChecksumWithSize[]
 export const MAX_BATCH_FILE_COUNT = 20
 // 1MB
 export const MAX_BATCH_BYTESIZE = 1024 * 1024
-export const MAX_UPLOAD_RETRY_COUNT = 2
+export const MAX_UPLOAD_RETRY_COUNT = 5
+
+// Adaptive batch sizing configuration
+export const ADAPTIVE_BATCH_CONFIG = {
+  MIN_BATCH_SIZE: 5,
+  MAX_BATCH_SIZE: 30,
+  INITIAL_BATCH_SIZE: 15,
+  // Increase batch size by 25% on success
+  SUCCESS_MULTIPLIER: 1.25,
+  // Decrease batch size by 50% on failure
+  FAILURE_MULTIPLIER: 0.5,
+}
+
+// Parallel upload configuration
+export const PARALLEL_UPLOAD_CONFIG = {
+  // Maximum concurrent upload batches
+  MAX_CONCURRENT_BATCHES: 5,
+  // Delay between batch starts (ms) to avoid overwhelming the server
+  BATCH_START_DELAY: 100,
+}
 
 export function uploadTheme(
   theme: Theme,
@@ -244,16 +263,31 @@ function buildUploadJob(
 
   const progress = {current: 0, total: filesToUpload.length}
 
-  const uploadFileBatches = (fileType: ChecksumWithSize[]) => {
+  const uploadFileBatches = async (fileType: ChecksumWithSize[]) => {
     if (fileType.length === 0) return Promise.resolve()
-    return Promise.all(
-      createBatches(fileType).map((batch) =>
-        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+
+    const batches = createBatches(fileType)
+
+    // Process batches with controlled concurrency
+    for (let i = 0; i < batches.length; i += PARALLEL_UPLOAD_CONFIG.MAX_CONCURRENT_BATCHES) {
+      const concurrentBatches = batches.slice(i, i + PARALLEL_UPLOAD_CONFIG.MAX_CONCURRENT_BATCHES)
+
+      const batchPromises = concurrentBatches.map(async (batch, index) => {
+        // Add small delay between batch starts to avoid overwhelming the server
+        if (index > 0) {
+          await new Promise((resolve) => setTimeout(resolve, PARALLEL_UPLOAD_CONFIG.BATCH_START_DELAY * index))
+        }
+
+        return uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
           progress.current += batch.length
           batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
-        }),
-      ),
-    ).then(() => {})
+        })
+      })
+
+      // Wait for current set of concurrent batches to complete before starting next set
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.all(batchPromises)
+    }
   }
 
   const dependentFilesUploadPromise = dependentFiles.reduce(
@@ -326,13 +360,19 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
   }
 }
 
-function createBatches<T extends {size: number}>(files: T[]): T[][] {
+// Track batch size adaptation
+let currentAdaptiveBatchSize = ADAPTIVE_BATCH_CONFIG.INITIAL_BATCH_SIZE
+
+function createBatches<T extends {size: number}>(files: T[], useAdaptiveSizing = true): T[][] {
   const batches: T[][] = []
   let currentBatch: T[] = []
   let currentBatchSize = 0
 
+  // Use adaptive batch size or fall back to default
+  const maxFileCount = useAdaptiveSizing ? currentAdaptiveBatchSize : MAX_BATCH_FILE_COUNT
+
   for (const file of files) {
-    const hasEnoughItems = currentBatch.length >= MAX_BATCH_FILE_COUNT
+    const hasEnoughItems = currentBatch.length >= maxFileCount
     const hasEnoughByteSize = currentBatchSize >= MAX_BATCH_BYTESIZE
 
     if (hasEnoughItems || hasEnoughByteSize) {
@@ -352,16 +392,61 @@ function createBatches<T extends {size: number}>(files: T[]): T[][] {
   return batches
 }
 
+// Adjust batch size based on upload success/failure
+function adjustAdaptiveBatchSize(success: boolean) {
+  if (success) {
+    currentAdaptiveBatchSize = Math.min(
+      Math.floor(currentAdaptiveBatchSize * ADAPTIVE_BATCH_CONFIG.SUCCESS_MULTIPLIER),
+      ADAPTIVE_BATCH_CONFIG.MAX_BATCH_SIZE,
+    )
+    outputDebug(`Batch size increased to ${currentAdaptiveBatchSize} after successful upload`)
+  } else {
+    currentAdaptiveBatchSize = Math.max(
+      Math.floor(currentAdaptiveBatchSize * ADAPTIVE_BATCH_CONFIG.FAILURE_MULTIPLIER),
+      ADAPTIVE_BATCH_CONFIG.MIN_BATCH_SIZE,
+    )
+    outputDebug(`Batch size decreased to ${currentAdaptiveBatchSize} after failed upload`)
+  }
+}
+
+// Cache for checksums to avoid recalculation
+const checksumCache = new Map<string, {checksum: string; mtime?: number}>()
+
 function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): ChecksumWithSize[] {
   const checksums: ChecksumWithSize[] = []
 
   localThemeFileSystem.files.forEach((file, key) => {
+    // Check if we can use cached checksum
+    const cached = checksumCache.get(key)
+    const currentMtime = file.stats?.mtime
+
+    let checksum = file.checksum
+
+    // Use cached checksum if file hasn't been modified
+    if (cached && currentMtime && cached.mtime === currentMtime) {
+      checksum = cached.checksum
+      outputDebug(`Using cached checksum for ${key}`)
+    } else {
+      // Update cache with new checksum
+      checksumCache.set(key, {
+        checksum: file.checksum,
+        mtime: currentMtime,
+      })
+    }
+
     checksums.push({
       key,
-      checksum: file.checksum,
+      checksum,
       size: file.stats?.size ?? 0,
     })
   })
+
+  // Clean up cache for deleted files
+  for (const key of checksumCache.keys()) {
+    if (!localThemeFileSystem.files.has(key)) {
+      checksumCache.delete(key)
+    }
+  }
 
   return checksums
 }
@@ -382,8 +467,17 @@ async function uploadBatch(
       ...(attachment && {attachment}),
     }
   })
-  outputDebug(`Uploading the following files:\n${batch.map((file) => `-${file.key}`).join('\n')}`)
+  outputDebug(
+    `Uploading batch of ${batch.length} files (adaptive size: ${currentAdaptiveBatchSize}):\n${batch
+      .map((file) => `-${file.key}`)
+      .join('\n')}`,
+  )
   const results = await handleBulkUpload(uploadParams, themeId, session)
+
+  // Track batch success for adaptive sizing
+  const batchSuccess = results.every((result) => result.success)
+  adjustAdaptiveBatchSize(batchSuccess)
+
   // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
     uploadResults.set(result.key, result)
@@ -420,7 +514,14 @@ async function handleBulkUpload(
   const results = await bulkUploadThemeAssets(themeId, uploadParams, session)
   outputDebug(
     `File Upload Results:\n${results
-      .map((result) => `-${result.key}: ${result.success ? 'success' : 'failure'}`)
+      .map((result) => {
+        if (result.success) {
+          return `-${result.key}: success`
+        } else {
+          const errorDetails = result.errors?.asset?.join(', ') || 'unknown error'
+          return `-${result.key}: failure (${errorDetails})`
+        }
+      })
       .join('\n')}`,
   )
 
@@ -447,8 +548,10 @@ async function handleFailedUploads(
 
   if (count === MAX_UPLOAD_RETRY_COUNT) {
     outputDebug(
-      `Max retry count reached for the following files:\n${failedUploadParams
+      `Max retry count (${MAX_UPLOAD_RETRY_COUNT}) reached for the following files:\n${failedUploadParams
         .map((param) => `-${param.key}`)
+        .join('\n')}\nError details:\n${failedUploadResults
+        .map((result) => `- ${result.key}: ${result.errors?.asset?.join(', ') || 'unknown error'}`)
         .join('\n')}`,
     )
     return failedUploadResults

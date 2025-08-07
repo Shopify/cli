@@ -5,9 +5,11 @@ import {uploadTheme} from '../utilities/theme-uploader.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {runThemeCheck} from '../commands/theme/check.js'
+import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
+import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
-import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate, fetchTheme, themePublish, fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {
   DEVELOPMENT_THEME_ROLE,
@@ -15,7 +17,7 @@ import {
   promptThemeName,
   UNPUBLISHED_THEME_ROLE,
 } from '@shopify/cli-kit/node/themes/utils'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -23,6 +25,11 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-selector.js')
+vi.mock('../utilities/theme-fs.js')
+vi.mock('../utilities/theme-ui.js', () => ({
+  ensureDirectoryConfirmed: vi.fn(),
+  themeComponent: vi.fn((theme) => [`'${theme.name}'`, {subdued: `(#${theme.id})`}]),
+}))
 vi.mock('./local-storage.js')
 vi.mock('@shopify/cli-kit/node/themes/utils')
 vi.mock('@shopify/cli-kit/node/session')
@@ -53,6 +60,12 @@ describe('push', () => {
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
     vi.mocked(outputResult).mockReturnValue()
+    vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+    vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
+    vi.mocked(fetchChecksums).mockResolvedValue([])
+    vi.mocked(renderSuccess).mockImplementation(() => undefined)
+    vi.mocked(renderWarning).mockImplementation(() => undefined)
+    vi.mocked(themeComponent).mockImplementation((theme) => [`'${theme.name}'`, {subdued: `(#${theme.id})`}])
   })
 
   test('should call themePublish if publish flag is provided', async () => {
@@ -238,6 +251,256 @@ describe('push', () => {
       // When/Then
       await push({...defaultFlags, strict: true, json: true})
       expect(runThemeCheck).toHaveBeenCalledWith(path, 'json')
+    })
+  })
+
+  describe('network resilience', () => {
+    test('handles network errors with retries', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('assets/theme.css', {
+        success: false,
+        errors: {
+          asset: ['Network error: ECONNRESET'],
+        },
+      })
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(renderWarning).toHaveBeenCalled()
+    })
+
+    test('handles multiple retry attempts for uploads', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('templates/index.liquid', {
+        success: false,
+        errors: {
+          asset: ['Failed after 5 retry attempts'],
+        },
+      })
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push({...defaultFlags, json: true})
+
+      // Then
+      expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"errors"'))
+    })
+
+    test('handles EPIPE network errors', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('config/settings_data.json', {
+        success: false,
+        errors: {
+          asset: ['Network error: EPIPE - Broken pipe'],
+        },
+      })
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(uploadTheme).toHaveBeenCalled()
+    })
+
+    test('handles EHOSTUNREACH network errors', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('assets/app.js', {
+        success: false,
+        errors: {
+          asset: ['Network error: EHOSTUNREACH - No route to host'],
+        },
+      })
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(renderWarning).toHaveBeenCalled()
+    })
+  })
+
+  describe('directory validation', () => {
+    test('skips push when directory does not have required theme directories and not forced', async () => {
+      // Given
+      vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(false)
+      vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(false)
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(uploadTheme).not.toHaveBeenCalled()
+    })
+
+    test('continues push when directory does not have required theme directories but is forced', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+      vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(false)
+      vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
+
+      // When
+      await push({...defaultFlags, force: true})
+
+      // Then
+      expect(uploadTheme).toHaveBeenCalled()
+    })
+
+    test('continues push when directory has required theme directories', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+      vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(uploadTheme).toHaveBeenCalled()
+    })
+  })
+
+  describe('output handling', () => {
+    test('renders success message when push completes without errors', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('assets/theme.css', {success: true})
+      uploadResults.set('layout/theme.liquid', {success: true})
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(renderSuccess).toHaveBeenCalled()
+      expect(renderWarning).not.toHaveBeenCalled()
+    })
+
+    test('renders warning message when push completes with errors', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('assets/theme.css', {
+        success: false,
+        errors: {asset: ['Error message']},
+      })
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push(defaultFlags)
+
+      // Then
+      expect(renderWarning).toHaveBeenCalled()
+      expect(renderSuccess).not.toHaveBeenCalled()
+    })
+
+    test('renders appropriate message when publish flag is set with errors', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('assets/theme.css', {
+        success: false,
+        errors: {asset: ['Error message']},
+      })
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push({...defaultFlags, publish: true})
+
+      // Then
+      expect(renderWarning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.stringContaining('published with errors'),
+        }),
+      )
+    })
+
+    test('renders success message when publish completes without errors', async () => {
+      // Given
+      const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+      vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+
+      const uploadResults = new Map()
+      uploadResults.set('assets/theme.css', {success: true})
+
+      vi.mocked(uploadTheme).mockResolvedValue({
+        workPromise: Promise.resolve(),
+        uploadResults,
+        renderThemeSyncProgress: () => Promise.resolve(),
+      })
+
+      // When
+      await push({...defaultFlags, publish: true})
+
+      // Then
+      expect(renderSuccess).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: expect.stringContaining('now live'),
+        }),
+      )
     })
   })
 })

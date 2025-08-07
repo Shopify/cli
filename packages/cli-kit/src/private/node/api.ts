@@ -76,11 +76,15 @@ function isARetryableNetworkError(error: unknown): boolean {
       'ECONNABORTED',
       'ENOTFOUND',
       'ENETUNREACH',
-      'network socket disonnected',
+      'network socket disconnected',
       'ETIMEDOUT',
       'ECONNREFUSED',
       'EAI_FAIL',
       'The operation was aborted.',
+      'EPIPE',
+      'EHOSTUNREACH',
+      'EHOSTDOWN',
+      'ENETRESET',
     ]
     const anyMatches = networkErrorMessages.some((issueMessage) => error.message.includes(issueMessage))
     return anyMatches
