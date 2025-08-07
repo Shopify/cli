@@ -251,6 +251,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   getOutputFolderId(registrationUuid?: string) {
+    // We want to return the UID only for Dev Dashboard apps,
+    // that's why we take it from the configuration
     return this.configuration.uid ?? registrationUuid ?? this.handle
   }
 
