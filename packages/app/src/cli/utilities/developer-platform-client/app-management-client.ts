@@ -573,7 +573,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
         uuid: mod.registrationUuid!,
         title: mod.registrationTitle,
         type: mod.type,
-        activeVersion: mod.config ? {config: JSON.stringify(mod.config)} : undefined,
+        activeVersion: mod.config
+          ? {
+              config: JSON.stringify(mod.config),
+              ...(mod.target && {context: mod.target}),
+            }
+          : undefined,
       }
       if (CONFIG_EXTENSION_IDS.includes(registration.id)) {
         configurationRegistrations.push(registration)
@@ -1334,6 +1339,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
     registrationTitle: mod.handle,
     type: mod.specification.externalIdentifier,
     config: mod.config,
+    target: mod.target ?? '',
     specification: {
       ...mod.specification,
       identifier: mod.specification.identifier,

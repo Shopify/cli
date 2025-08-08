@@ -17,6 +17,7 @@ export type AppVersionByIdQuery = {
       userIdentifier: string
       handle: string
       config: JsonMapType
+      target?: string | null
       specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
     }[]
   }
@@ -30,6 +31,7 @@ export type VersionInfoFragment = {
     userIdentifier: string
     handle: string
     config: JsonMapType
+    target?: string | null
     specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
   }[]
 }
@@ -78,6 +80,7 @@ export const VersionInfoFragmentDoc = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -145,6 +148,7 @@ export const AppVersionById = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},

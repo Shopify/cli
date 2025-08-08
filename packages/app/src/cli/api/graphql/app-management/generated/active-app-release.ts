@@ -23,6 +23,7 @@ export type ActiveAppReleaseQuery = {
           userIdentifier: string
           handle: string
           config: JsonMapType
+          target?: string | null
           specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
         }[]
       }
@@ -44,6 +45,7 @@ export type AppVersionInfoFragment = {
         userIdentifier: string
         handle: string
         config: JsonMapType
+        target?: string | null
         specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
       }[]
     }
@@ -55,6 +57,7 @@ export type ReleasedAppModuleFragment = {
   userIdentifier: string
   handle: string
   config: JsonMapType
+  target?: string | null
   specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
 }
 
@@ -72,6 +75,7 @@ export const ReleasedAppModuleFragmentDoc = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -171,6 +175,7 @@ export const AppVersionInfoFragmentDoc = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -238,6 +243,7 @@ export const ActiveAppRelease = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
