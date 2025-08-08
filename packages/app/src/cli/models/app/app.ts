@@ -80,7 +80,6 @@ function fixSingleWildcards(value: string[] | undefined) {
  */
 export const AppSchema = zod.object({
   client_id: zod.string(),
-  organization_id: zod.string().optional(),
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -208,7 +207,7 @@ export function appHiddenConfigPath(appDirectory: string) {
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */
 export function filterNonVersionedAppFields(configuration: object): string[] {
-  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path')
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path', 'organization_id')
   return Object.keys(configuration).filter((fieldName) => {
     return !builtInFieldNames.includes(fieldName)
   })
@@ -406,11 +405,6 @@ export class App<
     )
   }
 
-  get appManagementApiEnabled() {
-    if (isLegacyAppSchema(this.configuration)) return false
-    return this.configuration.organization_id !== undefined
-  }
-
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {
     this.patchAppConfiguration(devApplicationURLs)
     this.realExtensions.forEach((ext) => ext.patchWithAppDevURLs(devApplicationURLs))
@@ -552,8 +546,7 @@ export class App<
 
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
-    if (this.appManagementApiEnabled) return true
-    return this.configuration.build?.include_config_on_deploy
+    return this.configuration.build?.include_config_on_deploy ?? true
   }
 
   private patchAppConfiguration(devApplicationURLs: ApplicationURLs) {

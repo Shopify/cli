@@ -43,8 +43,7 @@ import {
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
-import {AppConfiguration, AppManifest, isCurrentAppSchema} from '../models/app/app.js'
-import {loadAppConfiguration} from '../models/app/loader.js'
+import {AppManifest} from '../models/app/app.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -72,7 +71,6 @@ export type Paginateable<T> = T & {
 }
 
 interface SelectDeveloperPlatformClientOptions {
-  configuration?: AppConfiguration | undefined
   organization?: Organization
 }
 
@@ -83,62 +81,25 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = []
+
+  clients.push(new AppManagementClient())
+
   if (!blockPartnersAccess()) {
     clients.push(new PartnersClient())
   }
 
-  clients.push(new AppManagementClient())
   return clients
 }
 
-/**
- * Attempts to load an app's configuration in order to select a developer platform client.
- *
- * The provided options are a subset of what is common across most services.
- *
- * @param directory - The working directory for this command (possibly via `--path`)
- * @param configName - An optional configuration file name to force, provided by the developer
- * @param developerPlatformClient - An optional developer platform client to use, forced by the developer
- */
-export async function sniffServiceOptionsAndAppConfigToSelectPlatformClient(options: {
-  directory: string
-  configName?: string
-  developerPlatformClient?: DeveloperPlatformClient
-}): Promise<DeveloperPlatformClient> {
-  if (options.developerPlatformClient) {
-    return options.developerPlatformClient
-  }
-  try {
-    const {configuration} = await loadAppConfiguration({
-      ...options,
-      userProvidedConfigName: options.configName,
-    })
-    const developerPlatformClient = selectDeveloperPlatformClient({configuration})
-    return developerPlatformClient
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    // If the app is invalid, we really don't care at this point. This function is purely responsible for selecting
-    // a client.
-    return new PartnersClient()
-  }
-}
-
 export function selectDeveloperPlatformClient({
-  configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return selectDeveloperPlatformClientByConfig(configuration)
+  return new PartnersClient()
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
   if (organization.source === OrganizationSource.BusinessPlatform) return new AppManagementClient()
-  return new PartnersClient()
-}
-
-function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
-  if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
-    return new AppManagementClient()
   return new PartnersClient()
 }
 

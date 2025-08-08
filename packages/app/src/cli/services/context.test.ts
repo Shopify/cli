@@ -30,7 +30,11 @@ import metadata from '../metadata.js'
 import {AppConfigurationStateLinked, getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
-import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {
+  allDeveloperPlatformClients,
+  DeveloperPlatformClient,
+  selectDeveloperPlatformClient,
+} from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -184,91 +188,7 @@ afterEach(() => {
 })
 
 describe('ensureDeployContext', () => {
-  test('prompts the user to include the configuration and persist the flag if the flag is not present', async () => {
-    // Given
-    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(getAppIdentifiers).mockReturnValue({app: undefined})
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-
-    const setAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'setAppConfigValue').mockResolvedValue()
-    const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
-
-    // When
-    await ensureDeployContext(deployOptions(app))
-
-    // Then
-    expect(metadataSpyOn).toHaveBeenNthCalledWith(1, expect.any(Function))
-    expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({cmd_deploy_confirm_include_config_used: true})
-
-    expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy', true)
-    expect(renderInfo).toHaveBeenCalledWith({
-      body: [
-        {
-          list: {
-            items: ['Org:             org1', 'App:             app2'],
-          },
-        },
-        '\n',
-        'You can pass',
-        {
-          command: '--reset',
-        },
-        'to your command to reset your app configuration.',
-      ],
-      headline: 'Using shopify.app.toml for default values:',
-    })
-    setAppConfigValueSpy.mockRestore()
-  })
-
-  test('prompts the user to include the configuration and set it to false when not confirmed if the flag is not present', async () => {
-    // Given
-    const app = testAppWithConfig({config: {client_id: APP2.apiKey}})
-    const identifiers = {
-      app: APP2.apiKey,
-      extensions: {},
-      extensionIds: {},
-      extensionsNonUuidManaged: {},
-    }
-    vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
-    vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
-    vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const setAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'setAppConfigValue').mockResolvedValue()
-
-    // When
-    await ensureDeployContext(deployOptions(app))
-
-    // Then
-    expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy', false)
-    expect(renderInfo).toHaveBeenCalledWith({
-      body: [
-        {
-          list: {
-            items: ['Org:             org1', 'App:             app2'],
-          },
-        },
-        '\n',
-        'You can pass',
-        {
-          command: '--reset',
-        },
-        'to your command to reset your app configuration.',
-      ],
-      headline: 'Using shopify.app.toml for default values:',
-    })
-    setAppConfigValueSpy.mockRestore()
-  })
-
-  test('prompts the user to include the configuration if the flag is false', async () => {
+  test('prompts the user to include the configuration if the flag is false and current config is false', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: false}}})
     const identifiers = {
@@ -316,7 +236,7 @@ describe('ensureDeployContext', () => {
     setAppConfigValueSpy.mockRestore()
   })
 
-  test('doesnt prompt the user to include the configuration and display the current value if the flag is true', async () => {
+  test('doesnt prompt the user to include the configuration and display the current value if the config is true', async () => {
     // Given
     const app = testAppWithConfig({config: {client_id: APP2.apiKey, build: {include_config_on_deploy: true}}})
     const identifiers = {
@@ -437,7 +357,7 @@ describe('ensureDeployContext', () => {
       body: [
         {
           list: {
-            items: ['Org:             org1', 'App:             app2', 'Include config:  No'],
+            items: ['Org:             org1', 'App:             app2', 'Include config:  Yes'],
           },
         },
         '\n',
@@ -736,18 +656,20 @@ describe('appFromIdentifiers', () => {
   test('renders the org name when an app cannot be found and the account is a service account ', async () => {
     vi.mocked(isServiceAccount).mockReturnValue(true)
 
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromIdentifiers: () => Promise.resolve(undefined),
+      accountInfo: () =>
+        Promise.resolve({
+          type: 'ServiceAccount',
+          orgName: 'My Test Org',
+        }),
+    })
+
+    vi.mocked(allDeveloperPlatformClients).mockReturnValue([developerPlatformClient])
+
     await expect(
       appFromIdentifiers({
         apiKey: 'apiKey-12345',
-        developerPlatformClient: testDeveloperPlatformClient({
-          appFromIdentifiers: () => Promise.resolve(undefined),
-          accountInfo: () =>
-            Promise.resolve({
-              type: 'ServiceAccount',
-              orgName: 'My Test Org',
-            }),
-        }),
-        organizationId: 'orgId',
       }),
     ).rejects.toThrowError(
       expect.objectContaining({
@@ -760,18 +682,20 @@ describe('appFromIdentifiers', () => {
   test('renders the user email when an app cannot be found and the account is a user account ', async () => {
     vi.mocked(isUserAccount).mockReturnValue(true)
 
+    const developerPlatformClient = testDeveloperPlatformClient({
+      appFromIdentifiers: () => Promise.resolve(undefined),
+      accountInfo: () =>
+        Promise.resolve({
+          type: 'UserAccount',
+          email: 'user@example.com',
+        }),
+    })
+
+    vi.mocked(allDeveloperPlatformClients).mockReturnValue([developerPlatformClient])
+
     await expect(
       appFromIdentifiers({
         apiKey: 'apiKey-12345',
-        developerPlatformClient: testDeveloperPlatformClient({
-          appFromIdentifiers: () => Promise.resolve(undefined),
-          accountInfo: () =>
-            Promise.resolve({
-              type: 'UserAccount',
-              email: 'user@example.com',
-            }),
-        }),
-        organizationId: 'orgId',
       }),
     ).rejects.toThrowError(
       expect.objectContaining({
