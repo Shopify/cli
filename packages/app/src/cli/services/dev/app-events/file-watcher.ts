@@ -6,9 +6,10 @@ import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
-import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, matchGlob, readFileSync, glob} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ignore from 'ignore'
+import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
 import {Writable} from 'stream'
 
 const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
@@ -86,6 +87,11 @@ export class FileWatcher {
 
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
+    // Scan for imports in the watched paths
+    const importedPaths = await this.scanDirectoriesForImports(fullExtensionDirectories)
+    console.log('Imported paths to watch: ', importedPaths)
+    watchPaths.push(...importedPaths)
+
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
         '**/node_modules/**',
@@ -112,6 +118,49 @@ export class FileWatcher {
     this.extensionPaths.forEach((path) => {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
+  }
+
+  /**
+   * Scans directories for imports before starting the watcher
+   */
+  private async scanDirectoriesForImports(directories: string[]): Promise<string[]> {
+    const supportedExtensions = ['.js', '.ts', '.jsx', '.tsx', '.mjs', '.cjs', '.rs']
+
+    // Find all source files in the directories
+    const patterns = directories.flatMap((dir) => supportedExtensions.map((ext) => joinPath(dir, `**/*${ext}`)))
+
+    const files = await glob(patterns, {
+      ignore: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/*.test.*',
+        '**/dist/**',
+        '**/generated/**',
+        '**/.turbo/**',
+        '**/coverage/**',
+      ],
+      absolute: true,
+      onlyFiles: true,
+    })
+
+    outputDebug(`Scanning ${files.length} source files for imports...`)
+
+    // Extract imports from all files in parallel
+    const importPromises = files.map((file: string) => {
+      return extractImportPaths(file)
+    })
+    const allImports = await Promise.all(importPromises)
+    const uniqueImports = [...new Set(allImports.flat())]
+
+    // Filter out paths that are already in the watch list
+    const newImports = uniqueImports.filter((path) => {
+      const normalizedPath = normalizePath(path)
+      return !directories.some((dir) => isSubpath(normalizePath(dir), normalizedPath))
+    })
+
+    outputDebug(`Found ${newImports.length} imported files to watch`)
+
+    return newImports
   }
 
   /**
