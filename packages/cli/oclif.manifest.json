@@ -597,8 +597,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n\n  It's valid only for apps created on the Next-Gen Dev Platform.\n  ",
-      "descriptionWithMarkdown": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n\n  It's valid only for apps created on the Next-Gen Dev Platform.\n  ",
+      "description": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
+      "descriptionWithMarkdown": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
