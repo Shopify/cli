@@ -24,17 +24,16 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           shallow: true,
         })
         await removeGitRemote(destination)
-        await removeSkeletonGitHubFolder(destination)
+        await removeDirectory(joinPath(destination, '.github'))
+        await removeDirectory(joinPath(destination, '.git'))
       },
     },
   ])
 }
 
-async function removeSkeletonGitHubFolder(destination: string) {
-  const githubDir = joinPath(destination, '.github')
-
-  if (await fileExists(githubDir)) {
-    await rmdir(githubDir)
+async function removeDirectory(path: string) {
+  if (await fileExists(path)) {
+    await rmdir(path)
   }
 }
 
