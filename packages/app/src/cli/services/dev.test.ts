@@ -130,6 +130,6 @@ describe('blockIfMigrationIncomplete', () => {
       developerPlatformClient,
     } as any
 
-    await expect(blockIfMigrationIncomplete(devConfig)).rejects.toThrow(/need to be migrated/)
+    await expect(blockIfMigrationIncomplete(devConfig)).rejects.toThrow(/need to be assigned uid identifiers/)
   })
 })

@@ -242,8 +242,14 @@ export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
   const remoteExtensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app
     .extensionRegistrations
   if (developerPlatformClient.supportsDevSessions && !remoteExtensions.every((extension) => extension.id)) {
-    const message = [`Your app includes extensions that need to be migrated to the Next-Gen Dev Platform.`]
-    const nextSteps = ['Run', {command: 'shopify app deploy'}, 'to finish the migration.']
+    const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']
+    const nextSteps = [
+      'You must first map IDs to your existing extensions by running',
+      {command: 'shopify app deploy'},
+      'interactively, without',
+      {command: '--force'},
+      'to finish the migration.',
+    ]
     throw new AbortError(message, nextSteps)
   }
 }
