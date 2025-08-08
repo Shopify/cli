@@ -138,7 +138,10 @@ async function findFunctionRun(
 
 async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
-  const selectedRun = await selectFunctionRunPrompt(functionRuns, "Which function run would you like to replay locally?")
+  const selectedRun = await selectFunctionRunPrompt(
+    functionRuns,
+    'Which function run would you like to replay locally?',
+  )
 
   if (selectedRun === undefined) {
     throw new AbortError(`No logs found in ${functionRunsDir}`)

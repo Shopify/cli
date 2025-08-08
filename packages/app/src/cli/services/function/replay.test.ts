@@ -17,7 +17,7 @@ import {existsSync, readdirSync} from 'fs'
 vi.mock('fs')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../generate-schema.js')
-vi.mock('../../prompts/function/replay.js')
+vi.mock('../../prompts/function/select-run.js')
 vi.mock('../dev/extension/bundler.js')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -64,7 +64,10 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run, file2.run])
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
+      [file1.run, file2.run],
+      'Which function run would you like to replay locally?',
+    )
     expectFunctionRun(extension, file1.run.payload.input)
     expect(outputInfo).not.toHaveBeenCalled()
   })
@@ -86,7 +89,10 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(files.map(({run}) => run).slice(0, 100))
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
+      files.map(({run}) => run).slice(0, 100),
+      'Which function run would you like to replay locally?',
+    )
   })
 
   test('does not allow selection of runs for other functions', async () => {
@@ -108,7 +114,10 @@ describe('replay', () => {
     })
 
     // Then
-    expect(selectFunctionRunPrompt).toHaveBeenCalledWith([file1.run])
+    expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
+      [file1.run],
+      'Which function run would you like to replay locally?',
+    )
   })
 
   test('throws error if no logs available', async () => {
@@ -260,6 +269,7 @@ describe('replay', () => {
     // Then
     expect(selectFunctionRunPrompt).toHaveBeenCalledWith(
       [...filesWithInput, ...additionalFiles.slice(0, 100)].map(({run}) => run),
+      'Which function run would you like to replay locally?',
     )
   })
 })

@@ -4,11 +4,10 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {selectFunctionRunPrompt} from '../../prompts/function/select-run.js'
 import {nameFixturePrompt} from '../../prompts/function/name-fixture.js'
 
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {readFile, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-
 import {existsSync, readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
@@ -45,44 +44,65 @@ export interface FunctionRunData {
 
 export async function testgen(options: TestgenOptions) {
   const {extension, app} = options
-  const apiKey = options.app.configuration.client_id
+  const apiKey = app.configuration.client_id
   const functionRunsDir = joinPath(getLogsDir(), apiKey)
+
+  const testsDir = joinPath(options.extension.directory, `tests`)
+
+  // Create the tests directory
+  if (!existsSync(testsDir)) {
+    await mkdir(testsDir)
+  }
+
+  // Create the fixtures directory
+  const testFixturesDir = joinPath(testsDir, `fixtures`)
+  if (!existsSync(testFixturesDir)) {
+    await mkdir(testFixturesDir)
+  }
+
+  // Create default test file
+  const testFile = joinPath(testsDir, `default.test.ts`)
+  if (!existsSync(testFile)) {
+    const defaultTestPath = joinPath(cwd(), 'packages/app/src/cli/templates/function/default.test.ts.template')
+    const testFileContent = await readFile(defaultTestPath)
+    await writeFile(testFile, testFileContent)
+  }
 
   const selectedRun = options.log
     ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
     : await getRunFromSelector(functionRunsDir, extension.handle)
 
-  const {input, output} = selectedRun.payload
-  const outputDir = joinPath(options.extension.directory, `tests`)
-
-  // Create the output directory
-  if (!existsSync(outputDir)) {
-    await mkdir(outputDir)
+  // Ensure payload exists with default values if undefined
+  const payload = selectedRun.payload || {
+    input: {},
+    output: {},
+    export: 'run',
+    inputBytes: 0,
+    outputBytes: 0,
+    functionId: '',
+    logs: '',
+    fuelConsumed: 0,
   }
 
-  const testScenarioDir = joinPath(outputDir, `scenarios`)
-  if (!existsSync(testScenarioDir)) {
-    await mkdir(testScenarioDir)
-  }
-
+  const {input, output} = payload
   // Get the fixture name from user prompt
   const fixtureName = await nameFixturePrompt(selectedRun.identifier)
-  const fixturePath = joinPath(testScenarioDir, `${fixtureName}.json`)
+  const fixturePath = joinPath(testFixturesDir, `${fixtureName}.json`)
 
   // Create the fixture object in the correct format
   const fixture = {
     name: fixtureName,
-    export: selectedRun.payload.export,
-    query: `${selectedRun.payload.export}.graphql`,
-    input: input,
-    output: output,
+    export: payload.export,
+    query: `${payload.export}.graphql`,
+    input,
+    output,
   }
 
   // Write the fixture file
   await writeFile(fixturePath, JSON.stringify(fixture, null, 2))
 
   return {
-    outputDir,
+    testsDir,
     fixturePath,
     fixtureName,
     identifier: selectedRun.identifier,
@@ -146,10 +166,33 @@ async function findFunctionRun(
 
 async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
-  const selectedRun = await selectFunctionRunPrompt(functionRuns, "Which function run would you like to generate test files from?")
+  const selectedRun = await selectFunctionRunPrompt(
+    functionRuns,
+    'Which function run would you like to generate test files from?',
+  )
 
   if (selectedRun === undefined) {
-    throw new AbortError(`No logs found in ${functionRunsDir}`)
+    return {
+      shopId: 0,
+      apiClientId: 0,
+      payload: {
+        input: {},
+        output: {},
+        export: 'run',
+        inputBytes: 0,
+        outputBytes: 0,
+        functionId: '',
+        logs: '',
+        fuelConsumed: 0,
+      },
+      logType: 'function',
+      cursor: '',
+      status: 'success',
+      source: '',
+      sourceNamespace: 'extensions',
+      logTimestamp: new Date().toISOString(),
+      identifier: 'default',
+    }
   }
   return selectedRun
 }
