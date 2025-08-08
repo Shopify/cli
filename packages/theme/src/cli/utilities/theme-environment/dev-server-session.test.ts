@@ -2,11 +2,12 @@ import {
   abortOnMissingRequiredFile,
   getStorefrontSessionCookiesWithVerification,
   initializeDevServerSession,
+  fetchDevServerSession,
 } from './dev-server-session.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
-import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -86,7 +87,40 @@ describe('verifyRequiredFilesExist', () => {
 })
 
 describe('dev server session', async () => {
+  describe('fetchDevServerSession', async () => {
+    test('calls ensureAuthenticatedThemes with noPrompt: true', async () => {
+      // Given
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        storefront_digest: 'digest_value',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+      })
+
+      // When
+      await fetchDevServerSession(themeId, adminSession, 'admin-password')
+
+      // Then
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(storeFqdn, 'admin-password', [], false, {noPrompt: true})
+    })
+  })
+
   describe('initializeDevServerSession', async () => {
+    let setIntervalSpy: any
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      setIntervalSpy = vi.spyOn(global, 'setInterval')
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      setIntervalSpy.mockRestore()
+    })
+
     test('returns a session', async () => {
       // Given
       vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
@@ -115,6 +149,26 @@ describe('dev server session', async () => {
           token: 'token_1',
         }),
       )
+    })
+
+    test('sets up auto-refresh with 5 second interval', async () => {
+      // Given
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        storefront_digest: 'digest_value',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+      })
+
+      // When
+      const session = await initializeDevServerSession(themeId, adminSession)
+
+      // Then
+      expect(setIntervalSpy).toHaveBeenCalledWith(expect.any(Function), 5000)
+      expect(session.refresh).toBeDefined()
     })
 
     test('returns a refreshable session', async () => {

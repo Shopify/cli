@@ -66,7 +66,7 @@ export async function fetchDevServerSession(
 ): Promise<DevServerSession> {
   const baseUrl = buildBaseStorefrontUrl(adminSession)
 
-  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [])
+  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [], false, {noPrompt: true})
   const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword)
   const sessionCookies = await getStorefrontSessionCookiesWithVerification(
     baseUrl,

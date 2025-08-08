@@ -181,6 +181,7 @@ ${outputToken.json(scopes)}
  * @param password - Password generated from Theme Access app.
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @param options - Optional extra options to use.
  * @returns The access token and store.
  */
 export async function ensureAuthenticatedThemes(
@@ -188,6 +189,7 @@ export async function ensureAuthenticatedThemes(
   password: string | undefined,
   scopes: AdminAPIScope[] = [],
   forceRefresh = false,
+  options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<AdminSession> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${outputToken.json(scopes)}
@@ -199,7 +201,7 @@ ${outputToken.json(scopes)}
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
     return session
   }
-  return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
+  return ensureAuthenticatedAdmin(store, scopes, forceRefresh, options)
 }
 
 /**
