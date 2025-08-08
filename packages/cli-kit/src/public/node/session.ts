@@ -116,13 +116,13 @@ ${outputToken.json(appManagementScopes)}
  *
  * @param scopes - Optional array of extra scopes to authenticate with.
  * @param password - Optional password to use.
- * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @param options - Optional extra options to use.
  * @returns The access token for the Storefront API.
  */
 export async function ensureAuthenticatedStorefront(
   scopes: StorefrontRendererScope[] = [],
   password: string | undefined = undefined,
-  forceRefresh = false,
+  options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<string> {
   if (password) {
     const session = {token: password, storeFqdn: ''}
@@ -135,7 +135,7 @@ export async function ensureAuthenticatedStorefront(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Storefront API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, {forceRefresh})
+  const tokens = await ensureAuthenticated({storefrontRendererApi: {scopes}}, process.env, options)
   if (!tokens.storefront) {
     throw new BugError('No storefront token found after ensuring authenticated')
   }
@@ -147,14 +147,12 @@ ${outputToken.json(scopes)}
  *
  * @param store - Store fqdn to request auth for.
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @param forceRefresh - Optional flag to force a refresh of the token.
  * @param options - Optional extra options to use.
  * @returns The access token for the Admin API.
  */
 export async function ensureAuthenticatedAdmin(
   store: string,
   scopes: AdminAPIScope[] = [],
-  forceRefresh = false,
   options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<AdminSession> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Admin API with the following scopes for the store ${outputToken.raw(
@@ -163,7 +161,6 @@ export async function ensureAuthenticatedAdmin(
 ${outputToken.json(scopes)}
 `)
   const tokens = await ensureAuthenticated({adminApi: {scopes, storeFqdn: store}}, process.env, {
-    forceRefresh,
     ...options,
   })
   if (!tokens.admin) {
@@ -180,14 +177,14 @@ ${outputToken.json(scopes)}
  * @param store - Store fqdn to request auth for.
  * @param password - Password generated from Theme Access app.
  * @param scopes - Optional array of extra scopes to authenticate with.
- * @param forceRefresh - Optional flag to force a refresh of the token.
+ * @param options - Optional extra options to use.
  * @returns The access token and store.
  */
 export async function ensureAuthenticatedThemes(
   store: string,
   password: string | undefined,
   scopes: AdminAPIScope[] = [],
-  forceRefresh = false,
+  options: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<AdminSession> {
   outputDebug(outputContent`Ensuring that the user is authenticated with the Theme API with the following scopes:
 ${outputToken.json(scopes)}
@@ -199,7 +196,7 @@ ${outputToken.json(scopes)}
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
     return session
   }
-  return ensureAuthenticatedAdmin(store, scopes, forceRefresh)
+  return ensureAuthenticatedAdmin(store, scopes, options)
 }
 
 /**

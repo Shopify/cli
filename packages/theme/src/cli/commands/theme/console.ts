@@ -36,7 +36,7 @@ export default class Console extends ThemeCommand {
     const store = ensureThemeStore(flags)
     const {url, password: themeAccessPassword} = flags
 
-    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
+    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword)
 
     const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
     await initializeRepl(adminSession, themeId, url, themeAccessPassword, storePassword)
