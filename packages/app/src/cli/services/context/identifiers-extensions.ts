@@ -73,6 +73,7 @@ export async function ensureExtensionsIds(
       options.appId,
       remoteExtensions,
       migrationsClient,
+      options.developerPlatformClient,
     )
     didMigrateDashboardExtensions = true
   }
@@ -85,6 +86,7 @@ export async function ensureExtensionsIds(
       options.appId,
       dashboardExtensions,
       migrationsClient,
+      options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -99,6 +101,7 @@ export async function ensureExtensionsIds(
       'marketing_activity',
       dashboardExtensions,
       migrationsClient,
+      options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -113,6 +116,7 @@ export async function ensureExtensionsIds(
       'payments_extension',
       dashboardExtensions,
       migrationsClient,
+      options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -127,6 +131,7 @@ export async function ensureExtensionsIds(
       'subscription_link_extension',
       dashboardExtensions,
       migrationsClient,
+      options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
@@ -141,6 +146,7 @@ export async function ensureExtensionsIds(
       'admin_link',
       dashboardExtensions,
       migrationsClient,
+      options.developerPlatformClient,
     )
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true

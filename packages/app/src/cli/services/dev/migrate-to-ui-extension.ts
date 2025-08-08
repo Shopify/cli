@@ -4,17 +4,23 @@ import {
 } from '../../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSource} from '../context/identifiers.js'
 import {LocalRemoteSource} from '../context/id-matching.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function migrateExtensionsToUIExtension(
   extensionsToMigrate: LocalRemoteSource[],
   appId: string,
   remoteExtensions: RemoteSource[],
+  migrationClient: DeveloperPlatformClient,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   await Promise.all(
-    extensionsToMigrate.map(({remote}) => migrateExtensionToUIExtension(appId, remote.id, developerPlatformClient)),
+    extensionsToMigrate.map(({remote}) => {
+      if (developerPlatformClient.clientName === ClientName.AppManagement) {
+        return migrateExtensionToUIExtension(appId, undefined, remote.uuid, migrationClient)
+      }
+      return migrateExtensionToUIExtension(appId, remote.id, undefined, migrationClient)
+    }),
   )
 
   return remoteExtensions.map((extension) => {
@@ -31,11 +37,13 @@ export async function migrateExtensionsToUIExtension(
 async function migrateExtensionToUIExtension(
   apiKey: MigrateToUiExtensionVariables['apiKey'],
   registrationId: MigrateToUiExtensionVariables['registrationId'],
+  registrationUuid: MigrateToUiExtensionVariables['registrationUuid'],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const variables: MigrateToUiExtensionVariables = {
     apiKey,
     registrationId,
+    registrationUuid,
   }
 
   const result: MigrateToUiExtensionSchema = await developerPlatformClient.migrateToUiExtension(variables)

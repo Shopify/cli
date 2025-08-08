@@ -1,7 +1,7 @@
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -93,10 +93,16 @@ export async function migrateAppModules(
   appId: string,
   type: string,
   remoteExtensions: RemoteSource[],
+  migrationClient: DeveloperPlatformClient,
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const migratedIDs = await Promise.all(
-    extensionsToMigrate.map(({remote}) => migrateAppModule(appId, remote.id, type, developerPlatformClient)),
+    extensionsToMigrate.map(({remote}) => {
+      if (developerPlatformClient.clientName === ClientName.AppManagement) {
+        return migrateAppModule(appId, undefined, remote.uuid, type, migrationClient)
+      }
+      return migrateAppModule(appId, remote.id, undefined, type, developerPlatformClient)
+    }),
   )
 
   return remoteExtensions
@@ -112,12 +118,14 @@ export async function migrateAppModules(
 async function migrateAppModule(
   apiKey: MigrateAppModuleVariables['apiKey'],
   registrationId: MigrateAppModuleVariables['registrationId'],
+  registrationUuid: MigrateAppModuleVariables['registrationUuid'],
   type: MigrateAppModuleVariables['type'],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const variables: MigrateAppModuleVariables = {
     apiKey,
     registrationId,
+    registrationUuid,
     type,
   }
 
