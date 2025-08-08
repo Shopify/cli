@@ -10,6 +10,7 @@ import {
   removeStorefrontPassword,
   ThemeLocalStorageSchema,
   setThemeStore,
+  extractShopName,
 } from './local-storage.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
@@ -54,5 +55,19 @@ describe('local-storage', () => {
         })
       })
     })
+  })
+})
+
+describe('extractShopName', () => {
+  test('extracts shop name from store URL', () => {
+    expect(extractShopName('http://my-store.myshopify.com')).toBe('my-store')
+    expect(extractShopName('http://my-store.shopify.io')).toBe('my-store')
+    expect(extractShopName('http://my-store.shop.dev')).toBe('my-store')
+    expect(extractShopName('http://my-store.spin.dev')).toBe('my-store')
+
+    expect(extractShopName('https://my-store.myshopify.com')).toBe('my-store')
+    expect(extractShopName('https://my-store.shopify.io')).toBe('my-store')
+    expect(extractShopName('https://my-store.shop.dev')).toBe('my-store')
+    expect(extractShopName('https://my-store.spin.dev')).toBe('my-store')
   })
 })
