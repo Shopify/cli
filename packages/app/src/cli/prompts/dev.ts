@@ -1,11 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-  Organization,
-  MinimalOrganizationApp,
-  OrganizationStore,
-  MinimalAppIdentifiers,
-  OrganizationSource,
-} from '../models/organization.js'
+import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
 import {Paginateable} from '../utilities/developer-platform-client.js'
@@ -15,7 +9,6 @@ import {
   RenderAutocompleteOptions,
   renderAutocompletePrompt,
   renderConfirmationPrompt,
-  renderInfo,
   renderTextPrompt,
 } from '@shopify/cli-kit/node/ui'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
@@ -23,20 +16,6 @@ import {outputCompleted} from '@shopify/cli-kit/node/output'
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {
     return organizations[0]!
-  }
-
-  if (
-    organizations.some((org) => org.source === OrganizationSource.BusinessPlatform) &&
-    organizations.some((org) => org.source === OrganizationSource.Partners)
-  ) {
-    renderInfo({
-      headline: 'You have access to the Next-Gen Dev Platform.',
-      body: 'Select a Dev Dashboard organization from the list below to use it.',
-      link: {
-        label: 'See documentation for more information.',
-        url: 'https://shopify.dev/beta/next-gen-dev-platform',
-      },
-    })
   }
 
   const orgList = organizations.map((org) => ({label: org.businessName, value: org.id}))
