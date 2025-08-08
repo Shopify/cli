@@ -5291,10 +5291,18 @@
       "hiddenAliases": [
       ],
       "id": "theme:delete",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        [
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
+      "strict": true,
       "summary": "Delete remote themes from the connected store. This command can't be undone."
     },
     "theme:dev": {

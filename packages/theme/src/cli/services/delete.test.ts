@@ -1,9 +1,9 @@
-import {themesDelete, renderDeprecatedArgsWarning} from './delete.js'
+import {themesDelete} from './delete.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'
-import {renderConfirmationPrompt, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -140,23 +140,5 @@ describe('themesDelete', () => {
     // Then
     expect(themeDelete).not.toBeCalled()
     expect(renderSuccess).not.toBeCalled()
-  })
-})
-
-describe('renderDeprecatedArgsWarning', () => {
-  test('renders the the deprecated-args warning message', async () => {
-    // Given/When
-    renderDeprecatedArgsWarning(['1', '2'])
-
-    // Then
-    expect(renderWarning).toBeCalledWith({
-      body: [
-        'Positional arguments are deprecated. Use the',
-        {command: '--theme'},
-        'flag instead:\n\n',
-        {command: `$ shopify theme delete --theme 1 2`},
-        {char: '.'},
-      ],
-    })
   })
 })
