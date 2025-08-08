@@ -24,49 +24,50 @@ function getRemoteExtension(attributes: Partial<RemoteSource> = {}) {
 }
 
 describe('migrateExtensions()', () => {
-  test('performs a graphQL mutation for each extension', async () => {
-    // Given
+  test('uses registrationUuid for AppManagement client', async () => {
     const extensionsToMigrate = [
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1'})},
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2'})},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1', uuid: 'uuid1'})},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2', uuid: 'uuid2'})},
     ]
     const appId = '123abc'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
-    const developerPlatformClient = testDeveloperPlatformClient()
+    const migrationClient = testDeveloperPlatformClient()
 
-    // When
-    await migrateFlowExtensions(extensionsToMigrate, appId, remoteExtensions, developerPlatformClient)
-
-    // Then
-    expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledTimes(extensionsToMigrate.length)
-    expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledWith({
-      apiKey: appId,
-      registrationId: extensionsToMigrate[0]!.remote.id,
+    await migrateFlowExtensions({
+      extensionsToMigrate,
+      appId,
+      remoteExtensions,
+      migrationClient,
     })
-    expect(developerPlatformClient.migrateFlowExtension).toHaveBeenCalledWith({
+
+    expect(migrationClient.migrateFlowExtension).toHaveBeenCalledTimes(extensionsToMigrate.length)
+    expect(migrationClient.migrateFlowExtension).toHaveBeenCalledWith({
       apiKey: appId,
-      registrationId: extensionsToMigrate[1]!.remote.id,
+      registrationId: undefined,
+      registrationUuid: extensionsToMigrate[0]!.remote.uuid,
+    })
+    expect(migrationClient.migrateFlowExtension).toHaveBeenCalledWith({
+      apiKey: appId,
+      registrationId: undefined,
+      registrationUuid: extensionsToMigrate[1]!.remote.uuid,
     })
   })
 
   test('Returns updated remoteExensions', async () => {
-    // Given
     const extensionsToMigrate = [
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1'})},
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2'})},
+      {local: getLocalExtension(), remote: getRemoteExtension()},
+      {local: getLocalExtension(), remote: getRemoteExtension()},
     ]
     const appId = '123abc'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
-    // When
-    const result = await migrateFlowExtensions(
+    const result = await migrateFlowExtensions({
       extensionsToMigrate,
       appId,
       remoteExtensions,
-      testDeveloperPlatformClient(),
-    )
+      migrationClient: testDeveloperPlatformClient(),
+    })
 
-    // Then
     expect(result).toStrictEqual(remoteExtensions.map((remote) => ({...remote, type: 'FLOW_ACTION'})))
   })
 })

@@ -885,12 +885,12 @@ describe('ensureExtensionsIds: Migrates extension', () => {
       },
     })
 
-    expect(migrateExtensionsToUIExtension).toBeCalledWith(
+    expect(migrateExtensionsToUIExtension).toBeCalledWith({
       extensionsToMigrate,
-      opts.appId,
+      appId: opts.appId,
       remoteExtensions,
-      expect.any(PartnersClient),
-    )
+      migrationClient: expect.any(PartnersClient),
+    })
   })
 })
 

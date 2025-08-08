@@ -61,31 +61,31 @@ export async function ensureExtensionsIds(
 
   // Migration is only supported in partners client
   const clientName = options.developerPlatformClient.clientName
-  const migrationsClient = clientName === ClientName.Partners ? options.developerPlatformClient : new PartnersClient()
+  const migrationClient = clientName === ClientName.Partners ? options.developerPlatformClient : new PartnersClient()
 
   let didMigrateDashboardExtensions = false
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
     if (!confirmedMigration) throw new AbortSilentError()
-    remoteExtensions = await migrateExtensionsToUIExtension(
-      uiExtensionsToMigrate,
-      options.appId,
+    remoteExtensions = await migrateExtensionsToUIExtension({
+      extensionsToMigrate: uiExtensionsToMigrate,
+      appId: options.appId,
       remoteExtensions,
-      migrationsClient,
-    )
+      migrationClient,
+    })
     didMigrateDashboardExtensions = true
   }
 
   if (flowExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(flowExtensionsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateFlowExtensions(
-      flowExtensionsToMigrate,
-      options.appId,
-      dashboardExtensions,
-      migrationsClient,
-    )
+    const newRemoteExtensions = await migrateFlowExtensions({
+      extensionsToMigrate: flowExtensionsToMigrate,
+      appId: options.appId,
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -93,13 +93,13 @@ export async function ensureExtensionsIds(
   if (marketingToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(marketingToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      marketingToMigrate,
-      options.appId,
-      'marketing_activity',
-      dashboardExtensions,
-      migrationsClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: marketingToMigrate,
+      appId: options.appId,
+      type: 'marketing_activity',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -107,13 +107,13 @@ export async function ensureExtensionsIds(
   if (paymentsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(paymentsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      paymentsToMigrate,
-      options.appId,
-      'payments_extension',
-      dashboardExtensions,
-      migrationsClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: paymentsToMigrate,
+      appId: options.appId,
+      type: 'payments_extension',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -121,13 +121,13 @@ export async function ensureExtensionsIds(
   if (subscriptionLinksToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(subscriptionLinksToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      subscriptionLinksToMigrate,
-      options.appId,
-      'subscription_link_extension',
-      dashboardExtensions,
-      migrationsClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: subscriptionLinksToMigrate,
+      appId: options.appId,
+      type: 'subscription_link_extension',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -135,13 +135,13 @@ export async function ensureExtensionsIds(
   if (adminLinkExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(adminLinkExtensionsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      adminLinkExtensionsToMigrate,
-      options.appId,
-      'admin_link',
-      dashboardExtensions,
-      migrationsClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: adminLinkExtensionsToMigrate,
+      appId: options.appId,
+      type: 'admin_link',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
