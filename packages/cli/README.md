@@ -14,6 +14,7 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function testgen`](#shopify-app-function-testgen)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
+* [`shopify app function wasmtest`](#shopify-app-function-wasmtest)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -516,6 +517,31 @@ DESCRIPTION
 
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function written in JavaScript.
+```
+
+## `shopify app function wasmtest`
+
+Builds the function and runs all tests in the test folder.
+
+```
+USAGE
+  $ shopify app function wasmtest [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+    [--skip-build] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --skip-build         Skip building the function and just run tests.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Builds the function and runs all tests in the test folder.
+
+  Builds the function to WebAssembly and then runs all tests in the test folder. This is useful for ensuring your
+  function works correctly before deployment.
 ```
 
 ## `shopify app generate extension`

@@ -6,7 +6,7 @@ export async function nameFixturePrompt(identifier: string): Promise<string> {
     defaultValue: identifier,
     validate: (value) => {
       if (!value || value.trim() === '') {
-        return 'Test fixture name cannot be empty'
+        return "Test fixture name can't be empty"
       }
       // Check for valid filename characters
       if (!/^[a-zA-Z0-9_-]+$/.test(value)) {

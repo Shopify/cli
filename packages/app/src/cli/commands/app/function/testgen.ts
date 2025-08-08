@@ -44,18 +44,18 @@ export default class FunctionTestgen extends AppLinkedCommand {
     }
 
     const {app} = await linkedAppContext({
-      directory: flags.path!,
+      directory: flags.path,
       clientId: flags['client-id'] ?? flags['api-key'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
 
-    const ourFunction = await chooseFunction(app, flags.path!)
+    const ourFunction = await chooseFunction(app, flags.path)
 
-    const result = await testgen({
+    await testgen({
       app,
       extension: ourFunction,
-      path: flags.path!,
+      path: flags.path,
       log: flags.log,
       outputDir: flags['output-dir'],
     })
