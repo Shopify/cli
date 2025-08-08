@@ -1,6 +1,11 @@
 import {configurationFileNames, versions} from '../../constants.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {buildGraphqlTypes, PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '../function/build.js'
+import {
+  buildGraphqlTypes,
+  PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION,
+  PREFERRED_GRAPHQL_CODEGEN_CLI_PACKAGE_MAJOR_VERSION,
+  PREFERRED_GRAPHQL_CODEGEN_TYPESCRIPT_OPERATIONS_PACKAGE_MAJOR_VERSION,
+} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from '../extensions/common.js'
@@ -190,7 +195,7 @@ async function functionExtensionInit({
       task: async () => {
         // We need to run `npm install` once to setup the workspace correctly
         if (app.usesWorkspaces && app.packageManager === 'npm') {
-          await installNodeModules({packageManager: 'npm', directory: app.directory})
+          await installNodeModules({packageManager: app.packageManager, directory: app.directory})
         }
 
         const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
@@ -312,10 +317,17 @@ function getSrcFileExtension(extensionFlavor: ExtensionFlavorValue): SrcFileExte
 export function getFunctionRuntimeDependencies(templateLanguage: string): DependencyVersion[] {
   const dependencies: DependencyVersion[] = []
   if (templateLanguage === 'javascript') {
-    dependencies.push({
-      name: '@shopify/shopify_function',
-      version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
-    })
+    dependencies.push(
+      {
+        name: '@shopify/shopify_function',
+        version: `~${PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION}.0.0`,
+      },
+      {name: '@graphql-codegen/cli', version: `~${PREFERRED_GRAPHQL_CODEGEN_CLI_PACKAGE_MAJOR_VERSION}.0.0`},
+      {
+        name: '@graphql-codegen/typescript-operations',
+        version: `~${PREFERRED_GRAPHQL_CODEGEN_TYPESCRIPT_OPERATIONS_PACKAGE_MAJOR_VERSION}.0.0`,
+      },
+    )
   }
   return dependencies
 }
