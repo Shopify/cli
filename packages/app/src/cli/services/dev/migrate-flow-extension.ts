@@ -4,7 +4,7 @@ import {
   MigrateFlowExtensionSchema,
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function migrateFlowExtensions(
@@ -12,9 +12,15 @@ export async function migrateFlowExtensions(
   appId: string,
   remoteExtensions: RemoteSource[],
   developerPlatformClient: DeveloperPlatformClient,
+  migrationClient: DeveloperPlatformClient,
 ) {
   const migratedIDs = await Promise.all(
-    extensionsToMigrate.map(({remote}) => migrateFlowExtension(appId, remote.id, developerPlatformClient)),
+    extensionsToMigrate.map(({remote}) => {
+      if (developerPlatformClient.clientName === ClientName.AppManagement) {
+        return migrateFlowExtension(appId, undefined, remote.uuid, migrationClient)
+      }
+      return migrateFlowExtension(appId, remote.id, undefined, migrationClient)
+    }),
   )
 
   const typesMap = new Map<string, string>([
@@ -35,11 +41,13 @@ export async function migrateFlowExtensions(
 async function migrateFlowExtension(
   apiKey: MigrateFlowExtensionVariables['apiKey'],
   registrationId: MigrateFlowExtensionVariables['registrationId'],
+  registrationUuid: MigrateFlowExtensionVariables['registrationUuid'],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const variables: MigrateFlowExtensionVariables = {
     apiKey,
     registrationId,
+    registrationUuid,
   }
 
   const result: MigrateFlowExtensionSchema = await developerPlatformClient.migrateFlowExtension(variables)

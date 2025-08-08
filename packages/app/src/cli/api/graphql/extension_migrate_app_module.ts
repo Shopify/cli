@@ -1,8 +1,10 @@
 import {gql} from 'graphql-request'
 
 export const MigrateAppModuleMutation = gql`
-  mutation MigrateAppModule($apiKey: String!, $registrationId: ID!, $type: String!) {
-    migrateAppModule(input: {apiKey: $apiKey, registrationId: $registrationId, type: $type}) {
+  mutation MigrateAppModule($apiKey: String!, $registrationId: ID, $registrationUuid: String, $type: String!) {
+    migrateAppModule(
+      input: {apiKey: $apiKey, registrationId: $registrationId, registrationUuid: $registrationUuid, type: $type}
+    ) {
       migratedAppModule
       userErrors {
         field
@@ -14,7 +16,8 @@ export const MigrateAppModuleMutation = gql`
 
 export interface MigrateAppModuleVariables {
   apiKey: string
-  registrationId: string
+  registrationId?: string
+  registrationUuid?: string
   type: string
 }
 

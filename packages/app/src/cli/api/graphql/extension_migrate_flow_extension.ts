@@ -1,8 +1,10 @@
 import {gql} from 'graphql-request'
 
 export const MigrateFlowExtensionMutation = gql`
-  mutation MigrateFlowExtension($apiKey: String!, $registrationId: ID!) {
-    migrateFlowExtension(input: {apiKey: $apiKey, registrationId: $registrationId}) {
+  mutation MigrateFlowExtension($apiKey: String!, $registrationId: ID, $registrationUuid: String) {
+    migrateFlowExtension(
+      input: {apiKey: $apiKey, registrationId: $registrationId, registrationUuid: $registrationUuid}
+    ) {
       migratedFlowExtension
       userErrors {
         field
@@ -14,7 +16,8 @@ export const MigrateFlowExtensionMutation = gql`
 
 export interface MigrateFlowExtensionVariables {
   apiKey: string
-  registrationId: string
+  registrationId?: string
+  registrationUuid?: string
 }
 
 export interface MigrateFlowExtensionSchema {
