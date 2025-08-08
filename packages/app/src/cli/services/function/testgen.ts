@@ -1,29 +1,23 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {renderReplay} from './ui.js'
-import {runFunction} from './runner.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/select-run.js'
+import {nameFixturePrompt} from '../../prompts/function/name-fixture.js'
 
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, cwd} from '@shopify/cli-kit/node/path'
+import {readFile, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-
 import {existsSync, readdirSync} from 'fs'
 
 const LOG_SELECTOR_LIMIT = 100
 
-interface ReplayOptions {
+interface TestgenOptions {
   app: AppLinkedInterface
   extension: ExtensionInstance<FunctionConfigType>
-  stdout?: boolean
   path: string
-  json: boolean
-  watch: boolean
   log?: string
+  outputDir?: string
 }
 
 export interface FunctionRunData {
@@ -48,38 +42,72 @@ export interface FunctionRunData {
   identifier: string
 }
 
-export async function replay(options: ReplayOptions) {
-  const {watch, extension, app} = options
-  const abortController = new AbortController()
+export async function testgen(options: TestgenOptions) {
+  const {extension, app} = options
+  const apiKey = app.configuration.client_id
+  const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
-  try {
-    const apiKey = options.app.configuration.client_id
-    const functionRunsDir = joinPath(getLogsDir(), apiKey)
+  const testsDir = joinPath(options.extension.directory, `tests`)
 
-    const selectedRun = options.log
-      ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
-      : await getRunFromSelector(functionRunsDir, extension.handle)
+  // Create the tests directory
+  if (!existsSync(testsDir)) {
+    await mkdir(testsDir)
+  }
 
-    const {input, export: runExport} = selectedRun.payload
+  // Create the fixtures directory
+  const testFixturesDir = joinPath(testsDir, `fixtures`)
+  if (!existsSync(testFixturesDir)) {
+    await mkdir(testFixturesDir)
+  }
 
-    if (watch) {
-      await renderReplay({
-        selectedRun,
-        abortController,
-        app,
-        extension,
-      })
-    } else {
-      await runFunction({
-        functionExtension: extension,
-        json: options.json,
-        input: JSON.stringify(input),
-        export: runExport,
-      })
-    }
-  } catch (error) {
-    abortController.abort()
-    throw error
+  // Create default test file
+  const testFile = joinPath(testsDir, `default.test.ts`)
+  if (!existsSync(testFile)) {
+    const defaultTestPath = joinPath(cwd(), 'packages/app/src/cli/templates/function/default.test.ts.template')
+    const testFileContent = await readFile(defaultTestPath)
+    await writeFile(testFile, testFileContent)
+  }
+
+  const selectedRun = options.log
+    ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
+    : await getRunFromSelector(functionRunsDir, extension.handle)
+
+  // Ensure payload exists with default values if undefined
+  const payload = selectedRun.payload || {
+    input: {},
+    output: {},
+    export: 'run',
+    inputBytes: 0,
+    outputBytes: 0,
+    functionId: '',
+    logs: '',
+    fuelConsumed: 0,
+  }
+
+  const {input, output} = payload
+  // Get the fixture name from user prompt
+  const fixtureName = await nameFixturePrompt(selectedRun.identifier)
+  const fixturePath = joinPath(testFixturesDir, `${fixtureName}.json`)
+
+  // Create the fixture object in the correct format
+  const fixture = {
+    name: fixtureName,
+    export: payload.export,
+    query: `${payload.export}.graphql`,
+    input,
+    output,
+  }
+
+  // Write the fixture file
+  await writeFile(fixturePath, JSON.stringify(fixture, null, 2))
+
+  return {
+    testsDir,
+    fixturePath,
+    fixtureName,
+    identifier: selectedRun.identifier,
+    input,
+    output,
   }
 }
 
@@ -140,11 +168,31 @@ async function getRunFromSelector(functionRunsDir: string, functionHandle: strin
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
   const selectedRun = await selectFunctionRunPrompt(
     functionRuns,
-    'Which function run would you like to replay locally?',
+    'Which function run would you like to generate test files from?',
   )
 
   if (selectedRun === undefined) {
-    throw new AbortError(`No logs found in ${functionRunsDir}`)
+    return {
+      shopId: 0,
+      apiClientId: 0,
+      payload: {
+        input: {},
+        output: {},
+        export: 'run',
+        inputBytes: 0,
+        outputBytes: 0,
+        functionId: '',
+        logs: '',
+        fuelConsumed: 0,
+      },
+      logType: 'function',
+      cursor: '',
+      status: 'success',
+      source: '',
+      sourceNamespace: 'extensions',
+      logTimestamp: new Date().toISOString(),
+      identifier: 'default',
+    }
   }
   return selectedRun
 }

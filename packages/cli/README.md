@@ -12,7 +12,9 @@
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
+* [`shopify app function testgen`](#shopify-app-function-testgen)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
+* [`shopify app function wasmtest`](#shopify-app-function-wasmtest)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
@@ -465,6 +467,34 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
+## `shopify app function testgen`
+
+Generates test files from a function run log.
+
+```
+USAGE
+  $ shopify app function testgen [--client-id <value> | -c <value>] [-l <value>] [--no-color] [-o <value>] [--path
+    <value>] [--reset | ] [--verbose]
+
+FLAGS
+  -c, --config=<value>      The name of the app configuration.
+  -l, --log=<value>         Specifies a log identifier to generate test files from instead of selecting from a list. The
+                            identifier is provided in the output of `shopify app dev` and is the suffix of the log file
+                            name.
+  -o, --output-dir=<value>  Specifies the output directory for the test files. Defaults to "test-{identifier}".
+      --client-id=<value>   The Client ID of your app.
+      --no-color            Disable color output.
+      --path=<value>        The path to your function directory.
+      --reset               Reset all your settings.
+      --verbose             Increase the verbosity of the output.
+
+DESCRIPTION
+  Generates test files from a function run log.
+
+  Prompts users to select a function run log and generates test fixtures from it. These test cases based on real
+  function executions act as an E2E test suite for the function.
+```
+
 ## `shopify app function typegen`
 
 Generate GraphQL types for a JavaScript function.
@@ -487,6 +517,31 @@ DESCRIPTION
 
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function written in JavaScript.
+```
+
+## `shopify app function wasmtest`
+
+Builds the function and runs all tests in the test folder.
+
+```
+USAGE
+  $ shopify app function wasmtest [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+    [--skip-build] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --skip-build         Skip building the function and just run tests.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Builds the function and runs all tests in the test folder.
+
+  Builds the function to WebAssembly and then runs all tests in the test folder. This is useful for ensuring your
+  function works correctly before deployment.
 ```
 
 ## `shopify app generate extension`
