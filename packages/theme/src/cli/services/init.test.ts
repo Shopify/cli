@@ -1,4 +1,4 @@
-import {cloneRepoAndCheckoutLatestTag, cloneRepo, promptAndCreateAIFile} from './init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo, promptAndCreateAIInstructions} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
@@ -131,7 +131,7 @@ describe('promptAndCreateAIFile()', () => {
       .mockReturnValueOnce('/path/to/theme/.github/copilot-instructions.md')
 
     // When
-    await promptAndCreateAIFile(destination)
+    await promptAndCreateAIInstructions(destination)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
@@ -155,7 +155,7 @@ describe('promptAndCreateAIFile()', () => {
       .mockReturnValueOnce('/path/to/theme/.cursor/rules/liquid.mdc')
 
     // When
-    await promptAndCreateAIFile(destination)
+    await promptAndCreateAIInstructions(destination)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
@@ -176,7 +176,7 @@ describe('promptAndCreateAIFile()', () => {
     vi.mocked(renderSelectPrompt).mockResolvedValue('none')
 
     // When
-    await promptAndCreateAIFile(destination)
+    await promptAndCreateAIInstructions(destination)
 
     // Then
     expect(renderSelectPrompt).toHaveBeenCalledWith({
