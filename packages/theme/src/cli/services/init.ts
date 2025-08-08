@@ -1,8 +1,15 @@
 import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {mkdir, writeFile, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {rmdir, fileExists, inTemporaryDirectory, moveFile} from '@shopify/cli-kit/node/fs'
+
+export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme'
+
+const SUPPORTED_AI_INSTRUCTIONS = {
+  github: 'VSCode (GitHub Copilot)',
+  cursor: 'Cursor',
+  claude: 'Claude',
+}
 
 export async function cloneRepo(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination)
@@ -24,8 +31,15 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           shallow: true,
         })
         await removeGitRemote(destination)
-        await removeDirectory(joinPath(destination, '.github'))
-        await removeDirectory(joinPath(destination, '.git'))
+
+        if (repoUrl === SKELETON_THEME_URL) {
+          await Promise.all(
+            Object.keys(SUPPORTED_AI_INSTRUCTIONS).map(async (key) =>
+              removeDirectory(joinPath(destination, `.${key}`)),
+            ),
+          )
+          await removeDirectory(joinPath(destination, '.git'))
+        }
       },
     },
   ])
@@ -37,41 +51,53 @@ async function removeDirectory(path: string) {
   }
 }
 
-export async function promptAndCreateAIFile(destination: string) {
+export async function promptAndCreateAIInstructions(destination: string) {
   const aiChoice = await renderSelectPrompt({
     message: 'Set up AI dev support?',
     choices: [
-      {label: 'VSCode (GitHub Copilot)', value: 'vscode'},
-      {label: 'Cursor', value: 'cursor'},
+      ...Object.entries(SUPPORTED_AI_INSTRUCTIONS).map(([key, value]) => ({
+        label: value,
+        value: key,
+      })),
       {label: 'Skip', value: 'none'},
     ],
   })
 
-  const aiFileUrl = 'https://raw.githubusercontent.com/Shopify/theme-liquid-docs/main/ai/liquid.mdc'
-
-  switch (aiChoice) {
-    case 'vscode': {
-      const githubDir = joinPath(destination, '.github')
-      await mkdir(githubDir)
-      const aiFilePath = joinPath(githubDir, 'copilot-instructions.md')
-      await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
-      break
-    }
-    case 'cursor': {
-      const cursorDir = joinPath(destination, '.cursor', 'rules')
-      await mkdir(cursorDir)
-      const aiFilePath = joinPath(cursorDir, 'liquid.mdc')
-      await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
-      break
-    }
-    case 'none':
-      // No action required
-      break
+  if (aiChoice === 'none') {
+    return
   }
+
+  await renderTasks([
+    {
+      title: `Adding AI instructions into ${destination}`,
+      task: async () => {
+        await inTemporaryDirectory(async (tempDir) => {
+          await downloadGitRepository({
+            repoUrl: `https://github.com/Shopify/theme-liquid-docs.git`,
+            destination: tempDir,
+            shallow: true,
+          })
+          const aiSrcDir = joinPath(tempDir, 'ai', aiChoice)
+          const aiDestDir = joinPath(destination, `.${aiChoice}`)
+
+          await moveFile(aiSrcDir, aiDestDir)
+        })
+      },
+    },
+  ])
 }
 
-async function downloadAndSaveAIFile(url: string, filePath: string) {
-  const response = await fetch(url)
-  const content = await response.text()
-  await writeFile(filePath, content)
-}
+// async function copyDirectoryContents(srcDir: string, destDir: string): Promise<void> {
+//   if (!(await fileExists(srcDir))) {
+//     return
+//   }
+
+//   if (!(await fileExists(destDir))) {
+//     await mkdir(destDir)
+//   }
+
+//   // Get all files and directories in the source directory
+//   const items = await glob(joinPath(srcDir, '**/*'))
+
+//   console.log(items)
+// }
