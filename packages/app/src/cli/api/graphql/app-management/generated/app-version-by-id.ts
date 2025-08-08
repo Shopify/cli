@@ -13,6 +13,7 @@ export type AppVersionByIdQuery = {
     id: string
     metadata: {message?: string | null; versionTag?: string | null}
     appModules: {
+      id: number
       uuid: string
       userIdentifier: string
       handle: string
@@ -27,6 +28,7 @@ export type VersionInfoFragment = {
   id: string
   metadata: {message?: string | null; versionTag?: string | null}
   appModules: {
+    id: number
     uuid: string
     userIdentifier: string
     handle: string
@@ -76,6 +78,7 @@ export const VersionInfoFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
@@ -144,6 +147,7 @@ export const AppVersionById = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},

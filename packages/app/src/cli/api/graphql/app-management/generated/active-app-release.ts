@@ -19,6 +19,7 @@ export type ActiveAppReleaseQuery = {
       version: {
         name: string
         appModules: {
+          id: number
           uuid: string
           userIdentifier: string
           handle: string
@@ -41,6 +42,7 @@ export type AppVersionInfoFragment = {
     version: {
       name: string
       appModules: {
+        id: number
         uuid: string
         userIdentifier: string
         handle: string
@@ -53,6 +55,7 @@ export type AppVersionInfoFragment = {
 }
 
 export type ReleasedAppModuleFragment = {
+  id: number
   uuid: string
   userIdentifier: string
   handle: string
@@ -71,6 +74,7 @@ export const ReleasedAppModuleFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
@@ -171,6 +175,7 @@ export const AppVersionInfoFragmentDoc = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
@@ -239,6 +244,7 @@ export const ActiveAppRelease = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},

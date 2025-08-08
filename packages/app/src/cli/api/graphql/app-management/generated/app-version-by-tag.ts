@@ -13,6 +13,7 @@ export type AppVersionByTagQuery = {
     id: string
     metadata: {message?: string | null; versionTag?: string | null}
     appModules: {
+      id: number
       uuid: string
       userIdentifier: string
       handle: string
@@ -68,6 +69,7 @@ export const AppVersionByTag = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},

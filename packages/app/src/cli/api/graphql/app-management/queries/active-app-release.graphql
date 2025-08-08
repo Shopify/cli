@@ -27,6 +27,7 @@ fragment AppVersionInfo on App {
 }
 
 fragment ReleasedAppModule on AppModule {
+  id
   uuid
   userIdentifier
   handle

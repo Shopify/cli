@@ -19,6 +19,7 @@ export type ActiveAppReleaseFromApiKeyQuery = {
       version: {
         name: string
         appModules: {
+          id: number
           uuid: string
           userIdentifier: string
           handle: string
@@ -77,6 +78,7 @@ export const ActiveAppReleaseFromApiKey = {
       selectionSet: {
         kind: 'SelectionSet',
         selections: [
+          {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},

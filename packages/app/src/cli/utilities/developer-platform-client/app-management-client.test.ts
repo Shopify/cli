@@ -78,6 +78,7 @@ const templateDisallowedByBetaFlag: GatedExtensionTemplate = {
 
 function moduleFromExtension(extension: ExtensionInstance) {
   return {
+    id: 1,
     uuid: extension.uid,
     userIdentifier: extension.uid,
     handle: extension.handle,
