@@ -183,6 +183,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
 async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
   await warnIfScopesDifferBeforeDev(devConfig)
+  await blockIfMigrationIncomplete(devConfig)
 }
 
 /**
@@ -233,6 +234,17 @@ export async function warnIfScopesDifferBeforeDev({
         nextSteps,
       })
     }
+  }
+}
+
+export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
+  const {developerPlatformClient, remoteApp} = devConfig
+  const remoteExtensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app
+    .extensionRegistrations
+  if (developerPlatformClient.supportsDevSessions && !remoteExtensions.every((extension) => extension.id)) {
+    const message = [`Your app includes extensions that need to be migrated to the Next-Gen Dev Platform.`]
+    const nextSteps = ['Run', {command: 'shopify app deploy'}, 'to finish the migration.']
+    throw new AbortError(message, nextSteps)
   }
 }
 

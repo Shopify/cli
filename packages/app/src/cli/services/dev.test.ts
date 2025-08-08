@@ -1,4 +1,4 @@
-import {warnIfScopesDifferBeforeDev} from './dev.js'
+import {warnIfScopesDifferBeforeDev, blockIfMigrationIncomplete} from './dev.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -65,5 +65,71 @@ describe('warnIfScopesDifferBeforeDev', () => {
 
     // Then
     expect(mockOutput.warn()).toBe('')
+  })
+})
+
+describe('blockIfMigrationIncomplete', () => {
+  const baseConfig = () => ({
+    localApp: testAppLinked({}),
+    remoteApp: testOrganizationApp(),
+    developerPlatformClient: testDeveloperPlatformClient({supportsDevSessions: true}),
+  })
+
+  test('does nothing when dev sessions not supported', async () => {
+    const devConfig = {
+      ...baseConfig(),
+      developerPlatformClient: testDeveloperPlatformClient({supportsDevSessions: false}),
+    } as any
+    await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
+  })
+
+  test('does nothing when all remote extensions have ids (migrated)', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDevSessions: true,
+      async appExtensionRegistrations() {
+        return {
+          app: {
+            extensionRegistrations: [
+              {id: '1', uuid: 'u1', title: 'Ext 1', type: 'theme'},
+              {id: '2', uuid: 'u2', title: 'Ext 2', type: 'web_pixel_extension'},
+            ],
+            configurationRegistrations: [],
+            dashboardManagedExtensionRegistrations: [],
+          },
+        } as any
+      },
+    })
+
+    const devConfig = {
+      ...baseConfig(),
+      developerPlatformClient,
+    } as any
+
+    await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
+  })
+
+  test('throws AbortError when some remote extensions are missing ids (not migrated)', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDevSessions: true,
+      async appExtensionRegistrations() {
+        return {
+          app: {
+            extensionRegistrations: [
+              {id: '', uuid: 'u1', title: 'Legacy Ext 1', type: 'theme'},
+              {uuid: 'u2', title: 'Legacy Ext 2', type: 'web_pixel_extension'},
+            ],
+            configurationRegistrations: [],
+            dashboardManagedExtensionRegistrations: [],
+          },
+        } as any
+      },
+    })
+
+    const devConfig = {
+      ...baseConfig(),
+      developerPlatformClient,
+    } as any
+
+    await expect(blockIfMigrationIncomplete(devConfig)).rejects.toThrow(/need to be migrated/)
   })
 })
