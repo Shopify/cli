@@ -151,6 +151,8 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
 
   await checkIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force, developerPlatformClient})
 
+  const envIdentifiers = getAppIdentifiers({app})
+
   const identifiers = await ensureDeploymentIdsPresence({
     app,
     appId: remoteApp.apiKey,
@@ -158,7 +160,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     force,
     release: !noRelease,
     developerPlatformClient,
-    envIdentifiers: getAppIdentifiers({app}),
+    envIdentifiers,
     remoteApp,
     activeAppVersion,
   })

@@ -23,6 +23,7 @@ import {removeTrailingSlash} from '../../models/extensions/specifications/valida
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]
@@ -61,6 +62,22 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   remoteExtensionsRegistrations: RemoteExtensionRegistrations
 }> {
   let remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations(options)
+
+  if (options.force && !options.developerPlatformClient.supportsDashboardManagedExtensions) {
+    const unMigratedextensions = remoteExtensionsRegistrations.app.extensionRegistrations.filter((ext) => !ext.id)
+
+    if (unMigratedextensions.length > 0) {
+      const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']
+      const nextSteps = [
+        'You must first map IDs to your existing extensions by running',
+        {command: 'shopify app deploy'},
+        'interactively, without',
+        {command: '--force'},
+        'to finish the migration.',
+      ]
+      throw new AbortError(message, nextSteps)
+    }
+  }
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
 
