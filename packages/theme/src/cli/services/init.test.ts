@@ -95,7 +95,7 @@ describe('cloneRepo()', async () => {
     expect(removeGitRemote).toHaveBeenCalledWith(destination)
   })
 
-  test('removes .github directory from skeleton theme after cloning when it exists', async () => {
+  test('removes .github & .git directories from skeleton theme after cloning when it exists', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/skeleton-theme.git'
     const destination = 'destination'
@@ -107,6 +107,8 @@ describe('cloneRepo()', async () => {
     // Then
     expect(fileExists).toHaveBeenCalledWith('destination/.github')
     expect(rmdir).toHaveBeenCalledWith('destination/.github')
+    expect(fileExists).toHaveBeenCalledWith('destination/.git')
+    expect(rmdir).toHaveBeenCalledWith('destination/.git')
   })
 })
 
