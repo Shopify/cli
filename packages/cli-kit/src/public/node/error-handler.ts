@@ -10,6 +10,7 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
+import {generateGroupingHash, extractErrorContext} from './error-grouping.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
@@ -125,6 +126,24 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+
+          // Generate groupingHash for better error grouping with error boundary
+          try {
+            event.groupingHash = generateGroupingHash(reportableError)
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch (groupingError: unknown) {
+            outputDebug(`GroupingHash generation failed: ${groupingError}`)
+            // Fallback to a simple hash based on error name
+            event.groupingHash = `fallback-${reportableError.constructor.name}`
+          }
+
+          // Preserve original data in metadata for debugging
+          const context = extractErrorContext(reportableError)
+          event.addMetadata('original', {
+            stackTrace: context.originalStack,
+            message: context.originalMessage,
+            errorClass: context.errorClass,
+          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
