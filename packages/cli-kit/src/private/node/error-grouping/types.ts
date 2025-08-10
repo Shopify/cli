@@ -1,4 +1,18 @@
 /**
+ * Represents a parsed stack frame from an error stack trace.
+ */
+export interface StackFrame {
+  /** The file path where the error occurred. */
+  file: string
+  /** The method/function name where the error occurred. */
+  method: string
+  /** The line number in the file. */
+  lineNumber?: number
+  /** The column number in the file. */
+  columnNumber?: number
+}
+
+/**
  * Error context information used for generating grouping hashes.
  */
 export interface ErrorContext {
@@ -12,14 +26,7 @@ export interface ErrorContext {
   sanitizedMessage: string
 
   /** Information about the top stack frame. */
-  topFrame?: {
-    /** The file path where the error occurred. */
-    file: string
-    /** The method/function name where the error occurred. */
-    method: string
-    /** The line number in the file. */
-    lineNumber?: number
-  }
+  topFrame?: StackFrame
 
   /** The CLI command being executed (e.g., 'app dev'). */
   command?: string

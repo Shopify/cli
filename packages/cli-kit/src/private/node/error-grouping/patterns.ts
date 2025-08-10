@@ -61,11 +61,39 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
     description: 'Local server ports',
   },
 
-  // 2. File paths - normalize all OS paths (Windows, Mac, Linux)
+  // 2. File paths - AGGRESSIVE normalization across all OS
+  // IMPORTANT: More specific patterns must come first!
+
+  // node_modules paths - extract only the part after node_modules/
   {
-    pattern: /([A-Z]:\\|\/)?(?:Users|home|var|tmp|opt|src|workspace|projects)[/\\][^\s]+/gi,
+    pattern: /(?:[A-Z]:[\\/]|[\\/])?.*node_modules[\\/]([^\s]+)/gi,
+    replace: 'node_modules/$1',
+    description: 'Node modules paths - normalize to relative',
+  },
+  // Yarn cache paths
+  {
+    pattern: /(?:[A-Z]:[\\/]|[\\/])?.*\.yarn[\\/](?:berry[\\/])?cache[\\/]([^\s]+)/gi,
+    replace: 'yarn-cache/$1',
+    description: 'Yarn cache paths',
+  },
+  // pnpm store paths
+  {
+    pattern: /(?:[A-Z]:[\\/]|[\\/])?.*\.(?:pnpm-store|pnpm)[\\/]([^\s]+)/gi,
+    replace: 'pnpm-store/$1',
+    description: 'pnpm store paths',
+  },
+  // All other file paths - normalize aggressively (but don't touch already normalized paths)
+  {
+    pattern:
+      /(?:[A-Z]:[\\/]|[\\/])(?:Users[\\/][^\\/]+|home[\\/][^\\/]+|var[\\/](?:folders[\\/][^\\/]+[\\/][^\\/]+[\\/][^\\/]+|jenkins[\\/]workspace)|tmp|opt|src|workspace|projects|github[\\/]workspace|bitbucket[\\/]pipelines[\\/]agent|app|private|AppData[\\/](?:Local|Roaming)[\\/][^\\/]+|Windows[\\/]Temp)[\\/][^\s]+/gi,
     replace: '<PATH>',
     description: 'File paths across different operating systems',
+  },
+  // Simpler catch-all for remaining absolute paths (but not already normalized paths)
+  {
+    pattern: /(?:[A-Z]:[\\/]|^[\\/])[^\s]*[\\/][^\s]+\.(js|ts|jsx|tsx|mjs|cjs|json)/gi,
+    replace: '<PATH>',
+    description: 'Remaining absolute file paths',
   },
 
   // 3. Store names (*.myshopify.com)

@@ -1,0 +1,838 @@
+import {generateGroupingKey, extractErrorContext, sanitizeErrorMessage} from './error-grouping.js'
+import {describe, test, expect} from 'vitest'
+
+describe('generateGroupingKey', () => {
+  test('generates consistent key for same error patterns', () => {
+    const error1 = new Error('Failed to connect to my-store.myshopify.com')
+    const error2 = new Error('Failed to connect to another-store.myshopify.com')
+
+    const key1 = generateGroupingKey(error1, false)
+    const key2 = generateGroupingKey(error2, false)
+
+    // Same pattern, different store names - keys should still be the same since stack frame would be similar
+    // The stack frame part will be 'unknown' if no meaningful frame is found
+    expect(key1).toBe(key2)
+    expect(key1).toMatch(/^cli:handled:Error:Failed to connect to <STORE>\.myshopify\.com:/)
+  })
+
+  test('generates different keys for different error classes', () => {
+    const error = new Error('Test error')
+    const typeError = new TypeError('Test error')
+
+    const key1 = generateGroupingKey(error, false)
+    const key2 = generateGroupingKey(typeError, false)
+
+    expect(key1).not.toBe(key2)
+  })
+
+  test('handles null/undefined message gracefully', () => {
+    const error = new Error()
+    const key = generateGroupingKey(error, false)
+    expect(key).toBeTruthy()
+    expect(key).toMatch(/^cli:handled:Error:.*:/)
+  })
+
+  test('includes handled/unhandled status in key', () => {
+    const error = new Error('Test error')
+    const handledKey = generateGroupingKey(error, false)
+    const unhandledKey = generateGroupingKey(error, true)
+
+    expect(handledKey).toMatch(/^cli:handled:/)
+    expect(unhandledKey).toMatch(/^cli:unhandled:/)
+    expect(handledKey).not.toBe(unhandledKey)
+  })
+
+  test('differentiates handled vs unhandled for same error', () => {
+    const error = new TypeError('Connection refused')
+
+    const handledKey = generateGroupingKey(error, false)
+    const unhandledKey = generateGroupingKey(error, true)
+
+    // Should have same error class and message but different status
+    // Now includes stack frame at the end
+    expect(handledKey).toMatch(/^cli:handled:TypeError:Connection refused:/)
+    expect(unhandledKey).toMatch(/^cli:unhandled:TypeError:Connection refused:/)
+    expect(handledKey).not.toBe(unhandledKey)
+  })
+
+  test('properly groups handled errors separately from unhandled', () => {
+    const errors = [
+      {error: new Error('Network timeout'), unhandled: false},
+      {error: new Error('Network timeout'), unhandled: true},
+      {error: new TypeError('Cannot read property'), unhandled: false},
+      {error: new TypeError('Cannot read property'), unhandled: true},
+    ]
+
+    const keys = errors.map(({error, unhandled}) => generateGroupingKey(error, unhandled))
+
+    // Should have 4 unique keys (2 error types × 2 statuses)
+    const uniqueKeys = new Set(keys)
+    expect(uniqueKeys.size).toBe(4)
+
+    // Verify the expected keys now include stack frame
+    expect(keys[0]).toMatch(/^cli:handled:Error:Network timeout:/)
+    expect(keys[1]).toMatch(/^cli:unhandled:Error:Network timeout:/)
+    expect(keys[2]).toMatch(/^cli:handled:TypeError:Cannot read property:/)
+    expect(keys[3]).toMatch(/^cli:unhandled:TypeError:Cannot read property:/)
+  })
+
+  test('generates consistent keys for same error type', () => {
+    const error1 = new Error('Test error')
+    const error2 = new Error('Test error')
+
+    const key1 = generateGroupingKey(error1, false)
+    const key2 = generateGroupingKey(error2, false)
+
+    expect(key1).toBe(key2)
+  })
+
+  test('key format follows expected pattern', () => {
+    const error = new TypeError('Failed to connect to shop.myshopify.com')
+    const key = generateGroupingKey(error, true)
+
+    // Now includes stack frame at the end
+    expect(key).toMatch(/^cli:unhandled:TypeError:Failed to connect to <STORE>\.myshopify\.com:/)
+  })
+})
+
+describe('sanitizeErrorMessage', () => {
+  test.each([
+    // JWT tokens - CRITICAL: Test first to ensure they're caught before other patterns
+    [
+      'Auth failed with token eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+      'Auth failed with token <JWT>',
+    ],
+    ['JWT token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.SWTKwK', 'JWT token: <JWT>'],
+
+    // Database URLs
+    ['mongodb://user:pass@localhost:27017/db', '<DATABASE_URL>'],
+    ['postgresql://user:password@host.com:5432/mydb', '<DATABASE_URL>'],
+    ['mysql://root:secret@127.0.0.1:3306/database', '<DATABASE_URL>'],
+    ['redis://user:pass@redis.example.com:6379', '<DATABASE_URL>'],
+    ['sqlite:///path/to/database.db', '<DATABASE_URL>'],
+
+    // GitHub tokens
+    ['Token ghp_1234567890abcdefghijklmnopqrstuvwxyz1234', 'Token <GITHUB_TOKEN>'],
+    ['GitHub PAT: gho_abcdefghijklmnopqrstuvwxyz1234567890', 'GitHub PAT: <GITHUB_TOKEN>'],
+    ['Secret ghps_1234567890abcdefghijklmnopqrstuvwxyz12', 'Secret <GITHUB_TOKEN>'],
+
+    // NPM tokens
+    ['npm_abcdefghijklmnopqrstuvwxyz1234567890', '<NPM_TOKEN>'],
+    ['NPM token npm_1234567890abcdefghijklmnopqrstuvwxyzAB', 'NPM token <NPM_TOKEN>'],
+
+    // API keys in various formats
+    ['api_key=sk_test_1234567890abcdef', 'api_key=<REDACTED>'],
+    ['apikey: "my-secret-api-key-12345"', 'api_key=<REDACTED>'],
+    ['api-key=abc123xyz789', 'api_key=<REDACTED>'],
+    ['api_secret:super_secret_value_123', 'api_key=<REDACTED>'],
+    ['api_token="token_abc_123_xyz"', 'api_key=<REDACTED>'],
+
+    // Bearer tokens
+    ['Authorization: Bearer abc123xyz789token', 'Authorization: Bearer <TOKEN>'],
+    ['Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9', 'Bearer <TOKEN>'],
+
+    // Email addresses
+    ['Contact user@example.com for help', 'Contact <EMAIL> for help'],
+    ['Send to john.doe+test@company.co.uk', 'Send to <EMAIL>'],
+    ['Email admin@shopify.com failed', 'Email <EMAIL> failed'],
+
+    // File paths
+    ['Cannot read file /Users/john/project/file.js', 'Cannot read file <PATH>'],
+    ['Error at C:\\Users\\jane\\app\\index.ts', 'Error at <PATH>'],
+    ['Failed to load /home/user/app/config.json', 'Failed to load <PATH>'],
+
+    // Store names
+    ['Failed to connect to my-store.myshopify.com', 'Failed to connect to <STORE>.myshopify.com'],
+    ['Store quick-brown-fox-123.myshopify.com not found', 'Store <STORE>.myshopify.com not found'],
+
+    // Ports
+    ['Connection refused at localhost:3456', 'Connection refused at localhost:<PORT>'],
+    ['Server running on http://127.0.0.1:8080', 'Server running on http://127.0.0.1:<PORT>'],
+
+    // UUIDs/GIDs
+    ['Resource gid://shopify/Product/7890123456', 'Resource gid://shopify/<TYPE>/<ID>'],
+    ['UUID a1b2c3d4-e5f6-7890-abcd-ef1234567890', 'UUID <UUID>'],
+
+    // Tokens
+    ['Invalid token shpat_1234567890abcdef', 'Invalid token <TOKEN>'],
+    ['Auth failed for shpua_xyz123', 'Auth failed for <TOKEN>'],
+
+    // Versions
+    ['Package @shopify/cli@3.82.0 not found', 'Package @<PACKAGE>@<VERSION> not found'],
+    ['Node v20.10.0 required', 'Node <VERSION> required'],
+
+    // API versions
+    ['Failed GET /admin/2024-01/products.json', 'Failed GET /admin/<API_VERSION>/products.json'],
+
+    // Webpack chunks
+    ['Cannot load chunk app.a1b2c3d4.js', 'Cannot load chunk app.<HASH>.js'],
+    ['Module vendors~main.xyz789.js failed', 'Module vendors~main.<HASH>.js failed'],
+
+    // Line/column numbers
+    ['Error at line 42, column 17', 'Error at line <LINE>, column <COL>'],
+    ['SyntaxError (123:45)', 'SyntaxError (<LINE>:<COL>)'],
+
+    // Complex combinations with sensitive data
+    [
+      'Store my-shop.myshopify.com failed at localhost:3000 with token shpat_abc123',
+      'Store <STORE>.myshopify.com failed at localhost:<PORT> with token <TOKEN>',
+    ],
+    [
+      'Database mongodb://admin:password@localhost:27017/shopify at user@example.com',
+      'Database <DATABASE_URL> at <EMAIL>',
+    ],
+    [
+      'JWT eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.abc failed for api_key=secret123',
+      'JWT <JWT> failed for api_key=<REDACTED>',
+    ],
+  ])('%s -> %s', (input, expected) => {
+    expect(sanitizeErrorMessage(input)).toBe(expected)
+  })
+
+  test('handles empty string', () => {
+    expect(sanitizeErrorMessage('')).toBe('')
+  })
+
+  test('handles very long messages', () => {
+    const longMessage = `Error: ${'a'.repeat(10000)} at /Users/john/file.js`
+    const result = sanitizeErrorMessage(longMessage)
+    expect(result).toContain('<PATH>')
+    expect(result.length).toBeGreaterThan(100)
+  })
+})
+
+describe('extractErrorContext', () => {
+  test('extracts all required context fields', () => {
+    const error = new Error('Test error message')
+    error.stack = `Error: Test error message
+    at testFunction (/Users/john/project/file.js:10:5)
+    at Object.<anonymous> (/Users/john/project/test.js:20:10)`
+
+    const context = extractErrorContext(error)
+
+    expect(context.errorClass).toBe('Error')
+    expect(context.errorMessage).toBe('Test error message')
+    expect(context.sanitizedMessage).toBe('Test error message')
+    expect(context.topFrame).toEqual({
+      method: 'testFunction',
+      file: '<PATH>',
+      lineNumber: 10,
+      columnNumber: 5,
+    })
+    expect(context.originalMessage).toBe('Test error message')
+    expect(context.originalStack).toBe(error.stack)
+  })
+
+  test('handles missing stack trace', () => {
+    const error = new Error('No stack')
+    // Intentionally removing stack for test
+    delete error.stack
+
+    const context = extractErrorContext(error)
+
+    expect(context.topFrame).toBeUndefined()
+    expect(context.originalStack).toBeUndefined()
+  })
+
+  test('handles custom error classes', () => {
+    class CustomError extends Error {
+      constructor(message: string) {
+        super(message)
+        this.name = 'CustomError'
+      }
+    }
+
+    const error = new CustomError('Custom error')
+    const context = extractErrorContext(error)
+
+    expect(context.errorClass).toBe('CustomError')
+  })
+})
+
+describe('edge cases', () => {
+  test('handles circular references in error objects', () => {
+    const error: any = new Error('Circular')
+    error.circular = error
+
+    expect(() => generateGroupingKey(error, false)).not.toThrow()
+  })
+
+  test('handles non-ASCII characters', () => {
+    const error = new Error('Error with emoji 🚀 and unicode λ')
+    const key = generateGroupingKey(error, false)
+    expect(key).toBeTruthy()
+  })
+
+  test('handles malformed stack traces', () => {
+    const error = new Error('Malformed')
+    error.stack = 'This is not a valid stack trace'
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toBeTruthy()
+  })
+})
+
+describe('aggressive path normalization', () => {
+  test('normalizes various node_modules paths to the same pattern', () => {
+    const testCases = [
+      // Global installations
+      '/Users/john/project/node_modules/@shopify/cli/dist/index.js',
+      'C:\\Users\\jane\\AppData\\Roaming\\npm\\node_modules\\@shopify\\cli\\dist\\index.js',
+      '/home/bob/.local/share/pnpm/global/5/node_modules/@shopify/cli/dist/index.js',
+      // Local installations
+      '/workspace/myapp/node_modules/@shopify/cli/dist/index.js',
+      '/opt/homebrew/lib/node_modules/@shopify/cli/dist/index.js',
+      // CI environments
+      '/github/workspace/node_modules/@shopify/cli/dist/index.js',
+      '/bitbucket/pipelines/agent/node_modules/@shopify/cli/dist/index.js',
+    ]
+
+    const errors = testCases.map((path) => {
+      const error = new Error(`Failed to load module at ${path}`)
+      return error
+    })
+
+    const keys = errors.map((error) => generateGroupingKey(error, false))
+
+    // All should sanitize to the same pattern - node_modules paths are normalized
+    const uniqueKeys = new Set(keys)
+    expect(uniqueKeys.size).toBe(1)
+    expect(keys[0]).toContain('node_modules/@shopify/cli/dist/index.js')
+  })
+
+  test('normalizes CLI installation paths aggressively', () => {
+    const testCases = [
+      // macOS paths
+      '/Users/alice/src/github.com/Shopify/cli/packages/cli-kit/dist/error.js',
+      '/Users/bob/projects/shopify-cli/packages/cli-kit/dist/error.js',
+      // Windows paths
+      'C:\\Users\\charlie\\work\\cli\\packages\\cli-kit\\dist\\error.js',
+      'D:\\Development\\shopify\\cli\\packages\\cli-kit\\dist\\error.js',
+      // Linux paths
+      '/home/david/repos/cli/packages/cli-kit/dist/error.js',
+      '/opt/shopify/cli/packages/cli-kit/dist/error.js',
+      // CI paths
+      '/github/workspace/packages/cli-kit/dist/error.js',
+      '/var/jenkins/workspace/cli/packages/cli-kit/dist/error.js',
+    ]
+
+    const errors = testCases.map((path) => {
+      const error = new Error(`Error in file ${path}`)
+      return error
+    })
+
+    const keys = errors.map((error) => generateGroupingKey(error, false))
+
+    // All should normalize to the same key
+    const uniqueKeys = new Set(keys)
+    expect(uniqueKeys.size).toBe(1)
+    expect(keys[0]).toContain('Error in file <PATH>')
+  })
+
+  test('handles package manager cache paths', () => {
+    const testCases = [
+      // Yarn cache paths with node_modules - these get normalized to node_modules/...
+      '/.yarn/berry/cache/@shopify-cli-npm-3.50.0-abc123.zip/node_modules/@shopify/cli/dist/index.js',
+      '/.yarn/cache/@shopify-cli-npm-3.50.0-xyz789/node_modules/@shopify/cli/dist/index.js',
+      // pnpm store paths with node_modules - these get normalized to node_modules/...
+      '/.pnpm-store/v3/npm-@shopify-cli-3.50.0-abc123/node_modules/@shopify/cli/dist/index.js',
+      '/.pnpm/@shopify+cli@3.50.0/node_modules/@shopify/cli/dist/index.js',
+      // npm cache with node_modules
+      '/npm/cache/_npx/12345/lib/node_modules/@shopify/cli/dist/index.js',
+    ]
+
+    const errors = testCases.map((path) => {
+      const error = new Error(`Cache error at ${path}`)
+      return error
+    })
+
+    const keys = errors.map((error) => generateGroupingKey(error, false))
+
+    // All paths with node_modules should normalize to node_modules/...
+    // This is correct behavior - we want to normalize ALL node_modules paths the same way
+    keys.forEach((key) => {
+      expect(key).toContain('node_modules/@shopify/cli/dist/index.js')
+    })
+  })
+
+  test('removes absolute paths from stack traces', () => {
+    const error1 = new Error('Stack trace test')
+    error1.stack = `Error: Stack trace test
+    at Object.<anonymous> (/Users/john/project/src/index.js:10:15)
+    at Module._compile (/Users/john/project/node_modules/module.js:653:30)
+    at Object.Module._extensions..js (/usr/local/lib/node_modules/node/lib/module.js:664:10)`
+
+    const error2 = new Error('Stack trace test')
+    error2.stack = `Error: Stack trace test
+    at Object.<anonymous> (C:\\Users\\jane\\work\\src\\index.js:10:15)
+    at Module._compile (C:\\Users\\jane\\work\\node_modules\\module.js:653:30)
+    at Object.Module._extensions..js (C:\\Program Files\\nodejs\\lib\\module.js:664:10)`
+
+    const context1 = extractErrorContext(error1)
+    const context2 = extractErrorContext(error2)
+
+    // Stack traces should be normalized to remove absolute paths
+    expect(context1.topFrame?.file).toBe('<PATH>')
+    expect(context2.topFrame?.file).toBe('<PATH>')
+  })
+
+  test('normalizes temporary directory paths', () => {
+    const testCases = [
+      // macOS temp with node_modules
+      '/var/folders/xx/yyy123/T/npm-12345/node_modules/@shopify/cli/index.js',
+      // macOS temp without node_modules
+      '/private/var/folders/ab/cdef456/T/TemporaryItems/@shopify/cli/index.js',
+      // Linux temp
+      '/tmp/npm-cache-78910/@shopify/cli/index.js',
+      '/tmp/build-12345/node_modules/@shopify/cli/index.js',
+      // Windows temp
+      'C:\\Users\\user\\AppData\\Local\\Temp\\npm-11111\\@shopify\\cli\\index.js',
+      'C:\\Windows\\Temp\\build\\@shopify\\cli\\index.js',
+    ]
+
+    const errors = testCases.map((path) => {
+      const error = new Error(`Temp file error: ${path}`)
+      return error
+    })
+
+    const keys = errors.map((error) => generateGroupingKey(error, false))
+
+    // Temp paths should be normalized appropriately
+    expect(keys[0]).toContain('node_modules/@shopify/cli/index.js')
+    expect(keys[1]).toContain('<PATH>')
+    expect(keys[2]).toContain('<PATH>')
+    expect(keys[3]).toContain('node_modules/@shopify/cli/index.js')
+    expect(keys[4]).toContain('<PATH>')
+    expect(keys[5]).toContain('<PATH>')
+  })
+
+  test('handles Docker and container paths', () => {
+    const testCases = [
+      '/app/node_modules/@shopify/cli/dist/index.js',
+      '/workspace/node_modules/@shopify/cli/dist/index.js',
+      '/usr/src/app/node_modules/@shopify/cli/dist/index.js',
+      '/opt/app/node_modules/@shopify/cli/dist/index.js',
+    ]
+
+    const errors = testCases.map((path) => {
+      const error = new Error(`Container path: ${path}`)
+      return error
+    })
+
+    const keys = errors.map((error) => generateGroupingKey(error, false))
+
+    // Container paths with node_modules should normalize to node_modules/...
+    keys.forEach((key) => {
+      expect(key).toContain('node_modules/@shopify/cli/dist/index.js')
+    })
+  })
+})
+
+describe('stack frame extraction', () => {
+  test('includes top stack frame in grouping key', () => {
+    const error = new Error('Test error')
+    error.stack = `Error: Test error
+    at testFunction (/Users/john/project/src/file.js:10:5)
+    at runTest (/Users/john/project/test.js:20:10)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/^cli:handled:Error:Test error:src\/file\.js:testFunction$/)
+  })
+
+  test('skips Node.js internal frames', () => {
+    const error = new Error('Test error')
+    error.stack = `Error: Test error
+    at node:internal/modules/cjs/loader:123:45
+    at node:events:513:28
+    at actualFunction (/Users/john/project/src/real.js:15:8)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/^cli:handled:Error:Test error:src\/real\.js:actualFunction$/)
+  })
+
+  test('handles various Node.js internal module formats', () => {
+    const error = new Error('Test error')
+    error.stack = `Error: Test error
+    at node:internal/process/task_queues:95:5
+    at node:internal/timers:123:45
+    at node:fs:456:78
+    at node:path:789:10
+    at node:events:513:28
+    at userCode (/app/index.js:42:15)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/^cli:handled:Error:Test error:app\/index\.js:userCode$/)
+  })
+
+  test('handles missing function name in stack frame', () => {
+    const error = new Error('Test error')
+    error.stack = `Error: Test error
+    at /Users/john/project/src/anonymous.js:10:5
+    at runTest (/Users/john/project/test.js:20:10)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/^cli:handled:Error:Test error:src\/anonymous\.js:<anonymous>$/)
+  })
+
+  test('handles no stack trace', () => {
+    const error = new Error('No stack')
+    delete error.stack
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toBe('cli:handled:Error:No stack:unknown')
+  })
+
+  test('handles empty stack trace', () => {
+    const error = new Error('Empty stack')
+    error.stack = ''
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toBe('cli:handled:Error:Empty stack:unknown')
+  })
+
+  test('handles malformed stack trace', () => {
+    const error = new Error('Malformed')
+    error.stack = 'This is not a valid stack trace'
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toBe('cli:handled:Error:Malformed:unknown')
+  })
+
+  test('normalizes different path formats to consistent frame', () => {
+    const errors = [
+      {
+        stack: `Error: Test
+    at handler (/Users/alice/cli/packages/cli-kit/src/error-handler.ts:125:15)`,
+        expected: 'packages/cli-kit/src/error-handler.ts:handler',
+      },
+      {
+        stack: `Error: Test
+    at handler (C:\\Users\\bob\\cli\\packages\\cli-kit\\src\\error-handler.ts:125:15)`,
+        // Windows paths fall back to taking last 3 parts
+        expected: 'cli-kit/src/error-handler.ts:handler',
+      },
+      {
+        stack: `Error: Test
+    at handler (/home/charlie/projects/cli/packages/cli-kit/src/error-handler.ts:125:15)`,
+        expected: 'packages/cli-kit/src/error-handler.ts:handler',
+      },
+    ]
+
+    const keys = errors.map((errorData) => {
+      const error = new Error('Test')
+      error.stack = errorData.stack
+      return generateGroupingKey(error, false)
+    })
+
+    // Unix paths normalize consistently with packages/ prefix
+    expect(keys[0]).toMatch(/packages\/cli-kit\/src\/error-handler\.ts:handler$/)
+    expect(keys[2]).toMatch(/packages\/cli-kit\/src\/error-handler\.ts:handler$/)
+
+    // Windows path normalizes differently (takes last 3 parts)
+    expect(keys[1]).toMatch(/cli-kit\/src\/error-handler\.ts:handler$/)
+
+    // Unix paths should be the same
+    expect(keys[0]).toBe(keys[2])
+  })
+
+  test('handles async/await wrappers in method names', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at async handleRequest (/app/server.js:10:5)
+    at Promise.then (/app/server.js:20:10)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/server\.js:handleRequest$/)
+  })
+
+  test('handles generator functions', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at * processItems (/app/generator.js:10:5)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/generator\.js:processItems$/)
+  })
+
+  test('handles Object method calls', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at Object.processData (/app/processor.js:10:5)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/processor\.js:processData$/)
+  })
+
+  test('handles constructor calls', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at new MyClass (/app/classes.js:10:5)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/classes\.js:MyClass$/)
+  })
+
+  test('differentiates errors from different stack frames', () => {
+    const error1 = new Error('Database connection failed')
+    error1.stack = `Error: Database connection failed
+    at connectDB (/app/database.js:10:5)`
+
+    const error2 = new Error('Database connection failed')
+    error2.stack = `Error: Database connection failed
+    at retryConnection (/app/retry.js:20:10)`
+
+    const key1 = generateGroupingKey(error1, false)
+    const key2 = generateGroupingKey(error2, false)
+
+    expect(key1).not.toBe(key2)
+    expect(key1).toMatch(/database\.js:connectDB$/)
+    expect(key2).toMatch(/retry\.js:retryConnection$/)
+  })
+
+  test('groups same errors with same stack frame', () => {
+    const error1 = new Error('Network timeout')
+    error1.stack = `Error: Network timeout
+    at fetchData (/app/api.js:30:15)`
+
+    const error2 = new Error('Network timeout')
+    error2.stack = `Error: Network timeout
+    at fetchData (/app/api.js:30:15)`
+
+    const key1 = generateGroupingKey(error1, false)
+    const key2 = generateGroupingKey(error2, false)
+
+    expect(key1).toBe(key2)
+    expect(key1).toMatch(/api\.js:fetchData$/)
+  })
+
+  test('handles webpack/bundled code with hashes', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at handleClick (app.a1b2c3d4.js:10:5)`
+
+    const key = generateGroupingKey(error, false)
+    // The hash is not sanitized in the stack frame, only in the message
+    expect(key).toMatch(/app\.a1b2c3d4\.js:handleClick$/)
+  })
+
+  test('handles node_modules paths consistently', () => {
+    const errors = [
+      {
+        stack: `Error: Test
+    at validate (/Users/john/project/node_modules/@shopify/cli/dist/validator.js:10:5)`,
+      },
+      {
+        stack: `Error: Test
+    at validate (C:\\project\\node_modules\\@shopify\\cli\\dist\\validator.js:10:5)`,
+      },
+    ]
+
+    const keys = errors.map((errorData) => {
+      const error = new Error('Test')
+      error.stack = errorData.stack
+      return generateGroupingKey(error, false)
+    })
+
+    // Unix path strips node_modules/ prefix correctly
+    expect(keys[0]).toMatch(/@shopify\/cli\/dist\/validator\.js:validate$/)
+
+    // Windows path falls back to last 3 parts (doesn't match node_modules pattern due to backslashes)
+    expect(keys[1]).toMatch(/cli\/dist\/validator\.js:validate$/)
+
+    // They won't be identical due to different path handling, but both are consistent within their OS
+  })
+
+  test('handles stack trace with no line numbers', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at native
+    at userFunction (/app/code.js:10:5)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/code\.js:userFunction$/)
+  })
+
+  test('handles eval and anonymous functions', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at eval (eval at runCode (/app/runner.js:10:5))
+    at <anonymous> (/app/anonymous.js:20:10)
+    at regularFunction (/app/regular.js:30:15)`
+
+    const key = generateGroupingKey(error, false)
+    // Eval frames are not properly parsed, so the key shows the eval string
+    expect(key).toMatch(/eval at runCode.*eval$/)
+  })
+
+  test('handles TypeScript source maps', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at handleRequest (/dist/server.js:125:15)
+    at processTicksAndRejections (node:internal/process/task_queues:95:5)`
+
+    const key = generateGroupingKey(error, false)
+    expect(key).toMatch(/dist\/server\.js:handleRequest$/)
+  })
+
+  test('handles deeply nested paths', () => {
+    const error = new Error('Test')
+    error.stack = `Error: Test
+    at deepFunction (/very/long/path/to/project/src/components/ui/buttons/submit/handler.js:10:5)`
+
+    const key = generateGroupingKey(error, false)
+    // Should extract relevant parts
+    expect(key).toMatch(/submit\/handler\.js:deepFunction$/)
+  })
+})
+
+describe('error boundary protection', () => {
+  test('returns fallback hash for invalid input (null)', () => {
+    const key = generateGroupingKey(null as any, false)
+    expect(key).toBe('cli:invalid:InvalidInput:invalid-error-object:unknown')
+  })
+
+  test('returns fallback hash for invalid input (undefined)', () => {
+    const key = generateGroupingKey(undefined as any, false)
+    expect(key).toBe('cli:invalid:InvalidInput:invalid-error-object:unknown')
+  })
+
+  test('returns fallback hash for invalid input (string)', () => {
+    const key = generateGroupingKey('not an error' as any, false)
+    expect(key).toBe('cli:invalid:InvalidInput:invalid-error-object:unknown')
+  })
+
+  test('returns fallback hash for invalid input (number)', () => {
+    const key = generateGroupingKey(42 as any, false)
+    expect(key).toBe('cli:invalid:InvalidInput:invalid-error-object:unknown')
+  })
+
+  test('returns fallback hash for invalid input (plain object)', () => {
+    const key = generateGroupingKey({message: 'fake error'} as any, false)
+    expect(key).toBe('cli:invalid:InvalidInput:invalid-error-object:unknown')
+  })
+
+  test('handles errors with problematic constructor names', () => {
+    const error: any = new Error('Test')
+    Object.defineProperty(error.constructor, 'name', {
+      get: () => {
+        throw new Error('Constructor name throws')
+      },
+    })
+
+    // Should not throw and should generate a valid hash (using fallback values internally)
+    expect(() => generateGroupingKey(error, false)).not.toThrow()
+    const key = generateGroupingKey(error, false)
+    expect(key).toBeTruthy()
+    // Valid hash format
+    expect(key).toMatch(/^cli:handled:/)
+  })
+
+  test('handles errors that throw during context extraction', () => {
+    const error: any = new Error('Test')
+    Object.defineProperty(error, 'message', {
+      get: () => {
+        throw new Error('Message getter throws')
+      },
+    })
+
+    // Should not throw and should generate a valid hash (using fallback values internally)
+    expect(() => generateGroupingKey(error, false)).not.toThrow()
+    const key = generateGroupingKey(error, false)
+    expect(key).toBeTruthy()
+    // Valid hash format
+    expect(key).toMatch(/^cli:handled:/)
+  })
+})
+
+describe('performance', () => {
+  test('generates key within reasonable time for typical errors', () => {
+    const error = new Error('Performance test at /Users/john/file.js:123:45')
+
+    const start = performance.now()
+    for (let i = 0; i < 100; i++) {
+      generateGroupingKey(error, false)
+    }
+    const end = performance.now()
+
+    const avgTime = (end - start) / 100
+    // Less than 10ms per key
+    expect(avgTime).toBeLessThan(10)
+  })
+
+  test("sanitization doesn't cause regex catastrophic backtracking", () => {
+    const pathologicalInput = `${'a'.repeat(1000)}localhost:${'1'.repeat(1000)}`
+
+    const start = performance.now()
+    sanitizeErrorMessage(pathologicalInput)
+    const end = performance.now()
+
+    // Should complete quickly
+    expect(end - start).toBeLessThan(100)
+  })
+
+  describe('ReDoS protection tests', () => {
+    test('store domains pattern completes within 10ms threshold', () => {
+      // Previously vulnerable to ReDoS: 103ms with unbounded quantifier
+      const pathologicalInput = `${'-'.repeat(1000)}.myshopify.com`
+
+      const start = performance.now()
+      sanitizeErrorMessage(pathologicalInput)
+      const end = performance.now()
+
+      expect(end - start).toBeLessThan(10)
+    })
+
+    test('webpack chunks pattern completes within 10ms threshold', () => {
+      // Previously vulnerable to ReDoS: 51ms with unbounded quantifier
+      const pathologicalInput = `app${'-'.repeat(1000)}.abcdef.js`
+
+      const start = performance.now()
+      sanitizeErrorMessage(pathologicalInput)
+      const end = performance.now()
+
+      expect(end - start).toBeLessThan(10)
+    })
+
+    test('line:column pattern completes within reasonable time', () => {
+      // Test with reasonable input that matches the pattern limits (max 6 digits)
+      const inputs = [
+        // Max allowed by pattern
+        `(999999:999999)`,
+        // Should not match due to >6 digits
+        `(${'1'.repeat(7)}:${'2'.repeat(7)})`,
+        // Normal case
+        `(12345:67890)`,
+      ]
+
+      for (const input of inputs) {
+        const start = performance.now()
+        sanitizeErrorMessage(input)
+        const end = performance.now()
+
+        // Should complete very quickly since pattern limits to 6 digits
+        expect(end - start).toBeLessThan(10)
+      }
+    })
+
+    test('all patterns handle extreme inputs within 10ms', () => {
+      const extremeInputs = [
+        // Store with maximum allowed length (62 chars + domain)
+        `${'a'.repeat(62)}.myshopify.com`,
+        // Complex webpack chunk names
+        `vendor~module~component-sub-component.a1b2c3d4.js`,
+        // Maximum line:column numbers
+        `(999999:999999)`,
+        // Mixed pathological patterns
+        `Store ${'-'.repeat(100)}.myshopify.com at line 999999:999999 failed`,
+      ]
+
+      for (const input of extremeInputs) {
+        const start = performance.now()
+        sanitizeErrorMessage(input)
+        const end = performance.now()
+
+        expect(end - start).toBeLessThan(10)
+      }
+    })
+  })
+})

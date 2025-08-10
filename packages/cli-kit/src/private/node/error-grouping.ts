@@ -1,11 +1,11 @@
 /**
- * Error grouping module for generating consistent grouping hashes for errors.
+ * Error grouping module for generating consistent grouping keys for errors.
  * This module provides utilities to sanitize sensitive data and generate
- * stable hashes for error grouping in Bugsnag/Observe.
+ * stable keys for error grouping in Observe.
  */
 
 // Main functions
-export {generateGroupingHash, clearHashCache} from './error-grouping/hash-generator.js'
+export {generateGroupingKey} from './error-grouping/key-generator.js'
 export {extractErrorContext} from './error-grouping/context-extractor.js'
 export {sanitizeErrorMessage, sanitizeStackTrace} from './error-grouping/sanitizers.js'
 
@@ -13,4 +13,4 @@ export {sanitizeErrorMessage, sanitizeStackTrace} from './error-grouping/sanitiz
 export {SANITIZATION_RULES, getRulesByCategory} from './error-grouping/patterns.js'
 
 // Types
-export type {ErrorContext, SanitizationRule, GroupingHashOptions, HashGenerationResult} from './error-grouping/types.js'
+export type {ErrorContext, SanitizationRule} from './error-grouping/types.js'
