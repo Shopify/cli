@@ -40,4 +40,3 @@ export function sanitizeErrorMessage(message: string): string {
 
   return sanitized
 }
-
