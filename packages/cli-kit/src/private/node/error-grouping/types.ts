@@ -60,34 +60,3 @@ export interface SanitizationRule {
   /** Optional description of what this rule sanitizes. */
   description?: string
 }
-
-/**
- * Options for generating grouping hashes.
- */
-interface GroupingHashOptions {
-  /** Whether to include the command in the hash. */
-  includeCommand?: boolean
-
-  /** Whether to include the environment in the hash. */
-  includeEnvironment?: boolean
-
-  /** Whether to include the platform in the hash. */
-  includePlatform?: boolean
-
-  /** Custom sanitization rules to apply. */
-  customRules?: SanitizationRule[]
-}
-
-/**
- * Result of hash generation.
- */
-interface HashGenerationResult {
-  /** The generated grouping hash. */
-  hash: string
-
-  /** The context used to generate the hash. */
-  context: ErrorContext
-
-  /** Performance metrics. */
-  performanceMs?: number
-}
