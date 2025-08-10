@@ -190,7 +190,7 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
  * @param category - The category of rules to retrieve.
  * @returns An array of sanitization rules for the specified category.
  */
-export function getRulesByCategory(
+function getRulesByCategory(
   category: 'paths' | 'tokens' | 'identifiers' | 'versions' | 'locations',
 ): SanitizationRule[] {
   switch (category) {

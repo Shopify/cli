@@ -64,7 +64,7 @@ export interface SanitizationRule {
 /**
  * Options for generating grouping hashes.
  */
-export interface GroupingHashOptions {
+interface GroupingHashOptions {
   /** Whether to include the command in the hash. */
   includeCommand?: boolean
 
@@ -81,7 +81,7 @@ export interface GroupingHashOptions {
 /**
  * Result of hash generation.
  */
-export interface HashGenerationResult {
+interface HashGenerationResult {
   /** The generated grouping hash. */
   hash: string
 

@@ -4,13 +4,9 @@
  * stable keys for error grouping in Observe.
  */
 
-// Main functions
+// Main functions - only export what's actually used externally
 export {generateGroupingKey} from './error-grouping/key-generator.js'
 export {extractErrorContext} from './error-grouping/context-extractor.js'
-export {sanitizeErrorMessage, sanitizeStackTrace} from './error-grouping/sanitizers.js'
 
-// Patterns and rules
-export {SANITIZATION_RULES, getRulesByCategory} from './error-grouping/patterns.js'
-
-// Types
-export type {ErrorContext, SanitizationRule} from './error-grouping/types.js'
+// Export sanitizeErrorMessage only for tests
+export {sanitizeErrorMessage} from './error-grouping/sanitizers.js'

@@ -47,7 +47,7 @@ export function sanitizeErrorMessage(message: string): string {
  * @param stack - The stack trace string to sanitize.
  * @returns The sanitized stack trace, or undefined if input is undefined.
  */
-export function sanitizeStackTrace(stack: string | undefined): string | undefined {
+function sanitizeStackTrace(stack: string | undefined): string | undefined {
   if (!stack) return undefined
 
   let sanitized = stack
