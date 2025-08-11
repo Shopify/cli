@@ -114,7 +114,7 @@ async function handleUnsupportedDashboardExtensions(
     `App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:\n`,
     extensions.map((ext) => `  - ${ext.title}`).join('\n'),
   ]
-  const nextSteps = ['\n\nRun ', {command: 'shopify app deploy'}, 'to add legacy extensions.']
+  const nextSteps = ['\n\nRun ', {command: 'shopify app import-extensions'}, 'to add legacy extensions.']
 
   if (force || !isTTY()) {
     throw new AbortError(message, nextSteps)
