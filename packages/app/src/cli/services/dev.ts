@@ -183,6 +183,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
 async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
   await warnIfScopesDifferBeforeDev(devConfig)
+  await blockIfMigrationIncomplete(devConfig)
 }
 
 /**
@@ -233,6 +234,24 @@ export async function warnIfScopesDifferBeforeDev({
         nextSteps,
       })
     }
+  }
+}
+
+export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
+  const {developerPlatformClient, remoteApp} = devConfig
+  if (!developerPlatformClient.supportsDevSessions) return
+
+  const extensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app.extensionRegistrations
+  if (!extensions.every((extension) => extension.id)) {
+    const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']
+    const nextSteps = [
+      'You must first map IDs to your existing extensions by running',
+      {command: 'shopify app deploy'},
+      'interactively, without',
+      {command: '--force'},
+      'to finish the migration.',
+    ]
+    throw new AbortError(message, nextSteps)
   }
 }
 
