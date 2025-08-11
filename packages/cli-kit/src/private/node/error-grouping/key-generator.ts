@@ -8,20 +8,19 @@ import {extractErrorContext, extractTopStackFrame} from './context-extractor.js'
  * @param unhandled - Whether the error is unhandled.
  * @returns A grouping key string in format: cli:handled/unhandled:errorClass:sanitizedMessage:topStackFrame
  */
+function isValidError(error: Error): boolean {
+  return error && typeof error === 'object' && error instanceof Error
+}
+
 export function generateGroupingKey(error: Error, unhandled: boolean): string {
   try {
-    // Validate input - must be an actual Error instance
-    if (!error || typeof error !== 'object' || !(error instanceof Error)) {
+    if (!isValidError(error)) {
       return 'cli:invalid:InvalidInput:invalid-error-object:unknown'
     }
 
-    // Extract context
     const context = extractErrorContext(error)
-
-    // Determine handled status
     const handledStatus = unhandled ? 'unhandled' : 'handled'
 
-    // Extract top stack frame (safely access error.stack)
     let topStackFrame = 'unknown'
     try {
       topStackFrame = extractTopStackFrame(error.stack) ?? 'unknown'
@@ -30,13 +29,11 @@ export function generateGroupingKey(error: Error, unhandled: boolean): string {
       // If accessing stack throws, use 'unknown'
     }
 
-    // Build the grouping key with the top stack frame
     const groupingKey = `cli:${handledStatus}:${context.errorClass}:${context.sanitizedMessage}:${topStackFrame}`
 
     return groupingKey
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (keyError: unknown) {
-    // Return a fallback key that still provides some grouping value
     const errorName = error?.constructor?.name || 'Unknown'
     const handledStatus = unhandled ? 'unhandled' : 'handled'
     return `cli:${handledStatus}:${errorName}:fallback-key-generation-failed:unknown`

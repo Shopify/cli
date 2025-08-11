@@ -1,5 +1,53 @@
 import {sanitizeErrorMessage} from './sanitizers.js'
-import type {ErrorContext, StackFrame} from './types.js'
+
+/**
+ * Represents a parsed stack frame from an error stack trace.
+ */
+export interface StackFrame {
+  /** The file path where the error occurred. */
+  file: string
+  /** The method/function name where the error occurred. */
+  method: string
+  /** The line number in the file. */
+  lineNumber?: number
+  /** The column number in the file. */
+  columnNumber?: number
+}
+
+/**
+ * Error context information used for generating grouping hashes.
+ */
+export interface ErrorContext {
+  /** The error class name (e.g., 'TypeError', 'FatalError'). */
+  errorClass: string
+
+  /** The raw error message. */
+  errorMessage: string
+
+  /** The sanitized error message with sensitive data removed. */
+  sanitizedMessage: string
+
+  /** Information about the top stack frame. */
+  topFrame?: StackFrame
+
+  /** The CLI command being executed (e.g., 'app dev'). */
+  command?: string
+
+  /** The environment (e.g., 'development', 'production'). */
+  environment?: string
+
+  /** The platform (e.g., 'darwin', 'win32', 'linux'). */
+  platform?: string
+
+  /** The CLI version. */
+  cliVersion?: string
+
+  /** The original stack trace before sanitization. */
+  originalStack?: string
+
+  /** The original error message before sanitization. */
+  originalMessage: string
+}
 
 /**
  * Extracts and sanitizes context from an error for grouping and debugging.
@@ -7,24 +55,27 @@ import type {ErrorContext, StackFrame} from './types.js'
  * @param error - The error to extract context from.
  * @returns An ErrorContext object with sanitized and original values.
  */
-export function extractErrorContext(error: Error): ErrorContext {
-  // Safely get error class name
-  let errorClass = 'Error'
+function getErrorClassName(error: Error): string {
   try {
-    errorClass = error.constructor?.name ?? 'Error'
+    return error.constructor?.name ?? 'Error'
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    // If accessing constructor.name throws, use default
+    return 'Error'
   }
+}
 
-  // Safely get error message
-  let errorMessage = ''
+function getErrorMessage(error: Error): string {
   try {
-    errorMessage = error.message ?? ''
+    return error.message ?? ''
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    // If accessing message throws, use empty string
+    return ''
   }
+}
+
+export function extractErrorContext(error: Error): ErrorContext {
+  const errorClass = getErrorClassName(error)
+  const errorMessage = getErrorMessage(error)
 
   const sanitizedMessage = sanitizeErrorMessage(errorMessage)
 
@@ -64,8 +115,6 @@ export function extractErrorContext(error: Error): ErrorContext {
     topFrame,
     originalStack,
     originalMessage: errorMessage,
-    // Additional context can be added here if needed
-    // command, environment, platform, cliVersion will be added by the caller
   }
 }
 

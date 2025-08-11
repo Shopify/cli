@@ -1,30 +1,44 @@
-import type {SanitizationRule} from './types.js'
+/**
+ * Rule for sanitizing sensitive data from error messages.
+ */
+export interface SanitizationRule {
+  /** The regex pattern to match sensitive data. */
+  pattern: RegExp
+
+  /** The replacement string for matched data. */
+  replace: string
+
+  /** Optional description of what this rule sanitizes. */
+  description?: string
+}
 
 /**
  * Sanitization rules for removing sensitive data from error messages.
  * Order matters: more specific patterns should come before general ones.
  */
+// JWT must be processed first to avoid partial matches by other patterns
+const jwtTokenRules: SanitizationRule = {
+  pattern: /eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/g,
+  replace: '<JWT>',
+  description: 'JWT tokens',
+}
+
+const databaseUrlRules: SanitizationRule = {
+  pattern: /(?:mongodb|postgresql|mysql|redis|postgres|sqlite):\/\/[^\s]+/gi,
+  replace: '<DATABASE_URL>',
+  description: 'Database connection URLs',
+}
+
+const githubTokenRules: SanitizationRule = {
+  pattern: /gh[pso]s?_[A-Za-z0-9_]{36,}/g,
+  replace: '<GITHUB_TOKEN>',
+  description: 'GitHub personal access tokens',
+}
+
 export const SANITIZATION_RULES: SanitizationRule[] = [
-  // CRITICAL: JWT tokens - MUST come first to avoid partial matches
-  {
-    pattern: /eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/g,
-    replace: '<JWT>',
-    description: 'JWT tokens',
-  },
-
-  // Database URLs - before general URLs
-  {
-    pattern: /(?:mongodb|postgresql|mysql|redis|postgres|sqlite):\/\/[^\s]+/gi,
-    replace: '<DATABASE_URL>',
-    description: 'Database connection URLs',
-  },
-
-  // GitHub tokens - before general tokens (includes ghps_ pattern)
-  {
-    pattern: /gh[pso]s?_[A-Za-z0-9_]{36,}/g,
-    replace: '<GITHUB_TOKEN>',
-    description: 'GitHub personal access tokens',
-  },
+  jwtTokenRules,
+  databaseUrlRules,
+  githubTokenRules,
 
   // NPM tokens
   {
@@ -54,17 +68,14 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
     description: 'Email addresses',
   },
 
-  // 1. Ports (localhost:*) - MUST come first before any IP/version patterns
+  // Ports must precede IP/version patterns to avoid conflicts
   {
     pattern: /(localhost|127\.0\.0\.1|0\.0\.0\.0|::1):\d+/gi,
     replace: '$1:<PORT>',
     description: 'Local server ports',
   },
 
-  // 2. File paths - AGGRESSIVE normalization across all OS
-  // IMPORTANT: More specific patterns must come first!
-
-  // node_modules paths - extract only the part after node_modules/
+  // File path normalization - specific patterns before general ones
   {
     pattern: /(?:[A-Z]:[\\/]|[\\/])?.*node_modules[\\/]([^\s]+)/gi,
     replace: 'node_modules/$1',
@@ -96,14 +107,13 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
     description: 'Remaining absolute file paths',
   },
 
-  // 3. Store names (*.myshopify.com)
   {
     pattern: /[\w][\w-]{0,61}\.myshopify\.com/gi,
     replace: '<STORE>.myshopify.com',
     description: 'Shopify store domains',
   },
 
-  // 4. Shopify tokens (shpat_*, shpua_*, etc.) - Must come before UUIDs
+  // Shopify tokens must be processed before UUID patterns
   {
     pattern: /shp[a-z]{2}_[a-f0-9]+/gi,
     replace: '<TOKEN>',
@@ -115,35 +125,30 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
     description: 'Shopify user agent tokens',
   },
 
-  // 5. GIDs (gid://shopify/*)
   {
     pattern: /gid:\/\/shopify\/\w+\/[\w-]+/gi,
     replace: 'gid://shopify/<TYPE>/<ID>',
     description: 'Shopify global IDs',
   },
 
-  // 6. UUIDs
   {
     pattern: /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi,
     replace: '<UUID>',
     description: 'UUID identifiers',
   },
 
-  // 7. Package versions (@package@version)
   {
     pattern: /@[\w/-]+@\d+\.\d+\.\d+(-[\w.]+)?/gi,
     replace: '@<PACKAGE>@<VERSION>',
     description: 'NPM package versions',
   },
 
-  // 8. API versions (/admin/YYYY-MM)
   {
     pattern: /\/admin\/\d{4}-\d{2}/gi,
     replace: '/admin/<API_VERSION>',
     description: 'Shopify API versions',
   },
 
-  // 9. Webpack chunks
   {
     pattern: /([a-z~]+(?:-[a-z~]+){0,10})\.[a-f0-9]{6,8}\.(js|css|mjs)/gi,
     replace: '$1.<HASH>.$2',
@@ -155,28 +160,25 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
     description: 'Webpack vendor chunks',
   },
 
-  // 10. Version numbers (v1.2.3) - Must come after ports
+  // Version patterns must follow port patterns to avoid conflicts
   {
     pattern: /\bv\d+\.\d+\.\d+(-[\w.]+)?\b/gi,
     replace: '<VERSION>',
     description: 'Semantic version numbers',
   },
 
-  // 11. Line numbers
   {
     pattern: /\bline\s+\d+/gi,
     replace: 'line <LINE>',
     description: 'Line number references',
   },
 
-  // 12. Column numbers
   {
     pattern: /\bcolumn\s+\d+/gi,
     replace: 'column <COL>',
     description: 'Column number references',
   },
 
-  // 13. Line:Column format
   {
     pattern: /\(?\d{1,6}:\d{1,6}\)?/g,
     replace: '(<LINE>:<COL>)',

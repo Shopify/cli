@@ -1,10 +1,21 @@
 import {SANITIZATION_RULES} from './patterns.js'
 
-// Pre-compile patterns for performance
-const compiledRules = SANITIZATION_RULES.map((rule) => ({
+const preCompiledRules = SANITIZATION_RULES.map((rule) => ({
   pattern: new RegExp(rule.pattern.source, rule.pattern.flags),
   replace: rule.replace,
 }))
+
+function normalizeCaptureGroups(groups: unknown[], replaceTemplate: string): string {
+  const normalizedGroups = groups.map((group) => (typeof group === 'string' ? group.replace(/\\/g, '/') : group))
+
+  let replacement = replaceTemplate
+  normalizedGroups.forEach((group, index) => {
+    if (typeof group === 'string') {
+      replacement = replacement.replace(`$${index + 1}`, group)
+    }
+  })
+  return replacement
+}
 
 /**
  * Sanitizes an error message by replacing dynamic values with placeholders.
@@ -17,23 +28,11 @@ export function sanitizeErrorMessage(message: string): string {
 
   let sanitized = message
 
-  // Apply all sanitization rules
-  for (const rule of compiledRules) {
+  for (const rule of preCompiledRules) {
     sanitized = sanitized.replace(rule.pattern, (_match, ...groups) => {
-      // If there are capture groups and this is a path-related pattern
       if (groups.length > 0 && rule.replace.includes('$1')) {
-        // Normalize backslashes to forward slashes in captured paths
-        const normalizedGroups = groups.map((group) => (typeof group === 'string' ? group.replace(/\\/g, '/') : group))
-        // Replace $1, $2, etc. with normalized groups
-        let replacement = rule.replace
-        normalizedGroups.forEach((group, index) => {
-          if (typeof group === 'string') {
-            replacement = replacement.replace(`$${index + 1}`, group)
-          }
-        })
-        return replacement
+        return normalizeCaptureGroups(groups, rule.replace)
       }
-      // For patterns without capture groups, use the original replace string
       return rule.replace
     })
   }

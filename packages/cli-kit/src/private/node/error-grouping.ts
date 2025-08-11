@@ -7,6 +7,3 @@
 // Main functions - only export what's actually used externally
 export {generateGroupingKey} from './error-grouping/key-generator.js'
 export {extractErrorContext} from './error-grouping/context-extractor.js'
-
-// Export sanitizeErrorMessage only for tests
-export {sanitizeErrorMessage} from './error-grouping/sanitizers.js'
