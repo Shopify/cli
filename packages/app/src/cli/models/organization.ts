@@ -49,7 +49,7 @@ export type OrganizationApp = MinimalOrganizationApp & {
   }
   configuration?: AppConfigurationUsedByCli
   flags: Flag[]
-  developerPlatformClient?: DeveloperPlatformClient
+  developerPlatformClient: DeveloperPlatformClient
 }
 
 export interface OrganizationStore {

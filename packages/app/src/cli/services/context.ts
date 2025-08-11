@@ -284,7 +284,6 @@ export async function fetchOrCreateOrganizationApp(options: CreateAppOptions): P
   const developerPlatformClient = selectDeveloperPlatformClient({organization: org})
   const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
   const remoteApp = await selectOrCreateApp(apps, hasMorePages, organization, developerPlatformClient, options)
-  remoteApp.developerPlatformClient = developerPlatformClient
 
   await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
 
