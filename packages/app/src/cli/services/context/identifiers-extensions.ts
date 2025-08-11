@@ -316,10 +316,8 @@ async function createExtensions(
       // Just pretend to create the extension, as it's not necessary to do anything
       // in this case.
       result[extension.localIdentifier] = {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        id: extension.uid!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        uuid: extension.uid!,
+        id: extension.uid,
+        uuid: extension.uid,
         type: extension.type,
         title: extension.handle,
       }

@@ -427,7 +427,10 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [],
-          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildExtensionBreakdownInfo('extension-a-2', undefined),
+          ],
           toUpdate: [],
         },
         extensionsToConfirm,
@@ -464,8 +467,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [
-            buildExtensionBreakdownInfo('EXTENSION_A'),
-            buildExtensionBreakdownInfo('extension-a-2'),
+            buildExtensionBreakdownInfo('EXTENSION_A', 'UUID_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
             buildDashboardBreakdownInfo('Dashboard A'),
           ],
           toUpdate: [],
@@ -505,7 +508,10 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
+          toCreate: [
+            buildExtensionBreakdownInfo('EXTENSION_A', 'UUID_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
+          ],
           toUpdate: [],
           unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
         },
@@ -551,9 +557,12 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('extension-a-2')],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
           toUpdate: [],
-          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -598,11 +607,14 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [
-            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
-            buildExtensionBreakdownInfo('extension-a-2'),
+            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A', 'UUID_DM_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
           ],
           toUpdate: [],
-          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -650,16 +662,19 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [
-            buildExtensionBreakdownInfo('Checkout post purchase Deleted B'),
+            buildExtensionBreakdownInfo('Checkout post purchase Deleted B', 'B'),
             buildDashboardBreakdownInfo('Dashboard Deleted B'),
           ],
           toCreate: [
-            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
-            buildExtensionBreakdownInfo('extension-a-2'),
+            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A', 'UUID_DM_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
             buildDashboardBreakdownInfo('Dashboard New'),
           ],
           toUpdate: [],
-          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -704,8 +719,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('extension-a-2')],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A')],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A', undefined)],
           unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
@@ -775,8 +790,8 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
-        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
-        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B', undefined)],
+        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase', undefined)],
         toUpdate: [],
         unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
       },
@@ -811,7 +826,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
       extensionIdentifiersBreakdown: {
         toCreate: [],
         toUpdate: [],
-        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B', undefined)],
         unchanged: [],
       },
       versionDetails: versionDiff.versionDetails,
