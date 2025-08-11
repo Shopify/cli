@@ -545,6 +545,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: 'tmp',
+    type: 'theme',
     options: {
       ignore: [],
       only: [],

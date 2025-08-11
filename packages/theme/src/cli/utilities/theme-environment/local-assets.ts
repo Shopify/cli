@@ -19,7 +19,7 @@ export function getAssetsHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
     if (event.method !== 'GET') return
 
-    if (isCompiledAssetRequest(event)) {
+    if (isCompiledAssetRequest(event, ctx)) {
       return handleCompiledAssetRequest(event, ctx)
     }
 
@@ -93,8 +93,8 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
   )
 }
 
-function isCompiledAssetRequest(event: H3Event): boolean {
-  return event.path.includes('/compiled_assets')
+function isCompiledAssetRequest(event: H3Event, ctx: DevServerContext): boolean {
+  return ctx.type === 'theme' && event.path.includes('/compiled_assets')
 }
 
 function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {

@@ -82,6 +82,7 @@ export async function dev(options: DevOptions) {
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: options.directory,
+    type: 'theme',
     options: {
       themeEditorSync: options['theme-editor-sync'],
       host,
