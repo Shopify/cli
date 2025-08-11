@@ -45,7 +45,7 @@ export default class Profile extends ThemeCommand {
     const store = ensureThemeStore(flags)
     const {password: themeAccessPassword} = flags
 
-    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
+    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword)
     let filter
     if (flags.theme) {
       filter = {filter: {theme: flags.theme}}
