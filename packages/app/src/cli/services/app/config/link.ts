@@ -25,8 +25,8 @@ import {
 import {
   Flag,
   DeveloperPlatformClient,
-  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
   CreateAppOptions,
+  selectDeveloperPlatformClient,
 } from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
@@ -128,18 +128,14 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
   appDirectory: string
   developerPlatformClient: DeveloperPlatformClient
 }> {
-  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
-
   const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
   const appDirectory = possibleAppDirectory ?? options.directory
 
+  const defaultDeveloperPlatformClient = selectDeveloperPlatformClient()
+
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromIdentifiers({
-      apiKey: options.apiKey,
-      developerPlatformClient,
-      organizationId: options.organizationId,
-    })
+    const remoteApp = await appFromIdentifiers({apiKey: options.apiKey})
     if (!remoteApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -149,13 +145,13 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     return {
       remoteApp,
       appDirectory,
-      developerPlatformClient,
+      developerPlatformClient: remoteApp.developerPlatformClient ?? defaultDeveloperPlatformClient,
     }
   }
 
   const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
 
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const developerPlatformClient = remoteApp.developerPlatformClient ?? defaultDeveloperPlatformClient
 
   return {
     remoteApp,
