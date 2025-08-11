@@ -794,7 +794,7 @@ describe('ImportExtensionsIfNeeded', () => {
         force: true,
       }),
     ).rejects.toThrow(
-      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+      "App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:",
     )
   })
 
@@ -819,7 +819,7 @@ describe('ImportExtensionsIfNeeded', () => {
         force: false,
       }),
     ).rejects.toThrow(
-      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+      "App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:",
     )
   })
 
@@ -884,7 +884,7 @@ describe('ImportExtensionsIfNeeded', () => {
         force: true,
       }),
     ).rejects.toThrow(
-      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+      "App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:",
     )
   })
 
@@ -909,7 +909,7 @@ describe('ImportExtensionsIfNeeded', () => {
         force: false,
       }),
     ).rejects.toThrow(
-      "App can't be deployed until legacy extensions are added to your version or removed from your app:",
+      "App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:",
     )
   })
 
@@ -983,5 +983,39 @@ describe('ImportExtensionsIfNeeded', () => {
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
     expect(importAllExtensions).not.toHaveBeenCalled()
     expect(result).toBe(app)
+  })
+
+  test('ensureDeploymentIdsPresence throws when forcing deploy and unassigned dashboard extensions exist on unsupported platform', async () => {
+    // Given
+    const app = testAppLinked()
+    const remoteApp = testOrganizationApp()
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDashboardManagedExtensions: false,
+      appExtensionRegistrations: async () =>
+        Promise.resolve({
+          app: {
+            extensionRegistrations: [{id: '', title: 'Legacy extension'}],
+            configurationRegistrations: [],
+          },
+        } as any),
+    })
+
+    const identifiersModule = await vi.importActual<typeof import('./context/identifiers.js')>(
+      './context/identifiers.js',
+    )
+
+    // When/Then
+    await expect(
+      identifiersModule.ensureDeploymentIdsPresence({
+        app,
+        developerPlatformClient,
+        appId: remoteApp.apiKey,
+        appName: remoteApp.title,
+        envIdentifiers: {},
+        force: true,
+        release: true,
+        remoteApp,
+      } as any),
+    ).rejects.toThrow('need to be assigned')
   })
 })

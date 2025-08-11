@@ -111,7 +111,7 @@ async function handleUnsupportedDashboardExtensions(
   const {app, remoteApp, developerPlatformClient, force, extensions} = options
 
   const message = [
-    `App can't be deployed until legacy extensions are added to your version or removed from your app:\n`,
+    `App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:\n`,
     extensions.map((ext) => `  - ${ext.title}`).join('\n'),
   ]
   const nextSteps = ['\n\nRun ', {command: 'shopify app import-extensions'}, 'to add legacy extensions.']
