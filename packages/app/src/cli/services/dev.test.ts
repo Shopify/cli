@@ -132,4 +132,29 @@ describe('blockIfMigrationIncomplete', () => {
 
     await expect(blockIfMigrationIncomplete(devConfig)).rejects.toThrow(/need to be assigned uid identifiers/)
   })
+
+  test('does nothing for Partners with missing ids (not migrated)', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDevSessions: false,
+      async appExtensionRegistrations() {
+        return {
+          app: {
+            extensionRegistrations: [
+              {id: '', uuid: 'u1', title: 'Legacy Ext 1', type: 'theme'},
+              {uuid: 'u2', title: 'Legacy Ext 2', type: 'web_pixel_extension'},
+            ],
+            configurationRegistrations: [],
+            dashboardManagedExtensionRegistrations: [],
+          },
+        } as any
+      },
+    })
+
+    const devConfig = {
+      ...baseConfig(),
+      developerPlatformClient,
+    } as any
+
+    await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
+  })
 })

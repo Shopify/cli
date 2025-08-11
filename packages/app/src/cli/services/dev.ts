@@ -239,9 +239,10 @@ export async function warnIfScopesDifferBeforeDev({
 
 export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
   const {developerPlatformClient, remoteApp} = devConfig
-  const remoteExtensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app
-    .extensionRegistrations
-  if (developerPlatformClient.supportsDevSessions && !remoteExtensions.every((extension) => extension.id)) {
+  if (!developerPlatformClient.supportsDevSessions) return
+
+  const extensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app.extensionRegistrations
+  if (!extensions.every((extension) => extension.id)) {
     const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']
     const nextSteps = [
       'You must first map IDs to your existing extensions by running',
