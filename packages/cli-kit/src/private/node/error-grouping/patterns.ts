@@ -1,7 +1,7 @@
 /**
  * Rule for sanitizing sensitive data from error messages.
  */
-export interface SanitizationRule {
+interface SanitizationRule {
   /** The regex pattern to match sensitive data. */
   pattern: RegExp
 

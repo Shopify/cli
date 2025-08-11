@@ -3,7 +3,7 @@ import {sanitizeErrorMessage} from './sanitizers.js'
 /**
  * Represents a parsed stack frame from an error stack trace.
  */
-export interface StackFrame {
+interface StackFrame {
   /** The file path where the error occurred. */
   file: string
   /** The method/function name where the error occurred. */
@@ -17,7 +17,7 @@ export interface StackFrame {
 /**
  * Error context information used for generating grouping hashes.
  */
-export interface ErrorContext {
+interface ErrorContext {
   /** The error class name (e.g., 'TypeError', 'FatalError'). */
   errorClass: string
 
