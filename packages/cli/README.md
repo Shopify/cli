@@ -2027,8 +2027,8 @@ ARGUMENTS
 
 FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
-  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme] The Git URL to clone from. Defaults to
-                           Shopify's Skeleton theme.
+  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme.git] The Git URL to clone from. Defaults
+                           to Shopify's Skeleton theme.
       --no-color           Disable color output.
       --path=<value>       The path where you want to run the command. Defaults to the current working directory.
       --verbose            Increase the verbosity of the output.
@@ -2039,8 +2039,8 @@ DESCRIPTION
   Clones a Git repository to your local machine to use as the starting point for building a theme.
 
   If no Git repository is specified, then this command creates a copy of Shopify's "Skeleton theme"
-  (https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided,
-  then you're prompted to enter one.
+  (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is
+  provided, then you're prompted to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
   point. However, the theme that you submit needs to be "substantively different from existing themes"
