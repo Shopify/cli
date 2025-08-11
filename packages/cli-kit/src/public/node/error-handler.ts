@@ -130,7 +130,8 @@ export async function sendErrorToBugsnag(
           // Generate groupingKey for better error grouping with error boundary
           try {
             const groupingKey = generateGroupingKey(reportableError, unhandled)
-            event.addMetadata('observe', {groupingKey})
+            // Set custom observe grouping key for better error grouping
+            event.addMetadata('custom', {observeGroupingKey: groupingKey})
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (groupingError: unknown) {
             outputDebug(`GroupingKey generation failed: ${groupingError}`)
@@ -138,7 +139,7 @@ export async function sendErrorToBugsnag(
             const fallbackKey = `cli:${unhandled ? 'unhandled' : 'handled'}:${
               reportableError.constructor.name
             }:fallback`
-            event.addMetadata('observe', {groupingKey: fallbackKey})
+            event.addMetadata('custom', {observeGroupingKey: fallbackKey})
           }
 
           // Preserve original data in metadata for debugging
