@@ -93,6 +93,31 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
     replace: 'pnpm-store/$1',
     description: 'pnpm store paths',
   },
+  // URL patterns - add more comprehensive URL sanitization
+  // Partners URLs
+  {
+    pattern: /https?:\/\/partners\.shopify\.com\/\d+\/[^\s]+/gi,
+    replace: 'https://partners.shopify.com/<PARTNER_ID>/<PATH>',
+    description: 'Partners dashboard URLs',
+  },
+  // Shopify dev URLs
+  {
+    pattern: /https?:\/\/shopify\.dev\/[^\s]+/gi,
+    replace: 'https://shopify.dev/<PATH>',
+    description: 'Shopify dev documentation URLs',
+  },
+  // Generic Shopify API URLs with dynamic IDs
+  {
+    pattern: /https?:\/\/[^/]+\.shopify\.com\/admin\/api\/[\d-]+\/[^\s]+/gi,
+    replace: 'https://<DOMAIN>.shopify.com/admin/api/<VERSION>/<RESOURCE>',
+    description: 'Shopify API URLs with versions and resources',
+  },
+  // Generic API URLs
+  {
+    pattern: /(https?:\/\/[^/]+)(\/[^\s]*\d{5,}[^\s]*)/gi,
+    replace: '$1/<PATH_WITH_ID>',
+    description: 'URLs with numeric IDs',
+  },
   // All other file paths - normalize aggressively (but don't touch already normalized paths)
   {
     pattern:
