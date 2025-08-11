@@ -16,10 +16,10 @@ const limiter = new Bottleneck({
   maxConcurrent: 10,
 })
 
-async function setupRequest(orgId: string, token: string) {
+async function setupRequest(token: string) {
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
-  const url = `https://${fqdn}/app_management/unstable/organizations/${orgId}/graphql.json`
+  const url = `https://${fqdn}/app_management/unstable/graphql.json`
   return {
     token,
     api,
@@ -59,7 +59,6 @@ export interface RequestOptions {
  * @param unauthorizedHandler - Optional handler for unauthorized requests.
  */
 export interface AppManagementRequestOptions<TResult, TVariables extends Variables> {
-  organizationId: string
   query: TypedDocumentNode<TResult, TVariables>
   token: string
   variables?: TVariables
@@ -77,13 +76,12 @@ export interface AppManagementRequestOptions<TResult, TVariables extends Variabl
 export async function appManagementRequestDoc<TResult, TVariables extends Variables>(
   options: AppManagementRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
-  // For app management, we need to cache the response based on the orgId.
-  const cacheExtraKey = (options.cacheOptions?.cacheExtraKey ?? '') + options.organizationId
+  const cacheExtraKey = options.cacheOptions?.cacheExtraKey ?? ''
   const newCacheOptions = options.cacheOptions ? {...options.cacheOptions, cacheExtraKey} : undefined
 
   const result = limiter.schedule<TResult>(async () =>
     graphqlRequestDoc<TResult, TVariables>({
-      ...(await setupRequest(options.organizationId, options.token)),
+      ...(await setupRequest(options.token)),
       query: options.query,
       variables: options.variables,
       cacheOptions: newCacheOptions,

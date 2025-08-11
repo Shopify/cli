@@ -13,7 +13,7 @@ import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {MinimalAppIdentifiers, AppApiKeyAndOrgId, OrganizationApp} from '../../../models/organization.js'
+import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -49,7 +49,7 @@ const DEFAULT_REMOTE_CONFIGURATION = {
 
 function buildDeveloperPlatformClient(extraFields: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
+    async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
@@ -807,7 +807,7 @@ embedded = false
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
       vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
-        return (await developerPlatformClient.appFromIdentifiers({apiKey, organizationId: '1'}))!
+        return (await developerPlatformClient.appFromIdentifiers(apiKey))!
       })
 
       // When

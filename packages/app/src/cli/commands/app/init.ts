@@ -168,7 +168,7 @@ async function selectAppOrNewAppName(
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)
 
-    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app.apiKey)
     if (!fullSelectedApp) throw new AbortError(`App with id ${app.id} not found`)
     return {result: 'existing', app: fullSelectedApp}
   }
