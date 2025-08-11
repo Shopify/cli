@@ -780,9 +780,10 @@ describe('automaticMatchmaking: with Atomic Deployments enabled', () => {
 
   test('creates the missing extension when there is a remote one', async () => {
     // When
+    const registrationA = {...REGISTRATION_A, id: ''}
     const got = await automaticMatchmaking(
       [EXTENSION_A, EXTENSION_A_2],
-      [REGISTRATION_A],
+      [registrationA],
       {'extension-a': 'UUID_A'},
       testDeveloperPlatformClient({supportsAtomicDeployments: true}),
     )
@@ -805,16 +806,21 @@ describe('outputAddedIDs', () => {
     vi.mocked(outputInfo).mockClear()
 
     // Extension B has a valid UID
-    REGISTRATION_B.id = EXTENSION_B.uid
+    // Extension C is marked as toCreate because we only try to match by UID (because it has a real one)
+    const registrationA = {...REGISTRATION_A, id: ''}
+    const registrationB = {...REGISTRATION_B, id: EXTENSION_B.uid}
+    const registrationC = {...REGISTRATION_C}
+    const registrationD = {...REGISTRATION_D, id: ''}
 
     // When: Extensions are matched by UUID (not by UID)
-    await automaticMatchmaking(
-      [EXTENSION_A, EXTENSION_B, EXTENSION_C],
-      [REGISTRATION_A, REGISTRATION_B, REGISTRATION_C],
+    const result = await automaticMatchmaking(
+      [EXTENSION_A, EXTENSION_B, EXTENSION_C, EXTENSION_D],
+      [registrationA, registrationB, registrationC, registrationD],
       {
         'extension-a': 'UUID_A',
         'extension-b': 'UUID_B',
         'extension-c': 'UUID_C',
+        'extension-d': 'UUID_D',
       },
       testDeveloperPlatformClient({supportsAtomicDeployments: true}),
     )
@@ -823,10 +829,13 @@ describe('outputAddedIDs', () => {
     expect(outputInfo).toHaveBeenCalledWith('Generating extension IDs\n')
     expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('\x1B[36mextension-a\x1B[39m | Added ID: UUID_A'))
     expect(outputInfo).not.toHaveBeenCalledWith(expect.stringContaining('Added ID: UUID_B'))
-    expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('\x1B[35mextension-c\x1B[39m | Added ID: UUID_C'))
+    expect(outputInfo).not.toHaveBeenCalledWith(expect.stringContaining('Added ID: UUID_C'))
+    expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('\x1B[35mextension-d\x1B[39m | Added ID: UUID_D'))
     expect(outputInfo).toHaveBeenCalledWith('\n')
 
     // Verify it was called 4 times total (header + 2 extensions + footer)
     expect(outputInfo).toHaveBeenCalledTimes(4)
+
+    expect(result.toCreate).toEqual([EXTENSION_C])
   })
 })

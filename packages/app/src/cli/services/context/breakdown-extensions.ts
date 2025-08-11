@@ -362,7 +362,13 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
 
-  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(version, localRegistration, toCreate, specs)
+  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
+    version,
+    localRegistration,
+    toCreate,
+    specs,
+    developerPlatformClient,
+  )
 
   const dashboardOnlyFinal = dashboardOnly.filter(
     (dashboardOnly) =>
@@ -384,13 +390,23 @@ function loadExtensionsIdentifiersBreakdown(
   localRegistration: IdentifiersExtensions,
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter(
     (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
   )
 
+  // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
+  // In Partners, we keep the legacy match of only UUID.
   function moduleHasUUIDorUID(module: AppModuleVersion, identifier: string) {
-    return module.registrationUuid === identifier || module.registrationId === identifier
+    if (developerPlatformClient.supportsAtomicDeployments) {
+      return (
+        (module.registrationUuid === identifier && module.registrationId.length === 0) ||
+        module.registrationId === identifier
+      )
+    } else {
+      return module.registrationUuid === identifier
+    }
   }
 
   const allExistingExtensions = Object.entries(localRegistration)
