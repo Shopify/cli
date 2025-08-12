@@ -250,10 +250,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
   }
 
-  getOutputFolderId(registrationUuid?: string) {
-    // We want to return the UID only for Dev Dashboard apps,
-    // that's why we take it from the configuration
-    return this.configuration.uid ?? registrationUuid ?? this.handle
+  getOutputFolderId(outputId?: string) {
+    // Ideally we want to return `this.uid` always. To keep supporting Partners API we accept a value to override that.
+
+    return outputId ?? this.uid
   }
 
   // UI Specific properties
@@ -362,10 +362,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, registrationUuid?: string) {
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, registrationUuid)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
     }
 
     await this.build(options)
@@ -373,7 +373,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       await bundleThemeExtension(this, options)
     }
 
-    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(registrationUuid))
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
@@ -400,8 +400,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  getOutputPathForDirectory(directory: string, registrationUuid?: string) {
-    const id = this.getOutputFolderId(registrationUuid)
+  getOutputPathForDirectory(directory: string, outputId?: string) {
+    const id = this.getOutputFolderId(outputId)
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }

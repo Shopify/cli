@@ -64,7 +64,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false, isDevDashboardApp: false})
 
       // Then
       expect(extensionBundleMock).toHaveBeenCalledTimes(2)
@@ -98,7 +98,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false, isDevDashboardApp: false})
 
       // Then
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
@@ -131,7 +131,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
 
       // Then
       expect(extensionBuildMock).not.toHaveBeenCalled()
@@ -161,7 +161,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
 
       // Then
       expect(mockInstallJavy).not.toHaveBeenCalled()
@@ -189,7 +189,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false, isDevDashboardApp: false})
 
       // Then
       expect(mockInstallJavy).toHaveBeenCalledWith(app)
@@ -222,7 +222,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
 
       // Then
       expect(extensionBuildMock).not.toHaveBeenCalled()
@@ -282,7 +282,7 @@ describe('bundleAndBuildExtensions', () => {
       }
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true})
+      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
 
       // Then - verify none of the build methods were called
       expect(functionBuildMock).not.toHaveBeenCalled()
