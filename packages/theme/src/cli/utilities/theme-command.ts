@@ -225,33 +225,58 @@ export default abstract class ThemeCommand extends Command {
   private async runConcurrent(validEnvironments: {environment: EnvironmentName; flags: FlagValues}[]) {
     const abortController = new AbortController()
 
-    await renderConcurrent({
-      processes: validEnvironments.map(({environment, flags}) => ({
-        prefix: environment,
-        action: async (stdout: Writable, stderr: Writable, _signal) => {
-          try {
-            const store = flags.store as string
-            await useThemeStoreContext(store, async () => {
-              const session = await this.createSession(flags)
+    const stores = validEnvironments.map((env) => env.flags.store as string)
+    const uniqueStores = new Set(stores)
+    const runGroups =
+      stores.length === uniqueStores.size ? [validEnvironments] : this.createSequentialGroups(validEnvironments)
 
-              const commandName = this.constructor.name.toLowerCase()
-              recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
+    for (const runGroup of runGroups) {
+      // eslint-disable-next-line no-await-in-loop
+      await renderConcurrent({
+        processes: runGroup.map(({environment, flags}) => ({
+          prefix: environment,
+          action: async (stdout: Writable, stderr: Writable, _signal) => {
+            try {
+              const store = flags.store as string
+              await useThemeStoreContext(store, async () => {
+                const session = await this.createSession(flags)
 
-              await this.command(flags, session, true, {stdout, stderr})
-            })
+                const commandName = this.constructor.name.toLowerCase()
+                recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
-            // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch (error) {
-            if (error instanceof Error) {
-              error.message = `Environment ${environment} failed: \n\n${error.message}`
-              renderError({body: [error.message]})
+                await this.command(flags, session, true, {stdout, stderr})
+              })
+
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch (error) {
+              if (error instanceof Error) {
+                error.message = `Environment ${environment} failed: \n\n${error.message}`
+                renderError({body: [error.message]})
+              }
             }
-          }
-        },
-      })),
-      abortSignal: abortController.signal,
-      showTimestamps: true,
+          },
+        })),
+        abortSignal: abortController.signal,
+        showTimestamps: true,
+      })
+    }
+  }
+
+  /**
+   * Create groups of environments with unique flags.store values to run sequentially
+   * to prevent conflicts between environments acting on the same store
+   * @param environments - The environments to group
+   * @returns The environment groups
+   */
+  private createSequentialGroups(environments: {environment: EnvironmentName; flags: FlagValues}[]) {
+    const groups: {environment: EnvironmentName; flags: FlagValues}[][] = []
+
+    environments.forEach((environment) => {
+      const groupWithoutStore = groups.find((arr) => !arr.some((env) => env.flags.store === environment.flags.store))
+      groupWithoutStore ? groupWithoutStore.push(environment) : groups.push([environment])
     })
+
+    return groups
   }
 
   /**
