@@ -12,12 +12,16 @@ import {reloadApp} from '../models/app/loader.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
+import {FunctionConfigType} from '../models/extensions/specifications/function.js'
+import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui'
+import type {Task} from '@shopify/cli-kit/node/ui'
+import { runFunctionTestsIfExists } from './function/test-runner.js'
 
 export interface DeployOptions {
   /** The app to be built and uploaded */
@@ -217,6 +221,14 @@ export async function deploy(options: DeployOptions) {
       skipBuild: options.skipBuild,
       isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,
     })
+
+    const functionExtensions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
+    for (const extension of functionExtensions) {
+      await runFunctionTestsIfExists(extension as unknown as ExtensionInstance<FunctionConfigType>, {
+        stdout: process.stdout,
+        stderr: process.stderr,
+      })
+    }
 
     let uploadTaskTitle
 
