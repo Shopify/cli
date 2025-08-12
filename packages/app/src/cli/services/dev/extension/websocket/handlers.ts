@@ -47,8 +47,17 @@ export function parseLogMessage(message: string, location: LogPayload['location'
       line: location.line,
       column: location.column,
     })
+
     if (originalLocation) {
-      locationSuffix = ` at ${originalLocation.source}:${originalLocation.line}:${originalLocation.column}`
+      // the first replace is to fix the source missing part of the path
+      // the second is to reduce the length of the path, it could be further returned using a relative path
+      const filepath = originalLocation.source
+        ?.replace('/test-extensions/extensions/', '/test-extensions/matrix-mangoes/extensions/')
+        .replace('/Users/henrystelle/', '~/')
+      const filename = filepath?.split('/').pop()
+      const lineColumnRef = `${originalLocation.line}:${originalLocation.column}`
+      const link = outputToken.link(`${filename}:${lineColumnRef}`, `${filepath}:${lineColumnRef}`)
+      locationSuffix = outputContent` at ${link}`.value
     }
   }
 
