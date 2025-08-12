@@ -10,6 +10,8 @@ import {
   removeStorefrontPassword,
   ThemeLocalStorageSchema,
   setThemeStore,
+  getThemeStore,
+  useThemeStoreContext,
 } from './local-storage.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
@@ -52,6 +54,57 @@ describe('local-storage', () => {
           setThemeStore('test-store', storage)
           await expect(() => func(storage)).not.toThrow()
         })
+      })
+    })
+  })
+
+  describe('getThemeStore', () => {
+    test('selects store from context when inside useThemeStoreContext', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
+        setThemeStore('storage-store.myshopify.com', storage)
+
+        const initialStore = getThemeStore(storage)
+        let insideContextStore: string | undefined
+
+        await useThemeStoreContext('context-store.myshopify.com', async () => {
+          insideContextStore = getThemeStore(storage)
+        })
+
+        const outsideContextStore = getThemeStore(storage)
+
+        expect(initialStore).toBe('storage-store.myshopify.com')
+        expect(outsideContextStore).toBe('storage-store.myshopify.com')
+        expect(insideContextStore).toBe('context-store.myshopify.com')
+      })
+    })
+
+    test('ensures concurrently run commands maintain their own store value', async () => {
+      await inTemporaryDirectory(async (cwd) => {
+        const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
+        setThemeStore('storage-store.myshopify.com', storage)
+
+        const results: {[key: string]: string | undefined} = {}
+
+        await Promise.all([
+          useThemeStoreContext('store1.myshopify.com', async () => {
+            await new Promise((resolve) => setTimeout(resolve, 10))
+            results.env1 = getThemeStore(storage)
+          }),
+          useThemeStoreContext('store2.myshopify.com', async () => {
+            await new Promise((resolve) => setTimeout(resolve, 5))
+            results.env2 = getThemeStore(storage)
+          }),
+          useThemeStoreContext('store3.myshopify.com', async () => {
+            results.env3 = getThemeStore(storage)
+          }),
+          (results.env4 = getThemeStore(storage)),
+        ])
+
+        expect(results.env1).toBe('store1.myshopify.com')
+        expect(results.env2).toBe('store2.myshopify.com')
+        expect(results.env3).toBe('store3.myshopify.com')
+        expect(results.env4).toBe('storage-store.myshopify.com')
       })
     })
   })
