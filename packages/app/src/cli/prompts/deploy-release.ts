@@ -110,7 +110,11 @@ async function buildExtensionsContentPrompt(extensionsContentBreakdown: Extensio
       case 'dashboard':
         return [extension.title, {subdued: `(${preffix}from Partner Dashboard)`}]
       case 'extension':
-        return extension.title
+        if (extension.uid && extension.uid.length > 0) {
+          return `${extension.title} (uid: ${extension.uid})`
+        } else {
+          return extension.title
+        }
     }
   }
   let extensionsInfoTable
