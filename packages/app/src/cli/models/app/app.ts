@@ -395,8 +395,8 @@ export class App<
   }
 
   get allExtensions() {
-    if (this.includeConfigOnDeploy) return this.realExtensions
-    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+    if (this.includeConfigOnDeploy === false) return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+    return this.realExtensions
   }
 
   get draftableExtensions() {
@@ -546,7 +546,7 @@ export class App<
 
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
-    return this.configuration.build?.include_config_on_deploy ?? true
+    return this.configuration.build?.include_config_on_deploy
   }
 
   private patchAppConfiguration(devApplicationURLs: ApplicationURLs) {

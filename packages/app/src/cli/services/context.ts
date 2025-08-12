@@ -152,7 +152,16 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
   const {reset, force, noRelease, app, remoteApp, developerPlatformClient, organization} = options
   const activeAppVersion = await developerPlatformClient.activeAppVersion(remoteApp)
 
-  await checkIncludeConfigOnDeploy({org: organization, app, remoteApp, reset, force, developerPlatformClient})
+  const includeConfigOnDeploy = await checkIncludeConfigOnDeploy({app, reset, force, developerPlatformClient})
+
+  renderCurrentlyUsedConfigInfo({
+    org: organization.businessName,
+    appName: remoteApp.title,
+    appDotEnv: app.dotenv?.path,
+    configFile: basename(app.configuration.path),
+    includeConfigOnDeploy,
+    messages: [resetHelpMessage],
+  })
 
   const identifiers = await ensureDeploymentIdsPresence({
     app,
@@ -183,40 +192,39 @@ interface ShouldOrPromptIncludeConfigDeployOptions {
 }
 
 async function checkIncludeConfigOnDeploy({
-  org,
   app,
-  remoteApp,
   reset,
   force,
   developerPlatformClient,
 }: {
-  org: Organization
   app: AppInterface
-  remoteApp: OrganizationApp
   reset: boolean
   force: boolean
   developerPlatformClient: DeveloperPlatformClient
-}) {
+}): Promise<boolean | undefined> {
   if (developerPlatformClient.supportsAtomicDeployments) {
     await removeIncludeConfigOnDeployField(app)
-    return
+    return undefined
   }
 
-  let previousIncludeConfigOnDeploy = app.includeConfigOnDeploy
-  if (reset) previousIncludeConfigOnDeploy = undefined
-  if (force) previousIncludeConfigOnDeploy = previousIncludeConfigOnDeploy ?? false
+  let includeConfigOnDeploy = app.includeConfigOnDeploy
+  if (reset) includeConfigOnDeploy = undefined
 
-  renderCurrentlyUsedConfigInfo({
-    org: org.businessName,
-    appName: remoteApp.title,
-    appDotEnv: app.dotenv?.path,
-    configFile: basename(app.configuration.path),
-    includeConfigOnDeploy: previousIncludeConfigOnDeploy,
-    messages: [resetHelpMessage],
-  })
+  if (force && includeConfigOnDeploy === undefined) {
+    // If a partner is deploying on CI/CD with include_config_on_deploy not set,
+    // we need to abort the deploy, because the default value changed to true.
+    const message = [
+      'You must specify a value for',
+      {command: 'include_config_on_deploy'},
+      'in your TOML file. Including configuration will be required very soon.',
+    ]
+    const nextSteps = ['Run', {command: 'shopify app deploy'}, 'interactively, without', {command: '--force'}, '.']
+    throw new AbortError(message, nextSteps)
+  }
 
-  if (force || previousIncludeConfigOnDeploy === true) return
-  await promptIncludeConfigOnDeploy({
+  if (force || includeConfigOnDeploy === true) return includeConfigOnDeploy
+
+  return promptAndSaveIncludeConfigOnDeploy({
     appDirectory: app.directory,
     localApp: app,
   })
@@ -258,7 +266,7 @@ function renderWarningAboutIncludeConfigOnDeploy() {
   })
 }
 
-async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions) {
+async function promptAndSaveIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions): Promise<boolean> {
   const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
   localConfiguration.build = {
@@ -267,6 +275,7 @@ async function promptIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigD
   }
   await setAppConfigValue(localConfiguration.path, 'build.include_config_on_deploy', shouldIncludeConfigDeploy)
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
+  return shouldIncludeConfigDeploy
 }
 
 function includeConfigOnDeployPrompt(configPath: string): Promise<boolean> {

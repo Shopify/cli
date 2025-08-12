@@ -669,6 +669,26 @@ describe('allExtensions', () => {
     expect(app.allExtensions).toContain(configExtension)
   })
 
+  test('includes configuration extensions by default when include_config_on_deploy is undefined', async () => {
+    const configExtension = await testAppAccessConfigExtension()
+    const app = testApp(
+      {
+        configuration: {
+          ...CORRECT_CURRENT_APP_SCHEMA,
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: 'https://google.com',
+            include_config_on_deploy: undefined,
+          },
+        },
+        allExtensions: [configExtension],
+      },
+      'current',
+    )
+
+    expect(app.allExtensions).toContain(configExtension)
+  })
+
   test('does not include configuration extensions when include_config_on_deploy is disabled', async () => {
     const configuration = {
       ...CORRECT_CURRENT_APP_SCHEMA,
