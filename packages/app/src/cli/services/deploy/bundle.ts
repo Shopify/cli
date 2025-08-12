@@ -13,6 +13,7 @@ interface BundleOptions {
   bundlePath?: string
   identifiers?: Identifiers
   skipBuild: boolean
+  isDevDashboardApp: boolean
 }
 
 export async function bundleAndBuildExtensions(options: BundleOptions) {
@@ -33,18 +34,23 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
       return {
         prefix: extension.localIdentifier,
         action: async (stdout: Writable, stderr: Writable, signal: AbortSignal) => {
-          const extensionIdentifier = options.identifiers?.extensions[extension.localIdentifier]
+          // This outputId is the UID for AppManagement, and UUID for Partners
+          // Comes from the matching logic in `ensureDeployContext`
+          const outputId = options.isDevDashboardApp
+            ? undefined
+            : options.identifiers?.extensions[extension.localIdentifier]
+
           if (options.skipBuild) {
             await extension.copyIntoBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
               bundleDirectory,
-              extensionIdentifier,
+              outputId,
             )
           } else {
             await extension.buildForBundle(
               {stderr, stdout, signal, app: options.app, environment: 'production'},
               bundleDirectory,
-              extensionIdentifier,
+              outputId,
             )
           }
         },

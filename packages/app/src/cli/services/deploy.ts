@@ -183,6 +183,7 @@ export async function deploy(options: DeployOptions) {
     app,
     developerPlatformClient,
   })
+
   const release = !noRelease
   const apiKey = remoteApp.apiKey
 
@@ -205,7 +206,14 @@ export async function deploy(options: DeployOptions) {
       bundlePath = joinPath(options.app.directory, '.shopify', `deploy-bundle.${developerPlatformClient.bundleFormat}`)
       await mkdir(dirname(bundlePath))
     }
-    await bundleAndBuildExtensions({app, bundlePath, identifiers, skipBuild: options.skipBuild})
+
+    await bundleAndBuildExtensions({
+      app,
+      bundlePath,
+      identifiers,
+      skipBuild: options.skipBuild,
+      isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,
+    })
 
     let uploadTaskTitle
 
