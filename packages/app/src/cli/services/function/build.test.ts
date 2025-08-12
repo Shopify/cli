@@ -22,7 +22,9 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import * as fsNode from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
+import {generate} from '@graphql-codegen/cli'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('esbuild', async () => {
@@ -32,6 +34,9 @@ vi.mock('esbuild', async () => {
     build: vi.fn(),
   }
 })
+vi.mock('@graphql-codegen/cli', () => ({
+  generate: vi.fn().mockResolvedValue(undefined),
+}))
 
 let stdout: any
 let stderr: any
@@ -56,15 +61,34 @@ describe('buildGraphqlTypes', () => {
     // Given
     const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
 
+    // Mock the package.json
+    const packageJson = {
+      codegen: {
+        schema: 'schema.graphql',
+        documents: 'src/*.graphql',
+        generates: {
+          './generated/api.ts': {
+            plugins: ['typescript'],
+          },
+        },
+      },
+    }
+    vi.spyOn(fsNode, 'readFile').mockImplementation(async (path: string) => {
+      if (path === joinPath(ourFunction.directory, 'package.json')) {
+        return JSON.stringify(packageJson) as any
+      }
+      return JSON.stringify({}) as any
+    })
+
     // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+    const got = buildGraphqlTypes(ourFunction)
 
     // Then
     await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+    expect(fsNode.readFile).toHaveBeenCalledWith(joinPath(ourFunction.directory, 'package.json'))
+    expect(vi.mocked(generate)).toHaveBeenCalledWith({
       cwd: ourFunction.directory,
-      stderr,
-      signal,
+      ...packageJson.codegen,
     })
   })
 
@@ -74,7 +98,7 @@ describe('buildGraphqlTypes', () => {
     ourFunction.entrySourceFilePath = 'src/main.rs'
 
     // When
-    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+    const got = buildGraphqlTypes(ourFunction)
 
     // Then
     await expect(got).rejects.toThrow(/GraphQL types can only be built for JavaScript functions/)
