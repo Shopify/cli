@@ -32,6 +32,13 @@ import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 vi.mock('../../models/app/validation/multi-cli-warning.js')
+vi.mock('../function/build.js', async () => {
+  const actual: any = await vi.importActual('../function/build.js')
+  return {
+    ...actual,
+    buildGraphqlTypes: vi.fn().mockResolvedValue(undefined),
+  }
+})
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
   return {
@@ -361,7 +368,7 @@ describe('initialize a extension', async () => {
           await file.mkdir(joinPath(destination, 'src'))
           await file.writeFile(joinPath(destination, 'src', 'index'), '')
         })
-        const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue()
+        const buildGraphqlTypesSpy = vi.spyOn(functionBuild, 'buildGraphqlTypes').mockResolvedValue(undefined)
 
         // When
         const extensionDir = await createFromTemplate({
@@ -409,6 +416,20 @@ describe('initialize a extension', async () => {
           await file.mkdir(joinPath(destination, 'src'))
           await file.writeFile(joinPath(destination, 'src', 'index'), '')
           await file.writeFile(joinPath(destination, 'src', 'run.graphql'), '')
+          await file.writeFile(
+            joinPath(destination, 'package.json'),
+            JSON.stringify({
+              codegen: {
+                schema: 'schema.graphql',
+                documents: 'src/*.graphql',
+                generates: {
+                  './generated/api.ts': {
+                    plugins: ['typescript'],
+                  },
+                },
+              },
+            }),
+          )
         })
 
         // When

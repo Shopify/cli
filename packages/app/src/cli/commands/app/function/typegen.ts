@@ -29,7 +29,7 @@ export default class FunctionTypegen extends AppUnlinkedCommand {
 
     const ourFunction = await chooseFunction(app, flags.path)
 
-    await buildGraphqlTypes(ourFunction, {stdout: process.stdout, stderr: process.stderr, app})
+    await buildGraphqlTypes(ourFunction)
     renderSuccess({headline: 'GraphQL types generated successfully.'})
 
     return {app}
