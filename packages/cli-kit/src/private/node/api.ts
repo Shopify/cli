@@ -86,7 +86,8 @@ function isARetryableNetworkError(error: unknown): boolean {
     ]
     const errorMessage = error.message.toLowerCase()
     const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
-    return anyMatches
+    const missingReason = /^request to .* failed, reason:\s*$/.test(errorMessage)
+    return anyMatches || missingReason
   }
   return false
 }
