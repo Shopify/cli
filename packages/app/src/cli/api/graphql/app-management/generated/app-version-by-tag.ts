@@ -17,6 +17,7 @@ export type AppVersionByTagQuery = {
       userIdentifier: string
       handle: string
       config: JsonMapType
+      target?: string | null
       specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
     }[]
   }
@@ -71,6 +72,7 @@ export const AppVersionByTag = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},

@@ -125,6 +125,7 @@ export interface AppModuleVersion {
   registrationUuid?: string
   registrationTitle: string
   config?: object
+  target?: string
   type: string
   specification?: AppModuleVersionSpecification
 }
