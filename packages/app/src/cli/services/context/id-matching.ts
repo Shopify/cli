@@ -86,23 +86,26 @@ function matchByUIDandUUID(
   const matchedByUUID: IdentifiersExtensions = {}
 
   // First, try to match by UID, then by UUID.
+  // But only accept a UUID match if the ID for the remote source is empty, meaning is still pending migration.
   local.forEach((localSource) => {
     const matchByUID = remote.find((remoteSource) => remoteSource.id === localSource.uid)
     const matchByUUID = remote.find((remoteSource) => remoteSource.uuid === ids[localSource.localIdentifier])
 
     if (matchByUID) {
       matchedByUID[localSource.localIdentifier] = matchByUID.id
-    } else if (matchByUUID) {
+    } else if (matchByUUID && matchByUUID.id.length === 0) {
       matchedByUUID[localSource.localIdentifier] = matchByUUID.uuid
     } else {
       pendingLocal.push(localSource)
     }
   })
 
+  // Remote source with a valid UID is not pending, shouldn't be tried to be matched by name/type.
   const pendingRemote = remote.filter(
     (remoteSource) =>
       !Object.values(matchedByUUID).includes(remoteSource.uuid) &&
-      !Object.values(matchedByUID).includes(remoteSource.id),
+      !Object.values(matchedByUID).includes(remoteSource.id) &&
+      remoteSource.id.length === 0,
   )
 
   // Then, try to match by name and type as a last resort.
