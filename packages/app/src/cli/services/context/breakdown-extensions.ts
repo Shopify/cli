@@ -399,13 +399,14 @@ function loadExtensionsIdentifiersBreakdown(
   // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
   // In Partners, we keep the legacy match of only UUID.
   function moduleHasUUIDorUID(module: AppModuleVersion, identifier: string) {
+    const UuidMatch = module.registrationUuid === identifier
+    const UidMatch = module.registrationId === identifier
+    const pendingMigration = module.registrationId.length === 0
+
     if (developerPlatformClient.supportsAtomicDeployments) {
-      return (
-        (module.registrationUuid === identifier && module.registrationId.length === 0) ||
-        module.registrationId === identifier
-      )
+      return UidMatch || (pendingMigration && UuidMatch)
     } else {
-      return module.registrationUuid === identifier
+      return UuidMatch
     }
   }
 
