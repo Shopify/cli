@@ -151,6 +151,32 @@ const shopifyGlobalIdRule: SanitizationRule = {
   description: 'Shopify global IDs',
 }
 
+// Timestamps - must come before line:column pattern
+const isoTimestampRule: SanitizationRule = {
+  pattern: /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z?/gi,
+  replace: '<TIMESTAMP>',
+  description: 'ISO 8601 timestamps',
+}
+
+const unixTimestampRule: SanitizationRule = {
+  pattern: /\b1[5-9]\d{11,12}\b/g,
+  replace: '<UNIX_TIMESTAMP>',
+  description: 'Unix timestamps (milliseconds)',
+}
+
+// Request and trace IDs - must come before UUID pattern
+const requestIdRule: SanitizationRule = {
+  pattern: /(\b(?:request[_-]?id|trace[_-]?id|correlation[_-]?id|x-request-id)[\s:]*)([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?:-\d+)?)/gi,
+  replace: '$1<REQUEST_ID>',
+  description: 'Request/trace IDs with optional numeric suffix',
+}
+
+const standaloneRequestIdRule: SanitizationRule = {
+  pattern: /\b[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}-\d+\b/gi,
+  replace: '<REQUEST_ID>',
+  description: 'Standalone request IDs (UUID with numeric suffix)',
+}
+
 // General identifiers
 const uuidRule: SanitizationRule = {
   pattern: /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi,
@@ -191,6 +217,12 @@ const semanticVersionRule: SanitizationRule = {
   description: 'Semantic version numbers',
 }
 
+const lineNumberWithColumnRule: SanitizationRule = {
+  pattern: /\bline\s+\d+:\d+/gi,
+  replace: 'line <LINE>:<COL>',
+  description: 'Line number with column references',
+}
+
 const lineNumberRule: SanitizationRule = {
   pattern: /\bline\s+\d+/gi,
   replace: 'line <LINE>',
@@ -221,6 +253,10 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
   // PII
   emailAddressRule,
 
+  // Timestamps - must come early to avoid line:column mismatches
+  isoTimestampRule,
+  unixTimestampRule,
+
   // Network
   localPortRule,
 
@@ -245,6 +281,10 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
   shopifyUserAgentTokenRule,
   shopifyGlobalIdRule,
 
+  // Request/trace IDs - must come before UUID
+  requestIdRule,
+  standaloneRequestIdRule,
+
   // General identifiers
   uuidRule,
 
@@ -258,6 +298,7 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
 
   // Version and location references - process last
   semanticVersionRule,
+  lineNumberWithColumnRule,  // Must come before lineNumberRule
   lineNumberRule,
   columnNumberRule,
   lineColumnFormatRule,
