@@ -1,6 +1,7 @@
 import {composeThemeGid, parseGid, DEVELOPMENT_THEME_ROLE} from './utils.js'
 import {buildTheme} from './factories.js'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
+import {recordEvent} from './analytics.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
@@ -42,6 +43,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
   const gid = composeThemeGid(id)
 
   try {
+    recordEvent('fetchTheme:GetTheme')
     const {theme} = await adminRequestDoc({
       query: GetTheme,
       session,
@@ -51,6 +53,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     })
 
     if (theme) {
+      recordEvent('fetchTheme:success')
       return buildTheme({
         id: parseGid(theme.id),
         processing: theme.processing,
@@ -58,6 +61,8 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
         name: theme.name,
       })
     }
+
+    recordEvent('fetchTheme:not_found')
 
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (_error) {
@@ -68,6 +73,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
      * Error handlers should not inspect GraphQL error messages directly, as
      * they are internationalized.
      */
+    recordEvent('fetchTheme:error')
     outputDebug(`Error fetching theme with ID: ${id}`)
   }
 }
@@ -76,6 +82,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   const themes: Theme[] = []
   let after: string | null = null
 
+  recordEvent('fetchThemes:GetThemes')
   while (true) {
     // eslint-disable-next-line no-await-in-loop
     const response = await adminRequestDoc({
@@ -86,6 +93,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
     if (!response.themes) {
+      recordEvent('fetchThemes:error')
       unexpectedGraphQLError('Failed to fetch themes')
     }
     const {nodes, pageInfo} = response.themes
@@ -101,6 +109,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       }
     })
     if (!pageInfo.hasNextPage) {
+      recordEvent('fetchThemes:success')
       return themes
     }
 
@@ -110,6 +119,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function themeCreate(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const themeSource = params.src ?? SkeletonThemeCdn
+  recordEvent('themeCreate:ThemeCreate')
   const {themeCreate} = await adminRequestDoc({
     query: ThemeCreate,
     session,
@@ -123,6 +133,7 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
   })
 
   if (!themeCreate) {
+    recordEvent('themeCreate:error')
     unexpectedGraphQLError('Failed to create theme')
   }
 
@@ -133,9 +144,11 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
   }
 
   if (!theme) {
+    recordEvent('themeCreate:error')
     unexpectedGraphQLError('Failed to create theme')
   }
 
+  recordEvent('themeCreate:success')
   return buildTheme({
     id: parseGid(theme.id),
     name: theme.name,
@@ -147,6 +160,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
   const assets: ThemeAsset[] = []
   let after: string | null = null
 
+  recordEvent('fetchThemeAssets:GetThemeFileBodies')
   while (true) {
     // eslint-disable-next-line no-await-in-loop
     const response = await adminRequestDoc({
@@ -158,6 +172,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
     })
 
     if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
+      recordEvent('fetchThemeAssets:error')
       const userErrors = response.theme?.files?.userErrors.map((error) => error.filename).join(', ')
       unexpectedGraphQLError(`Error fetching assets: ${userErrors}`)
     }
@@ -180,6 +195,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
     )
 
     if (!pageInfo.hasNextPage) {
+      recordEvent('fetchThemeAssets:success')
       return assets
     }
 
@@ -191,6 +207,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
   const batchSize = 50
   const results: Result[] = []
 
+  recordEvent('deleteThemeAssets:ThemeFilesDelete')
   for (let i = 0; i < filenames.length; i += batchSize) {
     const batch = filenames.slice(i, i + batchSize)
     // eslint-disable-next-line no-await-in-loop
@@ -205,6 +222,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
     })
 
     if (!themeFilesDelete) {
+      recordEvent('deleteThemeAssets:error')
       unexpectedGraphQLError('Failed to delete theme assets')
     }
 
@@ -226,12 +244,14 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
             errors: {asset: [error.message]},
           })
         } else {
+          recordEvent('deleteThemeAssets:error')
           unexpectedGraphQLError(`Failed to delete theme assets: ${error.message}`)
         }
       })
     }
   }
 
+  recordEvent('deleteThemeAssets:success')
   return results
 }
 
@@ -240,6 +260,7 @@ export async function bulkUploadThemeAssets(
   assets: AssetParams[],
   session: AdminSession,
 ): Promise<Result[]> {
+  recordEvent('bulkUploadThemeAssets:ThemeFilesUpsert')
   const results: Result[] = []
   for (let i = 0; i < assets.length; i += 50) {
     const chunk = assets.slice(i, i + 50)
@@ -248,6 +269,7 @@ export async function bulkUploadThemeAssets(
     const uploadResults = await uploadFiles(id, files, session)
     results.push(...processUploadResults(uploadResults))
   }
+  recordEvent('bulkUploadThemeAssets:success')
   return results
 }
 
@@ -278,12 +300,15 @@ async function uploadFiles(
   files: {filename: string; body: {type: OnlineStoreThemeFileBodyInputType; value: string}}[],
   session: AdminSession,
 ): Promise<ThemeFilesUpsertMutation> {
-  return adminRequestDoc({
+  recordEvent('uploadFiles:ThemeFilesUpsert')
+  const result = await adminRequestDoc({
     query: ThemeFilesUpsert,
     session,
     variables: {themeId: themeGid(themeId), files},
     requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
+  recordEvent('uploadFiles:success')
+  return result
 }
 
 function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[] {
@@ -324,6 +349,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
   const checksums: Checksum[] = []
   let after: string | null = null
 
+  recordEvent('fetchChecksums:GetThemeFileChecksums')
   while (true) {
     // eslint-disable-next-line no-await-in-loop
     const response = await adminRequestDoc({
@@ -349,6 +375,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
     )
 
     if (!pageInfo.hasNextPage) {
+      recordEvent('fetchChecksums:success')
       return checksums
     }
 
@@ -363,6 +390,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
     input.name = name
   }
 
+  recordEvent('themeUpdate:ThemeUpdate')
   const {themeUpdate} = await adminRequestDoc({
     query: ThemeUpdate,
     session,
@@ -370,6 +398,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
     requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themeUpdate) {
+    recordEvent('themeUpdate:error')
     // An unexpected error occurred during the GraphQL request execution
     unexpectedGraphQLError('Failed to update theme')
   }
@@ -381,10 +410,12 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
   }
 
   if (!theme) {
+    recordEvent('themeUpdate:error')
     // An unexpected error if neither theme nor userErrors are returned
     unexpectedGraphQLError('Failed to update theme')
   }
 
+  recordEvent('themeUpdate:success')
   return buildTheme({
     id: parseGid(theme.id),
     name: theme.name,
@@ -393,6 +424,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
 }
 
 export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
+  recordEvent('themePublish:ThemePublish')
   const {themePublish} = await adminRequestDoc({
     query: ThemePublish,
     session,
@@ -400,6 +432,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
     requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themePublish) {
+    recordEvent('themePublish:error')
     // An unexpected error occurred during the GraphQL request execution
     unexpectedGraphQLError('Failed to update theme')
   }
@@ -411,10 +444,12 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
   }
 
   if (!theme) {
+    recordEvent('themePublish:error')
     // An unexpected error if neither theme nor userErrors are returned
     unexpectedGraphQLError('Failed to update theme')
   }
 
+  recordEvent('themePublish:success')
   return buildTheme({
     id: parseGid(theme.id),
     name: theme.name,
@@ -423,6 +458,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
 }
 
 export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
+  recordEvent('themeDelete:ThemeDelete')
   const {themeDelete} = await adminRequestDoc({
     query: ThemeDelete,
     session,
@@ -430,6 +466,7 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
     requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themeDelete) {
+    recordEvent('themeDelete:error')
     // An unexpected error occurred during the GraphQL request execution
     unexpectedGraphQLError('Failed to update theme')
   }
@@ -441,10 +478,12 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
   }
 
   if (!deletedThemeId) {
+    recordEvent('themeDelete:error')
     // An unexpected error if neither theme nor userErrors are returned
     unexpectedGraphQLError('Failed to update theme')
   }
 
+  recordEvent('themeDelete:success')
   return true
 }
 
@@ -461,6 +500,7 @@ export async function themeDuplicate(
 ): Promise<ThemeDuplicateResult> {
   let requestId: string | undefined
 
+  recordEvent('themeDuplicate:ThemeDuplicate')
   const {themeDuplicate} = await adminRequestDoc({
     query: ThemeDuplicate,
     session,
@@ -508,6 +548,7 @@ export async function themeDuplicate(
     role: newTheme.role.toLowerCase(),
   })
 
+  recordEvent('themeDuplicate:success')
   return {
     theme,
     userErrors: [],
@@ -516,12 +557,14 @@ export async function themeDuplicate(
 }
 
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
+  recordEvent('metafieldDefinitionsByOwnerType:MetafieldDefinitionsByOwnerType')
   const {metafieldDefinitions} = await adminRequestDoc({
     query: MetafieldDefinitionsByOwnerType,
     session,
     variables: {ownerType: type},
   })
 
+  recordEvent('metafieldDefinitionsByOwnerType:success')
   return metafieldDefinitions.nodes.map((definition) => ({
     key: definition.key,
     namespace: definition.namespace,
@@ -535,16 +578,19 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
 }
 
 export async function passwordProtected(session: AdminSession): Promise<boolean> {
+  recordEvent('passwordProtected:OnlineStorePasswordProtection')
   const {onlineStore} = await adminRequestDoc({
     query: OnlineStorePasswordProtection,
     session,
   })
   if (!onlineStore) {
+    recordEvent('passwordProtected:error')
     unexpectedGraphQLError("Unable to get details about the storefront's password protection")
   }
 
   const {passwordProtection} = onlineStore
 
+  recordEvent('passwordProtected:success')
   return passwordProtection.enabled
 }
 
