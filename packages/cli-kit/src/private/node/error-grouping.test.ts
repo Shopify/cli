@@ -1,4 +1,5 @@
-import {generateGroupingKey, extractErrorContext} from './error-grouping.js'
+import {generateGroupingKey} from './error-grouping/key-generator.js'
+import {extractErrorContext} from './error-grouping/context-extractor.js'
 import {describe, test, expect} from 'vitest'
 
 describe('generateGroupingKey', () => {

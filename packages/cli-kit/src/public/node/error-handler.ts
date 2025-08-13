@@ -10,7 +10,7 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
-import {generateGroupingKey} from '../../private/node/error-grouping.js'
+import {generateGroupingKey} from '../../private/node/error-grouping/key-generator.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
