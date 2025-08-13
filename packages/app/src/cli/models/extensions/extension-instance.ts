@@ -436,11 +436,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const uuid = this.isUUIDStrategyExtension
       ? identifiers.extensions[this.localIdentifier]!
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
-    const uid = this.isUUIDStrategyExtension ? this.uid : uuid
 
     return {
       ...result,
-      uid,
+      uid: this.uid,
       uuid,
       specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(this.graphQLType),
     }
