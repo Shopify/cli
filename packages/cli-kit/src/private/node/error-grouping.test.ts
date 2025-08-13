@@ -1,5 +1,4 @@
 import {generateGroupingKey} from './error-grouping/key-generator.js'
-import {extractErrorContext} from './error-grouping/context-extractor.js'
 import {describe, test, expect} from 'vitest'
 
 describe('generateGroupingKey', () => {
@@ -93,54 +92,6 @@ describe('generateGroupingKey', () => {
 
     // Now includes stack frame at the end
     expect(key).toMatch(/^cli:unhandled:TypeError:Failed to connect to <STORE>\.myshopify\.com:/)
-  })
-})
-
-describe('extractErrorContext', () => {
-  test('extracts all required context fields', () => {
-    const error = new Error('Test error message')
-    error.stack = `Error: Test error message
-    at testFunction (/Users/john/project/file.js:10:5)
-    at Object.<anonymous> (/Users/john/project/test.js:20:10)`
-
-    const context = extractErrorContext(error)
-
-    expect(context.errorClass).toBe('Error')
-    expect(context.errorMessage).toBe('Test error message')
-    expect(context.sanitizedMessage).toBe('Test error message')
-    expect(context.topFrame).toEqual({
-      method: 'testFunction',
-      file: '<PATH>',
-      lineNumber: 10,
-      columnNumber: 5,
-    })
-    expect(context.originalMessage).toBe('Test error message')
-    expect(context.originalStack).toBe(error.stack)
-  })
-
-  test('handles missing stack trace', () => {
-    const error = new Error('No stack')
-    // Intentionally removing stack for test
-    delete error.stack
-
-    const context = extractErrorContext(error)
-
-    expect(context.topFrame).toBeUndefined()
-    expect(context.originalStack).toBeUndefined()
-  })
-
-  test('handles custom error classes', () => {
-    class CustomError extends Error {
-      constructor(message: string) {
-        super(message)
-        this.name = 'CustomError'
-      }
-    }
-
-    const error = new CustomError('Custom error')
-    const context = extractErrorContext(error)
-
-    expect(context.errorClass).toBe('CustomError')
   })
 })
 
@@ -263,12 +214,17 @@ describe('aggressive path normalization', () => {
     at Module._compile (C:\\Users\\jane\\work\\node_modules\\module.js:653:30)
     at Object.Module._extensions..js (C:\\Program Files\\nodejs\\lib\\module.js:664:10)`
 
-    const context1 = extractErrorContext(error1)
-    const context2 = extractErrorContext(error2)
+    const key1 = generateGroupingKey(error1, false)
+    const key2 = generateGroupingKey(error2, false)
 
-    // Stack traces should be normalized to remove absolute paths
-    expect(context1.topFrame?.file).toBe('<PATH>')
-    expect(context2.topFrame?.file).toBe('<PATH>')
+    // Both errors should produce keys with normalized paths
+    // The paths should be normalized to remove absolute prefixes
+    expect(key1).toContain(':Stack trace test:')
+    expect(key2).toContain(':Stack trace test:')
+    // Check that both keys end with the same normalized stack frame
+    const parts1 = key1.split(':')
+    const parts2 = key2.split(':')
+    expect(parts1[parts1.length - 1]).toBe(parts2[parts2.length - 1])
   })
 
   test('normalizes temporary directory paths', () => {

@@ -1,4 +1,5 @@
-import {extractErrorContext, extractTopStackFrame} from './context-extractor.js'
+import {extractTopStackFrame} from './context-extractor.js'
+import {sanitizeErrorMessage} from './sanitizers.js'
 
 /**
  * Generates a semantic grouping key for an error to improve error grouping in Observe.
@@ -12,13 +13,39 @@ function isValidError(error: Error): boolean {
   return error && typeof error === 'object' && error instanceof Error
 }
 
+/**
+ * Safely extracts the error class name.
+ */
+function getErrorClassName(error: Error): string {
+  try {
+    return error.constructor?.name ?? 'Error'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return 'Error'
+  }
+}
+
+/**
+ * Safely extracts the error message.
+ */
+function getErrorMessage(error: Error): string {
+  try {
+    return error.message ?? ''
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return ''
+  }
+}
+
 export function generateGroupingKey(error: Error, unhandled: boolean): string {
   try {
     if (!isValidError(error)) {
       return 'cli:invalid:InvalidInput:invalid-error-object:unknown'
     }
 
-    const context = extractErrorContext(error)
+    const errorClass = getErrorClassName(error)
+    const errorMessage = getErrorMessage(error)
+    const sanitizedMessage = sanitizeErrorMessage(errorMessage)
     const handledStatus = unhandled ? 'unhandled' : 'handled'
 
     let topStackFrame = 'unknown'
@@ -29,7 +56,7 @@ export function generateGroupingKey(error: Error, unhandled: boolean): string {
       // If accessing stack throws, use 'unknown'
     }
 
-    const groupingKey = `cli:${handledStatus}:${context.errorClass}:${context.sanitizedMessage}:${topStackFrame}`
+    const groupingKey = `cli:${handledStatus}:${errorClass}:${sanitizedMessage}:${topStackFrame}`
 
     return groupingKey
     // eslint-disable-next-line no-catch-all/no-catch-all
