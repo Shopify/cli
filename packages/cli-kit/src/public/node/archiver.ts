@@ -1,4 +1,4 @@
-import {relativePath, joinPath} from './path.js'
+import {relativePath, joinPath, dirname} from './path.js'
 import {glob, removeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
@@ -52,14 +52,46 @@ export async function zip(options: ZipOptions): Promise<void> {
     })
     archive.pipe(output)
 
+    // Compute relative file paths and collect explicit directory entries
+    const relativeFilePaths: string[] = []
+    const directoriesToAdd = new Set<string>()
     for (const filePath of pathsToZip) {
-      const fileRelativePath = relativePath(inputDirectory, filePath)
-      archive.file(filePath, {name: fileRelativePath})
+      const relPath = relativePath(inputDirectory, filePath)
+      relativeFilePaths.push(relPath)
+      collectParentDirectories(relPath, directoriesToAdd)
+    }
+
+    // Add directory entries first (parents before children; lexicographic tiebreaker for determinism)
+    const sortedDirs = Array.from(directoriesToAdd).sort((left, right) => {
+      const depthDifference = left.split('/').length - right.split('/').length
+      if (depthDifference !== 0) return depthDifference
+      return left.localeCompare(right)
+    })
+    for (const dir of sortedDirs) {
+      const dirName = dir.endsWith('/') ? dir : `${dir}/`
+      archive.append(Buffer.alloc(0), {name: dirName})
+    }
+
+    // Add files
+    for (let i = 0; i < pathsToZip.length; i++) {
+      const filePath = pathsToZip[i]
+      const rel = relativeFilePaths[i]
+      if (filePath && rel) archive.file(filePath, {name: rel})
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     archive.finalize()
   })
+}
+
+function collectParentDirectories(fileRelativePath: string, accumulator: Set<string>): void {
+  let currentDir = dirname(fileRelativePath)
+  while (currentDir && currentDir !== '.' && currentDir !== '/') {
+    accumulator.add(currentDir)
+    const parent = dirname(currentDir)
+    if (parent === currentDir) break
+    currentDir = parent
+  }
 }
 
 export interface BrotliOptions {
@@ -133,7 +165,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           archive.finalize()
         })
-        .catch((error) => reject(error))
+        .catch((error) => reject(error instanceof Error ? error : new Error(String(error))))
     })
 
     const tarContent = readFileSync(tempTarPath)
