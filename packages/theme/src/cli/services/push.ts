@@ -23,6 +23,7 @@ import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
+import {recordError, recordEvent, recordTiming} from '@shopify/cli-kit/node/themes/analytics'
 
 interface PushOptions {
   path: string
@@ -113,7 +114,7 @@ export async function push(flags: PushFlags): Promise<void> {
     if (offenses.length > 0) {
       const errorOffenses = offenses.filter((offense) => offense.severity === Severity.ERROR)
       if (errorOffenses.length > 0) {
-        throw new AbortError('Theme check failed. Please fix the errors before pushing.')
+        throw recordError(new AbortError('Theme check failed. Please fix the errors before pushing.'))
       }
     }
   }
@@ -128,6 +129,8 @@ export async function push(flags: PushFlags): Promise<void> {
   const force = flags.force ?? false
 
   const store = ensureThemeStore({store: flags.store})
+  recordEvent('theme-service:push:loaded-store')
+
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
   const workingDirectory = path ? resolvePath(path) : cwd()
@@ -135,7 +138,10 @@ export async function push(flags: PushFlags): Promise<void> {
     return
   }
 
+  recordTiming('theme-service:push:create-theme')
   const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags)
+  recordTiming('theme-service:push:create-theme')
+
   if (!selectedTheme) {
     return
   }
