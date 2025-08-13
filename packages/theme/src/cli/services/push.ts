@@ -23,6 +23,7 @@ import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
+import {recordError, recordTiming} from '@shopify/cli-kit/node/analytics'
 
 interface PushOptions {
   path: string
@@ -113,20 +114,19 @@ export async function push(flags: PushFlags): Promise<void> {
     if (offenses.length > 0) {
       const errorOffenses = offenses.filter((offense) => offense.severity === Severity.ERROR)
       if (errorOffenses.length > 0) {
-        throw new AbortError('Theme check failed. Please fix the errors before pushing.')
+        throw recordError(new AbortError('Theme check failed. Please fix the errors before pushing.'))
       }
     }
   }
+  recordTiming('theme-service:push:setup')
 
   const {path} = flags
-
   configureCLIEnvironment({
     verbose: flags.verbose,
     noColor: flags.noColor,
   })
 
   const force = flags.force ?? false
-
   const store = ensureThemeStore({store: flags.store})
   const adminSession = await ensureAuthenticatedThemes(store, flags.password)
 
@@ -139,6 +139,8 @@ export async function push(flags: PushFlags): Promise<void> {
   if (!selectedTheme) {
     return
   }
+
+  recordTiming('theme-service:push:setup')
 
   await executePush(selectedTheme, adminSession, {
     path: workingDirectory,
@@ -159,8 +161,10 @@ export async function push(flags: PushFlags): Promise<void> {
  * @param options - the options that modify how the theme gets uploaded
  */
 async function executePush(theme: Theme, session: AdminSession, options: PushOptions) {
+  recordTiming('theme-service:push:file-system')
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
+  recordTiming('theme-service:push:file-system')
 
   const {uploadResults, renderThemeSyncProgress} = await uploadTheme(
     theme,

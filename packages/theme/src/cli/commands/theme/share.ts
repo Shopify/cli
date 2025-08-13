@@ -4,6 +4,7 @@ import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {getRandomName} from '@shopify/cli-kit/common/string'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 export default class Share extends ThemeCommand {
   static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
@@ -39,6 +40,8 @@ export default class Share extends ThemeCommand {
       theme: getRandomName('creative'),
     }
 
+    recordTiming('theme-command:share')
     await push(pushFlags)
+    recordTiming('theme-command:share')
   }
 }

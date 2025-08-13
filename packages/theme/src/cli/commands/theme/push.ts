@@ -3,6 +3,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {push, PushFlags} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -115,6 +116,8 @@ export default class Push extends ThemeCommand {
       strict: flags.strict,
     }
 
+    recordTiming('theme-command:push')
     await push(pushFlags)
+    recordTiming('theme-command:push')
   }
 }
