@@ -169,6 +169,13 @@ export type StagedUploadTargetGenerateUploadResource =
    */
   | 'COLLECTION_IMAGE'
   /**
+   * Represents a file associated with a dispute.
+   *
+   * For example, after uploading the file, you can add the file to a dispute using the
+   * [disputeEvidenceUpdate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/disputeEvidenceUpdate).
+   */
+  | 'DISPUTE_FILE_UPLOAD'
+  /**
    * Represents any file other than HTML.
    *
    * For example, after uploading the file, you can add the file to the
