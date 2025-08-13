@@ -126,12 +126,107 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   return {...configuration, path: filepath}
 }
 
-export function parseHumanReadableError(issues: Pick<zod.ZodIssueBase, 'path' | 'message'>[]) {
+interface UnionError {
+  issues?: {path?: (string | number)[]; message: string}[]
+  name: string
+}
+
+interface ExtendedZodIssue {
+  path?: (string | number)[]
+  message?: string
+  code?: string
+  unionErrors?: UnionError[]
+}
+
+/**
+ * Finds the best matching variant from a union error by scoring each variant
+ * based on how close it is to the user's likely intent.
+ */
+function findBestMatchingVariant(unionErrors: UnionError[]): UnionError | null {
+  if (!unionErrors || unionErrors.length === 0) return null
+
+  let bestVariant: UnionError | null = null
+  let bestScore = -1
+
+  for (const variant of unionErrors) {
+    if (!variant.issues) continue
+
+    // Score based on error types - prioritize variants with fewer missing fields
+    let score = 0
+    let missingFieldCount = 0
+    let typeErrorCount = 0
+    let otherErrorCount = 0
+
+    for (const issue of variant.issues) {
+      if (issue.message?.includes('Required') || issue.message?.includes('required')) {
+        missingFieldCount++
+      } else if (issue.message?.includes('Expected') && issue.message?.includes('received')) {
+        typeErrorCount++
+      } else {
+        otherErrorCount++
+      }
+    }
+
+    // Scoring logic: prefer variants with fewer missing fields
+    // Missing fields are more likely to indicate the intended variant
+    // than type mismatches (which could indicate wrong variant entirely)
+    if (missingFieldCount > 0) {
+      // If there are missing fields, this could be the intended variant
+      score = 1000 - missingFieldCount * 10 - typeErrorCount - otherErrorCount
+    } else if (typeErrorCount > 0) {
+      // If only type errors, less likely to be the intended variant
+      score = 100 - typeErrorCount * 5 - otherErrorCount
+    } else {
+      // Other errors
+      score = 50 - otherErrorCount
+    }
+
+    if (score > bestScore) {
+      bestScore = score
+      bestVariant = variant
+    }
+  }
+
+  return bestVariant
+}
+
+export function parseHumanReadableError(issues: ExtendedZodIssue[]) {
   let humanReadableError = ''
+
   issues.forEach((issue) => {
-    const path = issue.path ? issue?.path.join('.') : 'n/a'
-    humanReadableError += `• [${path}]: ${issue.message}\n`
+    // Handle union errors with smart variant detection
+    if (issue.code === 'invalid_union' && issue.unionErrors) {
+      // Find the variant that's most likely the intended one
+      const bestVariant = findBestMatchingVariant(issue.unionErrors)
+
+      if (bestVariant && bestVariant.issues && bestVariant.issues.length > 0) {
+        // Show errors only for the best matching variant
+        bestVariant.issues.forEach((nestedIssue) => {
+          const path = nestedIssue.path && nestedIssue.path.length > 0 ? nestedIssue.path.map(String).join('.') : 'root'
+          humanReadableError += `• [${path}]: ${nestedIssue.message}\n`
+        })
+      } else {
+        // Fallback to showing all variants if we can't determine the best one
+        humanReadableError += `• Union validation failed. None of the possible variants matched:\n`
+        issue.unionErrors.forEach((unionError, index: number) => {
+          humanReadableError += `  Variant ${index + 1}:\n`
+          if (unionError.issues) {
+            unionError.issues.forEach((nestedIssue) => {
+              const path =
+                nestedIssue.path && nestedIssue.path.length > 0 ? nestedIssue.path.map(String).join('.') : 'root'
+              humanReadableError += `    • [${path}]: ${nestedIssue.message}\n`
+            })
+          }
+        })
+      }
+    } else {
+      // Handle regular issues
+      const path = issue.path && issue.path.length > 0 ? issue.path.map(String).join('.') : 'root'
+      const message = issue.message ?? 'Unknown error'
+      humanReadableError += `• [${path}]: ${message}\n`
+    }
   })
+
   return humanReadableError
 }
 
