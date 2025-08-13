@@ -10,7 +10,7 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
-import {generateGroupingKey, extractErrorContext} from '../../private/node/error-grouping.js'
+import {generateGroupingKey} from '../../private/node/error-grouping.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
@@ -141,14 +141,6 @@ export async function sendErrorToBugsnag(
             }:fallback`
             event.addMetadata('custom', {observeGroupingKey: fallbackKey})
           }
-
-          // Preserve original data in metadata for debugging
-          const context = extractErrorContext(reportableError)
-          event.addMetadata('original', {
-            stackTrace: context.originalStack,
-            message: context.originalMessage,
-            errorClass: context.errorClass,
-          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
