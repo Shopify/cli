@@ -26,7 +26,8 @@ describe('zip', () => {
 
       // Then
       const archiveEntries = await readArchiveFiles(zipPath)
-      expect(structure.sort()).toEqual(archiveEntries.sort())
+      const expectedEntries = withExplicitDirectoryEntries(structure)
+      expect(expectedEntries.sort()).toEqual(archiveEntries.sort())
     })
   })
 
@@ -49,7 +50,8 @@ describe('zip', () => {
 
       // Then
       const archiveEntries = await readArchiveFiles(zipPath)
-      expect([`extensions/first/main.js`]).toEqual(archiveEntries)
+      const expectedEntries = withExplicitDirectoryEntries([`extensions/first/main.js`])
+      expect(expectedEntries.sort()).toEqual(archiveEntries.sort())
     })
   })
 })
@@ -156,4 +158,20 @@ async function readArchiveFiles(zipPath: string) {
   await archive.close()
 
   return archiveEntries
+}
+
+function withExplicitDirectoryEntries(files: string[]): string[] {
+  const entries = new Set<string>()
+  for (const file of files) {
+    entries.add(file)
+    let currentDir = dirname(file)
+    while (currentDir && currentDir !== '.' && currentDir !== '/') {
+      const dirEntry = currentDir.endsWith('/') ? currentDir : `${currentDir}/`
+      entries.add(dirEntry)
+      const parent = dirname(currentDir)
+      if (parent === currentDir) break
+      currentDir = parent
+    }
+  }
+  return Array.from(entries)
 }
