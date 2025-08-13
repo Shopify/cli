@@ -12,7 +12,7 @@ import {SANITIZATION_RULES} from './patterns.js'
 const preCompiledRules = SANITIZATION_RULES.map((rule) => ({
   pattern: new RegExp(rule.pattern.source, rule.pattern.flags),
   replace: rule.replace,
-  normalizeWindowsPaths: rule.normalizeWindowsPaths || false,
+  normalizeWindowsPaths: rule.normalizeWindowsPaths ?? false,
 }))
 
 /**
@@ -30,7 +30,7 @@ const preCompiledRules = SANITIZATION_RULES.map((rule) => ({
  * // replaceTemplate: "$1node_modules/$2"
  * // returns: "Error in node_modules/express/index.js"
  */
-function applyWindowsPathNormalization(match: string, groups: unknown[], replaceTemplate: string): string {
+function applyWindowsPathNormalization(_match: string, groups: unknown[], replaceTemplate: string): string {
   let result = replaceTemplate
   groups.forEach((group, index) => {
     if (typeof group === 'string') {

@@ -305,7 +305,8 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
 
   // Version and location references - process last
   semanticVersionRule,
-  lineNumberWithColumnRule, // Must come before lineNumberRule
+  // Must come before lineNumberRule
+  lineNumberWithColumnRule,
   lineNumberRule,
   columnNumberRule,
   lineColumnFormatRule,
