@@ -667,6 +667,30 @@ describe('generatePartnersURLs', () => {
       },
     })
   })
+
+  test('Returns app proxy section when receiving a relative proxy url', () => {
+    const applicationUrl = 'http://my-base-url'
+
+    const got = generateApplicationURLs(applicationUrl, [], {
+      url: '/subpath',
+      subpath: 'subpath',
+      prefix: 'prefix',
+    })
+
+    expect(got).toMatchObject({
+      applicationUrl,
+      redirectUrlWhitelist: [
+        `${applicationUrl}/auth/callback`,
+        `${applicationUrl}/auth/shopify/callback`,
+        `${applicationUrl}/api/auth/callback`,
+      ],
+      appProxy: {
+        proxyUrl: 'http://my-base-url/subpath',
+        proxySubPath: 'subpath',
+        proxySubPathPrefix: 'prefix',
+      },
+    })
+  })
 })
 
 describe('validatePartnersURLs', () => {
