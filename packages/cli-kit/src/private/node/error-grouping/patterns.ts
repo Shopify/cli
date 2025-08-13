@@ -10,6 +10,9 @@ interface SanitizationRule {
 
   /** Optional description of what this rule sanitizes. */
   description?: string
+
+  /** Whether this rule captures file paths that need Windows backslash normalization. */
+  normalizeWindowsPaths?: boolean
 }
 
 /**
@@ -70,21 +73,24 @@ const localPortRule: SanitizationRule = {
 
 // File path normalization - specific patterns before general ones
 const nodeModulesPathRule: SanitizationRule = {
-  pattern: /(?:[A-Z]:[\\/]|[\\/])?.*node_modules[\\/]([^\s]+)/gi,
-  replace: 'node_modules/$1',
+  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/])[^\s]*?node_modules[\\/]([^\s]+)/gi,
+  replace: '$1node_modules/$2',
   description: 'Node modules paths - normalize to relative',
+  normalizeWindowsPaths: true,
 }
 
 const yarnCachePathRule: SanitizationRule = {
-  pattern: /(?:[A-Z]:[\\/]|[\\/])?.*\.yarn[\\/](?:berry[\\/])?cache[\\/]([^\s]+)/gi,
-  replace: 'yarn-cache/$1',
+  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/])[^\s]*?\.yarn[\\/](?:berry[\\/])?cache[\\/]([^\s]+)/gi,
+  replace: '$1yarn-cache/$2',
   description: 'Yarn cache paths',
+  normalizeWindowsPaths: true,
 }
 
 const pnpmStorePathRule: SanitizationRule = {
-  pattern: /(?:[A-Z]:[\\/]|[\\/])?.*\.(?:pnpm-store|pnpm)[\\/]([^\s]+)/gi,
-  replace: 'pnpm-store/$1',
+  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/])[^\s]*?\.(?:pnpm-store|pnpm)[\\/]([^\s]+)/gi,
+  replace: '$1pnpm-store/$2',
   description: 'pnpm store paths',
+  normalizeWindowsPaths: true,
 }
 
 // Shopify-specific URL patterns
@@ -166,7 +172,8 @@ const unixTimestampRule: SanitizationRule = {
 
 // Request and trace IDs - must come before UUID pattern
 const requestIdRule: SanitizationRule = {
-  pattern: /(\b(?:request[_-]?id|trace[_-]?id|correlation[_-]?id|x-request-id)[\s:]*)([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?:-\d+)?)/gi,
+  pattern:
+    /(\b(?:request[_-]?id|trace[_-]?id|correlation[_-]?id|x-request-id)[\s:]*)([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?:-\d+)?)/gi,
   replace: '$1<REQUEST_ID>',
   description: 'Request/trace IDs with optional numeric suffix',
 }
@@ -298,7 +305,7 @@ export const SANITIZATION_RULES: SanitizationRule[] = [
 
   // Version and location references - process last
   semanticVersionRule,
-  lineNumberWithColumnRule,  // Must come before lineNumberRule
+  lineNumberWithColumnRule, // Must come before lineNumberRule
   lineNumberRule,
   columnNumberRule,
   lineColumnFormatRule,

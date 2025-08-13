@@ -47,6 +47,17 @@ describe('sanitizeErrorMessage', () => {
     ['Error at C:\\Users\\jane\\app\\index.ts', 'Error at <PATH>'],
     ['Failed to load /home/user/app/config.json', 'Failed to load <PATH>'],
 
+    // Windows path normalization in node_modules (backslash to forward slash)
+    ['Error in C:\\Users\\john\\project\\node_modules\\express\\index.js', 'Error in node_modules/express/index.js'],
+    [
+      'Failed at D:\\code\\app\\node_modules\\@shopify\\cli-kit\\dist\\index.js',
+      'Failed at node_modules/@shopify/cli-kit/dist/index.js',
+    ],
+
+    // Yarn and pnpm cache paths with Windows backslashes
+    ['Loading C:\\Users\\jane\\.yarn\\cache\\lodash-npm-4.17.21.zip', 'Loading yarn-cache/lodash-npm-4.17.21.zip'],
+    ['Error in C:\\Users\\john\\.pnpm-store\\v3\\files\\abc123', 'Error in pnpm-store/v3/files/abc123'],
+
     // Store names
     ['Failed to connect to my-store.myshopify.com', 'Failed to connect to <STORE>.myshopify.com'],
     ['Store quick-brown-fox-123.myshopify.com not found', 'Store <STORE>.myshopify.com not found'],
@@ -79,13 +90,13 @@ describe('sanitizeErrorMessage', () => {
     ['Logged at 2024-12-25T12:00:00.123Z', 'Logged at <TIMESTAMP>'],
     ['Timestamp 2023-08-10T19:55:56Z found', 'Timestamp <TIMESTAMP> found'],
     ['Unix timestamp 1754776271000 detected', 'Unix timestamp <UNIX_TIMESTAMP> detected'],
-    
+
     // Request IDs (must be before UUID patterns)
     ['Request ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890-1754776271', 'Request ID: <REQUEST_ID>'],
     ['trace_id: a1b2c3d4-e5f6-7890-abcd-ef1234567890-9876543210', 'trace_id: <REQUEST_ID>'],
     ['x-request-id: 11111111-2222-3333-4444-555555555555-123456', 'x-request-id: <REQUEST_ID>'],
     ['correlation-id: aa11bb22-cc33-dd44-ee55-ff6677889900-999', 'correlation-id: <REQUEST_ID>'],
-    
+
     // Line/column numbers
     ['Error at line 42, column 17', 'Error at line <LINE>, column <COL>'],
     ['Error at line 15:30 in file.js', 'Error at line <LINE>:<COL> in file.js'],
@@ -104,13 +115,13 @@ describe('sanitizeErrorMessage', () => {
       'JWT eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1c2VyIn0.abc failed for api_key=secret123',
       'JWT <JWT> failed for api_key=<REDACTED>',
     ],
-    
+
     // Real-world Cloudflare error patterns
     [
       'Could not start Cloudflare tunnel: Failed to serve quic connection error="Unauthorized: Failed to get tunnel"\n2025-08-10T19:55:55Z ERR Register tunnel error from server side error="Unauthorized: Failed to get tunnel"',
       'Could not start Cloudflare tunnel: Failed to serve quic connection error="Unauthorized: Failed to get tunnel"\n<TIMESTAMP> ERR Register tunnel error from server side error="Unauthorized: Failed to get tunnel"',
     ],
-    
+
     // Real-world GraphQL error with request ID
     [
       'The Admin GraphQL API responded unsuccessfully with errors:\n[{"message": "Access denied"}]\nRequest ID: a1b2c3d4-e5f6-7890-abcd-ef1234567890-1754776271',
