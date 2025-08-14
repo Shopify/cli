@@ -60,6 +60,7 @@ import {
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -205,6 +206,7 @@ export interface UserError {
   message: string
   category: string
   details: ErrorDetail[]
+  on?: JsonMapType
 }
 
 interface ErrorDetail {
