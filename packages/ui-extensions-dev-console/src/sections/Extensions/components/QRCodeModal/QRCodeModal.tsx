@@ -15,6 +15,7 @@ interface Code {
   url: string
   title: string
   type: Surface | 'home'
+  target?: string // Optional target for deeplinking to specific extension points
 }
 
 interface QRCodeModalProps extends Pick<ModalProps, 'onClose'> {
@@ -34,7 +35,7 @@ export function QRCodeModal({code, onClose}: QRCodeModalProps) {
   )
 }
 
-function QRCodeContent({url, type}: Code) {
+function QRCodeContent({url, type, target}: Code) {
   const [i18n] = useI18n({
     id: 'QRCodeModal',
     fallback: en,
@@ -52,7 +53,15 @@ function QRCodeContent({url, type}: Code) {
 
     // View a POS extension in POS app
     if (type === 'point_of_sale') {
-      return `com.shopify.pos://pos-ui-extensions?url=${url}`
+      let posUrl = `com.shopify.pos://pos-ui-extensions?url=${url}`
+
+      // Append target for deeplinking when no WSS connection is established
+      // This allows the POS app to navigate directly to the specific extension target
+      if (target) {
+        posUrl += `&target=${encodeURIComponent(target)}`
+      }
+
+      return posUrl
     }
 
     // View app home (iframe) in mobile app
@@ -62,7 +71,7 @@ function QRCodeContent({url, type}: Code) {
 
     // View a UI extension in mobile app
     return `https://${store}/admin/extensions-dev/mobile?url=${url}`
-  }, [url, app, app?.mobileUrl])
+  }, [url, app, app?.mobileUrl, target, store, type])
 
   const onButtonClick = useCallback(() => {
     if (qrCodeURL && copyToClipboard(qrCodeURL)) {

@@ -28,6 +28,18 @@ function showMobileQrCode(extension: ExtensionPayload) {
   return extension.surface === 'point_of_sale' || extension.surface === 'admin'
 }
 
+function getPOSExtensionTarget(extension: ExtensionPayload): string | undefined {
+  // For unified POS UI extensions, get the target from the first POS extension point
+  if (isUIExtension(extension) && Array.isArray(extension.extensionPoints)) {
+    const posExtensionPoint = (extension.extensionPoints as ExtensionPoint[]).find(
+      (point) => point.surface === 'point_of_sale'
+    )
+    return posExtensionPoint?.target
+  }
+
+  return undefined
+}
+
 export function ExtensionRow({uuid}: Props) {
   const [showModal, setShowModal] = useState(false)
   const [i18n] = useI18n({
@@ -40,6 +52,9 @@ export function ExtensionRow({uuid}: Props) {
   if (!extension) {
     return null
   }
+
+  // Get the target for POS extensions to enable deeplinking
+  const posTarget = getPOSExtensionTarget(extension)
 
   return (
     <Row onMouseEnter={focus} onMouseLeave={unfocus}>
@@ -62,6 +77,7 @@ export function ExtensionRow({uuid}: Props) {
                   url: extension.development.root.url,
                   type: isUnifiedPOSUIExtension(extension) ? 'point_of_sale' : extension.surface,
                   title: extension.handle,
+                  target: posTarget, // Pass the target for deeplinking
                 }
               : undefined
           }

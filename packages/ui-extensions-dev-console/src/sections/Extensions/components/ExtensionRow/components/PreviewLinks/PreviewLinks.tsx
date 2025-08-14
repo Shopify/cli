@@ -17,7 +17,7 @@ export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
     fallback: en,
   })
 
-  if (extension.surface === 'point_of_sale') {
+  if (extension.surface === 'point_of_sale' && !isUnifiedPOSUI) {
     return <NotApplicable />
   }
 
@@ -36,7 +36,7 @@ export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
               return null
             }
 
-            const {root, target, resource} = extensionPoint
+            const {root, target, resource, surface} = extensionPoint
 
             return (
               <PreviewLink
@@ -45,6 +45,8 @@ export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
                 key={target}
                 resourceUrl={resource.url}
                 hasLink={!isUnifiedPOSUI}
+                surface={surface} // Pass the surface to PreviewLink
+                target={target} // Pass the target for POS deeplinking
               />
             )
           })}
@@ -58,6 +60,7 @@ export function PreviewLinks({extension, isUnifiedPOSUI}: Props) {
       rootUrl={extension.development.root.url}
       resourceUrl={extension.development.resource.url}
       title={extension.type.replaceAll('_', ' ')}
+      surface={extension.surface} // Pass the surface for non-UI extensions too
     />
   )
 }
