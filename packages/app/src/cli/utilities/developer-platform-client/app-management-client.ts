@@ -877,7 +877,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const fullResult = await businessPlatformOrganizationsRequestDoc({
       query: ProvisionShopAccess,
       token: await this.businessPlatformToken(),
-      organizationId: orgId,
+      organizationId: String(numberFromGid(orgId)),
       variables,
       unauthorizedHandler: this.createUnauthorizedHandler(),
     })
