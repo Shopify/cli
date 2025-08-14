@@ -143,6 +143,7 @@ export type AppVersionWithContext = AppVersion & {
 }
 
 export type AppDeployOptions = AppDeployVariables & {
+  appManifest: AppManifest
   appId: string
   organizationId: string
   name: string
