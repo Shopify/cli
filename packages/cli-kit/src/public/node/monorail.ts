@@ -145,6 +145,12 @@ export interface Schemas {
       app_web_frontend_any?: Optional<boolean>
       app_web_frontend_count?: Optional<number>
 
+      // Theme related commands
+      cmd_theme_timings?: Optional<string>
+      cmd_theme_errors?: Optional<string>
+      cmd_theme_retries?: Optional<string>
+      cmd_theme_events?: Optional<string>
+
       // Environment
       env_ci?: Optional<boolean>
       env_ci_platform?: Optional<string>

@@ -1,5 +1,7 @@
 import {ensureThemeStore} from './theme-store.js'
 import {configurationFileName} from '../constants.js'
+import metadata from '../metadata.js'
+import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -252,7 +254,10 @@ export default abstract class ThemeCommand extends Command {
   private async createSession(flags: FlagValues) {
     const store = flags.store as string
     const password = flags.password as string
-    return ensureAuthenticatedThemes(ensureThemeStore({store}), password)
+    const session = await ensureAuthenticatedThemes(ensureThemeStore({store}), password)
+    await this.logStoreMetadata(session)
+
+    return session
   }
 
   /**
@@ -282,5 +287,15 @@ export default abstract class ThemeCommand extends Command {
     }
 
     return true
+  }
+
+  private async logStoreMetadata(session: AdminSession): Promise<void> {
+    await metadata.addPublicMetadata(() => ({
+      store_fqdn_hash: hashString(session.storeFqdn),
+    }))
+
+    await metadata.addSensitiveMetadata(() => ({
+      store_fqdn: session.storeFqdn,
+    }))
   }
 }
