@@ -1,6 +1,7 @@
 import {getModulesToMigrate, migrateAppModules} from './migrate-app-module.js'
 import {LocalSource, RemoteSource} from '../context/identifiers.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {ClientName} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test} from 'vitest'
 
 function getLocalExtension(attributes: Partial<LocalSource> = {}) {
@@ -140,54 +141,57 @@ describe('getModulesToMigrate()', () => {
 })
 
 describe('migrateAppModules()', () => {
-  test('performs a graphQL mutation for each extension', async () => {
-    // Given
+  test('uses registrationUuid for AppManagement client', async () => {
     const extensionsToMigrate = [
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1'})},
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2'})},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1', uuid: 'uuid1'})},
+      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2', uuid: 'uuid2'})},
     ]
     const appId = '123abc'
     const type = 'payments_extension'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
-    const developerPlatformClient = testDeveloperPlatformClient()
+    const appManagementClient = testDeveloperPlatformClient({clientName: ClientName.AppManagement})
+    const migrationClient = testDeveloperPlatformClient()
 
-    // When
-    await migrateAppModules(extensionsToMigrate, appId, type, remoteExtensions, developerPlatformClient)
+    await migrateAppModules({
+      extensionsToMigrate,
+      appId,
+      type,
+      remoteExtensions,
+      migrationClient,
+    })
 
-    // Then
-    expect(developerPlatformClient.migrateAppModule).toHaveBeenCalledTimes(extensionsToMigrate.length)
-    expect(developerPlatformClient.migrateAppModule).toHaveBeenCalledWith({
+    expect(migrationClient.migrateAppModule).toHaveBeenCalledTimes(extensionsToMigrate.length)
+    expect(migrationClient.migrateAppModule).toHaveBeenCalledWith({
       apiKey: appId,
-      registrationId: extensionsToMigrate[0]!.remote.id,
+      registrationId: undefined,
+      registrationUuid: extensionsToMigrate[0]!.remote.uuid,
       type,
     })
-    expect(developerPlatformClient.migrateAppModule).toHaveBeenCalledWith({
+    expect(migrationClient.migrateAppModule).toHaveBeenCalledWith({
       apiKey: appId,
-      registrationId: extensionsToMigrate[1]!.remote.id,
+      registrationId: undefined,
+      registrationUuid: extensionsToMigrate[1]!.remote.uuid,
       type,
     })
   })
 
   test('Returns updated remoteExensions', async () => {
-    // Given
     const extensionsToMigrate = [
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id1'})},
-      {local: getLocalExtension(), remote: getRemoteExtension({id: 'id2'})},
+      {local: getLocalExtension(), remote: getRemoteExtension()},
+      {local: getLocalExtension(), remote: getRemoteExtension()},
     ]
     const appId = '123abc'
     const type = 'payments_extension'
     const remoteExtensions = extensionsToMigrate.map(({remote}) => remote)
 
-    // When
-    const result = await migrateAppModules(
+    const result = await migrateAppModules({
       extensionsToMigrate,
       appId,
       type,
       remoteExtensions,
-      testDeveloperPlatformClient(),
-    )
+      migrationClient: testDeveloperPlatformClient(),
+    })
 
-    // Then
     expect(result).toStrictEqual(remoteExtensions.map((remote) => ({...remote, type: 'PAYMENTS_EXTENSION'})))
   })
 })

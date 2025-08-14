@@ -88,15 +88,25 @@ export function getModulesToMigrate(
   }, [])
 }
 
-export async function migrateAppModules(
-  extensionsToMigrate: LocalRemoteSource[],
-  appId: string,
-  type: string,
-  remoteExtensions: RemoteSource[],
-  developerPlatformClient: DeveloperPlatformClient,
-) {
+export async function migrateAppModules(options: {
+  extensionsToMigrate: LocalRemoteSource[]
+  appId: string
+  type: string
+  remoteExtensions: RemoteSource[]
+  migrationClient: DeveloperPlatformClient
+}) {
+  const {extensionsToMigrate, appId, type, remoteExtensions, migrationClient} = options
+
   const migratedIDs = await Promise.all(
-    extensionsToMigrate.map(({remote}) => migrateAppModule(appId, remote.id, type, developerPlatformClient)),
+    extensionsToMigrate.map(({remote}) =>
+      migrateAppModule({
+        apiKey: appId,
+        registrationId: undefined,
+        registrationUuid: remote.uuid,
+        type,
+        migrationClient,
+      }),
+    ),
   )
 
   return remoteExtensions
@@ -109,19 +119,23 @@ export async function migrateAppModules(
     })
 }
 
-async function migrateAppModule(
-  apiKey: MigrateAppModuleVariables['apiKey'],
-  registrationId: MigrateAppModuleVariables['registrationId'],
-  type: MigrateAppModuleVariables['type'],
-  developerPlatformClient: DeveloperPlatformClient,
-) {
+async function migrateAppModule(options: {
+  apiKey: MigrateAppModuleVariables['apiKey']
+  registrationId: MigrateAppModuleVariables['registrationId']
+  registrationUuid: MigrateAppModuleVariables['registrationUuid']
+  type: MigrateAppModuleVariables['type']
+  migrationClient: DeveloperPlatformClient
+}) {
+  const {apiKey, registrationId, registrationUuid, type, migrationClient} = options
+
   const variables: MigrateAppModuleVariables = {
     apiKey,
     registrationId,
+    registrationUuid,
     type,
   }
 
-  const result: MigrateAppModuleSchema = await developerPlatformClient.migrateAppModule(variables)
+  const result: MigrateAppModuleSchema = await migrationClient.migrateAppModule(variables)
 
   if (result?.migrateAppModule?.userErrors?.length > 0) {
     const errors = result.migrateAppModule.userErrors.map((error) => error.message).join(', ')
