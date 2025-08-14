@@ -9,6 +9,7 @@ import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
+import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -45,7 +46,11 @@ describe('Storefront API', () => {
       )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
 
       // Then
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==123:'})
@@ -71,7 +76,12 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
 
       // Then
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==123:', storefront_digest: 'digest-value'})
@@ -138,7 +148,12 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'wrongpassword')
+      const cookies = getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'wrongpassword',
+      )
 
       // Then
       await expect(cookies).rejects.toThrow(
@@ -174,7 +189,11 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
 
       // Then
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==RETRYCOOKIE:'})
@@ -203,7 +222,47 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
+
+      // Then
+      expect(cookies).toEqual({
+        _shopify_essential: authenticatedEssential,
+      })
+    })
+
+    test('handles theme kit access with _shopify_essential cookies', async () => {
+      const originalEssential = ':AABBCCDDEEFFGGHH==123:'
+      const authenticatedEssential = ':NEWESSENTIAL==456:'
+
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${originalEssential}; path=/; HttpOnly`},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': `_shopify_essential=${authenticatedEssential}; path=/; HttpOnly`,
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        `https://${getThemeKitAccessDomain()}`,
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
 
       // Then
       expect(cookies).toEqual({
@@ -231,7 +290,12 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
 
       // Then
       expect(cookies).toEqual({
@@ -258,7 +322,12 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+      const cookies = getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
 
       // Then
       await expect(cookies).rejects.toThrow(

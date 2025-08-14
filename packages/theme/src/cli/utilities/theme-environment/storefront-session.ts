@@ -46,12 +46,14 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
 
 export async function getStorefrontSessionCookies(
   storeUrl: string,
+  storeFqdn: string,
   themeId: string,
   password?: string,
   headers: {[key: string]: string} = {},
 ): Promise<{[key: string]: string}> {
   const cookieRecord: {[key: string]: string} = {}
   const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
+  const storeOrigin = prependHttps(storeFqdn)
 
   cookieRecord._shopify_essential = shopifyEssential
 
@@ -63,7 +65,13 @@ export async function getStorefrontSessionCookies(
     return cookieRecord
   }
 
-  const additionalCookies = await enrichSessionWithStorefrontPassword(shopifyEssential, storeUrl, password, headers)
+  const additionalCookies = await enrichSessionWithStorefrontPassword(
+    shopifyEssential,
+    storeUrl,
+    storeOrigin,
+    password,
+    headers,
+  )
 
   return {...cookieRecord, ...additionalCookies}
 }
@@ -124,6 +132,7 @@ async function sessionEssentialCookie(
 async function enrichSessionWithStorefrontPassword(
   shopifyEssential: string,
   storeUrl: string,
+  storeOrigin: string,
   password: string,
   headers: {[key: string]: string},
 ): Promise<{[key: string]: string}> {
@@ -140,7 +149,7 @@ async function enrichSessionWithStorefrontPassword(
     },
   })
 
-  if (!redirectsToStorefront(response, storeUrl)) {
+  if (!redirectsToStorefront(response, storeOrigin)) {
     throw new AbortError(
       'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
     )
