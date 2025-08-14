@@ -12,6 +12,9 @@ vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/path')
 vi.mock('fs')
 vi.mock('../../models/app/loader.js')
+vi.mock('@shopify/cli-kit/node/ui/components', () => ({
+  useConcurrentOutputContext: vi.fn((options, callback) => callback()),
+}))
 
 const mockExec = vi.mocked(exec)
 const mockJoinPath = vi.mocked(joinPath)
@@ -30,6 +33,7 @@ describe('test-runner', () => {
     mockExtension = {
       localIdentifier: 'test-function',
       directory: '/test/path',
+      outputPrefix: 'test-function',
     } as ExtensionInstance<FunctionConfigType>
 
     mockStdout = {write: vi.fn()}
@@ -91,12 +95,13 @@ describe('test-runner', () => {
       const mockExtension = {
         directory: '/test/path',
         localIdentifier: 'test-function',
+        outputPrefix: 'test-function',
       } as ExtensionInstance<FunctionConfigType>
 
       const mockOptions = {
         stdout: { write: vi.fn() },
         stderr: { write: vi.fn() },
-      } as any as any as any
+      } as any
 
       mockExistsSync.mockReturnValue(true)
       vi.mocked(runFunctionTests).mockResolvedValue()
@@ -112,6 +117,7 @@ describe('test-runner', () => {
       const mockExtension = {
         directory: '/test/path',
         localIdentifier: 'test-function',
+        outputPrefix: 'test-function',
       } as ExtensionInstance<FunctionConfigType>
 
       const mockOptions = {
@@ -144,7 +150,6 @@ describe('runFunctionTests', () => {
         stderr: mockStderr,
       })
 
-      expect(mockStdout.write).toHaveBeenCalledWith('Running tests for test-function...')
       expect(mockExec).toHaveBeenCalledWith('npm test', [], {
         cwd: '/test/path',
         stdout: mockStdout,
@@ -176,8 +181,8 @@ describe('runFunctionTests', () => {
         stderr: mockStderr,
       })
 
-      expect(mockExec).toHaveBeenCalledWith('npx', ['vitest', 'run', 'test1.test.ts', 'test2.test.js'], {
-        cwd: '/test/path/tests',
+      expect(mockExec).toHaveBeenCalledWith('npx', ['vitest', 'run', 'tests'], {
+        cwd: '/test/path',
         stdout: mockStdout,
         stderr: mockStderr,
         signal: undefined,
@@ -201,7 +206,7 @@ describe('runFunctionTests', () => {
         stderr: mockStderr,
       })
 
-      expect(mockStderr.write).toHaveBeenCalledWith('Warning: Tests failed: Test execution failed\n')
+      expect(mockStdout.write).toHaveBeenCalledWith('Warning: Tests failed: Test execution failed\n')
     })
   })
 })

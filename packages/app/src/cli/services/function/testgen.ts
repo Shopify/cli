@@ -198,6 +198,7 @@ async function getRunFromSelector(functionRunsDir: string, functionHandle: strin
 }
 
 async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
+  console.log('functionRunsDir', functionRunsDir)
   const allFunctionRunFileNames = getAllFunctionRunFileNames(functionRunsDir)
     .filter((filename) => {
       // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json

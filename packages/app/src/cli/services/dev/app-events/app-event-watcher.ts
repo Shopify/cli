@@ -13,6 +13,7 @@ import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {formatMessagesSync, Message} from 'esbuild'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import EventEmitter from 'events'
+import { runTestsForExtensions } from '../../function/test-runner.js'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -141,6 +142,7 @@ export class AppEventWatcher extends EventEmitter {
     if (buildExtensionsFirst) {
       this.initialEvents = this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
       await this.buildExtensions(this.initialEvents)
+      await runTestsForExtensions(this.app, this.options)
     }
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
@@ -159,6 +161,9 @@ export class AppEventWatcher extends EventEmitter {
 
           // Build the created/updated extensions and update the extension events with the build result
           await this.buildExtensions(buildableEvents)
+          if (buildableEvents.some((extEvent) => extEvent.extension.isFunctionExtension)) {
+            await runTestsForExtensions(this.app, this.options)
+          }
 
           // Find deleted extensions and delete their previous build output
           await this.deleteExtensionsBuildOutput(appEvent)
