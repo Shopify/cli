@@ -219,7 +219,25 @@ export async function deploy(options: DeployOptions) {
       isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,
     })
 
-    await runTestsForExtensions(app)
+    try {
+      await runTestsForExtensions(app)
+    } catch (error) {
+      if (options.force) {
+        outputInfo('⚠️  Tests failed, but continuing with deployment due to --force flag')
+      } else {
+        throw new AbortError(
+          'Deployment failed because function tests failed',
+          [
+            'Please fix the failing tests before deploying, or use ',
+            {command: '--force'},
+            ' to deploy anyway.',
+            '\n\nRun ',
+            {command: 'shopify app function test'},
+            ' to see test results locally.'
+          ]
+        )
+      }
+    }
 
     let uploadTaskTitle
 
