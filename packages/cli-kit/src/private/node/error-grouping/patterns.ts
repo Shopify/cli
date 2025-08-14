@@ -46,7 +46,7 @@ const npmTokenRule: SanitizationRule = {
 }
 
 const apiKeyRule: SanitizationRule = {
-  pattern: /(?:api[_-]?key|apikey|api_secret|api[_-]?token)[=:]\s*["']?[A-Za-z0-9-_]+["']?/gi,
+  pattern: /["']?(?:api[_-]?key|apikey|api_secret|api[_-]?token)["']?\s*[=:]\s*["']?[A-Za-z0-9-_]+["']?/gi,
   replace: 'api_key=<REDACTED>',
   description: 'API keys and secrets',
 }

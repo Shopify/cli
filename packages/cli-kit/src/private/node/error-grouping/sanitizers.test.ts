@@ -32,6 +32,15 @@ describe('sanitizeErrorMessage', () => {
     ['api-key=abc123xyz789', 'api_key=<REDACTED>'],
     ['api_secret:super_secret_value_123', 'api_key=<REDACTED>'],
     ['api_token="token_abc_123_xyz"', 'api_key=<REDACTED>'],
+    
+    // JSON-formatted API keys (like in GraphQL variables)
+    ['"apiKey":"6a970ec2ce9b12b0674e48e68149a4cd"', 'api_key=<REDACTED>'],
+    ['{"apiKey":"abc123xyz"}', '{api_key=<REDACTED>}'],
+    ['"api_key":"secret123","api_token":"token456"', 'api_key=<REDACTED>,api_key=<REDACTED>'],
+    
+    // Multiple API keys in same string
+    ['api_key=first and "apiKey":"second" in same string', 'api_key=<REDACTED> and api_key=<REDACTED> in same string'],
+    ['query FindApp($api_key=abc!) { variables:{"apiKey":"xyz123"} }', 'query FindApp($api_key=<REDACTED>!) { variables:{api_key=<REDACTED>} }'],
 
     // Bearer tokens
     ['Authorization: Bearer abc123xyz789token', 'Authorization: Bearer <TOKEN>'],
@@ -133,6 +142,24 @@ describe('sanitizeErrorMessage', () => {
 
   test('handles empty string', () => {
     expect(sanitizeErrorMessage('')).toBe('')
+  })
+
+  test('handles GraphQL error with multiple API keys in JSON', () => {
+    const graphqlError = `GraphQL Error (Code: 401): {"response":{"error":"","status":401,"headers":{}},"request":{"query":"\\n  query FindApp($api_key=abc123!) {\\n    app(apiKey: $apiKey) {\\n      id\\n      title\\n      apiKey\\n      organizationId\\n    }\\n  }\\n","variables":{"apiKey":"6a970ec2ce9b12b0674e48e68149a4cd"}}}`
+    
+    const sanitized = sanitizeErrorMessage(graphqlError)
+    
+    // Both API keys should be sanitized
+    expect(sanitized).toContain('$api_key=<REDACTED>!')
+    expect(sanitized).toContain('"variables":{api_key=<REDACTED>}}')
+    
+    // Count the number of redactions
+    const redactionCount = (sanitized.match(/api_key=<REDACTED>/g) || []).length
+    expect(redactionCount).toBe(2)
+    
+    // No unhashed API keys should remain
+    expect(sanitized).not.toContain('abc123')
+    expect(sanitized).not.toContain('6a970ec2ce9b12b0674e48e68149a4cd')
   })
 
   test('handles very long messages', () => {
