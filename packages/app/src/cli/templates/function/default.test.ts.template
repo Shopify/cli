@@ -31,8 +31,11 @@ async function loadFixture(fixturePath: string) {
 
 async function runFunctionRunner(wasmPath: string, exportName: string, input: any) {
   try {
-    // Create a temporary input file
-    const inputFile = path.join(__dirname, 'temp-input.json');
+    // Create a temporary input file in the generated directory (which is ignored by file watcher)
+    const generatedDir = path.join(__dirname, 'generated');
+    // Ensure the generated directory exists
+    await fs.promises.mkdir(generatedDir, { recursive: true });
+    const inputFile = path.join(generatedDir, 'temp-input.json');
     await fs.promises.writeFile(inputFile, JSON.stringify(input, null, 2));
 
     // Run the shopify app function run command with JSON output
@@ -51,9 +54,6 @@ async function runFunctionRunner(wasmPath: string, exportName: string, input: an
     let result: any;
     try {
       result = JSON.parse(stdout);
-
-      // Handle the function execution result structure
-      console.log('Raw result:', JSON.stringify(result, null, 2));
 
       let actualOutput;
       if (result && result.output && result.output.humanized) {
@@ -94,7 +94,8 @@ async function runFunctionRunner(wasmPath: string, exportName: string, input: an
     };
   } catch (error) {
     // Clean up temporary file if it exists
-    const inputFile = path.join(__dirname, 'temp-input.json');
+    const generatedDir = path.join(__dirname, 'generated');
+    const inputFile = path.join(generatedDir, 'temp-input.json');
     await fs.promises.unlink(inputFile).catch(() => {});
 
     console.log('=== ERROR DETAILS ===');

@@ -30,11 +30,6 @@ export default class FunctionTestgen extends AppLinkedCommand {
         'Specifies a log identifier to generate test files from instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.',
       env: 'SHOPIFY_FLAG_LOG',
     }),
-    'output-dir': Flags.string({
-      char: 'o',
-      description: 'Specifies the output directory for the test files. Defaults to "test-{identifier}".',
-      env: 'SHOPIFY_FLAG_OUTPUT_DIR',
-    }),
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -57,7 +52,6 @@ export default class FunctionTestgen extends AppLinkedCommand {
       extension: ourFunction,
       path: flags.path,
       log: flags.log,
-      outputDir: flags['output-dir'],
     })
 
     return {app}
