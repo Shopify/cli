@@ -1,6 +1,7 @@
 import {composeThemeGid, parseGid, DEVELOPMENT_THEME_ROLE} from './utils.js'
 import {buildTheme} from './factories.js'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
+import {recordTiming} from './analytics.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
@@ -244,8 +245,12 @@ export async function bulkUploadThemeAssets(
   for (let i = 0; i < assets.length; i += 50) {
     const chunk = assets.slice(i, i + 50)
     const files = prepareFilesForUpload(chunk)
+
+    recordTiming('theme-api:upload-files')
     // eslint-disable-next-line no-await-in-loop
     const uploadResults = await uploadFiles(id, files, session)
+    recordTiming('theme-api:upload-files')
+
     results.push(...processUploadResults(uploadResults))
   }
   return results
