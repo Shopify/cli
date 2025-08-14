@@ -9,7 +9,7 @@ import {SANITIZATION_RULES} from './patterns.js'
  * - replace: The replacement template string (may contain $1, $2, etc. for capture groups)
  * - normalizeWindowsPaths: Optional flag for rules that need Windows path normalization
  */
-const preCompiledRules = SANITIZATION_RULES.map((rule) => ({
+const PRECOMPILED_RULES = SANITIZATION_RULES.map((rule) => ({
   pattern: new RegExp(rule.pattern.source, rule.pattern.flags),
   replace: rule.replace,
   normalizeWindowsPaths: rule.normalizeWindowsPaths ?? false,
@@ -67,7 +67,7 @@ export function sanitizeErrorMessage(message: string): string {
   if (!message) return ''
 
   // Use reduce to apply each sanitization rule sequentially
-  return preCompiledRules.reduce((sanitized, rule) => {
+  return PRECOMPILED_RULES.reduce((sanitized, rule) => {
     // For file path rules that capture Windows paths, we need to normalize backslashes
     if (rule.normalizeWindowsPaths) {
       return sanitized.replace(rule.pattern, (match, ...groups) =>

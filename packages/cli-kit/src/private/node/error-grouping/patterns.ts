@@ -73,21 +73,21 @@ const localPortRule: SanitizationRule = {
 
 // File path normalization - specific patterns before general ones
 const nodeModulesPathRule: SanitizationRule = {
-  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/])[^\s]*?node_modules[\\/]([^\s]+)/gi,
+  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/]).+?node_modules[\\/]([^\s]+)/gi,
   replace: '$1node_modules/$2',
   description: 'Node modules paths - normalize to relative',
   normalizeWindowsPaths: true,
 }
 
 const yarnCachePathRule: SanitizationRule = {
-  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/])[^\s]*?\.yarn[\\/](?:berry[\\/])?cache[\\/]([^\s]+)/gi,
+  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/]).+?\.yarn[\\/](?:berry[\\/])?cache[\\/]([^\s]+)/gi,
   replace: '$1yarn-cache/$2',
   description: 'Yarn cache paths',
   normalizeWindowsPaths: true,
 }
 
 const pnpmStorePathRule: SanitizationRule = {
-  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/])[^\s]*?\.(?:pnpm-store|pnpm)[\\/]([^\s]+)/gi,
+  pattern: /(^|[\s])(?:[A-Z]:[\\/]|[\\/]).+?\.(?:pnpm-store|pnpm)[\\/]([^\s]+)/gi,
   replace: '$1pnpm-store/$2',
   description: 'pnpm store paths',
   normalizeWindowsPaths: true,

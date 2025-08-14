@@ -8,8 +8,8 @@ const NODE_INTERNAL_PATTERNS = [
   /node:internal\//,
   // Matches all node:* modules
   /node:[a-z_]+/,
-  // Legacy internal modules
-  /^internal\//,
+  // Legacy internal modules (may appear after "at ")
+  /\binternal\//,
 ] as const
 
 /**
@@ -49,6 +49,11 @@ export function extractTopStackFrame(stack: string | undefined): string | undefi
       const method = match[1] ?? '<anonymous>'
       const fullPath = match[2] ?? ''
 
+      // Skip anonymous and eval frames that don't have real file paths
+      if (fullPath === '<anonymous>' || fullPath.startsWith('eval ')) {
+        continue
+      }
+
       // Normalize the file path
       const filename = normalizeFilePath(fullPath)
 
@@ -72,24 +77,27 @@ function normalizeFilePath(fullPath: string): string {
   let filename = fullPath
 
   // Common path patterns to normalize, ordered by specificity
+  // Support both forward slashes and backslashes
   const pathPatterns: [RegExp, string][] = [
     // Package paths
-    [/^.*\/packages\//, 'packages/'],
+    [/^.*[/\\]packages[/\\]/, 'packages/'],
     // Node modules - strip everything before node_modules
-    [/^.*\/node_modules\//, ''],
+    [/^.*[/\\]node_modules[/\\]/, ''],
     // Source directories
-    [/^.*\/src\//, 'src/'],
-    [/^.*\/lib\//, 'lib/'],
-    [/^.*\/dist\//, 'dist/'],
+    [/^.*[/\\]src[/\\]/, 'src/'],
+    [/^.*[/\\]lib[/\\]/, 'lib/'],
     // Build directories
-    [/^.*\/build\//, 'build/'],
-    [/^.*\/out\//, 'out/'],
+    [/^.*[/\\]dist[/\\]/, 'dist/'],
+    [/^.*[/\\]build[/\\]/, 'build/'],
+    [/^.*[/\\]out[/\\]/, 'out/'],
   ]
 
   // Apply the first matching pattern
   for (const [pattern, replacement] of pathPatterns) {
     if (pattern.test(filename)) {
       filename = filename.replace(pattern, replacement)
+      // Normalize any remaining backslashes to forward slashes
+      filename = filename.replace(/\\/g, '/')
       break
     }
   }
