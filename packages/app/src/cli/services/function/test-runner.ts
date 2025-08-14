@@ -70,14 +70,18 @@ export async function runFunctionTests(
     if (testCommand) {
       const startTime = Date.now()
       const execAsync = promisify(exec)
-      await execAsync(testCommand, {
-        cwd: extension.directory,
-      })
-      const endTime = Date.now()
-      const duration = (endTime - startTime) / 1000
-      await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
-        options.stdout.write(`✅ Tests completed in ${duration.toFixed(2)}s\n`)
-      })
+      try {
+        await execAsync(testCommand, {
+          cwd: extension.directory,
+        })
+        const endTime = Date.now()
+        const duration = (endTime - startTime) / 1000
+        await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+          options.stdout.write(`✅ Tests completed in ${duration.toFixed(2)}s\n`)
+        })
+      } catch (error) {
+        throw new Error(`Custom test command failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      }
     } else {
       await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
         outputDebug(`Using default vitest runner`)
@@ -90,7 +94,6 @@ export async function runFunctionTests(
         if (testFiles.length > 0) {
           const startTime = Date.now()
 
-          // Create a custom stdout/stderr that writes through our concurrent output context
           const customStdout = new Writable({
             write(chunk: Buffer, encoding: string, callback: (error?: Error | null) => void) {
               useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
@@ -109,13 +112,13 @@ export async function runFunctionTests(
             }
           })
 
-          // Run vitest from the function directory, not the tests directory
           await cliKitExec('npx', ['vitest', 'run', 'tests'], {
             cwd: extension.directory,
             stdout: customStdout,
             stderr: customStderr,
             signal: options.signal,
           })
+
           const endTime = Date.now()
           const duration = (endTime - startTime) / 1000
           await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
@@ -125,9 +128,7 @@ export async function runFunctionTests(
       }
     }
   } catch (error) {
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
-      options.stdout.write(`Warning: Tests failed: ${error instanceof Error ? error.message : 'Unknown error'}\n`)
-    })
+    throw new Error(`Tests failed for function ${extension.localIdentifier}: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
