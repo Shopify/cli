@@ -48,7 +48,7 @@ describe('aggressive path normalization', () => {
     expect(keys[1]).toContain('node_modules/@shopify/cli/dist/index.js')
     expect(keys[2]).toContain('node_modules/@shopify/cli/dist/index.js')
     expect(keys[3]).toContain('node_modules/@shopify/cli/dist/index.js')
-    
+
     // And all should have the same stack frame
     expect(keys[0]).toContain('@shopify/cli/dist/index.js:cliFunction')
     expect(keys[1]).toContain('@shopify/cli/dist/index.js:cliFunction')
@@ -212,7 +212,8 @@ describe('stack frame extraction integration', () => {
     const key2 = generateGroupingKey(error2, false)
 
     // Different messages but same stack frame
-    expect(key1).not.toBe(key2) // Different because messages are different
+    // Different because messages are different
+    expect(key1).not.toBe(key2)
     expect(key1).toContain('same-file.js:sameFunction')
     expect(key2).toContain('same-file.js:sameFunction')
   })

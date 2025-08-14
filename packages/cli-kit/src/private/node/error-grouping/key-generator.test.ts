@@ -190,6 +190,7 @@ describe('performance', () => {
     const end = performance.now()
 
     expect(key).toBeTruthy()
-    expect(end - start).toBeLessThan(10) // Should complete in under 10ms
+    // Should complete in under 10ms
+    expect(end - start).toBeLessThan(10)
   })
 })

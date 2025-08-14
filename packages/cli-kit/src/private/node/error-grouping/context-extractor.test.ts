@@ -76,17 +76,20 @@ describe('extractTopStackFrame', () => {
       {
         stack: `Error: Test
         at handler (/Users/john/project/src/handler.js:10:5)`,
-        expected: 'src/handler.js:handler', // src/ pattern matches
+        // src/ pattern matches
+        expected: 'src/handler.js:handler',
       },
       {
         stack: `Error: Test
         at handler (C:\\Users\\john\\project\\src\\handler.js:10:5)`,
-        expected: 'src/handler.js:handler', // src/ pattern matches
+        // src/ pattern matches
+        expected: 'src/handler.js:handler',
       },
       {
         stack: `Error: Test
         at handler (/home/user/workspace/project/src/handler.js:10:5)`,
-        expected: 'src/handler.js:handler', // src/ pattern matches
+        // src/ pattern matches
+        expected: 'src/handler.js:handler',
       },
     ]
 
@@ -142,12 +145,14 @@ describe('extractTopStackFrame', () => {
       {
         stack: `Error: Test
         at handler (/Users/john/project/node_modules/express/lib/router.js:10:5)`,
-        expected: 'express/lib/router.js:handler', // node_modules/ gets stripped
+        // node_modules/ gets stripped
+        expected: 'express/lib/router.js:handler',
       },
       {
         stack: `Error: Test
         at handler (C:\\project\\node_modules\\@shopify\\cli-kit\\dist\\index.js:10:5)`,
-        expected: '@shopify/cli-kit/dist/index.js:handler', // node_modules/ gets stripped
+        // node_modules/ gets stripped
+        expected: '@shopify/cli-kit/dist/index.js:handler',
       },
     ]
 
@@ -172,7 +177,8 @@ describe('extractTopStackFrame', () => {
         stack: `Error: Test
         at eval (eval at <anonymous> (/project/file.js:10:5))`,
         // eval patterns are complex and not perfectly handled
-        expected: undefined, // No match for eval pattern
+        // No match for eval pattern
+        expected: undefined,
       },
       {
         stack: `Error: Test
@@ -199,7 +205,8 @@ describe('extractTopStackFrame', () => {
     at processTicksAndRejections (node:internal/process/task_queues:95:5)`
 
     const frame = extractTopStackFrame(stack)
-    expect(frame).toBe('dist/handler.js:handler') // dist/ pattern matches
+    // dist/ pattern matches
+    expect(frame).toBe('dist/handler.js:handler')
   })
 
   test('handles deeply nested paths', () => {
