@@ -12,6 +12,30 @@ import {Writable} from 'stream'
 vi.mock('../../../../../dev/extension/bundler.js')
 vi.mock('../../../../runner.js')
 
+async function waitForMockCalls(mockFn: any, expectedCallCount: number, timeoutMs = 2000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () =>
+        reject(
+          new Error(
+            `Mock timeout: expected ${expectedCallCount} calls, got ${mockFn.mock.calls.length} after ${timeoutMs}ms`,
+          ),
+        ),
+      timeoutMs,
+    )
+
+    const check = () => {
+      if (mockFn.mock.calls.length >= expectedCallCount) {
+        clearTimeout(timeout)
+        resolve()
+      } else {
+        setImmediate(check)
+      }
+    }
+    check()
+  })
+}
+
 const SELECTED_RUN = {
   shopId: 69665030382,
   apiClientId: 124042444801,
@@ -87,6 +111,7 @@ describe('useFunctionWatcher', () => {
     )
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
+    await waitForMockCalls(runFunction, 1)
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
@@ -114,12 +139,14 @@ describe('useFunctionWatcher', () => {
 
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
+    await waitForMockCalls(runFunction, 1)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
 
     appWatcher.emit('all', event)
     await vi.advanceTimersByTimeAsync(0)
+    await waitForMockCalls(runFunction, 2)
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
@@ -152,9 +179,10 @@ describe('useFunctionWatcher', () => {
 
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
+    await waitForMockCalls(runFunction, 1)
 
     appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(0)
+    await waitForMockCalls(runFunction, 1)
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
