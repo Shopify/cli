@@ -20,6 +20,13 @@ interface SanitizationRule {
  * Order matters: more specific patterns should come before general ones.
  */
 
+// GraphQL variables - must be processed very early to scrub entire variables object
+const graphqlVariablesRule: SanitizationRule = {
+  pattern: /"variables"\s*:\s*\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/gi,
+  replace: '"variables":<VARIABLES>',
+  description: 'GraphQL query variables',
+}
+
 // Authentication tokens - must be processed first to avoid partial matches
 const jwtTokenRule: SanitizationRule = {
   pattern: /eyJ[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+\.[A-Za-z0-9-_]+/g,
@@ -249,6 +256,9 @@ const lineColumnFormatRule: SanitizationRule = {
 }
 
 export const SANITIZATION_RULES: SanitizationRule[] = [
+  // GraphQL variables - process very first to avoid partial sanitization
+  graphqlVariablesRule,
+  
   // Authentication tokens - process first
   jwtTokenRule,
   databaseUrlRule,

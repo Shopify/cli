@@ -144,18 +144,36 @@ describe('sanitizeErrorMessage', () => {
     expect(sanitizeErrorMessage('')).toBe('')
   })
 
-  test('handles GraphQL error with multiple API keys in JSON', () => {
+  test('handles GraphQL variables scrubbing', () => {
+    // Simple variables
+    const simple = 'GraphQL error: {"request":{"query":"mutation test","variables":{"apiKey":"abc123"}}}'
+    expect(sanitizeErrorMessage(simple)).toBe('GraphQL error: {"request":{"query":"mutation test","variables":<VARIABLES>}}')
+    
+    // Multiple variables
+    const multiple = '"variables":{"topic":"customers/redact","api_version":"2025-07","address":"https://example.com"}'
+    expect(sanitizeErrorMessage(multiple)).toBe('"variables":<VARIABLES>')
+    
+    // Nested objects in variables
+    const nested = '"variables":{"user":{"name":"John","id":"123"},"apiKey":"secret"}'
+    expect(sanitizeErrorMessage(nested)).toBe('"variables":<VARIABLES>')
+    
+    // Real GraphQL error example
+    const realError = 'GraphQL Error (Code: 401): {"response":{"error":"","status":401},"request":{"query":"query test","variables":{"apiKey":"521e15024472a212116e50a815909700"}}}'
+    const sanitized = sanitizeErrorMessage(realError)
+    expect(sanitized).toContain('"variables":<VARIABLES>')
+    expect(sanitized).not.toContain('521e15024472a212116e50a815909700')
+  })
+
+  test('handles GraphQL error with query parameters and variables', () => {
     const graphqlError = `GraphQL Error (Code: 401): {"response":{"error":"","status":401,"headers":{}},"request":{"query":"\\n  query FindApp($api_key=abc123!) {\\n    app(apiKey: $apiKey) {\\n      id\\n      title\\n      apiKey\\n      organizationId\\n    }\\n  }\\n","variables":{"apiKey":"6a970ec2ce9b12b0674e48e68149a4cd"}}}`
     
     const sanitized = sanitizeErrorMessage(graphqlError)
     
-    // Both API keys should be sanitized
+    // Query parameter should be sanitized
     expect(sanitized).toContain('$api_key=<REDACTED>!')
-    expect(sanitized).toContain('"variables":{api_key=<REDACTED>}}')
     
-    // Count the number of redactions
-    const redactionCount = (sanitized.match(/api_key=<REDACTED>/g) || []).length
-    expect(redactionCount).toBe(2)
+    // Variables should be completely scrubbed
+    expect(sanitized).toContain('"variables":<VARIABLES>}}')
     
     // No unhashed API keys should remain
     expect(sanitized).not.toContain('abc123')
