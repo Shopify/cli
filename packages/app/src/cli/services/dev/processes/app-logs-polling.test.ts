@@ -142,6 +142,7 @@ describe('app-logs-polling', () => {
         developerPlatformClient,
         appLogsSubscribeVariables,
         'organizationId',
+        stdout,
       )
       expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
       expect(pollAppLogs).toHaveBeenCalledOnce()
@@ -191,6 +192,7 @@ describe('app-logs-polling', () => {
         developerPlatformClient,
         appLogsSubscribeVariables,
         'organizationId',
+        stdout,
       )
       expect(outputDebug).toHaveBeenCalledWith('Failed to start function logs: Error: uh oh, another error', stderr)
       expect(pollAppLogs).not.toHaveBeenCalled()
