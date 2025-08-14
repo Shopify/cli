@@ -203,7 +203,7 @@ describe('retryAwareRequest', () => {
     const mockRequestFn = vi
       .fn()
       .mockImplementationOnce(() => {
-        throw new Error('The user aborted a request.')
+        throw new Error('the operation was aborted')
       })
       .mockImplementationOnce(() => {
         return Promise.resolve({

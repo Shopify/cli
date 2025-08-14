@@ -82,7 +82,6 @@ function isARetryableNetworkError(error: unknown): boolean {
       'eai_again',
       'epipe',
       'the operation was aborted',
-      'the user aborted a request',
     ]
     const errorMessage = error.message.toLowerCase()
     const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
