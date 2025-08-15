@@ -14,6 +14,8 @@ import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {Writable} from 'stream'
 
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
@@ -193,6 +195,7 @@ export const subscribeToAppLogs = async (
   developerPlatformClient: DeveloperPlatformClient,
   variables: AppLogsSubscribeMutationVariables,
   organizationId: string,
+  stdout?: Writable,
 ): Promise<string> => {
   // Now try the subscription with the fresh token
   const result = await developerPlatformClient.subscribeToAppLogs(variables, organizationId)
@@ -208,8 +211,10 @@ export const subscribeToAppLogs = async (
 
   if (errors && errors.length > 0) {
     const errorOutput = errors.join(', ')
-    outputWarn(`Errors subscribing to app logs: ${errorOutput}`)
-    outputWarn('App log streaming is not available in this session.')
+    await useConcurrentOutputContext({stripAnsi: false}, () => {
+      outputWarn(`Errors subscribing to app logs: ${errorOutput}`, stdout)
+      outputWarn('App log streaming is not available in this session.', stdout)
+    })
     throw new AbortError(errorOutput)
   } else {
     if (!jwtToken) {

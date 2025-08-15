@@ -50,31 +50,7 @@ export const pollAppLogs = async ({
     const response = await developerPlatformClient.appLogs({jwtToken, cursor}, organizationId)
 
     const {errors, status} = response as AppLogsError
-    if (status !== 200) {
-      const errorResponse = {
-        errors: errors.map((error) => ({message: error, status})),
-      }
-
-      const result = await handleFetchAppLogsError({
-        response: errorResponse,
-        onThrottle: (retryIntervalMs) => {
-          outputWarn(`Request throttled while polling app logs.`)
-          outputWarn(`Retrying in ${retryIntervalMs / 1000} seconds.`)
-        },
-        onUnknownError: (retryIntervalMs) => {
-          outputWarn(`Error while polling app logs.`)
-          outputWarn(`Retrying in ${retryIntervalMs / 1000} seconds.`)
-        },
-        onResubscribe: () => {
-          return resubscribeCallback()
-        },
-      })
-
-      if (result.nextJwtToken) {
-        nextJwtToken = result.nextJwtToken
-      }
-      retryIntervalMs = result.retryIntervalMs
-    } else {
+    if (status === 200) {
       const {app_logs: appLogs} = response as AppLogsSuccess
 
       for (const log of appLogs) {
@@ -106,6 +82,30 @@ export const pollAppLogs = async ({
           )
         })
       }
+    } else {
+      const errorResponse = {
+        errors: errors.map((error) => ({message: error, status})),
+      }
+
+      const result = await handleFetchAppLogsError({
+        response: errorResponse,
+        onThrottle: (retryIntervalMs) => {
+          outputWarn(`Request throttled while polling app logs.`, stdout)
+          outputWarn(`Retrying in ${retryIntervalMs / 1000} seconds.`, stdout)
+        },
+        onUnknownError: (retryIntervalMs) => {
+          outputWarn(`Error while polling app logs.`, stdout)
+          outputWarn(`Retrying in ${retryIntervalMs / 1000} seconds.`, stdout)
+        },
+        onResubscribe: () => {
+          return resubscribeCallback()
+        },
+      })
+
+      if (result.nextJwtToken) {
+        nextJwtToken = result.nextJwtToken
+      }
+      retryIntervalMs = result.retryIntervalMs
     }
 
     const {cursor: responseCursor} = response as AppLogsSuccess
@@ -129,8 +129,8 @@ export const pollAppLogs = async ({
     }, retryIntervalMs)
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
-    outputWarn(`Error while polling app logs.`)
-    outputWarn(`Retrying in ${POLLING_ERROR_RETRY_INTERVAL_MS / 1000} seconds.`)
+    outputWarn(`Error while polling app logs.`, stdout)
+    outputWarn(`Retrying in ${POLLING_ERROR_RETRY_INTERVAL_MS / 1000} seconds.`, stdout)
     outputDebug(`${error as string}}\n`)
 
     setTimeout(() => {

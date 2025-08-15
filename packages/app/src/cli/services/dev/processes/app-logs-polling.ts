@@ -69,7 +69,12 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
   {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, appWatcher, localApp: _localApp},
 ) => {
   async function startPolling(abortSignal?: AbortSignal) {
-    const jwtToken = await subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, organizationId)
+    const jwtToken = await subscribeToAppLogs(
+      developerPlatformClient,
+      appLogsSubscribeVariables,
+      organizationId,
+      stdout,
+    )
 
     const apiKey = appLogsSubscribeVariables.apiKey
     await createLogsDir(apiKey)
