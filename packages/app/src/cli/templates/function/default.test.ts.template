@@ -1,10 +1,7 @@
 import { describe, test, expect } from "vitest";
 import path from "path";
 import fs from "fs";
-import { exec } from "child_process";
-import { promisify } from "util";
-
-const execAsync = promisify(exec);
+import { spawn } from "child_process";
 
 async function loadFixture(fixturePath: string) {
   try {
@@ -29,84 +26,75 @@ async function loadFixture(fixturePath: string) {
   }
 }
 
-async function runFunctionRunner(wasmPath: string, exportName: string, input: any) {
+async function runFunctionRunner(exportName: string, input: any) {
   try {
-    // Create a temporary input file in the generated directory (which is ignored by file watcher)
-    const generatedDir = path.join(__dirname, 'generated');
-    // Ensure the generated directory exists
-    await fs.promises.mkdir(generatedDir, { recursive: true });
-    const inputFile = path.join(generatedDir, 'temp-input.json');
-    await fs.promises.writeFile(inputFile, JSON.stringify(input, null, 2));
+    const inputJson = JSON.stringify(input);
 
-    // Run the shopify app function run command with JSON output
-    // We need to run from the app root directory and specify the function path
-    const appRootDir = path.dirname(path.dirname(__dirname)); // Go up from tests/function-name to app root
-    const functionName = path.basename(path.dirname(__dirname)); // Get function name from path
-    const command = `shopify app function run --input ${inputFile} --export ${exportName} --json --path ${functionName}`;
-    const workingDir = appRootDir;
+    const appRootDir = path.dirname(path.dirname(__dirname));
+    const functionName = path.basename(path.dirname(__dirname));
 
-    const { stdout, stderr } = await execAsync(command, { cwd: workingDir });
+    return new Promise((resolve, reject) => {
+      const shopifyProcess = spawn('shopify', [
+        'app', 'function', 'run',
+        '--export', exportName,
+        '--json',
+        '--path', functionName
+      ], {
+        cwd: appRootDir,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
-    // Clean up temporary file
-    await fs.promises.unlink(inputFile).catch(() => {});
+      let stdout = '';
+      let stderr = '';
 
-    // Try to parse the output as JSON
-    let result: any;
-    try {
-      result = JSON.parse(stdout);
+      shopifyProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
 
-      let actualOutput;
-      if (result && result.output && result.output.humanized) {
-        // The output field contains humanized data
-        try {
-          actualOutput = JSON.parse(result.output.humanized);
-        } catch (humanizedParseError) {
-          actualOutput = result.output.humanized;
+      shopifyProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      shopifyProcess.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Command failed with exit code ${code}: ${stderr}`));
+          return;
         }
-      } else if (result && result.humanized) {
-        // The result itself contains humanized data
+
+        let result: any;
         try {
-          actualOutput = JSON.parse(result.humanized);
-        } catch (humanizedParseError) {
-          actualOutput = result.humanized;
+          result = JSON.parse(stdout);
+
+          let actualOutput;
+          if (result?.output?.humanized) {
+            actualOutput = JSON.parse(result.output.humanized);
+          } else if (result?.output) {
+            actualOutput = result.output;
+          } else {
+            actualOutput = result;
+          }
+
+          resolve({
+            result: { output: actualOutput },
+            error: null,
+          });
+        } catch (parseError) {
+          resolve({
+            result: { output: stdout.trim() },
+            error: null,
+          });
         }
-      } else if (result && result.output) {
-        // Use the output field directly
-        actualOutput = result.output;
-      } else {
-        // Use the entire result
-        actualOutput = result;
-      }
+      });
 
-      result = { output: actualOutput };
-    } catch (parseError) {
-      // If JSON parsing fails, return the raw output
-      console.warn('Function run did not return valid JSON, using raw output');
-      return {
-        result: { output: stdout.trim() },
-        error: null,
-      };
-    }
+      shopifyProcess.on('error', (error) => {
+        reject(new Error(`Failed to start shopify command: ${error.message}`));
+      });
 
-    return {
-      result,
-      error: null,
-    };
+      shopifyProcess.stdin.write(inputJson);
+      shopifyProcess.stdin.end();
+    });
+
   } catch (error) {
-    // Clean up temporary file if it exists
-    const generatedDir = path.join(__dirname, 'generated');
-    const inputFile = path.join(generatedDir, 'temp-input.json');
-    await fs.promises.unlink(inputFile).catch(() => {});
-
-    console.log('=== ERROR DETAILS ===');
-    console.log('Error:', error);
-    console.log('Error type:', typeof error);
-    if (error instanceof Error) {
-      console.log('Error message:', error.message);
-      console.log('Error stack:', error.stack);
-    }
-    console.log('=====================');
-
     if (error instanceof Error) {
       return {
         result: null,
@@ -120,7 +108,6 @@ async function runFunctionRunner(wasmPath: string, exportName: string, input: an
     }
   }
 }
-
 
 // Keeping these as a placeholder for now, can add more validation later
 async function validateInputShape(input: any, exportName: string, dirname: string) {
@@ -139,10 +126,6 @@ async function validateOutputShape(output: any, exportName: string, dirname: str
 }
 
 describe("Default Integration Tests", () => {
-  const wasmPath = path.join(
-    __dirname,
-    "../target/wasm32-wasip1/release/discount-function.wasm"
-  );
   const fixturesDir = path.join(__dirname, "fixtures");
   const fixtureFiles = fs
     .readdirSync(fixturesDir)
@@ -152,19 +135,17 @@ describe("Default Integration Tests", () => {
   fixtureFiles.forEach((fixtureFile) => {
     test(`runs ${path.relative(fixturesDir, fixtureFile)}`, async () => {
       const fixture = await loadFixture(fixtureFile);
-
       await validateInputShape(fixture.input, fixture.export, __dirname);
       await validateOutputShape(fixture.expectedOutput, fixture.export, __dirname);
 
       const { result, error } = await runFunctionRunner(
-        wasmPath,
         fixture.export,
         fixture.input
       );
 
       expect(error).toBeNull();
       expect(result.output).toEqual(fixture.expectedOutput);
-    });
+    }, 10000);
   });
 });
 
