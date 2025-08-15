@@ -57,7 +57,7 @@ describe('fetchTheme', () => {
       session,
       variables: {id: 'gid://shopify/OnlineStoreTheme/123'},
       responseOptions: {handleErrors: false},
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
 
     expect(theme).not.toBeNull()
@@ -83,7 +83,7 @@ describe('fetchTheme', () => {
       session,
       variables: {id: 'gid://shopify/OnlineStoreTheme/123'},
       responseOptions: {handleErrors: false},
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
   })
 })
@@ -110,7 +110,7 @@ describe('fetchThemes', () => {
       session,
       variables: {after: null},
       responseOptions: {handleErrors: false},
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
     expect(themes).toHaveLength(2)
 
@@ -164,7 +164,7 @@ describe('fetchChecksums', () => {
         after: null,
       },
       responseOptions: {handleErrors: false},
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
     expect(checksum).toHaveLength(3)
     expect(checksum[0]!.key).toEqual('snippets/product-variant-picker.liquid')
@@ -208,7 +208,7 @@ describe('themeCreate', () => {
         role: 'UNPUBLISHED',
       },
       responseOptions: {handleErrors: false},
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
@@ -243,7 +243,7 @@ describe('themeCreate', () => {
         role: 'UNPUBLISHED',
       },
       responseOptions: {handleErrors: false},
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
   })
 })
@@ -279,7 +279,7 @@ describe('themeUpdate', () => {
           id: `gid://shopify/OnlineStoreTheme/${id}`,
           input: {name},
         },
-        requestBehaviour: expectedApiOptions,
+        preferredBehaviour: expectedApiOptions,
       })
       expect(theme).not.toBeNull()
       expect(theme!.id).toEqual(id)
@@ -316,7 +316,7 @@ describe('themeUpdate', () => {
         id: `gid://shopify/OnlineStoreTheme/${id}`,
         input: {},
       },
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
     expect(theme).not.toBeNull()
     expect(theme!.id).toEqual(id)
@@ -352,7 +352,7 @@ describe('themePublish', () => {
         query: ThemePublish,
         session,
         variables: {id: `gid://shopify/OnlineStoreTheme/${id}`},
-        requestBehaviour: expectedApiOptions,
+        preferredBehaviour: expectedApiOptions,
       })
       expect(theme).not.toBeNull()
       expect(theme!.id).toEqual(id)
@@ -386,7 +386,7 @@ describe('deleteThemeAssets', () => {
         themeId: `gid://shopify/OnlineStoreTheme/${id}`,
         files: [key],
       },
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
     expect(output).toEqual([{key, success: true, operation: 'DELETE'}])
   })
@@ -414,7 +414,7 @@ describe('deleteThemeAssets', () => {
         themeId: `gid://shopify/OnlineStoreTheme/${id}`,
         files: [key],
       },
-      requestBehaviour: expectedApiOptions,
+      preferredBehaviour: expectedApiOptions,
     })
     expect(output).toEqual([{key, success: true, operation: 'DELETE'}])
   })
@@ -441,7 +441,7 @@ describe('themeDelete', () => {
         query: ThemeDelete,
         session,
         variables: {id: `gid://shopify/OnlineStoreTheme/${id}`},
-        requestBehaviour: expectedApiOptions,
+        preferredBehaviour: expectedApiOptions,
       })
       expect(response).toBe(true)
     })
@@ -469,7 +469,7 @@ describe('themeDuplicate', () => {
         query: ThemeDuplicate,
         session,
         variables: {id: `gid://shopify/OnlineStoreTheme/${id}`, name},
-        requestBehaviour: expectedApiOptions,
+        preferredBehaviour: expectedApiOptions,
         version: '2025-10',
         responseOptions: {
           onResponse: expect.any(Function),
@@ -541,7 +541,7 @@ describe('bulkUploadThemeAssets', async () => {
           },
         ],
       },
-      requestBehaviour: expect.objectContaining({
+      preferredBehaviour: expect.objectContaining({
         maxRetryTimeMs: 90000,
         useAbortSignal: false,
         useNetworkLevelRetry: true,
@@ -602,7 +602,7 @@ describe('bulkUploadThemeAssets', async () => {
           },
         ],
       },
-      requestBehaviour: expect.objectContaining({
+      preferredBehaviour: expect.objectContaining({
         maxRetryTimeMs: 90000,
         useAbortSignal: false,
         useNetworkLevelRetry: true,
