@@ -17,10 +17,11 @@ import {
   readFileSync,
   glob,
   detectEOL,
+  copyDirectoryContents,
 } from './fs.js'
 import {joinPath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
 import * as os from 'os'
 
@@ -320,5 +321,70 @@ describe('detectEOL', () => {
 
     // Then
     expect(eol).toEqual('\n')
+  })
+})
+
+describe('copyDirectoryContents', () => {
+  beforeEach(() => {
+    // restore fast-glob to its original implementation for the tests
+    vi.doMock('fast-glob', async () => {
+      return vi.importActual('fast-glob')
+    })
+  })
+
+  test('copies the contents of source directory to destination directory', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      const destDir = joinPath(tmpDir, 'dest')
+      await mkdir(srcDir)
+      await mkdir(destDir)
+      await writeFile(joinPath(srcDir, 'file'), 'test')
+      await copyDirectoryContents(srcDir, destDir)
+
+      // Then
+      await expect(readFile(joinPath(destDir, 'file'))).resolves.toEqual('test')
+    })
+  })
+
+  test('copies the contents of source directory to another directory when destination directory does not exist', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      const destDir = joinPath(tmpDir, 'dest')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'file'), 'test')
+      await copyDirectoryContents(srcDir, destDir)
+
+      // Then
+      await expect(readFile(joinPath(destDir, 'file'))).resolves.toEqual('test')
+    })
+  })
+
+  test('copies the nested contents of source directory to destination directory', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      const destDir = joinPath(tmpDir, 'dest')
+      await mkdir(srcDir)
+      await mkdir(destDir)
+      await mkdir(joinPath(srcDir, 'nested'))
+      await writeFile(joinPath(srcDir, 'nested', 'file'), 'test')
+      await copyDirectoryContents(srcDir, destDir)
+
+      // Then
+      await expect(readFile(joinPath(destDir, 'nested', 'file'))).resolves.toEqual('test')
+    })
+  })
+
+  test('throws an error when the source directory does not exist', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      const destDir = joinPath(tmpDir, 'dest')
+
+      // When
+      await expect(copyDirectoryContents(srcDir, destDir)).rejects.toThrow(`Source directory ${srcDir} does not exist`)
+    })
   })
 })
