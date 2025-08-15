@@ -173,7 +173,7 @@ describe('ensureAuthenticatedTheme', () => {
 
   test('returns the password when is provided and custom_app_token', async () => {
     // When
-    const got = await ensureAuthenticatedThemes('mystore', 'password')
+    const got = await ensureAuthenticatedThemes('mystore.myshopify.com', 'password')
 
     // Then
     expect(got).toEqual({token: 'password', storeFqdn: 'mystore.myshopify.com'})
@@ -183,7 +183,7 @@ describe('ensureAuthenticatedTheme', () => {
 
   test('returns the password when is provided and theme_access_token', async () => {
     // When
-    const got = await ensureAuthenticatedThemes('mystore', 'shptka_password')
+    const got = await ensureAuthenticatedThemes('mystore.myshopify.com', 'shptka_password')
 
     // Then
     expect(got).toEqual({token: 'shptka_password', storeFqdn: 'mystore.myshopify.com'})
