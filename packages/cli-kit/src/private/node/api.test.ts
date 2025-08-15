@@ -198,4 +198,148 @@ describe('retryAwareRequest', () => {
 
     await expect(networkRetryDisabled).rejects.toThrowError('ENOTFOUND')
   })
+
+  test('retries when request is aborted by client (AbortError message)', async () => {
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error('the operation was aborted')
+      })
+      .mockImplementationOnce(() => {
+        return Promise.resolve({
+          status: 200,
+          data: {ok: true},
+          headers: new Headers(),
+        })
+      })
+
+    const mockScheduleDelayFn = vi.fn((fn, _delay) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com/graphql.json',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 2000,
+      },
+      undefined,
+      {
+        defaultDelayMs: 10,
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {ok: true},
+    })
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+  })
+
+  test('retries when fetch wrapper has blank reason in message', async () => {
+    const blankReasonMessage = 'request to https://example.com/admin/api/unstable/graphql.json failed, reason:'
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error(blankReasonMessage)
+      })
+      .mockImplementationOnce(() => {
+        return Promise.resolve({
+          status: 200,
+          data: {ok: true},
+          headers: new Headers(),
+        })
+      })
+
+    const mockScheduleDelayFn = vi.fn((fn, _delay) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com/graphql.json',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 2000,
+      },
+      undefined,
+      {
+        defaultDelayMs: 10,
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {ok: true},
+    })
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+  })
+
+  test('retries when blank reason contains trailing whitespace/newlines', async () => {
+    const blankReasonWithWhitespace =
+      'request to https://example.com/admin/api/unstable/graphql.json failed, reason:   \n\t'
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new Error(blankReasonWithWhitespace)
+      })
+      .mockImplementationOnce(() => {
+        return Promise.resolve({
+          status: 200,
+          data: {ok: true},
+          headers: new Headers(),
+        })
+      })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com/graphql.json',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 2000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: (fn) => fn()},
+    )
+
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {ok: true},
+    })
+    expect(mockRequestFn).toHaveBeenCalledTimes(2)
+  })
+
+  test('does not treat non-blank reason as retryable when no known patterns match', async () => {
+    vi.useRealTimers()
+    const nonBlankUnknownReason =
+      'request to https://example.com/admin/api/unstable/graphql.json failed, reason: gateway policy'
+
+    const mockRequestFn = vi.fn().mockImplementationOnce(() => {
+      throw new Error(nonBlankUnknownReason)
+    })
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://example.com/graphql.json',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 2000,
+      },
+      undefined,
+      {defaultDelayMs: 10, scheduleDelay: (fn) => fn()},
+    )
+
+    await expect(result).rejects.toThrowError(nonBlankUnknownReason)
+    expect(mockRequestFn).toHaveBeenCalledTimes(1)
+  })
 })

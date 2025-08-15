@@ -72,18 +72,21 @@ function isARetryableNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
     const networkErrorMessages = [
       'socket hang up',
-      'ECONNRESET',
-      'ECONNABORTED',
-      'ENOTFOUND',
-      'ENETUNREACH',
+      'econnreset',
+      'econnaborted',
+      'enotfound',
+      'enetunreach',
       'network socket disconnected',
-      'ETIMEDOUT',
-      'ECONNREFUSED',
-      'EAI_FAIL',
-      'The operation was aborted.',
+      'etimedout',
+      'econnrefused',
+      'eai_again',
+      'epipe',
+      'the operation was aborted',
     ]
-    const anyMatches = networkErrorMessages.some((issueMessage) => error.message.includes(issueMessage))
-    return anyMatches
+    const errorMessage = error.message.toLowerCase()
+    const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
+    const missingReason = /^request to .* failed, reason:\s*$/.test(errorMessage)
+    return anyMatches || missingReason
   }
   return false
 }
