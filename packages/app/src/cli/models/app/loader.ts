@@ -19,6 +19,7 @@ import {
   AppHiddenConfig,
   isLegacyAppSchema,
 } from './app.js'
+import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -124,15 +125,6 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
   return {...configuration, path: filepath}
-}
-
-export function parseHumanReadableError(issues: Pick<zod.ZodIssueBase, 'path' | 'message'>[]) {
-  let humanReadableError = ''
-  issues.forEach((issue) => {
-    const path = issue.path ? issue?.path.join('.') : 'n/a'
-    humanReadableError += `• [${path}]: ${issue.message}\n`
-  })
-  return humanReadableError
 }
 
 /**
