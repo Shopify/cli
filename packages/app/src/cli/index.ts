@@ -11,6 +11,7 @@ import EnvShow from './commands/app/env/show.js'
 import FunctionBuild from './commands/app/function/build.js'
 import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
+import FunctionValidate from './commands/app/function/validate.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
@@ -53,6 +54,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
   'app:function:typegen': FunctionTypegen,
+  'app:function:validate': FunctionValidate,
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
