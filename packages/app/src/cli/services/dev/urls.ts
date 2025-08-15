@@ -3,6 +3,7 @@ import {AppConfigurationInterface, AppLinkedInterface, CurrentAppConfiguration} 
 import {UpdateURLsSchema, UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
+import {prependApplicationUrl} from '../../models/extensions/specifications/validation/url_prepender.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -173,7 +174,7 @@ export function generateApplicationURLs(
   const appProxy = proxyFields
     ? {
         appProxy: {
-          proxyUrl: replaceHost(proxyFields.url, baseURL),
+          proxyUrl: replaceHost(prependApplicationUrl(proxyFields.url, baseURL), baseURL),
           proxySubPath: proxyFields.subpath,
           proxySubPathPrefix: proxyFields.prefix,
         },
