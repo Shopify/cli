@@ -214,6 +214,19 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
       }
       return subscription
     })
+
+    // Sort webhook subscriptions by uri & topics in both baseline and remote config
+    // Ensuring that deepCompare will not fail if the order is different
+    baselineConfig.webhooks.subscriptions.sort((webhookA, webhookB) => {
+      const keyA = webhookA.uri + (webhookA.topics?.sort().join(',') ?? '')
+      const keyB = webhookB.uri + (webhookB.topics?.sort().join(',') ?? '')
+      return keyA.localeCompare(keyB)
+    })
+    remoteConfig.webhooks?.subscriptions?.sort((webhookA, webhookB) => {
+      const keyA = webhookA.uri + (webhookA.topics?.sort().join(',') ?? '')
+      const keyB = webhookB.uri + (webhookB.topics?.sort().join(',') ?? '')
+      return keyA.localeCompare(keyB)
+    })
   }
 
   const diffConfigContent = buildDiffConfigContent(baselineConfig, remoteConfig, app.configSchema)

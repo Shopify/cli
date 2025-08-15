@@ -1679,6 +1679,139 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         deletedFieldNames: [],
       })
     })
+
+    test('webhook subscriptions are properly sorted by URI and topics', async () => {
+      // Given
+      const unsortedWebhookModules: AppModuleVersion[] = [
+        {
+          registrationId: 'W_1',
+          registrationUuid: 'UUID_W_1',
+          registrationTitle: 'Webhook 1',
+          type: 'webhook_subscription',
+          config: {
+            // Unsorted topics
+            topics: ['products/update', 'products/create'],
+            uri: 'https://myapp.com/webhooks/products',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+        {
+          registrationId: 'W_2',
+          registrationUuid: 'UUID_W_2',
+          registrationTitle: 'Webhook 2',
+          type: 'webhook_subscription',
+          config: {
+            topics: ['orders/create'],
+            uri: 'https://myapp.com/webhooks/orders',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+        {
+          registrationId: 'W_4',
+          registrationUuid: 'UUID_W_4',
+          registrationTitle: 'Webhook 4',
+          type: 'webhook_subscription',
+          config: {
+            topics: ['products/delete'],
+            // Same URI as W_1
+            uri: 'https://myapp.com/webhooks/products',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+        {
+          registrationId: 'W_3',
+          registrationUuid: 'UUID_W_3',
+          registrationTitle: 'Webhook 3',
+          type: 'webhook_subscription',
+          config: {
+            // Unsorted topics
+            topics: ['customers/create', 'customers/update'],
+            uri: 'https://myapp.com/webhooks/customers',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+      ]
+
+      const activeVersion = {appModuleVersions: [...unsortedWebhookModules, APP_URL_SPEC, API_VERSION_SPEC]}
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+      })
+
+      const appConfiguration = {
+        ...APP_CONFIGURATION,
+        webhooks: {
+          api_version: '2023-04',
+          // Subscriptions in a different order than remote
+          subscriptions: [
+            {
+              topics: ['products/delete'],
+              uri: 'https://myapp.com/webhooks/products',
+            },
+            {
+              topics: ['orders/create'],
+              uri: 'https://myapp.com/webhooks/orders',
+            },
+            {
+              // Different order from remote
+              topics: ['customers/update', 'customers/create'],
+              uri: 'https://myapp.com/webhooks/customers',
+            },
+            {
+              // Different order from remote
+              topics: ['products/create', 'products/update'],
+              uri: 'https://myapp.com/webhooks/products',
+            },
+          ],
+        },
+      }
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], appConfiguration),
+        release: true,
+      })
+
+      // Then
+      // Even though the webhook subscriptions are in different orders and have unsorted topics,
+      // they should be considered the same after normalization
+      expect(result).toEqual({
+        existingFieldNames: ['webhooks', 'application_url'],
+        existingUpdatedFieldNames: [],
+        newFieldNames: ['name', 'embedded'],
+        deletedFieldNames: [],
+      })
+    })
   })
   describe('deploy with release using local configuration when there is no remote app version', () => {
     test('all local configuration will be returned in the new list', async () => {
