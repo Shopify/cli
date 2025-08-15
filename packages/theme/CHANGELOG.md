@@ -1,5 +1,28 @@
 # @shopify/theme
 
+## 3.84.0
+
+### Minor Changes
+
+- 1f4fd78: Allow multi-environment theme commands to accept flags from CLI
+- b382a89: Prompt for confirmation before running multi-environment theme commands that allow `--force` flag
+- 281b50b: Allow theme rename command to be run with multiple environments
+- a12a7cc: Allow commands run with multiple environments to require "one of" a list of flags
+
+### Patch Changes
+
+- 828bf47: Fixed issue with json files being returned as html/text content type in theme dev
+- b47f879: Removed workflows folder in .github when cloning skeleton theme
+- 1161f7a: Update docs for 'ignore' and 'only' flags for theme push/pull
+- 52f999f: Provide error when using non-theme access app password
+- 4839fb0: Remove .git dir after initializing new theme
+- f330c9f: Add a warning for users declaring multiple environments in a command that only supports a single environment
+- bfc6325: Prevent `shopify app dev` sessions from opening multiple tabs in the browser during re-authentication
+- 9dd353c: Fix `shopify app dev` to serve local assets as expected
+- Updated dependencies [40e2d6f]
+- Updated dependencies [62d6b9a]
+  - @shopify/cli-kit@3.84.0
+
 ## 3.83.0
 
 ### Minor Changes

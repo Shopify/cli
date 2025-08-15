@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.84.0
+
+### Patch Changes
+
+- 40e2d6f: Fixed typo in isARetryableNetworkError to catch network socket disconnected
+- 62d6b9a: Add more retryable errors and improve consistency of identifying retryable conditions
+
 ## 3.83.0
 
 ### Minor Changes
