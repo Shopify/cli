@@ -2,63 +2,67 @@ import {clearCache, runCLI, runCreateCLI} from './cli.js'
 import {findUpAndReadPackageJson} from './node-package-manager.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as confStore from '../../private/node/conf-store.js'
-import {describe, expect, test, vi} from 'vitest'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./node-package-manager.js')
 
 describe('cli', () => {
+  beforeEach(() => {
+    vi.mocked(findUpAndReadPackageJson).mockResolvedValue({content: {engines: {node: '>=18.0.0'}}} as any)
+  })
+
   test('prepares to run the CLI', async () => {
     const launchCLI = vi.fn()
-    await runCLI({moduleURL: 'test', development: false}, launchCLI)
-    expect(launchCLI).toHaveBeenCalledWith({moduleURL: 'test'})
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI)
+    expect(launchCLI).toHaveBeenCalledWith({moduleURL: 'file:///test'})
   })
 
   test('triggers no colour mode based on --no-color flag', async () => {
     const launchCLI = vi.fn()
     const env = {} as any
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['--no-color'], env)
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI, ['--no-color'], env)
     expect(env.FORCE_COLOR).toBe('0')
   })
 
   test('triggers no colour mode based on NO_COLOR environment variable', async () => {
     const launchCLI = vi.fn()
     const env = {NO_COLOR: 'TRUE'} as any
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, [], env)
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI, [], env)
     expect(env.FORCE_COLOR).toBe('0')
   })
 
   test('triggers no colour mode based on SHOPIFY_FLAG_NO_COLOR environment variable', async () => {
     const launchCLI = vi.fn()
     const env = {SHOPIFY_FLAG_NO_COLOR: 'TRUE'} as any
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, [], env)
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI, [], env)
     expect(env.FORCE_COLOR).toBe('0')
   })
 
   test('triggers no colour mode based on TERM environment variable', async () => {
     const launchCLI = vi.fn()
     const env = {TERM: 'dumb'} as any
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, [], env)
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI, [], env)
     expect(env.FORCE_COLOR).toBe('0')
   })
 
   test('triggers DEBUG based on --verbose flag', async () => {
     const launchCLI = vi.fn()
     const env = {} as any
-    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['--verbose'], env)
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI, ['--verbose'], env)
     expect(env.DEBUG).toBe('*')
   })
 
   test('triggers SHOPIFY_CLI_ENV based on running in development mode', async () => {
     const launchCLI = vi.fn()
     const env = {} as any
-    await runCLI({moduleURL: 'test', development: true}, launchCLI, [], env)
+    await runCLI({moduleURL: 'file:///test', development: true}, launchCLI, [], env)
     expect(env.SHOPIFY_CLI_ENV).toBe('development')
   })
 
   test('exits if running an old Node version', async () => {
     const launchCLI = vi.fn()
     const outputMock = mockAndCaptureOutput()
-    const run = runCLI({moduleURL: 'test', development: false}, launchCLI, [], {}, {node: '17.9'} as any)
+    const run = runCLI({moduleURL: 'file:///test', development: false}, launchCLI, [], {}, {node: '17.9'} as any)
     await expect(run).rejects.toThrow()
     expect(outputMock.output()).toMatchInlineSnapshot(`
       "╭─ error ──────────────────────────────────────────────────────────────────────╮
@@ -73,6 +77,20 @@ describe('cli', () => {
       [1] https://nodejs.dev/en/about/previous-releases
       "
     `)
+  })
+
+  test('exits if running node version older than package.json engines field', async () => {
+    const launchCLI = vi.fn()
+    vi.mocked(findUpAndReadPackageJson).mockResolvedValue({content: {engines: {node: '>=22.0.0'}}} as any)
+    const run = runCLI({moduleURL: 'file:///test', development: false}, launchCLI, [], {}, {node: '21.9'} as any)
+    await expect(run).rejects.toThrow()
+  })
+
+  test('allows newer node version than what package.json engines field requires', async () => {
+    const launchCLI = vi.fn()
+    vi.mocked(findUpAndReadPackageJson).mockResolvedValue({content: {engines: {node: '>=20.0.0'}}} as any)
+    await runCLI({moduleURL: 'file:///test', development: false}, launchCLI, [], {}, {node: '22.1.0'} as any)
+    expect(launchCLI).toHaveBeenCalledWith({moduleURL: 'file:///test'})
   })
 
   test('changes process.argv when running create-x', async () => {
