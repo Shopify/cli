@@ -1,0 +1,16 @@
+import {renderInfo, Token} from '@shopify/cli-kit/node/ui'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import colors from '@shopify/cli-kit/node/colors'
+
+export function renderAsyncOperationStarted(operation: string, destination: string, source: string, id: string): void {
+  const msg: Token[] = [{subdued: 'From'}, destination]
+  msg.push({subdued: '\nTo  '}, source)
+  msg.push({subdued: '\nID  '}, id)
+  renderInfo({headline: {info: `${operation} created`}, body: msg})
+
+  outputInfo(colors.dim(' Tips'))
+  outputInfo(
+    colors.dim(` • Continue watching with `) + colors.dim(colors.bold(`shopify store copy show ${id} --watch`)),
+  )
+  outputInfo(`${colors.dim(` • View details with `) + colors.dim(colors.bold(`shopify store copy show ${id}`))}\n`)
+}
