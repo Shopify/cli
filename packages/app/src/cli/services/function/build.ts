@@ -26,6 +26,8 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
+export const PREFERRED_GRAPHQL_CODEGEN_CLI_PACKAGE_MAJOR_VERSION = '5'
+export const PREFERRED_GRAPHQL_CODEGEN_TYPESCRIPT_OPERATIONS_PACKAGE_MAJOR_VERSION = '4'
 
 class InvalidShopifyFunctionPackageError extends AbortError {
   constructor(message: string) {
@@ -129,7 +131,22 @@ export async function buildGraphqlTypes(
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+    const packageManager = options.app.packageManager
+    let execArgs: string[]
+
+    switch (packageManager) {
+      case 'pnpm':
+      case 'yarn':
+      case 'bun':
+        execArgs = ['exec', 'graphql-code-generator', '--config', 'package.json']
+        break
+      case 'npm':
+      default:
+        execArgs = ['exec', '--', 'graphql-code-generator', '--config', 'package.json']
+        break
+    }
+
+    return exec(packageManager, execArgs, {
       cwd: fun.directory,
       stderr: options.stderr,
       signal: options.signal,
