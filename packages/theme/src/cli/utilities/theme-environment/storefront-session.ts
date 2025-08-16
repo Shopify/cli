@@ -59,13 +59,14 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
 }
 
 export async function getStorefrontSessionCookies(
+  baseUrl: string,
   storeUrl: string,
   themeId: string,
   password?: string,
   headers: {[key: string]: string} = {},
 ): Promise<{[key: string]: string}> {
   const cookieRecord: {[key: string]: string} = {}
-  const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
+  const shopifyEssential = await sessionEssentialCookie(baseUrl, themeId, headers)
 
   cookieRecord._shopify_essential = shopifyEssential
 
