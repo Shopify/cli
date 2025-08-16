@@ -9,6 +9,7 @@ import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
+import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/themes/api')
@@ -45,7 +46,11 @@ describe('Storefront API', () => {
       )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
 
       // Then
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==123:'})
@@ -62,13 +67,21 @@ describe('Storefront API', () => {
         )
         .mockResolvedValueOnce(
           response({
-            status: 200,
-            headers: {'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly'},
+            status: 302,
+            headers: {
+              'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
+              location: 'https://example-store.myshopify.com/',
+            },
           }),
         )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'password')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
 
       // Then
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==123:', storefront_digest: 'digest-value'})
@@ -135,7 +148,12 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = getStorefrontSessionCookies('https://example-store.myshopify.com', '123456', 'wrongpassword')
+      const cookies = getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'wrongpassword',
+      )
 
       // Then
       await expect(cookies).rejects.toThrow(
@@ -171,11 +189,152 @@ describe('Storefront API', () => {
         )
 
       // When
-      const cookies = await getStorefrontSessionCookies('https://example-store.myshopify.com', '123456')
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+      )
 
       // Then
       expect(cookies).toEqual({_shopify_essential: ':AABBCCDDEEFFGGHH==RETRYCOOKIE:'})
       expect(shopifyFetch).toHaveBeenCalledTimes(3)
+    })
+
+    test('handles storefront_digest migration to _shopify_essential cookie', async () => {
+      const originalEssential = ':AABBCCDDEEFFGGHH==123:'
+      const authenticatedEssential = ':NEWESSENTIAL==456:'
+
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${originalEssential}; path=/; HttpOnly`},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': `_shopify_essential=${authenticatedEssential}; path=/; HttpOnly`,
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
+
+      // Then
+      expect(cookies).toEqual({
+        _shopify_essential: authenticatedEssential,
+      })
+    })
+
+    test('handles theme kit access with _shopify_essential cookies', async () => {
+      const originalEssential = ':AABBCCDDEEFFGGHH==123:'
+      const authenticatedEssential = ':NEWESSENTIAL==456:'
+
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${originalEssential}; path=/; HttpOnly`},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': `_shopify_essential=${authenticatedEssential}; path=/; HttpOnly`,
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        `https://${getThemeKitAccessDomain()}`,
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
+
+      // Then
+      expect(cookies).toEqual({
+        _shopify_essential: authenticatedEssential,
+      })
+    })
+
+    test('handles case when storefront_digest is present (non-migrated case)', async () => {
+      // Given: storefront_digest is still being used
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': '_shopify_essential=:AABBCCDDEEFFGGHH==123:; path=/; HttpOnly'},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 302,
+            headers: {
+              'set-cookie': 'storefront_digest=digest-value; path=/; HttpOnly',
+              location: 'https://example-store.myshopify.com/',
+            },
+          }),
+        )
+
+      // When
+      const cookies = await getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
+
+      // Then
+      expect(cookies).toEqual({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        storefront_digest: 'digest-value',
+      })
+    })
+
+    test('throws error when pasword page does not return a 302', async () => {
+      // Given: password redirects correctly but _shopify_essential doesn't change (shouldn't happen)
+      const sameEssential = ':AABBCCDDEEFFGGHH==123:'
+
+      vi.mocked(shopifyFetch)
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+            headers: {'set-cookie': `_shopify_essential=${sameEssential}; path=/; HttpOnly`},
+          }),
+        )
+        .mockResolvedValueOnce(
+          response({
+            status: 200,
+          }),
+        )
+
+      // When
+      const cookies = getStorefrontSessionCookies(
+        'https://example-store.myshopify.com',
+        'example-store.myshopify.com',
+        '123456',
+        'password',
+      )
+
+      // Then
+      await expect(cookies).rejects.toThrow(
+        new AbortError(
+          'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+        ),
+      )
     })
   })
 

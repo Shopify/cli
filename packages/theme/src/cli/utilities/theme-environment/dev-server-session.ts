@@ -94,7 +94,7 @@ export async function getStorefrontSessionCookiesWithVerification(
   storefrontPassword?: string,
 ): Promise<{[key: string]: string}> {
   try {
-    return await getStorefrontSessionCookies(storeUrl, themeId, storefrontPassword, {
+    return await getStorefrontSessionCookies(storeUrl, adminSession.storeFqdn, themeId, storefrontPassword, {
       'X-Shopify-Shop': adminSession.storeFqdn,
       'X-Shopify-Access-Token': adminSession.token,
       Authorization: `Bearer ${storefrontToken}`,
