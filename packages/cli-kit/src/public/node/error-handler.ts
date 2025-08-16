@@ -10,6 +10,7 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
+import {generateGroupingKey} from '../../private/node/error-grouping/key-generator.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
@@ -125,6 +126,21 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+
+          // Generate groupingKey for better error grouping with error boundary
+          try {
+            const groupingKey = generateGroupingKey(reportableError, unhandled)
+            // Set custom observe grouping key for better error grouping
+            event.addMetadata('custom', {observeGroupingKey: groupingKey})
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch (groupingError: unknown) {
+            outputDebug(`GroupingKey generation failed: ${groupingError}`)
+            // Fallback to a simple key based on error name
+            const fallbackKey = `cli:${unhandled ? 'unhandled' : 'handled'}:${
+              reportableError.constructor.name
+            }:fallback`
+            event.addMetadata('custom', {observeGroupingKey: fallbackKey})
+          }
         }
         const errorHandler = (error: unknown) => {
           if (error) {
