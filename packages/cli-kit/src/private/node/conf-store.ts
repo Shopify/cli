@@ -27,6 +27,7 @@ interface Cache {
 
 export interface ConfSchema {
   sessionStore: string
+  currentSessionId?: string
   cache?: Cache
 }
 
@@ -49,7 +50,7 @@ function cliKitStore() {
  *
  * @returns Session.
  */
-export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
+export function getSessions(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
   outputDebug(outputContent`Getting session store...`)
   return config.get('sessionStore')
 }
@@ -59,7 +60,7 @@ export function getSession(config: LocalStorage<ConfSchema> = cliKitStore()): st
  *
  * @param session - Session.
  */
-export function setSession(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+export function setSessions(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Setting session store...`)
   config.set('sessionStore', session)
 }
@@ -67,9 +68,37 @@ export function setSession(session: string, config: LocalStorage<ConfSchema> = c
 /**
  * Remove session.
  */
-export function removeSession(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+export function removeSessions(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing session store...`)
   config.delete('sessionStore')
+}
+
+/**
+ * Get current session ID.
+ *
+ * @returns Current session ID.
+ */
+export function getCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
+  outputDebug(outputContent`Getting current session ID...`)
+  return config.get('currentSessionId')
+}
+
+/**
+ * Set current session ID.
+ *
+ * @param sessionId - Session ID.
+ */
+export function setCurrentSessionId(sessionId: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Setting current session ID...`)
+  config.set('currentSessionId', sessionId)
+}
+
+/**
+ * Remove current session ID.
+ */
+export function removeCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  outputDebug(outputContent`Removing current session ID...`)
+  config.delete('currentSessionId')
 }
 
 type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['value']
@@ -101,7 +130,7 @@ export async function cacheRetrieveOrRepopulate(
 }
 
 export function cacheStore(key: ExportedKey, value: string, config = cliKitStore()): void {
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   cache[key] = {value, timestamp: Date.now()}
   config.set('cache', cache)
 }
@@ -112,7 +141,7 @@ export function cacheStore(key: ExportedKey, value: string, config = cliKitStore
  * @returns The chache element.
  */
 export function cacheRetrieve(key: ExportedKey, config = cliKitStore()): CacheValue<string> | undefined {
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   return cache[key]
 }
 
@@ -146,7 +175,7 @@ export async function runAtMinimumInterval(
   task: () => Promise<void>,
   config = cliKitStore(),
 ): Promise<boolean> {
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   const cacheKey: MostRecentOccurrenceKey = `most-recent-occurrence-${key}`
   const cached = cache[cacheKey]
 
@@ -197,7 +226,7 @@ interface RunWithRateLimitOptions {
  */
 export async function runWithRateLimit(options: RunWithRateLimitOptions, config = cliKitStore()): Promise<boolean> {
   const {key, limit, timeout, task} = options
-  const cache: Cache = config.get('cache') || {}
+  const cache: Cache = config.get('cache') ?? {}
   const cacheKey: RateLimitKey = `rate-limited-occurrences-${key}`
   const cached = cache[cacheKey]
   const now = Date.now()
