@@ -1,6 +1,7 @@
 import {BugError} from '@shopify/cli-kit/node/error'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {AsyncLocalStorage} from 'node:async_hooks'
 
 type DevelopmentThemeId = string
 
@@ -15,6 +16,9 @@ interface DevelopmentThemeLocalStorageSchema {
 interface ThemeStorePasswordSchema {
   [themeStore: string]: string
 }
+
+/** Preserves the theme store a command is acting on during multi environment execution */
+const themeStoreContext = new AsyncLocalStorage<{store: string}>()
 
 let _themeLocalStorageInstance: LocalStorage<ThemeLocalStorageSchema> | undefined
 let _developmentThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
@@ -56,7 +60,8 @@ function themeStorePasswordStorage() {
 }
 
 export function getThemeStore(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
-  return storage.get('themeStore')
+  const context = themeStoreContext.getStore()
+  return context?.store ? context.store : storage.get('themeStore')
 }
 
 export function setThemeStore(store: string, storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
@@ -143,4 +148,9 @@ function assertThemeStoreExists(storage: LocalStorage<ThemeLocalStorageSchema> =
     )
   }
   return themeStore
+}
+
+/** Provides theme store context to each environment during concurrent multi environment execution */
+export async function useThemeStoreContext<T>(store: string, callback: () => Promise<T>): Promise<T> {
+  return themeStoreContext.run({store}, callback)
 }
