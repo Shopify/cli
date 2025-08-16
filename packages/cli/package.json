@@ -154,6 +154,9 @@
       "store": {
         "description": "Manage stores and store data."
       },
+      "store:copy": {
+        "description": "Copy, export, or import store data."
+      },
       "app": {
         "description": "Build Shopify apps."
       },
