@@ -333,7 +333,7 @@ export class DevSession {
     if (this.statusManager.status.isReady) {
       appManifest.modules = appManifest.modules.filter((module) => updatedUids.includes(module.uid))
     } else {
-      await writeManifestToBundle(appEvent.app, this.bundlePath, undefined)
+      await writeManifestToBundle(appManifest, this.bundlePath)
     }
 
     const existingDirs = await readdir(this.bundlePath)

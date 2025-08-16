@@ -724,15 +724,20 @@ describe('deploy', () => {
     const versionTag = '1.0.0'
     const message = 'Test deploy'
     const commitReference = 'https://github.com/org/repo/commit/123'
-    const appModules = [
-      {
-        uid: 'branding',
-        config: JSON.stringify({name: 'Test App'}),
-        handle: 'test-app',
-        specificationIdentifier: BrandingSpecIdentifier,
-        context: 'unused-context',
-      },
-    ]
+    const manifest = {
+      name: 'Test App',
+      handle: 'test-app',
+      modules: [
+        {
+          type: BrandingSpecIdentifier,
+          handle: 'test-app',
+          uid: 'branding',
+          assets: 'branding',
+          target: 'unused-context',
+          config: {name: 'Test App'},
+        },
+      ],
+    }
 
     const mockResponse = {
       appVersionCreate: {
@@ -756,10 +761,11 @@ describe('deploy', () => {
 
     // When
     await client.deploy({
+      appManifest: manifest,
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
-      appModules,
+      appModules: [],
       organizationId: 'gid://shopify/Organization/123',
       versionTag,
       message,
@@ -776,6 +782,7 @@ describe('deploy', () => {
         version: {
           source: {
             name: 'Test App',
+            handle: 'test-app',
             modules: [
               {
                 uid: 'branding',
@@ -783,170 +790,7 @@ describe('deploy', () => {
                 handle: 'test-app',
                 config: {name: 'Test App'},
                 target: 'unused-context',
-              },
-            ],
-          },
-        },
-        metadata: {
-          versionTag,
-          message,
-          sourceControlUrl: commitReference,
-        },
-      },
-      requestOptions: {requestMode: 'slow-request'},
-      unauthorizedHandler: {
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      },
-    })
-  })
-
-  test('includes the target property when context is provided', async () => {
-    // Given
-    const versionTag = '1.0.0'
-    const message = 'Test deploy'
-    const commitReference = 'https://github.com/org/repo/commit/123'
-    const appModules = [
-      {
-        uid: 'payments_extension uuid',
-        config: JSON.stringify({name: 'Test App'}),
-        handle: 'test-app',
-        specificationIdentifier: 'payments_extension',
-        context: 'payments.offsite.render',
-      },
-    ]
-
-    const mockResponse = {
-      appVersionCreate: {
-        version: {
-          id: 'gid://shopify/Version/1',
-          metadata: {
-            versionTag,
-            message,
-            sourceControlUrl: commitReference,
-          },
-          appModules: [
-            {
-              uuid: 'some_uuid',
-            },
-          ],
-        },
-        userErrors: [],
-      },
-    }
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    await client.deploy({
-      apiKey: 'api-key',
-      appId: 'gid://shopify/App/123',
-      name: 'Test App',
-      appModules,
-      organizationId: 'gid://shopify/Organization/123',
-      versionTag,
-      message,
-      commitReference,
-      skipPublish: true,
-    })
-
-    // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      query: expect.anything(),
-      token: 'token',
-      variables: {
-        appId: 'gid://shopify/App/123',
-        version: {
-          source: {
-            name: 'Test App',
-            modules: [
-              {
-                uid: 'payments_extension uuid',
-                type: 'payments_extension',
-                handle: 'test-app',
-                config: {name: 'Test App'},
-                target: 'payments.offsite.render',
-              },
-            ],
-          },
-        },
-        metadata: {
-          versionTag,
-          message,
-          sourceControlUrl: commitReference,
-        },
-      },
-      requestOptions: {requestMode: 'slow-request'},
-      unauthorizedHandler: {
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      },
-    })
-  })
-
-  test('does not include target property when context is empty', async () => {
-    // Given
-    const versionTag = '1.0.0'
-    const message = 'Test deploy'
-    const commitReference = 'https://github.com/org/repo/commit/123'
-    const appModules = [
-      {
-        uid: 'branding',
-        config: JSON.stringify({name: 'Test App'}),
-        handle: 'test-app',
-        specificationIdentifier: BrandingSpecIdentifier,
-        context: '',
-      },
-    ]
-
-    const mockResponse = {
-      appVersionCreate: {
-        version: {
-          id: 'gid://shopify/Version/1',
-          metadata: {
-            versionTag,
-            message,
-            sourceControlUrl: commitReference,
-          },
-          appModules: [
-            {
-              uuid: 'some_uuid',
-            },
-          ],
-        },
-        userErrors: [],
-      },
-    }
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    await client.deploy({
-      apiKey: 'api-key',
-      appId: 'gid://shopify/App/123',
-      name: 'Test App',
-      appModules,
-      organizationId: 'gid://shopify/Organization/123',
-      versionTag,
-      message,
-      commitReference,
-      skipPublish: true,
-    })
-
-    // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      query: expect.anything(),
-      token: 'token',
-      variables: {
-        appId: 'gid://shopify/App/123',
-        version: {
-          source: {
-            name: 'Test App',
-            modules: [
-              {
-                uid: 'branding',
-                type: BrandingSpecIdentifier,
-                handle: 'test-app',
-                config: {name: 'Test App'},
-                // The target property should not be present
+                assets: 'branding',
               },
             ],
           },
@@ -982,6 +826,7 @@ describe('deploy', () => {
 
     // When
     await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
@@ -1002,60 +847,6 @@ describe('deploy', () => {
         },
         metadata: expect.any(Object),
       },
-      requestOptions: {requestMode: 'slow-request'},
-      unauthorizedHandler: {
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      },
-    })
-  })
-
-  test('updates name from branding module if present', async () => {
-    // Given
-    const appModules = [
-      {
-        uuid: 'branding',
-        config: JSON.stringify({name: 'Updated App Name'}),
-        handle: 'branding',
-        specificationIdentifier: BrandingSpecIdentifier,
-        context: 'unused-context',
-      },
-    ]
-    const mockResponse = {
-      appVersionCreate: {
-        version: {
-          id: 'gid://shopify/Version/1',
-          metadata: {},
-          appModules: [],
-        },
-        userErrors: [],
-      },
-    }
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    await client.deploy({
-      apiKey: 'api-key',
-      appId: 'gid://shopify/App/123',
-      name: 'Original Name',
-      appModules,
-      organizationId: 'gid://shopify/Organization/123',
-      versionTag: '1.0.0',
-      skipPublish: true,
-    })
-
-    // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      query: expect.anything(),
-      token: 'token',
-      variables: expect.objectContaining({
-        version: {
-          source: {
-            name: 'Updated App Name',
-            modules: expect.any(Array),
-          },
-        },
-      }),
       requestOptions: {requestMode: 'slow-request'},
       unauthorizedHandler: {
         handler: expect.any(Function),
@@ -1087,6 +878,7 @@ describe('deploy', () => {
 
     // When
     const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
@@ -1121,6 +913,7 @@ describe('deploy', () => {
 
     // When
     const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',

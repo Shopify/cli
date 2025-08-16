@@ -1,6 +1,6 @@
 import {bundleAndBuildExtensions} from './bundle.js'
 import {testApp, testFunctionExtension, testThemeExtensions, testUIExtension} from '../../models/app/app.test-data.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppManifest} from '../../models/app/app.js'
 import * as bundle from '../bundle.js'
 import * as functionBuild from '../function/build.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -11,6 +11,7 @@ vi.mock('../function/build.js')
 
 describe('bundleAndBuildExtensions', () => {
   let app: AppInterface
+  let appManifest: AppManifest
 
   test('generates a manifest.json', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
@@ -36,39 +37,21 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
-      const expectedManifest = {
-        name: 'App',
-        handle: '',
-        modules: [
-          {
-            type: 'web_pixel_extension_external',
-            handle: 'test-ui-extension',
-            uid: 'test-ui-extension-uid',
-            assets: 'test-ui-extension-uid',
-            target: '',
-            config: {},
-          },
-          {
-            type: 'theme_external',
-            handle: 'theme-extension-name',
-            uid: themeExtension.uid,
-            assets: themeExtension.uid,
-            target: '',
-            config: {
-              theme_extension: {
-                files: {},
-              },
-            },
-          },
-        ],
-      }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
 
       // Then
       expect(extensionBundleMock).toHaveBeenCalledTimes(2)
-      expect(bundle.writeManifestToBundle).toHaveBeenCalledWith(app, bundleDirectory, identifiers)
+      expect(bundle.writeManifestToBundle).toHaveBeenCalledWith(appManifest, bundleDirectory)
 
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
     })
@@ -96,9 +79,17 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
 
       // Then
       await expect(file.fileExists(bundlePath)).resolves.toBeTruthy()
@@ -129,9 +120,17 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: true,
+        isDevDashboardApp: false,
+      })
 
       // Then
       expect(extensionBuildMock).not.toHaveBeenCalled()
@@ -159,9 +158,17 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: true,
+        isDevDashboardApp: false,
+      })
 
       // Then
       expect(mockInstallJavy).not.toHaveBeenCalled()
@@ -187,9 +194,17 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: false, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: false,
+        isDevDashboardApp: false,
+      })
 
       // Then
       expect(mockInstallJavy).toHaveBeenCalledWith(app)
@@ -220,9 +235,17 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: true,
+        isDevDashboardApp: false,
+      })
 
       // Then
       expect(extensionBuildMock).not.toHaveBeenCalled()
@@ -280,9 +303,17 @@ describe('bundleAndBuildExtensions', () => {
         extensionIds: {},
         extensionsNonUuidManaged: {},
       }
+      appManifest = await app.manifest(identifiers)
 
       // When
-      await bundleAndBuildExtensions({app, identifiers, bundlePath, skipBuild: true, isDevDashboardApp: false})
+      await bundleAndBuildExtensions({
+        app,
+        appManifest,
+        identifiers,
+        bundlePath,
+        skipBuild: true,
+        isDevDashboardApp: false,
+      })
 
       // Then - verify none of the build methods were called
       expect(functionBuildMock).not.toHaveBeenCalled()

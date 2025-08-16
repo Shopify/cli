@@ -1,8 +1,7 @@
 // import {AppInterface} from '../models/app/app.js'
-import {AppInterface} from '../models/app/app.js'
+import {AppManifest} from '../models/app/app.js'
 import {AssetUrlSchema, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../models/organization.js'
-import {Identifiers} from '../models/app/identifiers.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
@@ -10,12 +9,7 @@ import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from 'fs/promises'
 
-export async function writeManifestToBundle(
-  app: AppInterface,
-  bundlePath: string,
-  identifiers: Identifiers | undefined,
-) {
-  const appManifest = await app.manifest(identifiers)
+export async function writeManifestToBundle(appManifest: AppManifest, bundlePath: string) {
   const manifestPath = joinPath(bundlePath, 'manifest.json')
   await writeFile(manifestPath, JSON.stringify(appManifest, null, 2))
 }
