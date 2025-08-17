@@ -50,8 +50,8 @@ export async function checkPortAvailability(portNumber: number): Promise<boolean
 
 function host(): string | undefined {
   // The get-port-please library does not work as expected when HOST env var is defined,
-  // so explicitly set the host to 0.0.0.0 to avoid conflicts
-  return process.env.HOST ? '0.0.0.0' : undefined
+  // so explicitly set the host to localhost to avoid conflicts
+  return 'localhost'
 }
 
 /**
