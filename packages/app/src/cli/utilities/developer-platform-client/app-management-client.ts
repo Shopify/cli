@@ -108,6 +108,7 @@ import {ReleaseVersion} from '../../api/graphql/app-management/generated/release
 import {
   CreateAppVersion,
   CreateAppVersionMutation,
+  CreateAppVersionMutationVariables,
 } from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
@@ -715,9 +716,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async deploy({
+    appManifest,
     appId,
-    name,
-    appModules,
     organizationId,
     versionTag,
     message,
@@ -725,36 +725,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
-    // `name` is from the package.json package name or the directory name, while
-    // the branding module reflects the current specified name in the TOML.
-    // Since it is technically valid to not have a branding module, we will default
-    // to the `name` if no branding module is present.
-    let updatedName = name
-    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
-    if (brandingModule) {
-      updatedName = JSON.parse(brandingModule.config).name
-    }
     const metadata = {versionTag, message, sourceControlUrl: commitReference}
-    const queryVersion: AppVersionSourceUrl | AppVersionSource = bundleUrl
+    const queryVersion: CreateAppVersionMutationVariables['version'] = bundleUrl
       ? {sourceUrl: bundleUrl}
-      : {
-          source: {
-            name: updatedName,
-            modules: (appModules ?? []).map((mod) => ({
-              uid: mod.uid ?? mod.uuid ?? mod.handle,
-              uuid: mod.uuid,
-              type: mod.specificationIdentifier,
-              handle: mod.handle,
-              config: JSON.parse(mod.config),
-              ...(mod.context ? {target: mod.context} : {}),
-            })),
-          },
-        }
-    const variables = {
-      appId,
-      version: queryVersion as unknown as JsonMapType,
-      metadata,
-    }
+      : {source: appManifest}
+
+    const variables: CreateAppVersionMutationVariables = {appId, version: queryVersion, metadata}
 
     const result = await this.appManagementRequest({
       query: CreateAppVersion,
@@ -1162,10 +1138,6 @@ interface AppVersionSource {
       config: {[key: string]: unknown}
     }[]
   }
-}
-
-interface AppVersionSourceUrl {
-  sourceUrl: string
 }
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406

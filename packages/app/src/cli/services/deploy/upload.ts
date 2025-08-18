@@ -3,11 +3,14 @@ import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.j
 
 import {AppDeployOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getUploadURL, uploadToGCS} from '../bundle.js'
+import {AppManifest} from '../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
 
 interface UploadExtensionsBundleOptions {
+  appManifest: AppManifest
+
   /** The ID of the application */
   appId: string
 
@@ -87,6 +90,7 @@ export async function uploadExtensionsBundle(
   }
 
   const variables: AppDeployOptions = {
+    appManifest: options.appManifest,
     appId: options.appId,
     apiKey: options.apiKey,
     name: options.name,

@@ -95,6 +95,11 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -153,6 +158,7 @@ describe('deploy', () => {
   test('deploys the app with no extensions', async () => {
     const app = testAppLinked({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
+    const appManifest = await app.manifest(undefined)
 
     // When
     await testDeployBundle({
@@ -163,6 +169,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest,
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -186,6 +193,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'web_pixel_extension_external',
+            handle: 'test-ui-extension',
+            uid: 'test-ui-extension-uid',
+            uuid: 'test-ui-extension',
+            assets: 'test-ui-extension-uid',
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -219,6 +241,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'theme_external',
+            handle: 'theme-extension-name',
+            uid: undefined,
+            uuid: 'theme-extension-name',
+            assets: undefined,
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -270,6 +307,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'function_external',
+            handle: 'test-function-extension',
+            uid: undefined,
+            uuid: 'test-function-extension',
+            assets: undefined,
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -305,6 +357,30 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'web_pixel_extension_external',
+            handle: 'test-ui-extension',
+            uid: 'test-ui-extension-uid',
+            uuid: 'test-ui-extension',
+            assets: 'test-ui-extension-uid',
+            target: '',
+            config: expect.any(Object),
+          },
+          {
+            type: 'theme_external',
+            handle: 'theme-extension-name',
+            uid: undefined,
+            uuid: 'theme-extension-name',
+            assets: undefined,
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -352,6 +428,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'point_of_sale_external',
+            handle: 'point_of_sale',
+            uid: 'point_of_sale',
+            uuid: undefined,
+            assets: 'point_of_sale',
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -390,6 +481,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'point_of_sale_external',
+            handle: 'point_of_sale',
+            uid: 'point_of_sale',
+            uuid: undefined,
+            assets: 'point_of_sale',
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
