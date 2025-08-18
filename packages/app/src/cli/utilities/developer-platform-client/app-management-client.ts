@@ -184,7 +184,6 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 export class AppManagementClient implements DeveloperPlatformClient {
   public readonly clientName = ClientName.AppManagement
   public readonly webUiName = 'Developer Dashboard'
-  public readonly requiresOrganization = true
   public readonly supportsAtomicDeployments = true
   public readonly supportsDevSessions = true
   public readonly supportsStoreSearch = true
