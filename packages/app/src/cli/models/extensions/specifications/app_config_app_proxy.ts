@@ -6,11 +6,11 @@ import {
   CustomTransformationConfig,
   createConfigExtensionSpecification,
 } from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppProxySchema = BaseSchema.extend({
+const AppProxySchema = BaseSchemaWithoutHandle.extend({
   app_proxy: zod
     .object({
       url: zod.preprocess(
