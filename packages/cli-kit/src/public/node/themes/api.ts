@@ -47,7 +47,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       session,
       variables: {id: gid},
       responseOptions: {handleErrors: false},
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (theme) {
@@ -83,7 +83,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       session,
       variables: {after},
       responseOptions: {handleErrors: false},
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')
@@ -119,7 +119,7 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
       role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
     },
     responseOptions: {handleErrors: false},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 
   if (!themeCreate) {
@@ -154,7 +154,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
       session,
       variables: {id: themeGid(id), filenames, after},
       responseOptions: {handleErrors: false},
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
@@ -201,7 +201,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
         themeId: composeThemeGid(id),
         files: batch,
       },
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!themeFilesDelete) {
@@ -282,7 +282,7 @@ async function uploadFiles(
     query: ThemeFilesUpsert,
     session,
     variables: {themeId: themeGid(themeId), files},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 }
 
@@ -331,7 +331,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
       session,
       variables: {id: themeGid(id), after},
       responseOptions: {handleErrors: false},
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!response?.theme?.files?.nodes || !response?.theme?.files?.pageInfo) {
@@ -367,7 +367,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
     query: ThemeUpdate,
     session,
     variables: {id: composeThemeGid(id), input},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themeUpdate) {
     // An unexpected error occurred during the GraphQL request execution
@@ -397,7 +397,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
     query: ThemePublish,
     session,
     variables: {id: composeThemeGid(id)},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themePublish) {
     // An unexpected error occurred during the GraphQL request execution
@@ -427,7 +427,7 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
     query: ThemeDelete,
     session,
     variables: {id: composeThemeGid(id)},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themeDelete) {
     // An unexpected error occurred during the GraphQL request execution
@@ -465,7 +465,7 @@ export async function themeDuplicate(
     query: ThemeDuplicate,
     session,
     variables: {id: composeThemeGid(id), name},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     version: '2025-10',
     responseOptions: {
       onResponse: (response) => {
