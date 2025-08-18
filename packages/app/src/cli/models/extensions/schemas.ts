@@ -105,6 +105,10 @@ export const BaseSchemaWithHandle = BaseSchema.extend({
   handle: HandleSchema,
 })
 
+export const BaseSchemaWithoutHandle = BaseSchema.omit({
+  handle: true,
+})
+
 export const UnifiedSchema = zod.object({
   api_version: ApiVersionSchema.optional(),
   description: zod.string().optional(),
