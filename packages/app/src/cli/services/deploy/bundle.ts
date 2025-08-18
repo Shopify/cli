@@ -1,4 +1,4 @@
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppManifest} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
@@ -10,6 +10,7 @@ import {Writable} from 'stream'
 
 interface BundleOptions {
   app: AppInterface
+  appManifest: AppManifest
   bundlePath?: string
   identifiers?: Identifiers
   skipBuild: boolean
@@ -21,7 +22,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
   await rmdir(bundleDirectory, {force: true})
   await mkdir(bundleDirectory)
 
-  await writeManifestToBundle(options.app, bundleDirectory, options.identifiers)
+  await writeManifestToBundle(options.appManifest, bundleDirectory)
 
   // Force the download of the javy binary in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
