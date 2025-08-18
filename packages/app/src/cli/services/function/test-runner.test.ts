@@ -1,11 +1,11 @@
-import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {runFunctionTests, getTestCommandFromToml, runFunctionTestsIfExists} from './test-runner.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
+import {loadConfigurationFileContent} from '../../models/app/loader.js'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {existsSync, readdirSync} from 'fs'
-import {loadConfigurationFileContent} from '../../models/app/loader.js'
 
 // Mock dependencies
 vi.mock('@shopify/cli-kit/node/system')
@@ -28,8 +28,6 @@ describe('test-runner', () => {
   let mockStderr: any
 
   beforeEach(() => {
-    vi.clearAllMocks()
-
     mockExtension = {
       localIdentifier: 'test-function',
       directory: '/test/path',
@@ -47,11 +45,13 @@ describe('test-runner', () => {
     test('returns test command from TOML when present', async () => {
       mockExistsSync.mockReturnValue(true)
       mockLoadConfigurationFileContent.mockResolvedValue({
-        extensions: [{
-          test: {
-            command: 'npm test'
-          }
-        }]
+        extensions: [
+          {
+            test: {
+              command: 'npm test',
+            },
+          },
+        ],
       })
 
       const result = await getTestCommandFromToml('/test/path')
@@ -72,7 +72,7 @@ describe('test-runner', () => {
     test('returns undefined when test command is not present', async () => {
       mockExistsSync.mockReturnValue(true)
       mockLoadConfigurationFileContent.mockResolvedValue({
-        extensions: [{}]
+        extensions: [{}],
       })
 
       const result = await getTestCommandFromToml('/test/path')
@@ -99,8 +99,8 @@ describe('test-runner', () => {
       } as ExtensionInstance<FunctionConfigType>
 
       const mockOptions = {
-        stdout: { write: vi.fn() },
-        stderr: { write: vi.fn() },
+        stdout: {write: vi.fn()},
+        stderr: {write: vi.fn()},
       } as any
 
       mockExistsSync.mockReturnValue(true)
@@ -121,8 +121,8 @@ describe('test-runner', () => {
       } as ExtensionInstance<FunctionConfigType>
 
       const mockOptions = {
-        stdout: { write: vi.fn() },
-        stderr: { write: vi.fn() },
+        stdout: {write: vi.fn()},
+        stderr: {write: vi.fn()},
       } as any
 
       mockExistsSync.mockReturnValue(false)
@@ -134,15 +134,17 @@ describe('test-runner', () => {
     })
   })
 
-describe('runFunctionTests', () => {
+  describe('runFunctionTests', () => {
     test('runs custom test command when specified in TOML', async () => {
       mockExistsSync.mockReturnValue(true)
       mockLoadConfigurationFileContent.mockResolvedValue({
-        extensions: [{
-          test: {
-            command: 'npm test'
-          }
-        }]
+        extensions: [
+          {
+            test: {
+              command: 'npm test',
+            },
+          },
+        ],
       })
 
       await runFunctionTests(mockExtension, {
@@ -162,13 +164,11 @@ describe('runFunctionTests', () => {
     test('runs vitest when no custom test command is specified', async () => {
       mockExistsSync.mockReturnValue(true)
       mockLoadConfigurationFileContent.mockResolvedValue({
-        extensions: [{}]
+        extensions: [{}],
       })
 
       // Mock tests directory exists
-      mockJoinPath
-        .mockReturnValueOnce('/test/path/shopify.extension.toml')
-        .mockReturnValueOnce('/test/path/tests')
+      mockJoinPath.mockReturnValueOnce('/test/path/shopify.extension.toml').mockReturnValueOnce('/test/path/tests')
 
       mockExistsSync
         .mockReturnValueOnce(true) // TOML exists
@@ -192,11 +192,13 @@ describe('runFunctionTests', () => {
     test('handles test execution errors gracefully', async () => {
       mockExistsSync.mockReturnValue(true)
       mockLoadConfigurationFileContent.mockResolvedValue({
-        extensions: [{
-          test: {
-            command: 'npm test'
-          }
-        }]
+        extensions: [
+          {
+            test: {
+              command: 'npm test',
+            },
+          },
+        ],
       })
 
       mockExec.mockRejectedValue(new Error('Test execution failed'))

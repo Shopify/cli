@@ -4,6 +4,7 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {allExtensionTypes, importAllExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
+import {runTestsForExtensions} from './function/test-runner.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -18,7 +19,6 @@ import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/c
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui'
-import { runTestsForExtensions } from './function/test-runner.js'
 
 export interface DeployOptions {
   /** The app to be built and uploaded */
@@ -225,17 +225,14 @@ export async function deploy(options: DeployOptions) {
       if (options.force) {
         outputInfo('⚠️  Tests failed, but continuing with deployment due to --force flag')
       } else {
-        throw new AbortError(
-          'Deployment failed because function tests failed',
-          [
-            'Please fix the failing tests before deploying, or use ',
-            {command: '--force'},
-            ' to deploy anyway.',
-            '\n\nRun ',
-            {command: 'shopify app function test'},
-            ' to see test results locally.'
-          ]
-        )
+        throw new AbortError('Deployment failed because function tests failed', [
+          'Please fix the failing tests before deploying, or use ',
+          {command: '--force'},
+          ' to deploy anyway.',
+          '\n\nRun ',
+          {command: 'shopify app function test'},
+          ' to see test results locally.',
+        ])
       }
     }
 

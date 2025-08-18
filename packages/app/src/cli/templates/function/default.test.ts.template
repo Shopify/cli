@@ -26,7 +26,7 @@ async function loadFixture(fixturePath: string) {
   }
 }
 
-async function runFunctionRunner(exportName: string, input: any) {
+async function runFunction(exportName: string, input: any) {
   try {
     const inputJson = JSON.stringify(input);
 
@@ -109,7 +109,6 @@ async function runFunctionRunner(exportName: string, input: any) {
   }
 }
 
-// Keeping these as a placeholder for now, can add more validation later
 async function validateInputShape(input: any, exportName: string, dirname: string) {
   expect(() => JSON.stringify(input)).not.toThrow();
   expect(input).toBeDefined();
@@ -117,7 +116,6 @@ async function validateInputShape(input: any, exportName: string, dirname: strin
   expect(input).not.toBeNull();
 }
 
-// Keeping these as a placeholder for now, can add more validation later
 async function validateOutputShape(output: any, exportName: string, dirname: string) {
   expect(() => JSON.stringify(output)).not.toThrow();
   expect(output).toBeDefined();
@@ -138,7 +136,7 @@ describe("Default Integration Tests", () => {
       await validateInputShape(fixture.input, fixture.export, __dirname);
       await validateOutputShape(fixture.expectedOutput, fixture.export, __dirname);
 
-      const { result, error } = await runFunctionRunner(
+      const { result, error } = await runFunction(
         fixture.export,
         fixture.input
       );
@@ -148,5 +146,3 @@ describe("Default Integration Tests", () => {
     }, 10000);
   });
 });
-
-

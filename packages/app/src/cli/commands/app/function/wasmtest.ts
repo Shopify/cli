@@ -1,17 +1,17 @@
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
-import {runFunctionTests, runFunctionTestsIfExists} from '../../../services/function/test-runner.js'
+import {runFunctionTestsIfExists} from '../../../services/function/test-runner.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
+import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import { buildFunctionExtension } from '../../../services/build/extension.js'
-import {createHash} from 'crypto'
-import {readFileSync, writeFileSync, existsSync} from 'fs'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {readFileSync, writeFileSync, existsSync} from 'fs'
+import {createHash} from 'crypto'
 
 export default class FunctionWasmtest extends AppLinkedCommand {
   static summary = 'Builds the function and runs all tests in the test folder.'
@@ -103,7 +103,7 @@ If no custom test command is found, the command will automatically discover and 
     const packageFile = joinPath(functionPath, 'package.json')
 
     // Get all source files and config files that could affect the build
-    const sourceFiles = await glob('**/*.{ts,js}', { cwd: sourceDir, absolute: true })
+    const sourceFiles = await glob('**/*.{ts,js}', {cwd: sourceDir, absolute: true})
     const configFiles = [configFile, packageFile].filter(existsSync)
 
     const hash = createHash('md5')
@@ -135,7 +135,6 @@ If no custom test command is found, the command will automatically discover and 
       const storedHash = readFileSync(hashFile, 'utf-8').trim()
       return currentHash !== storedHash
     } catch {
-      // If we can't read the hash file, rebuild
       return true
     }
   }

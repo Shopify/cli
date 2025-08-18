@@ -9,6 +9,7 @@
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function fixture-override`](#shopify-app-function-fixture-override)
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
@@ -382,6 +383,27 @@ DESCRIPTION
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
 
+## `shopify app function fixture-override`
+
+Create a new fixture by overriding values from an existing one
+
+```
+USAGE
+  $ shopify app function fixture-override -p <value> [-c <value>] [-h] [-i] [-o <value>] [-s <value>] [-t <value>]
+
+FLAGS
+  -c, --config=<value>     Path to JSON config file containing source, target, and overrides
+  -h, --help               Show CLI help.
+  -i, --interactive        Run in interactive mode to build overrides step by step
+  -o, --overrides=<value>  JSON string of overrides (e.g., '{"input.cart.lines.0.quantity": 5}')
+  -p, --path=<value>       (required) Path to the function extension
+  -s, --source=<value>     Source fixture name (without .json extension)
+  -t, --target=<value>     Target fixture name (without .json extension)
+
+DESCRIPTION
+  Create a new fixture by overriding values from an existing one
+```
+
 ## `shopify app function replay`
 
 Replays a function run from an app log.
@@ -473,20 +495,19 @@ Generates test files from a function run log.
 
 ```
 USAGE
-  $ shopify app function testgen [--client-id <value> | -c <value>] [-l <value>] [--no-color] [-o <value>] [--path
-    <value>] [--reset | ] [--verbose]
+  $ shopify app function testgen [--client-id <value> | -c <value>] [-l <value>] [--no-color] [--path <value>] [--reset |
+    ] [--verbose]
 
 FLAGS
-  -c, --config=<value>      The name of the app configuration.
-  -l, --log=<value>         Specifies a log identifier to generate test files from instead of selecting from a list. The
-                            identifier is provided in the output of `shopify app dev` and is the suffix of the log file
-                            name.
-  -o, --output-dir=<value>  Specifies the output directory for the test files. Defaults to "test-{identifier}".
-      --client-id=<value>   The Client ID of your app.
-      --no-color            Disable color output.
-      --path=<value>        The path to your function directory.
-      --reset               Reset all your settings.
-      --verbose             Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+  -l, --log=<value>        Specifies a log identifier to generate test files from instead of selecting from a list. The
+                           identifier is provided in the output of `shopify app dev` and is the suffix of the log file
+                           name.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Generates test files from a function run log.
@@ -540,8 +561,24 @@ FLAGS
 DESCRIPTION
   Builds the function and runs all tests in the test folder.
 
-  Builds the function to WebAssembly and then runs all tests in the test folder. This is useful for ensuring your
-  function works correctly before deployment.
+  Builds the function to WebAssembly and then automatically runs tests if a `tests` folder exists. This is useful for
+  ensuring your function works correctly before deployment.
+
+  If a test command is specified in your `shopify.extension.toml` file under `[extensions.test]`, that command will be
+  used instead of the default vitest runner:
+
+  ```toml
+  [[extensions]]
+  name = "my-function"
+  handle = "my-function"
+  type = "function"
+
+  [extensions.test]
+  command = "npx vitest run"
+  ```
+
+  If no custom test command is found, the command will automatically discover and run `.test.ts` and `.test.js` files
+  using vitest.
 ```
 
 ## `shopify app generate extension`

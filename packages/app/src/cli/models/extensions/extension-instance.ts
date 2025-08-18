@@ -20,7 +20,6 @@ import {
   buildUIExtension,
   bundleFunctionExtension,
 } from '../../services/build/extension.js'
-
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'

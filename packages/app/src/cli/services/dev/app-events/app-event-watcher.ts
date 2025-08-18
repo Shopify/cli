@@ -5,6 +5,7 @@ import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
+import {runTestsForExtensions} from '../../function/test-runner.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -13,7 +14,6 @@ import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {formatMessagesSync, Message} from 'esbuild'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import EventEmitter from 'events'
-import { runTestsForExtensions } from '../../function/test-runner.js'
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:

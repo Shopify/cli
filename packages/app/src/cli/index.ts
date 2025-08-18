@@ -30,6 +30,7 @@ import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
+import FunctionFixtureOverride from './commands/app/function/fixture-override.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -51,6 +52,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:env:show': EnvShow,
   'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
+  'app:function:fixture-override': FunctionFixtureOverride,
   'app:function:replay': FunctionReplay,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,

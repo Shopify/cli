@@ -923,6 +923,79 @@
       "strict": true,
       "summary": "Compile a function to wasm."
     },
+    "app:function:fixture-override": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Create a new fixture by overriding values from an existing one",
+      "flags": {
+        "config": {
+          "char": "c",
+          "description": "Path to JSON config file containing source, target, and overrides",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "help": {
+          "allowNo": false,
+          "char": "h",
+          "description": "Show CLI help.",
+          "name": "help",
+          "type": "boolean"
+        },
+        "interactive": {
+          "allowNo": false,
+          "char": "i",
+          "description": "Run in interactive mode to build overrides step by step",
+          "name": "interactive",
+          "type": "boolean"
+        },
+        "overrides": {
+          "char": "o",
+          "description": "JSON string of overrides (e.g., '{\"input.cart.lines.0.quantity\": 5}')",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "overrides",
+          "type": "option"
+        },
+        "path": {
+          "char": "p",
+          "description": "Path to the function extension",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "path",
+          "required": true,
+          "type": "option"
+        },
+        "source": {
+          "char": "s",
+          "description": "Source fixture name (without .json extension)",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "source",
+          "type": "option"
+        },
+        "target": {
+          "char": "t",
+          "description": "Target fixture name (without .json extension)",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "target",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:fixture-override",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "app:function:replay": {
       "aliases": [
       ],
@@ -1307,15 +1380,6 @@
           "name": "no-color",
           "type": "boolean"
         },
-        "output-dir": {
-          "char": "o",
-          "description": "Specifies the output directory for the test files. Defaults to \"test-{identifier}\".",
-          "env": "SHOPIFY_FLAG_OUTPUT_DIR",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "output-dir",
-          "type": "option"
-        },
         "path": {
           "description": "The path to your function directory.",
           "env": "SHOPIFY_FLAG_PATH",
@@ -1441,8 +1505,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Builds the function to WebAssembly and then runs all tests in the test folder. This is useful for ensuring your function works correctly before deployment.",
-      "descriptionWithMarkdown": "Builds the function to WebAssembly and then runs all tests in the test folder. This is useful for ensuring your function works correctly before deployment.",
+      "description": "Builds the function to WebAssembly and then automatically runs tests if a `tests` folder exists. This is useful for ensuring your function works correctly before deployment.\n\nIf a test command is specified in your `shopify.extension.toml` file under `[extensions.test]`, that command will be used instead of the default vitest runner:\n\n```toml\n[[extensions]]\nname = \"my-function\"\nhandle = \"my-function\"\ntype = \"function\"\n\n  [extensions.test]\n  command = \"npx vitest run\"\n```\n\nIf no custom test command is found, the command will automatically discover and run `.test.ts` and `.test.js` files using vitest.",
+      "descriptionWithMarkdown": "Builds the function to WebAssembly and then automatically runs tests if a `tests` folder exists. This is useful for ensuring your function works correctly before deployment.\n\nIf a test command is specified in your `shopify.extension.toml` file under `[extensions.test]`, that command will be used instead of the default vitest runner:\n\n```toml\n[[extensions]]\nname = \"my-function\"\nhandle = \"my-function\"\ntype = \"function\"\n\n  [extensions.test]\n  command = \"npx vitest run\"\n```\n\nIf no custom test command is found, the command will automatically discover and run `.test.ts` and `.test.js` files using vitest.",
       "flags": {
         "api-key": {
           "description": "Application's API key",
