@@ -220,7 +220,6 @@ export interface DeveloperPlatformClient {
   readonly clientName: ClientName
   readonly webUiName: string
   readonly supportsAtomicDeployments: boolean
-  readonly requiresOrganization: boolean
   readonly supportsDevSessions: boolean
   readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource

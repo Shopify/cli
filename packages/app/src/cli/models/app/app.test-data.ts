@@ -1418,7 +1418,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const clientStub: DeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
-    requiresOrganization: false,
     supportsAtomicDeployments: false,
     supportsDevSessions: stubs.supportsDevSessions ?? false,
     supportsStoreSearch: false,
@@ -1505,7 +1504,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          | 'requiresOrganization'
           | 'supportsAtomicDeployments'
           | 'clientName'
           | 'webUiName'
