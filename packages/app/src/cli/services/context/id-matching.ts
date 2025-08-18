@@ -153,7 +153,8 @@ function matchByUniqueType(
   const localGroups = groupBy(localSources, 'graphQLType')
   const localUnique = Object.values(pickBy(localGroups, (group, _key) => group.length === 1)).flat()
 
-  const remoteGroups = groupBy(remoteSources, 'type')
+  const remoteWithNormalizedType = remoteSources.map((remote) => ({...remote, type: remote.type.toLowerCase()}))
+  const remoteGroups = groupBy(remoteWithNormalizedType, 'type')
   const remoteUniqueMap = pickBy(remoteGroups, (group, _key) => group.length === 1)
 
   const toConfirm: {local: LocalSource; remote: RemoteSource}[] = []
@@ -163,7 +164,7 @@ function matchByUniqueType(
   // - find a corresponding unique remote source and ask the user to confirm
   // - create it from scratch
   for (const local of localUnique) {
-    const remote = remoteUniqueMap[local.graphQLType]
+    const remote = remoteUniqueMap[local.graphQLType.toLowerCase()]
     if (remote && remote[0]) {
       toConfirm.push({local, remote: remote[0]})
     } else {
@@ -176,11 +177,11 @@ function matchByUniqueType(
   // it means that we need to create them.
   const localDuplicated = difference(localSources, localUnique)
   const remotePending = difference(
-    remoteSources,
+    remoteWithNormalizedType,
     toConfirm.map((elem) => elem.remote),
   )
   const [localPending, localToCreate] = partition(localDuplicated, (local) =>
-    remotePending.map((remote) => remote.type).includes(local.graphQLType),
+    remotePending.map((remote) => remote.type.toLowerCase()).includes(local.graphQLType.toLowerCase()),
   )
   toCreate.push(...localToCreate)
 
