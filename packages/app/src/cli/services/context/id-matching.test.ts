@@ -14,56 +14,56 @@ const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
   id: 'A',
   title: 'EXTENSION_A',
-  type: 'CHECKOUT_POST_PURCHASE',
+  type: 'checkout_post_purchase',
 }
 
 const REGISTRATION_A_2: RemoteSource = {
   uuid: 'UUID_A_2',
   id: 'A_2',
   title: 'EXTENSION_A_2',
-  type: 'CHECKOUT_POST_PURCHASE',
+  type: 'checkout_post_purchase',
 }
 
 const REGISTRATION_A_3: RemoteSource = {
   uuid: 'UUID_A_3',
   id: 'A_3',
   title: 'EXTENSION_A_3',
-  type: 'CHECKOUT_POST_PURCHASE',
+  type: 'checkout_post_purchase',
 }
 
 const REGISTRATION_A_4: RemoteSource = {
   uuid: 'UUID_A_4',
   id: 'A_4',
   title: 'EXTENSION_A_4',
-  type: 'CHECKOUT_POST_PURCHASE',
+  type: 'checkout_post_purchase',
 }
 
 const REGISTRATION_B: RemoteSource = {
   uuid: 'UUID_B',
   id: 'B',
   title: 'EXTENSION_B',
-  type: 'SUBSCRIPTION_MANAGEMENT',
+  type: 'subscription_management',
 }
 
 const REGISTRATION_C: RemoteSource = {
   uuid: 'UUID_C',
   id: 'C',
   title: 'EXTENSION_C',
-  type: 'THEME_APP_EXTENSION',
+  type: 'theme_app_extension',
 }
 
 const REGISTRATION_D: RemoteSource = {
   uuid: 'UUID_D',
   id: 'D',
   title: 'EXTENSION_D',
-  type: 'WEB_PIXEL_EXTENSION',
+  type: 'web_pixel_extension',
 }
 
 const REGISTRATION_FUNCTION_A: RemoteSource = {
   uuid: 'FUNCTION_UUID_A',
   id: 'FUNCTION_A',
   title: 'FUNCTION A',
-  type: 'FUNCTION',
+  type: 'function',
   draftVersion: {
     config: JSON.stringify({
       legacy_function_id: 'LEGACY_FUNCTION_ULID_A',
