@@ -23,6 +23,7 @@ const IGNORED_ENDPOINTS = [
   '/shopify/monorail',
   '/mini-profiler-resources',
   '/web-pixels-manager',
+  '/web-pixels@',
   '/wpm',
   '/services/',
 ]
