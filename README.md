@@ -41,7 +41,7 @@ To work with themes, the CLI needs to be installed globally with:
 
 You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
 
-Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/themes/tools/cli)
+Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/storefronts/themes/tools/cli)
 
 <p>&nbsp;</p>
 
