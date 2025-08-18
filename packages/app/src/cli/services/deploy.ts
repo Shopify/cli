@@ -207,6 +207,8 @@ export async function deploy(options: DeployOptions) {
       await mkdir(dirname(bundlePath))
     }
 
+    const appManifest = await app.manifest(identifiers)
+
     await bundleAndBuildExtensions({
       app,
       bundlePath,
@@ -240,6 +242,7 @@ export async function deploy(options: DeployOptions) {
           )
 
           uploadExtensionsBundleResult = await uploadExtensionsBundle({
+            appManifest,
             appId: remoteApp.id,
             apiKey,
             name: app.name,
