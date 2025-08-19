@@ -27,6 +27,11 @@ interface PassThroughFlagsOptions {
   // Only pass on flags that are relevant to CLI2
   allowedFlags?: string[]
 }
+interface ValidEnvironment {
+  environment: EnvironmentName
+  flags: FlagValues
+  requiresAuth: boolean
+}
 type EnvironmentName = string
 /**
  * Flags required to run a command in multiple environments
@@ -167,7 +172,7 @@ export default abstract class ThemeCommand extends Command {
     requiredFlags: Exclude<RequiredFlags, null>,
     requiresAuth: boolean,
   ) {
-    const valid: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[] = []
+    const valid: ValidEnvironment[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
 
     for (const [environmentName, environmentFlags] of environmentMap) {
@@ -194,7 +199,7 @@ export default abstract class ThemeCommand extends Command {
     commandName: string,
     requiredFlags: Exclude<RequiredFlags, null>,
     validationResults: {
-      valid: {environment: string; flags: FlagValues; requiresAuth: boolean}[]
+      valid: ValidEnvironment[]
       invalid: {environment: string; reason: string}[]
     },
   ) {
@@ -234,9 +239,7 @@ export default abstract class ThemeCommand extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(
-    validEnvironments: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[],
-  ) {
+  private async runConcurrent(validEnvironments: ValidEnvironment[]) {
     const abortController = new AbortController()
 
     const stores = validEnvironments.map((env) => env.flags.store as string)
@@ -282,10 +285,8 @@ export default abstract class ThemeCommand extends Command {
    * @param environments - The environments to group
    * @returns The environment groups
    */
-  private createSequentialGroups(
-    environments: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[],
-  ) {
-    const groups: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[][] = []
+  private createSequentialGroups(environments: ValidEnvironment[]) {
+    const groups: ValidEnvironment[][] = []
 
     environments.forEach((environment) => {
       const groupWithoutStore = groups.find((arr) => !arr.some((env) => env.flags.store === environment.flags.store))
