@@ -17,13 +17,12 @@ describe('nameFixturePrompt', () => {
 
     expect(mockRenderTextPrompt).toHaveBeenCalledWith({
       message: 'What would you like to name this test fixture?',
-      defaultValue: identifier,
       validate: expect.any(Function),
     })
     expect(result).toBe(userInput)
   })
 
-  test('uses identifier as default value', async () => {
+  test('prompts for fixture name without default value', async () => {
     const identifier = 'abcdef'
 
     mockRenderTextPrompt.mockResolvedValue('test-fixture')
@@ -32,7 +31,6 @@ describe('nameFixturePrompt', () => {
 
     expect(mockRenderTextPrompt).toHaveBeenCalledWith({
       message: 'What would you like to name this test fixture?',
-      defaultValue: identifier,
       validate: expect.any(Function),
     })
   })

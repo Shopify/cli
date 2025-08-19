@@ -44,9 +44,9 @@ export async function loadFixtureWithOverrides(fixturePath: string, overrides: F
  * @param path - Dot-separated path (e.g., "input.cart.lines.0.quantity")
  * @param value - The value to set
  */
-function setNestedValue(obj: unknown, path: string, value: unknown): void {
+function setNestedValue(obj: any, path: string, value: unknown): void {
   const keys = path.split('.')
-  let current = obj
+  let current: any = obj
 
   // Navigate to the parent of the target key
   for (let i = 0; i < keys.length - 1; i++) {
@@ -108,9 +108,9 @@ export async function createFixtureWithOverrides(
   sourceFixturePath: string,
   targetFixturePath: string,
   overrides: FixtureOverride = {},
-  fixtureName?: string,
+  fixtureName?: string
 ): Promise<void> {
-  const modifiedFixture = await loadFixtureWithOverrides(sourceFixturePath, overrides)
+  const modifiedFixture = await loadFixtureWithOverrides(sourceFixturePath, overrides) as any
 
   // Update the fixture name if provided
   if (fixtureName) {

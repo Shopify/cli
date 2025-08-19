@@ -91,7 +91,7 @@ describe('testgen', () => {
 
     // Mock default test file content
     mockReadFile.mockImplementation((path) => {
-      if (path === '/workspace/packages/app/src/cli/templates/function/default.test.ts.template') {
+      if (path === '/packages/app/src/cli/templates/function/default.test.ts.template') {
         return Promise.resolve(mockDefaultTestContent) as any
       }
       return Promise.resolve(JSON.stringify(mockFunctionRunData)) as any
@@ -112,7 +112,7 @@ describe('testgen', () => {
 
     // Should create default test file
     expect(mockReadFile).toHaveBeenCalledWith(
-      '/workspace/packages/app/src/cli/templates/function/default.test.ts.template',
+      '/packages/app/src/cli/templates/function/default.test.ts.template',
     )
     expect(mockWriteFile).toHaveBeenCalledWith('/test/path/tests/default.test.ts', mockDefaultTestContent)
 
@@ -160,7 +160,7 @@ describe('testgen', () => {
 
     // Should not create default test file if it exists
     expect(mockReadFile).not.toHaveBeenCalledWith(
-      '/workspace/packages/app/src/cli/templates/function/default.test.ts.template',
+      '/packages/app/src/cli/templates/function/default.test.ts.template',
     )
     expect(mockWriteFile).not.toHaveBeenCalledWith('/test/path/tests/default.test.ts', expect.any(String))
 

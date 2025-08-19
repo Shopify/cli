@@ -60,6 +60,18 @@ export async function testgen(options: TestgenOptions) {
     await mkdir(testFixturesDir)
   }
 
+  const helpersDir = joinPath(testsDir, `helpers`)
+  if (!existsSync(helpersDir)) {
+    await mkdir(helpersDir)
+    const helpersTemplatePath = joinPath(cwd(), 'packages/app/src/cli/templates/function/helpers')
+    const helpersTemplateFiles = readdirSync(helpersTemplatePath)
+    for (const file of helpersTemplateFiles) {
+      const filePath = joinPath(helpersTemplatePath, file)
+      const fileContent = await readFile(filePath)
+      await writeFile(joinPath(helpersDir, file), fileContent)
+    }
+  }
+
   // Create default test file
   const testFile = joinPath(testsDir, `default.test.ts`)
   if (!existsSync(testFile)) {

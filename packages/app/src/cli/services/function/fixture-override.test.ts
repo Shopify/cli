@@ -1,6 +1,6 @@
 import {loadFixtureWithOverrides, createFixtureWithOverrides} from './fixture-override.js'
 import {describe, test, expect, beforeEach, afterEach} from 'vitest'
-import {writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {writeFile, removeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {tmpdir} from 'os'
 
@@ -72,6 +72,9 @@ describe('Fixture Override Utilities', () => {
     sourceFixturePath = joinPath(tempDir, 'source.json')
     targetFixturePath = joinPath(tempDir, 'target.json')
 
+    // Create temporary directory
+    await mkdir(tempDir)
+
     // Create source fixture file
     await writeFile(sourceFixturePath, JSON.stringify(sampleFixture, null, 2))
   })
@@ -89,9 +92,9 @@ describe('Fixture Override Utilities', () => {
     test('loads fixture without overrides', async () => {
       const result = await loadFixtureWithOverrides(sourceFixturePath)
 
-      expect(result.name).toBe('test_fixture')
-      expect(result.input.cart.lines[0].quantity).toBe(2)
-      expect(result.input.cart.lines[1].quantity).toBe(1)
+      expect((result as any).name).toBe('test_fixture')
+      expect((result as any).input.cart.lines[0].quantity).toBe(2)
+      expect((result as any).input.cart.lines[1].quantity).toBe(1)
     })
 
     test('applies simple overrides', async () => {
@@ -101,8 +104,8 @@ describe('Fixture Override Utilities', () => {
 
       const result = await loadFixtureWithOverrides(sourceFixturePath, overrides)
 
-      expect(result.input.cart.lines[0].quantity).toBe(5)
-      expect(result.input.cart.lines[1].quantity).toBe(1) // Unchanged
+      expect((result as any).input.cart.lines[0].quantity).toBe(5)
+      expect((result as any).input.cart.lines[1].quantity).toBe(1) // Unchanged
     })
 
     test('applies multiple overrides', async () => {
@@ -114,9 +117,9 @@ describe('Fixture Override Utilities', () => {
 
       const result = await loadFixtureWithOverrides(sourceFixturePath, overrides)
 
-      expect(result.input.cart.lines[0].quantity).toBe(5)
-      expect(result.input.cart.lines[1].quantity).toBe(3)
-      expect(result.input.cart.cost.subtotalAmount.amount).toBe('265.00')
+      expect((result as any).input.cart.lines[0].quantity).toBe(5)
+      expect((result as any).input.cart.lines[1].quantity).toBe(3)
+      expect((result as any).input.cart.cost.subtotalAmount.amount).toBe('265.00')
     })
 
     test('applies nested object overrides', async () => {
@@ -126,8 +129,8 @@ describe('Fixture Override Utilities', () => {
 
       const result = await loadFixtureWithOverrides(sourceFixturePath, overrides)
 
-      expect(result.input.cart.lines[0].merchandise.title).toBe('Modified Product')
-      expect(result.input.cart.lines[1].merchandise.title).toBe('Another Product') // Unchanged
+      expect((result as any).input.cart.lines[0].merchandise.title).toBe('Modified Product')
+      expect((result as any).input.cart.lines[1].merchandise.title).toBe('Another Product') // Unchanged
     })
 
     test('applies array index overrides', async () => {
@@ -138,8 +141,8 @@ describe('Fixture Override Utilities', () => {
 
       const result = await loadFixtureWithOverrides(sourceFixturePath, overrides)
 
-      expect(result.input.cart.lines[0].attributes[0].value).toBe('XL')
-      expect(result.input.cart.lines[0].attributes[1].value).toBe('Red')
+      expect((result as any).input.cart.lines[0].attributes[0].value).toBe('XL')
+      expect((result as any).input.cart.lines[0].attributes[1].value).toBe('Red')
     })
 
     test('throws error for invalid path', async () => {
@@ -184,9 +187,9 @@ describe('Fixture Override Utilities', () => {
 
       const result = await loadFixtureWithOverrides(targetFixturePath)
 
-      expect(result.name).toBe('modified_fixture')
-      expect(result.input.cart.lines[0].quantity).toBe(5)
-      expect(result.input.cart.cost.subtotalAmount.amount).toBe('265.00')
+      expect((result as any).name).toBe('modified_fixture')
+      expect((result as any).input.cart.lines[0].quantity).toBe(5)
+      expect((result as any).input.cart.cost.subtotalAmount.amount).toBe('265.00')
     })
 
     test('creates fixture without name override', async () => {
@@ -198,8 +201,8 @@ describe('Fixture Override Utilities', () => {
 
       const result = await loadFixtureWithOverrides(targetFixturePath)
 
-      expect(result.name).toBe('test_fixture') // Original name preserved
-      expect(result.input.cart.lines[0].quantity).toBe(5)
+      expect((result as any).name).toBe('test_fixture') // Original name preserved
+      expect((result as any).input.cart.lines[0].quantity).toBe(5)
     })
   })
 })

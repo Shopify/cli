@@ -1,6 +1,6 @@
 {
   "extends": "../../configurations/tsconfig.json",
-  "include": ["./src/**/*.ts", "./src/**/*.js", "./src/**/*.tsx"],
+  "include": ["./src/**/*.ts", "./src/**/*.js", "./src/**/*.tsx", "src/cli/templates/function/default.test.ts.template"],
   "exclude": ["./dist", "./src/templates/**/*"],
   "compilerOptions": {
     "outDir": "dist",

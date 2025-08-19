@@ -1,5 +1,5 @@
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {createFixtureWithOverrides} from '../../../utilities/fixture-override.js'
+import {createFixtureWithOverrides} from '../../../services/function/fixture-override.js'
 import {Flags} from '@oclif/core'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -185,7 +185,12 @@ export default class FunctionFixtureOverride extends AppLinkedCommand {
     }
 
     // Return a mock app object since this command doesn't actually need an app
-    return {app: {} as unknown}
+    return {app: {
+      configuration: {client_id: 'mock-client-id'},
+      allExtensions: [],
+      directory: functionPath,
+      name: 'mock-app'
+    } as any}
   }
 
   private async buildOverridesInteractively(): Promise<{[key: string]: unknown}> {

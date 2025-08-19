@@ -1,127 +1,9 @@
 import { describe, test, expect } from "vitest";
 import path from "path";
 import fs from "fs";
-import { spawn } from "child_process";
-
-async function loadFixture(fixturePath: string) {
-  try {
-    const fixtureContent = await fs.promises.readFile(fixturePath, 'utf-8');
-    const fixture = JSON.parse(fixtureContent);
-
-    return {
-      name: fixture.name,
-      export: fixture.export,
-      query: fixture.query,
-      input: fixture.input,
-      expectedOutput: fixture.output,
-    };
-  } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error(`Invalid JSON in fixture file ${fixturePath}: ${error.message}`);
-    } else if (error instanceof Error) {
-      throw new Error(`Failed to load fixture file ${fixturePath}: ${error.message}`);
-    } else {
-      throw new Error(`Unknown error loading fixture file ${fixturePath}`);
-    }
-  }
-}
-
-async function runFunction(exportName: string, input: any) {
-  try {
-    const inputJson = JSON.stringify(input);
-
-    const appRootDir = path.dirname(path.dirname(__dirname));
-    const functionName = path.basename(path.dirname(__dirname));
-
-    return new Promise((resolve, reject) => {
-      const shopifyProcess = spawn('shopify', [
-        'app', 'function', 'run',
-        '--export', exportName,
-        '--json',
-        '--path', functionName
-      ], {
-        cwd: appRootDir,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      shopifyProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      shopifyProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      shopifyProcess.on('close', (code) => {
-        if (code !== 0) {
-          reject(new Error(`Command failed with exit code ${code}: ${stderr}`));
-          return;
-        }
-
-        let result: any;
-        try {
-          result = JSON.parse(stdout);
-
-          let actualOutput;
-          if (result?.output?.humanized) {
-            actualOutput = JSON.parse(result.output.humanized);
-          } else if (result?.output) {
-            actualOutput = result.output;
-          } else {
-            actualOutput = result;
-          }
-
-          resolve({
-            result: { output: actualOutput },
-            error: null,
-          });
-        } catch (parseError) {
-          resolve({
-            result: { output: stdout.trim() },
-            error: null,
-          });
-        }
-      });
-
-      shopifyProcess.on('error', (error) => {
-        reject(new Error(`Failed to start shopify command: ${error.message}`));
-      });
-
-      shopifyProcess.stdin.write(inputJson);
-      shopifyProcess.stdin.end();
-    });
-
-  } catch (error) {
-    if (error instanceof Error) {
-      return {
-        result: null,
-        error: error.message,
-      };
-    } else {
-      return {
-        result: null,
-        error: 'Unknown error occurred',
-      };
-    }
-  }
-}
-
-async function validateInputShape(input: any, exportName: string, dirname: string) {
-  expect(() => JSON.stringify(input)).not.toThrow();
-  expect(input).toBeDefined();
-  expect(typeof input).toBe('object');
-  expect(input).not.toBeNull();
-}
-
-async function validateOutputShape(output: any, exportName: string, dirname: string) {
-  expect(() => JSON.stringify(output)).not.toThrow();
-  expect(output).toBeDefined();
-  expect(typeof output).toBe('object');
-  expect(output).not.toBeNull();
-}
+import {loadFixture} from "./helpers/load_fixture.js";
+import {runFunction} from "./helpers/run_function.js";
+import {validateFixtures} from "./helpers/validate.js";
 
 describe("Default Integration Tests", () => {
   const fixturesDir = path.join(__dirname, "fixtures");
@@ -133,13 +15,22 @@ describe("Default Integration Tests", () => {
   fixtureFiles.forEach((fixtureFile) => {
     test(`runs ${path.relative(fixturesDir, fixtureFile)}`, async () => {
       const fixture = await loadFixture(fixtureFile);
-      await validateInputShape(fixture.input, fixture.export, __dirname);
-      await validateOutputShape(fixture.expectedOutput, fixture.export, __dirname);
 
-      const { result, error } = await runFunction(
+      const functionDir = path.dirname(__dirname);
+
+      const inputQueryPath = path.join(functionDir, "src", fixture.query);
+      const schemaPath = path.join(functionDir, "schema.graphql");
+
+      // Validate the fixture against the query and schema
+      await validateFixtures(fixture, inputQueryPath, schemaPath);
+
+      // runFunction returns an unknown type, so we must assert its shape
+      const runResult = await runFunction(
         fixture.export,
         fixture.input
-      );
+      ) as { result: { output: unknown }, error: unknown };
+
+      const { result, error } = runResult;
 
       expect(error).toBeNull();
       expect(result.output).toEqual(fixture.expectedOutput);
