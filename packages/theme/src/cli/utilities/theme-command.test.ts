@@ -27,6 +27,14 @@ class TestThemeCommand extends ThemeCommand {
     password: Flags.string({
       env: 'SHOPIFY_FLAG_PASSWORD',
     }),
+    path: Flags.string({
+      env: 'SHOPIFY_FLAG_PATH',
+      default: 'current/working/directory',
+    }),
+    'no-color': Flags.boolean({
+      env: 'SHOPIFY_FLAG_NO_COLOR',
+      default: false,
+    }),
   }
 
   static multiEnvironmentsFlags: RequiredFlags = ['store']
@@ -119,7 +127,9 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {from: undefined})
+      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {
+        from: 'current/working/directory',
+      })
       expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(1)
       expect(renderConcurrent).not.toHaveBeenCalled()
       expect(command.commandCalls).toHaveLength(1)
@@ -149,8 +159,14 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {from: undefined, silent: true})
-      expect(loadEnvironment).toHaveBeenCalledWith('staging', 'shopify.theme.toml', {from: undefined, silent: true})
+      expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {
+        from: 'current/working/directory',
+        silent: true,
+      })
+      expect(loadEnvironment).toHaveBeenCalledWith('staging', 'shopify.theme.toml', {
+        from: 'current/working/directory',
+        silent: true,
+      })
 
       expect(renderConcurrent).toHaveBeenCalledOnce()
       expect(renderConcurrent).toHaveBeenCalledWith(
@@ -432,6 +448,52 @@ describe('ThemeCommand', () => {
           body: ['Environment command-error failed: \n\nMocking a command error'],
         }),
       )
+    })
+
+    test('CLI and shopify.theme.toml flag values take precedence over defaults', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: 'theme1.myshopify.com', path: 'theme/path'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', development: true, path: 'development/path'})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com', live: true, 'no-color': false})
+
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'theme', '--environment', 'development', '--environment', 'live', '--no-color'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const commandCalls = command.commandCalls
+      expect(commandCalls).toHaveLength(3)
+
+      const themeEnvFlags = commandCalls[0]?.flags
+      expect(themeEnvFlags?.path).toEqual('theme/path')
+      expect(themeEnvFlags?.store).toEqual('store1.myshopify.com')
+      expect(themeEnvFlags?.theme).toEqual('theme1.myshopify.com')
+      expect(themeEnvFlags?.['no-color']).toEqual(true)
+
+      const developmentEnvFlags = commandCalls[1]?.flags
+      expect(developmentEnvFlags?.path).toEqual('development/path')
+      expect(developmentEnvFlags?.store).toEqual('store2.myshopify.com')
+      expect(developmentEnvFlags?.development).toEqual(true)
+      expect(developmentEnvFlags?.['no-color']).toEqual(true)
+
+      const liveEnvFlags = commandCalls[2]?.flags
+      expect(liveEnvFlags?.path).toEqual('current/working/directory')
+      expect(liveEnvFlags?.store).toEqual('store3.myshopify.com')
+      expect(liveEnvFlags?.live).toEqual(true)
+      expect(liveEnvFlags?.['no-color']).toEqual(true)
     })
   })
 })

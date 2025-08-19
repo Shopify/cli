@@ -3,7 +3,7 @@ import {configurationFileName} from '../constants.js'
 import {useThemeStoreContext} from '../services/local-storage.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
-import Command, {ArgOutput, FlagOutput} from '@shopify/cli-kit/node/base-command'
+import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {
@@ -103,7 +103,7 @@ export default abstract class ThemeCommand extends Command {
       return
     }
 
-    const environmentsMap = await this.loadEnvironments(environments, flags)
+    const environmentsMap = await this.loadEnvironments(environments, flags, klass)
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
 
     const commandAllowsForceFlag = 'force' in klass.flags
@@ -119,13 +119,17 @@ export default abstract class ThemeCommand extends Command {
   /**
    * Create a map of environments from the shopify.theme.toml file
    * @param environments - Names of environments to load
-   * @param flags - Flags provided via the CLI
+   * @param flags - Flags provided via the CLI or by default
+   * @param klass - The command class
    * @returns The map of environments
    */
   private async loadEnvironments(
     environments: EnvironmentName[],
     flags: FlagValues,
+    klass: Input<FlagOutput, FlagOutput, ArgOutput>,
   ): Promise<Map<EnvironmentName, FlagValues>> {
+    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass))
+
     const environmentMap = new Map<EnvironmentName, FlagValues>()
 
     for (const environmentName of environments) {
@@ -136,8 +140,9 @@ export default abstract class ThemeCommand extends Command {
       })
 
       environmentMap.set(environmentName, {
-        ...environmentFlags,
         ...flags,
+        ...environmentFlags,
+        ...flagsWithoutDefaults,
         environment: [environmentName],
       })
     }
