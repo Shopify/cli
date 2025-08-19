@@ -1,6 +1,6 @@
 import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
-import {shopifyFetch} from '@shopify/cli-kit/node/http'
+import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
@@ -41,31 +41,19 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
     )
   }
 
-  const locationHeader = response.headers.get('location') ?? ''
-  let redirectUrl: URL
-
-  try {
-    redirectUrl = new URL(locationHeader, storeUrl)
-  } catch (error) {
-    if (error instanceof TypeError) {
-      return false
-    }
-    throw error
-  }
-
-  const storeOrigin = new URL(storeUrl).origin
-
-  return response.status === 302 && redirectUrl.origin === storeOrigin
+  return redirectsToStorefront(response, storeUrl)
 }
 
 export async function getStorefrontSessionCookies(
   storeUrl: string,
+  storeFqdn: string,
   themeId: string,
   password?: string,
   headers: {[key: string]: string} = {},
 ): Promise<{[key: string]: string}> {
   const cookieRecord: {[key: string]: string} = {}
   const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
+  const storeOrigin = prependHttps(storeFqdn)
 
   cookieRecord._shopify_essential = shopifyEssential
 
@@ -77,11 +65,15 @@ export async function getStorefrontSessionCookies(
     return cookieRecord
   }
 
-  const storefrontDigest = await enrichSessionWithStorefrontPassword(shopifyEssential, storeUrl, password, headers)
+  const additionalCookies = await enrichSessionWithStorefrontPassword(
+    shopifyEssential,
+    storeUrl,
+    storeOrigin,
+    password,
+    headers,
+  )
 
-  cookieRecord.storefront_digest = storefrontDigest
-
-  return cookieRecord
+  return {...cookieRecord, ...additionalCookies}
 }
 
 async function sessionEssentialCookie(
@@ -140,9 +132,10 @@ async function sessionEssentialCookie(
 async function enrichSessionWithStorefrontPassword(
   shopifyEssential: string,
   storeUrl: string,
+  storeOrigin: string,
   password: string,
   headers: {[key: string]: string},
-) {
+): Promise<{[key: string]: string}> {
   const params = new URLSearchParams({password})
 
   const response = await shopifyFetch(`${storeUrl}/password`, {
@@ -156,21 +149,45 @@ async function enrichSessionWithStorefrontPassword(
     },
   })
 
-  const setCookies = response.headers.raw()['set-cookie'] ?? []
-  const storefrontDigest = getCookie(setCookies, 'storefront_digest')
-
-  if (!storefrontDigest) {
-    outputDebug(
-      `Failed to obtain storefront_digest cookie.\n
-       -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
-       -Body: ${await response.text()}`,
-    )
+  if (!redirectsToStorefront(response, storeOrigin)) {
     throw new AbortError(
       'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
     )
   }
 
-  return storefrontDigest
+  const setCookies = response.headers.raw()['set-cookie'] ?? []
+  const storefrontDigest = getCookie(setCookies, 'storefront_digest')
+  const newShopifyEssential = getCookie(setCookies, '_shopify_essential')
+
+  const result: {[key: string]: string} = {}
+
+  if (storefrontDigest) {
+    result.storefront_digest = storefrontDigest
+  }
+
+  if (newShopifyEssential) {
+    result._shopify_essential = newShopifyEssential
+  }
+
+  return result
+}
+
+function redirectsToStorefront(response: Response, storeUrl: string) {
+  const locationHeader = response.headers.get('location') ?? ''
+  let redirectUrl: URL
+
+  try {
+    redirectUrl = new URL(locationHeader, storeUrl)
+  } catch (error) {
+    if (error instanceof TypeError) {
+      return false
+    }
+    throw error
+  }
+
+  const storeOrigin = new URL(storeUrl).origin
+
+  return response.status === 302 && redirectUrl.origin === storeOrigin
 }
 
 function getCookie(setCookieArray: string[], cookieName: string) {
