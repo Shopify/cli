@@ -8,6 +8,8 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/interfaces'
+import {recordEvent, recordTiming} from '@shopify/cli-kit/node/themes/analytics'
+import {compileData} from '@shopify/cli-kit/node/themes/analytics/storage'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
 
@@ -34,7 +36,9 @@ export default class Info extends ThemeCommand {
   static multiEnvironmentsFlags = ['store', 'password']
 
   async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
+    recordTiming('theme-command:info:test')
     if (flags.theme || flags.development) {
+      recordEvent('theme-command:info:1')
       const output = await fetchThemeInfo(adminSession, flags)
       if (!output) {
         throw new AbortError('Theme not found!')
@@ -47,8 +51,13 @@ export default class Info extends ThemeCommand {
       const formattedInfo = await formatThemeInfo(output, flags)
       renderInfo(formattedInfo)
     } else {
+      recordEvent('theme-command:info:2')
       const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
       renderInfo({customSections: infoMessage})
     }
+    recordTiming('theme-command:info:test')
+
+    // eslint-disable-next-line no-console
+    console.log(compileData())
   }
 }

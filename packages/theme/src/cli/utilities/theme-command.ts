@@ -15,6 +15,7 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {recordEvent} from '@shopify/cli-kit/node/themes/analytics'
+import {compileData} from '@shopify/cli-kit/node/themes/analytics/storage'
 import type {Writable} from 'stream'
 
 export interface FlagValues {
@@ -92,6 +93,7 @@ export default abstract class ThemeCommand extends Command {
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
       await this.command(flags, session)
+      await this.logAnalyticsData(session)
       return
     }
 
@@ -238,6 +240,7 @@ export default abstract class ThemeCommand extends Command {
         action: async (stdout: Writable, stderr: Writable, _signal) => {
           try {
             await this.command(flags, session, true, {stdout, stderr})
+            await this.logAnalyticsData(session)
 
             // eslint-disable-next-line no-catch-all/no-catch-all
           } catch (error) {
@@ -262,7 +265,6 @@ export default abstract class ThemeCommand extends Command {
     const store = flags.store as string
     const password = flags.password as string
     const session = await ensureAuthenticatedThemes(ensureThemeStore({store}), password)
-    await this.logStoreMetadata(session)
 
     return session
   }
@@ -296,9 +298,16 @@ export default abstract class ThemeCommand extends Command {
     return true
   }
 
-  private async logStoreMetadata(session: AdminSession): Promise<void> {
+  private async logAnalyticsData(session: AdminSession): Promise<void> {
+    const data = compileData()
+
     await metadata.addPublicMetadata(() => ({
       store_fqdn_hash: hashString(session.storeFqdn),
+
+      cmd_theme_timings: JSON.stringify(data.timings),
+      cmd_theme_errors: JSON.stringify(data.errors),
+      cmd_theme_retries: JSON.stringify(data.retries),
+      cmd_theme_events: JSON.stringify(data.events),
     }))
 
     await metadata.addSensitiveMetadata(() => ({
