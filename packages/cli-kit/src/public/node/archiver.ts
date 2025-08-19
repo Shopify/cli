@@ -52,24 +52,21 @@ export async function zip(options: ZipOptions): Promise<void> {
     })
     archive.pipe(output)
 
-    // Find parent directories to add explicitly to the archive
     const directoriesToAdd = new Set<string>()
     for (const filePath of pathsToZip) {
-      const relPath = relativePath(inputDirectory, filePath)
-      collectParentDirectories(relPath, directoriesToAdd)
+      const fileRelativePath = relativePath(inputDirectory, filePath)
+      collectParentDirectories(fileRelativePath, directoriesToAdd)
     }
 
-    // Add directories, parents before children
     const sortedDirs = Array.from(directoriesToAdd).sort((left, right) => left.localeCompare(right))
     for (const dir of sortedDirs) {
       const dirName = dir.endsWith('/') ? dir : `${dir}/`
       archive.append(Buffer.alloc(0), {name: dirName})
     }
 
-    // Add files
     for (const filePath of pathsToZip) {
-      const rel = relativePath(inputDirectory, filePath)
-      if (filePath && rel) archive.file(filePath, {name: rel})
+      const fileRelativePath = relativePath(inputDirectory, filePath)
+      if (filePath && fileRelativePath) archive.file(filePath, {name: fileRelativePath})
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
