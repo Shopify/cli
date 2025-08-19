@@ -211,6 +211,7 @@ export async function deploy(options: DeployOptions) {
 
     await bundleAndBuildExtensions({
       app,
+      appManifest,
       bundlePath,
       identifiers,
       skipBuild: options.skipBuild,
