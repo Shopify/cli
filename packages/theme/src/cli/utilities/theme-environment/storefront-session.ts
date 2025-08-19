@@ -6,6 +6,7 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {recordError} from '@shopify/cli-kit/node/themes/analytics'
 
 export class ShopifyEssentialError extends Error {}
 
@@ -36,8 +37,10 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
   })
 
   if (response.status === 429) {
-    throw new AbortError(
-      `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
+    throw recordError(
+      new AbortError(
+        `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
+      ),
     )
   }
 
@@ -165,8 +168,10 @@ async function enrichSessionWithStorefrontPassword(
        -Request ID: ${response.headers.get('x-request-id') ?? 'unknown'}\n
        -Body: ${await response.text()}`,
     )
-    throw new AbortError(
-      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+    throw recordError(
+      new AbortError(
+        'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+      ),
     )
   }
 
