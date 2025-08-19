@@ -273,5 +273,5 @@ export const startProxyServer: DevProcessFunction<{
     `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
     stdout,
   )
-  await server.listen(port)
+  await server.listen(port, 'localhost')
 }
