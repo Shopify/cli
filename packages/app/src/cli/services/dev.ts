@@ -242,7 +242,12 @@ export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
   if (!developerPlatformClient.supportsDevSessions) return
 
   const extensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app.extensionRegistrations
-  if (!extensions.every((extension) => extension.id)) {
+  if (
+    !extensions
+      // Ignore webhook subscriptions because they do need UIDs but shouldn't block dev
+      .filter((extension) => extension.type.toLowerCase() !== 'webhook_subscription')
+      .every((extension) => extension.id)
+  ) {
     const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']
     const nextSteps = [
       'You must first map IDs to your existing extensions by running',
