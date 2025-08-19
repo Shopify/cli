@@ -97,6 +97,25 @@ export async function testgen(options: TestgenOptions) {
     await writeFile(testFile, testFileContent)
   }
 
+  // Always copy package.json to provide Node.js project structure for testing
+  const packageJsonPath = joinPath(testsDir, 'package.json')
+  if (!existsSync(packageJsonPath)) {
+    const packageJsonTemplatePath = joinPath(cwd(), 'packages/app/src/cli/templates/function/package.json')
+    const packageJsonContent = await readFile(packageJsonTemplatePath)
+    await writeFile(packageJsonPath, packageJsonContent)
+
+    // Install dependencies after creating package.json
+    const {exec} = await import('child_process')
+    const {promisify} = await import('util')
+    const execAsync = promisify(exec)
+
+    try {
+      await execAsync('npm install', {cwd: testsDir})
+    } catch (error) {
+      console.warn(`Warning: Failed to run npm install in tests directory: ${error}`)
+    }
+  }
+
   // Ensure payload exists with default values if undefined
   const payload = selectedRun.payload || {
     input: {},
