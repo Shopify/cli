@@ -1,5 +1,6 @@
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {recordError} from '@shopify/cli-kit/node/themes/analytics'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {createError as createH3Error, type H3Error} from 'h3'
 
@@ -58,15 +59,17 @@ type FetchError = H3Error<{requestId?: string; url?: string}>
  * @param url - The URL of the request.
  */
 export function createFetchError(resource: Partial<Response & Error>, url?: string | URL): FetchError {
-  return createH3Error({
-    status: resource.status ?? 502,
-    statusText: resource.statusText ?? 'Bad Gateway',
-    cause: resource,
-    data: {
-      url: (url ?? resource.url)?.toString(),
-      requestId: resource.headers?.get('x-request-id') ?? undefined,
-    },
-  })
+  return recordError(
+    createH3Error({
+      status: resource.status ?? 502,
+      statusText: resource.statusText ?? 'Bad Gateway',
+      cause: resource,
+      data: {
+        url: (url ?? resource.url)?.toString(),
+        requestId: resource.headers?.get('x-request-id') ?? undefined,
+      },
+    }),
+  )
 }
 
 /**
