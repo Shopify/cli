@@ -47,6 +47,19 @@ export async function testgen(options: TestgenOptions) {
   const apiKey = app.configuration.client_id
   const functionRunsDir = joinPath(getLogsDir(), apiKey)
 
+  const selectedRun = options.log
+    ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
+    : await getRunFromSelector(functionRunsDir, extension.handle)
+
+  // Check if we actually got a valid run with data
+  if (!selectedRun || !selectedRun.payload || !selectedRun.payload.input) {
+    throw new AbortError(
+      `No function run logs found for function '${extension.handle}'.\n` +
+      `Make sure you have run the function at least once to generate logs.\n` +
+      `Logs directory: ${functionRunsDir}`
+    )
+  }
+
   const testsDir = joinPath(options.extension.directory, `tests`)
 
   // Create the tests directory
@@ -72,17 +85,17 @@ export async function testgen(options: TestgenOptions) {
     }
   }
 
-  // Create default test file
+  // Create default test file only if no test files exist
   const testFile = joinPath(testsDir, `default.test.ts`)
-  if (!existsSync(testFile)) {
+  const existingTestFiles = readdirSync(testsDir).filter(file =>
+    file.endsWith('.test.ts') || file.endsWith('.test.js')
+  )
+
+  if (existingTestFiles.length === 0 && !existsSync(testFile)) {
     const defaultTestPath = joinPath(cwd(), 'packages/app/src/cli/templates/function/default.test.ts.template')
     const testFileContent = await readFile(defaultTestPath)
     await writeFile(testFile, testFileContent)
   }
-
-  const selectedRun = options.log
-    ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
-    : await getRunFromSelector(functionRunsDir, extension.handle)
 
   // Ensure payload exists with default values if undefined
   const payload = selectedRun.payload || {
@@ -178,34 +191,24 @@ async function findFunctionRun(
 
 async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
+
+  if (functionRuns.length === 0) {
+    throw new AbortError(
+      `No function run logs found for function '${functionHandle}'.\n` +
+      `Make sure you have run the function at least once to generate logs.\n` +
+      `Logs directory: ${functionRunsDir}`
+    )
+  }
+
   const selectedRun = await selectFunctionRunPrompt(
     functionRuns,
     'Which function run would you like to generate test files from?',
   )
 
   if (selectedRun === undefined) {
-    return {
-      shopId: 0,
-      apiClientId: 0,
-      payload: {
-        input: {},
-        output: {},
-        export: 'run',
-        inputBytes: 0,
-        outputBytes: 0,
-        functionId: '',
-        logs: '',
-        fuelConsumed: 0,
-      },
-      logType: 'function',
-      cursor: '',
-      status: 'success',
-      source: '',
-      sourceNamespace: 'extensions',
-      logTimestamp: new Date().toISOString(),
-      identifier: 'default',
-    }
+    throw new AbortError('No function run selected. Exiting.')
   }
+
   return selectedRun
 }
 

@@ -5,7 +5,7 @@ import {loadFixture} from "./helpers/load_fixture.js";
 import {runFunction} from "./helpers/run_function.js";
 import {validateFixtures} from "./helpers/validate.js";
 
-describe("Default Integration Tests", () => {
+describe("Default Integration Test", () => {
   const fixturesDir = path.join(__dirname, "fixtures");
   const fixtureFiles = fs
     .readdirSync(fixturesDir)
