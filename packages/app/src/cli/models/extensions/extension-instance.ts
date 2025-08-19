@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -508,7 +508,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'uuid':
         return this.configuration.uid ?? nonRandomUUID(this.handle)
       case 'dynamic':
-        return nonRandomUUID(this.handle)
+        // NOTE: This is a temporary special case for webhook subscriptions.
+        // We're directly checking for webhook properties and casting the configuration
+        // instead of using a proper dynamic strategy implementation.
+        // To remove this special case:
+        // 1. Implement a proper dynamic UID strategy for webhooks in the server-side specification
+        // 2. Update the CLI to use that strategy instead of this hardcoded logic
+        // Related issues: PR #559094 in old Core repo
+        if ('topic' in this.configuration && 'uri' in this.configuration) {
+          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
+          return `${subscription.topic}::${subscription.filter}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
+        } else {
+          return nonRandomUUID(JSON.stringify(this.configuration))
+        }
     }
   }
 }
