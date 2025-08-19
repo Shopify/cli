@@ -85,6 +85,32 @@ class TestThemeCommandWithUnionFlags extends TestThemeCommand {
   }
 }
 
+class TestUnauthenticatedThemeCommand extends ThemeCommand {
+  static flags = {
+    environment: Flags.string({
+      multiple: true,
+      default: [],
+      env: 'SHOPIFY_FLAG_ENVIRONMENT',
+    }),
+    store: Flags.string({
+      env: 'SHOPIFY_FLAG_STORE',
+    }),
+  }
+
+  static multiEnvironmentsFlags: RequiredFlags = ['store']
+
+  commandCalls: {flags: any; session: AdminSession; multiEnvironment?: boolean; context?: any}[] = []
+
+  async command(
+    flags: any,
+    session: AdminSession,
+    multiEnvironment?: boolean,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {
+    this.commandCalls.push({flags, session, multiEnvironment, context})
+  }
+}
+
 describe('ThemeCommand', () => {
   let mockSession: AdminSession
 
@@ -551,6 +577,32 @@ describe('ThemeCommand', () => {
       expect(liveEnvFlags?.store).toEqual('store3.myshopify.com')
       expect(liveEnvFlags?.live).toEqual(true)
       expect(liveEnvFlags?.['no-color']).toEqual(true)
+    })
+
+    test('commands will only create a session object if the password flag is supported', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com'})
+
+      vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
+        for (const process of processes) {
+          // eslint-disable-next-line no-await-in-loop
+          await process.action({} as Writable, {} as Writable, {} as any)
+        }
+      })
+
+      await CommandConfig.load()
+      const command = new TestUnauthenticatedThemeCommand(
+        ['--environment', 'store1', '--environment', 'store2'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
     })
   })
 })

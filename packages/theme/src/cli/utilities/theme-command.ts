@@ -67,7 +67,7 @@ export default abstract class ThemeCommand extends Command {
 
   async command(
     _flags: FlagValues,
-    _session: AdminSession,
+    _session?: AdminSession,
     _multiEnvironment = false,
     _context?: {stdout?: Writable; stderr?: Writable},
   ): Promise<void> {}
@@ -84,18 +84,17 @@ export default abstract class ThemeCommand extends Command {
     }
     const requiredFlags = klass.multiEnvironmentsFlags
     const {flags} = await this.parse(klass)
-
+    const commandRequiresAuth = 'password' in klass.flags
     const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
 
     // Single environment or no environment
     if (environments.length <= 1) {
-      const session = await this.createSession(flags)
+      const session = commandRequiresAuth ? await this.createSession(flags) : undefined
       const commandName = this.constructor.name.toLowerCase()
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
       await this.command(flags, session)
-      await this.logAnalyticsData(session)
       return
     }
 
@@ -112,7 +111,7 @@ export default abstract class ThemeCommand extends Command {
     }
 
     const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
-    const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
+    const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags, commandRequiresAuth)
 
     const commandAllowsForceFlag = 'force' in klass.flags
 
@@ -160,13 +159,15 @@ export default abstract class ThemeCommand extends Command {
    * Split environments into valid and invalid based on flags
    * @param environmentMap - The map of environments to validate
    * @param requiredFlags - The required flags to check for
+   * @param requiresAuth - Whether the command requires authentication
    * @returns An object containing valid and invalid environment arrays
    */
   private async validateEnvironments(
     environmentMap: Map<EnvironmentName, FlagValues>,
     requiredFlags: Exclude<RequiredFlags, null>,
+    requiresAuth: boolean,
   ) {
-    const valid: {environment: EnvironmentName; flags: FlagValues}[] = []
+    const valid: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
 
     for (const [environmentName, environmentFlags] of environmentMap) {
@@ -176,8 +177,7 @@ export default abstract class ThemeCommand extends Command {
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
         continue
       }
-
-      valid.push({environment: environmentName, flags: environmentFlags})
+      valid.push({environment: environmentName, flags: environmentFlags, requiresAuth})
     }
 
     return {valid, invalid}
@@ -194,7 +194,7 @@ export default abstract class ThemeCommand extends Command {
     commandName: string,
     requiredFlags: Exclude<RequiredFlags, null>,
     validationResults: {
-      valid: {environment: string; flags: FlagValues}[]
+      valid: {environment: string; flags: FlagValues; requiresAuth: boolean}[]
       invalid: {environment: string; reason: string}[]
     },
   ) {
@@ -234,7 +234,9 @@ export default abstract class ThemeCommand extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(validEnvironments: {environment: EnvironmentName; flags: FlagValues}[]) {
+  private async runConcurrent(
+    validEnvironments: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[],
+  ) {
     const abortController = new AbortController()
 
     const stores = validEnvironments.map((env) => env.flags.store as string)
@@ -245,13 +247,13 @@ export default abstract class ThemeCommand extends Command {
     for (const runGroup of runGroups) {
       // eslint-disable-next-line no-await-in-loop
       await renderConcurrent({
-        processes: runGroup.map(({environment, flags}) => ({
+        processes: runGroup.map(({environment, flags, requiresAuth}) => ({
           prefix: environment,
           action: async (stdout: Writable, stderr: Writable, _signal) => {
             try {
               const store = flags.store as string
               await useThemeStoreContext(store, async () => {
-                const session = await this.createSession(flags)
+                const session = requiresAuth ? await this.createSession(flags) : undefined
 
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
@@ -280,8 +282,10 @@ export default abstract class ThemeCommand extends Command {
    * @param environments - The environments to group
    * @returns The environment groups
    */
-  private createSequentialGroups(environments: {environment: EnvironmentName; flags: FlagValues}[]) {
-    const groups: {environment: EnvironmentName; flags: FlagValues}[][] = []
+  private createSequentialGroups(
+    environments: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[],
+  ) {
+    const groups: {environment: EnvironmentName; flags: FlagValues; requiresAuth: boolean}[][] = []
 
     environments.forEach((environment) => {
       const groupWithoutStore = groups.find((arr) => !arr.some((env) => env.flags.store === environment.flags.store))
