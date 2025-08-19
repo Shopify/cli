@@ -5095,6 +5095,9 @@
       "hiddenAliases": [
       ],
       "id": "theme:check",
+      "multiEnvironmentsFlags": [
+        "path"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",

@@ -194,7 +194,7 @@ export function formatSummary(offenses: Offense[], offensesByFile: OffenseMap, t
   return summary
 }
 
-export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string) {
+export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: string, environment?: string) {
   const fileNames = Object.keys(offensesByFile).sort()
 
   fileNames.forEach((filePath) => {
@@ -203,13 +203,13 @@ export function renderOffensesText(offensesByFile: OffenseMap, themeRootPath: st
     const headlineFilePath = filePath.replace(themeRootPath, '').slice(1)
 
     renderInfo({
-      headline: headlineFilePath,
+      headline: environment ? `[${environment}] ${headlineFilePath}` : headlineFilePath,
       body: formatOffenses(offensesByFile[filePath]!),
     })
   })
 }
 
-export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffenseMap[] {
+export function formatOffensesJson(offensesByFile: OffenseMap, environment?: string): TransformedOffenseMap[] {
   return Object.entries(offensesByFile).map(([path, offenses]) => {
     const transformedOffenses = offenses.map((offense: Offense) => {
       return {
@@ -226,6 +226,7 @@ export function formatOffensesJson(offensesByFile: OffenseMap): TransformedOffen
     const counts = countOffenseTypes(offenses)
 
     return {
+      environment,
       path,
       offenses: transformedOffenses,
       errorCount: counts[Severity.ERROR] ?? 0,
@@ -288,7 +289,7 @@ export async function performAutoFixes(sourceCodes: Theme, offenses: Offense[]) 
   await autofix(sourceCodes, offenses, saveToDiskFixApplicator)
 }
 
-export async function outputActiveConfig(themeRoot: string, configPath?: string) {
+export async function outputActiveConfig(themeRoot: string, configPath?: string, environment?: string) {
   const {ignore, settings, rootUri} = await loadConfig(configPath, themeRoot)
 
   const config = {
@@ -304,10 +305,11 @@ export async function outputActiveConfig(themeRoot: string, configPath?: string)
     // Dump out the active settings for all checks.
     ...settings,
   }
-  outputResult(YAML.stringify(config))
+  const output = environment ? {[environment]: config} : config
+  outputResult(YAML.stringify(output))
 }
 
-export async function outputActiveChecks(root: string, configPath?: string) {
+export async function outputActiveChecks(root: string, configPath?: string, environment?: string) {
   const {settings, ignore, checks} = await loadConfig(configPath, root)
   // Depending on how the configs were merged during loadConfig, there may be
   // duplicate patterns to ignore. We can clean them before outputting.
@@ -343,7 +345,8 @@ export async function outputActiveChecks(root: string, configPath?: string) {
     return acc
   }, {})
 
-  outputResult(YAML.stringify(checksList))
+  const output = environment ? {[environment]: checksList} : checksList
+  outputResult(YAML.stringify(output))
 }
 
 interface ExtendedWriteStream extends NodeJS.WriteStream {
