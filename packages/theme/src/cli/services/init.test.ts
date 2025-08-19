@@ -1,13 +1,23 @@
-import {cloneRepoAndCheckoutLatestTag, cloneRepo, promptAndCreateAIFile} from './init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo, createAIInstructions} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {writeFile, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {rmdir, fileExists, copyDirectoryContents} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/git')
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/node/fs', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/fs')
+  return {
+    ...actual,
+    fileExists: vi.fn(),
+    rmdir: vi.fn(),
+    copyDirectoryContents: vi.fn(),
+    inTemporaryDirectory: vi.fn(async (callback) => {
+      // eslint-disable-next-line node/no-callback-literal
+      return callback('/tmp')
+    }),
+  }
+})
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/path')
 vi.mock('@shopify/cli-kit/node/ui', async () => {
@@ -63,6 +73,19 @@ describe('cloneRepoAndCheckoutLatestTag()', async () => {
     expect(fileExists).toHaveBeenCalledWith('destination/.github')
     expect(rmdir).toHaveBeenCalledWith('destination/.github')
   })
+
+  test('doesnt remove .github directory from non-skeleton theme after cloning when it exists', async () => {
+    // Given
+    const repoUrl = 'https://github.com/Shopify/dawn.git'
+    const destination = 'destination'
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await cloneRepoAndCheckoutLatestTag(repoUrl, destination)
+
+    // Then
+    expect(rmdir).not.toHaveBeenCalledWith('destination/.github')
+  })
 })
 
 describe('cloneRepo()', async () => {
@@ -95,7 +118,7 @@ describe('cloneRepo()', async () => {
     expect(removeGitRemote).toHaveBeenCalledWith(destination)
   })
 
-  test('removes .github & .git directories from skeleton theme after cloning when it exists', async () => {
+  test('removes .github directory from skeleton theme after cloning when it exists', async () => {
     // Given
     const repoUrl = 'https://github.com/Shopify/skeleton-theme.git'
     const destination = 'destination'
@@ -107,88 +130,47 @@ describe('cloneRepo()', async () => {
     // Then
     expect(fileExists).toHaveBeenCalledWith('destination/.github')
     expect(rmdir).toHaveBeenCalledWith('destination/.github')
-    expect(fileExists).toHaveBeenCalledWith('destination/.git')
-    expect(rmdir).toHaveBeenCalledWith('destination/.git')
+  })
+
+  test('doesnt remove .github directory from non-skeleton theme after cloning when it exists', async () => {
+    // Given
+    const repoUrl = 'https://github.com/Shopify/dawn.git'
+    const destination = 'destination'
+    vi.mocked(fileExists).mockResolvedValue(true)
+
+    // When
+    await cloneRepo(repoUrl, destination)
+
+    // Then
+    expect(rmdir).not.toHaveBeenCalledWith('destination/.github')
   })
 })
 
-describe('promptAndCreateAIFile()', () => {
+describe('createAIInstructions()', () => {
   const destination = '/path/to/theme'
-  const aiFileUrl = 'https://raw.githubusercontent.com/Shopify/theme-liquid-docs/main/ai/liquid.mdc'
-  const mockFileContent = 'AI file content 🤖✨'
 
   beforeEach(() => {
-    vi.mocked(fetch).mockResolvedValue({
-      text: vi.fn().mockResolvedValue(mockFileContent),
-    } as any)
+    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
   })
 
-  test('creates VSCode AI file when vscode option is selected', async () => {
+  test('creates AI instructions if it exists', async () => {
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('vscode')
-    vi.mocked(joinPath)
-      .mockReturnValueOnce('/path/to/theme/.github')
-      .mockReturnValueOnce('/path/to/theme/.github/copilot-instructions.md')
+    vi.mocked(downloadGitRepository).mockResolvedValue()
+    vi.mocked(copyDirectoryContents).mockResolvedValue()
 
     // When
-    await promptAndCreateAIFile(destination)
+    await createAIInstructions(destination, 'cursor')
 
     // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'Set up AI dev support?',
-      choices: [
-        {label: 'VSCode (GitHub Copilot)', value: 'vscode'},
-        {label: 'Cursor', value: 'cursor'},
-        {label: 'Skip', value: 'none'},
-      ],
-    })
-
-    expect(fetch).toHaveBeenCalledWith(aiFileUrl)
-    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/.github/copilot-instructions.md', mockFileContent)
+    expect(downloadGitRepository).toHaveBeenCalled()
+    expect(copyDirectoryContents).toHaveBeenCalledWith('/tmp/ai/cursor', '/path/to/theme/.cursor')
   })
 
-  test('creates Cursor AI file when cursor option is selected', async () => {
+  test('throws an error when the AI instructions directory does not exist', async () => {
     // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('cursor')
-    vi.mocked(joinPath)
-      .mockReturnValueOnce('/path/to/theme/.cursor/rules')
-      .mockReturnValueOnce('/path/to/theme/.cursor/rules/liquid.mdc')
+    vi.mocked(downloadGitRepository).mockResolvedValue()
+    vi.mocked(copyDirectoryContents).mockRejectedValue(new Error('Directory does not exist'))
 
-    // When
-    await promptAndCreateAIFile(destination)
-
-    // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'Set up AI dev support?',
-      choices: [
-        {label: 'VSCode (GitHub Copilot)', value: 'vscode'},
-        {label: 'Cursor', value: 'cursor'},
-        {label: 'Skip', value: 'none'},
-      ],
-    })
-
-    expect(fetch).toHaveBeenCalledWith(aiFileUrl)
-    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/.cursor/rules/liquid.mdc', mockFileContent)
-  })
-
-  test('does not create any AI file when none option is selected', async () => {
-    // Given
-    vi.mocked(renderSelectPrompt).mockResolvedValue('none')
-
-    // When
-    await promptAndCreateAIFile(destination)
-
-    // Then
-    expect(renderSelectPrompt).toHaveBeenCalledWith({
-      message: 'Set up AI dev support?',
-      choices: [
-        {label: 'VSCode (GitHub Copilot)', value: 'vscode'},
-        {label: 'Cursor', value: 'cursor'},
-        {label: 'Skip', value: 'none'},
-      ],
-    })
-
-    expect(fetch).not.toHaveBeenCalled()
-    expect(writeFile).not.toHaveBeenCalled()
+    await expect(createAIInstructions(destination, 'cursor')).rejects.toThrow('Failed to create AI instructions')
   })
 })

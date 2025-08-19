@@ -593,3 +593,33 @@ export function matchGlob(key: string, pattern: string, options?: MatchGlobOptio
 export function readdir(path: string): Promise<string[]> {
   return fsReaddir(path)
 }
+
+/**
+ * Copies the contents of a directory to another directory.
+ *
+ * @param srcDir - Source directory path.
+ * @param destDir - Destination directory path.
+ */
+export async function copyDirectoryContents(srcDir: string, destDir: string): Promise<void> {
+  if (!(await fileExists(srcDir))) {
+    throw new Error(`Source directory ${srcDir} does not exist`)
+  }
+
+  if (!(await fileExists(destDir))) {
+    await mkdir(destDir)
+  }
+
+  // Get all files and directories in the source directory
+  const items = await glob(joinPath(srcDir, '**/*'))
+
+  const filesToCopy = []
+
+  for (const item of items) {
+    const relativePath = item.replace(srcDir, '').replace(/^[/\\]/, '')
+    const destPath = joinPath(destDir, relativePath)
+
+    filesToCopy.push(copyFile(item, destPath))
+  }
+
+  await Promise.all(filesToCopy)
+}
