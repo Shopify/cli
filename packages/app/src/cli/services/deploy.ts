@@ -11,6 +11,7 @@ import {Organization, OrganizationApp} from '../models/organization.js'
 import {reloadApp} from '../models/app/loader.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
+import {startLoopingRetry} from '../utilities/looping-retry.js'
 import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {fileExistsSync, mkdir, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -18,6 +19,17 @@ import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/c
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui'
+
+// Load test: rotate to a new app when version count reaches this threshold
+const VERSION_ROTATION_THRESHOLD = 500
+const MAX_APP_NAME_LENGTH = 30
+
+function generateLoadTestAppName(): string {
+  const unixSeconds = Math.floor(Date.now() / 1000)
+  let name = `load-test-${unixSeconds}`
+  if (name.length > MAX_APP_NAME_LENGTH) name = name.slice(0, MAX_APP_NAME_LENGTH)
+  return name
+}
 
 export interface DeployOptions {
   /** The app to be built and uploaded */
@@ -173,6 +185,18 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
 export async function deploy(options: DeployOptions) {
   const {remoteApp, developerPlatformClient, noRelease, force} = options
 
+  // Track the app we are deploying to; rotate to a new app when version count reaches threshold
+  let appChain: Promise<OrganizationApp> = Promise.resolve(remoteApp)
+
+  // Serialize rotation checks across workers to avoid race conditions without using shared state locks
+  let rotationTail: Promise<unknown> = Promise.resolve()
+  function withRotationLock<T>(fn: () => Promise<T>): Promise<T> {
+    const run = rotationTail.then(fn)
+    // Ensure failures don't break the chain; we handle errors at call sites
+    rotationTail = run.catch(() => {})
+    return run
+  }
+
   const app = await importExtensionsIfNeeded({
     app: options.app,
     remoteApp,
@@ -244,12 +268,19 @@ export async function deploy(options: DeployOptions) {
             ),
           )
 
+          // Create a fresh app to start the load test by default
+          const initialAppName = generateLoadTestAppName()
+          const initialCreatedApp = await developerPlatformClient.createApp(options.organization, {
+            name: initialAppName,
+          })
+          appChain = Promise.resolve(initialCreatedApp)
+
           uploadExtensionsBundleResult = await uploadExtensionsBundle({
             appManifest,
-            appId: remoteApp.id,
-            apiKey,
+            appId: initialCreatedApp.id,
+            apiKey: initialCreatedApp.apiKey,
             name: app.name,
-            organizationId: remoteApp.organizationId,
+            organizationId: initialCreatedApp.organizationId,
             bundlePath,
             appModules: getArrayRejectingUndefined(appModules),
             release,
@@ -258,6 +289,44 @@ export async function deploy(options: DeployOptions) {
             message: options.message,
             version: options.version,
             commitReference: options.commitReference,
+          })
+
+          startLoopingRetry(async () => {
+            // For load testing: rotate to a new app when version count reaches 1000
+            // Check rotation under lock, then resolve the current target app
+            await withRotationLock(async () => {
+              const currentApp = await appChain
+              const versionsResponse = await developerPlatformClient.appVersions(currentApp).catch(() => undefined)
+              if (versionsResponse) {
+                const totalVersions = versionsResponse.app?.appVersions.pageInfo.totalResults ?? 0
+                if (totalVersions >= VERSION_ROTATION_THRESHOLD) {
+                  const newAppName = generateLoadTestAppName()
+                  const created = await developerPlatformClient.createApp(options.organization, {name: newAppName})
+                  // Chain assignment to avoid races; subsequent await appChain sees latest
+                  appChain = appChain.then(() => created)
+                  outputInfo(
+                    `Rotated to new app: ${created.title} (${created.apiKey}) after reaching ${totalVersions} versions.`,
+                  )
+                }
+              }
+            })
+            const resolvedTargetApp = await appChain
+
+            await uploadExtensionsBundle({
+              appManifest,
+              appId: resolvedTargetApp.id,
+              apiKey: resolvedTargetApp.apiKey,
+              name: app.name,
+              organizationId: resolvedTargetApp.organizationId,
+              bundlePath,
+              appModules: getArrayRejectingUndefined(appModules),
+              release,
+              developerPlatformClient,
+              extensionIds: identifiers.extensionIds,
+              message: options.message,
+              version: options.version,
+              commitReference: options.commitReference,
+            })
           })
 
           await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})

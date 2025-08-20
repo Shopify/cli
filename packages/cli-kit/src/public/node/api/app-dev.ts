@@ -9,8 +9,8 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 // Jobs are launched every 150ms
 // Only 10 requests can be executed concurrently.
 const limiter = new Bottleneck({
-  minTime: 150,
-  maxConcurrent: 10,
+  minTime: 0,
+  maxConcurrent: 100,
 })
 
 /**
