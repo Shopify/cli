@@ -29,14 +29,14 @@ const schemas = [
     localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
   },
   {
-    owner: 'Shopify',
-    repo: 'business-platform',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
   {
-    owner: 'Shopify',
-    repo: 'business-platform',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
@@ -80,18 +80,19 @@ const schemas = [
     usesLfs: true,
   },
   {
-    owner: 'Shopify',
-    repo: 'business-platform',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
     localPath: './packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
   {
-    owner: 'Shopify',
-    repo: 'business-platform',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
     localPath: './packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
 ]
+
 
 /**
  * @param {Schema} schema
