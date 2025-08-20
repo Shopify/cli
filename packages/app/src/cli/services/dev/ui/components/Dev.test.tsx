@@ -930,6 +930,59 @@ describe('Dev', () => {
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
   })
+
+  test('shows a different GraphiQL URL if custom advertise URL is provided', async () => {
+    // Given
+    const backendProcess = {
+      prefix: 'backend',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('first backend message')
+        stdout.write('second backend message')
+        stdout.write('third backend message')
+      },
+    }
+
+    // When
+    const renderInstance = render(
+      <Dev
+        processes={[backendProcess]}
+        abortController={new AbortController()}
+        previewUrl="https://shopify.com"
+        graphiqlUrl="https://graphiql.shopify.com"
+        graphiqlPort={1234}
+        graphiqlAdvertiseUrl="https://foo-proxy.example.com/graphiql"
+        app={testApp}
+        developerPreview={developerPreview}
+        shopFqdn="mystore.shopify.io"
+      />,
+    )
+
+    await new Promise((resolve) => setTimeout(resolve, 500))
+
+    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
+      "00:00:00 │ backend │ first backend message
+      00:00:00 │ backend │ second backend message
+      00:00:00 │ backend │ third backend message
+
+      ────────────────────────────────────────────────────────────────────────────────────────────────────
+
+      › Press d │ toggle development store preview: ✔ on
+      › Press g │ open GraphiQL (Admin API) in your browser
+      › Press p │ preview in your browser
+      › Press q │ quit
+
+      Preview URL: https://shopify.com
+      GraphiQL URL: https://foo-proxy.example.com/graphiql
+      "
+    `)
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 100, 'p')
+    expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
+
+    // unmount so that polling is cleared after every test
+    renderInstance.unmount()
+  })
 })
 
 describe('calculatePrefixColumnSize', () => {

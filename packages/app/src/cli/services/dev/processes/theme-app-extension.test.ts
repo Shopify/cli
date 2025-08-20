@@ -167,6 +167,60 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
       orderedNextSteps: true,
     })
   })
+
+  test('Returns a different theme extension URL if custom advertise URL is provided', async () => {
+    // Given
+    const mockTheme = {id: 123} as Theme
+    vi.mocked(fetchTheme).mockResolvedValue(mockTheme)
+
+    const storeFqdn = 'test.myshopify.com'
+    const theme = '123'
+    const remoteApp = testOrganizationApp()
+    const localApp = testApp({allExtensions: [await testThemeExtensions()]})
+
+    // When
+    const result = await setupPreviewThemeAppExtensionsProcess({
+      localApp,
+      remoteApp,
+      storeFqdn,
+      theme,
+      themeExtensionAdvertiseUrl: 'https://foo-proxy.example.com',
+    })
+
+    // Then
+    expect(result).toBeDefined()
+    expect(renderInfo).toBeCalledWith({
+      headline: 'The theme app extension development server is ready.',
+      nextSteps: [
+        [
+          {
+            link: {
+              label: 'Install your app in your development store',
+              url: 'https://partners.shopify.com/1/apps/1/test',
+            },
+          },
+        ],
+        [
+          {
+            link: {
+              label: 'Setup your theme app extension in the host theme',
+              url: 'https://test.myshopify.com/admin/themes/123/editor',
+            },
+          },
+        ],
+        [
+          'Preview your theme app extension at',
+          {
+            link: {
+              label: 'https://foo-proxy.example.com',
+              url: 'https://foo-proxy.example.com',
+            },
+          },
+        ],
+      ],
+      orderedNextSteps: true,
+    })
+  })
 })
 
 describe('findOrCreateHostTheme', () => {
