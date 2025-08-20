@@ -361,7 +361,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async organizations(): Promise<Organization[]> {
     const organizationsResult = await this.businessPlatformRequest({query: ListOrganizations})
     if (!organizationsResult.currentUserAccount) return []
-    return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
+    return organizationsResult.currentUserAccount.organizationsWithAccessToDestination.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: `${org.name} (Dev Dashboard)`,
       source: this.organizationSource,

@@ -6,7 +6,10 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 export type ListOrganizationsQueryVariables = Types.Exact<{[key: string]: never}>
 
 export type ListOrganizationsQuery = {
-  currentUserAccount?: {uuid: string; organizations: {nodes: {id: string; name: string}[]}} | null
+  currentUserAccount?: {
+    uuid: string
+    organizationsWithAccessToDestination: {nodes: {id: string; name: string}[]}
+  } | null
 }
 
 export const ListOrganizations = {
@@ -28,12 +31,12 @@ export const ListOrganizations = {
                 {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
                 {
                   kind: 'Field',
-                  name: {kind: 'Name', value: 'organizations'},
+                  name: {kind: 'Name', value: 'organizationsWithAccessToDestination'},
                   arguments: [
                     {
                       kind: 'Argument',
-                      name: {kind: 'Name', value: 'hasAccessToDestination'},
-                      value: {kind: 'EnumValue', value: 'DEVELOPER_DASHBOARD'},
+                      name: {kind: 'Name', value: 'destination'},
+                      value: {kind: 'EnumValue', value: 'APPS_CLI'},
                     },
                   ],
                   selectionSet: {
