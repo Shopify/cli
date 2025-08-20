@@ -97,7 +97,7 @@ export async function migrateAppModules(options: {
 }) {
   const {extensionsToMigrate, appId, type, remoteExtensions, migrationClient} = options
 
-  const migratedIDs = await Promise.all(
+  await Promise.all(
     extensionsToMigrate.map(({remote}) =>
       migrateAppModule({
         apiKey: appId,
@@ -109,8 +109,9 @@ export async function migrateAppModules(options: {
     ),
   )
 
+  const migratedUUIDs = extensionsToMigrate.map(({remote}) => remote.uuid)
   return remoteExtensions
-    .filter((extension) => migratedIDs.includes(extension.id))
+    .filter((extension) => migratedUUIDs.includes(extension.uuid))
     .map((extension) => {
       return {
         ...extension,
