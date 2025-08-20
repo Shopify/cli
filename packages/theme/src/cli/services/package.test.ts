@@ -191,7 +191,10 @@ async function readArchiveFiles(zipPath: string) {
   await expect(fileExists(zipPath)).resolves.toBeTruthy()
   // eslint-disable-next-line @babel/new-cap
   const archive = new StreamZip.async({file: zipPath})
-  const archiveEntries = Object.keys(await archive.entries())
+  const entries = await archive.entries()
+  const archiveEntries = Object.values(entries)
+    .filter((entry: any) => !entry.isDirectory)
+    .map((entry: any) => entry.name)
   await archive.close()
 
   return archiveEntries
