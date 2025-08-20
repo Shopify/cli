@@ -15,7 +15,7 @@ export async function migrateFlowExtensions(options: {
 }) {
   const {extensionsToMigrate, appId, remoteExtensions, migrationClient} = options
 
-  const migratedIDs = await Promise.all(
+  await Promise.all(
     extensionsToMigrate.map(({remote}) =>
       migrateFlowExtension({
         apiKey: appId,
@@ -31,8 +31,9 @@ export async function migrateFlowExtensions(options: {
     ['flow_trigger_definition', 'FLOW_TRIGGER'],
   ])
 
+  const migratedUUIDs = extensionsToMigrate.map(({remote}) => remote.uuid)
   return remoteExtensions
-    .filter((extension) => migratedIDs.includes(extension.id))
+    .filter((extension) => migratedUUIDs.includes(extension.uuid))
     .map((extension) => {
       return {
         ...extension,
