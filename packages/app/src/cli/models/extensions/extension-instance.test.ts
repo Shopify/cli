@@ -531,12 +531,24 @@ describe('draftMessages', async () => {
       expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
     })
 
-    test('returns non-random UUID based on handle when strategy is dynamic', async () => {
+    test('returns a custom string when strategy is dynamic and it is a webhook subscription extension without filters', async () => {
       // Given
       const extensionInstance = await testSingleWebhookSubscriptionExtension()
-
       // Then
-      expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
+      expect(extensionInstance.uid).toBe('orders/delete::undefined::https://my-app.com/webhooks')
+    })
+
+    test('returns a custom string when strategy is dynamic and it is a webhook subscription extension with filters', async () => {
+      // Given
+      const extensionInstance = await testSingleWebhookSubscriptionExtension({
+        config: {
+          topic: 'orders/delete',
+          uri: 'https://my-app.com/webhooks',
+          filter: '123',
+        },
+      })
+      // Then
+      expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
     })
   })
 })
