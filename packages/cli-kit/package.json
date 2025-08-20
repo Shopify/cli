@@ -129,7 +129,7 @@
     "fast-glob": "3.3.3",
     "figures": "5.0.0",
     "find-up": "6.3.0",
-    "form-data": "4.0.1",
+    "form-data": "4.0.4",
     "fs-extra": "11.1.0",
     "get-port-please": "3.1.2",
     "gradient-string": "2.0.2",
