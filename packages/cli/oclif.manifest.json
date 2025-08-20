@@ -5183,6 +5183,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:console",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -5487,6 +5488,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:dev",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -5983,6 +5985,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:metafields:pull",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6087,6 +6090,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:open",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6949,6 +6953,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:serve",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
