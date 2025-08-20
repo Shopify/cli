@@ -1,6 +1,6 @@
-import {importExtensions} from './import-extensions.js'
+import {importExtensions, filterOutImportedExtensions} from './import-extensions.js'
 import {buildTomlObject} from './flow/extension-to-toml.js'
-import {testAppLinked, testDeveloperPlatformClient} from '../models/app/app.test-data.js'
+import {testAppLinked, testDeveloperPlatformClient, testUIExtension} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -235,5 +235,33 @@ describe('import-extensions', () => {
       const tomlPathE = joinPath(tmpDir, 'extensions', 'title-e', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathE)).toBe(false)
     })
+  })
+})
+
+describe('filterOutImportedExtensions', () => {
+  test('filters out extensions that are already imported', async () => {
+    // Given
+    const extensionA = await testUIExtension({handle: 'my-extension-a'})
+    const extensionB = await testUIExtension({handle: 'my-extension-b'})
+
+    const app = testAppLinked({
+      dotenv: {
+        path: '.env',
+        variables: {
+          SHOPIFY_MY_EXTENSION_A_ID: 'uuidA',
+          SHOPIFY_MY_EXTENSION_B_ID: 'uuidB',
+          SHOPIFY_SOME_OTHER_ID: 'someOtherId',
+        },
+      },
+      allExtensions: [extensionA, extensionB],
+    })
+
+    const extensions = [flowExtensionA, flowExtensionB, marketingActivityExtension]
+
+    // When
+    const result = filterOutImportedExtensions(app, extensions)
+
+    // Then
+    expect(result).toEqual([marketingActivityExtension])
   })
 })

@@ -2,7 +2,7 @@ import {ensureDeployContext} from './context.js'
 import {deploy, importExtensionsIfNeeded} from './deploy.js'
 import {uploadExtensionsBundle} from './deploy/upload.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {importAllExtensions, allExtensionTypes} from './import-extensions.js'
+import {importAllExtensions, allExtensionTypes, filterOutImportedExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
 import {reloadApp} from '../models/app/loader.js'
 import {
@@ -75,6 +75,9 @@ beforeEach(() => {
 
   // Mock getExtensions to return empty arrays by default
   vi.mocked(getExtensions).mockResolvedValue([])
+
+  // Mock filterOutImportedExtensions to return the extensions by default
+  vi.mocked(filterOutImportedExtensions).mockImplementation((_app, extensions) => extensions)
 })
 
 describe('deploy', () => {
@@ -840,6 +843,7 @@ describe('ImportExtensionsIfNeeded', () => {
 
     vi.mocked(isTTY).mockReturnValue(true)
     vi.mocked(getExtensions).mockResolvedValue([])
+    vi.mocked(filterOutImportedExtensions).mockReturnValue([])
 
     // When
     const result = await importExtensionsIfNeeded({

@@ -33,7 +33,7 @@ export interface Identifiers {
 }
 
 type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
-type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
+type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release' | 'import-extensions'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
   identifiers: UuidOnlyIdentifiers
@@ -72,9 +72,11 @@ export async function updateAppIdentifiers(
 
   const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
   const writeToFile =
-    !contentIsEqual &&
-    (command === 'deploy' || command === 'release') &&
-    !developerPlatformClient.supportsAtomicDeployments
+    (!contentIsEqual &&
+      (command === 'deploy' || command === 'release') &&
+      !developerPlatformClient.supportsAtomicDeployments) ||
+    command === 'import-extensions'
+
   dotenvFile.variables = updatedVariables
 
   if (writeToFile) {
