@@ -9,6 +9,7 @@ import {readFile, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {existsSync, readdirSync} from 'fs'
+import {loadConfigurationFileContent} from '../../models/app/loader.js'
 
 const LOG_SELECTOR_LIMIT = 100
 
@@ -129,6 +130,41 @@ export async function testgen(options: TestgenOptions) {
   }
 
   const {input, output} = payload
+
+  // Parse TOML to find the targeting section that matches the export
+  let inputQueryPath = `${payload.export}.graphql` // fallback
+  let target = '' // fallback
+  try {
+    const tomlPath = joinPath(extension.directory, 'shopify.extension.toml')
+    if (existsSync(tomlPath)) {
+      const tomlContent = await loadConfigurationFileContent(tomlPath) as any
+      const extensions = tomlContent.extensions || []
+
+      // Find the extension that matches our function
+      const functionExtension = extensions.find((ext: any) =>
+        ext.handle === extension.handle && ext.type === 'function'
+      )
+
+      if (functionExtension && functionExtension.targeting) {
+        // Find the targeting section that matches our export
+        const targetingSection = functionExtension.targeting.find((target: any) =>
+          target.export === payload.export
+        )
+
+        if (targetingSection) {
+          if (targetingSection.input_query) {
+            inputQueryPath = targetingSection.input_query
+          }
+          if (targetingSection.target) {
+            target = targetingSection.target
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.warn(`Warning: Could not parse TOML file, using fallback values: ${error}`)
+  }
+
   // Get the fixture name from user prompt
   const fixtureName = await nameFixturePrompt(selectedRun.identifier)
   const fixturePath = joinPath(testFixturesDir, `${fixtureName}.json`)
@@ -137,7 +173,8 @@ export async function testgen(options: TestgenOptions) {
   const fixture = {
     name: fixtureName,
     export: payload.export,
-    query: `${payload.export}.graphql`,
+    query: inputQueryPath, // Use the actual input_query from TOML
+    target, // Include the target for output validation
     input,
     output,
   }
@@ -152,6 +189,7 @@ export async function testgen(options: TestgenOptions) {
     identifier: selectedRun.identifier,
     input,
     output,
+    target, // Include target in return object
   }
 }
 

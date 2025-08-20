@@ -8,12 +8,15 @@ import {
   buildSchema,
 } from 'graphql'
 import fs from 'fs/promises'
+import path from 'path'
 
-export async function validateFixtures(fixture: any, inputQueryPath: string, schemaPath: string) {
+export async function validateFixtures(fixture: any, schemaPath: string) {
   const errors: any[] = []
 
   console.log('VALIDATING INPUT QUERY AGAINST SCHEMA')
-  // Validate that the input query is valid against the local schema
+  const testsDir = __dirname // /path/to/function/tests/helpers
+  const functionDir = path.dirname(path.dirname(testsDir)) // /path/to/function
+  const inputQueryPath = path.join(functionDir, fixture.query) // /path/to/function/src/run.graphql
   const inputQueryString = await fs.readFile(inputQueryPath, 'utf8')
   const inputQueryAST = parse(inputQueryString)
   const schemaString = await fs.readFile(schemaPath, 'utf8')
@@ -21,10 +24,52 @@ export async function validateFixtures(fixture: any, inputQueryPath: string, sch
   validateInputQuery(schema, inputQueryAST) // works
   console.log('--------------------------------')
 
-  // Validate that the output fixture is valid against the local schema
   console.log('VALIDATING OUTPUT FIXTURE AGAINST SCHEMA')
   const outputFixtureObject = fixture.expectedOutput
-  console.log(validateJSONAgainstGraphQLType(schema, outputFixtureObject, 'CartValidationsGenerateRunResult'))
+
+  let resultTypeName = 'Unknown'
+  if (fixture.target) {
+    try {
+      const schemaContent = await fs.readFile(schemaPath, 'utf8')
+      const targetParts = fixture.target.split('.')
+      const operationName = targetParts[targetParts.length - 1] // "run"
+      let mutationMatch = null
+
+      const exactPattern = `"""\\s*Handles the Function result for the ${fixture.target.replace(/\./g, '\\.')} target\\.\\s*"""\\s*${operationName}\\s*\\(\\s*[^)]*result:\\s*(\\w+)!`
+      mutationMatch = schemaContent.match(new RegExp(exactPattern, 's'))
+
+      if (mutationMatch && mutationMatch[1]) {
+        resultTypeName = mutationMatch[1]
+      } else {
+        const operationPattern = `${operationName}\\s*\\(\\s*[^)]*result:\\s*(\\w+)!`
+        mutationMatch = schemaContent.match(new RegExp(operationPattern, 's'))
+
+        if (mutationMatch && mutationMatch[1]) {
+          resultTypeName = mutationMatch[1]
+        } else {
+          const simplePattern = `${operationName}\\s*\\(`
+          const simpleMatch = schemaContent.match(new RegExp(simplePattern, 's'))
+
+          if (simpleMatch) {
+            console.log('Found mutation field with operation name but couldn\'t extract result type')
+          }
+
+          console.warn(`Could not find result type for target: ${fixture.target}, skipping output validation`)
+        }
+      }
+    } catch (error) {
+      console.warn(`Error parsing schema for result type: ${error}, skipping output validation`)
+    }
+  } else {
+    console.warn('No target found in fixture, skipping output validation')
+  }
+
+  // Only validate output if we found a valid result type
+  if (resultTypeName !== 'Unknown') {
+    console.log(validateJSONAgainstGraphQLType(schema, outputFixtureObject, resultTypeName))
+  } else {
+    console.log('Skipping output validation - result type could not be determined')
+  }
   console.log('--------------------------------')
 
   console.log('VALIDATING INPUT FIXTURE AGAINST QUERY')

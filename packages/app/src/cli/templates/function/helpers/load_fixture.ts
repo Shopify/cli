@@ -11,6 +11,7 @@ export async function loadFixture(fixturePath: string) {
       query: fixture.query,
       input: fixture.input,
       expectedOutput: fixture.output,
+      target: fixture.target,
     };
   } catch (error) {
     if (error instanceof SyntaxError) {

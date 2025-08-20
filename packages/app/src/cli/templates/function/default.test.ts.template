@@ -18,13 +18,11 @@ describe("Default Integration Test", () => {
 
       const functionDir = path.dirname(__dirname);
 
-      const inputQueryPath = path.join(functionDir, "src", fixture.query);
+
       const schemaPath = path.join(functionDir, "schema.graphql");
 
-      // Validate the fixture against the query and schema
-      await validateFixtures(fixture, inputQueryPath, schemaPath);
+      await validateFixtures(fixture, schemaPath);
 
-      // runFunction returns an unknown type, so we must assert its shape
       const runResult = await runFunction(
         fixture.export,
         fixture.input
