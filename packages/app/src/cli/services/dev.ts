@@ -37,6 +37,7 @@ import {AppConfigurationUsedByCli} from '../models/extensions/specifications/typ
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ports} from '../constants.js'
 import {generateCertificate} from '../utilities/mkcert.js'
+import {throwUidMappingError} from '../prompts/uid-mapping-error.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -248,15 +249,7 @@ export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
       .filter((extension) => extension.type.toLowerCase() !== 'webhook_subscription')
       .every((extension) => extension.id)
   ) {
-    const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']
-    const nextSteps = [
-      'You must first map IDs to your existing extensions by running',
-      {command: 'shopify app deploy'},
-      'interactively, without',
-      {command: '--force'},
-      'to finish the migration.',
-    ]
-    throw new AbortError(message, nextSteps)
+    throwUidMappingError()
   }
 }
 
