@@ -234,12 +234,12 @@ export async function runWasmOpt(modulePath: string) {
   const wasmOpt = wasmOptBinary()
   await downloadBinary(wasmOpt)
 
-  const wasmOptDir = dirname(wasmOptBinary().path)
+  const wasmOptDir = dirname(wasmOpt.path)
 
   const command = `node`
   const args = [
     // invoke the js-wrapped wasm-opt binary
-    wasmOptBinary().name,
+    wasmOpt.name,
     modulePath,
     // pass these options to wasm-opt
     '-Oz',
@@ -259,7 +259,7 @@ export async function runWasmOpt(modulePath: string) {
 
 export async function runTrampoline(modulePath: string) {
   const trampoline = trampolineBinary()
-  await downloadBinary(trampoline)
+  // await downloadBinary(trampoline)
 
   const command = trampoline.path
 
