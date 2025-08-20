@@ -108,6 +108,31 @@ describe('blockIfMigrationIncomplete', () => {
     await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
   })
 
+  test('does nothing remote extensions dont have uids but are webhook subscriptions', async () => {
+    const developerPlatformClient = testDeveloperPlatformClient({
+      supportsDevSessions: true,
+      async appExtensionRegistrations() {
+        return {
+          app: {
+            extensionRegistrations: [
+              {id: '', uuid: 'u1', title: 'Ext 1', type: 'webhook_subscription'},
+              {id: '2', uuid: 'u2', title: 'Ext 2', type: 'web_pixel_extension'},
+            ],
+            configurationRegistrations: [],
+            dashboardManagedExtensionRegistrations: [],
+          },
+        } as any
+      },
+    })
+
+    const devConfig = {
+      ...baseConfig(),
+      developerPlatformClient,
+    } as any
+
+    await expect(blockIfMigrationIncomplete(devConfig)).resolves.toBeUndefined()
+  })
+
   test('throws AbortError when some remote extensions are missing ids (not migrated)', async () => {
     const developerPlatformClient = testDeveloperPlatformClient({
       supportsDevSessions: true,
