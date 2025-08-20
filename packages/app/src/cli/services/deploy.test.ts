@@ -653,6 +653,18 @@ describe('deploy', () => {
             "• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.",
           ],
         },
+        {
+          title: 'Reference',
+          body: [
+            '• ',
+            {
+              link: {
+                label: 'Migrating from the Partner Dashboard',
+                url: 'https://shopify.dev/docs/apps/build/dev-dashboard/migrate-from-partners',
+              },
+            },
+          ],
+        },
       ],
     })
   })
