@@ -1,5 +1,40 @@
 # @shopify/app
 
+## 3.84.0
+
+### Minor Changes
+
+- 6efb593: Relative app proxy urls. App proxy url values that start with / are automatically prepended with the application_url
+
+### Patch Changes
+
+- f3d3326: Added an app information box to the `app dev` command, to make current app information more accessible. Press 'i' to access it.
+- 2c2999c: Bump theme-tools packages
+- Updated dependencies [1f4fd78]
+- Updated dependencies [e301450]
+- Updated dependencies [9b872dc]
+- Updated dependencies [b382a89]
+- Updated dependencies [d2ad0b4]
+- Updated dependencies [864c687]
+- Updated dependencies [828bf47]
+- Updated dependencies [b47f879]
+- Updated dependencies [1161f7a]
+- Updated dependencies [52f999f]
+- Updated dependencies [281b50b]
+- Updated dependencies [4839fb0]
+- Updated dependencies [40e2d6f]
+- Updated dependencies [45ff625]
+- Updated dependencies [2c2999c]
+- Updated dependencies [f330c9f]
+- Updated dependencies [d19e3d7]
+- Updated dependencies [bfc6325]
+- Updated dependencies [62d6b9a]
+- Updated dependencies [9dd353c]
+- Updated dependencies [a12a7cc]
+  - @shopify/theme@3.84.0
+  - @shopify/cli-kit@3.84.0
+  - @shopify/plugin-cloudflare@3.84.0
+
 ## 3.83.0
 
 ### Minor Changes
