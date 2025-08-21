@@ -21,6 +21,18 @@ let _developmentThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalSto
 let _replThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
 let _themeStorePasswordStorageInstance: LocalStorage<ThemeStorePasswordSchema> | undefined
 
+/**
+ * Extracts the shop name from a store URL or name.
+ * Removes protocols, domains (.myshopify.com, .shopify.io, etc), and trailing slashes.
+ *
+ * @param store - The store URL or name, e.g. "https://my-store.myshopify.com"
+ * @returns The extracted shop name, e.g. "my-store"
+ */
+export function extractShopName(store: string): string {
+  const cleanStore = store.replace(/^https?:\/\//, '')
+  return cleanStore.replace(/\.(myshopify\.com|shopify\.io|spin\.dev|shop\.dev).*$/, '').replace(/\/$/, '')
+}
+
 function themeLocalStorage() {
   if (!_themeLocalStorageInstance) {
     _themeLocalStorageInstance = new LocalStorage<ThemeLocalStorageSchema>({projectName: 'shopify-cli-theme-conf'})
@@ -67,7 +79,8 @@ export function getDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
   outputDebug(outputContent`Getting development theme...`)
-  return developmentThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
+  const shopName = extractShopName(assertThemeStoreExists(themeStorage))
+  return developmentThemeLocalStorage().get(shopName)
 }
 
 export function setDevelopmentTheme(
@@ -75,21 +88,24 @@ export function setDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   outputDebug(outputContent`Setting development theme...`)
-  developmentThemeLocalStorage().set(assertThemeStoreExists(themeStorage), theme)
+  const shopName = extractShopName(assertThemeStoreExists(themeStorage))
+  developmentThemeLocalStorage().set(shopName, theme)
 }
 
 export function removeDevelopmentTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   outputDebug(outputContent`Removing development theme...`)
-  developmentThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
+  const shopName = extractShopName(assertThemeStoreExists(themeStorage))
+  developmentThemeLocalStorage().delete(shopName)
 }
 
 export function getREPLTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
   outputDebug(outputContent`Getting REPL theme...`)
-  return replThemeLocalStorage().get(assertThemeStoreExists(themeStorage))
+  const shopName = extractShopName(assertThemeStoreExists(themeStorage))
+  return replThemeLocalStorage().get(shopName)
 }
 
 export function setREPLTheme(
@@ -97,20 +113,23 @@ export function setREPLTheme(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   outputDebug(outputContent`Setting REPL theme to ${theme}...`)
-  replThemeLocalStorage().set(assertThemeStoreExists(themeStorage), theme)
+  const shopName = extractShopName(assertThemeStoreExists(themeStorage))
+  replThemeLocalStorage().set(shopName, theme)
 }
 
 export function removeREPLTheme(themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()): void {
   outputDebug(outputContent`Removing REPL theme...`)
-  replThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
+  const shopName = extractShopName(assertThemeStoreExists(themeStorage))
+  replThemeLocalStorage().delete(shopName)
 }
 
 export function getStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
   const themeStore = assertThemeStoreExists(themeStorage)
+  const shopName = extractShopName(themeStore)
   outputDebug(outputContent`Getting storefront password for shop ${themeStore}...`)
-  return themeStorePasswordStorage().get(themeStore)
+  return themeStorePasswordStorage().get(shopName)
 }
 
 export function setStorefrontPassword(
@@ -118,16 +137,18 @@ export function setStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   const themeStore = assertThemeStoreExists(themeStorage)
+  const shopName = extractShopName(themeStore)
   outputDebug(outputContent`Setting storefront password for shop ${themeStore}...`)
-  themeStorePasswordStorage().set(themeStore, password)
+  themeStorePasswordStorage().set(shopName, password)
 }
 
 export function removeStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): void {
   const themeStore = assertThemeStoreExists(themeStorage)
+  const shopName = extractShopName(themeStore)
   outputDebug(outputContent`Removing storefront password for ${themeStore}...`)
-  themeStorePasswordStorage().delete(themeStore)
+  themeStorePasswordStorage().delete(shopName)
 }
 
 function assertThemeStoreExists(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()): string {
