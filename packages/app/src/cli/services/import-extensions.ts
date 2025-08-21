@@ -37,6 +37,7 @@ export async function importExtensions(options: ImportOptions) {
   const {app, remoteApp, developerPlatformClient, extensionTypes, extensions, buildTomlObject, all} = options
 
   let extensionsToMigrate = extensions.filter((ext) => extensionTypes.includes(ext.type.toLowerCase()))
+  extensionsToMigrate = filterOutImportedExtensions(app, extensionsToMigrate)
 
   if (extensionsToMigrate.length === 0) {
     throw new AbortError('No extensions to migrate')
@@ -79,9 +80,17 @@ export async function importExtensions(options: ImportOptions) {
       extensions: extensionUuids,
       app: remoteApp.apiKey,
     },
-    command: 'deploy',
+    command: 'import-extensions',
     developerPlatformClient,
   })
+}
+
+// import-extensions updates the .env file with the new UUIDs. we can use that to know if an extension was already imported.
+// From the app loaded extensions, get the UUID and compare with the pending extensions.
+export function filterOutImportedExtensions(app: AppLinkedInterface, extensions: ExtensionRegistration[]) {
+  const cachedUUIDs = app.dotenv?.variables ?? {}
+  const localExtensionUUIDs = app.allExtensions.map((ext) => cachedUUIDs[ext.idEnvironmentVariableName])
+  return extensions.filter((ext) => !localExtensionUUIDs.includes(ext.uuid))
 }
 
 export async function importAllExtensions(options: ImportAllOptions) {

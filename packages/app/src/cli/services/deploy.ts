@@ -2,7 +2,7 @@ import {uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upl
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {allExtensionTypes, importAllExtensions} from './import-extensions.js'
+import {allExtensionTypes, filterOutImportedExtensions, importAllExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
@@ -151,19 +151,21 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
     onlyDashboardManaged: true,
   })
 
-  if (extensions.length === 0) {
+  const extensionsNotImportedYet = filterOutImportedExtensions(options.app, extensions)
+
+  if (extensionsNotImportedYet.length === 0) {
     return app
   }
 
   if (developerPlatformClient.supportsDashboardManagedExtensions) {
     return handleSupportedDashboardExtensions({
       ...options,
-      extensions,
+      extensions: extensionsNotImportedYet,
     })
   } else {
     return handleUnsupportedDashboardExtensions({
       ...options,
-      extensions,
+      extensions: extensionsNotImportedYet,
     })
   }
 }
