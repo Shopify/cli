@@ -68,9 +68,9 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
     }
 
     const doMonorail = async () => {
-      if (skipMonorailAnalytics) {
-        return
-      }
+      // if (skipMonorailAnalytics) {
+      //   return
+      // }
       const response = await publishMonorailEvent(MONORAIL_COMMAND_TOPIC, payload.public, payload.sensitive)
       if (response.type === 'error') {
         outputDebug(response.message)
