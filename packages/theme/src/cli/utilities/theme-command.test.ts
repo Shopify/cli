@@ -135,8 +135,9 @@ describe('ThemeCommand', () => {
 
     test('multiple environments provided - uses renderConcurrent for parallel execution', async () => {
       // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
       vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
 
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
@@ -150,7 +151,6 @@ describe('ThemeCommand', () => {
       // Then
       expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {from: undefined, silent: true})
       expect(loadEnvironment).toHaveBeenCalledWith('staging', 'shopify.theme.toml', {from: undefined, silent: true})
-      expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(2)
 
       expect(renderConcurrent).toHaveBeenCalledOnce()
       expect(renderConcurrent).toHaveBeenCalledWith(
@@ -166,10 +166,40 @@ describe('ThemeCommand', () => {
   })
 
   describe('multi environment', () => {
+    test('commands that act on the same store are run in groups to prevent conflicts', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', theme: 'wow a theme'})
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'another theme'})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithUnionFlags(
+        ['--environment', 'store1-theme', '--environment', 'store1-development', '--environment', 'store2-theme'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const runGroupOneProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(runGroupOneProcesses).toHaveLength(2)
+      expect(runGroupOneProcesses?.map((process) => process.prefix)).toEqual(['store1-theme', 'store2-theme'])
+
+      const runGroupTwoProcesses = vi.mocked(renderConcurrent).mock.calls[1]?.[0]?.processes
+      expect(runGroupTwoProcesses).toHaveLength(1)
+      expect(runGroupTwoProcesses?.map((process) => process.prefix)).toEqual(['store1-development'])
+    })
+
     test('commands with --force flag should not prompt for confirmation', async () => {
       // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
@@ -198,8 +228,9 @@ describe('ThemeCommand', () => {
 
     test('commands that do not allow --force flag should not prompt for confirmation', async () => {
       // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
@@ -216,8 +247,9 @@ describe('ThemeCommand', () => {
 
     test('commands without --force flag that allow it should prompt for confirmation', async () => {
       // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
@@ -244,8 +276,9 @@ describe('ThemeCommand', () => {
 
     test('should not execute command if confirmation is cancelled', async () => {
       // Given
-      const environmentConfig = {store: 'store.myshopify.com'}
-      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
@@ -340,8 +373,10 @@ describe('ThemeCommand', () => {
 
     test('commands error gracefully and continue with other environments', async () => {
       // Given
-      vi.mocked(loadEnvironment).mockResolvedValue({store: 'store.myshopify.com'})
-
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com', live: true})
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
       vi.mocked(renderConcurrent).mockImplementation(async ({processes}) => {
         for (const process of processes) {

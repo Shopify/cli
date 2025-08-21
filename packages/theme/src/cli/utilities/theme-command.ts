@@ -1,6 +1,7 @@
 import {ensureThemeStore} from './theme-store.js'
 import {configurationFileName} from '../constants.js'
 import metadata from '../metadata.js'
+import {useThemeStoreContext} from '../services/local-storage.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput} from '@shopify/cli-kit/node/base-command'
@@ -153,9 +154,8 @@ export default abstract class ThemeCommand extends Command {
     environmentMap: Map<EnvironmentName, FlagValues>,
     requiredFlags: Exclude<RequiredFlags, null>,
   ) {
-    const valid: {environment: EnvironmentName; flags: FlagValues; session: AdminSession}[] = []
+    const valid: {environment: EnvironmentName; flags: FlagValues}[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
-    const commandName = this.constructor.name.toLowerCase()
 
     for (const [environmentName, environmentFlags] of environmentMap) {
       const validationResult = this.validConfig(environmentFlags, requiredFlags, environmentName)
@@ -165,12 +165,7 @@ export default abstract class ThemeCommand extends Command {
         continue
       }
 
-      // eslint-disable-next-line no-await-in-loop
-      const session = await this.createSession(environmentFlags)
-
-      recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
-
-      valid.push({environment: environmentName, flags: environmentFlags, session})
+      valid.push({environment: environmentName, flags: environmentFlags})
     }
 
     return {valid, invalid}
@@ -227,30 +222,61 @@ export default abstract class ThemeCommand extends Command {
    * Run the command in each valid environment concurrently
    * @param validEnvironments - The valid environments to run the command in
    */
-  private async runConcurrent(
-    validEnvironments: {environment: EnvironmentName; flags: FlagValues; session: AdminSession}[],
-  ) {
+  private async runConcurrent(validEnvironments: {environment: EnvironmentName; flags: FlagValues}[]) {
     const abortController = new AbortController()
 
-    await renderConcurrent({
-      processes: validEnvironments.map(({environment, flags, session}) => ({
-        prefix: environment,
-        action: async (stdout: Writable, stderr: Writable, _signal) => {
-          try {
-            await this.command(flags, session, true, {stdout, stderr})
+    const stores = validEnvironments.map((env) => env.flags.store as string)
+    const uniqueStores = new Set(stores)
+    const runGroups =
+      stores.length === uniqueStores.size ? [validEnvironments] : this.createSequentialGroups(validEnvironments)
 
-            // eslint-disable-next-line no-catch-all/no-catch-all
-          } catch (error) {
-            if (error instanceof Error) {
-              error.message = `Environment ${environment} failed: \n\n${error.message}`
-              renderError({body: [error.message]})
+    for (const runGroup of runGroups) {
+      // eslint-disable-next-line no-await-in-loop
+      await renderConcurrent({
+        processes: runGroup.map(({environment, flags}) => ({
+          prefix: environment,
+          action: async (stdout: Writable, stderr: Writable, _signal) => {
+            try {
+              const store = flags.store as string
+              await useThemeStoreContext(store, async () => {
+                const session = await this.createSession(flags)
+
+                const commandName = this.constructor.name.toLowerCase()
+                recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
+
+                await this.command(flags, session, true, {stdout, stderr})
+              })
+
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch (error) {
+              if (error instanceof Error) {
+                error.message = `Environment ${environment} failed: \n\n${error.message}`
+                renderError({body: [error.message]})
+              }
             }
-          }
-        },
-      })),
-      abortSignal: abortController.signal,
-      showTimestamps: true,
+          },
+        })),
+        abortSignal: abortController.signal,
+        showTimestamps: true,
+      })
+    }
+  }
+
+  /**
+   * Create groups of environments with unique flags.store values to run sequentially
+   * to prevent conflicts between environments acting on the same store
+   * @param environments - The environments to group
+   * @returns The environment groups
+   */
+  private createSequentialGroups(environments: {environment: EnvironmentName; flags: FlagValues}[]) {
+    const groups: {environment: EnvironmentName; flags: FlagValues}[][] = []
+
+    environments.forEach((environment) => {
+      const groupWithoutStore = groups.find((arr) => !arr.some((env) => env.flags.store === environment.flags.store))
+      groupWithoutStore ? groupWithoutStore.push(environment) : groups.push([environment])
     })
+
+    return groups
   }
 
   /**
