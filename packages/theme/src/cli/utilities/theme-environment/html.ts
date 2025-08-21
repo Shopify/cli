@@ -58,12 +58,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
           // Fallback to proxying to see if that works:
           const proxyResponse = await tryProxyRequest(event, ctx, response)
           if (proxyResponse) {
-            logRequestLine(event, proxyResponse)
+            logRequestLine(event, proxyResponse, ctx)
             return proxyResponse
           }
         }
 
-        logRequestLine(event, response)
+        logRequestLine(event, response, ctx)
 
         return patchRenderingResponse(ctx, response, (body) => {
           assertThemeId(response, body, String(theme.id))

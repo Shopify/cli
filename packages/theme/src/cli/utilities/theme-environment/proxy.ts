@@ -47,7 +47,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 
       return proxyStorefrontRequest(event, ctx)
         .then(async (response) => {
-          logRequestLine(event, response)
+          logRequestLine(event, response, ctx)
 
           if (response.ok) {
             const fileName = pathname.split('/').at(-1) ?? ''
