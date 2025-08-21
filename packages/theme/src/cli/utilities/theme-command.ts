@@ -14,6 +14,7 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {recordEvent} from '@shopify/cli-kit/node/themes/analytics'
 import type {Writable} from 'stream'
 
 export interface FlagValues {
@@ -86,6 +87,9 @@ export default abstract class ThemeCommand extends Command {
     // Single environment or no environment
     if (environments.length <= 1) {
       const session = await this.createSession(flags)
+      const commandName = this.constructor.name.toLowerCase()
+
+      recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
       await this.command(flags, session)
       return
@@ -151,6 +155,7 @@ export default abstract class ThemeCommand extends Command {
   ) {
     const valid: {environment: EnvironmentName; flags: FlagValues; session: AdminSession}[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
+    const commandName = this.constructor.name.toLowerCase()
 
     for (const [environmentName, environmentFlags] of environmentMap) {
       const validationResult = this.validConfig(environmentFlags, requiredFlags, environmentName)
@@ -162,6 +167,8 @@ export default abstract class ThemeCommand extends Command {
 
       // eslint-disable-next-line no-await-in-loop
       const session = await this.createSession(environmentFlags)
+
+      recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
       valid.push({environment: environmentName, flags: environmentFlags, session})
     }
