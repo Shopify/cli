@@ -331,7 +331,21 @@ async function outputCompletionMessage({
     }
 
     body.push("• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.")
-    customSections = [{title: 'Next steps', body}]
+    customSections = [
+      {title: 'Next steps', body},
+      {
+        title: 'Reference',
+        body: [
+          '• ',
+          {
+            link: {
+              label: 'Migrating from the Partner Dashboard',
+              url: 'https://shopify.dev/docs/apps/build/dev-dashboard/migrate-from-partners',
+            },
+          },
+        ],
+      },
+    ]
   }
 
   if (release) {
