@@ -35,6 +35,7 @@ const identityToken: IdentityToken = {
   expiresAt: expiredDate,
   scopes: data.scope.split(' '),
   userId: '1234-5678',
+  alias: '1234-5678',
 }
 
 vi.mock('../../../public/node/http.js')
