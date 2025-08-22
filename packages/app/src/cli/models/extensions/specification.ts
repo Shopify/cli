@@ -47,7 +47,7 @@ export interface Asset {
 }
 
 type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none'}
+  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation'}
   | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -62,7 +62,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   surface: string
   registrationLimit: number
   experience: ExtensionExperience
-  buildConfig: BuildConfig
+  buildSteps: BuildConfig[]
   dependency?: string
   graphQLType?: string
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
@@ -190,7 +190,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
+    buildSteps: spec.buildSteps ?? [],
   }
   const merged = {...defaults, ...spec}
 
