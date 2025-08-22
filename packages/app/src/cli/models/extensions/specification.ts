@@ -17,7 +17,6 @@ export type ExtensionFeature =
   | 'ui_preview'
   | 'function'
   | 'theme'
-  | 'bundling'
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
