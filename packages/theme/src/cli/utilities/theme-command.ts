@@ -15,7 +15,7 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {recordEvent} from '@shopify/cli-kit/node/themes/analytics'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import type {Writable} from 'stream'
 
 export interface FlagValues {

@@ -2,7 +2,14 @@ import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
-
+import {
+  recordTiming as storageRecordTiming,
+  recordError as storageRecordError,
+  recordRetry as storageRecordRetry,
+  recordEvent as storageRecordEvent,
+  compileData as storageCompileData,
+  RuntimeData,
+} from '../../private/node/analytics/storage.js'
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
@@ -193,4 +200,96 @@ function sanitizePayload<T>(payload: T): T {
   // Remove Theme Access passwords from the payload
   const sanitizedPayloadString = payloadString.replace(/shptka_\w*/g, '*****')
   return JSON.parse(sanitizedPayloadString)
+}
+
+/**
+ * Records timing data for performance monitoring. Call twice with the same
+ * event name to start and stop timing. First call starts the timer, second
+ * call stops it and records the duration.
+ *
+ * @example
+ * ```ts
+ *   recordTiming('theme-upload') // Start timing
+ *   // ... do work ...
+ *   recordTiming('theme-upload') // Stop timing and record duration
+ * ```
+ *
+ * @param eventName - Unique identifier for the timing event
+ */
+export function recordTiming(eventName: string): void {
+  storageRecordTiming(eventName)
+}
+
+/**
+ * Records error information for debugging and monitoring. Use this to track
+ * any exceptions or error conditions that occur during theme operations.
+ * Errors are automatically categorized for easier analysis.
+ *
+ * @example
+ * ```ts
+ *   try {
+ *     // ... risky operation ...
+ *   } catch (error) {
+ *     recordError(error)
+ *   }
+ * ```
+ *
+ * @param error - Error object or message to record
+ */
+export function recordError<T>(error: T): T {
+  storageRecordError(error)
+  return error
+}
+
+/**
+ * Records retry attempts for network operations. Use this to track when
+ * operations are retried due to transient failures. Helps identify
+ * problematic endpoints or operations that frequently fail.
+ *
+ * @example
+ * ```ts
+ *   recordRetry('https://api.shopify.com/themes', 'upload')
+ * ```
+ *
+ * @param url - The URL or endpoint being retried
+ * @param operation - Description of the operation being retried
+ */
+export function recordRetry(url: string, operation: string): void {
+  storageRecordRetry(url, operation)
+}
+
+/**
+ * Records custom events for tracking specific user actions or system events.
+ * Use this for important milestones, user interactions, or significant
+ * state changes in the application.
+ *
+ * @example
+ * ```ts
+ *   recordEvent('theme-dev-started')
+ *   recordEvent('file-watcher-connected')
+ * ```
+ *
+ * @param eventName - Descriptive name for the event
+ */
+export function recordEvent(eventName: string): void {
+  storageRecordEvent(eventName)
+}
+
+/**
+ * Compiles and returns all runtime analytics data collected during the session.
+ * This includes timing measurements, error records, retry attempts, and custom
+ * events. Use this to retrieve a complete snapshot of analytics data for
+ * reporting or debugging purposes.
+ *
+ * @example
+ * ```ts
+ *   const analyticsData = compileData()
+ *   console.log(`Recorded ${analyticsData.timings.length} timing events`)
+ *   console.log(`Recorded ${analyticsData.errors.length} errors`)
+ * ```
+ *
+ * @returns Object containing all collected analytics data including timings, errors, retries, and events
+ */
+export function compileData(): RuntimeData {
+  return storageCompileData()
 }
