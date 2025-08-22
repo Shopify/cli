@@ -31,7 +31,7 @@ describe('allLocalSpecs', () => {
 describe('createContractBasedModuleSpecification', () => {
   test('creates a specification with the given identifier', () => {
     // When
-    const got = createContractBasedModuleSpecification('test', ['bundling'])
+    const got = createContractBasedModuleSpecification('test', ['localization'])
 
     // Then
     expect(got).toMatchObject(
@@ -41,7 +41,7 @@ describe('createContractBasedModuleSpecification', () => {
         uidStrategy: 'uuid',
       }),
     )
-    expect(got.appModuleFeatures()).toEqual(['bundling'])
+    expect(got.appModuleFeatures()).toEqual(['localization'])
   })
 })
 
