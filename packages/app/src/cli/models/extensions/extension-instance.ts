@@ -15,6 +15,7 @@ import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_web
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
+  buildTaxCalculationExtension,
   buildThemeExtension,
   buildUIExtension,
   bundleFunctionExtension,
@@ -29,7 +30,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, moveFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -134,7 +135,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    const mode = this.specification.buildConfig.mode
+    const mode = this.specification.buildSteps[0]?.mode
     if (mode === 'copy_files' || mode === 'theme') {
       return ''
     } else if (mode === 'function') {
@@ -346,29 +347,21 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.specification.buildConfig.mode
+    const steps = this.specification.buildSteps
 
-    switch (mode) {
-      case 'theme':
-        await buildThemeExtension(this, options)
-        return bundleThemeExtension(this, options)
-      case 'function':
-        return buildFunctionExtension(this, options)
-      case 'ui':
-        return buildUIExtension(this, options)
-      case 'tax_calculation':
-        await touchFile(this.outputPath)
-        await writeFile(this.outputPath, '(()=>{})();')
-        break
-      case 'copy_files':
-        return copyFilesForExtension(
-          this,
-          options,
-          this.specification.buildConfig.filePatterns,
-          this.specification.buildConfig.ignoredFilePatterns,
-        )
-      case 'none':
-        break
+    for (const step of steps) {
+      switch (step.mode) {
+        case 'theme':
+          return buildThemeExtension(this, options)
+        case 'function':
+          return buildFunctionExtension(this, options)
+        case 'ui':
+          return buildUIExtension(this, options)
+        case 'tax_calculation':
+          return buildTaxCalculationExtension(this)
+        case 'copy_files':
+          return copyFilesForExtension(this, options, step.filePatterns, step.ignoredFilePatterns)
+      }
     }
   }
 
@@ -386,16 +379,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.specification.buildConfig.mode
+    const hasBuildSteps = this.specification.buildSteps.length > 0
 
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
+    } else if (hasBuildSteps) {
       outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
       if (await fileExists(defaultOutputPath)) {
         await copyFile(defaultOutputPath, this.outputPath)
 
-        if (buildMode === 'function') {
+        if (this.isFunctionExtension) {
           await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
       }
