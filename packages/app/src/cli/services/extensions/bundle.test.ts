@@ -1,4 +1,4 @@
-import {bundleExtension, bundleThemeExtension} from './bundle.js'
+import {bundleExtension, bundleThemeExtension, copyFilesForExtension} from './bundle.js'
 import {testApp, testUIExtension} from '../../models/app/app.test-data.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
@@ -274,6 +274,121 @@ describe('bundleExtension()', () => {
           .some((filename) => ignoredFiles.includes(filename))
         expect(hasFiles).toEqual(false)
       })
+    })
+  })
+})
+
+describe('copyFilesForExtension()', () => {
+  test('copies files matching include patterns to output directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const outputDir = joinPath(tmpDir, 'output')
+
+      // Create extension directory structure
+      await mkdir(joinPath(extensionDir, 'src'))
+      await mkdir(joinPath(extensionDir, 'assets'))
+      await mkdir(joinPath(extensionDir, 'assets', 'images'))
+
+      // Create test files
+      touchFileSync(joinPath(extensionDir, 'config.json'))
+      touchFileSync(joinPath(extensionDir, 'src', 'index.js'))
+      touchFileSync(joinPath(extensionDir, 'src', 'styles.css'))
+      touchFileSync(joinPath(extensionDir, 'assets', 'logo.png'))
+      touchFileSync(joinPath(extensionDir, 'assets', 'images', 'banner.jpg'))
+
+      const extension = {
+        directory: extensionDir,
+        outputPath: outputDir,
+        localIdentifier: 'test-extension',
+      } as ExtensionInstance
+
+      const stdout = {write: vi.fn()}
+      const stderr = {write: vi.fn()}
+      const options = {stdout, stderr} as any
+
+      // When - copy all .json and .png files
+      await copyFilesForExtension(extension, options, ['*.json', '*.png'], [])
+
+      // Then
+      const copiedFiles = await glob(joinPath(outputDir, '**/*'))
+      const relativeFiles = copiedFiles.map((file) => file.replace(`${outputDir}/`, ''))
+
+      expect(relativeFiles.sort()).toEqual(['assets/logo.png', 'config.json'])
+      expect(stdout.write).toHaveBeenCalledWith('Copying files for extension test-extension...')
+      expect(stdout.write).toHaveBeenCalledWith('test-extension successfully built')
+    })
+  })
+
+  test('respects ignore patterns when copying files', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const outputDir = joinPath(tmpDir, 'output')
+
+      // Create extension directory structure
+      await mkdir(joinPath(extensionDir, 'dist'))
+      await mkdir(joinPath(extensionDir, 'src'))
+      await mkdir(joinPath(extensionDir, 'test'))
+
+      // Create test files
+      touchFileSync(joinPath(extensionDir, 'README.md'))
+      touchFileSync(joinPath(extensionDir, 'package.json'))
+      touchFileSync(joinPath(extensionDir, 'dist', 'bundle.js'))
+      touchFileSync(joinPath(extensionDir, 'src', 'index.js'))
+      touchFileSync(joinPath(extensionDir, 'test', 'test.js'))
+      touchFileSync(joinPath(extensionDir, 'test', 'README.md'))
+
+      const extension = {
+        directory: extensionDir,
+        outputPath: outputDir,
+        localIdentifier: 'test-extension',
+      } as ExtensionInstance
+
+      const stdout = {write: vi.fn()}
+      const stderr = {write: vi.fn()}
+      const options = {stdout, stderr} as any
+
+      // When - copy all files but ignore test directory and dist files
+      await copyFilesForExtension(extension, options, ['*'], ['test/**', 'dist/**'])
+
+      // Then
+      const copiedFiles = await glob(joinPath(outputDir, '**/*'))
+      const relativeFiles = copiedFiles.map((file) => file.replace(`${outputDir}/`, ''))
+
+      expect(relativeFiles.sort()).toEqual(['README.md', 'package.json', 'src/index.js'])
+      // Verify ignored files were not copied
+      expect(relativeFiles).not.toContain('test/test.js')
+      expect(relativeFiles).not.toContain('test/README.md')
+      expect(relativeFiles).not.toContain('dist/bundle.js')
+    })
+  })
+
+  test('handles empty include patterns gracefully', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionDir = joinPath(tmpDir, 'extension')
+      const outputDir = joinPath(tmpDir, 'output')
+
+      await mkdir(extensionDir)
+      touchFileSync(joinPath(extensionDir, 'file.txt'))
+
+      const extension = {
+        directory: extensionDir,
+        outputPath: outputDir,
+        localIdentifier: 'test-extension',
+      } as ExtensionInstance
+
+      const stdout = {write: vi.fn()}
+      const stderr = {write: vi.fn()}
+      const options = {stdout, stderr} as any
+
+      // When - no include patterns provided
+      await copyFilesForExtension(extension, options, [], [])
+
+      // Then - no files should be copied
+      const copiedFiles = await glob(joinPath(outputDir, '**/*'))
+      expect(copiedFiles).toEqual([])
     })
   })
 })

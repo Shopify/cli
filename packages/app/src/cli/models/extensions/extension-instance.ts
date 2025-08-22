@@ -14,13 +14,12 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
-  buildFlowTemplateExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
   bundleFunctionExtension,
 } from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -349,12 +348,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return buildFunctionExtension(this, options)
       case 'ui':
         return buildUIExtension(this, options)
-      case 'flow':
-        return buildFlowTemplateExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
         break
+      case 'copy_files':
+        return copyFilesForExtension(
+          this,
+          options,
+          this.specification.buildConfig.filePatterns,
+          this.specification.buildConfig.ignoredFilePatterns,
+        )
       case 'none':
         break
     }
