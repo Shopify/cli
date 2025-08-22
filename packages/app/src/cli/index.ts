@@ -12,7 +12,7 @@ import FunctionBuild from './commands/app/function/build.js'
 import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
-import FunctionTestgen from './commands/app/function/testgen.js'
+import FunctionGenerateFixture from './commands/app/function/generate-fixture.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
 import FunctionWasmtest from './commands/app/function/wasmtest.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
@@ -30,7 +30,6 @@ import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
-import FunctionFixtureOverride from './commands/app/function/fixture-override.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -52,13 +51,12 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:env:show': EnvShow,
   'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
-  'app:function:fixture-override': FunctionFixtureOverride,
   'app:function:replay': FunctionReplay,
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
-  'app:function:testgen': FunctionTestgen,
+  'app:function:generate:fixture': FunctionGenerateFixture,
   'app:function:typegen': FunctionTypegen,
-  'app:function:wasmtest': FunctionWasmtest,
+  'app:function:test': FunctionWasmtest,
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,

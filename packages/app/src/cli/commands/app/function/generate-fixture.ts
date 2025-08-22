@@ -1,5 +1,5 @@
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
-import {testgen} from '../../../services/function/testgen.js'
+import {testgen} from '../../../services/function/generate-fixture.js'
 import {appFlags} from '../../../flags.js'
 import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
@@ -7,7 +7,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 
-export default class FunctionTestgen extends AppLinkedCommand {
+export default class FunctionGenerateFixture extends AppLinkedCommand {
   static summary = 'Generates test files from a function run log.'
 
   static descriptionWithMarkdown = `Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions act as an E2E test suite for the function.`
@@ -33,7 +33,7 @@ export default class FunctionTestgen extends AppLinkedCommand {
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
-    const {flags} = await this.parse(FunctionTestgen)
+    const {flags} = await this.parse(FunctionGenerateFixture)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }

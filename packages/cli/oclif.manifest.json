@@ -353,6 +353,13 @@
           "name": "reset",
           "type": "boolean"
         },
+        "skip-tests": {
+          "allowNo": false,
+          "description": "Skip running function tests before deployment.",
+          "env": "SHOPIFY_FLAG_SKIP_TESTS",
+          "name": "skip-tests",
+          "type": "boolean"
+        },
         "source-control-url": {
           "description": "URL associated with the new app version.",
           "env": "SHOPIFY_FLAG_SOURCE_CONTROL_URL",
@@ -923,78 +930,105 @@
       "strict": true,
       "summary": "Compile a function to wasm."
     },
-    "app:function:fixture-override": {
+    "app:function:generate:fixture": {
       "aliases": [
       ],
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Create a new fixture by overriding values from an existing one",
+      "description": "Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions act as an E2E test suite for the function.",
+      "descriptionWithMarkdown": "Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions act as an E2E test suite for the function.",
       "flags": {
+        "api-key": {
+          "description": "Application's API key",
+          "env": "SHOPIFY_FLAG_API_KEY",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "api-key",
+          "type": "option"
+        },
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
         "config": {
           "char": "c",
-          "description": "Path to JSON config file containing source, target, and overrides",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
           "hasDynamicHelp": false,
+          "hidden": false,
           "multiple": false,
           "name": "config",
           "type": "option"
         },
-        "help": {
-          "allowNo": false,
-          "char": "h",
-          "description": "Show CLI help.",
-          "name": "help",
-          "type": "boolean"
-        },
-        "interactive": {
-          "allowNo": false,
-          "char": "i",
-          "description": "Run in interactive mode to build overrides step by step",
-          "name": "interactive",
-          "type": "boolean"
-        },
-        "overrides": {
-          "char": "o",
-          "description": "JSON string of overrides (e.g., '{\"input.cart.lines.0.quantity\": 5}')",
+        "log": {
+          "char": "l",
+          "description": "Specifies a log identifier to generate test files from instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.",
+          "env": "SHOPIFY_FLAG_LOG",
           "hasDynamicHelp": false,
           "multiple": false,
-          "name": "overrides",
+          "name": "log",
           "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
         },
         "path": {
-          "char": "p",
-          "description": "Path to the function extension",
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
           "hasDynamicHelp": false,
+          "hidden": false,
           "multiple": false,
           "name": "path",
-          "required": true,
+          "noCacheDefault": true,
           "type": "option"
         },
-        "source": {
-          "char": "s",
-          "description": "Source fixture name (without .json extension)",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "source",
-          "type": "option"
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
         },
-        "target": {
-          "char": "t",
-          "description": "Target fixture name (without .json extension)",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "target",
-          "type": "option"
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
-      "id": "app:function:fixture-override",
+      "id": "app:function:generate:fixture",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": true
+      "strict": true,
+      "summary": "Generates test files from a function run log."
     },
     "app:function:replay": {
       "aliases": [
@@ -1320,186 +1354,7 @@
       "strict": true,
       "summary": "Fetch the latest GraphQL schema for a function."
     },
-    "app:function:testgen": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions act as an E2E test suite for the function.",
-      "descriptionWithMarkdown": "Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions act as an E2E test suite for the function.",
-      "flags": {
-        "api-key": {
-          "description": "Application's API key",
-          "env": "SHOPIFY_FLAG_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "log": {
-          "char": "l",
-          "description": "Specifies a log identifier to generate test files from instead of selecting from a list. The identifier is provided in the output of `shopify app dev` and is the suffix of the log file name.",
-          "env": "SHOPIFY_FLAG_LOG",
-          "hasDynamicHelp": false,
-          "multiple": false,
-          "name": "log",
-          "type": "option"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your function directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "reset": {
-          "allowNo": false,
-          "description": "Reset all your settings.",
-          "env": "SHOPIFY_FLAG_RESET",
-          "exclusive": [
-            "config"
-          ],
-          "hidden": false,
-          "name": "reset",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
-      "id": "app:function:testgen",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Generates test files from a function run log."
-    },
-    "app:function:typegen": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
-      "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
-      "flags": {
-        "client-id": {
-          "description": "The Client ID of your app.",
-          "env": "SHOPIFY_FLAG_CLIENT_ID",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "client-id",
-          "type": "option"
-        },
-        "config": {
-          "char": "c",
-          "description": "The name of the app configuration.",
-          "env": "SHOPIFY_FLAG_APP_CONFIG",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "config",
-          "type": "option"
-        },
-        "no-color": {
-          "allowNo": false,
-          "description": "Disable color output.",
-          "env": "SHOPIFY_FLAG_NO_COLOR",
-          "hidden": false,
-          "name": "no-color",
-          "type": "boolean"
-        },
-        "path": {
-          "description": "The path to your function directory.",
-          "env": "SHOPIFY_FLAG_PATH",
-          "hasDynamicHelp": false,
-          "hidden": false,
-          "multiple": false,
-          "name": "path",
-          "noCacheDefault": true,
-          "type": "option"
-        },
-        "reset": {
-          "allowNo": false,
-          "description": "Reset all your settings.",
-          "env": "SHOPIFY_FLAG_RESET",
-          "exclusive": [
-            "config"
-          ],
-          "hidden": false,
-          "name": "reset",
-          "type": "boolean"
-        },
-        "verbose": {
-          "allowNo": false,
-          "description": "Increase the verbosity of the output.",
-          "env": "SHOPIFY_FLAG_VERBOSE",
-          "hidden": false,
-          "name": "verbose",
-          "type": "boolean"
-        }
-      },
-      "hasDynamicHelp": false,
-      "hiddenAliases": [
-      ],
-      "id": "app:function:typegen",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true,
-      "summary": "Generate GraphQL types for a JavaScript function."
-    },
-    "app:function:wasmtest": {
+    "app:function:test": {
       "aliases": [
       ],
       "args": {
@@ -1590,12 +1445,91 @@
       "hasDynamicHelp": false,
       "hiddenAliases": [
       ],
-      "id": "app:function:wasmtest",
+      "id": "app:function:test",
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
       "summary": "Builds the function and runs all tests in the test folder."
+    },
+    "app:function:typegen": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/app",
+      "description": "Creates test fixtures based on your function's execution logs for testing and validation.",
+      "descriptionWithMarkdown": "Creates test fixtures based on your function's execution logs for testing and validation.",
+      "flags": {
+        "client-id": {
+          "description": "The Client ID of your app.",
+          "env": "SHOPIFY_FLAG_CLIENT_ID",
+          "exclusive": [
+            "config"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "client-id",
+          "type": "option"
+        },
+        "config": {
+          "char": "c",
+          "description": "The name of the app configuration.",
+          "env": "SHOPIFY_FLAG_APP_CONFIG",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "config",
+          "type": "option"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path to your function directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "path",
+          "noCacheDefault": true,
+          "type": "option"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset all your settings.",
+          "env": "SHOPIFY_FLAG_RESET",
+          "exclusive": [
+            "config"
+          ],
+          "hidden": false,
+          "name": "reset",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "app:function:typegen",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Generate test fixtures for a function."
     },
     "app:generate:extension": {
       "aliases": [

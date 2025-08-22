@@ -13,7 +13,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 import {readFileSync, writeFileSync, existsSync} from 'fs'
 import {createHash} from 'crypto'
 
-export default class FunctionWasmtest extends AppLinkedCommand {
+export default class FunctionTest extends AppLinkedCommand {
   static summary = 'Builds the function and runs all tests in the test folder.'
 
   static descriptionWithMarkdown = `Builds the function to WebAssembly and then automatically runs tests if a \`tests\` folder exists. This is useful for ensuring your function works correctly before deployment.
@@ -51,7 +51,7 @@ If no custom test command is found, the command will automatically discover and 
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
-    const {flags} = await this.parse(FunctionWasmtest)
+    const {flags} = await this.parse(FunctionTest)
     if (flags['api-key']) {
       await showApiKeyDeprecationWarning()
     }

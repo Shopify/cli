@@ -1,4 +1,4 @@
-import {testgen} from './testgen.js'
+import {testgen} from './generate-fixture.js'
 import {testAppLinked} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'

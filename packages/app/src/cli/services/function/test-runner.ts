@@ -128,7 +128,7 @@ export async function runFunctionTests(
         if (testFiles.length > 0) {
           await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
             options.stdout.write(`📁 Found ${testFiles.length} test file(s): ${testFiles.join(', ')}\n`)
-            options.stdout.write(`🚀 Running: npx vitest run tests\n`)
+            options.stdout.write(`🚀 Running: npx vitest run (from tests directory)\n`)
           })
 
           const startTime = Date.now()
@@ -152,8 +152,8 @@ export async function runFunctionTests(
           })
 
           try {
-            await cliKitExec('npx', ['vitest', 'run', 'tests'], {
-              cwd: extension.directory,
+            await cliKitExec('npx', ['vitest', 'run'], {
+              cwd: testsDir, // Use tests directory so Vitest can find package.json and node_modules
               stdout: customStdout,
               stderr: customStderr,
               signal: options.signal,

@@ -53,6 +53,9 @@ export interface DeployOptions {
 
   /** If true, skip building any elements of the app that require building */
   skipBuild: boolean
+
+  /** If true, skip running function tests before deployment */
+  skipTests: boolean
 }
 
 interface TasksContext {
@@ -222,12 +225,12 @@ export async function deploy(options: DeployOptions) {
     try {
       await runTestsForExtensions(app)
     } catch (error) {
-      if (options.force) {
-        outputInfo('⚠️  Tests failed, but continuing with deployment due to --force flag')
+      if (options.skipTests) {
+        outputInfo('⚠️  Tests failed, but continuing with deployment due to --skip-tests flag')
       } else {
         throw new AbortError('Deployment failed because function tests failed', [
           'Please fix the failing tests before deploying, or use ',
-          {command: '--force'},
+          {command: '--skip-tests'},
           ' to deploy anyway.',
           '\n\nRun ',
           {command: 'shopify app function test'},
