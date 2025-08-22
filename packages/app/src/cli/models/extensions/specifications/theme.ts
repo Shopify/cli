@@ -1,6 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
+import {themeExtensionFiles, themeIgnoredFilePatterns} from '../../../utilities/extensions/theme.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {fileSize} from '@shopify/cli-kit/node/fs'
 import {dirname, relativePath} from '@shopify/cli-kit/node/path'
@@ -12,8 +12,11 @@ const themeSpec = createExtensionSpecification({
   schema: BaseSchema,
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
-  appModuleFeatures: (_) => {
-    return ['bundling', 'theme']
+  appModuleFeatures: (_) => [],
+  buildConfig: {
+    buildMode: 'copy_files',
+    filePatterns: ['*/*'],
+    ignoredFilePatterns: themeIgnoredFilePatterns,
   },
   deployConfig: async () => {
     return {theme_extension: {files: {}}}

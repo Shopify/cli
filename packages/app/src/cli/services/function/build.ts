@@ -302,7 +302,7 @@ export async function runJavy(
 }
 
 export async function installJavy(app: AppInterface) {
-  const extensions = app.allExtensions.filter((ext) => ext.features.includes('function') && ext.isJavaScript)
+  const extensions = app.allExtensions.filter((ext) => ext.isFunctionExtension && ext.isJavaScript)
 
   // Get the dependencies for each extension
   const depsPromises = extensions.map((ext) => {

@@ -19,7 +19,7 @@ interface FunctionRunnerOptions {
 }
 
 async function getFunctionRunnerBinary(ext: ExtensionInstance<FunctionConfigType>) {
-  if (ext.features.includes('function') && ext.isJavaScript) {
+  if (ext.isFunctionExtension && ext.isJavaScript) {
     const deps = await validateShopifyFunctionPackageVersion(ext)
     return functionRunnerBinary(deps.functionRunner)
   }

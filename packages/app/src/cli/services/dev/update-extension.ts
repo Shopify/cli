@@ -42,7 +42,7 @@ export async function updateExtensionDraft({
 }: UpdateExtensionDraftOptions) {
   let encodedFile: string | undefined
   const outputPath = extension.getOutputPathForDirectory(bundlePath)
-  if (extension.features.includes('esbuild')) {
+  if (extension.isESBuildExtension) {
     const content = await readFile(outputPath)
     if (!content) return
     encodedFile = Buffer.from(content).toString('base64')

@@ -201,7 +201,8 @@ export async function deploy(options: DeployOptions) {
   let uploadExtensionsBundleResult!: UploadExtensionsBundleOutput
 
   try {
-    const bundle = app.allExtensions.some((ext) => ext.features.includes('bundling'))
+    const bundle = true
+    // app.allExtensions.some((ext) => ext.features.includes('bundling'))
     let bundlePath: string | undefined
 
     if (bundle) {

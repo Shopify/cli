@@ -3,7 +3,7 @@ import {glob, createFileReadStream, fileExistsSync} from '@shopify/cli-kit/node/
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {createInterface} from 'readline'
 
-const ignoredFilePatterns = [
+export const themeIgnoredFilePatterns = [
   '.git',
   '.hg',
   '.bzr',
@@ -25,7 +25,7 @@ const ignoredFilePatterns = [
 export async function themeExtensionFiles(themeExtension: ExtensionInstance): Promise<string[]> {
   const filename = '.shopifyignore'
   const filepath = joinPath(themeExtension.directory, filename)
-  const ignore = ignoredFilePatterns.map((pattern) => joinPath('*', pattern))
+  const ignore = themeIgnoredFilePatterns.map((pattern) => joinPath('*', pattern))
 
   if (fileExistsSync(filepath)) {
     const patterns = await parseIgnoreFile(filepath)

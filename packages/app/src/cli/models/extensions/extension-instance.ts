@@ -14,13 +14,12 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
-  buildFlowTemplateExtension,
+  buildCopyFilesExtension,
   buildFunctionExtension,
-  buildThemeExtension,
   buildUIExtension,
   bundleFunctionExtension,
 } from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {bundleCopyFilesExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -44,8 +43,6 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
 ]
-
-type BuildMode = 'theme' | 'function' | 'ui' | 'flow' | 'tax_calculation' | 'none'
 
 /**
  * Class that represents an instance of a local extension
@@ -105,15 +102,15 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isThemeExtension() {
-    return this.features.includes('theme')
+    return this.specification.identifier === 'theme'
   }
 
   get isFunctionExtension() {
-    return this.features.includes('function')
+    return this.specification.buildConfig?.buildMode === 'function'
   }
 
   get isESBuildExtension() {
-    return this.features.includes('esbuild')
+    return this.specification.buildConfig?.buildMode === 'esbuild'
   }
 
   get isSourceMapGeneratingExtension() {
@@ -159,7 +156,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.uid = this.buildUIDFromStrategy()
     this.devUUID = `dev-${this.uid}`
 
-    if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
+    if (this.isESBuildExtension || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
     }
 
@@ -342,20 +339,26 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.buildMode(options)
-
-    switch (mode) {
-      case 'theme':
-        return buildThemeExtension(this, options)
+    switch (this.specification.buildConfig.buildMode) {
+      // case 'theme':
+      //   return buildThemeExtension(this, options)
       case 'function':
         return buildFunctionExtension(this, options)
-      case 'ui':
+      case 'esbuild':
         return buildUIExtension(this, options)
-      case 'flow':
-        return buildFlowTemplateExtension(this, options)
+      // case 'flow':
+      //   return buildFlowTemplateExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
+        break
+      case 'copy_files':
+        await buildCopyFilesExtension(
+          this,
+          options,
+          this.specification.buildConfig.filePatterns ?? [],
+          this.specification.buildConfig.ignoredFilePatterns ?? [],
+        )
         break
       case 'none':
         break
@@ -363,39 +366,36 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    if (this.features.includes('bundling')) {
-      // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    }
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
 
+    console.log('buildForBundle', this.specification.buildConfig.buildMode)
     await this.build(options)
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    }
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
-  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
+  async copyIntoBundle(_options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
     const defaultOutputPath = this.outputPath
 
-    if (this.features.includes('bundling')) {
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
-    }
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.buildMode(options)
+    const buildMode = this.specification.buildConfig.buildMode
 
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
-      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
-      if (await fileExists(defaultOutputPath)) {
+    if (buildMode === 'none') return
+
+    outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
+    if (await fileExists(defaultOutputPath)) {
+      if (buildMode === 'function') {
+        await bundleFunctionExtension(this.outputPath, this.outputPath)
+      } else if (buildMode === 'copy_files') {
+        await bundleCopyFilesExtension(
+          this,
+          this.specification.buildConfig.filePatterns ?? [],
+          this.specification.buildConfig.ignoredFilePatterns ?? [],
+        )
+      } else {
         await copyFile(defaultOutputPath, this.outputPath)
-
-        if (buildMode === 'function') {
-          await bundleFunctionExtension(this.outputPath, this.outputPath)
-        }
       }
     }
   }
@@ -464,24 +464,24 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
   }
 
-  private buildMode(options: ExtensionBuildOptions): BuildMode {
-    if (this.isThemeExtension) {
-      return 'theme'
-    } else if (this.isFunctionExtension) {
-      return 'function'
-    } else if (this.features.includes('esbuild')) {
-      return 'ui'
-    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
-      return 'flow'
-    }
+  // private buildMode(options: ExtensionBuildOptions): BuildMode {
+  //   if (this.isThemeExtension) {
+  //     return 'theme'
+  //   } else if (this.isFunctionExtension) {
+  //     return 'function'
+  //   } else if (this.features.includes('esbuild')) {
+  //     return 'ui'
+  //   } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
+  //     return 'flow'
+  //   }
 
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    if (this.type === 'tax_calculation') {
-      return 'tax_calculation'
-    }
+  //   // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
+  //   if (this.type === 'tax_calculation') {
+  //     return 'tax_calculation'
+  //   }
 
-    return 'none'
-  }
+  //   return 'none'
+  // }
 
   private buildHandle() {
     switch (this.specification.uidStrategy) {
