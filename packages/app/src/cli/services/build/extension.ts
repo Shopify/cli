@@ -1,6 +1,6 @@
 import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
-import {bundleExtension, bundleFlowTemplateExtension} from '../extensions/bundle.js'
+import {bundleExtension, bundleFlowTemplateExtension, bundleChannelSpecificationExtension} from '../extensions/bundle.js'
 import {buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -77,6 +77,15 @@ export async function buildFlowTemplateExtension(
 ): Promise<void> {
   options.stdout.write(`Building Flow Template extension ${extension.localIdentifier}...`)
   await bundleFlowTemplateExtension(extension)
+  options.stdout.write(`${extension.localIdentifier} successfully built`)
+}
+
+export async function buildChannelSpecificationExtension(
+  extension: ExtensionInstance,
+  options: ExtensionBuildOptions,
+): Promise<void> {
+  options.stdout.write(`Building Channel Specification extension ${extension.localIdentifier}...`)
+  await bundleChannelSpecificationExtension(extension)
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
