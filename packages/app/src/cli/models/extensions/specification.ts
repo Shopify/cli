@@ -15,14 +15,14 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type ExtensionFeature =
   | 'ui_preview'
-  | 'function'
-  | 'theme'
-  | 'bundling'
   | 'cart_url'
-  | 'esbuild'
   | 'single_js_entry_path'
   | 'localization'
   | 'generates_source_maps'
+
+type BuildConfig =
+  | {buildMode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
+  | {buildMode: 'function' | 'esbuild' | 'tax_calculation' | 'none'}
 
 export interface TransformationConfig {
   [key: string]: string
@@ -62,6 +62,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   experience: ExtensionExperience
   dependency?: string
   graphQLType?: string
+  buildConfig: BuildConfig
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,
@@ -187,6 +188,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
+    buildConfig: spec.buildConfig ?? {buildMode: 'none'},
   }
   const merged = {...defaults, ...spec}
 

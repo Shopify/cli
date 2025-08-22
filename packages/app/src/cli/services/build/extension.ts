@@ -1,6 +1,5 @@
-import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
-import {bundleExtension, bundleFlowTemplateExtension} from '../extensions/bundle.js'
+import {bundleCopyFilesExtension, bundleExtension} from '../extensions/bundle.js'
 import {buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -56,27 +55,38 @@ export interface ExtensionBuildOptions {
 }
 
 /**
- * It builds the theme extensions.
- * @param options - Build options.
- */
-export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
-  if (options.environment === 'development') return
+//  * It builds the theme extensions.
+//  * @param options - Build options.
+//  */
+// export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
+//   if (options.environment === 'development') return
 
-  options.stdout.write(`Running theme check on your Theme app extension...`)
-  const offenses = await runThemeCheck(extension.directory)
-  options.stdout.write(offenses)
-}
+//   options.stdout.write(`Running theme check on your Theme app extension...`)
+//   const offenses = await runThemeCheck(extension.directory)
+//   options.stdout.write(offenses)
+// }
 
-/**
- * It builds the flow template extensions.
- * @param options - Build options.
- */
-export async function buildFlowTemplateExtension(
+// /**
+//  * It builds the flow template extensions.
+//  * @param options - Build options.
+//  */
+// export async function buildFlowTemplateExtension(
+//   extension: ExtensionInstance,
+//   options: ExtensionBuildOptions,
+// ): Promise<void> {
+//   options.stdout.write(`Building Flow Template extension ${extension.localIdentifier}...`)
+//   await bundleFlowTemplateExtension(extension)
+//   options.stdout.write(`${extension.localIdentifier} successfully built`)
+// }
+
+export async function buildCopyFilesExtension(
   extension: ExtensionInstance,
   options: ExtensionBuildOptions,
+  filePatterns: string[],
+  ignoredFilePatterns: string[],
 ): Promise<void> {
-  options.stdout.write(`Building Flow Template extension ${extension.localIdentifier}...`)
-  await bundleFlowTemplateExtension(extension)
+  options.stdout.write(`Copying files for extension ${extension.localIdentifier}...`)
+  await bundleCopyFilesExtension(extension, filePatterns, ignoredFilePatterns)
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
