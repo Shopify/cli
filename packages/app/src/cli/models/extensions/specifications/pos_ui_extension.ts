@@ -10,7 +10,7 @@ const posUISpec = createExtensionSpecification({
   identifier: 'pos_ui_extension',
   dependency,
   schema: BaseSchema.extend({name: zod.string()}),
-  appModuleFeatures: (_) => ['ui_preview', 'bundling', 'esbuild', 'single_js_entry_path'],
+  appModuleFeatures: (_) => ['ui_preview', 'esbuild', 'single_js_entry_path'],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

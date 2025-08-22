@@ -13,7 +13,7 @@ const themeSpec = createExtensionSpecification({
   partnersWebIdentifier: 'theme_app_extension',
   graphQLType: 'theme_app_extension',
   appModuleFeatures: (_) => {
-    return ['bundling', 'theme']
+    return ['theme']
   },
   deployConfig: async () => {
     return {theme_extension: {files: {}}}
