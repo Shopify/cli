@@ -1,10 +1,12 @@
-import {ensureThemeStore} from '../../utilities/theme-store.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
-import {publish, renderArgumentsWarning} from '../../services/publish.js'
+import {publish} from '../../services/publish.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {OutputFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+
+type PublishFlags = OutputFlags<typeof Publish.flags>
 
 export default class Publish extends ThemeCommand {
   static summary = 'Set a remote theme as the live theme.'
@@ -18,9 +20,6 @@ You can run this command only in a directory that matches the [default Shopify t
 If you want to publish your local theme, then you need to run \`shopify theme push\` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the \`--force\` flag.`
 
   static description = this.descriptionWithoutMarkdown()
-
-  // Accept any number of args without naming them
-  static strict = false
 
   static flags = {
     ...globalFlags,
@@ -37,16 +36,9 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags, argv} = await this.parse(Publish)
-    const store = await ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
-    const themeId = flags.theme || argv[0]
+  static multiEnvironmentsFlags = ['store', 'password', 'theme']
 
-    if (argv.length > 0 && typeof argv[0] === 'string') {
-      renderArgumentsWarning(argv[0])
-    }
-
-    await publish(adminSession, themeId, flags)
+  async command(flags: PublishFlags, adminSession: AdminSession, multiEnvironment?: boolean) {
+    await publish(adminSession, flags, multiEnvironment)
   }
 }
