@@ -47,7 +47,7 @@ export interface Asset {
 }
 
 type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'flow' | 'function' | 'tax_calculation' | 'none'}
+  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none'}
   | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
