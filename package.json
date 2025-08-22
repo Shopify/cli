@@ -24,7 +24,6 @@
     "refresh-code-documentation": "nx run-many --target=refresh-code-documentation --all --skip-nx-cache",
     "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
-    "refresh-templates": "nx run-many --target=refresh-templates --all --skip-nx-cache",
     "release": "./bin/release",
     "post-release": "./bin/post-release",
     "shopify:run": "node packages/cli/bin/dev.js",
