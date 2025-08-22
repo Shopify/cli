@@ -4,6 +4,7 @@ import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {allExtensionTypes, filterOutImportedExtensions, importAllExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
+import {runTestsForExtensions} from './function/test-runner.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -52,6 +53,9 @@ export interface DeployOptions {
 
   /** If true, skip building any elements of the app that require building */
   skipBuild: boolean
+
+  /** If true, skip running function tests before deployment */
+  skipTests: boolean
 }
 
 interface TasksContext {
@@ -219,6 +223,23 @@ export async function deploy(options: DeployOptions) {
       skipBuild: options.skipBuild,
       isDevDashboardApp: developerPlatformClient.supportsAtomicDeployments,
     })
+
+    try {
+      await runTestsForExtensions(app)
+    } catch (error) {
+      if (options.skipTests) {
+        outputInfo('⚠️  Tests failed, but continuing with deployment due to --skip-tests flag')
+      } else {
+        throw new AbortError('Deployment failed because function tests failed', [
+          'Please fix the failing tests before deploying, or use ',
+          {command: '--skip-tests'},
+          ' to deploy anyway.',
+          '\n\nRun ',
+          {command: 'shopify app function test'},
+          ' to see test results locally.',
+        ])
+      }
+    }
 
     let uploadTaskTitle
 
