@@ -15,6 +15,7 @@ import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_web
 import {
   ExtensionBuildOptions,
   buildFlowTemplateExtension,
+  buildChannelSpecificationExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
@@ -45,7 +46,7 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhooksSpecIdentifier,
 ]
 
-type BuildMode = 'theme' | 'function' | 'ui' | 'flow' | 'tax_calculation' | 'none'
+type BuildMode = 'theme' | 'function' | 'ui' | 'flow' | 'channel' | 'tax_calculation' | 'none'
 
 /**
  * Class that represents an instance of a local extension
@@ -353,6 +354,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return buildUIExtension(this, options)
       case 'flow':
         return buildFlowTemplateExtension(this, options)
+      case 'channel':
+        return buildChannelSpecificationExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
@@ -473,6 +476,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return 'ui'
     } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
       return 'flow'
+    } else if (this.specification.identifier === 'channel_specification' && options.environment === 'production') {
+      return 'channel'
     }
 
     // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
