@@ -1,5 +1,18 @@
 # @shopify/theme
 
+## 3.85.0
+
+### Minor Changes
+
+- 7f54a36: Ensure commands run in multiple environments use the correct store URL
+- 84a7b10: Remove deprecated positional arguments from theme delete command
+- 9966ba6: Allow commands run in multiple environments to act on the same store URL
+- 1ee6a38: Allow theme delete command to be called with multiple environments
+
+### Patch Changes
+
+- @shopify/cli-kit@3.85.0
+
 ## 3.84.0
 
 ### Minor Changes
