@@ -342,7 +342,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.buildMode(options)
+    const mode = this.buildMode(options.environment)
 
     switch (mode) {
       case 'theme':
@@ -363,10 +363,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    if (this.features.includes('bundling')) {
-      // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    }
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
 
     await this.build(options)
     if (this.isThemeExtension) {
@@ -380,11 +377,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
     const defaultOutputPath = this.outputPath
 
-    if (this.features.includes('bundling')) {
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
-    }
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.buildMode(options)
+    const buildMode = this.buildMode(options.environment)
 
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
@@ -464,14 +459,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
   }
 
-  private buildMode(options: ExtensionBuildOptions): BuildMode {
+  buildMode(environment: 'production' | 'development'): BuildMode {
     if (this.isThemeExtension) {
       return 'theme'
     } else if (this.isFunctionExtension) {
       return 'function'
     } else if (this.features.includes('esbuild')) {
       return 'ui'
-    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
+    } else if (this.specification.identifier === 'flow_template' && environment === 'production') {
       return 'flow'
     }
 
