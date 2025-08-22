@@ -1,5 +1,6 @@
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {createError as createH3Error, type H3Error} from 'h3'
 
@@ -9,6 +10,8 @@ import {createError as createH3Error, type H3Error} from 'h3'
  * @param error - The error to render.
  */
 export function renderThrownError(headline: string, error: Error | AbortError) {
+  recordError(error)
+
   if (error instanceof AbortError) {
     error.message = `${headline}\n${error.message}`
     renderFatalError(error)

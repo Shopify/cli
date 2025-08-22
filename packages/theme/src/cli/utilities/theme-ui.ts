@@ -1,3 +1,4 @@
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {Task, renderConfirmationPrompt, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -30,9 +31,13 @@ export async function ensureDirectoryConfirmed(
     return true
   }
 
-  return renderConfirmationPrompt({
+  const confirm = await renderConfirmationPrompt({
     message: 'Do you want to proceed?',
   })
+
+  recordEvent(`theme-service:confirm-directory:${confirm}`)
+
+  return confirm
 }
 
 // This prevents the progress bar from polluting stdout (important for pipe operations)
