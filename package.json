@@ -76,7 +76,7 @@
     "pin-github-action": "^3.3.1",
     "react": "17.0.2",
     "rimraf": "^3.0.2",
-    "tmp": "^0.2.1",
+    "tmp": "^0.2.4",
     "ts-node": "^10.9.1",
     "typescript": "5.8.3",
     "vitest": "^3.1.4",
