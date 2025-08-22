@@ -83,6 +83,7 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
+  buildConfig: {mode: 'ui'},
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'esbuild', 'generates_source_maps']
     const needsCart =

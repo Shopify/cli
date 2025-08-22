@@ -49,6 +49,7 @@ const flowTemplateSpec = createExtensionSpecification({
   identifier: 'flow_template',
   schema: FlowTemplateExtensionSchema,
   appModuleFeatures: (_) => ['ui_preview'],
+  buildConfig: {mode: 'flow'},
   deployConfig: async (config, extensionPath) => {
     return {
       template_handle: config.handle,
