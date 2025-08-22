@@ -14,7 +14,6 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
-  buildFlowTemplateExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
@@ -349,8 +348,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return buildFunctionExtension(this, options)
       case 'ui':
         return buildUIExtension(this, options)
-      case 'flow':
-        return buildFlowTemplateExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')

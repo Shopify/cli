@@ -2,7 +2,6 @@ import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
-import {flowTemplateExtensionFiles} from '../../utilities/extensions/flow-template.js'
 import {context as esContext, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {copyFile, glob} from '@shopify/cli-kit/node/fs'
@@ -73,18 +72,6 @@ export async function bundleThemeExtension(
     files.map(function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
       const outputFile = joinPath(extension.outputPath, relativePathName)
-      return copyFile(filepath, outputFile)
-    }),
-  )
-}
-
-export async function bundleFlowTemplateExtension(extension: ExtensionInstance): Promise<void> {
-  const files = await flowTemplateExtensionFiles(extension)
-  await Promise.all(
-    files.map(function (filepath) {
-      const relativePathName = relativePath(extension.directory, filepath)
-      const outputFile = joinPath(extension.outputPath, relativePathName)
-      if (filepath === outputFile) return
       return copyFile(filepath, outputFile)
     }),
   )
