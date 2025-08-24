@@ -4,7 +4,7 @@ import metadata from '../metadata.js'
 import {useThemeStoreContext} from '../services/local-storage.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
-import Command, {ArgOutput, FlagOutput} from '@shopify/cli-kit/node/base-command'
+import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {
@@ -102,7 +102,15 @@ export default abstract class ThemeCommand extends Command {
       return
     }
 
-    const environmentsMap = await this.loadEnvironments(environments, flags)
+    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
+    if ('path' in flagsWithoutDefaults) {
+      renderWarning({
+        body: "Provide each environment's command path in your shopify.theme.toml file.",
+      })
+      return
+    }
+
+    const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
 
     const commandAllowsForceFlag = 'force' in klass.flags
@@ -118,12 +126,14 @@ export default abstract class ThemeCommand extends Command {
   /**
    * Create a map of environments from the shopify.theme.toml file
    * @param environments - Names of environments to load
-   * @param flags - Flags provided via the CLI
+   * @param flags - Flags provided via the CLI or by default
+   * @param flagsWithoutDefaults - Flags provided via the CLI
    * @returns The map of environments
    */
   private async loadEnvironments(
     environments: EnvironmentName[],
     flags: FlagValues,
+    flagsWithoutDefaults: FlagValues,
   ): Promise<Map<EnvironmentName, FlagValues>> {
     const environmentMap = new Map<EnvironmentName, FlagValues>()
 
@@ -135,8 +145,9 @@ export default abstract class ThemeCommand extends Command {
       })
 
       environmentMap.set(environmentName, {
-        ...environmentFlags,
         ...flags,
+        ...environmentFlags,
+        ...flagsWithoutDefaults,
         environment: [environmentName],
       })
     }
