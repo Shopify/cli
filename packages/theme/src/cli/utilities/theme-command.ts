@@ -102,7 +102,15 @@ export default abstract class ThemeCommand extends Command {
       return
     }
 
-    const environmentsMap = await this.loadEnvironments(environments, flags, klass)
+    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
+    if ('path' in flagsWithoutDefaults) {
+      renderWarning({
+        body: "Provide each environment's command path in your shopify.theme.toml file.",
+      })
+      return
+    }
+
+    const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
 
     const commandAllowsForceFlag = 'force' in klass.flags
@@ -119,16 +127,14 @@ export default abstract class ThemeCommand extends Command {
    * Create a map of environments from the shopify.theme.toml file
    * @param environments - Names of environments to load
    * @param flags - Flags provided via the CLI or by default
-   * @param klass - The command class
+   * @param flagsWithoutDefaults - Flags provided via the CLI
    * @returns The map of environments
    */
   private async loadEnvironments(
     environments: EnvironmentName[],
     flags: FlagValues,
-    klass: Input<FlagOutput, FlagOutput, ArgOutput>,
+    flagsWithoutDefaults: FlagValues,
   ): Promise<Map<EnvironmentName, FlagValues>> {
-    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass))
-
     const environmentMap = new Map<EnvironmentName, FlagValues>()
 
     for (const environmentName of environments) {
