@@ -16,6 +16,8 @@ import {
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import type {Writable} from 'stream'
 
 export interface FlagValues {
@@ -103,7 +105,13 @@ export default abstract class ThemeCommand extends Command {
       return
     }
 
-    const environmentsMap = await this.loadEnvironments(environments, flags, klass)
+    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass), this.argv)
+    if ('path' in flagsWithoutDefaults) {
+      this.errorOnGlobalPath()
+      return
+    }
+
+    const environmentsMap = await this.loadEnvironments(environments, flags, flagsWithoutDefaults)
     const validationResults = await this.validateEnvironments(environmentsMap, requiredFlags)
 
     const commandAllowsForceFlag = 'force' in klass.flags
@@ -120,16 +128,14 @@ export default abstract class ThemeCommand extends Command {
    * Create a map of environments from the shopify.theme.toml file
    * @param environments - Names of environments to load
    * @param flags - Flags provided via the CLI or by default
-   * @param klass - The command class
+   * @param flagsWithoutDefaults - Flags provided via the CLI
    * @returns The map of environments
    */
   private async loadEnvironments(
     environments: EnvironmentName[],
     flags: FlagValues,
-    klass: Input<FlagOutput, FlagOutput, ArgOutput>,
+    flagsWithoutDefaults: FlagValues,
   ): Promise<Map<EnvironmentName, FlagValues>> {
-    const {flags: flagsWithoutDefaults} = await this.parse(noDefaultsOptions(klass))
-
     const environmentMap = new Map<EnvironmentName, FlagValues>()
 
     for (const environmentName of environments) {
@@ -326,6 +332,27 @@ export default abstract class ThemeCommand extends Command {
     }
 
     return true
+  }
+
+  /**
+   * Error if the --path flag is provided via CLI when running a multi environment command
+   * Commands that act on local files require each environment to specify its own path in the shopify.theme.toml
+   */
+  private errorOnGlobalPath() {
+    const tomlPath = joinPath(cwd(), 'shopify.theme.toml')
+    const tomlInCwd = fileExistsSync(tomlPath)
+
+    renderError({
+      body: [
+        "Can't use `--path` flag with multiple environments.",
+        ...(tomlInCwd
+          ? ["Configure each environment's theme path in your shopify.theme.toml file instead."]
+          : [
+              'Run this command from the directory containing shopify.theme.toml.',
+              'No shopify.theme.toml found in current directory.',
+            ]),
+      ],
+    })
   }
 
   private async logAnalyticsData(session: AdminSession): Promise<void> {

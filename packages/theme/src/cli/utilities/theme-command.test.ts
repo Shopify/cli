@@ -5,12 +5,14 @@ import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {renderConcurrent, renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./theme-store.js')
+vi.mock('@shopify/cli-kit/node/fs')
 
 const CommandConfig = new Config({root: __dirname})
 
@@ -446,6 +448,61 @@ describe('ThemeCommand', () => {
       expect(renderError).toHaveBeenCalledWith(
         expect.objectContaining({
           body: ['Environment command-error failed: \n\nMocking a command error'],
+        }),
+      )
+    })
+
+    test('commands should display an error if the --path flag is used', async () => {
+      // Given
+      const environmentConfig = {store: 'store.myshopify.com'}
+      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(fileExistsSync).mockReturnValue(true)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'command-error', '--environment', 'development', '--path', 'path'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: [
+            "Can't use `--path` flag with multiple environments.",
+            "Configure each environment's theme path in your shopify.theme.toml file instead.",
+          ],
+        }),
+      )
+    })
+
+    test('commands should display an error if the --path flag is used and no shopify.theme.toml is found', async () => {
+      // Given
+      const environmentConfig = {store: 'store.myshopify.com'}
+      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(
+        ['--environment', 'command-error', '--environment', 'development', '--path', 'path'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(renderError).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: [
+            "Can't use `--path` flag with multiple environments.",
+            'Run this command from the directory containing shopify.theme.toml.',
+            'No shopify.theme.toml found in current directory.',
+          ],
         }),
       )
     })
