@@ -1,6 +1,5 @@
 import {ensureThemeStore} from './theme-store.js'
 import {configurationFileName} from '../constants.js'
-import metadata from '../metadata.js'
 import {useThemeStoreContext} from '../services/local-storage.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
@@ -15,7 +14,8 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
+import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import type {Writable} from 'stream'
 
 export interface FlagValues {
@@ -93,6 +93,7 @@ export default abstract class ThemeCommand extends Command {
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
       await this.command(flags, session)
+      await this.logAnalyticsData(session)
       return
     }
 
@@ -288,7 +289,7 @@ export default abstract class ThemeCommand extends Command {
     const store = flags.store as string
     const password = flags.password as string
     const session = await ensureAuthenticatedThemes(ensureThemeStore({store}), password)
-    await this.logStoreMetadata(session)
+    await this.logAnalyticsData(session)
 
     return session
   }
@@ -322,12 +323,18 @@ export default abstract class ThemeCommand extends Command {
     return true
   }
 
-  private async logStoreMetadata(session: AdminSession): Promise<void> {
-    await metadata.addPublicMetadata(() => ({
-      store_fqdn_hash: hashString(session.storeFqdn),
-    }))
+  private async logAnalyticsData(session: AdminSession): Promise<void> {
+    const data = compileData()
 
-    await metadata.addSensitiveMetadata(() => ({
+    await addPublicMetadata(() => ({
+      store_fqdn_hash: hashString(session.storeFqdn),
+
+      cmd_theme_timings: JSON.stringify(data.timings),
+      cmd_theme_errors: JSON.stringify(data.errors),
+      cmd_theme_retries: JSON.stringify(data.retries),
+      cmd_theme_events: JSON.stringify(data.events),
+    }))
+    await addSensitiveMetadata(() => ({
       store_fqdn: session.storeFqdn,
     }))
   }
