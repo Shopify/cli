@@ -1,4 +1,4 @@
-export function startLoopingRetry(action: () => Promise<unknown>, concurrency = 10): void {
+export function startLoopingRetry(action: () => Promise<unknown>, concurrency = 1): void {
   const windowMs = 60_000
   const successTimestamps: number[] = []
   const errorTimestamps: number[] = []
