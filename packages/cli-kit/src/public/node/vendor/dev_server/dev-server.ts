@@ -2,7 +2,6 @@ import fs from 'node:fs'
 
 import {createServer as createServer2024} from './dev-server-2024.js'
 import {createServer as createServer2016} from './dev-server-2016.js'
-import {createServer as createServerSpin} from './dev-server-spin.js'
 import type {DevServer as DevServerType, DevServerCore as DevServerCoreType, HostOptions} from './types.js'
 
 export {isDevServerEnvironment} from './env.js'
@@ -45,9 +44,7 @@ export class DevServerCore implements DevServerCoreType {
 const INFERENCE_MODE_SENTINEL = '/opt/dev/misc/dev-server-inference-mode'
 
 function inferProjectServer(projectName: string) {
-  if (process.env.SPIN === '1') {
-    return createServerSpin(projectName)
-  } else if (inferenceModeAndProjectIsEdition2016(projectName)) {
+  if (inferenceModeAndProjectIsEdition2016(projectName)) {
     return createServer2016(projectName)
   } else {
     return createServer2024(projectName)

@@ -43,7 +43,7 @@ describe('event tracking', () => {
     vi.mocked(macAddress).mockResolvedValue('macAddress')
     vi.mocked(hashString).mockReturnValue('hashed-macaddress')
     vi.mocked(isUnitTest).mockReturnValue(true)
-    vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
+    vi.mocked(cloudEnvironment).mockReturnValue({platform: 'localhost', editor: false})
     vi.mocked(os.platformAndArch).mockReturnValue({platform: 'darwin', arch: 'arm64'})
     publishEventMock = vi.mocked(publishMonorailEvent).mockReturnValue(Promise.resolve({type: 'ok'}))
   })
@@ -102,7 +102,7 @@ describe('event tracking', () => {
         env_plugin_installed_any_custom: true,
         env_plugin_installed_shopify: JSON.stringify(['@shopify/built-in']),
         env_device_id: 'hashed-macaddress',
-        env_cloud: 'spin',
+        env_cloud: 'localhost',
         cmd_all_exit: 'ok',
         cmd_all_timing_active_ms: 49,
         cmd_all_timing_network_ms: 30,

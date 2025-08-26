@@ -13,17 +13,6 @@ describe('serviceEnvironment', () => {
     expect(got).toBe(Environment.Local)
   })
 
-  test('returns Spin when the environment variable points to the spin environment', () => {
-    // Given
-    const env = {SHOPIFY_SERVICE_ENV: 'spin'}
-
-    // When
-    const got = serviceEnvironment(env)
-
-    // Then
-    expect(got).toBe(Environment.Spin)
-  })
-
   test('returns Production when the environment variable points to the production environment', () => {
     // Given
     const env = {SHOPIFY_SERVICE_ENV: 'production'}
@@ -44,16 +33,5 @@ describe('serviceEnvironment', () => {
 
     // Then
     expect(got).toBe(Environment.Production)
-  })
-
-  test('returns spin when environment variable SPIN is 1', () => {
-    // Given
-    const env = {SPIN: '1'}
-
-    // When
-    const got = serviceEnvironment(env)
-
-    // Then
-    expect(got).toBe(Environment.Spin)
   })
 })
