@@ -4,7 +4,7 @@ import {runFunction} from './runner.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
+import {selectFunctionRunPrompt} from '../../prompts/function/select-run.js'
 
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
@@ -138,7 +138,10 @@ async function findFunctionRun(
 
 async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
-  const selectedRun = await selectFunctionRunPrompt(functionRuns)
+  const selectedRun = await selectFunctionRunPrompt(
+    functionRuns,
+    'Which function run would you like to replay locally?',
+  )
 
   if (selectedRun === undefined) {
     throw new AbortError(`No logs found in ${functionRunsDir}`)

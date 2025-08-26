@@ -1,0 +1,37 @@
+import { describe, test, expect } from "vitest";
+import path from "path";
+import fs from "fs";
+import {loadFixture} from "./helpers/load_fixture.js";
+import {runFunction} from "./helpers/run_function.js";
+import {validateFixtures} from "./helpers/validate.js";
+
+describe("Default Integration Test", () => {
+  const fixturesDir = path.join(__dirname, "fixtures");
+  const fixtureFiles = fs
+    .readdirSync(fixturesDir)
+    .filter((file) => file.endsWith(".json"))
+    .map((file) => path.join(fixturesDir, file));
+
+  fixtureFiles.forEach((fixtureFile) => {
+    test(`runs ${path.relative(fixturesDir, fixtureFile)}`, async () => {
+      const fixture = await loadFixture(fixtureFile);
+
+      const functionDir = path.dirname(__dirname);
+
+
+      const schemaPath = path.join(functionDir, "schema.graphql");
+
+      await validateFixtures(fixture, schemaPath);
+
+      const runResult = await runFunction(
+        fixture.export,
+        fixture.input
+      ) as { result: { output: unknown }, error: unknown };
+
+      const { result, error } = runResult;
+
+      expect(error).toBeNull();
+      expect(result.output).toEqual(fixture.expectedOutput);
+    }, 10000);
+  });
+});

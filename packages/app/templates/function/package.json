@@ -1,0 +1,13 @@
+{
+    "name": "function-tests",
+    "version": "1.0.0",
+    "description": "Test configuration for Shopify function",
+    "type": "module",
+    "scripts": {
+      "test": "vitest run"
+    },
+    "devDependencies": {
+      "vitest": "^3.0.0",
+      "graphql": "^16.8.0"
+    }
+}
