@@ -1,6 +1,5 @@
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
 /**
@@ -18,13 +17,6 @@ export const themeFlags = {
   password: Flags.string({
     description: 'Password generated from the Theme Access app.',
     env: 'SHOPIFY_CLI_THEME_TOKEN',
-    parse: async (input) => {
-      if (input.startsWith('shptka_')) {
-        return input
-      }
-
-      throw new AbortError('Invalid password. Please generate a new password from the Theme Access app.')
-    },
   }),
   store: Flags.string({
     char: 's',
