@@ -1,3 +1,4 @@
+import {FunctionRunData, getRunFromIdentifier, getFunctionRunData} from './common.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -5,13 +6,11 @@ import {selectFunctionRunPrompt} from '../../prompts/function/select-run.js'
 import {nameFixturePrompt} from '../../prompts/function/name-fixture.js'
 
 import {loadConfigurationFileContent} from '../../models/app/loader.js'
+import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {joinPath, cwd} from '@shopify/cli-kit/node/path'
 import {readFile, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
-import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {existsSync, readdirSync} from 'fs'
-
-const LOG_SELECTOR_LIMIT = 100
 
 interface GenerateFixtureOptions {
   app: AppLinkedInterface
@@ -19,28 +18,6 @@ interface GenerateFixtureOptions {
   path: string
   log?: string
   outputDir?: string
-}
-
-export interface FunctionRunData {
-  shopId: number
-  apiClientId: number
-  payload: {
-    input: unknown
-    inputBytes: number
-    output: unknown
-    outputBytes: number
-    functionId: string
-    export: string
-    logs: string
-    fuelConsumed: number
-  }
-  logType: string
-  cursor: string
-  status: string
-  source: string
-  sourceNamespace: string
-  logTimestamp: string
-  identifier: string
 }
 
 export async function generateFixture(options: GenerateFixtureOptions) {
@@ -53,7 +30,7 @@ export async function generateFixture(options: GenerateFixtureOptions) {
     : await getRunFromSelector(functionRunsDir, extension.handle)
 
   // Check if we actually got a valid run with data
-  if (!selectedRun || !selectedRun.payload || !selectedRun.payload.input) {
+  if (!selectedRun || !selectedRun.payload) {
     throw new AbortError(
       `No function run logs found for function '${extension.handle}'.\n` +
         `Make sure you have run the function at least once to generate logs.\n` +
@@ -74,7 +51,7 @@ export async function generateFixture(options: GenerateFixtureOptions) {
     await mkdir(testFixturesDir)
   }
 
-  // Create default test file only if no test files exist
+  // Create default test file only if no test files already exist
   const testFile = joinPath(testsDir, `default.test.ts`)
   const existingTestFiles = readdirSync(testsDir).filter(
     (file) => file.endsWith('.test.ts') || file.endsWith('.test.js'),
@@ -86,7 +63,7 @@ export async function generateFixture(options: GenerateFixtureOptions) {
     await writeFile(testFile, testFileContent)
   }
 
-  // Always copy package.json to provide Node.js project structure for testing
+  // Copy package.json to provide Node.js project structure for testing
   const packageJsonPath = joinPath(testsDir, 'package.json')
   if (!existsSync(packageJsonPath)) {
     const packageJsonTemplatePath = joinPath(cwd(), 'packages/app/templates/function/package.json')
@@ -169,67 +146,6 @@ export async function generateFixture(options: GenerateFixtureOptions) {
   }
 }
 
-async function getRunFromIdentifier(
-  functionRunsDir: string,
-  functionHandle: string,
-  identifier: string,
-): Promise<FunctionRunData> {
-  const runPath = await findFunctionRun(functionRunsDir, functionHandle, identifier)
-  if (runPath === undefined) {
-    throw new AbortError(
-      `No log found for '${identifier}'.\nSearched ${functionRunsDir} for function ${functionHandle}.`,
-    )
-  }
-  const fileData = await readFile(runPath)
-  return JSON.parse(fileData)
-}
-
-interface LogFileMetadata {
-  namespace: string
-  functionHandle: string
-  identifier: string
-}
-
-function parseLogFilename(filename: string): LogFileMetadata | undefined {
-  // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
-  const splitFilename = filename.split(/[_.]/)
-
-  if (splitFilename.length < 6) {
-    return undefined
-  } else {
-    const namespace = splitFilename[3]
-    const functionHandle = splitFilename[4]
-    const identifier = splitFilename[5]
-
-    if (!namespace || !functionHandle || !identifier) {
-      return undefined
-    }
-
-    return {
-      namespace,
-      functionHandle,
-      identifier,
-    }
-  }
-}
-
-async function findFunctionRun(
-  functionRunsDir: string,
-  functionHandle: string,
-  identifier: string,
-): Promise<string | undefined> {
-  const fileName = getAllFunctionRunFileNames(functionRunsDir).find((filename) => {
-    const fileMetadata = parseLogFilename(filename)
-    return (
-      fileMetadata?.namespace === 'extensions' &&
-      fileMetadata?.functionHandle === functionHandle &&
-      fileMetadata?.identifier === identifier
-    )
-  })
-
-  return fileName ? joinPath(functionRunsDir, fileName) : undefined
-}
-
 async function getRunFromSelector(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData> {
   const functionRuns = await getFunctionRunData(functionRunsDir, functionHandle)
 
@@ -251,59 +167,4 @@ async function getRunFromSelector(functionRunsDir: string, functionHandle: strin
   }
 
   return selectedRun
-}
-
-async function getFunctionRunData(functionRunsDir: string, functionHandle: string): Promise<FunctionRunData[]> {
-  const allFunctionRunFileNames = getAllFunctionRunFileNames(functionRunsDir)
-    .filter((filename) => {
-      // Expected format: 20240522_150641_827Z_extensions_my-function_abcdef.json
-      const fileMetadata = parseLogFilename(filename)
-      return fileMetadata?.namespace === 'extensions' && fileMetadata?.functionHandle === functionHandle
-    })
-    .reverse()
-
-  let functionRunData: FunctionRunData[] = []
-  for (
-    let i = 0;
-    i < allFunctionRunFileNames.length && functionRunData.length < LOG_SELECTOR_LIMIT;
-    i += LOG_SELECTOR_LIMIT
-  ) {
-    const currentFunctionRunFileNameChunk = allFunctionRunFileNames.slice(i, i + LOG_SELECTOR_LIMIT)
-    const functionRunFilePaths = currentFunctionRunFileNameChunk.map((functionRunFile) =>
-      joinPath(functionRunsDir, functionRunFile),
-    )
-
-    // eslint-disable-next-line no-await-in-loop
-    const functionRunDataFromChunk = await Promise.all(
-      functionRunFilePaths.map(async (functionRunFilePath) => {
-        const fileData = await readFile(functionRunFilePath)
-        const parsedData = JSON.parse(fileData)
-        return {
-          ...parsedData,
-          identifier: getIdentifierFromFilename(functionRunFilePath),
-        }
-      }),
-    )
-
-    const filteredFunctionRunDataFromChunk = functionRunDataFromChunk.filter((run) => {
-      return run.payload.input != null
-    })
-
-    functionRunData = functionRunData.concat(filteredFunctionRunDataFromChunk)
-  }
-
-  return functionRunData
-}
-
-function getIdentifierFromFilename(fileName: string): string {
-  const parts = fileName.split('_')
-  const lastPart = parts.pop()
-  if (!lastPart) {
-    throw new Error(`Invalid filename format: ${fileName}`)
-  }
-  return lastPart.substring(0, 6)
-}
-
-function getAllFunctionRunFileNames(functionRunsDir: string): string[] {
-  return existsSync(functionRunsDir) ? readdirSync(functionRunsDir) : []
 }
