@@ -110,6 +110,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.features.includes('function')
   }
 
+  get isUIExtension() {
+    return this.configuration.type === 'ui_extension'
+  }
+
   get isESBuildExtension() {
     return this.features.includes('esbuild')
   }

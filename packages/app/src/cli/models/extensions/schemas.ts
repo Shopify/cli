@@ -57,6 +57,7 @@ const NewExtensionPointSchema = zod.object({
       chat: zod.string().optional(),
     })
     .optional(),
+  input_query: zod.string().optional(),
 })
 
 export const NewExtensionPointsSchema = zod.array(NewExtensionPointSchema)

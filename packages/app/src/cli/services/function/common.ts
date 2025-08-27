@@ -66,6 +66,50 @@ export async function inFunctionContext({
   }
 }
 
+export async function inExtensionContext({
+  path,
+  userProvidedConfigName,
+  apiKey,
+  callback,
+  reset,
+}: {
+  path: string
+  userProvidedConfigName?: string
+  apiKey?: string
+  reset?: boolean
+  callback: (
+    app: AppLinkedInterface,
+    developerPlatformClient: DeveloperPlatformClient,
+    extension: ExtensionInstance,
+    orgId: string,
+  ) => Promise<AppLinkedInterface>
+}) {
+  const {app, developerPlatformClient, organization} = await linkedAppContext({
+    directory: path,
+    clientId: apiKey,
+    forceRelink: reset ?? false,
+    userProvidedConfigName,
+  })
+
+  const allExtensions = app.allExtensions.filter((ext) => ext.isUIExtension)
+  const ourExtension = allExtensions.find((ext) => ext.directory === path)
+
+  if (ourExtension) {
+    return callback(app, developerPlatformClient, ourExtension, organization.id)
+  } else if (isTerminalInteractive()) {
+    const selectedExtension = await renderAutocompletePrompt({
+      message: 'Which extension?',
+      choices: allExtensions.map((ext) => ({label: ext.handle, value: ext})),
+    })
+
+    return callback(app, developerPlatformClient, selectedExtension, organization.id)
+  } else {
+    throw new AbortError(
+      'Run this command from an extension directory or use `--path` to specify an extension directory.',
+    )
+  }
+}
+
 export async function getOrGenerateSchemaPath(
   extension: ExtensionInstance<FunctionConfigType>,
   app: AppLinkedInterface,

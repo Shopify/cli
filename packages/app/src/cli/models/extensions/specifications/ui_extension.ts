@@ -7,6 +7,7 @@ import {fileExists} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {accessSync as fsAccessSync, readFileSync as fsReadFileSync} from 'fs'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -66,6 +67,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
         build_manifest: buildManifest,
+        input_query: targeting.input_query,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -87,7 +89,7 @@ const uiExtensionSpec = createExtensionSpecification({
     return validateUIExtensionPointConfig(directory, config.extension_points, path)
   },
   deployConfig: async (config, directory) => {
-    const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
+    const transformedExtensionPoints = config.extension_points.map((extP) => addDistPathToAssets(extP, directory))
 
     return {
       api_version: config.api_version,
@@ -137,9 +139,10 @@ const uiExtensionSpec = createExtensionSpecification({
   },
 })
 
-function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest: BuildManifest}) {
+function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest: BuildManifest}, directory: string) {
   return {
     ...extP,
+    input_query: readInputQuery(directory, extP),
     build_manifest: {
       ...extP.build_manifest,
       assets: Object.fromEntries(
@@ -197,6 +200,30 @@ Please check the module path for ${target}`.value,
     return err(errors.join('\n\n'))
   }
   return ok({})
+}
+
+function readInputQuery(basePath: string, extensionPoint: NewExtensionPointSchemaType) {
+  let inputQuery
+
+  if (extensionPoint.input_query) {
+    const path = joinPath(basePath, extensionPoint.input_query)
+    if (canAccessFile(path)) {
+      inputQuery = fsReadFileSync(path, 'utf-8')
+    }
+  }
+
+  console.log('inputQuery', inputQuery)
+  return inputQuery
+}
+
+function canAccessFile(path: string) {
+  try {
+    fsAccessSync(path)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
 }
 
 export default uiExtensionSpec

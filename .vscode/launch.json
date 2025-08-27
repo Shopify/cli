@@ -16,7 +16,7 @@
           "shopify",
           "app",
           "${input:command}",
-          "--path=${input:appDir}",
+          "--path=/Users/cpeddecord/workspace/apps/input-query-ext/extensions/input-query",
         ],
         "env": {
           "DEBUG": "\"*\"",

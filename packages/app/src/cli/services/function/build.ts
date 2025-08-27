@@ -126,6 +126,16 @@ export async function buildGraphqlTypes(
   })
 }
 
+export async function buildGraphqlTypesForUIExtension(extension: ExtensionInstance, options: JSFunctionBuildOptions) {
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+      cwd: extension.directory,
+      stderr: options.stderr,
+      signal: options.signal,
+    })
+  })
+}
+
 async function checkForShopifyFunctionRuntimeEntrypoint(fun: ExtensionInstance<FunctionConfigType>) {
   const entryPoint = await findPathUp('node_modules/@shopify/shopify_function/index.ts', {
     type: 'file',
