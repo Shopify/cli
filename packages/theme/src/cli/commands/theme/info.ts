@@ -8,6 +8,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {OutputFlags} from '@oclif/core/interfaces'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 type InfoFlags = OutputFlags<typeof Info.flags>
 
@@ -34,6 +35,7 @@ export default class Info extends ThemeCommand {
   static multiEnvironmentsFlags = ['store', 'password']
 
   async command(flags: InfoFlags, adminSession: AdminSession): Promise<void> {
+    recordTiming('theme-command:info')
     if (flags.theme || flags.development) {
       const output = await fetchThemeInfo(adminSession, flags)
       if (!output) {
@@ -50,5 +52,6 @@ export default class Info extends ThemeCommand {
       const infoMessage = await fetchDevInfo({cliVersion: this.config.version})
       renderInfo({customSections: infoMessage})
     }
+    recordTiming('theme-command:info')
   }
 }

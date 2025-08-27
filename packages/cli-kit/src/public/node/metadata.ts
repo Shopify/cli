@@ -2,7 +2,7 @@ import {isUnitTest} from './context/local.js'
 import {performance} from 'node:perf_hooks'
 import type {PickByPrefix} from '../common/ts/pick-by-prefix.js'
 import type {AnyJson} from '../../private/common/json.js'
-import type {MonorailEventPublic} from './monorail.js'
+import type {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 
 type ProvideMetadata<T> = () => Partial<T> | Promise<Partial<T>>
 
@@ -175,11 +175,13 @@ export function createRuntimeMetadataContainer<
   }
 }
 
-// We want to track anything that ends up getting sent to monorail as `cmd_all_*` and
-// `cmd_app_*`
+// We want to track anything that ends up getting sent to monorail as `cmd_all_*`,
+// `cmd_app_*`, `cmd_theme_*`, and `store_*`
 type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_all_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_app_'> &
-  PickByPrefix<MonorailEventPublic, 'cmd_create_app_'>
+  PickByPrefix<MonorailEventPublic, 'cmd_create_app_'> &
+  PickByPrefix<MonorailEventPublic, 'cmd_theme_'> &
+  PickByPrefix<MonorailEventPublic, 'store_'>
 
 const coreData = createRuntimeMetadataContainer<
   CmdFieldsFromMonorail,
@@ -190,7 +192,7 @@ const coreData = createRuntimeMetadataContainer<
       startTopic?: string
       startArgs: string[]
     }
-  } & {environmentFlags: string}
+  } & {environmentFlags: string} & PickByPrefix<MonorailEventSensitive, 'store_'>
 >({cmd_all_timing_network_ms: 0, cmd_all_timing_prompts_ms: 0})
 
 export const {getAllPublicMetadata, getAllSensitiveMetadata, addPublicMetadata, addSensitiveMetadata, runWithTimer} =

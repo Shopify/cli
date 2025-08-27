@@ -19,7 +19,7 @@ import {downloadGitRepository} from '@shopify/cli-kit/node/git'
 import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface
@@ -72,7 +72,6 @@ interface ExtensionInitOptions {
   type: string
   name: string
   extensionFlavor: ExtensionFlavor | undefined
-  uid: string | undefined
   onGetTemplateRepository: (url: string, destination: string) => Promise<void>
 }
 
@@ -87,7 +86,6 @@ export async function generateExtensionTemplate(
   const directory = await ensureExtensionDirectoryExists({app: options.app, name: extensionName})
   const url = options.cloneUrl ?? options.extensionTemplate.url
 
-  const uid = options.developerPlatformClient.supportsAtomicDeployments ? randomUUID() : undefined
   const initOptions: ExtensionInitOptions = {
     directory,
     url,
@@ -95,7 +93,6 @@ export async function generateExtensionTemplate(
     type: options.extensionTemplate.type,
     name: extensionName,
     extensionFlavor,
-    uid,
     onGetTemplateRepository:
       options.onGetTemplateRepository ??
       (async (url, destination) => {
@@ -133,7 +130,6 @@ async function themeExtensionInit({
   type,
   name,
   extensionFlavor,
-  uid,
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
   return inTemporaryDirectory(async (tmpDir) => {
@@ -143,7 +139,7 @@ async function themeExtensionInit({
       tmpDir,
       onGetTemplateRepository,
     )
-    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type, uid})
+    await recursiveLiquidTemplateCopy(templateDirectory, directory, {name, type, uid: nonRandomUUID(slugify(name))})
   })
 }
 
@@ -153,7 +149,6 @@ async function functionExtensionInit({
   app,
   name,
   extensionFlavor,
-  uid,
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
@@ -173,7 +168,7 @@ async function functionExtensionInit({
           name,
           handle: slugify(name),
           flavor: extensionFlavor?.value,
-          uid,
+          uid: nonRandomUUID(slugify(name)),
         })
       })
 
@@ -221,7 +216,6 @@ async function uiExtensionInit({
   app,
   name,
   extensionFlavor,
-  uid,
   onGetTemplateRepository,
 }: ExtensionInitOptions) {
   const templateLanguage = getTemplateLanguage(extensionFlavor?.value)
@@ -244,7 +238,7 @@ async function uiExtensionInit({
             name,
             handle: slugify(name),
             flavor: extensionFlavor?.value ?? '',
-            uid,
+            uid: nonRandomUUID(slugify(name)),
           })
         })
 

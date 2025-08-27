@@ -48,6 +48,8 @@ export type Scalars = {
   OrganizationID: {input: any; output: any}
   /** The ID for a OrganizationUser. */
   OrganizationUserID: {input: any; output: any}
+  /** The ID for a PersonAlias. */
+  PersonAliasID: {input: any; output: any}
   /** The ID for a Person. */
   PersonID: {input: any; output: any}
   /** The ID for a Principal. */

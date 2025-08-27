@@ -2,6 +2,7 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {ensureReplEnv, initializeRepl} from '../../services/console.js'
+import {validateThemePassword} from '../../services/flags-validation.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
@@ -33,6 +34,9 @@ export default class Console extends ThemeCommand {
 
   async run() {
     const {flags} = await this.parse(Console)
+
+    validateThemePassword(flags.password)
+
     const store = ensureThemeStore(flags)
     const {url, password: themeAccessPassword} = flags
 
