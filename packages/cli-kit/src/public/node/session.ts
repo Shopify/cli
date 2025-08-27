@@ -1,4 +1,3 @@
-import {normalizeStoreFqdn} from './context/fqdn.js'
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
@@ -190,7 +189,7 @@ export async function ensureAuthenticatedThemes(
 ${outputToken.json(scopes)}
 `)
   if (password) {
-    const session = {token: password, storeFqdn: await normalizeStoreFqdn(store)}
+    const session = {token: password, storeFqdn: store}
     const authMethod = isThemeAccessSession(session) ? 'theme_access_token' : 'custom_app_token'
     setLastSeenAuthMethod(authMethod)
     setLastSeenUserIdAfterAuth(nonRandomUUID(password))
