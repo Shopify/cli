@@ -1234,7 +1234,7 @@ async function appDeepLink({
 }
 
 export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
-  const appLink = await appDeepLink({organizationId, id: appId})
+  const appLink = await appDeepLink({organizationId: numberFromGid(organizationId).toString(), id: appId})
   return `${appLink}/versions/${numberFromGid(versionId)}`
 }
 
