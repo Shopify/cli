@@ -393,7 +393,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
     const id = this.getOutputFolderId(outputId)
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
+    const outputFile = this.isThemeExtension || this.type === 'channel_specification' ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
 
