@@ -4,9 +4,10 @@ import {testAppLinked, testDeveloperPlatformClient, testUIExtension} from '../mo
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {fileExistsSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortSilentError} from '@shopify/cli-kit/node/error'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./context.js')
@@ -132,6 +133,141 @@ describe('import-extensions', () => {
 
       const tomlPathE = joinPath(tmpDir, 'extensions', 'title-e', 'shopify.extension.toml')
       expect(fileExistsSync(tomlPathE)).toBe(false)
+    })
+  })
+
+  test('handles existing directory with user prompt - skip', async () => {
+    // Given
+    const extensions = [flowExtensionA]
+
+    // When
+    await inTemporaryDirectory(async (tmpDir) => {
+      const app = testAppLinked({directory: tmpDir})
+
+      // Create the extensions directory
+      const extensionsDir = joinPath(tmpDir, 'extensions')
+      await mkdir(extensionsDir)
+
+      // Create the specific extension directory
+      const extensionDir = joinPath(extensionsDir, 'title-a')
+      await mkdir(extensionDir)
+
+      // Mock prompts:
+      // 1. First prompt: select which extension to migrate (select flowExtensionA by its UUID)
+      // 2. Second prompt: what to do with existing directory (select skip)
+      vi.mocked(renderSelectPrompt)
+        // Select flowExtensionA
+        .mockResolvedValueOnce('uuidA')
+        // Skip existing directory
+        .mockResolvedValueOnce('skip')
+
+      await importExtensions({
+        app,
+        remoteApp: organizationApp,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition'],
+        extensions,
+        buildTomlObject,
+      })
+
+      // Then - expect the success message to be shown (even for skipped extensions)
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: ['Imported the following extensions from the dashboard:'],
+        body: '• "titleA" at: extensions/title-a',
+      })
+
+      // The toml file should not be created since we skipped
+      const tomlPathA = joinPath(tmpDir, 'extensions', 'title-a', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathA)).toBe(false)
+    })
+  })
+
+  test('handles existing directory with write option', async () => {
+    // Given
+    const extensions = [flowExtensionA]
+
+    // When
+    await inTemporaryDirectory(async (tmpDir) => {
+      const app = testAppLinked({directory: tmpDir})
+
+      // Create the extensions directory
+      const extensionsDir = joinPath(tmpDir, 'extensions')
+      await mkdir(extensionsDir)
+
+      // Create the specific extension directory
+      const extensionDir = joinPath(extensionsDir, 'title-a')
+      await mkdir(extensionDir)
+
+      // Mock prompts:
+      // 1. First prompt: select which extension to migrate (select flowExtensionA by its UUID)
+      // 2. Second prompt: what to do with existing directory (select write)
+      vi.mocked(renderSelectPrompt)
+        // Select flowExtensionA
+        .mockResolvedValueOnce('uuidA')
+        // Write/overwrite existing directory
+        .mockResolvedValueOnce('write')
+
+      await importExtensions({
+        app,
+        remoteApp: organizationApp,
+        developerPlatformClient: testDeveloperPlatformClient(),
+        extensionTypes: ['flow_action_definition'],
+        extensions,
+        buildTomlObject,
+      })
+
+      // Then - expect the success message to be shown
+      expect(renderSuccess).toHaveBeenCalledWith({
+        headline: ['Imported the following extensions from the dashboard:'],
+        body: '• "titleA" at: extensions/title-a',
+      })
+
+      // The toml file should be created since we wrote/overwrote
+      const tomlPathA = joinPath(tmpDir, 'extensions', 'title-a', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathA)).toBe(true)
+    })
+  })
+
+  test('handles existing directory with cancel option', async () => {
+    // Given
+    const extensions = [flowExtensionA]
+
+    // When
+    await inTemporaryDirectory(async (tmpDir) => {
+      const app = testAppLinked({directory: tmpDir})
+
+      // Create the extensions directory
+      const extensionsDir = joinPath(tmpDir, 'extensions')
+      await mkdir(extensionsDir)
+
+      // Create the specific extension directory
+      const extensionDir = joinPath(extensionsDir, 'title-a')
+      await mkdir(extensionDir)
+
+      // Mock prompts:
+      // 1. First prompt: select which extension to migrate (select flowExtensionA by its UUID)
+      // 2. Second prompt: what to do with existing directory (select cancel)
+      vi.mocked(renderSelectPrompt)
+        // Select flowExtensionA
+        .mockResolvedValueOnce('uuidA')
+        // Cancel the operation
+        .mockResolvedValueOnce('cancel')
+
+      // Then - expect the function to throw an AbortSilentError
+      await expect(
+        importExtensions({
+          app,
+          remoteApp: organizationApp,
+          developerPlatformClient: testDeveloperPlatformClient(),
+          extensionTypes: ['flow_action_definition'],
+          extensions,
+          buildTomlObject,
+        }),
+      ).rejects.toThrow(AbortSilentError)
+
+      // The toml file should not be created since we cancelled
+      const tomlPathA = joinPath(tmpDir, 'extensions', 'title-a', 'shopify.extension.toml')
+      expect(fileExistsSync(tomlPathA)).toBe(false)
     })
   })
 
