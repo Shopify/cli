@@ -1230,7 +1230,8 @@ async function appDeepLink({
   id,
   organizationId,
 }: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
-  return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+  const orgId = numberFromGid(organizationId).toString()
+  return `https://${await developerDashboardFqdn()}/dashboard/${orgId}/apps/${numberFromGid(id)}`
 }
 
 export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {
