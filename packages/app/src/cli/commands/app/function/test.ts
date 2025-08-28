@@ -11,7 +11,7 @@ import {outputInfo} from '@shopify/cli-kit/node/output'
 
 export default class FunctionTest extends AppLinkedCommand {
   static summary = 'Builds the function and runs all tests in the test folder.'
-
+  static hidden = true
   static descriptionWithMarkdown = `Builds the function to WebAssembly and then automatically runs tests if a \`tests\` folder exists. This is useful for ensuring your function works correctly before deployment.
 
 If a test command is specified in your \`shopify.extension.toml\` file under \`[extensions.test]\`, that command will be used instead of the default vitest runner:
