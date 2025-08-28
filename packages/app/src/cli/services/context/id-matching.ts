@@ -1,6 +1,7 @@
 import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -24,9 +25,14 @@ interface MatchResult {
  * Filter function to match a local and a remote source by type and handle
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return (
-    remote.type.toLowerCase() === local.graphQLType.toLowerCase() && slugify(remote.title) === slugify(local.handle)
-  )
+  const isSameType =
+    remote.type.toLowerCase() === local.graphQLType.toLowerCase() ||
+    remote.type.toLowerCase() === (local as ExtensionInstance).externalType.toLowerCase() ||
+    remote.type.toLowerCase() === (local as ExtensionInstance).type.toLowerCase()
+
+  // In this case, remote.title represents the remote handle.
+  // This needs to be cleaned up in the future in the `AppModuleVersion` transformation
+  return isSameType && slugify(remote.title) === slugify(local.handle)
 }
 
 /**
