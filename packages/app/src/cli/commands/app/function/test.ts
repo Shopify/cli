@@ -7,11 +7,7 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
-import {glob} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {readFileSync, writeFileSync, existsSync} from 'fs'
-import {createHash} from 'crypto'
 
 export default class FunctionTest extends AppLinkedCommand {
   static summary = 'Builds the function and runs all tests in the test folder.'
@@ -66,27 +62,23 @@ If no custom test command is found, the command will automatically discover and 
     const ourFunction = await chooseFunction(app, flags.path)
 
     if (!flags['skip-build']) {
-      const shouldBuild = await this.shouldRebuild(ourFunction.directory)
-      if (shouldBuild) {
-        const startTime = Date.now()
-        outputInfo('🔨 Building function...')
+      const startTime = Date.now()
+      outputInfo('🔨 Building function...')
 
-        await buildFunctionExtension(ourFunction, {
-          stdout: process.stdout,
-          stderr: process.stderr,
-          app,
-          environment: 'production',
-        })
+      await buildFunctionExtension(ourFunction, {
+        stdout: process.stdout,
+        stderr: process.stderr,
+        app,
+        environment: 'production',
+      })
 
-        const endTime = Date.now()
-        const duration = (endTime - startTime) / 1000
+      const endTime = Date.now()
+      const duration = (endTime - startTime) / 1000
 
-        // Save hash after successful build
-        await this.saveSourceHash(ourFunction.directory)
-        outputInfo(`✅ Function built successfully in ${duration.toFixed(2)}s`)
-      } else {
-        outputInfo('✅ Function is up to date, skipping build')
-      }
+      // Save hash after successful build
+      outputInfo(`✅ Function built successfully in ${duration.toFixed(2)}s`)
+    } else {
+      outputInfo('✅ Skipping build')
     }
 
     await runFunctionTestsIfExists(ourFunction, {
@@ -95,59 +87,5 @@ If no custom test command is found, the command will automatically discover and 
     })
 
     return {app}
-  }
-
-  private async getSourceHash(functionPath: string): Promise<string> {
-    const sourceDir = joinPath(functionPath, 'src')
-    const configFile = joinPath(functionPath, 'shopify.extension.toml')
-    const packageFile = joinPath(functionPath, 'package.json')
-
-    // Get all source files and config files that could affect the build
-    const sourceFiles = await glob('**/*.{ts,js}', {cwd: sourceDir, absolute: true})
-    const configFiles = [configFile, packageFile].filter(existsSync)
-
-    const hash = createHash('md5')
-
-    // Hash source files
-    for (const file of sourceFiles.sort()) {
-      const content = readFileSync(file)
-      hash.update(content)
-    }
-
-    // Hash config files
-    for (const file of configFiles) {
-      const content = readFileSync(file)
-      hash.update(content)
-    }
-
-    return hash.digest('hex')
-  }
-
-  private async shouldRebuild(functionPath: string): Promise<boolean> {
-    const hashFile = joinPath(functionPath, '.source-hash')
-    const currentHash = await this.getSourceHash(functionPath)
-
-    if (!existsSync(hashFile)) {
-      return true
-    }
-
-    try {
-      const storedHash = readFileSync(hashFile, 'utf-8').trim()
-      return currentHash !== storedHash
-    } catch {
-      return true
-    }
-  }
-
-  private async saveSourceHash(functionPath: string): Promise<void> {
-    const hashFile = joinPath(functionPath, '.source-hash')
-    const currentHash = await this.getSourceHash(functionPath)
-
-    try {
-      writeFileSync(hashFile, currentHash)
-    } catch (error) {
-      // Don't fail the build if we can't save the hash
-      outputInfo('⚠️  Could not save source hash for future builds')
-    }
   }
 }

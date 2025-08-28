@@ -99,9 +99,12 @@ describe('test-runner', () => {
 
       // Mock joinPath to return the correct paths
       mockJoinPath
-        .mockReturnValueOnce('/test/path/tests') // for tests directory
-        .mockReturnValueOnce('/test/path/shopify.extension.toml') // for TOML file
-        .mockReturnValueOnce('/test/path/tests') // for tests directory in runFunctionTests
+        // for tests directory
+        .mockReturnValueOnce('/test/path/tests')
+        // for TOML file
+        .mockReturnValueOnce('/test/path/shopify.extension.toml')
+        // for tests directory in runFunctionTests
+        .mockReturnValueOnce('/test/path/tests')
 
       // Mock readdirSync to return test files
       mockReaddirSync.mockReturnValue(['test1.test.ts', 'test2.test.js'] as any)
@@ -159,8 +162,10 @@ describe('test-runner', () => {
       mockJoinPath.mockReturnValueOnce('/test/path/shopify.extension.toml').mockReturnValueOnce('/test/path/tests')
 
       mockExistsSync
-        .mockReturnValueOnce(true) // TOML exists
-        .mockReturnValueOnce(true) // tests directory exists
+        // TOML exists
+        .mockReturnValueOnce(true)
+        // tests directory exists
+        .mockReturnValueOnce(true)
 
       const testCommand = await getTestCommandFromToml('/test/path')
       expect(testCommand).toBe('npm test')
@@ -175,8 +180,10 @@ describe('test-runner', () => {
       mockJoinPath.mockReturnValueOnce('/test/path/shopify.extension.toml').mockReturnValueOnce('/test/path/tests')
 
       mockExistsSync
-        .mockReturnValueOnce(true) // TOML exists
-        .mockReturnValueOnce(true) // tests directory exists
+        // TOML exists
+        .mockReturnValueOnce(true)
+        // tests directory exists
+        .mockReturnValueOnce(true)
 
       mockReaddirSync.mockReturnValue(['test1.test.ts', 'test2.test.js'] as any)
 

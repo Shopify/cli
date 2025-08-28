@@ -1,28 +1,18 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {AppLinkedInterface} from '../../models/app/app.js'
 import {loadConfigurationFileContent} from '../../models/app/loader.js'
-import {exec as cliKitExec} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortSignal as CLIAbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {existsSync, readdirSync} from 'fs'
 import {Writable} from 'stream'
-import {exec} from 'child_process'
-import {promisify} from 'util'
 
 interface FunctionTestOptions {
   stdout: Writable
   stderr: Writable
   signal?: CLIAbortSignal
-}
-
-interface TestResult {
-  passed: number
-  failed: number
-  total: number
-  duration: number
 }
 
 export async function getTestCommandFromToml(functionDirectory: string): Promise<string | undefined> {
@@ -32,20 +22,16 @@ export async function getTestCommandFromToml(functionDirectory: string): Promise
     return undefined
   }
 
-  try {
-    const tomlContent = await loadConfigurationFileContent(tomlPath)
+  const tomlContent = await loadConfigurationFileContent(tomlPath)
 
-    if (tomlContent.extensions && Array.isArray(tomlContent.extensions) && tomlContent.extensions[0]) {
-      const extension = tomlContent.extensions[0] as {test?: {command?: string}}
-      if (extension.test?.command) {
-        return extension.test.command
-      }
+  if (tomlContent.extensions && Array.isArray(tomlContent.extensions) && tomlContent.extensions[0]) {
+    const extension = tomlContent.extensions[0] as {test?: {command?: string}}
+    if (extension.test?.command) {
+      return extension.test.command
     }
-
-    return undefined
-  } catch {
-    return undefined
   }
+
+  return undefined
 }
 
 export async function runFunctionTestsIfExists(
@@ -81,24 +67,31 @@ export async function runFunctionTests(
         options.stdout.write(`🔧 Executing custom test command: ${testCommand}\n`)
       })
 
+      const customStdout = new Writable({
+        write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
+          useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
+            options.stdout.write(chunk)
+          })
+          callback()
+        },
+      })
+
+      const customStderr = new Writable({
+        write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
+          useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
+            options.stderr.write(chunk)
+          })
+          callback()
+        },
+      })
+
       const startTime = Date.now()
-      const execAsync = promisify(exec)
       try {
-        const {stdout, stderr} = await execAsync(testCommand, {
+        await exec('sh', ['-c', testCommand], {
           cwd: extension.directory,
+          stdout: customStdout,
+          stderr: customStderr,
         })
-
-        if (stdout) {
-          await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
-            options.stdout.write(`📋 Test output:\n${stdout}\n`)
-          })
-        }
-
-        if (stderr) {
-          await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
-            options.stderr.write(`⚠️  Test stderr:\n${stderr}\n`)
-          })
-        }
 
         const endTime = Date.now()
         const duration = (endTime - startTime) / 1000
@@ -134,7 +127,7 @@ export async function runFunctionTests(
           const startTime = Date.now()
 
           const customStdout = new Writable({
-            write(chunk: Buffer, encoding: string, callback: (error?: Error | null) => void) {
+            write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
               useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
                 options.stdout.write(chunk)
               })
@@ -143,7 +136,7 @@ export async function runFunctionTests(
           })
 
           const customStderr = new Writable({
-            write(chunk: Buffer, encoding: string, callback: (error?: Error | null) => void) {
+            write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
               useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
                 options.stderr.write(chunk)
               })
@@ -152,8 +145,9 @@ export async function runFunctionTests(
           })
 
           try {
-            await cliKitExec('npx', ['vitest', 'run'], {
-              cwd: testsDir, // Use tests directory so Vitest can find package.json and node_modules
+            await exec('npx', ['vitest', 'run'], {
+              // Use tests directory so Vitest can find package.json and node_modules
+              cwd: testsDir,
               stdout: customStdout,
               stderr: customStderr,
               signal: options.signal,
@@ -185,16 +179,5 @@ export async function runFunctionTests(
         error instanceof Error ? error.message : 'Unknown error'
       }`,
     )
-  }
-}
-
-async function runTestsForExtensions(app: AppLinkedInterface, options?: Partial<FunctionTestOptions>): Promise<void> {
-  const functionExtensions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
-  for (const extension of functionExtensions) {
-    await runFunctionTestsIfExists(extension as unknown as ExtensionInstance<FunctionConfigType>, {
-      stdout: options?.stdout ?? process.stdout,
-      stderr: options?.stderr ?? process.stderr,
-      signal: options?.signal,
-    })
   }
 }
