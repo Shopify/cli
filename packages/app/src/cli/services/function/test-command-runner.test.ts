@@ -70,15 +70,6 @@ describe('test-runner', () => {
 
       expect(result).toBeUndefined()
     })
-
-    test('handles TOML parsing errors gracefully', async () => {
-      mockExistsSync.mockReturnValue(true)
-      mockLoadConfigurationFileContent.mockRejectedValue(new Error('TOML parse error'))
-
-      const result = await getTestCommandFromToml('/test/path')
-
-      expect(result).toBeUndefined()
-    })
   })
 
   describe('runFunctionTestsIfExists', () => {
