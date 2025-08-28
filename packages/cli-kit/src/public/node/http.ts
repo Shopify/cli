@@ -187,7 +187,7 @@ export async function fetch(
 /**
  * A fetch function to use with Shopify services. The function ensures the right
  * TLS configuragion is used based on the environment in which the service is running
- * (e.g. Spin). NB: headers/auth are the responsibility of the caller.
+ * (e.g. Local). NB: headers/auth are the responsibility of the caller.
  *
  * By default, the CLI's fetch function's special behaviours, like automatic retries, are enabled.
  *

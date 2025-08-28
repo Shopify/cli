@@ -68,14 +68,6 @@ describe('isShopify', () => {
     // When
     await expect(isShopify()).resolves.toBe(true)
   })
-
-  test('returns true when it is a spin environment', async () => {
-    // Given
-    const env = {SPIN: '1'}
-
-    // When
-    await expect(isShopify(env)).resolves.toBe(true)
-  })
 })
 
 describe('hasGit', () => {
@@ -148,17 +140,6 @@ describe('macAddress', () => {
 })
 
 describe('cloudEnvironment', () => {
-  test('when spin environmentreturns correct cloud platform', () => {
-    // Given
-    const env = {SPIN: '1'}
-
-    // When
-    const got = cloudEnvironment(env)
-
-    // Then
-    expect(got.platform).toBe('spin')
-  })
-
   test('when codespace environmentreturns correct cloud platform', () => {
     // Given
     const env = {CODESPACES: '1'}

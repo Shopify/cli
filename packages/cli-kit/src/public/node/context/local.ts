@@ -1,4 +1,3 @@
-import {isSpin} from './spin.js'
 import {isTruthy} from './utilities.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
@@ -48,7 +47,7 @@ export function isVerbose(env = process.env): boolean {
 
 /**
  * Returns true if the environment in which the CLI is running is either
- * a local environment (where dev is present) or a cloud environment (spin).
+ * a local environment (where dev is present).
  *
  * @param env - The environment variables from the environment of the current process.
  * @returns True if the CLI is used in a Shopify environment.
@@ -58,7 +57,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
     return !isTruthy(env[environmentVariables.runAsUser])
   }
   const devInstalled = await fileExists(pathConstants.executables.dev)
-  return devInstalled || isSpin(env)
+  return devInstalled
 }
 
 /**
@@ -174,7 +173,7 @@ export function themeToken(env = process.env): string | undefined {
  * @returns Cloud platform information.
  */
 export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
-  platform: 'spin' | 'codespaces' | 'gitpod' | 'cloudShell' | 'localhost'
+  platform: 'codespaces' | 'gitpod' | 'cloudShell' | 'localhost'
   editor: boolean
 } {
   if (isSet(env[environmentVariables.codespaces])) {
@@ -185,9 +184,6 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
   }
   if (isSet(env[environmentVariables.cloudShell])) {
     return {platform: 'cloudShell', editor: true}
-  }
-  if (isSpin(env)) {
-    return {platform: 'spin', editor: false}
   }
   return {platform: 'localhost', editor: false}
 }

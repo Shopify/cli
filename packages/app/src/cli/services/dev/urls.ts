@@ -8,9 +8,7 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
-import {checkPortAvailability} from '@shopify/cli-kit/node/tcp'
 import {isValidURL} from '@shopify/cli-kit/common/url'
-import {appHost, appPort, fetchSpinPort, isSpin, spinFqdn, spinVariables} from '@shopify/cli-kit/node/context/spin'
 import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -52,7 +50,6 @@ interface FrontendURLResult {
  * The tunnel creation logic depends on 7 variables:
  * - If a Codespaces environment is detected, then the URL is built using the codespaces hostname. No need for tunnel
  * - If a Gitpod environment is detected, then the URL is built using the gitpod hostname. No need for tunnel
- * - If a Spin environment is detected, then the URL is built using the cli + fqdn hostname as configured in nginx.
  *   No need for tunnel. In case problems with that configuration, the flags Tunnel or Custom Tunnel url could be used
  * - If a tunnelUrl is provided, that takes preference and is returned as the frontendURL
  * - If noTunnel is true, that takes second preference and localhost is used
@@ -82,25 +79,6 @@ export async function generateFrontendURL(options: FrontendURLOptions): Promise<
     const defaultUrl = gitpodURL()?.replace('https://', '')
     frontendUrl = `https://${frontendPort}-${defaultUrl}`
     return {frontendUrl, frontendPort, usingLocalhost}
-  }
-
-  if (isSpin() && !options.tunnelUrl) {
-    const cliPortProcfileExecution = appPort()
-    if (cliPortProcfileExecution !== undefined && (await checkPortAvailability(cliPortProcfileExecution))) {
-      frontendUrl = `https://${appHost()}`
-      return {frontendUrl, frontendPort: cliPortProcfileExecution, usingLocalhost}
-    }
-    const cliPortManualExecution = await fetchSpinPort(
-      spinVariables.partnersSpinService,
-      spinVariables.manualCliSpinPortName,
-    )
-    if (cliPortManualExecution !== undefined) {
-      frontendUrl = `https://cli.${await spinFqdn()}`
-      return {frontendUrl, frontendPort: cliPortManualExecution, usingLocalhost}
-    }
-    throw new AbortError(
-      `Error building cli url in spin, cli as service port: ${cliPortProcfileExecution}, manual cli port: ${cliPortManualExecution}`,
-    )
   }
 
   if (options.tunnelUrl) {

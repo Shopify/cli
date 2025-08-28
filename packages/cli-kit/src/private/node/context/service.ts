@@ -1,4 +1,3 @@
-import {isSpin} from '../../../public/node/context/spin.js'
 import {environmentVariables} from '../constants.js'
 
 /**
@@ -9,7 +8,6 @@ import {environmentVariables} from '../constants.js'
 export enum Environment {
   Local = 'local',
   Production = 'production',
-  Spin = 'spin',
 }
 
 /**
@@ -22,8 +20,6 @@ export function serviceEnvironment(env = process.env): Environment {
   const value = env[environmentVariables.serviceEnv]
   if (value === 'local') {
     return Environment.Local
-  } else if (value === 'spin' || isSpin(env)) {
-    return Environment.Spin
   } else {
     return Environment.Production
   }
