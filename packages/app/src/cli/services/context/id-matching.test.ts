@@ -59,6 +59,14 @@ const REGISTRATION_D: RemoteSource = {
   type: 'web_pixel_extension',
 }
 
+// Same as REGISTRATION_D but with a different type using external_identifier
+const REGISTRATION_D_WITH_EXTERNAL_ID: RemoteSource = {
+  uuid: 'UUID_D',
+  id: 'D',
+  title: 'EXTENSION_D',
+  type: 'web_pixel_extension_external',
+}
+
 const REGISTRATION_FUNCTION_A: RemoteSource = {
   uuid: 'FUNCTION_UUID_A',
   id: 'FUNCTION_A',
@@ -571,6 +579,28 @@ describe('automaticMatchmaking: more remote of different types than local', () =
       toCreate: [],
       toManualMatch: {local: [], remote: [REGISTRATION_B]},
     }
+    expect(got).toEqual(expected)
+  })
+})
+
+describe('automaticMatchmaking: same name but different remote type (but still matches)', () => {
+  test('matches automatically', async () => {
+    // When
+    const got = await automaticMatchmaking(
+      [EXTENSION_D],
+      [REGISTRATION_D_WITH_EXTERNAL_ID],
+      {},
+      testDeveloperPlatformClient(),
+    )
+
+    // Then
+    const expected = {
+      identifiers: {'extension-d': 'UUID_D'},
+      toConfirm: [],
+      toCreate: [],
+      toManualMatch: {local: [], remote: []},
+    }
+
     expect(got).toEqual(expected)
   })
 })
