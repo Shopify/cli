@@ -183,8 +183,8 @@ describe('test-runner', () => {
         stderr: mockStderr,
       })
 
-      expect(mockExec).toHaveBeenCalledWith('npx', ['vitest', 'run', 'tests'], {
-        cwd: '/test/path',
+      expect(mockExec).toHaveBeenCalledWith('npx', ['vitest', 'run'], {
+        cwd: '/test/path/tests',
         stdout: expect.objectContaining({
           _writableState: expect.any(Object),
           write: expect.any(Function),
