@@ -103,20 +103,25 @@ async function deployConfirmationPrompt({
 }
 
 async function buildExtensionsContentPrompt(extensionsContentBreakdown: ExtensionIdentifiersBreakdown) {
-  const {onlyRemote, toCreate: toCreateBreakdown, toUpdate} = extensionsContentBreakdown
+  const {onlyRemote, toCreate: toCreateBreakdown, toUpdate, unchanged} = extensionsContentBreakdown
 
   const mapExtensionToInfoTableItem = (extension: ExtensionIdentifierBreakdownInfo, preffix: string) => {
     switch (extension.experience) {
       case 'dashboard':
         return [extension.title, {subdued: `(${preffix}from Partner Dashboard)`}]
       case 'extension':
-        return extension.title
+        if (extension.uid && extension.uid.length > 0) {
+          return `${extension.title} (uid: ${extension.uid})`
+        } else {
+          return extension.title
+        }
     }
   }
   let extensionsInfoTable
   const section = {
     new: toCreateBreakdown.map((extension) => mapExtensionToInfoTableItem(extension, 'new, ')),
-    unchanged: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, '')),
+    unchanged: unchanged.map((extension) => mapExtensionToInfoTableItem(extension, '')),
+    updated: toUpdate.map((extension) => mapExtensionToInfoTableItem(extension, 'updated, ')),
     removed: onlyRemote.map((extension) => mapExtensionToInfoTableItem(extension, 'removed, ')),
   }
   const extensionsInfo = buildDeployReleaseInfoTableSection(section)

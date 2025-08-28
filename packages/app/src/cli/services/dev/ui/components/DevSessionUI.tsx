@@ -1,4 +1,5 @@
 import {Spinner} from './Spinner.js'
+import {TabPanel, Tab} from './TabPanel.js'
 import metadata from '../../../../metadata.js'
 import {
   DevSessionStatus,
@@ -7,7 +8,7 @@ import {
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
-import {Alert, ConcurrentOutput, Link} from '@shopify/cli-kit/node/ui/components'
+import {Alert, ConcurrentOutput, Link, TabularData} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
 import React, {FunctionComponent, useEffect, useMemo, useState} from 'react'
 import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -24,6 +25,10 @@ interface DevSesionUIProps {
   abortController: AbortController
   devSessionStatusManager: DevSessionStatusManager
   shopFqdn: string
+  appURL?: string
+  appName?: string
+  organizationName?: string
+  configPath?: string
   onAbort: () => Promise<void>
 }
 
@@ -32,6 +37,10 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   processes,
   devSessionStatusManager,
   shopFqdn,
+  appURL,
+  appName,
+  organizationName,
+  configPath,
   onAbort,
 }) => {
   const {isRawModeSupported: canUseShortcuts} = useStdin()
@@ -85,32 +94,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
   useInput(
     (input, key) => {
       handleCtrlC(input, key, () => abortController.abort())
-
-      const onInput = async () => {
-        try {
-          setError('')
-
-          if (input === 'p' && status.previewURL && status.isReady) {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_preview_url_opened: true,
-            }))
-            await openURL(status.previewURL)
-          } else if (input === 'g' && status.graphiqlURL && status.isReady) {
-            await metadata.addPublicMetadata(() => ({
-              cmd_dev_graphiql_opened: true,
-            }))
-            await openURL(status.graphiqlURL)
-          } else if (input === 'q') {
-            abortController.abort()
-          }
-          // eslint-disable-next-line no-catch-all/no-catch-all
-        } catch (_) {
-          setError('Failed to handle your input.')
-        }
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      onInput()
     },
     {isActive: Boolean(canUseShortcuts)},
   )
@@ -124,6 +107,121 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       case 'error':
         return '❌'
     }
+  }
+
+  const tabs: {[key: string]: Tab} = {
+    // eslint-disable-next-line id-length
+    d: {
+      label: 'Dev status',
+      shortcuts: [
+        {
+          key: 'p',
+          condition: () => Boolean(status.previewURL && status.isReady),
+          action: async () => {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_preview_url_opened: true,
+            }))
+            if (status.previewURL) {
+              await openURL(status.previewURL)
+            }
+          },
+        },
+        {
+          key: 'g',
+          condition: () => Boolean(status.graphiqlURL && status.isReady),
+          action: async () => {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_graphiql_opened: true,
+            }))
+            if (status.graphiqlURL) {
+              await openURL(status.graphiqlURL)
+            }
+          },
+        },
+      ],
+      content: (
+        <>
+          {status.statusMessage && (
+            <Text>
+              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
+            </Text>
+          )}
+          {canUseShortcuts && (
+            <Box marginTop={1} flexDirection="column">
+              {status.graphiqlURL && status.isReady ? (
+                <Text>
+                  {figures.pointerSmall} <Text bold>(g)</Text> Open GraphiQL (Admin API) in your browser
+                </Text>
+              ) : null}
+              {status.isReady ? (
+                <Text>
+                  {figures.pointerSmall} <Text bold>(p)</Text> Preview in your browser
+                </Text>
+              ) : null}
+            </Box>
+          )}
+          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
+            {isShuttingDownMessage ? (
+              <Text>{isShuttingDownMessage}</Text>
+            ) : (
+              <>
+                {status.isReady && (
+                  <>
+                    {status.previewURL ? (
+                      <Text>
+                        Preview URL: <Link url={status.previewURL} />
+                      </Text>
+                    ) : null}
+                    {status.graphiqlURL ? (
+                      <Text>
+                        GraphiQL URL: <Link url={status.graphiqlURL} />
+                      </Text>
+                    ) : null}
+                  </>
+                )}
+              </>
+            )}
+          </Box>
+        </>
+      ),
+    },
+    // eslint-disable-next-line id-length
+    a: {
+      label: 'App info',
+      content: (
+        <Box flexDirection="column">
+          <TabularData
+            tabularData={[
+              ['App:', appName ?? ''],
+              ['App URL:', appURL ?? ''],
+              ['Config:', configPath?.split('/').pop() ?? ''],
+              ['Org:', organizationName ?? ''],
+            ].filter(([, value]) => value)}
+          />
+        </Box>
+      ),
+    },
+    // eslint-disable-next-line id-length
+    s: {
+      label: 'Store info',
+      content: (
+        <Box flexDirection="column">
+          <TabularData
+            tabularData={[
+              ['Dev store:', {link: {url: `https://${shopFqdn}`}}],
+              ['Dev store admin:', {link: {url: `https://${shopFqdn}/admin`}}],
+              ['Org:', organizationName ?? ''],
+            ].filter(([, value]) => value)}
+          />
+        </Box>
+      ),
+    },
+    q: {
+      label: 'Quit',
+      action: async () => {
+        abortController.abort()
+      },
+    },
   }
 
   return (
@@ -150,63 +248,25 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
       )}
       {/* eslint-disable-next-line no-negated-condition */}
       {!isAborted ? (
-        <Box
-          marginY={1}
-          paddingTop={0}
-          flexDirection="column"
-          flexGrow={1}
-          borderStyle="single"
-          borderBottom={false}
-          borderLeft={false}
-          borderRight={false}
-          borderTop
-        >
-          {status.statusMessage ? (
-            <Text>
-              {getStatusIndicator(status.statusMessage.type)} {status.statusMessage.message}
-            </Text>
-          ) : null}
+        <Box paddingTop={1} flexDirection="column" flexGrow={1}>
           {canUseShortcuts ? (
-            <Box marginTop={1} flexDirection="column">
-              {status.graphiqlURL && status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} Press <Text bold>g</Text> {figures.lineVertical} open GraphiQL (Admin API) in
-                  your browser
-                </Text>
-              ) : null}
-              {status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} Press <Text bold>p</Text> {figures.lineVertical} preview in your browser
-                </Text>
-              ) : null}
-              <Text>
-                {figures.pointerSmall} Press <Text bold>q</Text> {figures.lineVertical} quit
-              </Text>
+            <TabPanel tabs={tabs} initialActiveTab="d" />
+          ) : (
+            <Box
+              marginY={1}
+              paddingTop={0}
+              flexDirection="column"
+              flexGrow={1}
+              borderStyle="single"
+              borderBottom={false}
+              borderLeft={false}
+              borderRight={false}
+              borderTop
+            >
+              {/* Non-interactive fallback - reuse status tab content */}
+              {tabs.d?.content}
             </Box>
-          ) : null}
-
-          <Box marginTop={canUseShortcuts ? 1 : 0} flexDirection="column">
-            {isShuttingDownMessage ? (
-              <Text>{isShuttingDownMessage}</Text>
-            ) : (
-              <>
-                {status.isReady && (
-                  <>
-                    {status.previewURL ? (
-                      <Text>
-                        Preview URL: <Link url={status.previewURL} />
-                      </Text>
-                    ) : null}
-                    {status.graphiqlURL ? (
-                      <Text>
-                        GraphiQL URL: <Link url={status.graphiqlURL} />
-                      </Text>
-                    ) : null}
-                  </>
-                )}
-              </>
-            )}
-          </Box>
+          )}
         </Box>
       ) : null}
       {error ? (

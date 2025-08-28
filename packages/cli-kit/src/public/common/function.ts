@@ -1,6 +1,7 @@
 import lodashMemoize from 'lodash/memoize.js'
 import lodashDebounce from 'lodash/debounce.js'
-import type {DebouncedFunc, DebounceSettings} from 'lodash'
+import lodashThrottle from 'lodash/throttle.js'
+import type {DebouncedFunc, DebounceSettings, ThrottleSettings} from 'lodash'
 
 /**
  * Creates a function that memoizes the result of func. If resolver is provided it determines the cache key for
@@ -27,7 +28,7 @@ export function memoize<T extends (...args: any) => any>(func: T, resolver?: (..
  * Note: If leading and trailing options are true, func is invoked on the trailing edge of the timeout only
  * if the the debounced function is invoked more than once during the wait timeout.
  *
- * See David Corbacho’s article for details over the differences between _.debounce and _.throttle.
+ * See David Corbacho's article for details over the differences between _.debounce and _.throttle.
  *
  * @param func - The function to debounce.
  * @param wait - The number of milliseconds to delay.
@@ -41,4 +42,26 @@ export function debounce<T extends (...args: any) => any>(
   options?: DebounceSettings,
 ): DebouncedFunc<T> {
   return lodashDebounce(func, wait, options)
+}
+
+/**
+ * Creates a throttled function that only invokes func at most once per every wait milliseconds.
+ * The throttled function comes with a cancel method to cancel delayed invocations and a flush method to immediately invoke them.
+ * Provide an options object to indicate whether func should be invoked on the leading and/or trailing edge of the wait timeout.
+ * Subsequent calls to the throttled function return the result of the last func invocation.
+ *
+ * See David Corbacho's article for details over the differences between _.debounce and _.throttle.
+ *
+ * @param func - The function to throttle.
+ * @param wait - The number of milliseconds to throttle invocations to.
+ * @param options - The options object.
+ * @returns Returns the new throttled function.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function throttle<T extends (...args: any) => any>(
+  func: T,
+  wait?: number,
+  options?: ThrottleSettings,
+): DebouncedFunc<T> {
+  return lodashThrottle(func, wait, options)
 }

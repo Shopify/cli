@@ -308,8 +308,6 @@ DESCRIPTION
   Stop the app preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
-
-  It's valid only for apps created on the Next-Gen Dev Platform.
 ```
 
 ## `shopify app env pull`
@@ -1086,8 +1084,7 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
     [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
-    [--env-file <value>] [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
-    [--sourcemap] [--verbose]
+    [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>] [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
@@ -1106,12 +1103,9 @@ FLAGS
                                  Defaults to the '.env' located in your project path `--path`.
   --host                         Expose the server to the local network
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
-  --[no-]sourcemap               [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to
-                                 `true`. Deactivate `--no-sourcemaps`.
   --verbose                      Outputs more information about the command's execution.
 
 DESCRIPTION
@@ -1186,8 +1180,9 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
-             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
+             route to generate. One of
+             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
 
 FLAGS
   -f, --force                 Overwrites the destination directory and files if they already exist.
@@ -1330,8 +1325,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>]
-    [--port <value>] [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--path <value>] [--port <value>]
+    [--verbose] [--watch ]
 
 FLAGS
   --build                        Builds the app before starting the preview server.
@@ -1347,7 +1342,6 @@ FLAGS
   --env-file=<value>             [default: .env] Path to an environment file to override existing environment variables.
                                  Defaults to the '.env' located in your project path `--path`.
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
@@ -2049,8 +2043,8 @@ ARGUMENTS
 
 FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
-  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme] The Git URL to clone from. Defaults to
-                           Shopify's Skeleton theme.
+  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme.git] The Git URL to clone from. Defaults
+                           to Shopify's Skeleton theme.
       --no-color           Disable color output.
       --path=<value>       The path where you want to run the command. Defaults to the current working directory.
       --verbose            Increase the verbosity of the output.
@@ -2061,8 +2055,8 @@ DESCRIPTION
   Clones a Git repository to your local machine to use as the starting point for building a theme.
 
   If no Git repository is specified, then this command creates a copy of Shopify's "Skeleton theme"
-  (https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided,
-  then you're prompted to enter one.
+  (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is
+  provided, then you're prompted to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
   point. However, the theme that you submit needs to be "substantively different from existing themes"
@@ -2285,11 +2279,13 @@ FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
   -l, --live                    Pull theme files from your remote live theme.
   -n, --nodelete                Prevent deleting local files that don't exist remotely.
-  -o, --only=<value>...         Download only the specified files (Multiple flags allowed).
+  -o, --only=<value>...         Download only the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
-  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
@@ -2319,13 +2315,15 @@ FLAGS
   -j, --json                    Output the result as JSON.
   -l, --live                    Push theme files from your remote live theme.
   -n, --nodelete                Prevent deleting remote files that don't exist locally.
-  -o, --only=<value>...         Push only the specified files (Multiple flags allowed).
+  -o, --only=<value>...         Upload only the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
   -p, --publish                 Publish as the live theme after uploading.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
   -u, --unpublished             Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.

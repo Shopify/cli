@@ -1,11 +1,9 @@
-import ThemeCommand from '../../utilities/theme-command.js'
-import {RenameOptions, renameTheme} from '../../services/rename.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
+import {RenameOptions, renameTheme} from '../../services/rename.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {promptThemeName} from '@shopify/cli-kit/node/themes/utils'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
 export default class Rename extends ThemeCommand {
   static summary = 'Renames an existing theme.'
@@ -43,21 +41,9 @@ export default class Rename extends ThemeCommand {
     }),
   }
 
-  public async run(): Promise<void> {
-    const {flags} = await this.parse(Rename)
-    const {password, development, name, theme, live} = flags
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'name', ['live', 'development', 'theme']]
 
-    const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, password)
-    const newName = name || (await promptThemeName('New name for the theme'))
-
-    const renameOptions: RenameOptions = {
-      newName,
-      development,
-      theme,
-      live,
-    }
-
-    await renameTheme(adminSession, renameOptions)
+  async command(flags: RenameOptions, adminSession: AdminSession) {
+    await renameTheme(flags, adminSession)
   }
 }

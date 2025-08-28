@@ -7,7 +7,7 @@ interface CLIConfigOptions {
 }
 
 /**
- * Emulates the environment setup that oCLI commands perform when executed theme commands are executed programmatically.
+ * Emulates the environment setup that CLI commands perform when executed theme commands are executed programmatically.
  * Source: packages/cli-kit/src/public/node/cli.ts
  *
  * @param options - Configuration options for the CLI environment

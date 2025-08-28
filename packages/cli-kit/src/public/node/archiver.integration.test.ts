@@ -26,7 +26,8 @@ describe('zip', () => {
 
       // Then
       const archiveEntries = await readArchiveFiles(zipPath)
-      expect(structure.sort()).toEqual(archiveEntries.sort())
+      const expectedEntries = ['extensions/', 'extensions/first/', 'extensions/first/main.js', 'test.json']
+      expect(expectedEntries.sort()).toEqual(archiveEntries.sort())
     })
   })
 
@@ -49,7 +50,11 @@ describe('zip', () => {
 
       // Then
       const archiveEntries = await readArchiveFiles(zipPath)
-      expect([`extensions/first/main.js`]).toEqual(archiveEntries)
+
+      expect(archiveEntries).toContain('extensions/')
+      expect(archiveEntries).toContain('extensions/first/')
+      const expectedEntries = ['extensions/', 'extensions/first/', 'extensions/first/main.js']
+      expect(expectedEntries.sort()).toEqual(archiveEntries.sort())
     })
   })
 })

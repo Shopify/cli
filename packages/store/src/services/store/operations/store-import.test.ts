@@ -296,4 +296,59 @@ describe('StoreImportOperation', () => {
     expect(error.requestId).toBeUndefined()
     expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
   })
+
+  test('should get import-specific unauthorized error from API client', async () => {
+    const unauthorizedError = new OperationError(
+      'startBulkDataStoreImport',
+      ErrorCodes.UNAUTHORIZED_IMPORT,
+      {storeName: 'target.myshopify.com'},
+      'import-request-unauthorized-456',
+    )
+    mockApiClient.startBulkDataStoreImport.mockRejectedValue(unauthorizedError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreImport',
+      code: ErrorCodes.UNAUTHORIZED_IMPORT,
+      params: {storeName: 'target.myshopify.com'},
+      requestId: 'import-request-unauthorized-456',
+    })
+  })
+
+  test('should get missing EA access error from API client', async () => {
+    const missingEAError = new OperationError(
+      'startBulkDataStoreImport',
+      ErrorCodes.MISSING_EA_ACCESS,
+      {},
+      'import-request-ea-456',
+    )
+    mockApiClient.startBulkDataStoreImport.mockRejectedValue(missingEAError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreImport',
+      code: ErrorCodes.MISSING_EA_ACCESS,
+      requestId: 'import-request-ea-456',
+    })
+  })
 })

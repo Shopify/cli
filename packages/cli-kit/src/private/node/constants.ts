@@ -34,7 +34,6 @@ export const environmentVariables = {
   codespacePortForwardingDomain: 'GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN',
   gitpod: 'GITPOD_WORKSPACE_URL',
   cloudShell: 'CLOUD_SHELL',
-  spin: 'SPIN',
   spinAppPort: 'SERVER_PORT',
   spinAppHost: 'SPIN_APP_HOST',
   organization: 'SHOPIFY_CLI_ORGANIZATION',

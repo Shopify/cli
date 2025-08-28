@@ -86,7 +86,10 @@ describe('profile', () => {
     await profile(mockAdminSession, themeId, urlPath, true, 'themeAccessPassword', 'storePassword')
 
     // Then
-    expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], 'themeAccessPassword')
+    expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], 'themeAccessPassword', {
+      forceRefresh: false,
+      noPrompt: true,
+    })
   })
 
   test('throws error when fetch fails', async () => {

@@ -3,7 +3,6 @@ import {frontAndBackendConfig} from './utils.js'
 import {Web, WebType} from '../../../models/app/app.js'
 import {isWebType} from '../../../models/app/loader.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {isSpinEnvironment, spinFqdn} from '@shopify/cli-kit/node/context/spin'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {exec} from '@shopify/cli-kit/node/system'
 import {isVerbose} from '@shopify/cli-kit/node/context/local'
@@ -50,7 +49,7 @@ export async function setupWebProcesses({
   const {frontendConfig} = frontAndBackendConfig(webs)
 
   const hmrServerPort = frontendConfig?.configuration.hmr_server ? await getAvailableTCPPort() : undefined
-  const shopCustomDomain = isSpinEnvironment() ? `shopify.${await spinFqdn()}` : undefined
+  const shopCustomDomain = undefined
 
   const webProcessSetups = webs.map(async (web) => {
     const port = await getWebProcessPort({web, frontendPort, backendPort})

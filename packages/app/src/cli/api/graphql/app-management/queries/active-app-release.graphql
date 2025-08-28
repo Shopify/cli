@@ -7,6 +7,7 @@ query activeAppRelease($appId: ID!) {
 fragment AppVersionInfo on App {
   id
   key
+  organizationId
   activeRoot {
     clientCredentials {
       secrets {
@@ -30,9 +31,11 @@ fragment ReleasedAppModule on AppModule {
   userIdentifier
   handle
   config
+  target
   specification {
     identifier
     externalIdentifier
     name
+    managementExperience
   }
 }

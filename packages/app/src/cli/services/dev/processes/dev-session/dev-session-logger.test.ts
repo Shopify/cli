@@ -172,11 +172,12 @@ describe('DevSessionLogger', () => {
 
     test('logs messages', async () => {
       const mockExtension = {
-        getDevSessionUpdateMessage: vi.fn().mockResolvedValue('This has been updated.'),
+        getDevSessionUpdateMessages: vi.fn().mockResolvedValue(['This has been updated.']),
         entrySourceFilePath: '',
         devUUID: '',
         localIdentifier: '',
         idEnvironmentVariableName: '',
+        handle: 'test-extension',
       } as unknown as ExtensionInstance
 
       const event: AppEvent = {
@@ -194,9 +195,36 @@ describe('DevSessionLogger', () => {
       await logger.logExtensionUpdateMessages(event)
       expect(output).toMatchInlineSnapshot(`
         [
-          "└  This has been updated.",
+          "[90m└ [39mThis has been updated.",
         ]
       `)
+    })
+
+    test('does not log messages when extension is deleted', async () => {
+      const mockExtension = {
+        getDevSessionUpdateMessages: vi.fn().mockResolvedValue(['This would be logged if not deleted.']),
+        entrySourceFilePath: '',
+        devUUID: '',
+        localIdentifier: '',
+        idEnvironmentVariableName: '',
+        handle: 'test-extension',
+      } as unknown as ExtensionInstance
+
+      const event: AppEvent = {
+        app: {configuration: {}} as any,
+        extensionEvents: [
+          {
+            type: 'deleted' as EventType,
+            extension: mockExtension,
+          },
+        ],
+        path: '',
+        startTime: [0, 0],
+      }
+
+      await logger.logExtensionUpdateMessages(event)
+      expect(output).toMatchInlineSnapshot(`[]`)
+      expect(mockExtension.getDevSessionUpdateMessages).not.toHaveBeenCalled()
     })
   })
 

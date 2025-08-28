@@ -23,6 +23,14 @@ export const ErrorCodes = {
   FILE_DOWNLOAD_FAILED: 'FILE_DOWNLOAD_FAILED',
   STAGED_UPLOAD_FAILED: 'STAGED_UPLOAD_FAILED',
   GRAPHQL_API_ERROR: 'GRAPHQL_API_ERROR',
+
+  // Unauthorized errors
+  UNAUTHORIZED: 'UNAUTHORIZED',
+  UNAUTHORIZED_EXPORT: 'UNAUTHORIZED_EXPORT',
+  UNAUTHORIZED_IMPORT: 'UNAUTHORIZED_IMPORT',
+  UNAUTHORIZED_COPY: 'UNAUTHORIZED_COPY',
+  MISSING_EA_ACCESS: 'MISSING_EA_ACCESS',
+  STAGED_UPLOAD_ACCESS_DENIED: 'STAGED_UPLOAD_ACCESS_DENIED',
 } as const
 
 interface ErrorParams {
@@ -109,6 +117,24 @@ function generateErrorMessage(code: string, params?: ErrorParams, requestId?: st
       const finalRequestId = requestId ?? 'unknown'
       return `Copy could not complete due to an API request failure\n\nRequest Id: ${finalRequestId}`
     }
+
+    // Unauthorized errors
+    case ErrorCodes.UNAUTHORIZED:
+      return 'You are not authorized to perform this operation'
+    case ErrorCodes.UNAUTHORIZED_EXPORT:
+      return `You are not authorized to export bulk data from store "${params?.storeName}"\n\nTo export you'll need the 'bulk data > export' permission`
+    case ErrorCodes.UNAUTHORIZED_IMPORT:
+      return `You are not authorized to import bulk data to store "${params?.storeName}"\n\nTo import you'll need the 'bulk data > import' permission`
+    case ErrorCodes.UNAUTHORIZED_COPY:
+      return (
+        `You are not authorized to copy data between these stores\n\nTo export data from "${params?.sourceStoreName}"\n` +
+        `• You'll need the 'bulk data > export' permission\n\nTo import data to "${params?.targetStoreName}"\n` +
+        `• You'll need the 'bulk data > import' permission`
+      )
+    case ErrorCodes.MISSING_EA_ACCESS:
+      return `This command is in Early Access and is not yet available for the requested store(s).`
+    case ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED:
+      return `You don't have permission to upload files to this store.\n\nYou'll need the 'bulk data > import' permission to upload files.`
 
     default:
       return 'An error occurred'

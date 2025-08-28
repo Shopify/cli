@@ -55,9 +55,6 @@ commands:
   type-check:
     desc: 'Type-check the project'
     run: pnpm run type-check:affected
-  spin:
-    desc: 'Run commands in spin context'
-    run: bin/spin
 
 check:
   type-check: pnpm nx affected --target=type-check

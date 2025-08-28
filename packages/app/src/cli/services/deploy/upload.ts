@@ -3,11 +3,14 @@ import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.j
 
 import {AppDeployOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getUploadURL, uploadToGCS} from '../bundle.js'
+import {AppManifest} from '../../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
 import {partition} from '@shopify/cli-kit/common/collection'
 
 interface UploadExtensionsBundleOptions {
+  appManifest: AppManifest
+
   /** The ID of the application */
   appId: string
 
@@ -87,6 +90,7 @@ export async function uploadExtensionsBundle(
   }
 
   const variables: AppDeployOptions = {
+    appManifest: options.appManifest,
     appId: options.appId,
     apiKey: options.apiKey,
     name: options.name,
@@ -111,6 +115,7 @@ export async function uploadExtensionsBundle(
     const customSections: AlertCustomSection[] = deploymentErrorsToCustomSections(
       result.appDeploy.userErrors ?? [],
       options.extensionIds,
+      options.appModules,
       {
         version: options.version,
       },
@@ -143,6 +148,7 @@ const GENERIC_ERRORS_TITLE = '\n'
 export function deploymentErrorsToCustomSections(
   errors: AppDeploySchema['appDeploy']['userErrors'],
   extensionIds: IdentifiersExtensions,
+  appModules: AppModuleSettings[],
   flags: {
     version?: string
   } = {},
@@ -158,7 +164,14 @@ export function deploymentErrorsToCustomSections(
     return Object.values(extensionIds).includes(errorExtensionId.toString())
   }
 
-  const [extensionErrors, nonExtensionErrors] = partition(errors, (error) => isExtensionError(error))
+  const isAppManagementValidationError = (error: (typeof errors)[0]) => {
+    const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
+    return appModules.some((module) => module.uid === on?.user_identifier)
+  }
+
+  const [appManagementErrors, nonAppManagementErrors] = partition(errors, (err) => isAppManagementValidationError(err))
+
+  const [extensionErrors, nonExtensionErrors] = partition(nonAppManagementErrors, (error) => isExtensionError(error))
 
   const [cliErrors, partnersErrors] = partition(extensionErrors, (error) => isCliError(error, extensionIds))
 
@@ -166,6 +179,7 @@ export function deploymentErrorsToCustomSections(
     ...generalErrorsSection(nonExtensionErrors, {version: flags.version}),
     ...cliErrorsSections(cliErrors, extensionIds),
     ...partnersErrorsSections(partnersErrors),
+    ...appManagementErrorsSection(appManagementErrors, appModules),
   ]
   return customSections
 }
@@ -284,6 +298,52 @@ function cliErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors'], i
         return 0
       })
     })
+
+    return sections
+  }, [])
+}
+
+function appManagementErrorsSection(
+  errors: AppDeploySchema['appDeploy']['userErrors'],
+  appModules: AppModuleSettings[],
+) {
+  return errors.reduce<ErrorCustomSection[]>((sections, error) => {
+    // Find the app module that corresponds to this error
+    const on = error.on ? (error.on[0] as {user_identifier: unknown}) : undefined
+    const userIdentifier = on?.user_identifier as string | undefined
+    const appModule = appModules.find((module) => module.uid === userIdentifier)
+
+    const fallBackName = userIdentifier ? `Extension with uid: ${userIdentifier}` : 'Unknown Extension'
+    const extensionName = appModule?.handle ?? fallBackName
+
+    const field = (error.field ?? ['unknown']).join('.')
+    const errorMessage = `${field}: ${error.message}`
+
+    // Find or create section for this extension
+    const existingSection = sections.find((section) => section.title === extensionName)
+
+    if (existingSection) {
+      const sectionBody = existingSection.body as ListToken[]
+      const errorsList = sectionBody.find((listToken) => listToken.list.title === VALIDATION_ERRORS_TITLE)
+
+      if (errorsList) {
+        if (!errorsList.list.items.includes(errorMessage)) {
+          errorsList.list.items.push(errorMessage)
+        }
+      }
+    } else {
+      sections.push({
+        title: extensionName,
+        body: [
+          {
+            list: {
+              title: VALIDATION_ERRORS_TITLE,
+              items: [errorMessage],
+            },
+          },
+        ],
+      })
+    }
 
     return sections
   }, [])

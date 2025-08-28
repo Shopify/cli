@@ -50,10 +50,16 @@ export async function render(session: DevServerSession, context: DevServerRender
   /**
    * Theme Access app requests return the 'application/json' content type.
    * However, patched renderings will never patch JSON requests; so we're
-   * consistently discarding the content type.
+   * only discarding the content type for non-JSON responses that will be patched.
    */
+  const contentType = response.headers.get('Content-Type')
+  const isJsonResponse = contentType?.includes('application/json')
+
   response = new Response(response.body, response)
-  response.headers.delete('Content-Type')
+
+  if (!isJsonResponse) {
+    response.headers.delete('Content-Type')
+  }
 
   return response
 }

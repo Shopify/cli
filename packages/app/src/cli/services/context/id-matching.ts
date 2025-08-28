@@ -5,6 +5,8 @@ import {groupBy, partition} from '@shopify/cli-kit/common/collection'
 import {uniqBy, difference} from '@shopify/cli-kit/common/array'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {slugify} from '@shopify/cli-kit/common/string'
+import {outputInfo} from '@shopify/cli-kit/node/output'
+import colors from '@shopify/cli-kit/node/colors'
 
 export interface LocalRemoteSource {
   local: LocalSource
@@ -22,7 +24,9 @@ interface MatchResult {
  * Filter function to match a local and a remote source by type and handle
  */
 const sameTypeAndName = (local: LocalSource, remote: RemoteSource) => {
-  return remote.type === local.graphQLType && slugify(remote.title) === slugify(local.handle)
+  return (
+    remote.type.toLowerCase() === local.graphQLType.toLowerCase() && slugify(remote.title) === slugify(local.handle)
+  )
 }
 
 /**
@@ -67,77 +71,71 @@ function matchByNameAndType(
 /**
  * Automatically match local and remote sources if they have the same UID
  */
-function matchByUUID(
+function matchByUIDandUUID(
   local: LocalSource[],
   remote: RemoteSource[],
+  ids: IdentifiersExtensions,
 ): {
   matched: IdentifiersExtensions
   toCreate: LocalSource[]
   toConfirm: {local: LocalSource; remote: RemoteSource}[]
   toManualMatch: {local: LocalSource[]; remote: RemoteSource[]}
 } {
-  const matched: IdentifiersExtensions = {}
+  const matchedByUID: IdentifiersExtensions = {}
+  const pendingLocal: LocalSource[] = []
+  const matchedByUUID: IdentifiersExtensions = {}
 
+  // First, try to match by UID, then by UUID.
+  // But only accept a UUID match if the ID for the remote source is empty, meaning is still pending migration.
   local.forEach((localSource) => {
-    const possibleMatch = remote.find((remoteSource) => remoteSource.uuid === localSource.uid)
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    if (possibleMatch) matched[localSource.localIdentifier] = possibleMatch.uuid!
+    const matchByUID = remote.find((remoteSource) => remoteSource.id === localSource.uid)
+    const matchByUUID = remote.find((remoteSource) => remoteSource.uuid === ids[localSource.localIdentifier])
+
+    if (matchByUID) {
+      matchedByUID[localSource.localIdentifier] = matchByUID.id
+    } else if (matchByUUID && matchByUUID.id.length === 0) {
+      matchedByUUID[localSource.localIdentifier] = matchByUUID.uuid
+    } else {
+      pendingLocal.push(localSource)
+    }
   })
 
-  const toCreate = local.filter((elem) => !matched[elem.localIdentifier])
+  // Remote source with a valid UID is not pending, shouldn't be tried to be matched by name/type.
+  const pendingRemote = remote.filter(
+    (remoteSource) =>
+      !Object.values(matchedByUUID).includes(remoteSource.uuid) &&
+      !Object.values(matchedByUID).includes(remoteSource.id) &&
+      remoteSource.id.length === 0,
+  )
 
-  return {matched, toCreate, toConfirm: [], toManualMatch: {local: [], remote: []}}
-}
+  // Then, try to match by name and type as a last resort.
+  const {matched: matchedByName, toCreate, toConfirm, toManualMatch} = matchByNameAndType(pendingLocal, pendingRemote)
 
-function migrateLegacyFunctions(
-  ids: IdentifiersExtensions,
-  localSources: LocalSource[],
-  remoteSources: RemoteSource[],
-): {
-  migrated: IdentifiersExtensions
-  pending: {local: LocalSource[]; remote: RemoteSource[]}
-} {
-  const migrated: IdentifiersExtensions = {}
-  const pendingMigrations: IdentifiersExtensions = {}
+  // List of modules that were matched using anything other than the UID, meaning that they are being migrated to dev dash
+  const totalMatchedWithoutUID = {...matchedByUUID, ...matchedByName}
+  const localMatchedWithoutUID = local.filter((localSource) => totalMatchedWithoutUID[localSource.localIdentifier])
 
-  remoteSources
-    .filter((extension) => extension.type === 'FUNCTION')
-    .forEach((functionExtension) => {
-      const config = functionExtension.draftVersion?.config
-      if (config === undefined) return
-
-      const parsedConfig = JSON.parse(config)
-      const legacyId = parsedConfig.legacy_function_id
-      if (legacyId) pendingMigrations[legacyId] = functionExtension.uuid
-
-      const legacyUuid = parsedConfig.legacy_function_uuid
-      if (legacyUuid) pendingMigrations[legacyUuid] = functionExtension.uuid
-    })
-
-  localSources
-    .filter((extension) => extension.type === 'function')
-    .forEach((functionExtension) => {
-      const localId = ids[functionExtension.localIdentifier]
-      if (localId === undefined) return
-
-      const remoteId = pendingMigrations[localId]
-      if (remoteId) {
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-        delete pendingMigrations[functionExtension.localIdentifier]
-        migrated[functionExtension.localIdentifier] = remoteId
-      }
-    })
-
-  const pendingLocal = localSources.filter((elem) => !migrated[elem.localIdentifier])
-  const pendingRemote = remoteSources.filter((registration) => !Object.values(migrated).includes(registration.uuid))
+  outputAddedIDs(localMatchedWithoutUID)
 
   return {
-    migrated,
-    pending: {
-      local: pendingLocal,
-      remote: pendingRemote,
-    },
+    matched: {...matchedByUID, ...totalMatchedWithoutUID},
+    toCreate,
+    toConfirm,
+    toManualMatch,
   }
+}
+
+function outputAddedIDs(localMatchedWithoutUID: LocalSource[]) {
+  if (localMatchedWithoutUID.length === 0) return
+  const colorList = [colors.cyan, colors.magenta, colors.blue, colors.green, colors.yellow, colors.red]
+
+  const maxHandleLength = localMatchedWithoutUID.reduce((max, local) => Math.max(max, local.handle.length), 0)
+  outputInfo('Generating extension IDs\n')
+  localMatchedWithoutUID.forEach((local, index) => {
+    const color = colorList[index % colorList.length] ?? colors.white
+    outputInfo(`${color(local.handle.padStart(maxHandleLength))} | Added ID: ${local.uid}`)
+  })
+  outputInfo('\n')
 }
 
 /**
@@ -155,7 +153,8 @@ function matchByUniqueType(
   const localGroups = groupBy(localSources, 'graphQLType')
   const localUnique = Object.values(pickBy(localGroups, (group, _key) => group.length === 1)).flat()
 
-  const remoteGroups = groupBy(remoteSources, 'type')
+  const remoteWithNormalizedType = remoteSources.map((remote) => ({...remote, type: remote.type.toLowerCase()}))
+  const remoteGroups = groupBy(remoteWithNormalizedType, 'type')
   const remoteUniqueMap = pickBy(remoteGroups, (group, _key) => group.length === 1)
 
   const toConfirm: {local: LocalSource; remote: RemoteSource}[] = []
@@ -165,7 +164,7 @@ function matchByUniqueType(
   // - find a corresponding unique remote source and ask the user to confirm
   // - create it from scratch
   for (const local of localUnique) {
-    const remote = remoteUniqueMap[local.graphQLType]
+    const remote = remoteUniqueMap[local.graphQLType.toLowerCase()]
     if (remote && remote[0]) {
       toConfirm.push({local, remote: remote[0]})
     } else {
@@ -178,11 +177,11 @@ function matchByUniqueType(
   // it means that we need to create them.
   const localDuplicated = difference(localSources, localUnique)
   const remotePending = difference(
-    remoteSources,
+    remoteWithNormalizedType,
     toConfirm.map((elem) => elem.remote),
   )
   const [localPending, localToCreate] = partition(localDuplicated, (local) =>
-    remotePending.map((remote) => remote.type).includes(local.graphQLType),
+    remotePending.map((remote) => remote.type.toLowerCase()).includes(local.graphQLType.toLowerCase()),
   )
   toCreate.push(...localToCreate)
 
@@ -217,19 +216,15 @@ export async function automaticMatchmaking(
       return ids[local.localIdentifier] === remote.uuid
     })
 
-  const {migrated: migratedFunctions, pending: pendingAfterMigratingFunctions} = migrateLegacyFunctions(
-    ids,
-    localSources.filter((local) => !existsRemotely(local)),
-    remoteSources.filter((remote) => !localIds.includes(remote.uuid)),
-  )
-  const {local, remote} = pendingAfterMigratingFunctions
+  const local = localSources.filter((local) => !existsRemotely(local))
+  const remote = remoteSources.filter((remote) => !localIds.includes(remote.uuid))
 
   const {matched, toCreate, toConfirm, toManualMatch} = useUuidMatching
-    ? matchByUUID(local, remote)
+    ? matchByUIDandUUID(localSources, remoteSources, ids)
     : matchByNameAndType(local, remote)
 
   return {
-    identifiers: {...ids, ...matched, ...migratedFunctions},
+    identifiers: {...ids, ...matched},
     toConfirm,
     toCreate,
     toManualMatch,

@@ -423,7 +423,7 @@
   },
   {
     "name": "app dev clean",
-    "description": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n\n  It's valid only for apps created on the Next-Gen Dev Platform.\n  ",
+    "description": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
     "overviewPreviewDescription": "Cleans up the app preview from the selected store.",
     "type": "command",
     "isVisualComponent": false,
@@ -3416,15 +3416,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--legacy-runtime",
-                "value": "\"\"",
-                "description": "[Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -3443,15 +3434,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--sourcemap",
-                "value": "\"\"",
-                "description": "[Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--verbose",
                 "value": "\"\"",
                 "description": "Outputs more information about the command's execution.",
@@ -3459,7 +3441,7 @@
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_VERBOSE"
               }
             ],
-            "value": "export interface hydrogendev {\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER\n   */\n  '--disable-deps-optimizer'?: ''\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   *\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Expose the server to the local network\n   *\n   */\n  '--host'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_SOURCEMAP\n   */\n  '--sourcemap'?: ''\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface hydrogendev {\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER\n   */\n  '--disable-deps-optimizer'?: ''\n\n  /**\n   * Skip the version check when running `hydrogen dev`\n   *\n   */\n  '--disable-version-check'?: ''\n\n  /**\n   * Disable rendering fallback routes when a route file doesn't exist.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES\n   */\n  '--disable-virtual-routes'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * Expose the server to the local network\n   *\n   */\n  '--host'?: ''\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -4293,15 +4275,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "--legacy-runtime",
-                "value": "\"\"",
-                "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "--path <value>",
                 "value": "string",
                 "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -4335,7 +4308,7 @@
                 "isOptional": true
               }
             ],
-            "value": "export interface hydrogenpreview {\n  /**\n   * Builds the app before starting the preview server.\n   *\n   */\n  '--build'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * Runs the app in a Node.js sandbox instead of an Oxygen worker.\n   * @environment SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME\n   */\n  '--legacy-runtime'?: ''\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project.\n   *\n   */\n  '--watch'?: ''\n}"
+            "value": "export interface hydrogenpreview {\n  /**\n   * Builds the app before starting the preview server.\n   *\n   */\n  '--build'?: ''\n\n  /**\n   * Automatically generates GraphQL types for your project’s Storefront API queries.\n   *\n   */\n  '--codegen'?: ''\n\n  /**\n   * Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if this file exists.\n   *\n   */\n  '--codegen-config-path <value>'?: string\n\n  /**\n   * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.\n   * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG\n   */\n  '--debug'?: ''\n\n  /**\n   * Entry file for the worker. Defaults to `./server`.\n   * @environment SHOPIFY_HYDROGEN_FLAG_ENTRY\n   */\n  '--entry <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its handle. Fetch the handle using the `env list` command.\n   *\n   */\n  '--env <value>'?: string\n\n  /**\n   * Specifies the environment to perform the operation using its Git branch name.\n   * @environment SHOPIFY_HYDROGEN_ENVIRONMENT_BRANCH\n   */\n  '--env-branch <value>'?: string\n\n  /**\n   * Path to an environment file to override existing environment variables. Defaults to the '.env' located in your project path `--path`.\n   *\n   */\n  '--env-file <value>'?: string\n\n  /**\n   * The port where the inspector is available. Defaults to 9229.\n   * @environment SHOPIFY_HYDROGEN_FLAG_INSPECTOR_PORT\n   */\n  '--inspector-port <value>'?: string\n\n  /**\n   * The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * The port to run the server on. Defaults to 3000.\n   * @environment SHOPIFY_HYDROGEN_FLAG_PORT\n   */\n  '--port <value>'?: string\n\n  /**\n   * Outputs more information about the command's execution.\n   * @environment SHOPIFY_HYDROGEN_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Watches for changes and rebuilds the project.\n   *\n   */\n  '--watch'?: ''\n}"
           }
         }
       }
@@ -5564,7 +5537,7 @@
   },
   {
     "name": "theme init",
-    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+    "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
     "overviewPreviewDescription": "Clones a Git repository to use as a starting point for building a new theme.",
     "type": "command",
     "isVisualComponent": false,
@@ -6458,7 +6431,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-o, --only <value>",
                 "value": "string",
-                "description": "Download only the specified files (Multiple flags allowed).",
+                "description": "Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ONLY"
               },
@@ -6485,12 +6458,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --ignore <value>",
                 "value": "string",
-                "description": "Skip downloading the specified files (Multiple flags allowed).",
+                "description": "Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_IGNORE"
               }
             ],
-            "value": "export interface themepull {\n  /**\n   * Pull theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Pull theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting local files that don't exist remotely.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepull {\n  /**\n   * Pull theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Pull theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting local files that don't exist remotely.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
@@ -6631,7 +6604,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-o, --only <value>",
                 "value": "string",
-                "description": "Push only the specified files (Multiple flags allowed).",
+                "description": "Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ONLY"
               },
@@ -6676,12 +6649,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --ignore <value>",
                 "value": "string",
-                "description": "Skip uploading the specified files (Multiple flags allowed).",
+                "description": "Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_IGNORE"
               }
             ],
-            "value": "export interface themepush {\n  /**\n   * Allow push to a live theme.\n   * @environment SHOPIFY_FLAG_ALLOW_LIVE\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Push theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip uploading the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Push theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting remote files that don't exist locally.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Push only the specified files (Multiple flags allowed).\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Publish as the live theme after uploading.\n   * @environment SHOPIFY_FLAG_PUBLISH\n   */\n  '-p, --publish'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Require theme check to pass without errors before pushing. Warnings are allowed.\n   * @environment SHOPIFY_FLAG_STRICT_PUSH\n   */\n  '--strict'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Create a new unpublished theme and push to it.\n   * @environment SHOPIFY_FLAG_UNPUBLISHED\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepush {\n  /**\n   * Allow push to a live theme.\n   * @environment SHOPIFY_FLAG_ALLOW_LIVE\n   */\n  '-a, --allow-live'?: ''\n\n  /**\n   * Push theme files from your remote development theme.\n   * @environment SHOPIFY_FLAG_DEVELOPMENT\n   */\n  '-d, --development'?: ''\n\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_IGNORE\n   */\n  '-x, --ignore <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Push theme files from your remote live theme.\n   * @environment SHOPIFY_FLAG_LIVE\n   */\n  '-l, --live'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Prevent deleting remote files that don't exist locally.\n   * @environment SHOPIFY_FLAG_NODELETE\n   */\n  '-n, --nodelete'?: ''\n\n  /**\n   * Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.\n   * @environment SHOPIFY_FLAG_ONLY\n   */\n  '-o, --only <value>'?: string\n\n  /**\n   * Password generated from the Theme Access app.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Publish as the live theme after uploading.\n   * @environment SHOPIFY_FLAG_PUBLISH\n   */\n  '-p, --publish'?: ''\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Require theme check to pass without errors before pushing. Warnings are allowed.\n   * @environment SHOPIFY_FLAG_STRICT_PUSH\n   */\n  '--strict'?: ''\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>'?: string\n\n  /**\n   * Create a new unpublished theme and push to it.\n   * @environment SHOPIFY_FLAG_UNPUBLISHED\n   */\n  '-u, --unpublished'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

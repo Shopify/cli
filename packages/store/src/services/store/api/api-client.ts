@@ -45,7 +45,10 @@ export class ApiClient implements ApiClientInterface {
         this.createUnauthorizedHandler(),
       )
     } catch (error) {
-      throw this.handleError(error, 'startBulkDataStoreCopy')
+      throw this.handleError(error, 'startBulkDataStoreCopy', {
+        sourceStoreName: sourceShopDomain,
+        targetStoreName: targetShopDomain,
+      })
     }
   }
 
@@ -57,7 +60,9 @@ export class ApiClient implements ApiClientInterface {
     try {
       return await startBulkDataStoreExport(shopId, sourceShopDomain, token, this.createUnauthorizedHandler())
     } catch (error) {
-      throw this.handleError(error, 'startBulkDataStoreExport')
+      throw this.handleError(error, 'startBulkDataStoreExport', {
+        storeName: sourceShopDomain,
+      })
     }
   }
 
@@ -78,7 +83,9 @@ export class ApiClient implements ApiClientInterface {
         this.createUnauthorizedHandler(),
       )
     } catch (error) {
-      throw this.handleError(error, 'startBulkDataStoreImport')
+      throw this.handleError(error, 'startBulkDataStoreImport', {
+        storeName: targetShopDomain,
+      })
     }
   }
 
@@ -108,15 +115,62 @@ export class ApiClient implements ApiClientInterface {
     }
   }
 
-  private handleError(error: unknown, operationName: string): OperationError | ValidationError {
-    if (error instanceof OperationError || error instanceof ValidationError) {
-      return error
-    }
+  private handleError(
+    error: unknown,
+    operationName: string,
+    params?: {[key: string]: string},
+  ): OperationError | ValidationError {
     if (error instanceof ClientError) {
       const requestId = this.extractRequestIdFromError(error)
-      return new OperationError(operationName, ErrorCodes.GRAPHQL_API_ERROR, {}, requestId)
+      return new OperationError(operationName, ErrorCodes.GRAPHQL_API_ERROR, params, requestId)
     }
+
+    if (error?.constructor?.name === 'GraphQLClientError') {
+      const requestId = this.extractRequestIdFromErrorMessage(error)
+      const errors = (error as {errors?: {extensions?: {code?: string; fieldName?: string}}[]})?.errors
+
+      const unauthorizedError = this.handleUnauthorizedError(errors, operationName, params, requestId)
+      if (unauthorizedError) {
+        return unauthorizedError
+      }
+
+      if (this.isMissingEAAccess(errors)) {
+        return new OperationError(operationName, ErrorCodes.MISSING_EA_ACCESS, params, requestId)
+      }
+
+      return new OperationError(operationName, ErrorCodes.GRAPHQL_API_ERROR, params, requestId)
+    }
+
     throw error
+  }
+
+  private isMissingEAAccess(errors?: {extensions?: {code?: string; fieldName?: string}}[]): boolean {
+    return (
+      errors?.some(
+        (err) => err.extensions?.code === 'undefinedField' && err.extensions?.fieldName?.includes('bulkDataStore'),
+      ) ?? false
+    )
+  }
+
+  private handleUnauthorizedError(
+    errors: {extensions?: {code?: string}}[] | undefined,
+    operationName: string,
+    params?: {[key: string]: string},
+    requestId?: string,
+  ): OperationError | null {
+    const isUnauthorized = errors?.some((err) => err.extensions?.code === 'UNAUTHORIZED') ?? false
+    if (!isUnauthorized) {
+      return null
+    }
+
+    if (operationName === 'startBulkDataStoreExport') {
+      return new OperationError(operationName, ErrorCodes.UNAUTHORIZED_EXPORT, params, requestId)
+    } else if (operationName === 'startBulkDataStoreImport') {
+      return new OperationError(operationName, ErrorCodes.UNAUTHORIZED_IMPORT, params, requestId)
+    } else if (operationName === 'startBulkDataStoreCopy') {
+      return new OperationError(operationName, ErrorCodes.UNAUTHORIZED_COPY, params, requestId)
+    }
+    return new OperationError(operationName, ErrorCodes.UNAUTHORIZED, params, requestId)
   }
 
   private extractRequestIdFromError(error: unknown): string | undefined {
@@ -124,6 +178,16 @@ export class ApiClient implements ApiClientInterface {
       const response = (error as {response?: {headers?: {get?: (key: string) => string | null}}}).response
       if (response && response.headers && typeof response.headers.get === 'function') {
         return response.headers.get('x-request-id') ?? undefined
+      }
+    }
+    return undefined
+  }
+
+  private extractRequestIdFromErrorMessage(error: unknown): string | undefined {
+    if (error && typeof error === 'object' && 'message' in error) {
+      const message = (error as {message?: string}).message
+      if (message) {
+        return message.match(/Request ID: ([\w-]+)/)?.[1] ?? undefined
       }
     }
     return undefined

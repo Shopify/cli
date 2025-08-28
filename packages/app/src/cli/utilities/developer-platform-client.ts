@@ -3,7 +3,6 @@ import {AppManagementClient} from './developer-platform-client/app-management-cl
 import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
-  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -44,8 +43,7 @@ import {
 } from '../api/graphql/extension_migrate_to_ui_extension.js'
 import {RemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../api/graphql/extension_migrate_app_module.js'
-import {AppConfiguration, AppManifest, isCurrentAppSchema} from '../models/app/app.js'
-import {loadAppConfiguration} from '../models/app/loader.js'
+import {AppManifest} from '../models/app/app.js'
 import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
@@ -62,6 +60,7 @@ import {
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -73,7 +72,6 @@ export type Paginateable<T> = T & {
 }
 
 interface SelectDeveloperPlatformClientOptions {
-  configuration?: AppConfiguration | undefined
   organization?: Organization
 }
 
@@ -84,62 +82,25 @@ export interface AppVersionIdentifiers {
 
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = []
+
+  clients.push(new AppManagementClient())
+
   if (!blockPartnersAccess()) {
     clients.push(new PartnersClient())
   }
 
-  clients.push(new AppManagementClient())
   return clients
 }
 
-/**
- * Attempts to load an app's configuration in order to select a developer platform client.
- *
- * The provided options are a subset of what is common across most services.
- *
- * @param directory - The working directory for this command (possibly via `--path`)
- * @param configName - An optional configuration file name to force, provided by the developer
- * @param developerPlatformClient - An optional developer platform client to use, forced by the developer
- */
-export async function sniffServiceOptionsAndAppConfigToSelectPlatformClient(options: {
-  directory: string
-  configName?: string
-  developerPlatformClient?: DeveloperPlatformClient
-}): Promise<DeveloperPlatformClient> {
-  if (options.developerPlatformClient) {
-    return options.developerPlatformClient
-  }
-  try {
-    const {configuration} = await loadAppConfiguration({
-      ...options,
-      userProvidedConfigName: options.configName,
-    })
-    const developerPlatformClient = selectDeveloperPlatformClient({configuration})
-    return developerPlatformClient
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    // If the app is invalid, we really don't care at this point. This function is purely responsible for selecting
-    // a client.
-    return new PartnersClient()
-  }
-}
-
 export function selectDeveloperPlatformClient({
-  configuration,
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return selectDeveloperPlatformClientByConfig(configuration)
+  return new PartnersClient()
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
   if (organization.source === OrganizationSource.BusinessPlatform) return new AppManagementClient()
-  return new PartnersClient()
-}
-
-function selectDeveloperPlatformClientByConfig(configuration: AppConfiguration | undefined): DeveloperPlatformClient {
-  if (!configuration || (isCurrentAppSchema(configuration) && configuration.organization_id))
-    return new AppManagementClient()
   return new PartnersClient()
 }
 
@@ -165,6 +126,7 @@ export interface AppModuleVersion {
   registrationUuid?: string
   registrationTitle: string
   config?: object
+  target?: string
   type: string
   specification?: AppModuleVersionSpecification
 }
@@ -182,6 +144,7 @@ export type AppVersionWithContext = AppVersion & {
 }
 
 export type AppDeployOptions = AppDeployVariables & {
+  appManifest: AppManifest
   appId: string
   organizationId: string
   name: string
@@ -244,6 +207,7 @@ export interface UserError {
   message: string
   category: string
   details: ErrorDetail[]
+  on?: JsonMapType
 }
 
 interface ErrorDetail {
@@ -257,11 +221,11 @@ export interface DeveloperPlatformClient {
   readonly clientName: ClientName
   readonly webUiName: string
   readonly supportsAtomicDeployments: boolean
-  readonly requiresOrganization: boolean
   readonly supportsDevSessions: boolean
   readonly supportsStoreSearch: boolean
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
+  readonly supportsDashboardManagedExtensions: boolean
   session: () => Promise<PartnersSession>
   /**
    * This is an unsafe method that should only be used when the session is expired.
@@ -270,7 +234,7 @@ export interface DeveloperPlatformClient {
    */
   unsafeRefreshToken: () => Promise<string>
   accountInfo: () => Promise<PartnersSession['accountInfo']>
-  appFromIdentifiers: (app: AppApiKeyAndOrgId) => Promise<OrganizationApp | undefined>
+  appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
   orgAndApps: (orgId: string) => Promise<Paginateable<{organization: Organization; apps: MinimalOrganizationApp[]}>>

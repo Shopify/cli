@@ -2,7 +2,6 @@ import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {parseResourceConfigFlags} from '../../../lib/resource-config.js'
-import {storeFullDomain} from '../utils/store-utils.js'
 import {FileUploader} from '../utils/file-uploader.js'
 import {MockFileUploader} from '../utils/mock-file-uploader.js'
 import {ApiClient} from '../api/api-client.js'
@@ -15,6 +14,7 @@ import {confirmImportPrompt} from '../../../prompts/confirm_import.js'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {fileExists} from '@shopify/cli-kit/node/fs'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class StoreImportOperation implements StoreOperation {
   fromArg: string | undefined
@@ -39,7 +39,7 @@ export class StoreImportOperation implements StoreOperation {
 
     await this.validateInputFile(fromFile)
 
-    const targetShopDomain = storeFullDomain(toStore)
+    const targetShopDomain = await normalizeStoreFqdn(toStore)
     const apiShopId = await this.validateShop(targetShopDomain)
 
     if (!flags['no-prompt']) {

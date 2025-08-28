@@ -58,7 +58,7 @@ describe('fetchOrganizations', async () => {
     const got = await fetchOrganizations()
 
     // Then
-    expect(got).toEqual([ORG1, ORG2])
+    expect(got).toEqual([ORG2, ORG1])
     expect(partnersClient.organizations).toHaveBeenCalled()
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })

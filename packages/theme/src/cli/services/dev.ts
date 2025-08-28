@@ -18,7 +18,7 @@ import readline from 'readline'
 const DEFAULT_HOST = '127.0.0.1'
 const DEFAULT_PORT = '9292'
 
-export interface DevOptions {
+interface DevOptions {
   adminSession: AdminSession
   directory: string
   store: string
@@ -82,6 +82,7 @@ export async function dev(options: DevOptions) {
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: options.directory,
+    type: 'theme',
     options: {
       themeEditorSync: options['theme-editor-sync'],
       host,

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -227,10 +227,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.buildValidation(this)
   }
 
-  async keepBuiltSourcemapsLocally(bundleDirectory: string, extensionId: string): Promise<void> {
+  async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
     if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
-
-    const inputPath = joinPath(bundleDirectory, extensionId)
 
     const pathsToMove = await glob(`**/${this.handle}.js.map`, {
       cwd: inputPath,
@@ -250,6 +248,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+  }
+
+  getOutputFolderId(outputId?: string) {
+    // Ideally we want to return `this.uid` always. To keep supporting Partners API we accept a value to override that.
+
+    return outputId ?? this.uid
   }
 
   // UI Specific properties
@@ -358,12 +362,10 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
-    const extensionId = this.getOutputFolderId(identifiers?.extensions[this.localIdentifier])
-
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
     if (this.features.includes('bundling')) {
       // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionId)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
     }
 
     await this.build(options)
@@ -371,21 +373,22 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       await bundleThemeExtension(this, options)
     }
 
-    await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId)
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
+    await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
-  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
-    const extensionId = this.getOutputFolderId(identifiers?.extensions[this.localIdentifier])
-
+  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
     const defaultOutputPath = this.outputPath
 
     if (this.features.includes('bundling')) {
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionId)
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
     }
 
     const buildMode = this.buildMode(options)
 
-    if (buildMode !== 'none') {
+    if (this.isThemeExtension) {
+      await bundleThemeExtension(this, options)
+    } else if (buildMode !== 'none') {
       outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
       if (await fileExists(defaultOutputPath)) {
         await copyFile(defaultOutputPath, this.outputPath)
@@ -394,19 +397,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           await bundleFunctionExtension(this.outputPath, this.outputPath)
         }
       }
-
-      if (this.isThemeExtension) {
-        await bundleThemeExtension(this, options)
-      }
     }
   }
 
-  getOutputFolderId(extensionId?: string) {
-    return extensionId ?? this.uid ?? this.handle
-  }
-
-  getOutputPathForDirectory(directory: string, extensionId?: string) {
-    const id = this.getOutputFolderId(extensionId)
+  getOutputPathForDirectory(directory: string, outputId?: string) {
+    const id = this.getOutputFolderId(outputId)
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
@@ -441,19 +436,18 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const uuid = this.isUUIDStrategyExtension
       ? identifiers.extensions[this.localIdentifier]!
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
-    const uid = this.isUUIDStrategyExtension ? this.uid : uuid
 
     return {
       ...result,
-      uid,
+      uid: this.uid,
       uuid,
       specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(this.graphQLType),
     }
   }
 
-  async getDevSessionUpdateMessage(): Promise<string | undefined> {
-    if (!this.specification.getDevSessionUpdateMessage) return undefined
-    return this.specification.getDevSessionUpdateMessage(this.configuration)
+  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
+    if (!this.specification.getDevSessionUpdateMessages) return undefined
+    return this.specification.getDevSessionUpdateMessages(this.configuration)
   }
 
   /**
@@ -514,7 +508,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'uuid':
         return this.configuration.uid ?? nonRandomUUID(this.handle)
       case 'dynamic':
-        return nonRandomUUID(this.handle)
+        // NOTE: This is a temporary special case for webhook subscriptions.
+        // We're directly checking for webhook properties and casting the configuration
+        // instead of using a proper dynamic strategy implementation.
+        // To remove this special case:
+        // 1. Implement a proper dynamic UID strategy for webhooks in the server-side specification
+        // 2. Update the CLI to use that strategy instead of this hardcoded logic
+        // Related issues: PR #559094 in old Core repo
+        if ('topic' in this.configuration && 'uri' in this.configuration) {
+          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
+          return `${subscription.topic}::${subscription.filter}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
+        } else {
+          return nonRandomUUID(JSON.stringify(this.configuration))
+        }
     }
   }
 }

@@ -14,9 +14,11 @@ import {OperationError, ErrorCodes} from '../errors/errors.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utils/result-file-handler.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/export_results.js')
 vi.mock('../../../prompts/confirm_export.js')
@@ -54,13 +56,16 @@ describe('StoreExportOperation', () => {
       operation: mockCompletedOperation,
       isComplete: true,
     })
+
+    vi.mocked(fileExistsSync).mockReturnValue(false)
   })
 
   test('should show confirm prompt before export', async () => {
+    vi.mocked(fileExistsSync).mockReturnValue(true)
     vi.mocked(confirmExportPrompt).mockResolvedValue(true)
     await operation.execute('source.myshopify.com', 'export.sqlite', {})
 
-    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'export.sqlite')
+    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'export.sqlite', true)
     expect(renderExportResult).toHaveBeenCalled()
   })
 
@@ -75,7 +80,7 @@ describe('StoreExportOperation', () => {
     vi.mocked(confirmExportPrompt).mockResolvedValue(true)
     await operation.execute('source.myshopify.com', 'output.sqlite', {})
 
-    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite')
+    expect(confirmExportPrompt).toHaveBeenCalledWith('source.myshopify.com', 'output.sqlite', false)
     expect(renderCopyInfo).toHaveBeenCalledWith('Export Operation', 'source.myshopify.com', 'output.sqlite')
     expect(renderExportResult).toHaveBeenCalledWith('source.myshopify.com', mockCompletedOperation)
     expect(mockResultFileHandler.promptAndHandleResultFile).toHaveBeenCalledWith(
@@ -258,5 +263,60 @@ describe('StoreExportOperation', () => {
     const error = await promise.catch((err) => err)
     expect(error.requestId).toBeUndefined()
     expect(error.code).toBe(ErrorCodes.GRAPHQL_API_ERROR)
+  })
+
+  test('should get export-specific unauthorized error from API client', async () => {
+    const unauthorizedError = new OperationError(
+      'startBulkDataStoreExport',
+      ErrorCodes.UNAUTHORIZED_EXPORT,
+      {storeName: 'source.myshopify.com'},
+      'export-request-unauthorized-123',
+    )
+    mockApiClient.startBulkDataStoreExport.mockRejectedValue(unauthorizedError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreExport',
+      code: ErrorCodes.UNAUTHORIZED_EXPORT,
+      params: {storeName: 'source.myshopify.com'},
+      requestId: 'export-request-unauthorized-123',
+    })
+  })
+
+  test('should get missing EA access error from API client', async () => {
+    const missingEAError = new OperationError(
+      'startBulkDataStoreExport',
+      ErrorCodes.MISSING_EA_ACCESS,
+      {},
+      'export-request-ea-123',
+    )
+    mockApiClient.startBulkDataStoreExport.mockRejectedValue(missingEAError)
+
+    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
+      const ctx: any = {}
+      for (const task of tasks) {
+        // eslint-disable-next-line no-await-in-loop
+        await task.task(ctx, task)
+      }
+      return ctx
+    })
+
+    const promise = operation.execute('source.myshopify.com', 'export.sqlite', {'no-prompt': true})
+    await expect(promise).rejects.toThrow(OperationError)
+    await expect(promise).rejects.toMatchObject({
+      operation: 'startBulkDataStoreExport',
+      code: ErrorCodes.MISSING_EA_ACCESS,
+      requestId: 'export-request-ea-123',
+    })
   })
 })

@@ -13,7 +13,7 @@ export interface themepull {
   '-e, --environment <value>'?: string
 
   /**
-   * Skip downloading the specified files (Multiple flags allowed).
+   * Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.
    * @environment SHOPIFY_FLAG_IGNORE
    */
   '-x, --ignore <value>'?: string
@@ -37,7 +37,7 @@ export interface themepull {
   '-n, --nodelete'?: ''
 
   /**
-   * Download only the specified files (Multiple flags allowed).
+   * Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.
    * @environment SHOPIFY_FLAG_ONLY
    */
   '-o, --only <value>'?: string

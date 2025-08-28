@@ -80,7 +80,7 @@ describe('checkPortAvailability', () => {
 
     // Then
     expect(result).toBe(true)
-    expect(port.checkPort).toHaveBeenCalledWith(portNumber, undefined)
+    expect(port.checkPort).toHaveBeenCalledWith(portNumber, 'localhost')
   })
 
   test('returns false when port is not available', async () => {
@@ -93,23 +93,6 @@ describe('checkPortAvailability', () => {
 
     // Then
     expect(result).toBe(false)
-    expect(port.checkPort).toHaveBeenCalledWith(portNumber, undefined)
-  })
-
-  test('uses 0.0.0.0 as host when HOST env var is set', async () => {
-    // Given
-    const portNumber = 3000
-    vi.stubEnv('HOST', 'localhost')
-    vi.mocked(port.checkPort).mockResolvedValue(portNumber)
-
-    // When
-    const result = await checkPortAvailability(portNumber)
-
-    // Then
-    expect(result).toBe(true)
-    expect(port.checkPort).toHaveBeenCalledWith(portNumber, '0.0.0.0')
-
-    // Cleanup
-    vi.unstubAllEnvs()
+    expect(port.checkPort).toHaveBeenCalledWith(portNumber, 'localhost')
   })
 })

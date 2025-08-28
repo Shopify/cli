@@ -8,6 +8,7 @@ import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/th
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 
 interface UploadOptions {
   nodelete?: boolean
@@ -446,6 +447,8 @@ async function handleFailedUploads(
   const failedUploadParams = uploadParams.filter((param) => failedUploadsSet.has(param.key))
 
   if (count === MAX_UPLOAD_RETRY_COUNT) {
+    recordEvent(`theme-service:upload-failed-retry:max-retry`)
+
     outputDebug(
       `Max retry count reached for the following files:\n${failedUploadParams
         .map((param) => `-${param.key}`)
@@ -454,6 +457,7 @@ async function handleFailedUploads(
     return failedUploadResults
   }
 
+  recordEvent(`theme-service:upload-failed-retry:${failedUploadParams.length}`)
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
 }
 

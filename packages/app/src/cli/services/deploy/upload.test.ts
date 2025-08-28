@@ -1,5 +1,5 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle} from './upload.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -8,6 +8,9 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/crypto')
+
+const app = testApp()
+const appManifest = await app.manifest(undefined)
 
 describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners', async () => {
@@ -20,6 +23,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -35,6 +39,7 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -64,6 +69,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -81,6 +87,7 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -108,6 +115,7 @@ describe('uploadExtensionsBundle', () => {
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
     await uploadExtensionsBundle({
+      appManifest,
       appId: '1',
       apiKey: 'app-id',
       name: 'appName',
@@ -121,6 +129,7 @@ describe('uploadExtensionsBundle', () => {
 
     // Then
     expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+      appManifest,
       appId: '1',
       apiKey: 'app-id',
       name: 'appName',
@@ -221,6 +230,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       try {
         await uploadExtensionsBundle({
+          appManifest,
           appId: '1',
           apiKey: 'app-id',
           name: 'appName',
@@ -323,6 +333,7 @@ describe('uploadExtensionsBundle', () => {
 
       // When
       const result = await uploadExtensionsBundle({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -419,10 +430,14 @@ describe('deploymentErrorsToCustomSections', () => {
     ]
 
     // When
-    const customSections = deploymentErrorsToCustomSections(errors, {
-      'amortizable-marketplace-ext': '123',
-      'amortizable-marketplace-ext-2': '456',
-    })
+    const customSections = deploymentErrorsToCustomSections(
+      errors,
+      {
+        'amortizable-marketplace-ext': '123',
+        'amortizable-marketplace-ext-2': '456',
+      },
+      [],
+    )
 
     // Then
     expect(customSections).toEqual([
@@ -480,10 +495,14 @@ describe('deploymentErrorsToCustomSections', () => {
     ]
 
     // When
-    const customSections = deploymentErrorsToCustomSections(errors, {
-      'amortizable-marketplace-ext': '123',
-      'amortizable-marketplace-ext-2': '456',
-    })
+    const customSections = deploymentErrorsToCustomSections(
+      errors,
+      {
+        'amortizable-marketplace-ext': '123',
+        'amortizable-marketplace-ext-2': '456',
+      },
+      [],
+    )
 
     // Then
     expect(customSections).toEqual([
@@ -511,10 +530,14 @@ describe('deploymentErrorsToCustomSections', () => {
     ]
 
     // When
-    const customSections = deploymentErrorsToCustomSections(errors, {
-      'amortizable-marketplace-ext': '123',
-      'amortizable-marketplace-ext-2': '456',
-    })
+    const customSections = deploymentErrorsToCustomSections(
+      errors,
+      {
+        'amortizable-marketplace-ext': '123',
+        'amortizable-marketplace-ext-2': '456',
+      },
+      [],
+    )
 
     // Then
     expect(customSections).toEqual([
@@ -546,6 +569,7 @@ describe('deploymentErrorsToCustomSections', () => {
         'amortizable-marketplace-ext': '123',
         'amortizable-marketplace-ext-2': '456',
       },
+      [],
       {
         version: 'already-taken-version',
       },
@@ -581,9 +605,13 @@ describe('deploymentErrorsToCustomSections', () => {
     ]
 
     // When
-    const customSections = deploymentErrorsToCustomSections(errors, {
-      b05ef3d6a573863fa3b21fae7689f1: '686809612289',
-    })
+    const customSections = deploymentErrorsToCustomSections(
+      errors,
+      {
+        b05ef3d6a573863fa3b21fae7689f1: '686809612289',
+      },
+      [],
+    )
 
     // Then
     expect(customSections).toEqual([
@@ -667,13 +695,17 @@ describe('deploymentErrorsToCustomSections', () => {
     ]
 
     // When
-    const customSections = deploymentErrorsToCustomSections(errors as AppDeploySchema['appDeploy']['userErrors'], {
-      'webhook-subscription-1': '1',
-      'webhook-subscription-2': '2',
-      'webhook-subscription-3': '3',
-      'webhook-subscription-4': '4',
-      'webhook-subscription-5': '5',
-    })
+    const customSections = deploymentErrorsToCustomSections(
+      errors as AppDeploySchema['appDeploy']['userErrors'],
+      {
+        'webhook-subscription-1': '1',
+        'webhook-subscription-2': '2',
+        'webhook-subscription-3': '3',
+        'webhook-subscription-4': '4',
+        'webhook-subscription-5': '5',
+      },
+      [],
+    )
 
     // Then
     expect(customSections).toEqual([
@@ -692,6 +724,104 @@ describe('deploymentErrorsToCustomSections', () => {
           },
         ],
         title: 'Webhook Subscription',
+      },
+    ])
+  })
+
+  test('returns sections for app management validation errors with found appModules', () => {
+    // Given
+    const errors = [
+      {
+        field: ['supported_buyer_contexts', 'currency'],
+        message: 'must be a valid uppercase alpha-3 ISO 4217 value, invalid value: CADs',
+        category: 'invalid',
+        on: [
+          {
+            type: 'app_module',
+            app_module_uuid: '0198a414-9812-7907-820c-773de19dede3',
+            version_uuid: '0198a7a2-81fd-733d-b63c-1afe052b7fb3',
+            specification_identifier: 'payments_extension',
+            user_identifier: 'my-payment-extension-uid',
+          },
+        ],
+        details: [],
+      },
+      {
+        field: ['targeting', 'target'],
+        message: 'is required',
+        category: 'invalid',
+        on: [
+          {
+            type: 'app_module',
+            user_identifier: 'my-discount-extension-uid',
+          },
+        ],
+        details: [],
+      },
+      {
+        field: ['name'],
+        message: 'is too long',
+        category: 'invalid',
+        on: [
+          {
+            type: 'app_module',
+            user_identifier: 'my-payment-extension-uid',
+          },
+        ],
+        details: [],
+      },
+    ]
+
+    const appModules = [
+      {
+        uid: 'my-payment-extension-uid',
+        handle: 'my-payment-extension',
+        config: '{}',
+        context: '',
+        specificationIdentifier: 'payments_extension',
+      },
+      {
+        uid: 'my-discount-extension-uid',
+        handle: 'my-discount-function',
+        config: '{}',
+        context: '',
+        specificationIdentifier: 'discounts_extension',
+      },
+    ]
+
+    // When
+    const customSections = deploymentErrorsToCustomSections(
+      errors as any as AppDeploySchema['appDeploy']['userErrors'],
+      {},
+      appModules,
+    )
+
+    // Then
+    expect(customSections).toEqual([
+      {
+        title: 'my-payment-extension',
+        body: [
+          {
+            list: {
+              title: '\nValidation errors',
+              items: [
+                'supported_buyer_contexts.currency: must be a valid uppercase alpha-3 ISO 4217 value, invalid value: CADs',
+                'name: is too long',
+              ],
+            },
+          },
+        ],
+      },
+      {
+        title: 'my-discount-function',
+        body: [
+          {
+            list: {
+              title: '\nValidation errors',
+              items: ['targeting.target: is required'],
+            },
+          },
+        ],
       },
     ])
   })

@@ -2,7 +2,6 @@ import {StoreOperation} from '../types/operations.js'
 import {FlagOptions} from '../../../lib/types.js'
 import {BulkDataStoreExportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {Organization} from '../../../apis/destinations/index.js'
-import {storeFullDomain} from '../utils/store-utils.js'
 import {ResultFileHandler} from '../utils/result-file-handler.js'
 import {ApiClient} from '../api/api-client.js'
 import {ApiClientInterface} from '../types/api-client.js'
@@ -13,6 +12,8 @@ import {renderExportResult} from '../../../prompts/export_results.js'
 import {confirmExportPrompt} from '../../../prompts/confirm_export.js'
 import {Task, renderTasks} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export class StoreExportOperation implements StoreOperation {
   fromArg: string | undefined
@@ -31,12 +32,13 @@ export class StoreExportOperation implements StoreOperation {
   async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
 
-    const sourceShopDomain = storeFullDomain(fromStore)
+    const sourceShopDomain = await normalizeStoreFqdn(fromStore)
 
     const apiShopId = await this.validateShop(sourceShopDomain)
 
     if (!flags['no-prompt']) {
-      if (!(await confirmExportPrompt(sourceShopDomain, toFile))) {
+      const fileExists = fileExistsSync(toFile)
+      if (!(await confirmExportPrompt(sourceShopDomain, toFile, fileExists))) {
         outputInfo('Exiting.')
         process.exit(0)
       }

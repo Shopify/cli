@@ -6,8 +6,6 @@ const data: ReferenceEntityTemplateSchema = {
   description: `Stop the app preview that was started with \`shopify app dev\`.
 
   It restores the app's active version to the selected development store.
-
-  It's valid only for apps created on the Next-Gen Dev Platform.
   `,
   overviewPreviewDescription: `Cleans up the app preview from the selected store.`,
   type: 'command',

@@ -16,8 +16,10 @@ import {
 } from '../../../private/node/api/rest.js'
 import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
-import {normalizeStoreFqdn} from '../context/fqdn.js'
+
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
+import {serviceEnvironment} from '../../../private/node/context/service.js'
+import {DevServerCore} from '../vendor/dev_server/index.js'
 import {ClientError, Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
@@ -34,9 +36,15 @@ const LatestApiVersionByFQDN = new Map<string, string>()
 export async function adminRequest<T>(query: string, session: AdminSession, variables?: GraphQLVariables): Promise<T> {
   const api = 'Admin'
   const version = await fetchLatestSupportedApiVersion(session)
-  const store = await normalizeStoreFqdn(session.storeFqdn)
-  const url = adminUrl(store, version, session)
+  let storeDomain = session.storeFqdn
   const addedHeaders = themeAccessHeaders(session)
+
+  if (serviceEnvironment() === 'local') {
+    addedHeaders['x-forwarded-host'] = storeDomain
+    storeDomain = new DevServerCore().host('app')
+  }
+
+  const url = adminUrl(storeDomain, version, session)
   return graphqlRequest({query, api, addedHeaders, url, token: session.token, variables})
 }
 
@@ -52,7 +60,7 @@ export interface AdminRequestOptions<TResult, TVariables extends Variables> {
   /** Control how API responses will be handled. */
   responseOptions?: GraphQLResponseOptions<TResult>
   /** Custom request behaviour for retries and timeouts. */
-  requestBehaviour?: RequestModeInput
+  preferredBehaviour?: RequestModeInput
 }
 
 /**
@@ -64,16 +72,22 @@ export interface AdminRequestOptions<TResult, TVariables extends Variables> {
 export async function adminRequestDoc<TResult, TVariables extends Variables>(
   options: AdminRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
-  const {query, session, variables, version, responseOptions, requestBehaviour} = options
+  const {query, session, variables, version, responseOptions, preferredBehaviour} = options
 
   let apiVersion = version ?? LatestApiVersionByFQDN.get(session.storeFqdn)
   if (!apiVersion) {
-    apiVersion = await fetchLatestSupportedApiVersion(session)
+    apiVersion = await fetchLatestSupportedApiVersion(session, preferredBehaviour)
   }
-  const store = await normalizeStoreFqdn(session.storeFqdn)
+  let storeDomain = session.storeFqdn
   const addedHeaders = themeAccessHeaders(session)
+
+  if (serviceEnvironment() === 'local') {
+    addedHeaders['x-forwarded-host'] = storeDomain
+    storeDomain = new DevServerCore().host('app')
+  }
+
   const opts = {
-    url: adminUrl(store, apiVersion, session),
+    url: adminUrl(storeDomain, apiVersion, session),
     api: 'Admin',
     token: session.token,
     addedHeaders,
@@ -88,7 +102,7 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
     variables,
     responseOptions,
     unauthorizedHandler,
-    requestBehaviour,
+    preferredBehaviour,
   })
   return result
 }
@@ -103,10 +117,14 @@ function themeAccessHeaders(session: AdminSession): {[header: string]: string} {
  * GraphQL query to retrieve the latest supported API version.
  *
  * @param session - Shopify admin session including token and Store FQDN.
+ * @param preferredBehaviour - Custom request behaviour for retries and timeouts.
  * @returns - The latest supported API version.
  */
-async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<string> {
-  const apiVersions = await supportedApiVersions(session)
+async function fetchLatestSupportedApiVersion(
+  session: AdminSession,
+  preferredBehaviour?: RequestModeInput,
+): Promise<string> {
+  const apiVersions = await supportedApiVersions(session, preferredBehaviour)
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const latest = apiVersions.reverse()[0]!
   LatestApiVersionByFQDN.set(session.storeFqdn, latest)
@@ -117,10 +135,14 @@ async function fetchLatestSupportedApiVersion(session: AdminSession): Promise<st
  * GraphQL query to retrieve all supported API versions.
  *
  * @param session - Shopify admin session including token and Store FQDN.
+ * @param preferredBehaviour - Custom request behaviour for retries and timeouts.
  * @returns - An array of supported API versions.
  */
-export async function supportedApiVersions(session: AdminSession): Promise<string[]> {
-  const apiVersions = await fetchApiVersions(session)
+export async function supportedApiVersions(
+  session: AdminSession,
+  preferredBehaviour?: RequestModeInput,
+): Promise<string[]> {
+  const apiVersions = await fetchApiVersions(session, preferredBehaviour)
   return apiVersions
     .filter((item) => item.supported)
     .map((item) => item.handle)
@@ -131,9 +153,10 @@ export async function supportedApiVersions(session: AdminSession): Promise<strin
  * GraphQL query to retrieve all API versions.
  *
  * @param session - Shopify admin session including token and Store FQDN.
+ * @param preferredBehaviour - Custom request behaviour for retries and timeouts.
  * @returns - An array of supported and unsupported API versions.
  */
-async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
+async function fetchApiVersions(session: AdminSession, preferredBehaviour?: RequestModeInput): Promise<ApiVersion[]> {
   try {
     const response = await adminRequestDoc({
       query: PublicApiVersions,
@@ -141,6 +164,7 @@ async function fetchApiVersions(session: AdminSession): Promise<ApiVersion[]> {
       variables: {},
       version: 'unstable',
       responseOptions: {handleErrors: false},
+      preferredBehaviour,
     })
     return response.publicApiVersions
   } catch (error) {

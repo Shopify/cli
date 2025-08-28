@@ -1,5 +1,26 @@
 # @shopify/cli
 
+## 3.84.0
+
+### Minor Changes
+
+- 1f4fd78: Allow multi-environment theme commands to accept flags from CLI
+- 9b872dc: Update fetched AI instructions
+- b382a89: Prompt for confirmation before running multi-environment theme commands that allow `--force` flag
+- 281b50b: Allow theme rename command to be run with multiple environments
+- a12a7cc: Allow commands run with multiple environments to require "one of" a list of flags
+
+### Patch Changes
+
+- 1161f7a: Update docs for 'ignore' and 'only' flags for theme push/pull
+
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+- 39dbde0: Add `--no-build` flag to `shopify app deploy`. When provided, the deploy command will assume you have already run `shopify app build` or otherwise put build files in place.
+
 ## 3.82.0
 
 ### Patch Changes

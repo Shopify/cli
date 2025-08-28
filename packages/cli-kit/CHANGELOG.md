@@ -1,5 +1,29 @@
 # @shopify/cli-kit
 
+## 3.84.0
+
+### Minor Changes
+
+- 9b872dc: Update fetched AI instructions
+
+### Patch Changes
+
+- 864c687: Fix custom network behaviour for theme commands not being used
+- 40e2d6f: Fixed typo in isARetryableNetworkError to catch network socket disconnected
+- 62d6b9a: Add more retryable errors and improve consistency of identifying retryable conditions
+
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+
+### Patch Changes
+
+- b1feb1d: Add CLI theme login auth error next steps
+- ee353e9: No longer abort theme GraphQL requests on the client side
+- e73e9a5: Fix an issue with running `theme package` with a default environment present
+
 ## 3.82.0
 
 ### Patch Changes

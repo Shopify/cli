@@ -597,8 +597,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n\n  It's valid only for apps created on the Next-Gen Dev Platform.\n  ",
-      "descriptionWithMarkdown": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n\n  It's valid only for apps created on the Next-Gen Dev Platform.\n  ",
+      "description": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
+      "descriptionWithMarkdown": "Stop the app preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -3404,13 +3404,6 @@
           "name": "inspector-port",
           "type": "option"
         },
-        "legacy-runtime": {
-          "allowNo": false,
-          "description": "[Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-          "env": "SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME",
-          "name": "legacy-runtime",
-          "type": "boolean"
-        },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
           "env": "SHOPIFY_HYDROGEN_FLAG_PATH",
@@ -3427,13 +3420,6 @@
           "name": "port",
           "required": false,
           "type": "option"
-        },
-        "sourcemap": {
-          "allowNo": true,
-          "description": "[Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
-          "env": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP",
-          "name": "sourcemap",
-          "type": "boolean"
         },
         "verbose": {
           "allowNo": false,
@@ -3619,7 +3605,7 @@
       ],
       "args": {
         "routeName": {
-          "description": "The route to generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.",
+          "description": "The route to generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.",
           "name": "routeName",
           "options": [
             "home",
@@ -3633,6 +3619,7 @@
             "search",
             "robots",
             "sitemap",
+            "tokenlessApi",
             "all"
           ],
           "required": true
@@ -4115,13 +4102,6 @@
           "multiple": false,
           "name": "inspector-port",
           "type": "option"
-        },
-        "legacy-runtime": {
-          "allowNo": false,
-          "description": "Runs the app in a Node.js sandbox instead of an Oxygen worker.",
-          "env": "SHOPIFY_HYDROGEN_FLAG_LEGACY_RUNTIME",
-          "name": "legacy-runtime",
-          "type": "boolean"
         },
         "path": {
           "description": "The path to the directory of the Hydrogen storefront. Defaults to the current directory where the command is run.",
@@ -5337,10 +5317,18 @@
       "hiddenAliases": [
       ],
       "id": "theme:delete",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        [
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
+      "strict": true,
       "summary": "Delete remote themes from the connected store. This command can't be undone."
     },
     "theme:dev": {
@@ -5750,12 +5738,12 @@
         }
       },
       "customPluginName": "@shopify/theme",
-      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
-      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
       "flags": {
         "clone-url": {
           "char": "u",
-          "default": "https://github.com/Shopify/skeleton-theme",
+          "default": "https://github.com/Shopify/skeleton-theme.git",
           "description": "The Git URL to clone from. Defaults to Shopify's Skeleton theme.",
           "env": "SHOPIFY_FLAG_CLONE_URL",
           "hasDynamicHelp": false,
@@ -6419,7 +6407,7 @@
         },
         "ignore": {
           "char": "x",
-          "description": "Skip downloading the specified files (Multiple flags allowed).",
+          "description": "Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_IGNORE",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6452,7 +6440,7 @@
         },
         "only": {
           "char": "o",
-          "description": "Download only the specified files (Multiple flags allowed).",
+          "description": "Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ONLY",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6558,7 +6546,7 @@
         },
         "ignore": {
           "char": "x",
-          "description": "Skip uploading the specified files (Multiple flags allowed).",
+          "description": "Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_IGNORE",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6600,7 +6588,7 @@
         },
         "only": {
           "char": "o",
-          "description": "Push only the specified files (Multiple flags allowed).",
+          "description": "Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ONLY",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6788,6 +6776,16 @@
       "hiddenAliases": [
       ],
       "id": "theme:rename",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "name",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -7248,5 +7246,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.82.0"
+  "version": "3.84.0"
 }

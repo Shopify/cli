@@ -19,6 +19,7 @@ import {
   AppHiddenConfig,
   isLegacyAppSchema,
 } from './app.js'
+import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -58,7 +59,13 @@ import ignore from 'ignore'
 
 const defaultExtensionDirectory = 'extensions/*'
 
-export type AppLoaderMode = 'strict' | 'report'
+/**
+ * The mode in which the app is loaded, this affects how errors are handled:
+ * - strict: If there is any kind of error, the app won't be loaded.
+ * - report: The app will be loaded as much as possible, errors will be reported afterwards.
+ * - local: Errors for unknown extensions will be ignored. Other errors will prevent the app from loading.
+ */
+export type AppLoaderMode = 'strict' | 'report' | 'local'
 
 type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
 
@@ -118,15 +125,6 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
 
   const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
   return {...configuration, path: filepath}
-}
-
-export function parseHumanReadableError(issues: Pick<zod.ZodIssueBase, 'path' | 'message'>[]) {
-  let humanReadableError = ''
-  issues.forEach((issue) => {
-    const path = issue.path ? issue?.path.join('.') : 'n/a'
-    humanReadableError += `• [${path}]: ${issue.message}\n`
-  })
-  return humanReadableError
 }
 
 /**
@@ -466,6 +464,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     if (specification) {
       usedKnownSpecification = true
+    } else if (this.mode === 'local') {
+      return undefined
     } else {
       return this.abortOrReport(
         outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
@@ -676,7 +676,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path']
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path', 'organization_id']
         return !configKeysThatAreNeverModules.includes(key)
       })
 

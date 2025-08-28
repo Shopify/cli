@@ -1,5 +1,5 @@
-query fetchSpecifications {
-  specifications {
+query fetchSpecifications($organizationId: ID!) {
+  specifications(organizationId: $organizationId) {
     name
     identifier
     externalIdentifier

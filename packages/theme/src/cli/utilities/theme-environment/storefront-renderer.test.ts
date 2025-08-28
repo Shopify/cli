@@ -43,7 +43,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
-    expect(response.headers.get('Content-Type')).toBeNull()
+    expect(response.headers.get('Content-Type')).toEqual('application/json')
     expect(response.headers.get('something')).toEqual('else')
     expect(fetch).toHaveBeenCalledWith(
       'https://store.myshopify.com/products/1?_fd=0&pb=0',
@@ -59,6 +59,36 @@ describe('render', () => {
     )
   })
 
+  test('preserves Content-Type header for JSON responses', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('{"test": "data"}', {headers: {'Content-Type': 'application/json', something: 'else'}}),
+    )
+
+    // When
+    const response = await render(session, context)
+
+    // Then
+    expect(response.status).toEqual(200)
+    expect(response.headers.get('Content-Type')).toEqual('application/json')
+    expect(response.headers.get('something')).toEqual('else')
+  })
+
+  test('removes Content-Type header for non-JSON responses', async () => {
+    // Given
+    vi.mocked(fetch).mockResolvedValue(
+      new Response('<html></html>', {headers: {'Content-Type': 'text/html', something: 'else'}}),
+    )
+
+    // When
+    const response = await render(session, context)
+
+    // Then
+    expect(response.status).toEqual(200)
+    expect(response.headers.get('Content-Type')).toBeNull()
+    expect(response.headers.get('something')).toEqual('else')
+  })
+
   test('renders using theme access API', async () => {
     // Given
     vi.mocked(fetch).mockResolvedValue(
@@ -71,7 +101,7 @@ describe('render', () => {
 
     // Then
     expect(response.status).toEqual(200)
-    expect(response.headers.get('Content-Type')).toBeNull()
+    expect(response.headers.get('Content-Type')).toEqual('application/json')
     expect(response.headers.get('something')).toEqual('else')
     expect(fetch).toHaveBeenCalledWith(
       'https://theme-kit-access.shopifyapps.com/cli/sfr/products/1?_fd=0&pb=0',

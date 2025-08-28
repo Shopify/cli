@@ -82,6 +82,26 @@ describe('Error message generation', () => {
       'Network error',
     )
     expect(new OperationError('upload', ErrorCodes.STAGED_UPLOAD_FAILED).message).toBe('Failed to create staged upload')
+
+    // Unauthorized errors
+    expect(
+      new OperationError('export', ErrorCodes.UNAUTHORIZED_EXPORT, {storeName: 'test-store.myshopify.com'}).message,
+    ).toBe(
+      "You are not authorized to export bulk data from store \"test-store.myshopify.com\"\n\nTo export you'll need the 'bulk data > export' permission",
+    )
+    expect(
+      new OperationError('import', ErrorCodes.UNAUTHORIZED_IMPORT, {storeName: 'test-store.myshopify.com'}).message,
+    ).toBe(
+      "You are not authorized to import bulk data to store \"test-store.myshopify.com\"\n\nTo import you'll need the 'bulk data > import' permission",
+    )
+    expect(
+      new OperationError('copy', ErrorCodes.UNAUTHORIZED_COPY, {
+        sourceStoreName: 'source.myshopify.com',
+        targetStoreName: 'target.myshopify.com',
+      }).message,
+    ).toBe(
+      "You are not authorized to copy data between these stores\n\nTo export data from \"source.myshopify.com\"\n• You'll need the 'bulk data > export' permission\n\nTo import data to \"target.myshopify.com\"\n• You'll need the 'bulk data > import' permission",
+    )
   })
 
   test('should generate correct GRAPHQL_API_ERROR messages with request IDs', () => {
@@ -111,5 +131,109 @@ describe('OperationError with Request ID', () => {
     expect(error).toBeInstanceOf(OperationError)
     expect(error.requestId).toBeUndefined()
     expect(error.message).toContain('Request Id: unknown')
+  })
+})
+
+describe('Unauthorized Error Codes', () => {
+  test('should create UNAUTHORIZED_EXPORT error with store name', () => {
+    const error = new OperationError('startBulkDataStoreExport', ErrorCodes.UNAUTHORIZED_EXPORT, {
+      storeName: 'test-store.myshopify.com',
+    })
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.operation).toBe('startBulkDataStoreExport')
+    expect(error.code).toBe(ErrorCodes.UNAUTHORIZED_EXPORT)
+    expect(error.params).toEqual({storeName: 'test-store.myshopify.com'})
+    expect(error.message).toBe(
+      "You are not authorized to export bulk data from store \"test-store.myshopify.com\"\n\nTo export you'll need the 'bulk data > export' permission",
+    )
+  })
+
+  test('should create UNAUTHORIZED_IMPORT error with store name', () => {
+    const error = new OperationError('startBulkDataStoreImport', ErrorCodes.UNAUTHORIZED_IMPORT, {
+      storeName: 'target-store.myshopify.com',
+    })
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.operation).toBe('startBulkDataStoreImport')
+    expect(error.code).toBe(ErrorCodes.UNAUTHORIZED_IMPORT)
+    expect(error.params).toEqual({storeName: 'target-store.myshopify.com'})
+    expect(error.message).toBe(
+      "You are not authorized to import bulk data to store \"target-store.myshopify.com\"\n\nTo import you'll need the 'bulk data > import' permission",
+    )
+  })
+
+  test('should create UNAUTHORIZED_COPY error with source and target store names', () => {
+    const error = new OperationError('startBulkDataStoreCopy', ErrorCodes.UNAUTHORIZED_COPY, {
+      sourceStoreName: 'source.myshopify.com',
+      targetStoreName: 'target.myshopify.com',
+    })
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.operation).toBe('startBulkDataStoreCopy')
+    expect(error.code).toBe(ErrorCodes.UNAUTHORIZED_COPY)
+    expect(error.params).toEqual({
+      sourceStoreName: 'source.myshopify.com',
+      targetStoreName: 'target.myshopify.com',
+    })
+    expect(error.message).toBe(
+      "You are not authorized to copy data between these stores\n\nTo export data from \"source.myshopify.com\"\n• You'll need the 'bulk data > export' permission\n\nTo import data to \"target.myshopify.com\"\n• You'll need the 'bulk data > import' permission",
+    )
+  })
+
+  test('should create unauthorized errors with request IDs', () => {
+    const exportError = new OperationError(
+      'startBulkDataStoreExport',
+      ErrorCodes.UNAUTHORIZED_EXPORT,
+      {
+        storeName: 'test-store.myshopify.com',
+      },
+      'export-request-123',
+    )
+
+    expect(exportError.requestId).toBe('export-request-123')
+    expect(exportError.message).toBe(
+      "You are not authorized to export bulk data from store \"test-store.myshopify.com\"\n\nTo export you'll need the 'bulk data > export' permission",
+    )
+
+    const importError = new OperationError(
+      'startBulkDataStoreImport',
+      ErrorCodes.UNAUTHORIZED_IMPORT,
+      {
+        storeName: 'test-store.myshopify.com',
+      },
+      'import-request-456',
+    )
+
+    expect(importError.requestId).toBe('import-request-456')
+    expect(importError.message).toBe(
+      "You are not authorized to import bulk data to store \"test-store.myshopify.com\"\n\nTo import you'll need the 'bulk data > import' permission",
+    )
+
+    const copyError = new OperationError(
+      'startBulkDataStoreCopy',
+      ErrorCodes.UNAUTHORIZED_COPY,
+      {
+        sourceStoreName: 'source.myshopify.com',
+        targetStoreName: 'target.myshopify.com',
+      },
+      'copy-request-789',
+    )
+
+    expect(copyError.requestId).toBe('copy-request-789')
+    expect(copyError.message).toBe(
+      "You are not authorized to copy data between these stores\n\nTo export data from \"source.myshopify.com\"\n• You'll need the 'bulk data > export' permission\n\nTo import data to \"target.myshopify.com\"\n• You'll need the 'bulk data > import' permission",
+    )
+  })
+
+  test('should create STAGED_UPLOAD_ACCESS_DENIED error', () => {
+    const error = new OperationError('upload', ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED)
+
+    expect(error).toBeInstanceOf(OperationError)
+    expect(error.operation).toBe('upload')
+    expect(error.code).toBe(ErrorCodes.STAGED_UPLOAD_ACCESS_DENIED)
+    expect(error.message).toBe(
+      "You don't have permission to upload files to this store.\n\nYou'll need the 'bulk data > import' permission to upload files.",
+    )
   })
 })

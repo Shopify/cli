@@ -7,7 +7,7 @@ import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {migrateExtensionsToUIExtension} from '../dev/migrate-to-ui-extension.js'
 import {migrateFlowExtensions} from '../dev/migrate-flow-extension.js'
 import {AppInterface} from '../../models/app/app.js'
-import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {ClientName, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   FlowModulesMap,
   getModulesToMigrate,
@@ -21,6 +21,7 @@ import {
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {SingleWebhookSubscriptionType} from '../../models/extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
+import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {outputCompleted} from '@shopify/cli-kit/node/output'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {groupBy} from '@shopify/cli-kit/common/collection'
@@ -58,29 +59,33 @@ export async function ensureExtensionsIds(
     AdminLinkModulesMap,
   )
 
+  // Migration is only supported in partners client
+  const clientName = options.developerPlatformClient.clientName
+  const migrationClient = clientName === ClientName.Partners ? options.developerPlatformClient : new PartnersClient()
+
   let didMigrateDashboardExtensions = false
 
   if (uiExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(uiExtensionsToMigrate)
     if (!confirmedMigration) throw new AbortSilentError()
-    remoteExtensions = await migrateExtensionsToUIExtension(
-      uiExtensionsToMigrate,
-      options.appId,
+    remoteExtensions = await migrateExtensionsToUIExtension({
+      extensionsToMigrate: uiExtensionsToMigrate,
+      appId: options.appId,
       remoteExtensions,
-      options.developerPlatformClient,
-    )
+      migrationClient,
+    })
     didMigrateDashboardExtensions = true
   }
 
   if (flowExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(flowExtensionsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateFlowExtensions(
-      flowExtensionsToMigrate,
-      options.appId,
-      dashboardExtensions,
-      options.developerPlatformClient,
-    )
+    const newRemoteExtensions = await migrateFlowExtensions({
+      extensionsToMigrate: flowExtensionsToMigrate,
+      appId: options.appId,
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -88,13 +93,13 @@ export async function ensureExtensionsIds(
   if (marketingToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(marketingToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      marketingToMigrate,
-      options.appId,
-      'marketing_activity',
-      dashboardExtensions,
-      options.developerPlatformClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: marketingToMigrate,
+      appId: options.appId,
+      type: 'marketing_activity',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -102,13 +107,13 @@ export async function ensureExtensionsIds(
   if (paymentsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(paymentsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      paymentsToMigrate,
-      options.appId,
-      'payments_extension',
-      dashboardExtensions,
-      options.developerPlatformClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: paymentsToMigrate,
+      appId: options.appId,
+      type: 'payments_extension',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -116,13 +121,13 @@ export async function ensureExtensionsIds(
   if (subscriptionLinksToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(subscriptionLinksToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      subscriptionLinksToMigrate,
-      options.appId,
-      'subscription_link_extension',
-      dashboardExtensions,
-      options.developerPlatformClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: subscriptionLinksToMigrate,
+      appId: options.appId,
+      type: 'subscription_link_extension',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -130,13 +135,13 @@ export async function ensureExtensionsIds(
   if (adminLinkExtensionsToMigrate.length > 0) {
     const confirmedMigration = await extensionMigrationPrompt(adminLinkExtensionsToMigrate, false)
     if (!confirmedMigration) throw new AbortSilentError()
-    const newRemoteExtensions = await migrateAppModules(
-      adminLinkExtensionsToMigrate,
-      options.appId,
-      'admin_link',
-      dashboardExtensions,
-      options.developerPlatformClient,
-    )
+    const newRemoteExtensions = await migrateAppModules({
+      extensionsToMigrate: adminLinkExtensionsToMigrate,
+      appId: options.appId,
+      type: 'admin_link',
+      remoteExtensions: dashboardExtensions,
+      migrationClient,
+    })
     remoteExtensions = remoteExtensions.concat(newRemoteExtensions)
     didMigrateDashboardExtensions = true
   }
@@ -311,10 +316,8 @@ async function createExtensions(
       // Just pretend to create the extension, as it's not necessary to do anything
       // in this case.
       result[extension.localIdentifier] = {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        id: extension.uid!,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        uuid: extension.uid!,
+        id: extension.uid,
+        uuid: extension.uid,
         type: extension.type,
         title: extension.handle,
       }

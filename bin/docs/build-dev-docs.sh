@@ -15,14 +15,3 @@ eval $COMPILE_DOCS
 eval $COMPILE_STATIC_PAGES
 eval $COMPILE_CATEGORY_PAGES
 echo "DONE"
-
-if [ -n "$SPIN" ]; then
-  if [ -n "$SPIN_SHOPIFY_DEV_SERVICE_FQDN" ]; then
-    cp ./docs-shopify.dev/static/generated/* ~/src/github.com/Shopify/shopify-dev/db/data/docs/templated_apis/shopify-cli/v3/
-    cp ./docs-shopify.dev/static/screenshots/* ~/src/github.com/Shopify/shopify-dev/app/assets/images/templated-apis-screenshots/shopify-cli/v3/
-  else
-    echo "If you include shopify-dev in your Spin constellation, this will automatically copy ./docs-shopify.dev/generated to shopify-dev"
-  fi
-else
-  echo "Not copying docs to shopify-dev because we're not in Spin"
-fi

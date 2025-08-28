@@ -20,7 +20,6 @@ import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
 import {AdminSession} from '../../public/node/session.js'
-import {isSpin} from '../../public/node/context/spin.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 
@@ -259,7 +258,7 @@ ${outputToken.json(applications)}
 }
 
 function throwOnNoPrompt(noPrompt: boolean) {
-  if (!noPrompt || (isSpin() && firstPartyDev())) return
+  if (!noPrompt) return
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 

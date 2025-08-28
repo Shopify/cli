@@ -4,7 +4,6 @@ import {
   loadApp,
   loadDotEnv,
   parseConfigurationObject,
-  parseHumanReadableError,
   checkFolderIsValidApp,
   AppLoaderMode,
   getAppConfigurationState,
@@ -12,6 +11,7 @@ import {
   reloadApp,
   loadHiddenConfig,
 } from './loader.js'
+import {parseHumanReadableError} from './error-parsing.js'
 import {App, AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
@@ -436,6 +436,41 @@ wrong = "property"
 
     // When
     await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type "invalid_type"/)
+  })
+
+  test('loads only known extension types when mode is local', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // Create two extensions: one known and one unknown
+    const knownBlockConfiguration = `
+      name = "my_extension"
+      type = "theme"
+      `
+    await writeBlockConfig({
+      blockConfiguration: knownBlockConfiguration,
+      name: 'my-known-extension',
+    })
+    await writeFile(joinPath(blockPath('my-known-extension'), 'index.js'), '')
+
+    const unknownBlockConfiguration = `
+      name = "unknown_extension"
+      type = "unknown_type"
+      `
+    await writeBlockConfig({
+      blockConfiguration: unknownBlockConfiguration,
+      name: 'my-unknown-extension',
+    })
+    await writeFile(joinPath(blockPath('my-unknown-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp({mode: 'local'})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
+    expect(app.allExtensions[0]!.configuration.type).toBe('theme')
+    expect(app.errors).toBeUndefined()
   })
 
   test('throws if 2 or more extensions have the same handle', async () => {
@@ -2779,46 +2814,25 @@ describe('parseConfigurationObject', () => {
       roles: 1,
     }
 
-    const errorObject = [
-      {
-        code: 'invalid_union',
-        unionErrors: [
-          {
-            issues: [
-              {
-                code: 'invalid_type',
-                expected: 'array',
-                received: 'number',
-                path: ['roles'],
-                message: 'Expected array, received number',
-              },
-            ],
-            name: 'ZodError',
-          },
-          {
-            issues: [
-              {
-                expected: "'frontend' | 'backend' | 'background'",
-                received: 'number',
-                code: 'invalid_type',
-                path: ['type'],
-                message: "Expected 'frontend' | 'backend' | 'background', received number",
-              },
-            ],
-            name: 'ZodError',
-          },
-        ],
-        path: [],
-        message: 'Invalid input',
-      },
-    ]
-    const expectedFormatted = outputContent`\n${outputToken.errorText(
-      'Validation errors',
-    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    // Verify the function was called and capture the actual error structure
+    expect(abortOrReport).toHaveBeenCalledOnce()
+    const callArgs = abortOrReport.mock.calls[0]!
+    const actualErrorMessage = callArgs[0]
+
+    // Convert TokenizedString to regular string for testing
+    const errorString = actualErrorMessage.value
+
+    // The enhanced union handling should show only the most relevant errors
+    // instead of showing all variants, making it much more user-friendly
+    expect(errorString).toContain('[roles]: Expected array, received number')
+
+    // Should NOT show the confusing union variant breakdown
+    expect(errorString).not.toContain('Union validation failed')
+    expect(errorString).not.toContain('Option 1:')
+    expect(errorString).not.toContain('Option 2:')
   })
 })
 

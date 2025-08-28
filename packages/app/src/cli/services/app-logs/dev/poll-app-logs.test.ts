@@ -379,11 +379,11 @@ describe('pollAppLogs', () => {
       organizationId: 'organizationId',
     })
 
-    expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.', stdout)
     expect(vi.getTimerCount()).toEqual(1)
   })
 
-  test('displays error message, waits, and retries if error occured', async () => {
+  test('displays error message, waits, and retries if error occurred', async () => {
     // Given
     const outputDebugSpy = vi.spyOn(output, 'outputDebug')
     const outputWarnSpy = vi.spyOn(output, 'outputWarn')
@@ -406,7 +406,7 @@ describe('pollAppLogs', () => {
     })
 
     // Then
-    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.', stdout)
     expect(vi.getTimerCount()).toEqual(1)
   })
 
@@ -450,8 +450,8 @@ describe('pollAppLogs', () => {
 
     // When/Then
     await expect(writeAppLogsToFile).not.toHaveBeenCalled
-    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.')
-    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.')
+    expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.', stdout)
+    expect(outputWarnSpy).toHaveBeenCalledWith('Retrying in 5 seconds.', stdout)
     expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('JSON'))
   })
 })

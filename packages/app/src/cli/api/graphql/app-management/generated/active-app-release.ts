@@ -12,6 +12,7 @@ export type ActiveAppReleaseQuery = {
   app: {
     id: string
     key: string
+    organizationId: string
     activeRoot: {clientCredentials: {secrets: {key: string}[]}}
     activeRelease: {
       id: string
@@ -22,7 +23,8 @@ export type ActiveAppReleaseQuery = {
           userIdentifier: string
           handle: string
           config: JsonMapType
-          specification: {identifier: string; externalIdentifier: string; name: string}
+          target?: string | null
+          specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
         }[]
       }
     }
@@ -32,6 +34,7 @@ export type ActiveAppReleaseQuery = {
 export type AppVersionInfoFragment = {
   id: string
   key: string
+  organizationId: string
   activeRoot: {clientCredentials: {secrets: {key: string}[]}}
   activeRelease: {
     id: string
@@ -42,7 +45,8 @@ export type AppVersionInfoFragment = {
         userIdentifier: string
         handle: string
         config: JsonMapType
-        specification: {identifier: string; externalIdentifier: string; name: string}
+        target?: string | null
+        specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
       }[]
     }
   }
@@ -53,7 +57,8 @@ export type ReleasedAppModuleFragment = {
   userIdentifier: string
   handle: string
   config: JsonMapType
-  specification: {identifier: string; externalIdentifier: string; name: string}
+  target?: string | null
+  specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
 }
 
 export const ReleasedAppModuleFragmentDoc = {
@@ -70,6 +75,7 @@ export const ReleasedAppModuleFragmentDoc = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -79,6 +85,7 @@ export const ReleasedAppModuleFragmentDoc = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
@@ -99,6 +106,7 @@ export const AppVersionInfoFragmentDoc = {
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'organizationId'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'activeRoot'},
@@ -167,6 +175,7 @@ export const AppVersionInfoFragmentDoc = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -176,6 +185,7 @@ export const AppVersionInfoFragmentDoc = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
@@ -233,6 +243,7 @@ export const ActiveAppRelease = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -242,6 +253,7 @@ export const ActiveAppRelease = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
@@ -257,6 +269,7 @@ export const ActiveAppRelease = {
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'organizationId'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'activeRoot'},

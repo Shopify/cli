@@ -88,7 +88,7 @@ export default class Init extends AppLinkedCommand {
     let appName: string
     if (flags['client-id']) {
       // If a client-id is provided we don't need to prompt the user and can link directly to that app.
-      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id'], developerPlatformClient})
+      const selectedApp = await appFromIdentifiers({apiKey: flags['client-id']})
       appName = selectedApp.title
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
@@ -168,7 +168,7 @@ async function selectAppOrNewAppName(
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)
 
-    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app)
+    const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app.apiKey)
     if (!fullSelectedApp) throw new AbortError(`App with id ${app.id} not found`)
     return {result: 'existing', app: fullSelectedApp}
   }

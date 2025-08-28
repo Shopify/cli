@@ -75,6 +75,21 @@ const MODULE_CLI_A: AppModuleVersion = {
   },
 }
 
+const MODULE_CLI_A_NO_UID: AppModuleVersion = {
+  registrationId: '',
+  registrationUuid: 'UUID_A',
+  registrationTitle: 'Checkout post purchase',
+  type: 'checkout_post_purchase',
+  specification: {
+    identifier: 'checkout_post_purchase',
+    name: 'Post purchase UI extension',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
 const MODULE_DASHBOARD_MIGRATED_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
@@ -412,7 +427,11 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildExtensionBreakdownInfo('extension-a-2', undefined),
+          ],
+          toUpdate: [],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -448,11 +467,12 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [
-            buildExtensionBreakdownInfo('EXTENSION_A'),
-            buildExtensionBreakdownInfo('extension-a-2'),
+            buildExtensionBreakdownInfo('EXTENSION_A', 'UUID_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
             buildDashboardBreakdownInfo('Dashboard A'),
           ],
           toUpdate: [],
+          unchanged: [],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -488,14 +508,18 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildExtensionBreakdownInfo('extension-a-2')],
-          toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
+          toCreate: [
+            buildExtensionBreakdownInfo('EXTENSION_A', 'UUID_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
+          ],
+          toUpdate: [],
+          unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
       })
     })
-    test('and there is an active version with matching cli app modules then cli extension should be updated, and no dashboard extension should be migrated', async () => {
+    test('and there is an active version with matching cli app modules then cli extension should be updated as "unchanged", and no dashboard extension should be migrated', async () => {
       // Given
       const extensionsToConfirm = {
         validMatches: {EXTENSION_A: 'UUID_A'},
@@ -533,8 +557,12 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('extension-a-2')],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
+          toUpdate: [],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -579,10 +607,14 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
           toCreate: [
-            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
-            buildExtensionBreakdownInfo('extension-a-2'),
+            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A', 'UUID_DM_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
           ],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          toUpdate: [],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -630,15 +662,66 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [
-            buildExtensionBreakdownInfo('Checkout post purchase Deleted B'),
+            buildExtensionBreakdownInfo('Checkout post purchase Deleted B', 'B'),
             buildDashboardBreakdownInfo('Dashboard Deleted B'),
           ],
           toCreate: [
-            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A'),
-            buildExtensionBreakdownInfo('extension-a-2'),
+            buildExtensionBreakdownInfo('DASH_MIGRATED_EXTENSION_A', 'UUID_DM_A'),
+            buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid'),
             buildDashboardBreakdownInfo('Dashboard New'),
           ],
-          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A'), buildDashboardBreakdownInfo('Dashboard A')],
+          toUpdate: [],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
+        },
+        extensionsToConfirm,
+        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
+      })
+    })
+
+    test('and there is an active version with modules without UID, those should be returned as toUpdate, the rest, unchanged', async () => {
+      // Given
+      const extensionsToConfirm = {
+        validMatches: {EXTENSION_A: 'UUID_A'},
+        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
+        extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
+      }
+      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
+      const remoteExtensionRegistrations = {
+        app: {
+          extensionRegistrations: [REGISTRATION_A],
+          configurationRegistrations: [],
+          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
+        },
+      }
+      const activeAppVersion = {
+        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A_NO_UID],
+      }
+      let fetchActiveAppVersionCalled = false
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+        activeAppVersion: (_app: MinimalAppIdentifiers) => {
+          fetchActiveAppVersionCalled = true
+          return Promise.resolve(activeAppVersion)
+        },
+      })
+
+      // When
+      const result = await extensionsIdentifiersDeployBreakdown(
+        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
+      )
+
+      // Then
+      expect(fetchActiveAppVersionCalled).toBe(false)
+      expect(result).toEqual({
+        extensionIdentifiersBreakdown: {
+          onlyRemote: [],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
+          toUpdate: [buildExtensionBreakdownInfo('EXTENSION_A', undefined)],
+          unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
@@ -676,6 +759,7 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
         onlyRemote: [],
         toCreate: [],
         toUpdate: [],
+        unchanged: [],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -706,9 +790,10 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
     // Then
     expect(result).toEqual({
       extensionIdentifiersBreakdown: {
-        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
-        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase')],
-        toUpdate: [buildDashboardBreakdownInfo('Dashboard A')],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B', undefined)],
+        toCreate: [buildExtensionBreakdownInfo('Checkout post purchase', undefined)],
+        toUpdate: [],
+        unchanged: [buildDashboardBreakdownInfo('Dashboard A')],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -741,7 +826,8 @@ describe('extensionsIdentifiersReleaseBreakdown', () => {
       extensionIdentifiersBreakdown: {
         toCreate: [],
         toUpdate: [],
-        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B')],
+        onlyRemote: [buildExtensionBreakdownInfo('Checkout post purchase Deleted B', undefined)],
+        unchanged: [],
       },
       versionDetails: versionDiff.versionDetails,
     })
@@ -1590,6 +1676,139 @@ describe('configExtensionsIdentifiersBreakdown', () => {
         existingFieldNames: [],
         existingUpdatedFieldNames: ['application_url', 'webhooks'],
         newFieldNames: [],
+        deletedFieldNames: [],
+      })
+    })
+
+    test('webhook subscriptions are properly sorted by URI and topics', async () => {
+      // Given
+      const unsortedWebhookModules: AppModuleVersion[] = [
+        {
+          registrationId: 'W_1',
+          registrationUuid: 'UUID_W_1',
+          registrationTitle: 'Webhook 1',
+          type: 'webhook_subscription',
+          config: {
+            // Unsorted topics
+            topics: ['products/update', 'products/create'],
+            uri: 'https://myapp.com/webhooks/products',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+        {
+          registrationId: 'W_2',
+          registrationUuid: 'UUID_W_2',
+          registrationTitle: 'Webhook 2',
+          type: 'webhook_subscription',
+          config: {
+            topics: ['orders/create'],
+            uri: 'https://myapp.com/webhooks/orders',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+        {
+          registrationId: 'W_4',
+          registrationUuid: 'UUID_W_4',
+          registrationTitle: 'Webhook 4',
+          type: 'webhook_subscription',
+          config: {
+            topics: ['products/delete'],
+            // Same URI as W_1
+            uri: 'https://myapp.com/webhooks/products',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+        {
+          registrationId: 'W_3',
+          registrationUuid: 'UUID_W_3',
+          registrationTitle: 'Webhook 3',
+          type: 'webhook_subscription',
+          config: {
+            // Unsorted topics
+            topics: ['customers/create', 'customers/update'],
+            uri: 'https://myapp.com/webhooks/customers',
+          },
+          specification: {
+            identifier: 'webhook_subscription',
+            name: 'Webhook Subscription',
+            experience: 'extension',
+            options: {
+              managementExperience: 'cli',
+            },
+          },
+        },
+      ]
+
+      const activeVersion = {appModuleVersions: [...unsortedWebhookModules, APP_URL_SPEC, API_VERSION_SPEC]}
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        activeAppVersion: (_app: MinimalAppIdentifiers) => Promise.resolve(activeVersion),
+      })
+
+      const appConfiguration = {
+        ...APP_CONFIGURATION,
+        webhooks: {
+          api_version: '2023-04',
+          // Subscriptions in a different order than remote
+          subscriptions: [
+            {
+              topics: ['products/delete'],
+              uri: 'https://myapp.com/webhooks/products',
+            },
+            {
+              topics: ['orders/create'],
+              uri: 'https://myapp.com/webhooks/orders',
+            },
+            {
+              // Different order from remote
+              topics: ['customers/update', 'customers/create'],
+              uri: 'https://myapp.com/webhooks/customers',
+            },
+            {
+              // Different order from remote
+              topics: ['products/create', 'products/update'],
+              uri: 'https://myapp.com/webhooks/products',
+            },
+          ],
+        },
+      }
+
+      // When
+      const result = await configExtensionsIdentifiersBreakdown({
+        developerPlatformClient,
+        apiKey: 'apiKey',
+        remoteApp: testOrganizationApp(),
+        localApp: await LOCAL_APP([], appConfiguration),
+        release: true,
+      })
+
+      // Then
+      // Even though the webhook subscriptions are in different orders and have unsorted topics,
+      // they should be considered the same after normalization
+      expect(result).toEqual({
+        existingFieldNames: ['webhooks', 'application_url'],
+        existingUpdatedFieldNames: [],
+        newFieldNames: ['name', 'embedded'],
         deletedFieldNames: [],
       })
     })
