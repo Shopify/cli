@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.84.1
+
+### Patch Changes
+
+- cd1b5ac: No longer raise password errors when users use custom app passwords on `shopify theme pull/push` commands
+  - @shopify/cli-kit@3.84.1
+
 ## 3.84.0
 
 ### Minor Changes

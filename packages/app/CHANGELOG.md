@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.84.1
+
+### Patch Changes
+
+- 8f35726: Fix matching logic for some extensions with Dev Dash
+- 036a50d: Better handling on import-extensions with existing folder
+- 1adb4d5: Dont delete env files after migrating to dev dash
+- c09730c: Fix deeplink URL after a deploy
+- Updated dependencies [cd1b5ac]
+  - @shopify/theme@3.84.1
+  - @shopify/cli-kit@3.84.1
+  - @shopify/plugin-cloudflare@3.84.1
+
 ## 3.84.0
 
 ### Minor Changes
