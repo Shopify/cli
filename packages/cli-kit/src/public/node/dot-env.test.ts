@@ -1,5 +1,5 @@
-import {patchEnvFile, readAndParseDotEnv, writeDotEnv, createDotEnvFileLine} from './dot-env.js'
-import {inTemporaryDirectory, writeFile, readFile} from './fs.js'
+import {patchEnvFile, readAndParseDotEnv, writeDotEnv, createDotEnvFileLine, cleanUpEnvFile} from './dot-env.js'
+import {inTemporaryDirectory, writeFile, readFile, fileExists} from './fs.js'
 import {joinPath} from './path.js'
 import {describe, expect, test} from 'vitest'
 
@@ -254,5 +254,149 @@ describe('createDotEnvFileLine', () => {
     await expect(async () => {
       createDotEnvFileLine('FOO', value)
     }).rejects.toThrow(`The environment file patch has an env value that can't be surrounded by quotes: ${value}`)
+  })
+})
+
+describe('cleanUpEnvFile', () => {
+  test('removes specified environment variables and keeps the rest', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      const initialFile = {
+        path: dotEnvPath,
+        variables: {
+          FOO: 'BAR',
+          KEEP_ME: 'VALUE',
+          REMOVE_ME: 'DELETE',
+          ANOTHER_KEEP: 'KEEP',
+          ALSO_REMOVE: 'DELETE_TOO',
+        },
+      }
+      await writeDotEnv(initialFile)
+
+      // When
+      await cleanUpEnvFile(initialFile, ['REMOVE_ME', 'ALSO_REMOVE'])
+
+      // Then
+      const updatedFile = await readAndParseDotEnv(dotEnvPath)
+      expect(updatedFile.variables).toEqual({
+        FOO: 'BAR',
+        KEEP_ME: 'VALUE',
+        ANOTHER_KEEP: 'KEEP',
+      })
+    })
+  })
+
+  test('removes the file when all variables are removed', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      const initialFile = {
+        path: dotEnvPath,
+        variables: {
+          REMOVE_ME: 'DELETE',
+          ALSO_REMOVE: 'DELETE_TOO',
+        },
+      }
+      await writeDotEnv(initialFile)
+
+      // When
+      await cleanUpEnvFile(initialFile, ['REMOVE_ME', 'ALSO_REMOVE'])
+
+      // Then
+      const fileStillExists = await fileExists(dotEnvPath)
+      expect(fileStillExists).toBe(false)
+    })
+  })
+
+  test('handles partial matches correctly', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      const initialFile = {
+        path: dotEnvPath,
+        variables: {
+          FOO: 'BAR',
+          FOO_BAR: 'BAZ',
+          PREFIX_FOO: 'QUX',
+        },
+      }
+      await writeDotEnv(initialFile)
+
+      // When
+      await cleanUpEnvFile(initialFile, ['FOO'])
+
+      // Then
+      const updatedFile = await readAndParseDotEnv(dotEnvPath)
+      expect(updatedFile.variables).toEqual({
+        FOO_BAR: 'BAZ',
+        PREFIX_FOO: 'QUX',
+      })
+    })
+  })
+
+  test('preserves multiline variables that are not removed', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      const initialFile = {
+        path: dotEnvPath,
+        variables: {
+          MULTILINE: 'LINE1\nLINE2\nLINE3',
+          REMOVE_ME: 'DELETE',
+          ANOTHER: 'VALUE',
+        },
+      }
+      await writeDotEnv(initialFile)
+
+      // When
+      await cleanUpEnvFile(initialFile, ['REMOVE_ME'])
+
+      // Then
+      const updatedFile = await readAndParseDotEnv(dotEnvPath)
+      expect(updatedFile.variables).toEqual({
+        MULTILINE: 'LINE1\nLINE2\nLINE3',
+        ANOTHER: 'VALUE',
+      })
+    })
+  })
+
+  test('removes the file when starting with an empty variables object', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      const initialFile = {
+        path: dotEnvPath,
+        variables: {},
+      }
+      await writeDotEnv(initialFile)
+
+      // When
+      await cleanUpEnvFile(initialFile, ['ANYTHING'])
+
+      // Then
+      const fileStillExists = await fileExists(dotEnvPath)
+      expect(fileStillExists).toBe(false)
+    })
+  })
+
+  test('doesnt do anything if file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const dotEnvPath = joinPath(tmpDir, '.env')
+      const initialFile = {
+        path: dotEnvPath,
+        variables: {
+          FOO: 'BAR',
+        },
+      }
+
+      // When
+      await cleanUpEnvFile(initialFile, ['ANYTHING'])
+
+      // Then
+      const fileStillExists = await fileExists(dotEnvPath)
+      expect(fileStillExists).toBe(false)
+    })
   })
 })

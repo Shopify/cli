@@ -12,11 +12,12 @@ import {reloadApp} from '../models/app/loader.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
-import {fileExistsSync, mkdir, removeFile} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {cleanUpEnvFile} from '@shopify/cli-kit/node/dot-env'
 import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui'
 
 export interface DeployOptions {
@@ -268,7 +269,7 @@ export async function deploy(options: DeployOptions) {
     await renderTasks(tasks)
 
     // Delete the .env file after the first successful deploy to the Dev Dashboard
-    if (didMigrateExtensionsToDevDash && uploadExtensionsBundleResult.versionTag) await deleteEnvFile(app)
+    if (didMigrateExtensionsToDevDash && uploadExtensionsBundleResult.versionTag) await removeShopifyIDsFromEnvFile(app)
 
     await outputCompletionMessage({
       app,
@@ -290,8 +291,10 @@ export async function deploy(options: DeployOptions) {
   return {app}
 }
 
-async function deleteEnvFile(app: AppLinkedInterface) {
-  if (app.dotenv && fileExistsSync(app.dotenv.path)) await removeFile(app.dotenv.path)
+async function removeShopifyIDsFromEnvFile(app: AppLinkedInterface) {
+  if (!app.dotenv || !fileExistsSync(app.dotenv.path)) return
+  const idsToRemove = [...app.allExtensions.map((ext) => ext.idEnvironmentVariableName), 'SHOPIFY_API_KEY']
+  await cleanUpEnvFile(app.dotenv, idsToRemove)
 }
 
 async function outputCompletionMessage({

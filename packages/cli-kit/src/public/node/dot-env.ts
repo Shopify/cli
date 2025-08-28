@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AbortError} from './error.js'
-import {fileExists, readFile, writeFile} from './fs.js'
+import {fileExists, readFile, removeFile, writeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {pickBy} from '../common/object.js'
 import {parse} from 'dotenv'
 
 /**
@@ -45,6 +46,22 @@ export async function writeDotEnv(file: DotEnvFile): Promise<void> {
     .join('\n')
 
   await writeFile(file.path, fileContent)
+}
+
+/**
+ * Removes a list of keys from the .env file.
+ * If the file does not exist, it does nothing.
+ * If the file is empty after removing the keys, it removes the file.
+ * @param file - .env file to be cleaned up.
+ * @param keysToRemove - Keys to remove.
+ */
+export async function cleanUpEnvFile(file: DotEnvFile, keysToRemove: string[]): Promise<void> {
+  const newEnv = pickBy(file.variables, (_, key) => !keysToRemove.includes(key))
+  if (Object.keys(newEnv).length > 0 && (await fileExists(file.path))) {
+    await writeDotEnv({path: file.path, variables: newEnv})
+  } else {
+    await removeFile(file.path)
+  }
 }
 
 /**
@@ -96,7 +113,7 @@ export function patchEnvFile(
 
     if (match) {
       const key = match[1]!.trim()
-      const value = (match[2] || '').trim()
+      const value = (match[2] ?? '').trim()
 
       if (/^["'`]/.test(value) && !value.endsWith(value[0]!)) {
         multilineVariable = {
