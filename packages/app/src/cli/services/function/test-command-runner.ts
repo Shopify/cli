@@ -1,4 +1,3 @@
-
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
@@ -13,13 +12,13 @@ import {Writable} from 'stream'
 import {exec} from 'child_process'
 import {promisify} from 'util'
 
-export interface FunctionTestOptions {
+interface FunctionTestOptions {
   stdout: Writable
   stderr: Writable
   signal?: CLIAbortSignal
 }
 
-export interface TestResult {
+interface TestResult {
   passed: number
   failed: number
   total: number
@@ -189,10 +188,7 @@ export async function runFunctionTests(
   }
 }
 
-export async function runTestsForExtensions(
-  app: AppLinkedInterface,
-  options?: Partial<FunctionTestOptions>,
-): Promise<void> {
+async function runTestsForExtensions(app: AppLinkedInterface, options?: Partial<FunctionTestOptions>): Promise<void> {
   const functionExtensions = app.allExtensions.filter((ext) => ext.isFunctionExtension)
   for (const extension of functionExtensions) {
     await runFunctionTestsIfExists(extension as unknown as ExtensionInstance<FunctionConfigType>, {
