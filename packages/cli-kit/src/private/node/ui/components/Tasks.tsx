@@ -22,6 +22,7 @@ interface TasksProps<TContext> {
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
   noColor?: boolean
+  noProgressBar?: boolean
 }
 
 enum TasksState {
@@ -63,6 +64,7 @@ function Tasks<TContext>({
   onComplete = noop,
   abortSignal,
   noColor,
+  noProgressBar = false,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
@@ -105,7 +107,9 @@ function Tasks<TContext>({
     return null
   }
 
-  return state === TasksState.Loading && !isAborted ? <LoadingBar title={currentTask.title} noColor={noColor} /> : null
+  return state === TasksState.Loading && !isAborted ? (
+    <LoadingBar title={currentTask.title} noColor={noColor} noProgressBar={noProgressBar} />
+  ) : null
 }
 
 export {Tasks}

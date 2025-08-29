@@ -1,12 +1,12 @@
 /* eslint-disable tsdoc/syntax */
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
+import {uploadTheme} from '../utilities/theme-uploader.js'
 import {ensureDirectoryConfirmed, themeComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
-import {uploadTheme4} from '../utilities/theme-uploader.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -14,6 +14,7 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
+  renderError,
   renderSuccess,
   renderWarning,
 } from '@shopify/cli-kit/node/ui'
@@ -23,6 +24,7 @@ import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
 import {recordError, recordTiming} from '@shopify/cli-kit/node/analytics'
+import {Writable} from 'stream'
 
 interface PushOptions {
   path: string
@@ -32,10 +34,13 @@ interface PushOptions {
   publish?: boolean
   ignore?: string[]
   only?: string[]
+  allowLive?: boolean
   environment?: string
+  multiEnvironment?: boolean
 }
 
 interface JsonOutput {
+  environment?: string
   theme: {
     id: number
     name: string
@@ -101,7 +106,7 @@ export interface PushFlags {
   strict?: boolean
 
   /** The environment to push the theme to. */
-  environment?: string
+  environment?: string[]
 }
 
 /**
@@ -109,7 +114,14 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags, adminSession?: AdminSession) {
+export async function push(
+  flags: PushFlags,
+  adminSession?: AdminSession,
+  multiEnvironment?: boolean,
+  context?: {stdout?: Writable; stderr?: Writable},
+) {
+  const environment = flags.environment?.[0]
+
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
     const {offenses} = await runThemeCheck(flags.path ?? cwd(), outputType)
@@ -117,13 +129,18 @@ export async function push(flags: PushFlags, adminSession?: AdminSession) {
     if (offenses.length > 0) {
       const errorOffenses = offenses.filter((offense) => offense.severity === Severity.ERROR)
       if (errorOffenses.length > 0) {
-        throw recordError(new AbortError('Theme check failed. Please fix the errors before pushing.'))
+        throw recordError(
+          new AbortError(
+            environment
+              ? `[${environment}] Theme check failed. Please fix the errors before pushing.`
+              : 'Theme check failed. Please fix the errors before pushing.',
+          ),
+        )
       }
     }
   }
   recordTiming('theme-service:push:setup')
 
-  const {path} = flags
   configureCLIEnvironment({
     verbose: flags.verbose,
     noColor: flags.noColor,
@@ -131,27 +148,38 @@ export async function push(flags: PushFlags, adminSession?: AdminSession) {
 
   const force = flags.force ?? false
 
-  const workingDirectory = path ? resolvePath(path) : cwd()
-  if (!(await hasRequiredThemeDirectories(workingDirectory)) && !(await ensureDirectoryConfirmed(force))) {
+  const workingDirectory = flags.path ? resolvePath(flags.path) : cwd()
+  if (
+    !(await hasRequiredThemeDirectories(workingDirectory)) &&
+    !(await ensureDirectoryConfirmed(force, undefined, environment, multiEnvironment))
+  ) {
     return
   }
 
-  const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession as unknown as AdminSession, flags)
+  const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags, multiEnvironment)
   if (!selectedTheme) {
     return
   }
 
   recordTiming('theme-service:push:setup')
 
-  await executePush(selectedTheme, adminSession as unknown as AdminSession, {
-    path: workingDirectory,
-    nodelete: flags.nodelete ?? false,
-    publish: flags.publish ?? false,
-    json: flags.json ?? false,
-    force,
-    ignore: flags.ignore ?? [],
-    only: flags.only ?? [],
-  })
+  await executePush(
+    selectedTheme,
+    session,
+    {
+      allowLive: flags.allowLive ?? false,
+      environment,
+      force,
+      ignore: flags.ignore ?? [],
+      json: flags.json ?? false,
+      multiEnvironment,
+      nodelete: flags.nodelete ?? false,
+      only: flags.only ?? [],
+      path: workingDirectory,
+      publish: flags.publish ?? false,
+    },
+    context,
+  )
 }
 
 /**
@@ -161,18 +189,24 @@ export async function push(flags: PushFlags, adminSession?: AdminSession) {
  * @param session - the admin session to access the API and upload the theme
  * @param options - the options that modify how the theme gets uploaded
  */
-async function executePush(theme: Theme, session: AdminSession, options: PushOptions) {
+async function executePush(
+  theme: Theme,
+  session: AdminSession,
+  options: PushOptions,
+  context?: {stdout?: Writable; stderr?: Writable},
+) {
   recordTiming('theme-service:push:file-system')
   const themeChecksums = await fetchChecksums(theme.id, session)
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
   recordTiming('theme-service:push:file-system')
 
-  const {uploadResults, renderThemeSyncProgress} = await uploadTheme4(
+  const {uploadResults, renderThemeSyncProgress} = uploadTheme(
     theme,
     session,
     themeChecksums,
     themeFileSystem,
     options,
+    context,
   )
 
   await renderThemeSyncProgress()
@@ -214,11 +248,11 @@ async function handlePushOutput(
   options: PushOptions,
 ) {
   if (options.json) {
-    handleJsonOutput(theme, session, results)
+    handleJsonOutput(theme, session, results, options.environment)
   } else if (options.publish) {
-    handlePublishOutput(session, results)
+    handlePublishOutput(session, results, options.environment)
   } else {
-    handleOutput(theme, session, results)
+    handleOutput(theme, session, results, options.environment)
   }
 }
 
@@ -229,8 +263,9 @@ async function handlePushOutput(
  * @param session - The admin session for the theme.
  * @param results - The map of upload results.
  */
-function handleJsonOutput(theme: Theme, session: AdminSession, results: Map<string, Result>) {
+function handleJsonOutput(theme: Theme, session: AdminSession, results: Map<string, Result>, environment?: string) {
   const output: JsonOutput = {
+    environment,
     theme: {
       id: theme.id,
       name: theme.name,
@@ -242,7 +277,7 @@ function handleJsonOutput(theme: Theme, session: AdminSession, results: Map<stri
   }
   const hasErrors = hasUploadErrors(results)
   if (hasErrors) {
-    const message = `The theme '${theme.name}' was pushed with errors`
+    const message = `${environment ? `[${environment}] ` : ''}The theme '${theme.name}' was pushed with errors`
     output.theme.warning = message
 
     // Add errors from results
@@ -265,12 +300,16 @@ function handleJsonOutput(theme: Theme, session: AdminSession, results: Map<stri
  * @param session - The admin session for the theme.
  * @param results - The map of upload results.
  */
-function handlePublishOutput(session: AdminSession, results: Map<string, Result>) {
+function handlePublishOutput(session: AdminSession, results: Map<string, Result>, environment?: string) {
+  const header = environment ? [{subdued: `Environment: ${environment}\n\n`}] : []
+
   const hasErrors = hasUploadErrors(results)
   if (hasErrors) {
-    renderWarning({body: `Your theme was published with errors and is now live at https://${session.storeFqdn}`})
+    renderWarning({
+      body: [...header, `Your theme was published with errors and is now live at https://${session.storeFqdn}`],
+    })
   } else {
-    renderSuccess({body: `Your theme is now live at https://${session.storeFqdn}`})
+    renderSuccess({body: [...header, `Your theme is now live at https://${session.storeFqdn}`]})
   }
 }
 
@@ -281,7 +320,9 @@ function handlePublishOutput(session: AdminSession, results: Map<string, Result>
  * @param session - The admin session for the theme.
  * @param results - The map of upload results.
  */
-function handleOutput(theme: Theme, session: AdminSession, results: Map<string, Result>) {
+function handleOutput(theme: Theme, session: AdminSession, results: Map<string, Result>, environment?: string) {
+  const header = environment ? [{subdued: `Environment: ${environment}\n\n`}] : []
+
   const hasErrors = hasUploadErrors(results)
   const nextSteps = [
     [
@@ -304,22 +345,26 @@ function handleOutput(theme: Theme, session: AdminSession, results: Map<string, 
 
   if (hasErrors) {
     renderWarning({
-      body: ['The theme', ...themeComponent(theme), 'was pushed with errors'],
+      body: [...header, 'The theme', ...themeComponent(theme), 'was pushed with errors'],
       nextSteps,
     })
   } else {
     renderSuccess({
-      body: ['The theme', ...themeComponent(theme), 'was pushed successfully.'],
+      body: [...header, 'The theme', ...themeComponent(theme), 'was pushed successfully.'],
       nextSteps,
     })
   }
 }
 
-export async function createOrSelectTheme(adminSession: AdminSession, flags: PushFlags): Promise<Theme | undefined> {
-  const {live, development, unpublished, theme} = flags
+export async function createOrSelectTheme(
+  session: AdminSession,
+  flags: PushFlags,
+  multiEnvironment?: boolean,
+): Promise<Theme | undefined> {
+  const {live, development, unpublished, theme, environment} = flags
 
   if (development) {
-    const themeManager = new DevelopmentThemeManager(adminSession)
+    const themeManager = new DevelopmentThemeManager(session)
     return themeManager.findOrCreate()
   } else if (unpublished) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
@@ -328,10 +373,10 @@ export async function createOrSelectTheme(adminSession: AdminSession, flags: Pus
         name: themeName,
         role: UNPUBLISHED_THEME_ROLE,
       },
-      adminSession,
+      session,
     )
   } else {
-    const selectedTheme = await findOrSelectTheme(adminSession, {
+    const selectedTheme = await findOrSelectTheme(session, {
       create: true,
       header: 'Select a theme to push to:',
       filter: {
@@ -340,16 +385,38 @@ export async function createOrSelectTheme(adminSession: AdminSession, flags: Pus
       },
     })
 
-    if (await confirmPushToTheme(selectedTheme.role as Role, flags.allowLive, adminSession.storeFqdn)) {
-      return selectedTheme
-    }
+    const confirmed = await confirmPushToTheme(
+      selectedTheme.role as Role,
+      flags.allowLive,
+      session.storeFqdn,
+      environment,
+      multiEnvironment,
+    )
+    return confirmed ? selectedTheme : undefined
   }
 }
 
-async function confirmPushToTheme(themeRole: Role, allowLive: boolean | undefined, storeFqdn: string) {
+async function confirmPushToTheme(
+  themeRole: Role,
+  allowLive: boolean | undefined,
+  storeFqdn: string,
+  environment?: string[],
+  multiEnvironment?: boolean,
+) {
   if (themeRole === LIVE_THEME_ROLE) {
     if (allowLive) {
       return true
+    }
+
+    if (multiEnvironment) {
+      renderError({
+        headline: `Environment: ${environment}`,
+        body: [
+          `Can't push theme files to the live theme on ${storeFqdn}`,
+          'Use the --allow-live flag to push to a live theme.',
+        ],
+      })
+      return false
     }
 
     const options: RenderConfirmationPromptOptions = {

@@ -6671,6 +6671,16 @@
       "hiddenAliases": [
       ],
       "id": "theme:push",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "path",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6998,9 +7008,6 @@
       ],
       "args": {
       },
-      "cli2Flags": [
-        "force"
-      ],
       "customPluginName": "@shopify/theme",
       "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
@@ -7070,6 +7077,11 @@
       "hiddenAliases": [
       ],
       "id": "theme:share",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "path"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
