@@ -2,6 +2,7 @@ import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Writable} from 'stream'
 
 export function themeComponent(theme: Theme) {
   return [
@@ -72,8 +73,8 @@ export async function ensureLiveThemeConfirmed(theme: Theme, action: string) {
 }
 
 // This prevents the progress bar from polluting stdout (important for pipe operations)
-export async function renderTasksToStdErr(tasks: Task[]) {
+export async function renderTasksToStdErr(tasks: Task[], stderr?: Writable, noProgressBar = false) {
   if (tasks.length > 0) {
-    await renderTasks(tasks, {renderOptions: {stdout: process.stderr}})
+    await renderTasks(tasks, {renderOptions: {stdout: (stderr ?? process.stderr) as NodeJS.WriteStream}, noProgressBar})
   }
 }

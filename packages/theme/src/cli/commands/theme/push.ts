@@ -3,12 +3,12 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {push} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
-import {OutputFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {InferredFlags} from '@oclif/core/interfaces'
+import {Writable} from 'stream'
 
-type PushFlags = OutputFlags<typeof Push.flags>
+type PushFlags = InferredFlags<typeof Push.flags>
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -99,11 +99,25 @@ export default class Push extends ThemeCommand {
     environment: themeFlags.environment,
   }
 
-  static multiEnvironmentsFlags = ['store', 'password', 'theme']
+  static multiEnvironmentsFlags = ['store', 'password', 'path', ['live', 'development', 'theme']]
 
-  async command(flags: PushFlags, adminSession: AdminSession): Promise<void> {
+  async command(
+    flags: PushFlags,
+    adminSession: AdminSession,
+    multiEnvironment: boolean,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ) {
     recordTiming('theme-command:push')
-    await push(flags, adminSession)
+    await push(
+      {
+        ...flags,
+        allowLive: flags['allow-live'],
+        noColor: flags['no-color'],
+      },
+      adminSession,
+      multiEnvironment,
+      context,
+    )
     recordTiming('theme-command:push')
   }
 }

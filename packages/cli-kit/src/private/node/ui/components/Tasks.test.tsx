@@ -500,6 +500,26 @@ describe('Tasks', () => {
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })
+
+  test('hides progress bar when noProgressBar is true', async () => {
+    // Given
+    const firstTaskFunction = vi.fn(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+    })
+
+    const firstTask = {
+      title: 'task 1',
+      task: firstTaskFunction,
+    }
+
+    // When
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} noProgressBar />)
+    await taskHasRendered()
+
+    // Then
+    expect(unstyled(renderInstance.lastFrame()!)).toMatchInlineSnapshot(`"task 1 ..."`)
+    expect(firstTaskFunction).toHaveBeenCalled()
+  })
 })
 
 async function taskHasRendered() {

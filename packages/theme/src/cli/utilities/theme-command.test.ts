@@ -69,6 +69,10 @@ class TestThemeCommandWithForce extends TestThemeCommand {
   }
 }
 
+class TestThemeCommandWithPathFlag extends TestThemeCommandWithForce {
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'path']
+}
+
 class TestThemeCommandWithUnionFlags extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = ['store', ['live', 'development', 'theme']]
 
@@ -317,6 +321,38 @@ describe('ThemeCommand', () => {
         }),
       )
       expect(renderConcurrent).toHaveBeenCalledOnce()
+    })
+
+    test('confirmation prompts should display correctly formatted flag values', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', password: 'password1', path: 'development/theme/path'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: 'staging/theme/path'})
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithPathFlag(
+        ['--environment', 'development', '--environment', 'staging'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ['Run testthemecommandwithpathflag in the following environments?'],
+          infoTable: {
+            Environment: [
+              ['development', {subdued: 'store: store1.myshopify.com, password, path: ..t/theme/path'}],
+              ['staging', {subdued: 'store: store2.myshopify.com, password, path: ..g/theme/path'}],
+            ],
+          },
+          confirmationMessage: 'Yes, proceed',
+          cancellationMessage: 'Cancel',
+        }),
+      )
     })
 
     test('should not execute command if confirmation is cancelled', async () => {
