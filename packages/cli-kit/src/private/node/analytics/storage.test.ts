@@ -96,7 +96,7 @@ describe('analytics/storage', () => {
       expect(errorEntry?.timestamp).toBeGreaterThanOrEqual(beforeTime)
 
       expect(data.events.length).toBe(1)
-      expect(data.events[0]?.name).toBe('error:NETWORK:Network request failed')
+      expect(data.events[0]?.name).toBe('error:network:network-request-failed')
     })
 
     test('records a string error', () => {
@@ -134,7 +134,7 @@ describe('analytics/storage', () => {
       // Then
       const data = compileData()
       const event = data.events[0]
-      expect(event?.name).toBe(`error:UNKNOWN:${'A'.repeat(50)}`)
+      expect(event?.name).toBe(`error:unknown:${'a'.repeat(50)}`)
     })
 
     test('records multiple errors', () => {

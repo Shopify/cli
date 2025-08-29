@@ -1,3 +1,4 @@
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 /**
@@ -19,5 +20,5 @@ export function validateThemePassword(password?: string): void {
 
   if (password.startsWith('shptka_')) return
 
-  throw new AbortError('Invalid password. Please generate a new password from the Theme Access app.')
+  throw recordError(new AbortError('Invalid password. Please generate a new password from the Theme Access app.'))
 }
