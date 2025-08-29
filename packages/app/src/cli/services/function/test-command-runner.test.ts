@@ -100,6 +100,11 @@ describe('test-runner', () => {
       // Mock readdirSync to return test files
       mockReaddirSync.mockReturnValue(['test1.test.ts', 'test2.test.js'] as any)
 
+      // Mock TOML content - no custom test command
+      mockLoadConfigurationFileContent.mockResolvedValue({
+        extensions: [{}],
+      })
+
       await runFunctionTestsIfExists(mockExtension, mockOptions)
 
       // Should check tests directory first, then TOML file
