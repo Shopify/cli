@@ -1,5 +1,17 @@
 # @shopify/cli-kit
 
+## 3.85.0
+
+### Minor Changes
+
+- 74fc99c: Commands that don't require authentication should not create sessions when ran with multiple environments
+- 1416fe1: Ensure user provided flag values override defaults in commands with multiple environments
+
+### Patch Changes
+
+- a883d5b: Remove redundant calls to normalizeStoreFqdn in requests
+- be916a1: Fix theme event reporting for monorail
+
 ## 3.84.0
 
 ### Minor Changes
