@@ -17,7 +17,8 @@ import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import StoreCommands from '@shopify/store'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
-import {commands as AppCommands} from '@shopify/app'
+import {commands as CliRepoAppCommands} from '@shopify/app'
+import {commands as PluginAppCommands} from 'plugin-app-commands'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
@@ -86,6 +87,8 @@ PluginPluginsCommands.plugins.hidden = true
 
 // Remove default description because it injects a path from the generating computer, making it fail on CI
 PluginPluginsCommands['plugins:install'].description = ''
+
+const AppCommands = process.env.SHOPIFY_APP_PROTOTYPE === 'true' ? PluginAppCommands : CliRepoAppCommands
 
 const appCommands = Object.keys(AppCommands) as (keyof typeof AppCommands)[]
 appCommands.forEach((command) => {

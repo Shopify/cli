@@ -318,6 +318,9 @@ importers:
       espree:
         specifier: 9.6.1
         version: 9.6.1
+      plugin-app-commands:
+        specifier: link:/Users/jamieguerrero/src/plugin-app-commands
+        version: link:../../../../../plugin-app-commands
 
   packages/cli-kit:
     dependencies:
