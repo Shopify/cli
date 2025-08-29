@@ -45,7 +45,6 @@ export interface LinkOptions {
   appId?: string
   organizationId?: string
   configName?: string
-  baseConfigName?: string
   developerPlatformClient?: DeveloperPlatformClient
   isNewApp?: boolean
 }
@@ -178,7 +177,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       specifications: await loadLocalExtensionsSpecifications(),
       directory: options.directory,
       mode: 'report',
-      userProvidedConfigName: options.baseConfigName,
+      userProvidedConfigName: options.configName,
       remoteFlags: undefined,
     })
 
@@ -253,7 +252,7 @@ async function loadLocalAppOptions(
       specifications,
       directory: options.directory,
       mode: 'report',
-      userProvidedConfigName: options.baseConfigName,
+      userProvidedConfigName: options.configName,
       remoteFlags,
     })
     const configuration = app.configuration
@@ -321,13 +320,14 @@ async function loadConfigurationFileName(
     format: 'legacy' | 'current'
   },
 ): Promise<AppConfigurationFileName> {
-  // If the user has already selected a config name, use that
-  const cache = getCachedCommandInfo()
-  if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
-
+  // config name from the options takes precedence over everything else
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
+
+  // otherwise, use the cached config name if it exists
+  const cache = getCachedCommandInfo()
+  if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
 
   if (localAppInfo.format === 'legacy') {
     return configurationFileNames.app
