@@ -208,7 +208,9 @@ export default abstract class ThemeCommand extends Command {
         const flagDetails = requiredFlags
           .map((flag) => {
             const usedFlag = Array.isArray(flag) ? flag.find((flag) => flags[flag]) : flag
-            return usedFlag && [usedFlag.includes('password') ? usedFlag : `${usedFlag}: ${flags[usedFlag]}`]
+            if (usedFlag === 'password') return `password`
+            if (usedFlag === 'path' && typeof flags.path === 'string') return `path: ..${flags.path.slice(-12)}`
+            return usedFlag && `${usedFlag}: ${flags[usedFlag]}`
           })
           .join(', ')
 
