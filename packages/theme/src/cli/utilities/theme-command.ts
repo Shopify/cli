@@ -25,10 +25,6 @@ import type {Writable} from 'stream'
 export interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
 }
-interface PassThroughFlagsOptions {
-  // Only pass on flags that are relevant to CLI2
-  allowedFlags?: string[]
-}
 interface ValidEnvironment {
   environment: EnvironmentName
   flags: FlagValues
@@ -52,22 +48,6 @@ type EnvironmentName = string
 export type RequiredFlags = (string | string[])[] | null
 
 export default abstract class ThemeCommand extends Command {
-  passThroughFlags(flags: FlagValues, {allowedFlags}: PassThroughFlagsOptions): string[] {
-    const passThroughFlags: string[] = []
-    for (const [label, value] of Object.entries(flags)) {
-      if (!(allowedFlags ?? []).includes(label)) {
-        continue
-      } else if (typeof value === 'boolean') {
-        if (value) passThroughFlags.push(`--${label}`)
-      } else if (Array.isArray(value)) {
-        value.forEach((element) => passThroughFlags.push(`--${label}`, element))
-      } else {
-        passThroughFlags.push(`--${label}`, `${value}`)
-      }
-    }
-    return passThroughFlags
-  }
-
   environmentsFilename(): string {
     return configurationFileName
   }
