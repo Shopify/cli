@@ -11,7 +11,7 @@ export default class FunctionGenerateFixture extends AppLinkedCommand {
   static summary = 'Generates test files from a function run log.'
   static hidden = true
 
-  static descriptionWithMarkdown = `Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions act as an E2E test suite for the function.`
+  static descriptionWithMarkdown = `Prompts users to select a function run log and generates test fixtures from it. These test cases based on real function executions allows users to test the behaviour of their function based on its input and output.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -19,12 +19,6 @@ export default class FunctionGenerateFixture extends AppLinkedCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
-    'api-key': Flags.string({
-      hidden: true,
-      description: "Application's API key",
-      env: 'SHOPIFY_FLAG_API_KEY',
-      exclusive: ['config'],
-    }),
     log: Flags.string({
       char: 'l',
       description:
@@ -35,13 +29,10 @@ export default class FunctionGenerateFixture extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(FunctionGenerateFixture)
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    }
 
     const {app} = await linkedAppContext({
       directory: flags.path,
-      clientId: flags['client-id'] ?? flags['api-key'],
+      clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })

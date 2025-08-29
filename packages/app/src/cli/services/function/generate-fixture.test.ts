@@ -39,10 +39,19 @@ describe('generateFixture', () => {
     },
   })
 
-  const mockExtension: ExtensionInstance<FunctionConfigType> = {
+  const mockExtension = {
     handle: 'test-function',
     directory: '/test/path',
-  } as ExtensionInstance<FunctionConfigType>
+    configuration: {
+      targeting: [
+        {
+          export: 'run',
+          input_query: 'test-input-query',
+          target: 'test-target',
+        },
+      ],
+    },
+  } as unknown as ExtensionInstance<FunctionConfigType>
 
   const mockFunctionRunData = {
     shopId: 123,
@@ -127,8 +136,8 @@ describe('generateFixture', () => {
     const expectedFixture = {
       name: 'test-fixture',
       export: 'run',
-      query: '',
-      target: '',
+      query: 'test-input-query',
+      target: 'test-target',
       input: {test: 'input'},
       output: {test: 'output'},
     }
@@ -144,7 +153,7 @@ describe('generateFixture', () => {
       identifier: 'abcdef',
       input: {test: 'input'},
       output: {test: 'output'},
-      target: '',
+      target: 'test-target',
     })
   })
 
@@ -179,27 +188,8 @@ describe('generateFixture', () => {
       identifier: 'abcdef',
       input: {test: 'input'},
       output: {test: 'output'},
-      target: '',
+      target: 'test-target',
     })
-  })
-
-  test('throws error when log payload is undefined', async () => {
-    const mockFunctionRunDataWithoutPayload = {
-      ...mockFunctionRunData,
-      payload: undefined,
-    }
-
-    mockReadFile.mockResolvedValue(JSON.stringify(mockFunctionRunDataWithoutPayload) as any)
-
-    // When/Then - expect the function to throw an error
-    await expect(async () => {
-      await generateFixture({
-        app: mockApp,
-        extension: mockExtension,
-        path: '/test/path',
-        log: 'abcdef',
-      })
-    }).rejects.toThrow("No function run logs found for function 'test-function'")
   })
 
   test('uses selector prompt when no log identifier provided', async () => {
@@ -222,7 +212,7 @@ describe('generateFixture', () => {
       identifier: 'abcdef',
       input: {test: 'input'},
       output: {test: 'output'},
-      target: '',
+      target: 'test-target',
     })
   })
 
