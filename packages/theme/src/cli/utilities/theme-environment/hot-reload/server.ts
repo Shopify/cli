@@ -18,6 +18,7 @@ import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
+import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 import EventEmitter from 'node:events'
 import type {
   HotReloadEvent,
@@ -288,15 +289,20 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
         replaceExtensionTemplates: getExtensionInMemoryTemplates(ctx),
       })
         .then(async (response) => {
-          if (!response.ok) throw createFetchError(response)
+          if (!response.ok) {
+            recordEvent('theme-service:hot-reload:section:render-failed')
+            throw createFetchError(response)
+          }
 
           return patchRenderingResponse(ctx, response)
         })
         .catch(async (error: Error) => {
           const {status, statusText, ...errorInfo} = extractFetchErrorInfo(
-            error,
+            recordError(error),
             'Failed to render section on Hot Reload',
           )
+
+          recordEvent('theme-service:hot-reload:section:render-error')
 
           if (!appBlockId) renderWarning(errorInfo)
 

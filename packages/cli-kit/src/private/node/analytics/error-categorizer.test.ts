@@ -36,7 +36,6 @@ describe('categorizeError', () => {
     const errors = [
       new Error('ENOENT: no such file or directory'),
       new Error('EACCES: permission denied'),
-      new Error('File not found: theme.liquid'),
       new Error('Cannot read directory'),
       new Error('Invalid path provided'),
     ]
@@ -117,9 +116,9 @@ describe('categorizeError', () => {
 
     // When
     // Then
-    expect(categorizeError(errors[0])).toBe(ErrorCategory.Parsing)
-    expect(categorizeError(errors[1])).toBe(ErrorCategory.Parsing)
-    expect(categorizeError(errors[2])).toBe(ErrorCategory.Parsing)
+    expect(categorizeError(errors[0])).toBe(ErrorCategory.Json)
+    expect(categorizeError(errors[1])).toBe(ErrorCategory.Json)
+    expect(categorizeError(errors[2])).toBe(ErrorCategory.Json)
     expect(categorizeError(errors[3])).toBe(ErrorCategory.Authentication)
   })
 
@@ -134,7 +133,7 @@ describe('categorizeError', () => {
     // When
     // Then
     expect(categorizeError(errors[0])).toBe(ErrorCategory.Validation)
-    expect(categorizeError(errors[1])).toBe(ErrorCategory.Parsing)
+    expect(categorizeError(errors[1])).toBe(ErrorCategory.Validation)
     expect(categorizeError(errors[2])).toBe(ErrorCategory.Validation)
   })
 

@@ -6,6 +6,7 @@ import {validateThemePassword} from '../../services/flags-validation.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
@@ -43,6 +44,9 @@ export default class Console extends ThemeCommand {
     const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword)
 
     const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
+
+    recordEvent('theme-command:console:single-env:authenticated')
+
     await initializeRepl(adminSession, themeId, url, themeAccessPassword, storePassword)
   }
 }
