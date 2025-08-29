@@ -5,6 +5,7 @@ import {dev} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
+import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
 import {validateThemePassword} from '../../services/flags-validation.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -144,6 +145,11 @@ You can run this command only in a directory that matches the [default Shopify t
       const overwriteJson = flags['theme-editor-sync'] && theme.createdAtRuntime
 
       flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
+    }
+
+    const confirmed = await ensureLiveThemeConfirmed(theme, 'start development mode')
+    if (!confirmed) {
+      return
     }
 
     await dev({
