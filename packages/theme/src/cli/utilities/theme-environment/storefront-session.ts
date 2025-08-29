@@ -6,8 +6,9 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {type AdminSession} from '@shopify/cli-kit/node/session'
 import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 
-export class ShopifyEssentialError extends Error {}
+export class ShopifyEssentialError extends AbortError {}
 
 export async function isStorefrontPasswordProtected(session: AdminSession): Promise<boolean> {
   return passwordProtected(session)
@@ -25,6 +26,8 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
   params.append('utf8', '✓')
   params.append('password', password ?? '')
 
+  recordEvent('theme-service:storefront-session:check-storefront-password')
+
   const response = await shopifyFetch(`${storeUrl}/password`, {
     headers: {
       'cache-control': 'no-cache',
@@ -36,8 +39,10 @@ export async function isStorefrontPasswordCorrect(password: string | undefined, 
   })
 
   if (response.status === 429) {
-    throw new AbortError(
-      `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
+    throw recordError(
+      new AbortError(
+        `Too many incorrect password attempts. Please try again after ${response.headers.get('retry-after')} seconds.`,
+      ),
     )
   }
 
@@ -56,6 +61,8 @@ export async function getStorefrontSessionCookies(
   const storeOrigin = prependHttps(storeFqdn)
 
   cookieRecord._shopify_essential = shopifyEssential
+
+  recordEvent(`theme-service:storefront-session:is-password-protected:${Boolean(password)}`)
 
   if (!password) {
     /**
@@ -90,6 +97,8 @@ async function sessionEssentialCookie(
 
   const url = `${storeUrl}?${params}`
 
+  recordEvent(`theme-service:storefront-session:get-session-essential-cookie`)
+
   const response = await shopifyFetch(url, {
     method: 'HEAD',
     redirect: 'manual',
@@ -115,8 +124,10 @@ async function sessionEssentialCookie(
     )
 
     if (retries > 3) {
-      throw new ShopifyEssentialError(
-        'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+      throw recordError(
+        new ShopifyEssentialError(
+          'Your development session could not be created because the "_shopify_essential" could not be defined. Please, check your internet connection.',
+        ),
       )
     }
 
@@ -150,8 +161,10 @@ async function enrichSessionWithStorefrontPassword(
   })
 
   if (!redirectsToStorefront(response, storeOrigin)) {
-    throw new AbortError(
-      'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+    throw recordError(
+      new AbortError(
+        'Your development session could not be created because the store password is invalid. Please, retry with a different password.',
+      ),
     )
   }
 

@@ -5,6 +5,7 @@ import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 
 // 30 minutes in miliseconds.
 const SESSION_TIMEOUT_IN_MS = 30 * 60 * 1000
@@ -32,6 +33,7 @@ export async function initializeDevServerSession(
   session.refresh = async () => {
     outputDebug('Refreshing theme session...')
     const newSession = await fetchDevServerSession(themeId, adminSession, adminPassword, storefrontPassword)
+    recordEvent('theme-service:session:refreshed')
     Object.assign(session, newSession)
     return newSession
   }
@@ -113,10 +115,12 @@ export async function abortOnMissingRequiredFile(themeId: string, adminSession: 
   const requiredAssets = await fetchThemeAssets(Number(themeId), REQUIRED_THEME_FILES, adminSession)
 
   if (requiredAssets.length !== REQUIRED_THEME_FILES.length) {
-    throw new AbortError(
-      outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
-        `shopify theme delete -t ${themeId}`,
-      )} to delete it, then try your command again.`.value,
+    throw recordError(
+      new AbortError(
+        outputContent`Theme ${outputToken.cyan(themeId)} is missing required files. Run ${outputToken.cyan(
+          `shopify theme delete -t ${themeId}`,
+        )} to delete it, then try your command again.`.value,
+      ),
     )
   }
 

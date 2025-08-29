@@ -1,3 +1,4 @@
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import fs from 'fs/promises'
 
@@ -31,6 +32,8 @@ export class Notifier {
       }
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
+      recordError(error)
+
       let message = `Failed to notify filechange listener at ${this.notifyPath}`
       if (error instanceof Error) {
         message = message.concat(`: ${error.message}`)

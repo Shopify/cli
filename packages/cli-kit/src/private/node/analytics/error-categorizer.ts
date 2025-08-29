@@ -1,4 +1,5 @@
 export enum ErrorCategory {
+  Liquid = 'LIQUID',
   ThemeCheck = 'THEME_CHECK',
   Network = 'NETWORK',
   FileSystem = 'FILE_SYSTEM',
@@ -6,11 +7,13 @@ export enum ErrorCategory {
   Validation = 'VALIDATION',
   Permission = 'PERMISSION',
   RateLimit = 'RATE_LIMIT',
-  Parsing = 'PARSING',
+  Json = 'JSON',
   Unknown = 'UNKNOWN',
 }
 
 const ERROR_CATEGORY_TERMS = {
+  [ErrorCategory.Liquid]: ['liquid'],
+  [ErrorCategory.Json]: ['json', 'parse response'],
   [ErrorCategory.ThemeCheck]: ['theme check'],
   [ErrorCategory.Authentication]: ['unauthorized', 'forbidden', 'auth', 'token', 'credential'],
   [ErrorCategory.Network]: [
@@ -31,7 +34,6 @@ const ERROR_CATEGORY_TERMS = {
   [ErrorCategory.FileSystem]: ['enoent', 'eacces', 'file', 'directory', 'path'],
   [ErrorCategory.Permission]: ['permission', 'denied', 'access', 'insufficient'],
   [ErrorCategory.RateLimit]: ['rate limit', 'too many requests', 'throttle'],
-  [ErrorCategory.Parsing]: ['parse', 'syntax', 'json', 'invalid'],
   [ErrorCategory.Validation]: ['validation', 'invalid', 'required'],
 }
 
