@@ -3,21 +3,25 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
-import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {validateThemePassword} from '../../services/flags-validation.js'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {Task} from '@shopify/cli-kit/node/ui'
 
 export default class Profile extends ThemeCommand {
   static summary = 'Profile the Liquid rendering of a theme page.'
 
-  static usage = ['theme profile', 'theme profile --url /products/classic-leather-jacket']
+  static usage = [
+    'theme profile',
+    'theme profile --url /products/classic-leather-jacket',
+    'theme profile --frame header-group --iterations 30',
+  ]
 
   static descriptionWithMarkdown = `Profile the Shopify Liquid on a given page.
 
-  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.`
+  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.
+
+  When the \`--frame\` flag is provided, the command will analyze specific frames in the profile data and display timing information for frames matching the given substring. Use \`--iterations\` to run the analysis multiple times.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -37,6 +41,15 @@ export default class Profile extends ThemeCommand {
     'store-password': Flags.string({
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
+    }),
+    frame: Flags.string({
+      description: 'Frame name substring to filter and analyze in the profile data.',
+      env: 'SHOPIFY_FLAG_FRAME',
+    }),
+    iterations: Flags.integer({
+      description: 'Number of iterations to run the frame analysis.',
+      default: 1,
+      env: 'SHOPIFY_FLAG_ITERATIONS',
     }),
     ...jsonFlag,
   }
@@ -58,21 +71,15 @@ export default class Profile extends ThemeCommand {
     }
     const theme = await findOrSelectTheme(adminSession, filter)
 
-    const tasks: Task[] = [
-      {
-        title: `Generating Liquid profile for ${store + flags.url}`,
-        task: async () => {
-          await profile(
-            adminSession,
-            theme.id.toString(),
-            flags.url,
-            flags.json,
-            themeAccessPassword,
-            flags['store-password'],
-          )
-        },
-      },
-    ]
-    await renderTasksToStdErr(tasks)
+    await profile(
+      adminSession,
+      theme.id.toString(),
+      flags.url,
+      flags.json,
+      themeAccessPassword,
+      flags['store-password'],
+      flags.frame,
+      flags.iterations,
+    )
   }
 }
