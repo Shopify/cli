@@ -739,7 +739,30 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
     const {version} = result.appVersionCreate
     const userErrors = result.appVersionCreate.userErrors.map(toUserError) ?? []
-    if (!version) return {appDeploy: {userErrors}}
+    if (!version) {
+      // best-effort: include the last GraphQL request id captured by the client
+      const requestId = (
+        (await import('@shopify/cli-kit/node/metadata')).getAllPublicMetadata() as {
+          cmd_all_last_graphql_request_id?: string
+        }
+      ).cmd_all_last_graphql_request_id
+      // eslint-disable-next-line no-console
+      console.error(
+        JSON.stringify(
+          {
+            message: 'CreateAppVersion returned no version',
+            operation: 'CreateAppVersion',
+            variables,
+            userErrors: result.appVersionCreate.userErrors,
+            requestId,
+            rodFullResult: JSON.stringify(result),
+          },
+          null,
+          2,
+        ),
+      )
+      return {appDeploy: {userErrors}}
+    }
 
     const versionResult = {
       appDeploy: {
@@ -805,6 +828,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
         },
       }
     } else {
+      // eslint-disable-next-line no-console
+      console.error(JSON.stringify(releaseResult, null, 2))
       return {
         appRelease: {
           userErrors:
