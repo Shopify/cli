@@ -24,13 +24,13 @@ export function renderOperationResult(
 
   if (hasErrors) {
     renderWarning({
-      headline: 'Copy completed with errors',
+      headline: 'Copy completed with errors.',
       body: baseMsg,
       nextSteps: nextSteps.length > 0 ? nextSteps : undefined,
     })
   } else {
     renderSuccess({
-      headline: 'Copy completed',
+      headline: 'Copy completed.',
       body: baseMsg,
       nextSteps: nextSteps.length > 0 ? nextSteps : undefined,
     })
