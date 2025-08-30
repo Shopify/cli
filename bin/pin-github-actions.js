@@ -4,9 +4,9 @@ import glob from 'fast-glob'
 import {fileURLToPath} from 'url'
 import path from 'node:path'
 import utils from 'util'
-import {exec} from 'child_process'
+import {execFile} from 'child_process'
 
-export const execute = utils.promisify(exec)
+export const execute = utils.promisify(execFile)
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -29,7 +29,18 @@ async function doIt() {
   const pinGithubAction = `${__dirname}/../node_modules/.bin/pin-github-action`
   for (const githubYml of githubYmls) {
     await execute(
-      `GH_ADMIN_TOKEN=${githubAccessToken} ${pinGithubAction} ${githubYml} --allow="actions/*" --allow-empty`,
+      pinGithubAction,
+      [
+        githubYml,
+        '--allow=actions/*',
+        '--allow-empty',
+      ],
+      {
+        env: {
+          ...process.env,
+          GH_ADMIN_TOKEN: githubAccessToken,
+        },
+      }
     )
     process.stdout.write('.')
   }
