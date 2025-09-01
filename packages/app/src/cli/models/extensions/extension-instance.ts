@@ -45,8 +45,6 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhooksSpecIdentifier,
 ]
 
-type BuildMode = 'theme' | 'function' | 'ui' | 'flow' | 'tax_calculation' | 'none'
-
 /**
  * Class that represents an instance of a local extension
  * Before creating this class we've validated that:
@@ -342,7 +340,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.buildMode(options.environment)
+    const mode = this.specification.buildConfig.mode
 
     switch (mode) {
       case 'theme':
@@ -379,7 +377,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.buildMode(options.environment)
+    const buildMode = this.specification.buildConfig.mode
 
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
@@ -457,25 +455,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
-  }
-
-  buildMode(environment: 'production' | 'development'): BuildMode {
-    if (this.isThemeExtension) {
-      return 'theme'
-    } else if (this.isFunctionExtension) {
-      return 'function'
-    } else if (this.features.includes('esbuild')) {
-      return 'ui'
-    } else if (this.specification.identifier === 'flow_template' && environment === 'production') {
-      return 'flow'
-    }
-
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    if (this.type === 'tax_calculation') {
-      return 'tax_calculation'
-    }
-
-    return 'none'
   }
 
   private buildHandle() {
