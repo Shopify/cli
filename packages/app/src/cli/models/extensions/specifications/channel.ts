@@ -5,7 +5,7 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 
 const ChannelSpecificationSchema = BaseSchemaWithHandle.extend({
-  type: zod.literal('channel_config'),
+  type: zod.literal('channel_specification'),
   name: zod.string().optional(),
   channel_requirements: zod.any(),
 })
@@ -28,7 +28,7 @@ async function getSpecificationFiles(directory: string): Promise<string[]> {
 }
 
 const channelSpecificationSpec = createExtensionSpecification({
-  identifier: 'channel_config',
+  identifier: 'channel_specification',
   schema: ChannelSpecificationSchema,
   buildConfig: {mode: 'copy_files', filePatterns: getGlobPatterns()},
   appModuleFeatures: () => [],
@@ -37,7 +37,6 @@ const channelSpecificationSpec = createExtensionSpecification({
     return {
       handle: config.handle,
       name: config.name,
-      specifications,
       channel_requirements: config.channel_requirements,
     }
   },
