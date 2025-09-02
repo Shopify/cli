@@ -22,6 +22,7 @@ describe('extensionServerReducer()', () => {
       app,
       extensions: [extension],
       store: 'test-store.com',
+      actionType: 'connected',
     })
   })
 
@@ -35,6 +36,7 @@ describe('extensionServerReducer()', () => {
       app,
       extensions: [extension],
       store: 'test-store.com',
+      actionType: 'connected',
     })
 
     const currentExtension = initialState.extensions[0]
@@ -47,6 +49,7 @@ describe('extensionServerReducer()', () => {
       app: newApp,
       extensions: [newExtension],
       store: 'test-store.com',
+      actionType: 'connected',
     })
   })
 
@@ -68,6 +71,7 @@ describe('extensionServerReducer()', () => {
       app,
       extensions: [updated1, extension2],
       store: 'test-store.com',
+      actionType: 'update',
     })
   })
 
@@ -89,6 +93,7 @@ describe('extensionServerReducer()', () => {
       app,
       extensions: [extension1, updated2],
       store: 'test-store.com',
+      actionType: 'update',
     })
   })
 

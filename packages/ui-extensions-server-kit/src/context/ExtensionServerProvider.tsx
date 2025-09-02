@@ -35,7 +35,7 @@ export function ExtensionServerProvider({children, options: defaultOptions}: Ext
       client.on('connected', (payload) => dispatch(createConnectedAction(payload))),
       client.on('refresh', (payload) => dispatch(createRefreshAction(payload))),
       client.on('focus', (payload) => dispatch(createFocusAction(payload))),
-      client.on('unfocus', (payload) => dispatch(createUnfocusAction(payload))),
+      client.on('unfocus', () => dispatch(createUnfocusAction())),
     ]
 
     return () => listeners.forEach((unsubscribe) => unsubscribe())

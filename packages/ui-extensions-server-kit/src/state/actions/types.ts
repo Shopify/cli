@@ -20,7 +20,6 @@ export interface FocusAction {
 
 export interface UnfocusAction {
   type: 'unfocus'
-  payload: ExtensionServer.InboundEvents['unfocus']
 }
 
 export type ExtensionServerActions = ConnectedAction | UpdateAction | RefreshAction | FocusAction | UnfocusAction

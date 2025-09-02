@@ -28,9 +28,8 @@ export function createFocusAction(payload: FocusAction['payload']): FocusAction 
   }
 }
 
-export function createUnfocusAction(payload: UnfocusAction['payload']): UnfocusAction {
+export function createUnfocusAction(): UnfocusAction {
   return {
     type: 'unfocus',
-    payload,
   }
 }

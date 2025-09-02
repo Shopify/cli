@@ -1,10 +1,13 @@
 import {set, replaceUpdated, assetToString} from '../../utilities'
 import type {ExtensionServerActions} from '../actions'
-import type {ExtensionPayload} from '../../types'
+import type {App, ExtensionPayload} from '../../types'
 
 import type {ExtensionServerState} from './types'
 
-export function extensionServerReducer(state: ExtensionServerState, action: ExtensionServerActions) {
+export function extensionServerReducer(
+  state: ExtensionServerState,
+  action: ExtensionServerActions,
+): ExtensionServerState {
   switch (action.type) {
     case 'connected': {
       const extensions = (action.payload.extensions ?? []).map((extension) => {
@@ -31,7 +34,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
       })
       return {
         ...state,
-        app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
+        app: {...(state.app ?? {}), ...(action.payload.app ?? {})} as App,
         extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
         actionType: 'update',
       }
