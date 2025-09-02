@@ -18,7 +18,8 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
         store: action.payload.store,
         app: action.payload.app,
         extensions,
-      } as ExtensionServerState
+        actionType: 'connected',
+      }
     }
 
     case 'update': {
@@ -32,7 +33,8 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
         ...state,
         app: {...(state.app ?? {}), ...(action.payload.app ?? {})},
         extensions: replaceUpdated(state.extensions, extensions, ({uuid}) => uuid),
-      } as ExtensionServerState
+        actionType: 'update',
+      }
     }
 
     case 'refresh': {
@@ -52,6 +54,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
           }
           return extension
         }),
+        actionType: 'refresh',
       }
     }
 
@@ -66,6 +69,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
           }
           return extension
         }),
+        actionType: 'focus',
       }
     }
 
@@ -78,6 +82,7 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
           }
           return extension
         }),
+        actionType: 'unfocus',
       }
     }
 
