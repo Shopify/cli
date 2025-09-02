@@ -1,4 +1,4 @@
-import {categorizeError, ErrorCategory} from './error-categorizer.js'
+import {categorizeError, formatErrorMessage, ErrorCategory} from './error-categorizer.js'
 import {describe, test, expect} from 'vitest'
 
 describe('categorizeError', () => {
@@ -183,5 +183,343 @@ describe('categorizeError', () => {
 
     // Then
     expect(category).toBe(ErrorCategory.Unknown)
+  })
+})
+
+describe('formatErrorMessage', () => {
+  describe('Network errors', () => {
+    test('preserves HTTP status codes', () => {
+      // Given
+      const error = new Error('Request failed with status 404')
+      const category = ErrorCategory.Network
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('http-404-request-failed-with-status')
+    })
+
+    test('preserves GraphQL error codes', () => {
+      // Given
+      const error = new Error('GraphQL Error (Code: 401): Unauthorized')
+      const category = ErrorCategory.Network
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('http-401-graphql-error-code-unauthorized')
+    })
+
+    test('preserves connection error codes', () => {
+      // Given
+      const error = new Error('ECONNREFUSED: connection refused')
+      const category = ErrorCategory.Network
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('http-000-econnrefused-econnrefused-connection-refu')
+    })
+
+    test('handles network errors without specific codes', () => {
+      // Given
+      const error = new Error('Network request failed')
+      const category = ErrorCategory.Network
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('http-000-network-request-failed')
+    })
+  })
+
+  describe('Authentication errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Unauthorized access: 401')
+      const category = ErrorCategory.Authentication
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('unauthorized-access-401')
+    })
+
+    test('handles auth errors without status codes', () => {
+      // Given
+      const error = new Error('Invalid credentials provided')
+      const category = ErrorCategory.Authentication
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('invalid-credentials-provided')
+    })
+  })
+
+  describe('File system errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('ENOENT: no such file or directory')
+      const category = ErrorCategory.FileSystem
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('enoent-no-such-file-or-directory')
+    })
+
+    test('handles file system errors without error codes', () => {
+      // Given
+      const error = new Error('Cannot read directory')
+      const category = ErrorCategory.FileSystem
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('cannot-read-directory')
+    })
+  })
+
+  describe('Rate limit errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Rate limit exceeded: 100 requests per minute')
+      const category = ErrorCategory.RateLimit
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('rate-limit-exceeded-100-requests-per-minute')
+    })
+
+    test('handles rate limit errors without numbers', () => {
+      // Given
+      const error = new Error('Too many requests')
+      const category = ErrorCategory.RateLimit
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('too-many-requests')
+    })
+  })
+
+  describe('JSON errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Syntax error at line 42: unexpected token')
+      const category = ErrorCategory.Json
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('syntax-error-at-line-42-unexpected-token')
+    })
+
+    test('handles JSON errors without position info', () => {
+      // Given
+      const error = new Error('Invalid JSON received')
+      const category = ErrorCategory.Json
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('invalid-json-received')
+    })
+  })
+
+  describe('Validation errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Validation failed for field: username')
+      const category = ErrorCategory.Validation
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('validation-failed-for-field-username')
+    })
+
+    test('handles validation errors without field names', () => {
+      // Given
+      const error = new Error('Required field missing')
+      const category = ErrorCategory.Validation
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('required-field-missing')
+    })
+  })
+
+  describe('Permission errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Permission denied to /etc/config')
+      const category = ErrorCategory.Permission
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('permission-denied-to-etc-config')
+    })
+
+    test('handles permission errors without resource names', () => {
+      // Given
+      const error = new Error('Access denied')
+      const category = ErrorCategory.Permission
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('access-denied')
+    })
+  })
+
+  describe('Liquid errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Liquid syntax error at line 15')
+      const category = ErrorCategory.Liquid
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('liquid-syntax-error-at-line-15')
+    })
+
+    test('handles Liquid errors without line numbers', () => {
+      // Given
+      const error = new Error('Liquid template error')
+      const category = ErrorCategory.Liquid
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('liquid-template-error')
+    })
+  })
+
+  describe('Theme check errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Theme check failed for rule: missing-alt-text')
+      const category = ErrorCategory.ThemeCheck
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('theme-check-failed-for-rule-missing-alt-text')
+    })
+
+    test('handles theme check errors without rule names', () => {
+      // Given
+      const error = new Error('Theme validation failed')
+      const category = ErrorCategory.ThemeCheck
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('theme-validation-failed')
+    })
+  })
+
+  describe('Unknown errors', () => {
+    test('uses generic formatting', () => {
+      // Given
+      const error = new Error('Something went wrong')
+      const category = ErrorCategory.Unknown
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('something-went-wrong')
+    })
+  })
+
+  describe('Edge cases', () => {
+    test('handles very long error messages', () => {
+      // Given
+      const longMessage = 'A'.repeat(100)
+      const error = new Error(longMessage)
+      const category = ErrorCategory.Network
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted.length).toBeLessThanOrEqual(50)
+      expect(formatted).toBe(`http-000-${'a'.repeat(41)}`)
+    })
+
+    test('handles non-Error objects', () => {
+      // Given
+      const error = 'String error message'
+      const category = ErrorCategory.Unknown
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('string-error-message')
+    })
+
+    test('handles errors with special characters', () => {
+      // Given
+      const error = new Error('Error: @#$%^&*()!')
+      const category = ErrorCategory.Unknown
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('error')
+    })
+
+    test('removes consecutive dashes', () => {
+      // Given
+      const error = new Error('Error---with---many---dashes')
+      const category = ErrorCategory.Unknown
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('error-with-many-dashes')
+    })
+
+    test('trims leading and trailing dashes', () => {
+      // Given
+      const error = new Error('---Error message---')
+      const category = ErrorCategory.Unknown
+
+      // When
+      const formatted = formatErrorMessage(error, category)
+
+      // Then
+      expect(formatted).toBe('error-message')
+    })
   })
 })

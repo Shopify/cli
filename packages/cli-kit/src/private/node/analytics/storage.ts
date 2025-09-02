@@ -1,4 +1,4 @@
-import {categorizeError, ErrorCategory} from './error-categorizer.js'
+import {categorizeError, formatErrorMessage, ErrorCategory} from './error-categorizer.js'
 import {BArray, BMap} from './bounded-collections.js'
 
 interface TimingEntry {
@@ -78,10 +78,7 @@ export function recordError(error: unknown): void {
   _runtimeAnalyticsStore.errors.push(errorEntry)
 
   const normalizedErrorCategory = category.toLowerCase()
-  const normalizedErrorMessage = errorEntry.message
-    .substring(0, 50)
-    .replace(/[^a-zA-Z0-9]/g, '-')
-    .toLowerCase()
+  const normalizedErrorMessage = formatErrorMessage(error, category)
 
   recordEvent(`error:${normalizedErrorCategory}:${normalizedErrorMessage}`)
 }
