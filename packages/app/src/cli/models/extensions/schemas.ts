@@ -81,6 +81,10 @@ const SettingsSchema = zod.object({
   fields: zod.array(FieldSchema).optional(),
 })
 
+const TestsSchema = zod.object({
+  command: zod.string(),
+})
+
 const HandleSchema = zod
   .string()
   .trim()
@@ -100,6 +104,7 @@ export const BaseSchema = zod.object({
   extension_points: zod.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
   settings: SettingsSchema.optional(),
+  tests: TestsSchema.optional(),
 })
 
 export const BaseSchemaWithHandle = BaseSchema.extend({
