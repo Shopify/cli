@@ -99,7 +99,8 @@ import {
   RemoteTemplateSpecificationsSchema,
   RemoteTemplateSpecificationsVariables,
 } from '../../api/graphql/template_specifications.js'
-import {ExtensionTemplatesResult} from '../../models/app/template.js'
+import {ExtensionTemplate, ExtensionTemplatesResult} from '../../models/app/template.js'
+import {environmentVariableNames} from '../../constants.js'
 import {
   TargetSchemaDefinitionQuerySchema,
   TargetSchemaDefinitionQuery,
@@ -158,6 +159,7 @@ import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -354,15 +356,30 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
-    const variables: RemoteTemplateSpecificationsVariables = {apiKey}
-    const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
-    const templates = result.templateSpecifications.map((template) => {
-      const {types, ...rest} = template
-      return {
-        ...rest,
-        ...types[0],
+    let templates: ExtensionTemplate[]
+    const {templatesJsonPath} = environmentVariableNames
+    const overrideFile = process.env[templatesJsonPath]
+
+    if (overrideFile) {
+      if (!(await fileExists(overrideFile))) {
+        throw new AbortError('There is no file at the path specified for template specifications')
       }
-    })
+      const templatesJson = await readFile(overrideFile)
+      templates = JSON.parse(templatesJson)
+    } else {
+      const variables: RemoteTemplateSpecificationsVariables = {apiKey}
+      const result: RemoteTemplateSpecificationsSchema = await this.request(
+        RemoteTemplateSpecificationsQuery,
+        variables,
+      )
+      templates = result.templateSpecifications.map((template) => {
+        const {types, ...rest} = template
+        return {
+          ...rest,
+          ...types[0],
+        }
+      })
+    }
 
     let counter = 0
     const templatesWithPriority = templates.map((template) => ({
