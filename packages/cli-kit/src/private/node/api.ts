@@ -82,6 +82,7 @@ function isARetryableNetworkError(error: unknown): boolean {
       'eai_again',
       'epipe',
       'the operation was aborted',
+      'bad record mac',
     ]
     const errorMessage = error.message.toLowerCase()
     const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
