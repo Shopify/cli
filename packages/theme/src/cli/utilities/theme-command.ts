@@ -100,6 +100,7 @@ export default abstract class ThemeCommand extends Command {
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
       await this.command(flags, session)
+      await this.logAnalyticsData(session)
       return
     }
 
@@ -262,6 +263,7 @@ export default abstract class ThemeCommand extends Command {
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
                 await this.command(flags, session, true, {stdout, stderr})
+                await this.logAnalyticsData(session)
               })
 
               // eslint-disable-next-line no-catch-all/no-catch-all
@@ -305,7 +307,6 @@ export default abstract class ThemeCommand extends Command {
     const store = flags.store as string
     const password = flags.password as string
     const session = await ensureAuthenticatedThemes(ensureThemeStore({store}), password)
-    await this.logAnalyticsData(session)
 
     return session
   }
@@ -360,7 +361,9 @@ export default abstract class ThemeCommand extends Command {
     })
   }
 
-  private async logAnalyticsData(session: AdminSession): Promise<void> {
+  private async logAnalyticsData(session?: AdminSession): Promise<void> {
+    if (!session) return
+
     const data = compileData()
 
     await addPublicMetadata(() => ({
