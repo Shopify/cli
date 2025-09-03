@@ -39,7 +39,7 @@ export async function runExtensionTests(extensions: ExtensionInstance[], options
   outputInfo(`🧪 Found ${testableExtensions.length} extension(s) with test commands`)
 
   // Run test command for each extension
-  await Promise.all(testableExtensions.map((extension) => runExtensionTestCommand(extension, options)))
+  await Promise.all(testableExtensions.map((extension) => orchestrateExtensionTest(extension, options)))
 
   // Show completion message
   outputInfo('✅ All extension tests completed')
@@ -50,7 +50,7 @@ function hasTestConfiguration(extension: ExtensionInstance): boolean {
   return Boolean(config.tests?.command)
 }
 
-async function runExtensionTestCommand(extension: ExtensionInstance, options: ExtensionTestOptions): Promise<void> {
+async function orchestrateExtensionTest(extension: ExtensionInstance, options: ExtensionTestOptions): Promise<void> {
   const config = extension.configuration as ExtensionConfigWithTests
 
   await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
@@ -74,74 +74,63 @@ async function runExtensionTestCommand(extension: ExtensionInstance, options: Ex
   await buildExtensionForTesting(extension, options)
 
   // Run test command
-  await runTestCommand(extension, testCommand, options)
+  await runExtensionTestCommand(extension, testCommand, options)
 }
 
 async function buildExtensionForTesting(extension: ExtensionInstance, options: ExtensionTestOptions): Promise<void> {
-  // Build extension if not skipping build and app context is available
-  if (!options.skipBuild && options.app) {
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
-      options.stdout.write(`🔨 Building extension...\n`)
-    })
+  await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+    // Build extension if not skipping build and app context is available
+    if (!options.skipBuild && options.app) {
+      options.stdout.write(`🔨 Building extension ${extension.handle}...\n`)
 
-    const startTime = Date.now()
-    await extension.build({
-      stdout: options.stdout,
-      stderr: options.stderr,
-      app: options.app,
-      environment: 'production',
-    })
+      const startTime = Date.now()
+      await extension.build({
+        stdout: options.stdout,
+        stderr: options.stderr,
+        app: options.app,
+        environment: 'production',
+      })
 
-    const endTime = Date.now()
-    const duration = (endTime - startTime) / 1000
-
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+      const endTime = Date.now()
+      const duration = (endTime - startTime) / 1000
       options.stdout.write(`✅ Extension built successfully in ${duration.toFixed(2)}s\n`)
-    })
-  } else if (!options.skipBuild) {
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+    } else if (!options.skipBuild) {
       options.stdout.write(`⚠️  Skipping build (no app context available)\n`)
-    })
-  } else {
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+    } else {
       options.stdout.write(`✅ Skipping build\n`)
-    })
-  }
+    }
+  })
 }
 
-async function runTestCommand(
+async function runExtensionTestCommand(
   extension: ExtensionInstance,
   testCommand: string,
   options: ExtensionTestOptions,
 ): Promise<void> {
   await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
     options.stdout.write(`🔧 Executing test command: ${testCommand}\n`)
-  })
 
-  const startTime = Date.now()
-  try {
-    await exec('sh', ['-c', testCommand], {
-      cwd: extension.directory,
-      stdout: options.stdout,
-      stderr: options.stderr,
-      signal: options.signal,
-    })
+    const startTime = Date.now()
+    try {
+      await exec('sh', ['-c', testCommand], {
+        cwd: extension.directory,
+        stdout: options.stdout,
+        stderr: options.stderr,
+        signal: options.signal,
+      })
 
-    const endTime = Date.now()
-    const duration = (endTime - startTime) / 1000
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+      const endTime = Date.now()
+      const duration = (endTime - startTime) / 1000
       options.stdout.write(`✅ Test command completed successfully in ${duration.toFixed(2)}s\n`)
-    })
-  } catch (error) {
-    const endTime = Date.now()
-    const duration = (endTime - startTime) / 1000
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+    } catch (error) {
+      const endTime = Date.now()
+      const duration = (endTime - startTime) / 1000
       options.stdout.write(`❌ Test command failed after ${duration.toFixed(2)}s\n`)
-    })
-    throw new Error(
-      `Test command failed for ${extension.localIdentifier}: ${
-        error instanceof Error ? error.message : 'Unknown error'
-      }`,
-    )
-  }
+      throw new Error(
+        `Test command failed for ${extension.localIdentifier}: ${
+          error instanceof Error ? error.message : 'Unknown error'
+        }`,
+      )
+    }
+  })
 }
