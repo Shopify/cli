@@ -36,18 +36,13 @@ export async function runExtensionTests(extensions: ExtensionInstance[], options
     return
   }
 
-  // Show summary for multiple extensions
-  if (testableExtensions.length > 1) {
-    outputInfo(`🧪 Found ${testableExtensions.length} extension(s) with test commands`)
-  }
+  outputInfo(`🧪 Found ${testableExtensions.length} extension(s) with test commands`)
 
   // Run test command for each extension
   await Promise.all(testableExtensions.map((extension) => runExtensionTestCommand(extension, options)))
 
-  // Show completion message for multiple extensions
-  if (testableExtensions.length > 1) {
-    outputInfo('✅ All extension tests completed')
-  }
+  // Show completion message
+  outputInfo('✅ All extension tests completed')
 }
 
 function hasTestConfiguration(extension: ExtensionInstance): boolean {
@@ -62,6 +57,27 @@ async function runExtensionTestCommand(extension: ExtensionInstance, options: Ex
     options.stdout.write(`\n🔍 Testing extension: ${extension.localIdentifier}\n`)
   })
 
+  // Check for test command first - no point building if there's no test to run
+  const testCommand = config.tests?.command
+
+  if (!testCommand) {
+    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
+      options.stdout.write(`ℹ️  No test command configured for this extension\n`)
+      options.stdout.write(
+        `   Add [extensions.tests] command = "your-test-command" to the extension's TOML file to enable testing\n`,
+      )
+    })
+    return
+  }
+
+  // Build extension if needed
+  await buildExtensionForTesting(extension, options)
+
+  // Run test command
+  await runTestCommand(extension, testCommand, options)
+}
+
+async function buildExtensionForTesting(extension: ExtensionInstance, options: ExtensionTestOptions): Promise<void> {
   // Build extension if not skipping build and app context is available
   if (!options.skipBuild && options.app) {
     await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
@@ -91,22 +107,6 @@ async function runExtensionTestCommand(extension: ExtensionInstance, options: Ex
       options.stdout.write(`✅ Skipping build\n`)
     })
   }
-
-  // Check for test command
-  const testCommand = config.tests?.command
-
-  if (!testCommand) {
-    await useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, async () => {
-      options.stdout.write(`ℹ️  No test command configured for this extension\n`)
-      options.stdout.write(
-        `   Add [extensions.tests] command = "your-test-command" to the extension's TOML file to enable testing\n`,
-      )
-    })
-    return
-  }
-
-  // Run test command
-  await runTestCommand(extension, testCommand, options)
 }
 
 async function runTestCommand(
@@ -118,30 +118,12 @@ async function runTestCommand(
     options.stdout.write(`🔧 Executing test command: ${testCommand}\n`)
   })
 
-  const customStdout = new Writable({
-    write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
-      useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
-        options.stdout.write(chunk)
-      })
-      callback()
-    },
-  })
-
-  const customStderr = new Writable({
-    write(chunk: Buffer, _encoding: string, callback: (error?: Error | null) => void) {
-      useConcurrentOutputContext({outputPrefix: extension.outputPrefix, stripAnsi: false}, () => {
-        options.stderr.write(chunk)
-      })
-      callback()
-    },
-  })
-
   const startTime = Date.now()
   try {
     await exec('sh', ['-c', testCommand], {
       cwd: extension.directory,
-      stdout: customStdout,
-      stderr: customStderr,
+      stdout: options.stdout,
+      stderr: options.stderr,
       signal: options.signal,
     })
 
