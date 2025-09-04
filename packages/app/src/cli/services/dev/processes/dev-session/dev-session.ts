@@ -232,12 +232,8 @@ export class DevSession {
         )
 
         if (hasInstallationError) {
-          // Log a clear message before aborting
-          await this.logger.info('')
-          await this.logger.info('App has been uninstalled from the store.')
-
-          // Throw AbortError to gracefully shut down, following existing pattern
-          throw new AbortError('Run `shopify app dev` to reinstall and continue development.')
+          await this.handleAppUninstalled()
+          return
         }
       }
 
@@ -413,6 +409,30 @@ export class DevSession {
     const errors = result.devSessionUpdate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'updated'}
+  }
+
+  /**
+   * Handle app uninstallation by gracefully shutting down the dev session
+   */
+  private async handleAppUninstalled() {
+    // Log a clear message about what happened
+    await this.logger.info('')
+    await this.logger.info('App has been uninstalled from the store.')
+    await this.logger.info('Run `shopify app dev` to reinstall and continue development.')
+
+    // Update status to indicate the session is ending
+    this.statusManager.updateStatus({
+      isReady: false,
+      statusMessage: {
+        message: 'App uninstalled - shutting down',
+        type: 'error',
+      },
+    })
+
+    // Exit gracefully - this mimics what happens when user presses 'q'
+    if (!isUnitTest()) {
+      process.exit(0)
+    }
   }
 
   /**

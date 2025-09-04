@@ -376,7 +376,7 @@ describe('pushUpdatesForDevSession', () => {
     })
   })
 
-  test('aborts dev session when app is uninstalled from store', async () => {
+  test('gracefully shuts down dev session when app is uninstalled from store', async () => {
     // Given
     const uninstallError = [
       {
@@ -390,13 +390,6 @@ describe('pushUpdatesForDevSession', () => {
       .fn()
       .mockResolvedValue({devSessionUpdate: {userErrors: uninstallError}})
 
-    // Create a promise to catch the abort error
-    const errorPromise = new Promise((resolve, reject) => {
-      process.once('unhandledRejection', (error) => {
-        resolve(error)
-      })
-    })
-
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
     await appWatcher.start({stdout, stderr, signal: abortController.signal})
@@ -406,13 +399,18 @@ describe('pushUpdatesForDevSession', () => {
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
     await flushPromises()
 
-    // Wait for the unhandled rejection
-    const error = await errorPromise
-
-    // Then
-    expect(error).toBeInstanceOf(Error)
-    expect(error.message).toBe('Run `shopify app dev` to reinstall and continue development.')
+    // Then - check that the appropriate messages were logged
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('App has been uninstalled from the store.'))
+    expect(stdout.write).toHaveBeenCalledWith(
+      expect.stringContaining('Run `shopify app dev` to reinstall and continue development.'),
+    )
+
+    // Check that status was updated
+    expect(devSessionStatusManager.status.isReady).toBe(false)
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'App uninstalled - shutting down',
+      type: 'error',
+    })
   })
 
   test('does not abort for other remote errors', async () => {
