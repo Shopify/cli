@@ -262,6 +262,7 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
       storeName: 'storeName',
+      appDirectory: undefined,
     })
 
     const appLogPayloadOne = new FunctionRunLog(
@@ -273,6 +274,7 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
       storeName: 'storeName',
+      appDirectory: undefined,
     })
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[2],
@@ -280,6 +282,7 @@ describe('pollAppLogs', () => {
       apiKey: API_KEY,
       stdout,
       storeName: 'storeName',
+      appDirectory: undefined,
     })
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(

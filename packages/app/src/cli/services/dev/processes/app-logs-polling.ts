@@ -66,7 +66,7 @@ export async function setupAppLogsPollingProcess({
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
   {stdout, stderr: _stderr, abortSignal: _abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, appWatcher, localApp: _localApp},
+  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, appWatcher, localApp},
 ) => {
   async function startPolling(abortSignal?: AbortSignal) {
     const jwtToken = await subscribeToAppLogs(
@@ -90,6 +90,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       storeName,
       organizationId,
       abortSignal,
+      appDirectory: localApp.directory,
     })
   }
 

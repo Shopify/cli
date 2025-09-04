@@ -3,6 +3,8 @@ import {toFormattedAppLogJson} from '../utils.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
+import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 interface AppLogFile {
@@ -16,6 +18,7 @@ export const writeAppLogsToFile = async ({
   apiKey,
   stdout,
   storeName,
+  appDirectory,
 }: {
   appLog: AppLogData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,16 +26,34 @@ export const writeAppLogsToFile = async ({
   apiKey: string
   stdout: Writable
   storeName: string
+  appDirectory?: string
 }): Promise<AppLogFile> => {
   const identifier = randomUUID().substring(0, 6)
 
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
   const fileName = `${formattedTimestamp}_${appLog.source_namespace}_${appLog.source}_${identifier}.json`
   const path = joinPath(apiKey, fileName)
-  const fullOutputPath = joinPath(getLogsDir(), path)
+
+  let fullOutputPath: string
+  const logContent = toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName})
+
+  if (appDirectory) {
+    // Use .shopify/logs directory within the app
+    const shopifyDir = await getOrCreateHiddenShopifyFolder(appDirectory)
+    const logsDir = joinPath(shopifyDir, 'logs')
+
+    // Ensure logs directory exists
+    await mkdir(logsDir)
+
+    fullOutputPath = joinPath(logsDir, fileName)
+    await writeFile(fullOutputPath, logContent)
+  } else {
+    // Fall back to system logs directory
+    fullOutputPath = joinPath(getLogsDir(), path)
+    await writeLog(path, logContent)
+  }
 
   try {
-    await writeLog(path, toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName}))
     return {
       fullOutputPath,
       identifier,
