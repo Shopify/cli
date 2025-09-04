@@ -7,6 +7,8 @@ import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
 
 vi.mock('@shopify/cli-kit/node/logs')
+vi.mock('@shopify/cli-kit/node/hidden-folder')
+vi.mock('@shopify/cli-kit/node/fs')
 
 const APP_LOG: AppLogData = {
   shop_id: 1,
