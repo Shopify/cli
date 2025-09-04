@@ -10,8 +10,11 @@ import {
 } from '../../models/app/app.test-data.js'
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
+import {ExtensionTemplate} from '../../models/app/template.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test} from 'vitest'
+import {writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, cwd} from '@shopify/cli-kit/node/path'
+import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -199,6 +202,141 @@ describe('PartnersClient', () => {
 
       // Then
       expect(client.bundleFormat).toBe('zip')
+    })
+  })
+
+  describe('templateSpecifications', () => {
+    let originalEnv: string | undefined
+    let tempFilePath: string
+
+    beforeEach(() => {
+      originalEnv = process.env.SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH
+      tempFilePath = joinPath(cwd(), 'test-templates.json')
+    })
+
+    afterEach(async () => {
+      if (originalEnv) {
+        process.env.SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH = originalEnv
+      } else {
+        delete process.env.SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH
+      }
+
+      try {
+        await removeFile(tempFilePath)
+      } catch (error) {
+        // File might not exist, ignore only file not found errors
+        if (error instanceof Error && !error.message.includes('ENOENT')) {
+          throw error
+        }
+      }
+    })
+
+    test('uses local JSON file when SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH is set', async () => {
+      // Given
+      const localTemplates: ExtensionTemplate[] = [
+        {
+          identifier: 'test_extension',
+          name: 'Test Extension',
+          defaultName: 'test-extension',
+          group: 'Test Group',
+          supportLinks: ['https://test.com'],
+          type: 'ui_extension',
+          extensionPoints: ['admin.test'],
+          supportedFlavors: [
+            {
+              name: 'JavaScript React',
+              value: 'react',
+              path: 'test-path',
+            },
+          ],
+          url: 'https://github.com/test/repo',
+          sortPriority: 1,
+        },
+      ]
+
+      await writeFile(tempFilePath, JSON.stringify(localTemplates))
+      process.env.SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH = tempFilePath
+
+      const client = new PartnersClient(testPartnersUserSession)
+
+      // When
+      const result = await client.templateSpecifications({apiKey: 'test-key', organizationId: 'org-id', id: 'app-id'})
+
+      // Then
+      expect(result.templates).toHaveLength(1)
+      expect(result.templates[0]).toEqual(
+        expect.objectContaining({
+          identifier: 'test_extension',
+          name: 'Test Extension',
+          group: 'Test Group',
+        }),
+      )
+      expect(result.groupOrder).toEqual(['Test Group'])
+      expect(vi.mocked(partnersRequest)).not.toHaveBeenCalled()
+    })
+
+    test('throws error when SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH points to non-existent file', async () => {
+      // Given
+      const nonExistentPath = joinPath(cwd(), 'non-existent-templates.json')
+      process.env.SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH = nonExistentPath
+
+      const client = new PartnersClient(testPartnersUserSession)
+
+      // When & Then
+      await expect(
+        client.templateSpecifications({apiKey: 'test-key', organizationId: 'org-id', id: 'app-id'}),
+      ).rejects.toThrow('There is no file at the path specified for template specifications')
+    })
+
+    test('falls back to GraphQL when SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH not set', async () => {
+      // Given
+      delete process.env.SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH
+
+      const mockGraphQLResponse = {
+        templateSpecifications: [
+          {
+            identifier: 'graphql_extension',
+            name: 'GraphQL Extension',
+            defaultName: 'graphql-extension',
+            group: 'GraphQL Group',
+            sortPriority: 5,
+            supportLinks: ['https://graphql.com'],
+            types: [
+              {
+                url: 'https://github.com/graphql/repo',
+                type: 'ui_extension',
+                extensionPoints: ['admin.graphql'],
+                supportedFlavors: [
+                  {
+                    name: 'TypeScript',
+                    value: 'typescript',
+                    path: 'graphql-path',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+
+      vi.mocked(partnersRequest).mockResolvedValueOnce(mockGraphQLResponse)
+      const client = new PartnersClient(testPartnersUserSession)
+
+      // When
+      const result = await client.templateSpecifications({apiKey: 'test-key', organizationId: 'org-id', id: 'app-id'})
+
+      // Then
+      expect(result.templates).toHaveLength(1)
+      expect(result.templates[0]).toEqual(
+        expect.objectContaining({
+          identifier: 'graphql_extension',
+          name: 'GraphQL Extension',
+          group: 'GraphQL Group',
+          url: 'https://github.com/graphql/repo',
+        }),
+      )
+      expect(result.groupOrder).toEqual(['GraphQL Group'])
+      expect(vi.mocked(partnersRequest)).toHaveBeenCalledTimes(1)
     })
   })
 })
