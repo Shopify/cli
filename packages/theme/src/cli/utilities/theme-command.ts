@@ -18,6 +18,7 @@ import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import type {Writable} from 'stream'
 
 export interface FlagValues {
@@ -149,6 +150,11 @@ export default abstract class ThemeCommand extends Command {
         from: flags.path as string,
         silent: true,
       })
+
+      if (environmentFlags?.store && typeof environmentFlags.store === 'string') {
+        // eslint-disable-next-line no-await-in-loop
+        environmentFlags.store = await normalizeStoreFqdn(environmentFlags.store)
+      }
 
       environmentMap.set(environmentName, {
         ...flags,
