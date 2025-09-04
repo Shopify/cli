@@ -221,6 +221,26 @@ export class DevSession {
       await this.logger.debug('❌ App preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
+
+      // Check for app uninstallation error
+      if (result.status === 'remote-error') {
+        const errors = result.error
+
+        // Check for the specific error message indicating app uninstallation
+        const hasInstallationError = errors.some((err) =>
+          err.message.includes("The app isn't installed on the specified store"),
+        )
+
+        if (hasInstallationError) {
+          // Log a clear message before aborting
+          await this.logger.info('')
+          await this.logger.info('App has been uninstalled from the store.')
+
+          // Throw AbortError to gracefully shut down, following existing pattern
+          throw new AbortError('Run `shopify app dev` to reinstall and continue development.')
+        }
+      }
+
       if (result.error instanceof Error && result.error.cause === 'validation-error') {
         this.statusManager.setMessage('VALIDATION_ERROR')
       } else {

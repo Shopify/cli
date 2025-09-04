@@ -376,6 +376,75 @@ describe('pushUpdatesForDevSession', () => {
     })
   })
 
+  test('aborts dev session when app is uninstalled from store', async () => {
+    // Given
+    const uninstallError = [
+      {
+        message: "The app isn't installed on the specified store (test.myshopify.com).",
+        category: 'app_access/app/installation_invalid',
+        on: {},
+        field: null,
+      },
+    ]
+    developerPlatformClient.devSessionUpdate = vi
+      .fn()
+      .mockResolvedValue({devSessionUpdate: {userErrors: uninstallError}})
+
+    // Create a promise to catch the abort error
+    const errorPromise = new Promise((resolve, reject) => {
+      process.once('unhandledRejection', (error) => {
+        resolve(error)
+      })
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Trigger an update that will fail with uninstall error
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Wait for the unhandled rejection
+    const error = await errorPromise
+
+    // Then
+    expect(error).toBeInstanceOf(Error)
+    expect(error.message).toBe('Run `shopify app dev` to reinstall and continue development.')
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('App has been uninstalled from the store.'))
+  })
+
+  test('does not abort for other remote errors', async () => {
+    // Given
+    const otherError = [
+      {
+        message: 'Some other error occurred',
+        category: 'validation',
+        on: {},
+        field: null,
+      },
+    ]
+    developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({devSessionUpdate: {userErrors: otherError}})
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Trigger an update that will fail with a different error
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then - should not throw, just set error status
+    expect(devSessionStatusManager.status.statusMessage).toEqual({
+      message: 'Error updating app preview',
+      type: 'error',
+    })
+    // Should NOT log the uninstall message
+    expect(stdout.write).not.toHaveBeenCalledWith(expect.stringContaining('App has been uninstalled from the store.'))
+  })
+
   test('manifest sent in update payload only includes affected extensions', async () => {
     // Given
     vi.mocked(readdir).mockResolvedValue(['assets', 'assets/updated-extension'])
