@@ -240,6 +240,11 @@ FLAGS
                                           work for testing many app features, but not those that directly invoke your
                                           app (E.g: Webhooks)
       --verbose                           Increase the verbosity of the output.
+Network configuration
+```
+export SHOPIFY_CLI_HTTP_INTERFACE=0.0.0.0
+```
+to export all network interfaces
 
 DESCRIPTION
   Run the app.
