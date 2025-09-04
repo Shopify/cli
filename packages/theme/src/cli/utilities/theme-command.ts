@@ -17,7 +17,7 @@ import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import type {Writable} from 'stream'
@@ -159,6 +159,10 @@ export default abstract class ThemeCommand extends Command {
       if (environmentFlags?.store && typeof environmentFlags.store === 'string') {
         // eslint-disable-next-line no-await-in-loop
         environmentFlags.store = await normalizeStoreFqdn(environmentFlags.store)
+      }
+
+      if (environmentFlags?.path && typeof environmentFlags.path === 'string') {
+        environmentFlags.path = resolvePath(environmentFlags.path)
       }
 
       environmentMap.set(environmentName, {
