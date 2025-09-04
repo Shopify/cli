@@ -6,6 +6,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 
 type ReconciliationStrategy = typeof LOCAL_STRATEGY | typeof REMOTE_STRATEGY | undefined
 
@@ -45,11 +46,14 @@ export async function reconcileJsonFiles(
     localThemeFileSystem,
   )
 
-  if (
+  const isReconciled =
     filesOnlyPresentLocally.length === 0 &&
     filesOnlyPresentOnRemote.length === 0 &&
     filesWithConflictingChecksums.length === 0
-  ) {
+
+  recordEvent(`theme-service:theme-reconciliation:manual:${isReconciled}`)
+
+  if (isReconciled) {
     outputDebug('Local and remote checksums match - no need to reconcile theme assets')
     return noWorkPromise
   }

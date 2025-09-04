@@ -79,7 +79,7 @@ describe('analytics/storage', () => {
   })
 
   describe('recordError', () => {
-    test('records an Error object', () => {
+    test('records an Error object with category-specific formatting', () => {
       // Given
       const error = new Error('Network request failed')
       const beforeTime = Date.now()
@@ -96,7 +96,7 @@ describe('analytics/storage', () => {
       expect(errorEntry?.timestamp).toBeGreaterThanOrEqual(beforeTime)
 
       expect(data.events.length).toBe(1)
-      expect(data.events[0]?.name).toBe('error:NETWORK:Network request failed')
+      expect(data.events[0]?.name).toBe('error:network:http-000-network-request-failed')
     })
 
     test('records a string error', () => {
@@ -134,7 +134,55 @@ describe('analytics/storage', () => {
       // Then
       const data = compileData()
       const event = data.events[0]
-      expect(event?.name).toBe(`error:UNKNOWN:${'A'.repeat(50)}`)
+      expect(event?.name).toBe(`error:unknown:${'a'.repeat(50)}`)
+    })
+
+    test('preserves HTTP status codes in network errors', () => {
+      // Given
+      const error = new Error('Network request failed with status 401')
+
+      // When
+      recordError(error)
+
+      // Then
+      const data = compileData()
+      expect(data.errors.length).toBe(1)
+      expect(data.errors[0]?.category).toBe(ErrorCategory.Network)
+
+      expect(data.events.length).toBe(1)
+      expect(data.events[0]?.name).toBe('error:network:http-401-network-request-failed-with-status')
+    })
+
+    test('uses generic formatting for file system errors', () => {
+      // Given
+      const error = new Error('ENOENT: no such file or directory')
+
+      // When
+      recordError(error)
+
+      // Then
+      const data = compileData()
+      expect(data.errors.length).toBe(1)
+      expect(data.errors[0]?.category).toBe(ErrorCategory.FileSystem)
+
+      expect(data.events.length).toBe(1)
+      expect(data.events[0]?.name).toBe('error:file_system:enoent-no-such-file-or-directory')
+    })
+
+    test('uses generic formatting for authentication errors', () => {
+      // Given
+      const error = new Error('Unauthorized access: 401')
+
+      // When
+      recordError(error)
+
+      // Then
+      const data = compileData()
+      expect(data.errors.length).toBe(1)
+      expect(data.errors[0]?.category).toBe(ErrorCategory.Authentication)
+
+      expect(data.events.length).toBe(1)
+      expect(data.events[0]?.name).toBe('error:authentication:unauthorized-access-401')
     })
 
     test('records multiple errors', () => {
