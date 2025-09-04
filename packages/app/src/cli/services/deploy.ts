@@ -2,7 +2,7 @@ import {uploadExtensionsBundle, UploadExtensionsBundleOutput} from './deploy/upl
 
 import {ensureDeployContext} from './context.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {allExtensionTypes, importAllExtensions} from './import-extensions.js'
+import {allExtensionTypes, filterOutImportedExtensions, importAllExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
@@ -151,19 +151,21 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
     onlyDashboardManaged: true,
   })
 
-  if (extensions.length === 0) {
+  const extensionsNotImportedYet = filterOutImportedExtensions(options.app, extensions)
+
+  if (extensionsNotImportedYet.length === 0) {
     return app
   }
 
   if (developerPlatformClient.supportsDashboardManagedExtensions) {
     return handleSupportedDashboardExtensions({
       ...options,
-      extensions,
+      extensions: extensionsNotImportedYet,
     })
   } else {
     return handleUnsupportedDashboardExtensions({
       ...options,
-      extensions,
+      extensions: extensionsNotImportedYet,
     })
   }
 }
@@ -207,8 +209,11 @@ export async function deploy(options: DeployOptions) {
       await mkdir(dirname(bundlePath))
     }
 
+    const appManifest = await app.manifest(identifiers)
+
     await bundleAndBuildExtensions({
       app,
+      appManifest,
       bundlePath,
       identifiers,
       skipBuild: options.skipBuild,
@@ -240,6 +245,7 @@ export async function deploy(options: DeployOptions) {
           )
 
           uploadExtensionsBundleResult = await uploadExtensionsBundle({
+            appManifest,
             appId: remoteApp.id,
             apiKey,
             name: app.name,
@@ -318,7 +324,21 @@ async function outputCompletionMessage({
     }
 
     body.push("• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.")
-    customSections = [{title: 'Next steps', body}]
+    customSections = [
+      {title: 'Next steps', body},
+      {
+        title: 'Reference',
+        body: [
+          '• ',
+          {
+            link: {
+              label: 'Migrating from the Partner Dashboard',
+              url: 'https://shopify.dev/docs/apps/build/dev-dashboard/migrate-from-partners',
+            },
+          },
+        ],
+      },
+    ]
   }
 
   if (release) {

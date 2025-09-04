@@ -27,7 +27,7 @@ export async function migrateExtensionsToUIExtension(options: {
   )
 
   return remoteExtensions.map((extension) => {
-    if (extensionsToMigrate.some(({remote}) => remote.id === extension.id)) {
+    if (extensionsToMigrate.some(({remote}) => remote.uuid === extension.uuid)) {
       return {
         ...extension,
         type: 'UI_EXTENSION',

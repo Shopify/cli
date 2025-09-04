@@ -47,7 +47,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 
       return proxyStorefrontRequest(event, ctx)
         .then(async (response) => {
-          logRequestLine(event, response)
+          logRequestLine(event, response, ctx)
 
           if (response.ok) {
             const fileName = pathname.split('/').at(-1) ?? ''
@@ -172,6 +172,11 @@ export async function patchRenderingResponse(
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
 ): Promise<Response> {
+  // 3xx responses should be returned
+  if (rawResponse.status >= 300 && rawResponse.status < 400) {
+    return rawResponse
+  }
+
   const response = patchProxiedResponseHeaders(ctx, rawResponse)
 
   // Only set HTML content-type for actual HTML responses, preserve JSON content-type:

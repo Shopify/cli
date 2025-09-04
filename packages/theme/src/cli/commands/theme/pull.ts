@@ -3,6 +3,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {pull, PullFlags} from '../../services/pull.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 export default class Pull extends ThemeCommand {
   static summary = 'Download your remote theme files locally.'
@@ -62,6 +63,8 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       noColor: flags['no-color'],
     }
 
+    recordTiming('theme-command:pull')
     await pull(pullFlags)
+    recordTiming('theme-command:pull')
   }
 }

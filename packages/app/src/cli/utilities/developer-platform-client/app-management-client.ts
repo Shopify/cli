@@ -108,6 +108,7 @@ import {ReleaseVersion} from '../../api/graphql/app-management/generated/release
 import {
   CreateAppVersion,
   CreateAppVersionMutation,
+  CreateAppVersionMutationVariables,
 } from '../../api/graphql/app-management/generated/create-app-version.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
@@ -360,7 +361,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async organizations(): Promise<Organization[]> {
     const organizationsResult = await this.businessPlatformRequest({query: ListOrganizations})
     if (!organizationsResult.currentUserAccount) return []
-    return organizationsResult.currentUserAccount.organizations.nodes.map((org) => ({
+    return organizationsResult.currentUserAccount.organizationsWithAccessToDestination.nodes.map((org) => ({
       id: idFromEncodedGid(org.id),
       businessName: `${org.name} (Dev Dashboard)`,
       source: this.organizationSource,
@@ -715,9 +716,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async deploy({
+    appManifest,
     appId,
-    name,
-    appModules,
     organizationId,
     versionTag,
     message,
@@ -725,36 +725,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
     bundleUrl,
     skipPublish: noRelease,
   }: AppDeployOptions): Promise<AppDeploySchema> {
-    // `name` is from the package.json package name or the directory name, while
-    // the branding module reflects the current specified name in the TOML.
-    // Since it is technically valid to not have a branding module, we will default
-    // to the `name` if no branding module is present.
-    let updatedName = name
-    const brandingModule = appModules?.find((mod) => mod.specificationIdentifier === BrandingSpecIdentifier)
-    if (brandingModule) {
-      updatedName = JSON.parse(brandingModule.config).name
-    }
     const metadata = {versionTag, message, sourceControlUrl: commitReference}
-    const queryVersion: AppVersionSourceUrl | AppVersionSource = bundleUrl
+    const queryVersion: CreateAppVersionMutationVariables['version'] = bundleUrl
       ? {sourceUrl: bundleUrl}
-      : {
-          source: {
-            name: updatedName,
-            modules: (appModules ?? []).map((mod) => ({
-              uid: mod.uid ?? mod.uuid ?? mod.handle,
-              uuid: mod.uuid,
-              type: mod.specificationIdentifier,
-              handle: mod.handle,
-              config: JSON.parse(mod.config),
-              ...(mod.context ? {target: mod.context} : {}),
-            })),
-          },
-        }
-    const variables = {
-      appId,
-      version: queryVersion as unknown as JsonMapType,
-      metadata,
-    }
+      : {source: appManifest}
+
+    const variables: CreateAppVersionMutationVariables = {appId, version: queryVersion, metadata}
 
     const result = await this.appManagementRequest({
       query: CreateAppVersion,
@@ -1164,10 +1140,6 @@ interface AppVersionSource {
   }
 }
 
-interface AppVersionSourceUrl {
-  sourceUrl: string
-}
-
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
@@ -1258,7 +1230,8 @@ async function appDeepLink({
   id,
   organizationId,
 }: Pick<MinimalAppIdentifiers, 'id' | 'organizationId'>): Promise<string> {
-  return `https://${await developerDashboardFqdn()}/dashboard/${organizationId}/apps/${numberFromGid(id)}`
+  const orgId = numberFromGid(organizationId).toString()
+  return `https://${await developerDashboardFqdn()}/dashboard/${orgId}/apps/${numberFromGid(id)}`
 }
 
 export async function versionDeepLink(organizationId: string, appId: string, versionId: string): Promise<string> {

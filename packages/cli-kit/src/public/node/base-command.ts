@@ -281,7 +281,7 @@ function reportEnvironmentApplication<
  * If we parse using this configuration, the only specified flags will be those
  * the user actually passed on the command line.
  */
-function noDefaultsOptions<TFlags extends FlagOutput, TGlobalFlags extends FlagOutput, TArgs extends ArgOutput>(
+export function noDefaultsOptions<TFlags extends FlagOutput, TGlobalFlags extends FlagOutput, TArgs extends ArgOutput>(
   options: Input<TFlags, TGlobalFlags, TArgs> | undefined,
 ): Input<TFlags, TGlobalFlags, TArgs> | undefined {
   if (!options?.flags) return options

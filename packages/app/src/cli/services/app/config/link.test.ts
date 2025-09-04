@@ -1697,6 +1697,85 @@ embedded = false
     })
   })
 
+  test('existing config is respected when isNewApp is true, config is current and client_id is not the same as remote app and config name is provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient,
+        isNewApp: true,
+        configName: 'staging',
+      }
+      const localApp = {
+        configuration: {
+          path: joinPath(tmp, 'shopify.app.staging.toml'),
+          name: 'my app',
+          client_id: 'invalid_client_id_from_template',
+          webhooks: {
+            api_version: '2023-04',
+            subscriptions: [{topics: ['products/create'], uri: 'https://my-app.com/webhooks'}],
+          },
+          application_url: 'https://myapp.com',
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: 'my-store.myshopify.com',
+            include_config_on_deploy: true,
+          },
+          access_scopes: {
+            scopes: 'write_products',
+          },
+        } as CurrentAppConfiguration,
+      }
+
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        handle: 'handle',
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+handle = "handle"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://my-app.com/webhooks"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
   test('enables include_config_on_deploy when the apiKey is provided and isNewApp is true', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given

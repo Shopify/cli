@@ -1,8 +1,19 @@
 import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {mkdir, writeFile, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {rmdir, fileExists, inTemporaryDirectory, copyDirectoryContents} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
+
+export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
+const AI_INSTRUCTIONS_REPO_URL = 'https://github.com/Shopify/theme-liquid-docs.git'
+
+const SUPPORTED_AI_INSTRUCTIONS = {
+  github: 'VS Code (GitHub Copilot)',
+  cursor: 'Cursor',
+  claude: 'Claude',
+}
+
+type AIInstruction = keyof typeof SUPPORTED_AI_INSTRUCTIONS
 
 export async function cloneRepo(repoUrl: string, destination: string) {
   await downloadRepository(repoUrl, destination)
@@ -24,8 +35,15 @@ async function downloadRepository(repoUrl: string, destination: string, latestTa
           shallow: true,
         })
         await removeGitRemote(destination)
-        await removeDirectory(joinPath(destination, '.github'))
-        await removeDirectory(joinPath(destination, '.git'))
+
+        if (repoUrl === SKELETON_THEME_URL) {
+          await Promise.all(
+            Object.keys(SUPPORTED_AI_INSTRUCTIONS).map(async (key) =>
+              removeDirectory(joinPath(destination, `.${key}`)),
+            ),
+          )
+          await removeDirectory(joinPath(destination, '.git'))
+        }
       },
     },
   ])
@@ -37,41 +55,47 @@ async function removeDirectory(path: string) {
   }
 }
 
-export async function promptAndCreateAIFile(destination: string) {
-  const aiChoice = await renderSelectPrompt({
-    message: 'Set up AI dev support?',
+export async function promptAIInstruction() {
+  const aiChoice = (await renderSelectPrompt({
+    message: 'Include LLM instructions in the theme?',
     choices: [
-      {label: 'VSCode (GitHub Copilot)', value: 'vscode'},
-      {label: 'Cursor', value: 'cursor'},
-      {label: 'Skip', value: 'none'},
+      ...Object.entries(SUPPORTED_AI_INSTRUCTIONS).map(([key, value]) => ({
+        label: value,
+        value: key,
+      })),
+      {label: 'Skip', value: null},
     ],
-  })
+  })) as AIInstruction | null
 
-  const aiFileUrl = 'https://raw.githubusercontent.com/Shopify/theme-liquid-docs/main/ai/liquid.mdc'
-
-  switch (aiChoice) {
-    case 'vscode': {
-      const githubDir = joinPath(destination, '.github')
-      await mkdir(githubDir)
-      const aiFilePath = joinPath(githubDir, 'copilot-instructions.md')
-      await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
-      break
-    }
-    case 'cursor': {
-      const cursorDir = joinPath(destination, '.cursor', 'rules')
-      await mkdir(cursorDir)
-      const aiFilePath = joinPath(cursorDir, 'liquid.mdc')
-      await downloadAndSaveAIFile(aiFileUrl, aiFilePath)
-      break
-    }
-    case 'none':
-      // No action required
-      break
-  }
+  return aiChoice
 }
 
-async function downloadAndSaveAIFile(url: string, filePath: string) {
-  const response = await fetch(url)
-  const content = await response.text()
-  await writeFile(filePath, content)
+export async function createAIInstructions(themeRoot: string, aiInstruction: AIInstruction) {
+  await renderTasks([
+    {
+      title: `Adding AI instructions into ${themeRoot}`,
+      task: async () => {
+        await inTemporaryDirectory(async (tempDir) => {
+          await downloadGitRepository({
+            repoUrl: AI_INSTRUCTIONS_REPO_URL,
+            destination: tempDir,
+            shallow: true,
+          })
+          const aiSrcDir = joinPath(tempDir, 'ai', aiInstruction)
+
+          let aiDestDir = themeRoot
+
+          if (aiInstruction !== 'claude') {
+            aiDestDir = joinPath(themeRoot, `.${aiInstruction}`)
+          }
+
+          try {
+            await copyDirectoryContents(aiSrcDir, aiDestDir)
+          } catch (error) {
+            throw new AbortError('Failed to create AI instructions')
+          }
+        })
+      },
+    },
+  ])
 }

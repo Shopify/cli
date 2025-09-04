@@ -130,11 +130,6 @@ export async function convertToTransferDisabledStoreIfNeeded(
   developerPlatformClient: DeveloperPlatformClient,
   conversionMode: 'prompt-first' | 'never',
 ): Promise<boolean> {
-  /**
-   * It's not possible to convert stores to dev ones in spin environments. Should be created directly as development.
-   * Against production (!isSpinEnvironment()), this allows you to reference other shops in a TOML file even if some of
-   * the dev experience isn't completely supported.
-   */
   if (store.transferDisabled || firstPartyDev()) return true
 
   if (!store.transferDisabled && !store.convertableToPartnerTest) {

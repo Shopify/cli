@@ -5291,10 +5291,18 @@
       "hiddenAliases": [
       ],
       "id": "theme:delete",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        [
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
+      "strict": true,
       "summary": "Delete remote themes from the connected store. This command can't be undone."
     },
     "theme:dev": {
@@ -5704,12 +5712,12 @@
         }
       },
       "customPluginName": "@shopify/theme",
-      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
-      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
       "flags": {
         "clone-url": {
           "char": "u",
-          "default": "https://github.com/Shopify/skeleton-theme",
+          "default": "https://github.com/Shopify/skeleton-theme.git",
           "description": "The Git URL to clone from. Defaults to Shopify's Skeleton theme.",
           "env": "SHOPIFY_FLAG_CLONE_URL",
           "hasDynamicHelp": false,
@@ -7212,5 +7220,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.83.0"
+  "version": "3.84.0"
 }

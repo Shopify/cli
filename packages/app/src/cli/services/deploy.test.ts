@@ -2,7 +2,7 @@ import {ensureDeployContext} from './context.js'
 import {deploy, importExtensionsIfNeeded} from './deploy.js'
 import {uploadExtensionsBundle} from './deploy/upload.js'
 import {bundleAndBuildExtensions} from './deploy/bundle.js'
-import {importAllExtensions, allExtensionTypes} from './import-extensions.js'
+import {importAllExtensions, allExtensionTypes, filterOutImportedExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
 import {reloadApp} from '../models/app/loader.js'
 import {
@@ -75,6 +75,9 @@ beforeEach(() => {
 
   // Mock getExtensions to return empty arrays by default
   vi.mocked(getExtensions).mockResolvedValue([])
+
+  // Mock filterOutImportedExtensions to return the extensions by default
+  vi.mocked(filterOutImportedExtensions).mockImplementation((_app, extensions) => extensions)
 })
 
 describe('deploy', () => {
@@ -95,6 +98,11 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -153,6 +161,7 @@ describe('deploy', () => {
   test('deploys the app with no extensions', async () => {
     const app = testAppLinked({allExtensions: []})
     vi.mocked(renderTextPrompt).mockResolvedValueOnce('')
+    const appManifest = await app.manifest(undefined)
 
     // When
     await testDeployBundle({
@@ -163,6 +172,7 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest,
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -186,6 +196,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'web_pixel_extension_external',
+            handle: 'test-ui-extension',
+            uid: 'test-ui-extension-uid',
+            uuid: 'test-ui-extension',
+            assets: 'test-ui-extension-uid',
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -219,6 +244,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'theme_external',
+            handle: 'theme-extension-name',
+            uid: undefined,
+            uuid: 'theme-extension-name',
+            assets: undefined,
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -270,6 +310,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'function_external',
+            handle: 'test-function-extension',
+            uid: undefined,
+            uuid: 'test-function-extension',
+            assets: undefined,
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -305,6 +360,30 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'web_pixel_extension_external',
+            handle: 'test-ui-extension',
+            uid: 'test-ui-extension-uid',
+            uuid: 'test-ui-extension',
+            assets: 'test-ui-extension-uid',
+            target: '',
+            config: expect.any(Object),
+          },
+          {
+            type: 'theme_external',
+            handle: 'theme-extension-name',
+            uid: undefined,
+            uuid: 'theme-extension-name',
+            assets: undefined,
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -352,6 +431,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'point_of_sale_external',
+            handle: 'point_of_sale',
+            uid: 'point_of_sale',
+            uuid: undefined,
+            assets: 'point_of_sale',
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -390,6 +484,21 @@ describe('deploy', () => {
 
     // Then
     expect(uploadExtensionsBundle).toHaveBeenCalledWith({
+      appManifest: {
+        name: 'App',
+        handle: '',
+        modules: [
+          {
+            type: 'point_of_sale_external',
+            handle: 'point_of_sale',
+            uid: 'point_of_sale',
+            uuid: undefined,
+            assets: 'point_of_sale',
+            target: '',
+            config: expect.any(Object),
+          },
+        ],
+      },
       appId: 'app-id',
       apiKey: 'api-key',
       name: app.name,
@@ -545,6 +654,18 @@ describe('deploy', () => {
             'for: ',
             {list: {items: ['shopify.app.prod.toml', 'shopify.app.stg.toml']}},
             "• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.",
+          ],
+        },
+        {
+          title: 'Reference',
+          body: [
+            '• ',
+            {
+              link: {
+                label: 'Migrating from the Partner Dashboard',
+                url: 'https://shopify.dev/docs/apps/build/dev-dashboard/migrate-from-partners',
+              },
+            },
           ],
         },
       ],
@@ -734,6 +855,7 @@ describe('ImportExtensionsIfNeeded', () => {
 
     vi.mocked(isTTY).mockReturnValue(true)
     vi.mocked(getExtensions).mockResolvedValue([])
+    vi.mocked(filterOutImportedExtensions).mockReturnValue([])
 
     // When
     const result = await importExtensionsIfNeeded({

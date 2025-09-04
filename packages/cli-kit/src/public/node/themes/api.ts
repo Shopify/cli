@@ -28,6 +28,7 @@ import {adminRequestDoc} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
+import {recordTiming} from '../analytics.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
@@ -244,8 +245,12 @@ export async function bulkUploadThemeAssets(
   for (let i = 0; i < assets.length; i += 50) {
     const chunk = assets.slice(i, i + 50)
     const files = prepareFilesForUpload(chunk)
+
+    recordTiming('theme-api:upload-files')
     // eslint-disable-next-line no-await-in-loop
     const uploadResults = await uploadFiles(id, files, session)
+    recordTiming('theme-api:upload-files')
+
     results.push(...processUploadResults(uploadResults))
   }
   return results

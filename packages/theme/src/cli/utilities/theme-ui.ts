@@ -1,4 +1,6 @@
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {Task, renderConfirmationPrompt, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function themeComponent(theme: Theme) {
@@ -30,9 +32,33 @@ export async function ensureDirectoryConfirmed(
     return true
   }
 
-  return renderConfirmationPrompt({
+  const confirm = await renderConfirmationPrompt({
     message: 'Do you want to proceed?',
   })
+
+  recordEvent(`theme-service:confirm-directory:${confirm}`)
+
+  return confirm
+}
+
+export async function ensureLiveThemeConfirmed(theme: Theme, action: string) {
+  if (theme.role !== LIVE_THEME_ROLE || !process.stdout.isTTY) {
+    return true
+  }
+
+  const message =
+    `You're about to ${action} on your live theme "${theme.name}". ` +
+    `This will make changes visible to customers. Are you sure you want to proceed?`
+
+  const confirm = await renderConfirmationPrompt({
+    message,
+    confirmationMessage: 'Yes, proceed with live theme',
+    cancellationMessage: 'No, cancel',
+  })
+
+  recordEvent(`theme-service:confirm-live-theme:${confirm}`)
+
+  return confirm
 }
 
 // This prevents the progress bar from polluting stdout (important for pipe operations)

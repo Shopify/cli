@@ -6,6 +6,7 @@ import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 
 interface ThemeInfo {
   theme: {
@@ -60,8 +61,11 @@ export async function fetchDevInfo(config: {cliVersion: string}): Promise<AlertC
 }
 
 function devConfigSection(): AlertCustomSection {
-  const store = getThemeStore() || 'Not configured'
+  const store = getThemeStore() ?? 'Not configured'
   const developmentTheme = getDevelopmentTheme()
+
+  recordEvent(`theme-command:info:dev-theme-loaded:${developmentTheme}`)
+
   return tabularSection('Theme Configuration', [
     ['Store', store],
     ['Development Theme ID', developmentTheme ? `#${developmentTheme}` : {subdued: 'Not set'}],

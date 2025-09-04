@@ -49,7 +49,7 @@ const AppProxyTransformConfig: CustomTransformationConfig = {
     const proxyConfig = content as {url: string; subpath: string; prefix: string}
     return {
       app_proxy: {
-        url: proxyConfig.url,
+        url: removeTrailingSlash(proxyConfig.url),
         subpath: proxyConfig.subpath,
         prefix: proxyConfig.prefix,
       },

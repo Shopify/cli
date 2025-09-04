@@ -1,4 +1,4 @@
-import {relativePath, joinPath} from './path.js'
+import {relativePath, joinPath, dirname} from './path.js'
 import {glob, removeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
@@ -52,14 +52,36 @@ export async function zip(options: ZipOptions): Promise<void> {
     })
     archive.pipe(output)
 
+    const directoriesToAdd = new Set<string>()
     for (const filePath of pathsToZip) {
       const fileRelativePath = relativePath(inputDirectory, filePath)
-      archive.file(filePath, {name: fileRelativePath})
+      collectParentDirectories(fileRelativePath, directoriesToAdd)
+    }
+
+    const sortedDirs = Array.from(directoriesToAdd).sort((left, right) => left.localeCompare(right))
+    for (const dir of sortedDirs) {
+      const dirName = dir.endsWith('/') ? dir : `${dir}/`
+      archive.append(Buffer.alloc(0), {name: dirName})
+    }
+
+    for (const filePath of pathsToZip) {
+      const fileRelativePath = relativePath(inputDirectory, filePath)
+      if (filePath && fileRelativePath) archive.file(filePath, {name: fileRelativePath})
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     archive.finalize()
   })
+}
+
+function collectParentDirectories(fileRelativePath: string, accumulator: Set<string>): void {
+  let currentDir = dirname(fileRelativePath)
+  while (currentDir && currentDir !== '.' && currentDir !== '/') {
+    accumulator.add(currentDir)
+    const parent = dirname(currentDir)
+    if (parent === currentDir) break
+    currentDir = parent
+  }
 }
 
 export interface BrotliOptions {
@@ -133,7 +155,7 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           archive.finalize()
         })
-        .catch((error) => reject(error))
+        .catch((error) => reject(error instanceof Error ? error : new Error(String(error))))
     })
 
     const tarContent = readFileSync(tempTarPath)

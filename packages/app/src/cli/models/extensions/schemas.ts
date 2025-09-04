@@ -1,6 +1,7 @@
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export const MAX_EXTENSION_HANDLE_LENGTH = 50
+export const MAX_UID_LENGTH = 250
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ZodSchemaType<T> = zod.ZodType<T, any, any>

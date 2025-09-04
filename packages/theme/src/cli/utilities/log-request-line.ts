@@ -4,6 +4,7 @@ import {timestampDateFormat} from '../constants.js'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
+import type {DevServerContext} from './theme-environment/types.js'
 
 const CHARACTER_TRUNCATION_LIMIT = 80
 
@@ -12,8 +13,9 @@ interface MinimalResponse {
   headers: {get: (key: string) => string | null}
 }
 
-export function logRequestLine(event: H3Event, response: MinimalResponse) {
+export function logRequestLine(event: H3Event, response: MinimalResponse, ctx: DevServerContext) {
   if (!shouldLog(event)) return
+  if (ctx.type === 'theme-extension') return
 
   const truncatedPath =
     event.path.length > CHARACTER_TRUNCATION_LIMIT

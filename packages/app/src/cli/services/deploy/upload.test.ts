@@ -1,5 +1,5 @@
 import {deploymentErrorsToCustomSections, uploadExtensionsBundle} from './upload.js'
-import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -8,6 +8,9 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/crypto')
+
+const app = testApp()
+const appManifest = await app.manifest(undefined)
 
 describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners', async () => {
@@ -20,6 +23,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -35,6 +39,7 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -64,6 +69,7 @@ describe('uploadExtensionsBundle', () => {
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
       await uploadExtensionsBundle({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -81,6 +87,7 @@ describe('uploadExtensionsBundle', () => {
 
       // Then
       expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
@@ -108,6 +115,7 @@ describe('uploadExtensionsBundle', () => {
     vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
     await uploadExtensionsBundle({
+      appManifest,
       appId: '1',
       apiKey: 'app-id',
       name: 'appName',
@@ -121,6 +129,7 @@ describe('uploadExtensionsBundle', () => {
 
     // Then
     expect(developerPlatformClient.deploy).toHaveBeenCalledWith({
+      appManifest,
       appId: '1',
       apiKey: 'app-id',
       name: 'appName',
@@ -221,6 +230,7 @@ describe('uploadExtensionsBundle', () => {
       // Then
       try {
         await uploadExtensionsBundle({
+          appManifest,
           appId: '1',
           apiKey: 'app-id',
           name: 'appName',
@@ -323,6 +333,7 @@ describe('uploadExtensionsBundle', () => {
 
       // When
       const result = await uploadExtensionsBundle({
+        appManifest,
         appId: '1',
         apiKey: 'app-id',
         name: 'appName',
