@@ -190,6 +190,28 @@ describe('CreditCardPaymentsAppExtensionSchema', () => {
       ]),
     )
   })
+
+  test('validates successfully when ui_extension_handle is present', async () => {
+    // When
+    const {success} = CreditCardPaymentsAppExtensionSchema.safeParse({
+      ...config,
+      ui_extension_handle: 'valid-handle',
+    })
+
+    // Then
+    expect(success).toBe(true)
+  })
+
+  test('validates successfully when ui_extension_handle is not present', async () => {
+    // When
+    const {success} = CreditCardPaymentsAppExtensionSchema.safeParse({
+      ...config,
+      ui_extension_handle: undefined,
+    })
+
+    // Then
+    expect(success).toBe(true)
+  })
 })
 
 describe('creditCardPaymentsAppExtensionDeployConfig', () => {
