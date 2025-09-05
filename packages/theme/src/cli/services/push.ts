@@ -7,7 +7,8 @@ import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {ensureThemeStore} from '../utilities/theme-store.js'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -113,8 +114,12 @@ export interface PushFlags {
  *
  * @param flags - The flags for the push operation.
  */
-export async function push(flags: PushFlags, adminSession: AdminSession, multiEnvironment?: boolean) {
+export async function push(flags: PushFlags, adminSession?: AdminSession, multiEnvironment?: boolean) {
   const environment = flags.environment
+
+  // when push is used programmatically, we don't have an admin session, so need to create one
+  const session =
+    adminSession ?? (await ensureAuthenticatedThemes(ensureThemeStore({store: flags.store}), flags.password))
 
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'
@@ -147,14 +152,14 @@ export async function push(flags: PushFlags, adminSession: AdminSession, multiEn
     return
   }
 
-  const selectedTheme: Theme | undefined = await createOrSelectTheme(adminSession, flags, multiEnvironment)
+  const selectedTheme: Theme | undefined = await createOrSelectTheme(session, flags, multiEnvironment)
   if (!selectedTheme) {
     return
   }
 
   recordTiming('theme-service:push:setup')
 
-  await executePush(selectedTheme, adminSession, {
+  await executePush(selectedTheme, session, {
     path: workingDirectory,
     nodelete: flags.nodelete ?? false,
     publish: flags.publish ?? false,
