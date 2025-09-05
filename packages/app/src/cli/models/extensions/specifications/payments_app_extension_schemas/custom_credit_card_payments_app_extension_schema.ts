@@ -7,6 +7,7 @@ import {
 } from './base_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
 import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
+import {HandleSchema} from '../../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export type CustomCreditCardPaymentsAppExtensionConfigType = zod.infer<
@@ -29,7 +30,7 @@ export const CustomCreditCardPaymentsAppExtensionSchema = BasePaymentsAppExtensi
     api_version: zod.string(),
     multiple_capture: zod.boolean(),
     checkout_hosted_fields: zod.array(zod.string()).optional(),
-    ui_extension_handle: zod.string().optional(),
+    ui_extension_handle: HandleSchema,
     encryption_certificate_fingerprint: zod.string(),
     checkout_payment_method_fields: zod
       .array(

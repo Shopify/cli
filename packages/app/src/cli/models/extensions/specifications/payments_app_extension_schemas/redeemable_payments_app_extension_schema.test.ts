@@ -79,6 +79,37 @@ describe('RedeemablePaymentsAppExtensionSchema', () => {
       ]),
     )
   })
+
+  test('validates successfully when ui_extension_handle is present', async () => {
+    // When
+    const {success} = RedeemablePaymentsAppExtensionSchema.safeParse({
+      ...config,
+      ui_extension_handle: 'valid-handle',
+    })
+
+    // Then
+    expect(success).toBe(true)
+  })
+
+  test('returns an error when ui_extension_handle is not present', async () => {
+    // When/Then
+    expect(() =>
+      RedeemablePaymentsAppExtensionSchema.parse({
+        ...config,
+        ui_extension_handle: undefined,
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'string',
+          received: 'undefined',
+          path: ['ui_extension_handle'],
+          message: 'Required',
+        },
+      ]),
+    )
+  })
 })
 
 describe('redeemablePaymentsAppExtensionDeployConfig', () => {

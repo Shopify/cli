@@ -81,7 +81,7 @@ const SettingsSchema = zod.object({
   fields: zod.array(FieldSchema).optional(),
 })
 
-const HandleSchema = zod
+export const HandleSchema = zod
   .string()
   .trim()
   .nonempty("Handle can't be empty")
