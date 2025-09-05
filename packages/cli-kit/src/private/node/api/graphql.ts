@@ -87,7 +87,6 @@ Request ID: ${requestId}
       } else {
         mappedError = new AbortError(errorMessage)
       }
-      mappedError.stack = error.stack
       return mappedError
     } else {
       return error
