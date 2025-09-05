@@ -1,8 +1,9 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
+import {renderTasksToStdErr} from './theme-ui.js'
+import {timestampDateFormat} from '../constants.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
@@ -14,6 +15,8 @@ interface UploadOptions {
   nodelete?: boolean
   deferPartialWork?: boolean
   backgroundWorkCatch?: (error: Error) => never
+  environment?: string
+  multiEnvironment?: boolean
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -43,7 +46,7 @@ export function uploadTheme(
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults = new Map<string, Result>()
   const getProgress = (params: {current: number; total: number}) =>
-    `[${Math.round((params.current / params.total) * 100)}%]`
+    params.total === 0 ? '[100%]' : `[${Math.round((params.current / params.total) * 100)}%]`
 
   const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
 
@@ -53,7 +56,6 @@ export function uploadTheme(
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
-    .then(() => reportFailedUploads(uploadResults))
     .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
 
   const workPromise = options?.deferPartialWork
@@ -61,7 +63,7 @@ export function uploadTheme(
     : deleteJobPromise.then((result) => result.promise)
 
   if (options?.backgroundWorkCatch) {
-    // Aggregate all backgorund work in a single promise and handle errors
+    // Aggregate all background work in a single promise and handle errors
     Promise.all([
       themeCreationPromise,
       uploadJobPromise.then((result) => result.promise),
@@ -75,25 +77,83 @@ export function uploadTheme(
     renderThemeSyncProgress: async () => {
       if (options?.deferPartialWork) return
 
-      const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
-      await renderTasksToStdErr(
-        createIntervalTask({
-          promise: uploadPromise,
-          titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
-          timeout: 1000,
-        }),
-      )
+      if (options?.multiEnvironment) {
+        await renderMultiEnvironmentProgress(uploadJobPromise, deleteJobPromise, options, getProgress)
+      } else {
+        const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
 
-      const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
-      await renderTasksToStdErr(
-        createIntervalTask({
-          promise: deletePromise,
-          titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-          timeout: 1000,
-        }),
-      )
+        await renderTasksToStdErr(
+          createIntervalTask({
+            promise: uploadPromise,
+            titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
+            timeout: 1000,
+          }),
+        )
+
+        const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+        await renderTasksToStdErr(
+          createIntervalTask({
+            promise: deletePromise,
+            titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
+            timeout: 1000,
+          }),
+        )
+      }
+
+      // Report any failed uploads after all progress rendering is complete
+      reportFailedUploads(uploadResults, options?.environment)
     },
   }
+}
+
+/**
+ * Display multi environment upload progress with concurrency-friendly
+ * stderr.write output rather than the animated progress bar
+ */
+async function renderMultiEnvironmentProgress(
+  uploadJobPromise: Promise<SyncJob>,
+  deleteJobPromise: Promise<SyncJob>,
+  options: UploadOptions,
+  getProgress: (params: {current: number; total: number}) => string,
+) {
+  const write = (message: string) =>
+    process.stderr.write(`${timestampDateFormat.format(new Date())} │ ${options.environment} │ ${message}\n`)
+
+  const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
+  const uploadWatcher = (async () => {
+    write(`Uploading files to remote theme ${getProgress(uploadProgress)}`)
+    await uploadPromise
+    write(
+      `Upload completed ${getProgress({
+        current: uploadProgress.total,
+        total: uploadProgress.total,
+      })}`,
+    )
+  })()
+  await uploadWatcher
+
+  const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
+  const deleteWatcher = (async () => {
+    if (options.nodelete) {
+      return write(`Skipping file deletion (--nodelete flag)`)
+    }
+
+    if (deleteProgress.total === 0) {
+      return write(`No files need clean up`)
+    }
+
+    write(`Cleaning your remote theme ${getProgress(deleteProgress)}`)
+    await deletePromise
+    write(
+      `Cleanup completed ${getProgress({
+        current: deleteProgress.total,
+        total: deleteProgress.total,
+      })}`,
+    )
+  })()
+  await deleteWatcher
+
+  write(`All operations completed\n`)
 }
 
 function createIntervalTask({
@@ -461,11 +521,12 @@ async function handleFailedUploads(
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
 }
 
-function reportFailedUploads(uploadResults: Map<string, Result>) {
+function reportFailedUploads(uploadResults: Map<string, Result>, environment?: string) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
       const errorMessage = result.errors?.asset?.join('\n') ?? 'File upload failed'
-      renderThrownError(key, new Error(errorMessage))
+      const headline = environment ? `[${environment}] ${key}` : key
+      renderThrownError(headline, new Error(errorMessage))
     }
   }
 }

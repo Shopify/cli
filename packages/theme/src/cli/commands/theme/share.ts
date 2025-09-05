@@ -5,7 +5,10 @@ import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {getRandomName} from '@shopify/cli-kit/common/string'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
+import {InferredFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
+type ShareFlags = InferredFlags<typeof Share.flags>
 export default class Share extends ThemeCommand {
   static summary = 'Creates a shareable, unpublished, and new theme on your theme library with a randomized name.'
 
@@ -26,22 +29,22 @@ export default class Share extends ThemeCommand {
     }),
   }
 
-  static cli2Flags = ['force']
+  static multiEnvironmentsFlags = ['store', 'password', 'path', 'theme']
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Share)
-
+  async command(flags: ShareFlags, adminSession: AdminSession, multiEnvironment: boolean) {
     const pushFlags: PushFlags = {
       force: flags.force,
       path: flags.path,
       password: flags.password,
       store: flags.store,
       unpublished: true,
+      noColor: flags['no-color'],
       theme: getRandomName('creative'),
+      environment: flags.environment,
     }
 
     recordTiming('theme-command:share')
-    await push(pushFlags)
+    await push(pushFlags, adminSession, multiEnvironment)
     recordTiming('theme-command:share')
   }
 }
