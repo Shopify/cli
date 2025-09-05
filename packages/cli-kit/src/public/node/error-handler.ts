@@ -63,7 +63,7 @@ export async function sendErrorToBugsnag(
   exitMode: Omit<CommandExitMode, 'ok'>,
 ): Promise<{reported: false; error: unknown; unhandled: unknown} | {error: Error; reported: true; unhandled: boolean}> {
   try {
-    if (settings.debug) {
+    if (process.env.SHOPIFY_SERVICE_ENV === 'local' || settings.debug) {
       outputDebug(`Skipping Bugsnag report`)
       return {reported: false, error, unhandled: undefined}
     }
