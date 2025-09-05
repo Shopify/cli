@@ -1,4 +1,5 @@
 import {AppInterface} from '../../models/app/app.js'
+import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {ExtensionFlavor} from '../../models/app/template.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -6,6 +7,8 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {hyphenate} from '@shopify/cli-kit/common/string'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
+import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 
 export async function ensureDownloadedExtensionFlavorExists(
   extensionFlavor: ExtensionFlavor | undefined,
@@ -56,4 +59,27 @@ export async function canEnablePreviewMode({
   if (localApp.allExtensions.length > 0) return true
 
   return false
+}
+
+export async function chooseExtension(extensions: ExtensionInstance[], path: string): Promise<ExtensionInstance> {
+  // Filter out app config extensions (like app_access, pos, etc.)
+  const userExtensions = extensions.filter((ext) => !ext.isAppConfigExtension)
+
+  if (userExtensions.length === 0) {
+    throw new AbortError('No user extensions found in this app.')
+  }
+
+  const ourExtension = userExtensions.find((ext) => ext.directory === path)
+  if (ourExtension) return ourExtension
+  if (userExtensions.length === 1 && userExtensions[0]) return userExtensions[0]
+  if (isTerminalInteractive()) {
+    const selectedExtension = await renderAutocompletePrompt({
+      message: 'Which extension?',
+      choices: userExtensions.map((extension) => ({label: extension.localIdentifier, value: extension})),
+    })
+    return selectedExtension
+  }
+  throw new AbortError(
+    'Run this command from an extension directory or use `--path` to specify an extension directory.',
+  )
 }
