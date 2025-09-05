@@ -1,15 +1,16 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {validateThemePassword} from '../../services/flags-validation.js'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Task} from '@shopify/cli-kit/node/ui'
+import {InferredFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
+type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {
   static summary = 'Profile the Liquid rendering of a theme page.'
 
@@ -41,15 +42,13 @@ export default class Profile extends ThemeCommand {
     ...jsonFlag,
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Profile)
+  static multiEnvironmentsFlags: RequiredFlags = null
 
-    validateThemePassword(flags.password)
-
-    const store = ensureThemeStore(flags)
+  async command(flags: ProfileFlags, adminSession: AdminSession) {
     const {password: themeAccessPassword} = flags
 
-    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword)
+    validateThemePassword(themeAccessPassword)
+
     let filter
     if (flags.theme) {
       filter = {filter: {theme: flags.theme}}
@@ -60,7 +59,7 @@ export default class Profile extends ThemeCommand {
 
     const tasks: Task[] = [
       {
-        title: `Generating Liquid profile for ${store + flags.url}`,
+        title: `Generating Liquid profile for ${adminSession.storeFqdn} ${flags.url}`,
         task: async () => {
           await profile(
             adminSession,
