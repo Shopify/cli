@@ -82,10 +82,11 @@ Request ID: ${requestId}
 `
       }
       let mappedError: Error
-      if (status < 500) {
-        mappedError = new GraphQLClientError(errorMessage, status, error.response.errors)
-      } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (error.response.errors?.every((graphqlError: any) => graphqlError.type === 'GraphApi::UserError')) {
         mappedError = new AbortError(errorMessage)
+      } else {
+        mappedError = new GraphQLClientError(errorMessage, status, error.response.errors)
       }
       return mappedError
     } else {
