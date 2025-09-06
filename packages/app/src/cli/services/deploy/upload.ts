@@ -189,12 +189,21 @@ function generalErrorsSection(
   flags: {version?: string} = {},
 ): ErrorCustomSection[] {
   if (errors.length > 0) {
+    const versionTagError = errors.find((error) => error.field && error.field.includes('version_tag'))
+    if (versionTagError) {
+      // eslint-disable-next-line no-console
+      console.error(versionTagError.message)
+    }
     if (
       errors.filter(
         (error) => error.field && error.field.includes('version_tag') && error.message === 'has already been taken',
       ).length > 0 &&
       flags.version
     ) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `An app version with the name ${flags.version} already exists. Deploy again with a different version name.`,
+      )
       return [
         {
           body: [
