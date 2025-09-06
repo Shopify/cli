@@ -12,8 +12,10 @@ import {renderImportResult} from '../../../prompts/import_result.js'
 import {Shop} from '../../../apis/destinations/index.js'
 import {BulkDataStoreImportStartResponse, BulkDataOperationByIdResponse} from '../../../apis/organizations/types.js'
 import {ValidationError, OperationError, ErrorCodes} from '../errors/errors.js'
+import {renderAsyncOperationStarted} from '../../../prompts/async_operation_started.js'
+import {renderAsyncOperationJson} from '../../../prompts/async_operation_json.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
-import {renderTasks, renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 
@@ -25,6 +27,8 @@ vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('../../../prompts/copy_info.js')
 vi.mock('../../../prompts/import_result.js')
+vi.mock('../../../prompts/async_operation_json.js')
+vi.mock('../../../prompts/async_operation_started.js')
 
 describe('StoreImportOperation', () => {
   const mockBpSession = 'mock-bp-session-token'
@@ -59,16 +63,10 @@ describe('StoreImportOperation', () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
     vi.mocked(parseResourceConfigFlags).mockReturnValue({})
     vi.mocked(fileExists).mockResolvedValue(true)
-
-    vi.mocked(renderTasks).mockResolvedValue({
-      operation: mockCompletedOperation,
-      isComplete: true,
-      importUrl: mockUploadUrl,
-    })
   })
 
   test('should successfully import data to target shop', async () => {
-    await operation.execute('input.sqlite', 'target.myshopify.com', {})
+    await operation.execute('input.sqlite', 'target.myshopify.com', {watch: true})
 
     expect(fileExists).toHaveBeenCalledWith('input.sqlite')
     expect(renderConfirmationPrompt).toHaveBeenCalledWith({
@@ -97,16 +95,26 @@ describe('StoreImportOperation', () => {
     await operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
+    expect(renderAsyncOperationStarted).toHaveBeenCalled()
+  })
+
+  test('renders import result when --watch flag is provided', async () => {
+    await operation.execute('input.sqlite', 'target.myshopify.com', {watch: true})
     expect(renderImportResult).toHaveBeenCalled()
+  })
+
+  test('renders result in json format when --json flag is provided', async () => {
+    await operation.execute('input.sqlite', 'target.myshopify.com', {json: true})
+    expect(renderAsyncOperationJson).toHaveBeenCalled()
   })
 
   test('should exit when user cancels confirmation', async () => {
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
 
-    await expect(operation.execute('input.sqlite', 'target.myshopify.com', {})).rejects.toThrow('Process exit called')
+    const result = await operation.execute('input.sqlite', 'target.myshopify.com', {})
 
+    expect(result).toBeUndefined()
     expect(outputInfo).toHaveBeenCalledWith('Exiting.')
-    expect(process.exit).toHaveBeenCalledWith(0)
     expect(mockFileUploader.uploadSqliteFile).not.toHaveBeenCalled()
     expect(mockApiClient.startBulkDataStoreImport).not.toHaveBeenCalled()
   })
@@ -114,15 +122,6 @@ describe('StoreImportOperation', () => {
   test('should throw error when import operation fails to start', async () => {
     const failedResponse: BulkDataStoreImportStartResponse = generateTestFailedImportStartResponse()
     mockApiClient.startBulkDataStoreImport.mockResolvedValue(failedResponse)
-
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
 
     const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
     await expect(promise).rejects.toThrow(OperationError)
@@ -151,13 +150,9 @@ describe('StoreImportOperation', () => {
       },
     }
 
-    vi.mocked(renderTasks).mockResolvedValue({
-      operation: failedOperation,
-      isComplete: true,
-      importUrl: mockUploadUrl,
-    })
+    mockApiClient.pollBulkDataOperation.mockResolvedValue(failedOperation)
 
-    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
+    const promise = operation.execute('input.sqlite', 'target.myshopify.com', {watch: true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
       operation: 'import',
@@ -174,18 +169,6 @@ describe('StoreImportOperation', () => {
       },
     }
     vi.mocked(parseResourceConfigFlags).mockReturnValue(mockResourceConfig)
-
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      ctx.operation = mockCompletedOperation
-      ctx.isComplete = true
-      ctx.importUrl = mockUploadUrl
-      return ctx
-    })
 
     await operation.execute('input.sqlite', 'target.myshopify.com', {key: ['products:handle']})
 
@@ -209,15 +192,6 @@ describe('StoreImportOperation', () => {
       },
     }
     mockApiClient.startBulkDataStoreImport.mockResolvedValue(failedResponse)
-
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
 
     const promise = operation.execute('input.sqlite', 'target.myshopify.com', {})
     await expect(promise).rejects.toThrow(OperationError)
@@ -254,15 +228,6 @@ describe('StoreImportOperation', () => {
     )
     mockApiClient.startBulkDataStoreImport.mockRejectedValue(operationError)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
-
     const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
@@ -275,15 +240,6 @@ describe('StoreImportOperation', () => {
   test('should convert GraphQL ClientError to user-friendly error without request ID', async () => {
     const operationError = new OperationError('startBulkDataStoreImport', ErrorCodes.GRAPHQL_API_ERROR)
     mockApiClient.startBulkDataStoreImport.mockRejectedValue(operationError)
-
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
 
     const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
@@ -306,15 +262,6 @@ describe('StoreImportOperation', () => {
     )
     mockApiClient.startBulkDataStoreImport.mockRejectedValue(unauthorizedError)
 
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
-
     const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
     await expect(promise).rejects.toMatchObject({
@@ -333,15 +280,6 @@ describe('StoreImportOperation', () => {
       'import-request-ea-456',
     )
     mockApiClient.startBulkDataStoreImport.mockRejectedValue(missingEAError)
-
-    vi.mocked(renderTasks).mockImplementationOnce(async (tasks: any[]) => {
-      const ctx: any = {}
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task(ctx, task)
-      }
-      return ctx
-    })
 
     const promise = operation.execute('input.sqlite', 'target.myshopify.com', {'no-prompt': true})
     await expect(promise).rejects.toThrow(OperationError)
