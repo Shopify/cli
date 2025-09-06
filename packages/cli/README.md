@@ -9,9 +9,11 @@
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function generate fixture`](#shopify-app-function-generate-fixture)
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
+* [`shopify app function test`](#shopify-app-function-test)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
@@ -172,7 +174,8 @@ Deploy your Shopify app.
 ```
 USAGE
   $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
-    [--no-release] [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
+    [--no-release] [--path <value>] [--reset | ] [--skip-tests] [--source-control-url <value>] [--verbose] [--version
+    <value>]
 
 FLAGS
   -c, --config=<value>              The name of the app configuration.
@@ -187,6 +190,7 @@ FLAGS
       --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
       --path=<value>                The path to your app directory.
       --reset                       Reset all your settings.
+      --skip-tests                  Skip running function tests before deployment.
       --source-control-url=<value>  URL associated with the new app version.
       --verbose                     Increase the verbosity of the output.
       --version=<value>             Optional version tag that will be associated with this app version. If not provided,
@@ -380,6 +384,33 @@ DESCRIPTION
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
 
+## `shopify app function generate fixture`
+
+Generates test files from a function run log.
+
+```
+USAGE
+  $ shopify app function generate fixture [--client-id <value> | -c <value>] [-l <value>] [--no-color] [--path <value>] [--reset |
+    ] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -l, --log=<value>        Specifies a log identifier to generate test files from instead of selecting from a list. The
+                           identifier is provided in the output of `shopify app dev` and is the suffix of the log file
+                           name.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Generates test files from a function run log.
+
+  Prompts users to select a function run log and generates test fixtures from it. These test cases based on real
+  function executions act as an E2E test suite for the function.
+```
+
 ## `shopify app function replay`
 
 Replays a function run from an app log.
@@ -465,9 +496,50 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
+## `shopify app function test`
+
+Builds the function and runs all tests in the test folder.
+
+```
+USAGE
+  $ shopify app function test [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+    [--skip-build] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --skip-build         Skip building the function and just run tests.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Builds the function and runs all tests in the test folder.
+
+  Builds the function to WebAssembly and then automatically runs tests if a `tests` folder exists. This is useful for
+  ensuring your function works correctly before deployment.
+
+  If a test command is specified in your `shopify.extension.toml` file under `[extensions.test]`, that command will be
+  used instead of the default vitest runner:
+
+  ```toml
+  [[extensions]]
+  name = "my-function"
+  handle = "my-function"
+  type = "function"
+
+  [extensions.test]
+  command = "npx vitest run"
+  ```
+
+  If no custom test command is found, the command will automatically discover and run `.test.ts` and `.test.js` files
+  using vitest.
+```
+
 ## `shopify app function typegen`
 
-Generate GraphQL types for a JavaScript function.
+Generate test fixtures for a function.
 
 ```
 USAGE
@@ -483,10 +555,9 @@ FLAGS
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
-  Generate GraphQL types for a JavaScript function.
+  Generate test fixtures for a function.
 
-  Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
-  function written in JavaScript.
+  Creates test fixtures based on your function's execution logs for testing and validation.
 ```
 
 ## `shopify app generate extension`
