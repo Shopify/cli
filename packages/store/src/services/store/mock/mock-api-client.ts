@@ -7,9 +7,10 @@ import {
   BulkDataStoreExportStartResponse,
   BulkDataStoreImportStartResponse,
 } from '../../../apis/organizations/types.js'
-
+import {StoreIdentifier} from '../../../apis/organizations/index.js'
 import {ResourceConfigs} from '../../../lib/types.js'
 import {Shop} from '../../../apis/admin/types.js'
+import {Organization} from '../../../apis/destinations/index.js'
 
 export class MockApiClient implements ApiClientInterface {
   private pollCount = 0
@@ -25,7 +26,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreCopy(
-    _shopId: string,
+    _identifier: StoreIdentifier,
     _sourceShopDomain: string,
     _targetShopDomain: string,
     _resourceConfigs: ResourceConfigs,
@@ -37,7 +38,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreExport(
-    _shopId: string,
+    _identifier: StoreIdentifier,
     _sourceShopDomain: string,
     _token: string,
   ): Promise<BulkDataStoreExportStartResponse> {
@@ -57,7 +58,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async startBulkDataStoreImport(
-    _shopId: string,
+    _identifier: StoreIdentifier,
     _targetShopDomain: string,
     _importUrl: string,
     _resourceConfigs: ResourceConfigs,
@@ -79,7 +80,7 @@ export class MockApiClient implements ApiClientInterface {
   }
 
   async pollBulkDataOperation(
-    _shopId: string,
+    _identifier: StoreIdentifier,
     _operationId: string,
     _token: string,
   ): Promise<BulkDataOperationByIdResponse> {
@@ -110,6 +111,17 @@ export class MockApiClient implements ApiClientInterface {
         },
       },
     }
+  }
+
+  async fetchOrgs(_token: string): Promise<Organization[]> {
+    await this.delay(MOCK_CONFIG.API_DELAY)
+    return [
+      {
+        id: 'org-1',
+        name: 'Org 1',
+        shops: TEST_ALL_SHOPS,
+      },
+    ]
   }
 
   async ensureAuthenticatedBusinessPlatform(): Promise<string> {

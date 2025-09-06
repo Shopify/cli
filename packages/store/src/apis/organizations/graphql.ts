@@ -57,6 +57,7 @@ export const bulkDataStoreImportStartMutation = gql`
 export const bulkDataOperationByIdQuery = `#graphql
   query BulkDataOperationById($id: BulkDataOperationID!) {
     organization {
+      id
       name
       bulkData {
         operation(id: $id) {
