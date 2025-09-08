@@ -22,6 +22,10 @@ fi
 # Bundle the packages
 pnpm bundle-for-release
 
+# Upload sourcemaps for all packages to Observe
+echo "Uploading sourcemaps to Observe..."
+node bin/upload-sourcemaps-all.js
+
 # Create a duplicate package for the CLI (to be deployed as just `shopify`)
 node bin/create-cli-duplicate-package.js
 
