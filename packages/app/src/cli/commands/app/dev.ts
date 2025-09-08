@@ -87,6 +87,11 @@ If you're using the Ruby app template, then you need to complete the following s
       default: false,
       exclusive: ['tunnel-url'],
     }),
+    host: Flags.string({
+      description: 'Set which network interface the web server listens on. The default value is localhost.',
+      env: 'SHOPIFY_FLAG_HOST',
+      default: 'localhost',
+    }),
     'localhost-port': Flags.integer({
       description: 'Port to use for localhost.',
       env: 'SHOPIFY_FLAG_LOCALHOST_PORT',
@@ -174,6 +179,7 @@ If you're using the Ruby app template, then you need to complete the following s
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
       graphiqlKey: flags['graphiql-key'],
+      host: flags.host,
       tunnel: tunnelMode,
     }
 

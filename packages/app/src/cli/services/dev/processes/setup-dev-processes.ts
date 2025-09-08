@@ -30,6 +30,7 @@ interface ProxyServerProcess
     port: number
     rules: {[key: string]: string}
     localhostCert?: LocalhostCert
+    host: string
   }> {
   type: 'proxy-server'
 }
@@ -251,11 +252,12 @@ async function setPortsAndAddProxyProcess(
     newProcesses.push({
       type: 'proxy-server',
       prefix: 'proxy',
-      function: startProxyServer,
+      function: proxyService,
       options: {
         port: proxyPort,
         rules: allRules,
         localhostCert: reverseProxyCert,
+        host: commandOptions.host,
       },
     })
   }
@@ -263,15 +265,16 @@ async function setPortsAndAddProxyProcess(
   return newProcesses
 }
 
-export const startProxyServer: DevProcessFunction<{
+export const proxyService: DevProcessFunction<{
   port: number
   rules: {[key: string]: string}
   localhostCert?: LocalhostCert
-}> = async ({abortSignal, stdout}, {port, rules, localhostCert}) => {
+  host: string
+}> = async ({abortSignal, stdout}, {port, rules, localhostCert, host}) => {
   const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert, stdout)
   outputInfo(
-    `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
+    `Proxy server started on ${host}:${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
     stdout,
   )
-  await server.listen(port, 'localhost')
+  await server.listen(port, host)
 }

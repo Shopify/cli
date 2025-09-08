@@ -1,4 +1,4 @@
-import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
+import {DevConfig, setupDevProcesses, proxyService} from './setup-dev-processes.js'
 import {subscribeAndStartPolling} from './app-logs-polling.js'
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
@@ -95,6 +95,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -281,7 +282,7 @@ describe('setup-dev-processes', () => {
     expect(proxyServerProcess).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
-      function: startProxyServer,
+      function: proxyService,
       options: {
         port: 444,
         localhostCert: {
@@ -311,6 +312,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -384,6 +386,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -480,6 +483,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -566,6 +570,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
