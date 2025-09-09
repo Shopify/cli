@@ -47,6 +47,14 @@ const appAccessSpec = createConfigExtensionSpecification({
   schema: AppAccessSchema,
   transformConfig: AppAccessTransformConfig,
   getDevSessionUpdateMessages: async (config) => {
+    const hasAccessModule = config.access_scopes !== undefined
+    const isLegacyInstallFlow = config.access_scopes?.use_legacy_install_flow === true
+    const hasNoScopes = config.access_scopes?.scopes == null && config.access_scopes?.required_scopes == null
+
+    if (isLegacyInstallFlow || (hasAccessModule && hasNoScopes)) {
+      return [`Using legacy install flow - access scopes are not auto-granted`]
+    }
+
     const scopesString = config.access_scopes?.scopes
       ? config.access_scopes.scopes
           .split(',')
@@ -54,7 +62,7 @@ const appAccessSpec = createConfigExtensionSpecification({
           .join(', ')
       : config.access_scopes?.required_scopes?.join(', ')
 
-    return [scopesString ? `Access scopes auto-granted: ${scopesString}` : `App has been installed`]
+    return scopesString ? [`Access scopes auto-granted: ${scopesString}`] : [`App has been installed`]
   },
   patchWithAppDevURLs: (config, urls) => {
     if (urls.redirectUrlWhitelist) {
