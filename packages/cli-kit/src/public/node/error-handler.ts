@@ -125,23 +125,6 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
-
-          // Apply path normalization for sourcemap matching
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          ;(event as any).errors?.forEach((error: any) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            error.stacktrace?.forEach((stackFrame: any) => {
-              const originalPath = stackFrame.file
-              if (originalPath) {
-                // Normalize packages/cli/dist/... to @shopify/cli/dist/...
-                const normalized = originalPath.replace(/^packages\/([\w-]+)\//, '@shopify/$1/')
-                stackFrame.file = normalized
-
-                // Don't set inProject - let Observe determine this after symbolication
-                // Chunk files contain mixed code that will be mapped to different sources
-              }
-            })
-          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
@@ -189,14 +172,6 @@ export function cleanStackFrameFilePath({
     return path.joinPath(matchingPluginPath.name, path.relativePath(matchingPluginPath.pluginPath, fullLocation))
   }
 
-  // Check if this is a main CLI package path (e.g., /path/to/cli/packages/cli/dist/index.js)
-  // and convert it to match uploaded sourcemap structure (e.g., @shopify/cli/dist/index.js)
-  const packagesMatch = fullLocation.match(/(?:^|\/)packages\/([\w-]+)\/(dist\/.+)$/)
-  if (packagesMatch) {
-    const [, packageName, distPath] = packagesMatch
-    return `@shopify/${packageName}/${distPath}`
-  }
-
   // strip prefix up to node_modules folder, so we can normalize error reporting
   return currentFilePath.replace(/.*node_modules\//, '')
 }
@@ -225,11 +200,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
     event.errors.forEach((error: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       error.stacktrace.forEach((stackFrame: any) => {
-        const cleanedPath = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
-        stackFrame.file = cleanedPath
-
-        // Don't set inProject - let Observe determine this after symbolication
-        // This allows proper mapping from chunk files to original sources
+        stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
       })
     })
     try {
