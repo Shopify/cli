@@ -14,9 +14,8 @@ const mockIncomingPath = '/fake/incoming/file.json'
 
 describe('theme-merge', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(basename).mockReturnValue('file.json')
-    vi.mocked(readFile).mockResolvedValue('{}')
+    vi.mocked(readFile).mockResolvedValue(Buffer.from('{}'))
     vi.mocked(writeFile).mockResolvedValue()
   })
 
@@ -107,13 +106,15 @@ describe('theme-merge', () => {
         'sections.json',
       ]
 
-      for (const fileName of environmentFiles) {
-        vi.mocked(basename).mockReturnValue(fileName)
+      await Promise.all(
+        environmentFiles.map(async (fileName) => {
+          vi.mocked(basename).mockReturnValue(fileName)
 
-        const result = await preserveEnvironmentMerge(mockBasePath, mockCurrentPath, mockIncomingPath)
+          const result = await preserveEnvironmentMerge(mockBasePath, mockCurrentPath, mockIncomingPath)
 
-        expect(result.strategy).toBe('preserve-current-environment')
-      }
+          expect(result.strategy).toBe('preserve-current-environment')
+        }),
+      )
     })
 
     test('should use custom marker size parameter', async () => {
@@ -145,14 +146,15 @@ describe('theme-merge', () => {
       {file: 'locales/en/checkout.json', isEnvironmentSpecific: true},
       {file: 'locales/fr/customer.json', isEnvironmentSpecific: true},
       {file: 'locales/es/sections.json', isEnvironmentSpecific: true},
-      {file: 'config/schema.json', isEnvironmentSpecific: true}, // JSON files are all environment-specific
+      // JSON files are all environment-specific
+      {file: 'config/schema.json', isEnvironmentSpecific: true},
       {file: 'assets/style.css', isEnvironmentSpecific: false},
       {file: 'templates/page.liquid', isEnvironmentSpecific: false},
     ]
 
     testCases.forEach(({file, isEnvironmentSpecific}) => {
       test(`should identify ${file} as ${isEnvironmentSpecific ? 'environment-specific' : 'code file'}`, async () => {
-        const fileName = file.split('/').pop() || file
+        const fileName = file.split('/').pop() ?? file
         vi.mocked(basename).mockReturnValue(fileName)
 
         const result = await preserveEnvironmentMerge(mockBasePath, mockCurrentPath, mockIncomingPath)
