@@ -125,6 +125,18 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+
+          // Normalize paths to match uploaded sourcemap structure
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(event as any).errors?.forEach((error: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            error.stacktrace?.forEach((stackFrame: any) => {
+              if (stackFrame.file) {
+                // Normalize packages/cli/dist/... to @shopify/cli/dist/...
+                stackFrame.file = stackFrame.file.replace(/^packages\/([\w-]+)\//, '@shopify/$1/')
+              }
+            })
+          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
@@ -170,6 +182,14 @@ export function cleanStackFrameFilePath({
   if (matchingPluginPath !== undefined) {
     // the plugin name (e.g. @shopify/cli-kit), plus the relative path of the error line from within the plugin's code (e.g. dist/something.js )
     return path.joinPath(matchingPluginPath.name, path.relativePath(matchingPluginPath.pluginPath, fullLocation))
+  }
+
+  // Check if this is a main CLI package path (e.g., /path/to/cli/packages/cli/dist/index.js)
+  // and convert it to match uploaded sourcemap structure (e.g., @shopify/cli/dist/index.js)
+  const packagesMatch = fullLocation.match(/(?:^|\/)packages\/([\w-]+)\/(dist\/.+)$/)
+  if (packagesMatch) {
+    const [, packageName, distPath] = packagesMatch
+    return `@shopify/${packageName}/${distPath}`
   }
 
   // strip prefix up to node_modules folder, so we can normalize error reporting
