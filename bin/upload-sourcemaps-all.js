@@ -61,6 +61,13 @@ async function uploadPackageSourcemaps(packageName, temporaryDirectory) {
     const targetSrcPath = path.join(temporaryPackageCopy, 'src');
     await fsPromise.mkdir(targetSrcPath, { recursive: true });
     fs.cpSync(srcPath, targetSrcPath, {recursive: true});
+    
+    // Count files to verify copy
+    const { default: glob } = await import('fast-glob');
+    const srcFiles = glob.sync(`${targetSrcPath}/**/*.ts`, {onlyFiles: true});
+    console.log(`  Copied ${srcFiles.length} TypeScript files to @shopify/${packageName}/src`);
+  } else {
+    console.log(`  Warning: No src directory found for ${packageName}`);
   }
   
   // Copy bin folder (entry point scripts)
@@ -80,28 +87,6 @@ async function uploadPackageSourcemaps(packageName, temporaryDirectory) {
   console.log(`Prepared structure for @shopify/${packageName}`);
 }
 
-async function copyAllSourceFiles(temporaryDirectory) {
-  // Also copy all package source files to packages/ directory to match relative paths in sourcemaps
-  // Sourcemaps reference paths like ../../cli-kit/src/... from dist folders
-  const packagesDir = path.join(temporaryDirectory, 'packages');
-  await fsPromise.mkdir(packagesDir, { recursive: true });
-  
-  for (const packageName of PACKAGES_TO_UPLOAD) {
-    const sourceDirectory = path.join(__dirname, '..', 'packages', packageName);
-    if (!fs.existsSync(sourceDirectory)) continue;
-    
-    const targetPackageDir = path.join(packagesDir, packageName);
-    await fsPromise.mkdir(targetPackageDir, { recursive: true });
-    
-    // Copy src folder for relative path resolution
-    const srcPath = path.join(sourceDirectory, 'src');
-    if (fs.existsSync(srcPath)) {
-      const targetSrcPath = path.join(targetPackageDir, 'src');
-      fs.cpSync(srcPath, targetSrcPath, {recursive: true});
-      console.log(`Copied source files for packages/${packageName}/src`);
-    }
-  }
-}
 
 (async () => {
   try {
@@ -116,8 +101,28 @@ async function copyAllSourceFiles(temporaryDirectory) {
             await uploadPackageSourcemaps(packageName, temporaryDirectory);
           }
           
-          // Also copy source files with relative path structure for sourcemap resolution
-          await copyAllSourceFiles(temporaryDirectory);
+          // Debug: List what we're about to upload
+          console.log('\n=== Upload Summary ===');
+          const { default: glob } = await import('fast-glob');
+          const allFiles = glob.sync('**/*', {cwd: temporaryDirectory, onlyFiles: true});
+          const tsFiles = allFiles.filter(f => f.endsWith('.ts'));
+          const mapFiles = allFiles.filter(f => f.endsWith('.map'));
+          const jsFiles = allFiles.filter(f => f.endsWith('.js'));
+          
+          console.log(`Total files to upload: ${allFiles.length}`);
+          console.log(`  - TypeScript files: ${tsFiles.length}`);
+          console.log(`  - Sourcemap files: ${mapFiles.length}`);
+          console.log(`  - JavaScript files: ${jsFiles.length}`);
+          
+          // Show directory structure
+          const dirs = glob.sync('**/', {cwd: temporaryDirectory, onlyDirectories: true});
+          const srcDirs = dirs.filter(d => d.includes('/src'));
+          console.log(`\nSource directories (${srcDirs.length}):`, srcDirs.slice(0, 10));
+          
+          if (tsFiles.length === 0) {
+            console.error('\n⚠️  WARNING: No TypeScript files found! Sourcemap resolution may fail.');
+          }
+          console.log('==================\n');
           
           console.log('Uploading all sourcemaps to Bugsnag/Observe');
           process.chdir(temporaryDirectory);
