@@ -23,11 +23,13 @@ import {outputResult} from '@shopify/cli-kit/node/output'
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-selector.js')
+vi.mock('../utilities/git-config.js')
 vi.mock('./local-storage.js')
 vi.mock('@shopify/cli-kit/node/themes/utils')
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/git')
 vi.mock('../commands/theme/check.js')
 vi.mock('@shopify/cli-kit/node/output')
 
