@@ -132,6 +132,7 @@ async function uploadPackageSourcemaps(packageName, temporaryDirectory) {
             appVersion,
             overwrite: true,
             directory: '.',
+            uploadSources: true,  // Upload source files referenced in sourcemaps
             endpoint: 'https://error-analytics-production.shopifysvc.com/api/v1/sourcemap/browser'
           });
           
