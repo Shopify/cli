@@ -126,14 +126,14 @@ export async function sendErrorToBugsnag(
           event.severity = 'error'
           event.unhandled = unhandled
 
-          // Normalize paths to match uploaded sourcemap structure
+          // Mark @shopify/* files as in-project, including chunks
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ;(event as any).errors?.forEach((error: any) => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             error.stacktrace?.forEach((stackFrame: any) => {
-              if (stackFrame.file) {
-                // Normalize packages/cli/dist/... to @shopify/cli/dist/...
-                stackFrame.file = stackFrame.file.replace(/^packages\/([\w-]+)\//, '@shopify/$1/')
+              if (stackFrame.file && stackFrame.file.startsWith('@shopify/')) {
+                // All @shopify/* files are our code, including chunks
+                stackFrame.inProject = true
               }
             })
           })
@@ -220,7 +220,13 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
     event.errors.forEach((error: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       error.stacktrace.forEach((stackFrame: any) => {
-        stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+        const cleanedPath = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+        stackFrame.file = cleanedPath
+        
+        // Mark @shopify/* files as in-project, including chunks
+        if (cleanedPath.startsWith('@shopify/')) {
+          stackFrame.inProject = true
+        }
       })
     })
     try {

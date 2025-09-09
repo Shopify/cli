@@ -114,6 +114,14 @@ async function uploadPackageSourcemaps(packageName, temporaryDirectory) {
           console.log(`  - Sourcemap files: ${mapFiles.length}`);
           console.log(`  - JavaScript files: ${jsFiles.length}`);
           
+          // Show some actual sourcemap paths
+          console.log('\nSample sourcemap paths:');
+          mapFiles.slice(0, 5).forEach(f => console.log(`  - ${f}`));
+          
+          // Show some chunk files
+          const chunkFiles = jsFiles.filter(f => f.includes('chunk-'));
+          console.log(`\nChunk files (${chunkFiles.length}):`, chunkFiles.slice(0, 3));
+          
           // Show directory structure
           const dirs = glob.sync('**/', {cwd: temporaryDirectory, onlyDirectories: true});
           const srcDirs = dirs.filter(d => d.includes('/src'));
