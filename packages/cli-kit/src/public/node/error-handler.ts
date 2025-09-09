@@ -125,6 +125,27 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+
+          // Apply path normalization for sourcemap matching
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(event as any).errors?.forEach((error: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            error.stacktrace?.forEach((stackFrame: any) => {
+              const originalPath = stackFrame.file
+              if (originalPath) {
+                // Normalize packages/cli/dist/... to @shopify/cli/dist/...
+                const normalized = originalPath.replace(/^packages\/([\w-]+)\//, '@shopify/$1/')
+                stackFrame.file = normalized
+
+                // Set inProject based on whether it's a Shopify package
+                if (normalized.includes('node_modules')) {
+                  stackFrame.inProject = false
+                } else if (normalized.startsWith('@shopify/')) {
+                  stackFrame.inProject = true
+                }
+              }
+            })
+          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
@@ -172,6 +193,14 @@ export function cleanStackFrameFilePath({
     return path.joinPath(matchingPluginPath.name, path.relativePath(matchingPluginPath.pluginPath, fullLocation))
   }
 
+  // Check if this is a main CLI package path (e.g., /path/to/cli/packages/cli/dist/index.js)
+  // and convert it to match uploaded sourcemap structure (e.g., @shopify/cli/dist/index.js)
+  const packagesMatch = fullLocation.match(/(?:^|\/)packages\/([\w-]+)\/(dist\/.+)$/)
+  if (packagesMatch) {
+    const [, packageName, distPath] = packagesMatch
+    return `@shopify/${packageName}/${distPath}`
+  }
+
   // strip prefix up to node_modules folder, so we can normalize error reporting
   return currentFilePath.replace(/.*node_modules\//, '')
 }
@@ -200,7 +229,15 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
     event.errors.forEach((error: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       error.stacktrace.forEach((stackFrame: any) => {
-        stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+        const cleanedPath = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+        stackFrame.file = cleanedPath
+
+        // Set inProject based on whether it's a Shopify package
+        if (cleanedPath.includes('node_modules')) {
+          stackFrame.inProject = false
+        } else if (cleanedPath.startsWith('@shopify/')) {
+          stackFrame.inProject = true
+        }
       })
     })
     try {
