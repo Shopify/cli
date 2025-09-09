@@ -137,12 +137,8 @@ export async function sendErrorToBugsnag(
                 const normalized = originalPath.replace(/^packages\/([\w-]+)\//, '@shopify/$1/')
                 stackFrame.file = normalized
 
-                // Set inProject based on whether it's a Shopify package
-                if (normalized.includes('node_modules')) {
-                  stackFrame.inProject = false
-                } else if (normalized.startsWith('@shopify/')) {
-                  stackFrame.inProject = true
-                }
+                // Don't set inProject - let Observe determine this after symbolication
+                // Chunk files contain mixed code that will be mapped to different sources
               }
             })
           })
@@ -232,12 +228,8 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
         const cleanedPath = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
         stackFrame.file = cleanedPath
 
-        // Set inProject based on whether it's a Shopify package
-        if (cleanedPath.includes('node_modules')) {
-          stackFrame.inProject = false
-        } else if (cleanedPath.startsWith('@shopify/')) {
-          stackFrame.inProject = true
-        }
+        // Don't set inProject - let Observe determine this after symbolication
+        // This allows proper mapping from chunk files to original sources
       })
     })
     try {

@@ -77,7 +77,30 @@ async function uploadPackageSourcemaps(packageName, temporaryDirectory) {
     fs.cpSync(packageJsonPath, path.join(temporaryPackageCopy, 'package.json'));
   }
   
-  console.log(`Uploaded structure for @shopify/${packageName}`);
+  console.log(`Prepared structure for @shopify/${packageName}`);
+}
+
+async function copyAllSourceFiles(temporaryDirectory) {
+  // Also copy all package source files to packages/ directory to match relative paths in sourcemaps
+  // Sourcemaps reference paths like ../../cli-kit/src/... from dist folders
+  const packagesDir = path.join(temporaryDirectory, 'packages');
+  await fsPromise.mkdir(packagesDir, { recursive: true });
+  
+  for (const packageName of PACKAGES_TO_UPLOAD) {
+    const sourceDirectory = path.join(__dirname, '..', 'packages', packageName);
+    if (!fs.existsSync(sourceDirectory)) continue;
+    
+    const targetPackageDir = path.join(packagesDir, packageName);
+    await fsPromise.mkdir(targetPackageDir, { recursive: true });
+    
+    // Copy src folder for relative path resolution
+    const srcPath = path.join(sourceDirectory, 'src');
+    if (fs.existsSync(srcPath)) {
+      const targetSrcPath = path.join(targetPackageDir, 'src');
+      fs.cpSync(srcPath, targetSrcPath, {recursive: true});
+      console.log(`Copied source files for packages/${packageName}/src`);
+    }
+  }
 }
 
 (async () => {
@@ -92,6 +115,9 @@ async function uploadPackageSourcemaps(packageName, temporaryDirectory) {
           for (const packageName of PACKAGES_TO_UPLOAD) {
             await uploadPackageSourcemaps(packageName, temporaryDirectory);
           }
+          
+          // Also copy source files with relative path structure for sourcemap resolution
+          await copyAllSourceFiles(temporaryDirectory);
           
           console.log('Uploading all sourcemaps to Bugsnag/Observe');
           process.chdir(temporaryDirectory);
