@@ -1,7 +1,7 @@
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {Task, renderConfirmationPrompt, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function themeComponent(theme: Theme) {
   return [
@@ -21,9 +21,19 @@ export function themesComponent(themes: Theme[]) {
 export async function ensureDirectoryConfirmed(
   force: boolean,
   message = "It doesn't seem like you're running this command in a theme directory.",
+  environment?: string,
+  multiEnvironment?: boolean,
 ) {
   if (force) {
     return true
+  }
+
+  if (multiEnvironment) {
+    renderError({
+      headline: environment ? `Environment: ${environment}` : '',
+      body: message,
+    })
+    return false
   }
 
   renderWarning({body: message})
