@@ -19,13 +19,12 @@ const mockGitAttributesPath = '/fake/project/.gitattributes'
 
 describe('git-config', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(joinPath).mockReturnValue(mockGitAttributesPath)
     vi.mocked(ensureInsideGitDirectory).mockResolvedValue()
     vi.mocked(exec).mockResolvedValue()
     vi.mocked(captureOutput).mockResolvedValue('shopify theme git-merge-preserve')
     vi.mocked(fileExists).mockResolvedValue(false)
-    vi.mocked(readFile).mockResolvedValue('')
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(''))
     vi.mocked(writeFile).mockResolvedValue()
   })
 
@@ -69,7 +68,9 @@ describe('git-config', () => {
 
     test('should skip .gitattributes setup if already configured', async () => {
       vi.mocked(fileExists).mockResolvedValue(true)
-      vi.mocked(readFile).mockResolvedValue('# Shopify Theme Multi-Environment Configuration\nexisting content')
+      vi.mocked(readFile).mockResolvedValue(
+        Buffer.from('# Shopify Theme Multi-Environment Configuration\nexisting content'),
+      )
 
       await setupMultiEnvironmentGit(mockRootPath)
 
@@ -156,7 +157,8 @@ describe('git-config', () => {
       await setupMultiEnvironmentGit(mockRootPath)
 
       const writeCallArgs = vi.mocked(writeFile).mock.calls[0]
-      const gitAttributesContent = writeCallArgs[1] as string
+      expect(writeCallArgs).toBeDefined()
+      const gitAttributesContent = writeCallArgs![1] as string
 
       expect(gitAttributesContent).toContain('config/settings_data.json merge=shopify-preserve-env')
       expect(gitAttributesContent).toContain('templates/*.json merge=shopify-preserve-env')
@@ -171,12 +173,13 @@ describe('git-config', () => {
     test('should append to existing .gitattributes content', async () => {
       const existingContent = '# Existing content\n*.txt text=auto'
       vi.mocked(fileExists).mockResolvedValue(true)
-      vi.mocked(readFile).mockResolvedValue(existingContent)
+      vi.mocked(readFile).mockResolvedValue(Buffer.from(existingContent))
 
       await setupMultiEnvironmentGit(mockRootPath)
 
       const writeCallArgs = vi.mocked(writeFile).mock.calls[0]
-      const newContent = writeCallArgs[1] as string
+      expect(writeCallArgs).toBeDefined()
+      const newContent = writeCallArgs![1] as string
 
       expect(newContent).toContain(existingContent)
       expect(newContent).toContain('# Shopify Theme Multi-Environment Configuration')

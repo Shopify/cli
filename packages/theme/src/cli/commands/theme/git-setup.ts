@@ -37,7 +37,7 @@ export default class GitSetup extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(GitSetup)
-    const rootPath = process.cwd()
+    const rootPath = cwd()
 
     // Ensure we're in a Git repository
     if (!(await insideGitDirectory(rootPath))) {

@@ -1,22 +1,27 @@
+/* eslint-disable no-catch-all/no-catch-all */
 import GitMergePreserve from './git-merge-preserve.js'
 import {preserveEnvironmentMerge} from '../../utilities/theme-merge.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 import {test, describe, expect, vi, beforeEach, afterEach} from 'vitest'
 
 vi.mock('../../utilities/theme-merge.js')
 vi.mock('@shopify/cli-kit/node/output')
 
+const CommandConfig = new Config({root: __dirname})
+
 describe('GitMergePreserve command', () => {
   let gitMergePreserve: GitMergePreserve
-  let exitSpy: ReturnType<typeof vi.spyOn>
+  let exitSpy: any
 
-  beforeEach(() => {
-    gitMergePreserve = new GitMergePreserve([], {})
+  beforeEach(async () => {
+    await CommandConfig.load()
+    gitMergePreserve = new GitMergePreserve([], CommandConfig)
 
     // Mock process.exit to prevent actual exit during tests
-    exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => {
+    exitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {
       throw new Error('process.exit called')
-    })
+    }) as any)
 
     vi.mocked(preserveEnvironmentMerge).mockResolvedValue({
       success: true,
@@ -31,19 +36,15 @@ describe('GitMergePreserve command', () => {
 
   describe('successful merge', () => {
     test('should call preserveEnvironmentMerge with correct arguments', async () => {
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-          markerSize: '7',
-        },
-      })
+      const command = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json', '7'],
+        CommandConfig,
+      )
 
       try {
-        await gitMergePreserve.run()
+        await command.run()
       } catch (error) {
-        // Expected due to process.exit mock
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -57,18 +58,15 @@ describe('GitMergePreserve command', () => {
     })
 
     test('should use default marker size when not provided', async () => {
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-          markerSize: undefined,
-        },
-      })
+      const testCommand = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json'],
+        CommandConfig,
+      )
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -81,18 +79,15 @@ describe('GitMergePreserve command', () => {
     })
 
     test('should parse marker size from string to number', async () => {
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-          markerSize: '10',
-        },
-      })
+      const testCommand = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json', '10'],
+        CommandConfig,
+      )
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -105,17 +100,15 @@ describe('GitMergePreserve command', () => {
     })
 
     test('should output debug information', async () => {
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-        },
-      })
+      const testCommand = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json'],
+        CommandConfig,
+      )
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -131,17 +124,15 @@ describe('GitMergePreserve command', () => {
         strategy: 'failed-merge',
       })
 
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-        },
-      })
+      const testCommand = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json'],
+        CommandConfig,
+      )
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -151,32 +142,26 @@ describe('GitMergePreserve command', () => {
     test('should handle merge function errors', async () => {
       vi.mocked(preserveEnvironmentMerge).mockRejectedValue(new Error('Merge function failed'))
 
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-        },
-      })
+      const testCommand = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json'],
+        CommandConfig,
+      )
 
-      await expect(gitMergePreserve.run()).rejects.toThrow('Merge function failed')
+      await expect(testCommand.run()).rejects.toThrow('Merge function failed')
     })
   })
 
   describe('argument parsing', () => {
     test('should handle invalid marker size gracefully', async () => {
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/path/to/base.json',
-          current: '/path/to/current.json',
-          incoming: '/path/to/incoming.json',
-          markerSize: 'invalid',
-        },
-      })
+      const testCommand = new GitMergePreserve(
+        ['/path/to/base.json', '/path/to/current.json', '/path/to/incoming.json', 'invalid'],
+        CommandConfig,
+      )
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -198,28 +183,21 @@ describe('GitMergePreserve command', () => {
         '/path/to/locales/en/checkout.json',
       ]
 
-      for (const filePath of testCases) {
-        gitMergePreserve.parse = vi.fn().mockResolvedValue({
-          args: {
-            base: filePath.replace('current', 'base'),
-            current: filePath,
-            incoming: filePath.replace('current', 'incoming'),
-          },
-        })
+      await Promise.all(
+        testCases.map(async (filePath) => {
+          vi.mocked(preserveEnvironmentMerge).mockClear()
+          const testCommand = new GitMergePreserve(['/base.json', filePath, '/incoming.json'], CommandConfig)
 
-        try {
-          await gitMergePreserve.run()
-        } catch (error) {
-          expect((error as Error).message).toBe('process.exit called')
-        }
+          try {
+            await testCommand.run()
+          } catch (error) {
+            // Expected: process.exit is mocked to throw for test validation
+            expect((error as Error).message).toBe('process.exit called')
+          }
 
-        expect(preserveEnvironmentMerge).toHaveBeenCalledWith(
-          expect.stringContaining(filePath.split('/').pop()?.replace('current', 'base') || ''),
-          filePath,
-          expect.stringContaining(filePath.split('/').pop()?.replace('current', 'incoming') || ''),
-          7,
-        )
-      }
+          expect(preserveEnvironmentMerge).toHaveBeenCalledWith('/base.json', filePath, '/incoming.json', 7)
+        }),
+      )
     })
   })
 
@@ -263,17 +241,12 @@ describe('GitMergePreserve command', () => {
         strategy: 'preserve-current-environment',
       })
 
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/base.json',
-          current: '/current.json',
-          incoming: '/incoming.json',
-        },
-      })
+      const testCommand = new GitMergePreserve(['/base.json', '/current.json', '/incoming.json'], CommandConfig)
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 
@@ -287,17 +260,12 @@ describe('GitMergePreserve command', () => {
         strategy: 'failed',
       })
 
-      gitMergePreserve.parse = vi.fn().mockResolvedValue({
-        args: {
-          base: '/base.json',
-          current: '/current.json',
-          incoming: '/incoming.json',
-        },
-      })
+      const testCommand = new GitMergePreserve(['/base.json', '/current.json', '/incoming.json'], CommandConfig)
 
       try {
-        await gitMergePreserve.run()
+        await testCommand.run()
       } catch (error) {
+        // Expected: process.exit is mocked to throw for test validation
         expect((error as Error).message).toBe('process.exit called')
       }
 

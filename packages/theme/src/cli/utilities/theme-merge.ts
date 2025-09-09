@@ -1,3 +1,4 @@
+/* eslint-disable no-catch-all/no-catch-all */
 import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
@@ -13,10 +14,14 @@ export interface MergeResult {
  * This is called by Git as a custom merge driver
  */
 export async function preserveEnvironmentMerge(
-  base: string, // %O - common ancestor file
-  current: string, // %A - current branch version (ours)  
-  incoming: string, // %B - incoming branch version (theirs)
-  _markerSize = 7, // %L - conflict marker size
+  // %O - common ancestor file
+  base: string,
+  // %A - current branch version (ours)
+  current: string,
+  // %B - incoming branch version (theirs)
+  incoming: string,
+  // %L - conflict marker size
+  _markerSize = 7,
 ): Promise<MergeResult> {
   const fileName = basename(current)
   outputDebug(`Shopify theme merge: ${fileName}`)
@@ -30,9 +35,8 @@ export async function preserveEnvironmentMerge(
     // For other files, attempt smart merge
     return await attemptSmartMerge(base, current, incoming, fileName)
   } catch (error) {
+    // Expected: merge errors are handled gracefully with fallback strategy
     outputDebug(`Merge error for ${fileName}: ${error}`)
-
-    // Fallback: preserve current version
     return {
       success: true,
       conflictResolved: true,
@@ -95,9 +99,8 @@ async function attemptSmartMerge(
       strategy: 'smart-json-merge',
     }
   } catch (error) {
-    // JSON parsing failed, preserve current
+    // Expected: JSON parsing can fail for invalid JSON, preserve current version
     outputDebug(`JSON merge failed for ${fileName}: ${error}`)
-
     return {
       success: true,
       conflictResolved: true,
@@ -112,7 +115,8 @@ async function attemptSmartMerge(
 function isEnvironmentSpecificFile(fileName: string): boolean {
   const environmentSpecificPatterns = [
     'settings_data.json',
-    /^.*\.json$/, // Template and section JSON files
+    // Template and section JSON files
+    /^.*\.json$/,
     'checkout.json',
     'customer.json',
     'sections.json',

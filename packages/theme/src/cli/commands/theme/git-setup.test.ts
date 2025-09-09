@@ -5,24 +5,28 @@ import {
   isGitConfiguredForMultiEnv,
 } from '../../utilities/git-config.js'
 import {outputInfo, outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
+import {Config} from '@oclif/core'
 import {insideGitDirectory} from '@shopify/cli-kit/node/git'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {cwd} from '@shopify/cli-kit/node/path'
 import {test, describe, expect, vi, beforeEach, afterEach} from 'vitest'
 
 vi.mock('../../utilities/git-config.js')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('@shopify/cli-kit/node/git')
+vi.mock('@shopify/cli-kit/node/path')
 
+const CommandConfig = new Config({root: __dirname})
 const mockRootPath = '/fake/project'
 
 describe('GitSetup command', () => {
   let gitSetup: GitSetup
   const originalCwd = process.cwd
 
-  beforeEach(() => {
-    vi.clearAllMocks()
-    gitSetup = new GitSetup([], {})
-    process.cwd = vi.fn().mockReturnValue(mockRootPath)
+  beforeEach(async () => {
+    await CommandConfig.load()
+    gitSetup = new GitSetup([], CommandConfig)
+    vi.mocked(cwd).mockReturnValue(mockRootPath)
     vi.mocked(insideGitDirectory).mockResolvedValue(true)
     vi.mocked(setupMultiEnvironmentGit).mockResolvedValue()
     vi.mocked(resetGitConfiguration).mockResolvedValue()
@@ -35,11 +39,9 @@ describe('GitSetup command', () => {
 
   describe('multi-environment flag', () => {
     test('should setup multi-environment git when flag is provided', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: false, status: false},
-      })
+      const command = new GitSetup(['--multi-environment'], CommandConfig)
 
-      await gitSetup.run()
+      await command.run()
 
       expect(setupMultiEnvironmentGit).toHaveBeenCalledWith(mockRootPath)
       expect(outputInfo).toHaveBeenCalledWith(
@@ -48,11 +50,9 @@ describe('GitSetup command', () => {
     })
 
     test('should show next steps after successful setup', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: false, status: false},
-      })
+      const command = new GitSetup(['--multi-environment'], CommandConfig)
 
-      await gitSetup.run()
+      await command.run()
 
       expect(outputInfo).toHaveBeenCalledWith('Next steps:')
       expect(outputInfo).toHaveBeenCalledWith(expect.stringContaining('git add .gitattributes'))
@@ -62,11 +62,9 @@ describe('GitSetup command', () => {
 
   describe('reset flag', () => {
     test('should reset git configuration when flag is provided', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': false, reset: true, status: false},
-      })
+      const command = new GitSetup(['--reset'], CommandConfig)
 
-      await gitSetup.run()
+      await command.run()
 
       expect(resetGitConfiguration).toHaveBeenCalledWith(mockRootPath)
     })
@@ -74,12 +72,11 @@ describe('GitSetup command', () => {
 
   describe('status flag', () => {
     test('should show configured status when git is setup', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': false, reset: false, status: true},
-      })
       vi.mocked(isGitConfiguredForMultiEnv).mockResolvedValue(true)
 
-      await gitSetup.run()
+      const command = new GitSetup(['--status'], CommandConfig)
+
+      await command.run()
 
       expect(isGitConfiguredForMultiEnv).toHaveBeenCalledWith(mockRootPath)
       expect(outputSuccess).toHaveBeenCalledWith('✅ Git is configured for multi-environment theme development')
@@ -89,12 +86,11 @@ describe('GitSetup command', () => {
     })
 
     test('should show unconfigured status when git is not setup', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': false, reset: false, status: true},
-      })
       vi.mocked(isGitConfiguredForMultiEnv).mockResolvedValue(false)
 
-      await gitSetup.run()
+      const command = new GitSetup(['--status'], CommandConfig)
+
+      await command.run()
 
       expect(outputWarn).toHaveBeenCalledWith('⚠️  Git is not configured for multi-environment theme development')
       expect(outputInfo).toHaveBeenCalledWith(
@@ -105,11 +101,9 @@ describe('GitSetup command', () => {
 
   describe('default behavior', () => {
     test('should show usage info when no flags are provided', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': false, reset: false, status: false},
-      })
+      const command = new GitSetup([], CommandConfig)
 
-      await gitSetup.run()
+      await command.run()
 
       expect(outputInfo).toHaveBeenCalledWith('Use --multi-environment to setup conflict-free theme development')
       expect(outputInfo).toHaveBeenCalledWith('Use --status to check current configuration')
@@ -120,21 +114,19 @@ describe('GitSetup command', () => {
   describe('git directory validation', () => {
     test('should throw AbortError when not in a git directory', async () => {
       vi.mocked(insideGitDirectory).mockResolvedValue(false)
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: false, status: false},
-      })
 
-      await expect(gitSetup.run()).rejects.toThrow(AbortError)
+      const command = new GitSetup(['--multi-environment'], CommandConfig)
+
+      await expect(command.run()).rejects.toThrow(AbortError)
       expect(setupMultiEnvironmentGit).not.toHaveBeenCalled()
     })
 
     test('should proceed when in a git directory', async () => {
       vi.mocked(insideGitDirectory).mockResolvedValue(true)
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: false, status: false},
-      })
 
-      await gitSetup.run()
+      const command = new GitSetup(['--multi-environment'], CommandConfig)
+
+      await command.run()
 
       expect(setupMultiEnvironmentGit).toHaveBeenCalled()
     })
@@ -142,11 +134,9 @@ describe('GitSetup command', () => {
 
   describe('flag combinations', () => {
     test('should prioritize status over other flags', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: true, status: true},
-      })
+      const command = new GitSetup(['--multi-environment', '--reset', '--status'], CommandConfig)
 
-      await gitSetup.run()
+      await command.run()
 
       expect(isGitConfiguredForMultiEnv).toHaveBeenCalled()
       expect(setupMultiEnvironmentGit).not.toHaveBeenCalled()
@@ -154,11 +144,9 @@ describe('GitSetup command', () => {
     })
 
     test('should prioritize reset over multi-environment when both are set', async () => {
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: true, status: false},
-      })
+      const command = new GitSetup(['--multi-environment', '--reset'], CommandConfig)
 
-      await gitSetup.run()
+      await command.run()
 
       expect(resetGitConfiguration).toHaveBeenCalled()
       expect(setupMultiEnvironmentGit).not.toHaveBeenCalled()
@@ -168,29 +156,26 @@ describe('GitSetup command', () => {
   describe('error handling', () => {
     test('should handle setup errors gracefully', async () => {
       vi.mocked(setupMultiEnvironmentGit).mockRejectedValue(new Error('Setup failed'))
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': true, reset: false, status: false},
-      })
 
-      await expect(gitSetup.run()).rejects.toThrow('Setup failed')
+      const command = new GitSetup(['--multi-environment'], CommandConfig)
+
+      await expect(command.run()).rejects.toThrow('Setup failed')
     })
 
     test('should handle reset errors gracefully', async () => {
       vi.mocked(resetGitConfiguration).mockRejectedValue(new Error('Reset failed'))
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': false, reset: true, status: false},
-      })
 
-      await expect(gitSetup.run()).rejects.toThrow('Reset failed')
+      const command = new GitSetup(['--reset'], CommandConfig)
+
+      await expect(command.run()).rejects.toThrow('Reset failed')
     })
 
     test('should handle status check errors gracefully', async () => {
       vi.mocked(isGitConfiguredForMultiEnv).mockRejectedValue(new Error('Status check failed'))
-      gitSetup.parse = vi.fn().mockResolvedValue({
-        flags: {'multi-environment': false, reset: false, status: true},
-      })
 
-      await expect(gitSetup.run()).rejects.toThrow('Status check failed')
+      const command = new GitSetup(['--status'], CommandConfig)
+
+      await expect(command.run()).rejects.toThrow('Status check failed')
     })
   })
 
