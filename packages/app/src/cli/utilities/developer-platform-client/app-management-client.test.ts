@@ -7,7 +7,7 @@ import {
   encodedGidFromShopId,
   versionDeepLink,
 } from './app-management-client.js'
-import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
+import {OrganizationBetaFlagsQuery} from '../../api/graphql/business-platform-destinations/generated/beta-flags.js'
 import {
   testUIExtension,
   testRemoteExtensionTemplates,
@@ -149,17 +149,21 @@ describe('templateSpecifications', () => {
     const templates: GatedExtensionTemplate[] = [templateWithoutRules, allowedTemplate]
     const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
     vi.mocked(fetch).mockImplementation(mockedFetch)
-    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
-      organization: {
-        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
-        flag_allowedFlag: true,
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuery = {
+      currentUserAccount: {
+        organization: {
+          id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+          name: 'Test Organization',
+          enabledFlags: ['allowedFlag'],
+        },
       },
     }
-    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const businessPlatformRequestSpy = vi.spyOn(client, 'businessPlatformRequest' as any)
+    businessPlatformRequestSpy.mockResolvedValueOnce(mockedFetchFlagsResponse)
     const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
     const gotSortPriorities = got.map((template) => template.sortPriority)
@@ -176,39 +180,25 @@ describe('templateSpecifications', () => {
     const templates: GatedExtensionTemplate[] = [templateWithoutRules, allowedTemplate, templateDisallowedByBetaFlag]
     const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
     vi.mocked(fetch).mockImplementation(mockedFetch)
-    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
-      organization: {
-        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
-        flag_allowedFlag: true,
-        flag_notAllowedFlag: false,
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuery = {
+      currentUserAccount: {
+        organization: {
+          id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+          name: 'Test Organization',
+          enabledFlags: ['allowedFlag'],
+        },
       },
     }
-    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const businessPlatformRequestSpy = vi.spyOn(client, 'businessPlatformRequest' as any)
+    businessPlatformRequestSpy.mockResolvedValueOnce(mockedFetchFlagsResponse)
     const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
 
     // Then
-    expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalledWith({
-      query: `
-    query OrganizationBetaFlags($organizationId: OrganizationID!) {
-      organization(organizationId: $organizationId) {
-        id
-        flag_allowedFlag: hasFeatureFlag(handle: "allowedFlag")
-        flag_notAllowedFlag: hasFeatureFlag(handle: "notAllowedFlag")
-      }
-    }`,
-      token: 'business-platform-token',
-      organizationId: orgApp.organizationId,
-      variables: {organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId)},
-      unauthorizedHandler: {
-        type: 'token_refresh',
-        handler: expect.any(Function),
-      },
-    })
     const expectedAllowedTemplates = [templateWithoutRules, allowedTemplate]
     expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
   })
@@ -225,17 +215,21 @@ describe('templateSpecifications', () => {
     ]
     const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
     vi.mocked(fetch).mockImplementation(mockedFetch)
-    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
-      organization: {
-        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
-        flag_allowedFlag: true,
+    const mockedFetchFlagsResponse: OrganizationBetaFlagsQuery = {
+      currentUserAccount: {
+        organization: {
+          id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+          name: 'Test Organization',
+          enabledFlags: ['allowedFlag'],
+        },
       },
     }
-    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
     const client = new AppManagementClient()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const businessPlatformRequestSpy = vi.spyOn(client, 'businessPlatformRequest' as any)
+    businessPlatformRequestSpy.mockResolvedValueOnce(mockedFetchFlagsResponse)
     const {groupOrder} = await client.templateSpecifications(orgApp)
 
     // Then
