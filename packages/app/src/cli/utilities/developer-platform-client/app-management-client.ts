@@ -1,9 +1,4 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {
-  OrganizationBetaFlagsQuerySchema,
-  OrganizationBetaFlagsQueryVariables,
-  organizationBetaFlagsQuery,
-} from './app-management-client/graphql/organization_beta_flags.js'
 import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
@@ -76,6 +71,10 @@ import {
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
+import {
+  OrganizationBetaFlags,
+  OrganizationBetaFlagsQueryVariables,
+} from '../../api/graphql/business-platform-destinations/generated/beta-flags.js'
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
@@ -151,7 +150,6 @@ import {
 } from '@shopify/cli-kit/node/api/app-management'
 import {appDevRequestDoc, AppDevRequestOptions} from '@shopify/cli-kit/node/api/app-dev'
 import {
-  businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
   BusinessPlatformOrganizationsRequestOptions,
   businessPlatformRequestDoc,
@@ -1048,17 +1046,15 @@ export class AppManagementClient implements DeveloperPlatformClient {
   ): Promise<{[flag: (typeof allBetaFlags)[number]]: boolean}> {
     const variables: OrganizationBetaFlagsQueryVariables = {
       organizationId: encodedGidFromOrganizationIdForBP(organizationId),
+      flags: allBetaFlags,
     }
-    const flagsResult = await businessPlatformOrganizationsRequest<OrganizationBetaFlagsQuerySchema>({
-      query: organizationBetaFlagsQuery(allBetaFlags),
-      token: await this.businessPlatformToken(),
-      organizationId,
+    const flagsResult = await this.businessPlatformRequest({
+      query: OrganizationBetaFlags,
       variables,
-      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
     const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
-      result[flag] = Boolean(flagsResult.organization[`flag_${flag}`])
+      result[flag] = flagsResult.currentUserAccount?.organization?.enabledFlags.includes(flag) ?? false
     })
     return result
   }
