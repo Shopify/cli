@@ -184,8 +184,6 @@ const knownFailures = {
     '641e9973f085329b5a3ab3ba9e08106365d01cebceb9a9c0760debb82e4f2e82',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/organization.ts':
     '81aa51ec2465be18d8f184820c5965506074a3506865a0064bc3d49d7f4166dd',
-  'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/organization_beta_flags.ts':
-    'feb27126f3f91bac7af3a6fdbd45b7b70e55c6b8f2e94d2200723baa3fccc3ba',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/release-version.ts':
     'f6302376a4d5b06f54caf774dbb9e7cc2a65f5513f23cca4392ddaad903917a1',
   'packages/app/src/cli/utilities/developer-platform-client/app-management-client/graphql/specifications.ts':

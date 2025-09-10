@@ -1,0 +1,9 @@
+query OrganizationBetaFlags($organizationId: OrganizationID!, $flags: [String!]!) {
+  currentUserAccount {
+    organization(id: $organizationId) {
+      id
+      name
+      enabledFlags(flagHandles: $flags)
+    }
+  }
+}
