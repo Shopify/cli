@@ -9,7 +9,7 @@ export type OrganizationBetaFlagsQueryVariables = Types.Exact<{
 }>
 
 export type OrganizationBetaFlagsQuery = {
-  currentUserAccount?: {organization?: {id: string; name: string; enabledFlags: string[]} | null} | null
+  currentUserAccount?: {organization?: {id: string; name: string; enabledFlags: boolean[]} | null} | null
 }
 
 export const OrganizationBetaFlags = {

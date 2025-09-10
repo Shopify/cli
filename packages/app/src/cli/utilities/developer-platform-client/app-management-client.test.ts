@@ -151,7 +151,7 @@ describe('templateSpecifications', () => {
         organization: {
           id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
           name: 'Test Organization',
-          enabledFlags: ['allowedFlag'],
+          enabledFlags: [true, false],
         },
       },
     }
@@ -182,7 +182,7 @@ describe('templateSpecifications', () => {
         organization: {
           id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
           name: 'Test Organization',
-          enabledFlags: ['allowedFlag'],
+          enabledFlags: [true, false],
         },
       },
     }
@@ -217,7 +217,7 @@ describe('templateSpecifications', () => {
         organization: {
           id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
           name: 'Test Organization',
-          enabledFlags: ['allowedFlag'],
+          enabledFlags: [true, false],
         },
       },
     }

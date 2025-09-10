@@ -1053,8 +1053,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
       variables,
     })
     const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
-    allBetaFlags.forEach((flag) => {
-      result[flag] = flagsResult.currentUserAccount?.organization?.enabledFlags.includes(flag) ?? false
+    const enabledFlags = flagsResult.currentUserAccount?.organization?.enabledFlags ?? []
+
+    allBetaFlags.forEach((flag, index) => {
+      result[flag] = enabledFlags[index] === true
     })
     return result
   }
