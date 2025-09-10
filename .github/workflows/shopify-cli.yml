@@ -35,7 +35,15 @@ on:
     branches:
       - main
       - stable/3.*
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'RELEASE_NOTES/**'
   pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'RELEASE_NOTES/**'
   merge_group:
 
 
