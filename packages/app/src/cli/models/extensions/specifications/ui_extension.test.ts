@@ -1099,7 +1099,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
     test('does not set the typeDefinitionsByFile map when api version does not support Remote DOM', async () => {
       const typeDefinitionsByFile = new Map<string, Set<string>>()
       await inTemporaryDirectory(async (tmpDir) => {
-        const {extension, filePath} = await setupUIExtensionWithNodeModules({
+        const {extension} = await setupUIExtensionWithNodeModules({
           tmpDir,
           fileContent: '// TypeScript React code',
           // Non-Remote DOM supported version
@@ -1114,6 +1114,219 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // No shopify.d.ts file should be created
         expect(fileExistsSync(joinPath(tmpDir, 'shopify.d.ts'))).toBe(false)
+      })
+    })
+
+    test('generates types for imported modules when extension has single target', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import './utils/helper.js';
+            import './components/Button.jsx';
+            // Main extension code
+          `,
+          apiVersion: '2025-10',
+        })
+
+        // Create imported files
+        const utilsDir = joinPath(tmpDir, 'src', 'utils')
+        const componentsDir = joinPath(tmpDir, 'src', 'components')
+        await mkdir(utilsDir)
+        await mkdir(componentsDir)
+        await writeFile(joinPath(utilsDir, 'helper.js'), 'export const helper = () => {};')
+        await writeFile(joinPath(componentsDir, 'Button.jsx'), 'export const Button = () => {};')
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '// TypeScript config')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        // Then - should include types for imported modules when single target
+        expect(typeDefinitionsByFile.get(shopifyDtsPath)).toContain(
+          `//@ts-ignore\ndeclare module './src/utils/helper.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+        )
+        expect(typeDefinitionsByFile.get(shopifyDtsPath)).toContain(
+          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+        )
+      })
+    })
+
+    test('generates union types for shared modules when extension has multiple targets', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, nodeModulesPath} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import '../shared/utils.js';
+            // Main extension code
+          `,
+          apiVersion: '2025-10',
+        })
+
+        // Add second target that shares modules
+        const secondTarget = 'admin.orders-details.block.render'
+        const targetPath = joinPath(nodeModulesPath, secondTarget)
+        await mkdir(targetPath)
+        await writeFile(joinPath(targetPath, 'index.js'), '// Mock second target')
+        await writeFile(
+          joinPath(tmpDir, 'src', 'orders.jsx'),
+          `
+          import '../shared/utils.js';
+          // Orders extension code
+        `,
+        )
+
+        extension.configuration.extension_points.push({
+          target: secondTarget,
+          module: './src/orders.jsx',
+          build_manifest: {
+            assets: {
+              main: {
+                module: './src/orders.jsx',
+              },
+            } as any,
+          },
+        })
+
+        // Create shared module
+        const sharedDir = joinPath(tmpDir, 'shared')
+        await mkdir(sharedDir)
+        await writeFile(joinPath(sharedDir, 'utils.js'), 'export const sharedUtil = () => {};')
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '// TypeScript config')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = typeDefinitionsByFile.get(shopifyDtsPath)
+
+        // Then - should generate union type for shared module
+        expect(types).toContain(
+          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api | import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+        )
+      })
+    })
+
+    test('generates non-target-specific types for all files when extension has multiple targets from different surfaces', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension, nodeModulesPath} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import './components/Shared.jsx';
+            // Admin extension code
+          `,
+          apiVersion: '2025-10',
+          target: 'admin.product-details.action.render',
+        })
+
+        // Add checkout target (different surface)
+        const checkoutTarget = 'purchase.checkout.block.render'
+        const checkoutTargetPath = joinPath(nodeModulesPath, checkoutTarget)
+        await mkdir(checkoutTargetPath)
+        await writeFile(joinPath(checkoutTargetPath, 'index.js'), '// Mock checkout target')
+        await writeFile(
+          joinPath(tmpDir, 'src', 'checkout.jsx'),
+          `
+          import './components/Shared.jsx';
+          // Checkout extension code
+        `,
+        )
+
+        extension.configuration.extension_points.push({
+          target: checkoutTarget,
+          module: './src/checkout.jsx',
+          build_manifest: {
+            assets: {
+              main: {
+                module: './src/checkout.jsx',
+              },
+            } as any,
+          },
+        })
+
+        // Create shared component
+        const componentsDir = joinPath(tmpDir, 'src', 'components')
+        await mkdir(componentsDir)
+        await writeFile(joinPath(componentsDir, 'Shared.jsx'), 'export const Shared = () => {};')
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '// TypeScript config')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = typeDefinitionsByFile.get(shopifyDtsPath)
+
+        // Then - should generate union types for shared files
+        // when targets are from different surfaces (admin vs checkout)
+        expect(types).toContain(
+          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api | import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+        )
+      })
+    })
+
+    test('handles TypeScript path mapping aliases when resolving imports', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import '~/utils/helper.js';
+            import '@/components/Button.jsx';
+            // Main extension code using path aliases
+          `,
+          apiVersion: '2025-10',
+        })
+
+        // Create directory structure for aliased paths
+        const utilsDir = joinPath(tmpDir, 'src', 'utils')
+        const componentsDir = joinPath(tmpDir, 'src', 'components')
+        await mkdir(utilsDir)
+        await mkdir(componentsDir)
+        await writeFile(joinPath(utilsDir, 'helper.js'), 'export const helper = () => {};')
+        await writeFile(joinPath(componentsDir, 'Button.jsx'), 'export const Button = () => {};')
+
+        // Create tsconfig.json with path mapping
+        const tsconfigContent = JSON.stringify(
+          {
+            compilerOptions: {
+              baseUrl: '.',
+              paths: {
+                '~/*': ['./src/*'],
+                '@/*': ['./src/*'],
+              },
+            },
+          },
+          null,
+          2,
+        )
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), tsconfigContent)
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+
+        // Then - should resolve aliased imports and include types
+        expect(typeDefinitionsByFile.get(shopifyDtsPath)).toContain(
+          `//@ts-ignore\ndeclare module './src/utils/helper.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+        )
+        expect(typeDefinitionsByFile.get(shopifyDtsPath)).toContain(
+          `//@ts-ignore\ndeclare module './src/components/Button.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+        )
       })
     })
   })
