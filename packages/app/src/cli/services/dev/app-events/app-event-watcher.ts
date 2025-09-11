@@ -83,7 +83,7 @@ export interface AppEvent {
   appWasReloaded?: boolean
 }
 
-type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; uid: string}
+type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; file?: string; uid: string}
 
 /**
  * App event watcher will emit events when changes are detected in the file system.
@@ -248,7 +248,15 @@ export class AppEventWatcher extends EventEmitter {
           // If there is an `errors` array, it's an esbuild error, format it and log it
           // If not, just print the error message to stderr.
           const errors: Message[] = error.errors ?? []
+          let errorMessage = error.message
+          let errorFile: string | undefined
+
           if (errors.length) {
+            // Use the first error for the main message and file
+            const firstError = errors[0]
+            errorMessage = firstError?.text
+            errorFile = firstError?.location?.file
+
             const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: !isUnitTest()})
             formattedErrors.forEach((error) => {
               this.options.stderr.write(error)
@@ -256,7 +264,13 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             this.options.stderr.write(error.message)
           }
-          extEvent.buildResult = {status: 'error', error: error.message, uid: ext.uid}
+
+          extEvent.buildResult = {
+            status: 'error',
+            error: errorMessage,
+            file: errorFile,
+            uid: ext.uid,
+          }
         }
       })
     })
