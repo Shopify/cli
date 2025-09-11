@@ -27,8 +27,6 @@ export function exec(command: string, args: string[] = [], options?: ExecOptions
   const shortCommand = command.split('/').slice(-1).pop() || ''
   const commandProcess = execa(command, args, _options)
 
-  // Only attach debug event handlers if we're in debug mode
-  // Note: We use .pipe() to avoid consuming the data and preventing capture
   if (isDebug && commandProcess.stdout) {
     commandProcess.stdout.on('data', (data: Buffer) => {
       console.log(colors.gray(`${colors.bold(shortCommand)}: ${data.toString()}`))
