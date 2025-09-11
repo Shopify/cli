@@ -16,15 +16,19 @@ import {
   PREFERRED_FUNCTION_RUNNER_VERSION,
   PREFERRED_JAVY_VERSION,
   PREFERRED_JAVY_PLUGIN_VERSION,
+  V1_TRAMPOLINE_VERSION,
+  V2_TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
+
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
   return {
@@ -44,6 +48,19 @@ const derivedDeps = {
 }
 
 const app = testApp({dotenv: {variables: {VAR_FROM_ENV_FILE: 'env_file_var'}, path: ''}})
+
+function createWasmModule(importModuleName: string): Buffer {
+  const importsModuleNameBytes = Array.from(importModuleName).map((char) => char.charCodeAt(0))
+  // Module looks like:
+  // (module
+  //   (import "${importModuleName}" "foo" (func))
+  // )
+  return Buffer.from([
+    ...[0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x01, 0x04, 0x01, 0x60, 0x00, 0x00, 0x02, 0x1b, 0x01, 0x13],
+    ...importsModuleNameBytes,
+    ...[0x03, 0x66, 0x6f, 0x6f, 0x00, 0x00],
+  ])
+}
 
 beforeEach(async () => {
   stderr = {write: vi.fn()}
@@ -266,17 +283,56 @@ describe('runWasmOpt', () => {
 })
 
 describe('runTrampoline', () => {
-  test('runs trampoline on the module', async () => {
+  test('does not run trampoline if no relevant imports', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
     const modulePath = ourFunction.outputPath
+    vi.mocked(readFileSync).mockReturnValue(createWasmModule('bar'))
 
     // When
     const got = runTrampoline(modulePath)
 
     // Then
     await expect(got).resolves.toBeUndefined()
-    expect(exec).toHaveBeenCalledWith(trampolineBinary().path, ['-i', modulePath, '-o', modulePath])
+    expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('runs v1 trampoline on v1 module', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    const modulePath = ourFunction.outputPath
+    vi.mocked(readFileSync).mockReturnValue(createWasmModule('shopify_function_v1'))
+
+    // When
+    const got = runTrampoline(modulePath)
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(trampolineBinary(V1_TRAMPOLINE_VERSION).path, [
+      '-i',
+      modulePath,
+      '-o',
+      modulePath,
+    ])
+  })
+
+  test('runs v2 trampoline on v2 module', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    const modulePath = ourFunction.outputPath
+    vi.mocked(readFileSync).mockReturnValue(createWasmModule('shopify_function_v2'))
+
+    // When
+    const got = runTrampoline(modulePath)
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith(trampolineBinary(V2_TRAMPOLINE_VERSION).path, [
+      '-i',
+      modulePath,
+      '-o',
+      modulePath,
+    ])
   })
 })
 
