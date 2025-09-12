@@ -16,7 +16,10 @@ export function extensionServerReducer(state: ExtensionServerState, action: Exte
       return {
         ...state,
         store: action.payload.store,
-        app: action.payload.app,
+        app: {
+          ...action.payload.app,
+          id: action.payload.app?.id ?? action.payload.appId,
+        },
         extensions,
       } as ExtensionServerState
     }
