@@ -16,7 +16,6 @@ export type FetchSpecificationsQuery = {
     uidStrategy:
       | {appModuleLimit: number; isClientProvided: boolean}
       | {appModuleLimit: number; isClientProvided: boolean}
-      | {appModuleLimit: number; isClientProvided: boolean}
     validationSchema?: {jsonSchema: string} | null
   }[]
 }
