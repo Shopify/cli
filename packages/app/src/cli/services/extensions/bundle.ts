@@ -80,7 +80,6 @@ export async function bundleThemeExtension(
 
 export async function bundleFlowTemplateExtension(extension: ExtensionInstance): Promise<void> {
   const files = await flowTemplateExtensionFiles(extension)
-
   await Promise.all(
     files.map(function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
