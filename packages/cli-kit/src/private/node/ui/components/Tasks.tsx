@@ -28,6 +28,7 @@ interface TasksProps<TContext> {
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
   noColor?: boolean
+  noProgressBar?: boolean
 }
 
 enum TasksState {
@@ -69,6 +70,7 @@ function Tasks<TContext>({
   onComplete = noop,
   abortSignal,
   noColor,
+  noProgressBar = false,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
   const {twoThirds} = useLayout()
   let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
@@ -128,7 +130,7 @@ function Tasks<TContext>({
 
   return state === TasksState.Loading && !isAborted ? (
     <Box flexDirection="column">
-      <TextAnimation text={loadingBar} maxWidth={twoThirds} />
+      {!noProgressBar && <TextAnimation text={loadingBar} maxWidth={twoThirds} />}
       <Text>{currentTask.title} ...</Text>
     </Box>
   ) : null

@@ -16,17 +16,13 @@ import {
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import type {Writable} from 'stream'
 
 export interface FlagValues {
   [key: string]: boolean | string | string[] | number | undefined
-}
-interface PassThroughFlagsOptions {
-  // Only pass on flags that are relevant to CLI2
-  allowedFlags?: string[]
 }
 interface ValidEnvironment {
   environment: EnvironmentName
@@ -51,22 +47,6 @@ type EnvironmentName = string
 export type RequiredFlags = (string | string[])[] | null
 
 export default abstract class ThemeCommand extends Command {
-  passThroughFlags(flags: FlagValues, {allowedFlags}: PassThroughFlagsOptions): string[] {
-    const passThroughFlags: string[] = []
-    for (const [label, value] of Object.entries(flags)) {
-      if (!(allowedFlags ?? []).includes(label)) {
-        continue
-      } else if (typeof value === 'boolean') {
-        if (value) passThroughFlags.push(`--${label}`)
-      } else if (Array.isArray(value)) {
-        value.forEach((element) => passThroughFlags.push(`--${label}`, element))
-      } else {
-        passThroughFlags.push(`--${label}`, `${value}`)
-      }
-    }
-    return passThroughFlags
-  }
-
   environmentsFilename(): string {
     return configurationFileName
   }
@@ -156,6 +136,10 @@ export default abstract class ThemeCommand extends Command {
         environmentFlags.store = await normalizeStoreFqdn(environmentFlags.store)
       }
 
+      if (environmentFlags?.path && typeof environmentFlags.path === 'string') {
+        environmentFlags.path = resolvePath(environmentFlags.path)
+      }
+
       environmentMap.set(environmentName, {
         ...flags,
         ...environmentFlags,
@@ -224,7 +208,9 @@ export default abstract class ThemeCommand extends Command {
         const flagDetails = requiredFlags
           .map((flag) => {
             const usedFlag = Array.isArray(flag) ? flag.find((flag) => flags[flag]) : flag
-            return usedFlag && [usedFlag.includes('password') ? usedFlag : `${usedFlag}: ${flags[usedFlag]}`]
+            if (usedFlag === 'password') return `password`
+            if (usedFlag === 'path' && typeof flags.path === 'string') return `path: ..${flags.path.slice(-12)}`
+            return usedFlag && `${usedFlag}: ${flags[usedFlag]}`
           })
           .join(', ')
 
@@ -283,6 +269,7 @@ export default abstract class ThemeCommand extends Command {
         })),
         abortSignal: abortController.signal,
         showTimestamps: true,
+        renderOptions: {stdout: process.stderr},
       })
     }
   }

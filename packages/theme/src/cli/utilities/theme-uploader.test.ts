@@ -7,12 +7,15 @@ import {
   updateUploadErrors,
 } from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {renderTasksToStdErr} from './theme-ui.js'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('./theme-ui.js')
 
 beforeEach(() => {
   vi.mocked(deleteThemeAssets).mockImplementation(() => Promise.resolve([]))
@@ -614,6 +617,41 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+  })
+})
+
+describe('task progress rendering', () => {
+  const theme = {id: 1, name: 'Amazing Theme', createdAtRuntime: false, processing: false, role: ''}
+  const adminSession = {token: '', storeFqdn: 'test-store.myshopify.com'}
+
+  test('should use renderTasksToStdErr', async () => {
+    // Given
+    const remote: Checksum[] = []
+    const local = fakeThemeFileSystem('tmp', new Map())
+    const uploadOptions = {nodelete: false, multiEnvironment: false}
+
+    // When
+    const {renderThemeSyncProgress} = uploadTheme(theme, adminSession, remote, local, uploadOptions)
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(vi.mocked(renderTasksToStdErr)).toHaveBeenCalled()
+  })
+
+  describe('when multiEnvironment is true', () => {
+    test('should not display progress bar', async () => {
+      // Given
+      const remote: Checksum[] = []
+      const local = fakeThemeFileSystem('tmp', new Map())
+      const uploadOptions = {nodelete: false, multiEnvironment: true}
+
+      // When
+      const {renderThemeSyncProgress} = uploadTheme(theme, adminSession, remote, local, uploadOptions)
+      await renderThemeSyncProgress()
+
+      // Then
+      expect(vi.mocked(renderTasksToStdErr)).toHaveBeenCalledWith(expect.any(Array), undefined, true)
+    })
   })
 })
 
