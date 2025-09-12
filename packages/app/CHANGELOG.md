@@ -1,5 +1,28 @@
 # @shopify/app
 
+## 3.85.0
+
+### Patch Changes
+
+- 9ccd361: Do not require authentication for shopify app config use
+- a60f23e: Show IDs next to organization names when there are duplicates
+- f148928: Modify app access config update message for legacy install flow
+- Updated dependencies [7f54a36]
+- Updated dependencies [87bedd2]
+- Updated dependencies [84a7b10]
+- Updated dependencies [a883d5b]
+- Updated dependencies [74fc99c]
+- Updated dependencies [9966ba6]
+- Updated dependencies [c12289e]
+- Updated dependencies [abff4d4]
+- Updated dependencies [be916a1]
+- Updated dependencies [1416fe1]
+- Updated dependencies [1ee6a38]
+- Updated dependencies [f1f5581]
+  - @shopify/theme@3.85.0
+  - @shopify/cli-kit@3.85.0
+  - @shopify/plugin-cloudflare@3.85.0
+
 ## 3.84.0
 
 ### Minor Changes
