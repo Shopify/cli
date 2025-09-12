@@ -1,6 +1,6 @@
 import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
-import {installJavy} from './function/build.js'
+import {installBuildTools} from './function/build.js'
 import {AppInterface, Web} from '../models/app/app.js'
 import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -22,9 +22,9 @@ async function build(options: BuildOptions) {
     env.SHOPIFY_API_KEY = options.apiKey
   }
 
-  // Force the download of the javy binary in advance to avoid later problems,
+  // Force the download of the build tool binaries in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
-  await installJavy(options.app)
+  await installBuildTools(options.app)
 
   await renderConcurrent({
     processes: [

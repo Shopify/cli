@@ -139,11 +139,11 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('skips installing Javy for function extensions when skipBuild is true', async () => {
+  test('skips installing build tools for function extensions when skipBuild is true', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
-      const mockInstallJavy = vi.mocked(functionBuild.installJavy)
+      const mockInstallBuildTools = vi.mocked(functionBuild.installBuildTools)
 
       const functionExtension = await testFunctionExtension()
       const extensionCopyIntoBundleMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
@@ -171,15 +171,15 @@ describe('bundleAndBuildExtensions', () => {
       })
 
       // Then
-      expect(mockInstallJavy).not.toHaveBeenCalled()
+      expect(mockInstallBuildTools).not.toHaveBeenCalled()
     })
   })
 
-  test('installs Javy for function extensions when skipBuild is false', async () => {
+  test('installs build tools for function extensions when skipBuild is false', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
-      const mockInstallJavy = vi.mocked(functionBuild.installJavy)
+      const mockInstallBuildTools = vi.mocked(functionBuild.installBuildTools)
 
       const functionExtension = await testFunctionExtension()
       const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory, identifiers) => {
@@ -207,7 +207,7 @@ describe('bundleAndBuildExtensions', () => {
       })
 
       // Then
-      expect(mockInstallJavy).toHaveBeenCalledWith(app)
+      expect(mockInstallBuildTools).toHaveBeenCalledWith(app)
     })
   })
 

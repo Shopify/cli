@@ -301,11 +301,17 @@ export async function runJavy(
   })
 }
 
-export async function installJavy(app: AppInterface) {
+export async function installBuildTools(app: AppInterface) {
   const extensions = app.allExtensions.filter((ext) => ext.features.includes('function') && ext.isJavaScript)
 
+  const downloadPromises: Promise<void>[] = []
+  downloadPromises.push(downloadBinary(trampolineBinary()))
+  downloadPromises.push(downloadBinary(wasmOptBinary()))
+
+  const jsExtensions = extensions.filter((ext) => ext.isJavaScript)
+
   // Get the dependencies for each extension
-  const depsPromises = extensions.map((ext) => {
+  const depsPromises = jsExtensions.map((ext) => {
     return validateShopifyFunctionPackageVersion(ext as ExtensionInstance<FunctionConfigType>)
   })
   const deps = await Promise.all(depsPromises)
@@ -318,8 +324,7 @@ export async function installJavy(app: AppInterface) {
     javyPluginDeps.add(dep.javyPlugin)
   })
 
-  // Setup our download promises
-  const downloadPromises: Promise<void>[] = []
+  // Setup javy download promises
   javyDeps.forEach((javyDepVersion) => {
     downloadPromises.push(downloadBinary(javyBinary(javyDepVersion)))
   })

@@ -1,6 +1,6 @@
 import {AppInterface, AppManifest} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
-import {installJavy} from '../function/build.js'
+import {installBuildTools} from '../function/build.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {mkdir, rmdir} from '@shopify/cli-kit/node/fs'
@@ -24,10 +24,10 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
 
   await writeManifestToBundle(options.appManifest, bundleDirectory)
 
-  // Force the download of the javy binary in advance to avoid later problems,
+  // Force the download of the build tool binaries in advance to avoid later problems,
   // as it might be done multiple times in parallel. https://github.com/Shopify/cli/issues/2877
   if (!options.skipBuild) {
-    await installJavy(options.app)
+    await installBuildTools(options.app)
   }
 
   await renderConcurrent({
