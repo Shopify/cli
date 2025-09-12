@@ -10,21 +10,15 @@ import {
 import fs from 'fs/promises'
 import path from 'path'
 
-export async function validateFixtures(fixture: any, schemaPath: string) {
+export async function validateFixtures(fixture: any, schemaPath: string, inputQueryPath: string) {
   const errors: any[] = []
 
-  console.log('VALIDATING INPUT QUERY AGAINST SCHEMA')
-  const testsDir = __dirname // /path/to/function/tests/helpers
-  const functionDir = path.dirname(path.dirname(testsDir)) // /path/to/function
-  const inputQueryPath = path.join(functionDir, fixture.query) // /path/to/function/src/run.graphql
   const inputQueryString = await fs.readFile(inputQueryPath, 'utf8')
   const inputQueryAST = parse(inputQueryString)
   const schemaString = await fs.readFile(schemaPath, 'utf8')
   const schema = buildSchema(schemaString)
   validateInputQuery(schema, inputQueryAST) // works
-  console.log('--------------------------------')
 
-  console.log('VALIDATING OUTPUT FIXTURE AGAINST SCHEMA')
   const outputFixtureObject = fixture.expectedOutput
 
   let resultTypeName = 'Unknown'

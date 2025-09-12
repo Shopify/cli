@@ -18,10 +18,10 @@ describe("Default Integration Test", () => {
 
       const functionDir = path.dirname(__dirname);
 
-
       const schemaPath = path.join(functionDir, "schema.graphql");
+      const inputQueryPath = path.join(functionDir, "src/run.graphql");
 
-      await validateFixtures(fixture, schemaPath);
+      await validateFixtures(fixture, schemaPath, inputQueryPath);
 
       const runResult = await runFunction(
         fixture.export,
