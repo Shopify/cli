@@ -22,7 +22,7 @@ declare global {
 
     interface InboundEvents extends DispatchEvents {
       dispatch: {type: keyof DispatchEvents; payload: DispatchEvents[keyof DispatchEvents]}
-      connected: {extensions: ExtensionPayload[]; app?: App; store: string}
+      connected: {extensions: ExtensionPayload[]; app?: App; store: string; appId?: string}
       update: {extensions?: ExtensionPayload[]; app?: App}
     }
 
