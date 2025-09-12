@@ -126,6 +126,7 @@ export const pollAppLogs = async ({
         storeName,
         organizationId,
         abortSignal,
+        appDirectory,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -149,6 +150,7 @@ export const pollAppLogs = async ({
         storeName,
         organizationId,
         abortSignal,
+        appDirectory,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })

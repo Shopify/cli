@@ -37,10 +37,14 @@ export const writeAppLogsToFile = async ({
   let fullOutputPath: string
   const logContent = toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName})
 
+  stdout.write(`writeAppLogsToFile: appDirectory = ${appDirectory}\n`)
+
   if (appDirectory) {
     // Use .shopify/logs directory within the app
     const shopifyDir = await getOrCreateHiddenShopifyFolder(appDirectory)
-    const logsDir = joinPath(shopifyDir, 'logs')
+    const logsDir = joinPath(shopifyDir, 'logs', apiKey)
+
+    stdout.write(`Using app directory logs: ${logsDir}\n`)
 
     // Ensure logs directory exists
     await mkdir(logsDir)
