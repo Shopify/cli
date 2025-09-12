@@ -1,0 +1,8 @@
+{
+  "current": {
+    "store_name": "Development Store",
+    "theme_color": "#2563eb", 
+    "enable_cart_drawer": true,
+    "environment": "development"
+  }
+}
