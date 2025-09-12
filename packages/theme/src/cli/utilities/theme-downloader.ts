@@ -4,9 +4,11 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {Writable} from 'stream'
 
 interface DownloadOptions {
   nodelete: boolean
+  multiEnvironment?: boolean
 }
 
 export async function downloadTheme(
@@ -15,14 +17,18 @@ export async function downloadTheme(
   remoteChecksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: DownloadOptions,
+  context?: {stdout?: Writable; stderr?: Writable},
 ) {
   const deleteTasks = buildDeleteTasks(remoteChecksums, themeFileSystem, options)
   const downloadTasks = buildDownloadTasks(remoteChecksums, theme, themeFileSystem, session)
 
-  const tasks = [...deleteTasks, ...downloadTasks]
+  const tasks = [...deleteTasks, ...downloadTasks, {title: `Theme download complete`, task: async () => {}}]
 
   if (tasks.length > 0) {
-    await renderTasks(tasks)
+    await renderTasks(tasks, {
+      renderOptions: {stdout: (context?.stdout ?? process.stdout) as NodeJS.WriteStream},
+      noProgressBar: options.multiEnvironment,
+    })
   }
 }
 
@@ -65,7 +71,7 @@ function buildDownloadTasks(
   const filenames = checksums.map((checksum) => checksum.key)
 
   const getProgress = (params: {current: number; total: number}) =>
-    `[${Math.round((params.current / params.total) * 100)}%]`
+    params.total === 0 ? `[100%]` : `[${Math.round((params.current / params.total) * 100)}%]`
 
   const batches = batchedTasks(filenames, MAX_GRAPHQL_THEME_FILES, (batchedFilenames, i) => {
     const title = `Downloading files from remote theme ${getProgress({
