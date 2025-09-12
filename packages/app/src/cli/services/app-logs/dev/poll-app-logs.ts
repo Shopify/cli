@@ -29,6 +29,7 @@ export const pollAppLogs = async ({
   storeName,
   organizationId,
   abortSignal,
+  appDirectory,
 }: {
   stdout: Writable
   appLogsFetchInput: AppLogsOptions
@@ -38,6 +39,7 @@ export const pollAppLogs = async ({
   storeName: string
   organizationId: string
   abortSignal?: AbortSignal
+  appDirectory?: string
 }) => {
   if (abortSignal?.aborted) {
     return
@@ -72,6 +74,7 @@ export const pollAppLogs = async ({
             apiKey,
             stdout,
             storeName,
+            appDirectory,
           })
           stdout.write(
             outputContent`${outputToken.gray('└ ')}${outputToken.link(
@@ -123,6 +126,7 @@ export const pollAppLogs = async ({
         storeName,
         organizationId,
         abortSignal,
+        appDirectory,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -146,6 +150,7 @@ export const pollAppLogs = async ({
         storeName,
         organizationId,
         abortSignal,
+        appDirectory,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
