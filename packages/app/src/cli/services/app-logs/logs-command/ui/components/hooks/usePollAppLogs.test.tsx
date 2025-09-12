@@ -37,6 +37,7 @@ const OUTPUT = {test: 'output'}
 const INPUT = {test: 'input'}
 const INPUT_BYTES = 10
 const OUTPUT_BYTES = 10
+const TARGET = 'test.run'
 
 const NETWORK_ACCESS_HTTP_REQUEST = {
   url: 'https://api.example.com/hello',
@@ -100,6 +101,7 @@ const POLL_APP_LOGS_FOR_LOGS_RESPONSE = {
         function_id: FUNCTION_ID,
         logs: LOGS,
         fuel_consumed: FUEL_CONSUMED,
+        target: TARGET,
       }),
       log_type: LOG_TYPE,
       cursor: RETURNED_CURSOR,
