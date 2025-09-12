@@ -14,6 +14,7 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
+import {Writable} from 'stream'
 
 interface PullOptions {
   path: string
@@ -21,6 +22,8 @@ interface PullOptions {
   force: boolean
   only?: string[]
   ignore?: string[]
+  environment?: string
+  multiEnvironment?: boolean
 }
 
 export interface PullFlags {
@@ -83,6 +86,11 @@ export interface PullFlags {
    * Increase the verbosity of the output.
    */
   verbose?: boolean
+
+  /**
+   * The environment to pull from.
+   */
+  environment?: string[]
 }
 
 /**
@@ -91,19 +99,25 @@ export interface PullFlags {
  *
  * @param flags - All flags are optional.
  */
-export async function pull(flags: PullFlags): Promise<void> {
+export async function pull(
+  flags: PullFlags,
+  session?: AdminSession,
+  multiEnvironment?: boolean,
+  context?: {stdout?: Writable; stderr?: Writable},
+): Promise<void> {
   recordTiming('theme-service:pull:setup')
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
-  const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  // when pull is used programmatically, we don't have an admin session, so need to create one
+  const adminSession =
+    session ?? (await ensureAuthenticatedThemes(ensureThemeStore({store: flags.store}), flags.password))
 
   const developmentThemeManager = new DevelopmentThemeManager(adminSession)
   const developmentTheme = await (flags.development ? developmentThemeManager.find() : developmentThemeManager.fetch())
 
-  const {path, nodelete, live, development, only, ignore, force} = flags
+  const {path, nodelete, live, development, only, ignore, force, environment} = flags
 
-  if (!(await validateDirectory(path ?? cwd(), force ?? false))) {
+  if (!(await validateDirectory(path ?? cwd(), force ?? false, environment?.[0], multiEnvironment))) {
     return
   }
 
@@ -116,13 +130,20 @@ export async function pull(flags: PullFlags): Promise<void> {
   })
   recordTiming('theme-service:pull:setup')
 
-  await executePull(theme, adminSession, {
-    path: path ?? cwd(),
-    nodelete: nodelete ?? false,
-    only: only ?? [],
-    ignore: ignore ?? [],
-    force: force ?? false,
-  })
+  await executePull(
+    theme,
+    adminSession,
+    {
+      environment: environment?.[0],
+      force: force ?? false,
+      ignore: ignore ?? [],
+      multiEnvironment,
+      nodelete: nodelete ?? false,
+      only: only ?? [],
+      path: path ?? cwd(),
+    },
+    context,
+  )
 }
 
 /**
@@ -132,7 +153,12 @@ export async function pull(flags: PullFlags): Promise<void> {
  * @param session - the admin session to access the API and download the theme
  * @param options - the options that modify how the theme gets downloaded
  */
-async function executePull(theme: Theme, session: AdminSession, options: PullOptions) {
+async function executePull(
+  theme: Theme,
+  session: AdminSession,
+  options: PullOptions,
+  context?: {stdout?: Writable; stderr?: Writable},
+) {
   recordTiming('theme-service:pull:file-system')
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
   const [remoteChecksums] = await Promise.all([fetchChecksums(theme.id, session), themeFileSystem.ready()])
@@ -142,9 +168,11 @@ async function executePull(theme: Theme, session: AdminSession, options: PullOpt
   const store = session.storeFqdn
   const themeId = theme.id
 
-  await downloadTheme(theme, session, themeChecksums, themeFileSystem, options)
+  await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
 
+  const header = options.environment ? `Environment: ${options.environment}` : ''
   renderSuccess({
+    headline: header,
     body: ['The theme', ...themeComponent(theme), 'has been pulled.'],
     nextSteps: [
       [
@@ -190,7 +218,7 @@ export async function isEmptyDir(path: string) {
  * @param force - Whether to force the pull operation.
  * @returns Whether the directory is valid.
  */
-async function validateDirectory(path: string, force: boolean) {
+async function validateDirectory(path: string, force: boolean, environment?: string, multiEnvironment?: boolean) {
   if (force) return true
 
   /**
@@ -202,7 +230,7 @@ async function validateDirectory(path: string, force: boolean) {
   if (
     !(await isEmptyDir(path)) &&
     !(await hasRequiredThemeDirectories(path)) &&
-    !(await ensureDirectoryConfirmed(force))
+    !(await ensureDirectoryConfirmed(force, undefined, environment, multiEnvironment))
   ) {
     return false
   }
@@ -217,7 +245,9 @@ async function validateDirectory(path: string, force: boolean) {
     dirtyDirectory &&
     !(await ensureDirectoryConfirmed(
       force,
-      'The current Git directory has uncommitted changes. Do you want to proceed?',
+      'The current Git directory has uncommitted changes.',
+      environment,
+      multiEnvironment,
     ))
   ) {
     return false
