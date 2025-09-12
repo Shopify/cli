@@ -12,6 +12,7 @@ export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'busi
 
 const DEFAULT_RETRY_DELAY_MS = 1000
 const DEFAULT_RETRY_LIMIT = 10
+// Intentionally no truncation for local debugging
 
 export type NetworkRetryBehaviour =
   | {
@@ -67,6 +68,76 @@ type VerboseResponse<T> =
   | UnknownErrorResponse
   | CanRetryErrorResponse
   | UnauthorizedErrorResponse
+
+function debugStatusCodeFromResult<T extends {headers: Headers; status: number}>(
+  result: VerboseResponse<T>,
+): number | undefined {
+  switch (result.status) {
+    case 'ok':
+      return result.response.status
+    case 'client-error':
+    case 'unauthorized':
+    case 'can-retry':
+      return result.clientError?.response?.status as unknown as number | undefined
+    default:
+      return undefined
+  }
+}
+
+/**
+ * Attempt to read a textual body from a response for debug logging without consuming streams.
+ * Handles both success and error cases. Best-effort only.
+ */
+async function debugBodyFromResult<T extends {headers: Headers; status: number}>(
+  result: VerboseResponse<T>,
+): Promise<string | undefined> {
+  if (result.status !== 'ok') {
+    // try to extract data/errors from GraphQL client errors
+    if (result.status === 'client-error' || result.status === 'unauthorized' || result.status === 'can-retry') {
+      const ce = result.clientError
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorResponse: any = ce?.response
+      try {
+        if (errorResponse?.data) return JSON.stringify(errorResponse.data, null, 2)
+        if (errorResponse?.errors) return JSON.stringify(errorResponse.errors, null, 2)
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        // ignore stringify errors
+      }
+      return ce?.message
+    }
+    if (result.status === 'unknown-error') {
+      try {
+        return String(result.error)
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        return undefined
+      }
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const responseAny = result.response as any
+  try {
+    if (typeof responseAny?.clone === 'function' && typeof responseAny?.text === 'function') {
+      const cloned = responseAny.clone()
+      const text = await cloned.text()
+      return text
+    }
+    // GraphQL requests (via graphql-request) return an object with a `data` property
+    if (responseAny && typeof responseAny === 'object' && 'data' in responseAny) {
+      try {
+        return JSON.stringify(responseAny.data, null, 2)
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        // ignore JSON stringify issues
+      }
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // ignore body logging errors
+  }
+  return undefined
+}
 
 function isARetryableNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
@@ -220,9 +291,22 @@ export async function simpleRequestWithDebugLog<T extends {headers: Headers; sta
 ): Promise<T> {
   const result = await makeVerboseRequest(requestOptions)
 
+  let bodyPreview: string | undefined
+  try {
+    bodyPreview = await debugBodyFromResult(result)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // ignore body preview errors
+  }
+
+  const httpStatus = debugStatusCodeFromResult(result)
+
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
+With HTTP status: ${httpStatus ?? 'unknown'}
 With response headers:
 ${result.sanitizedHeaders}
+With response body:
+${bodyPreview ?? ''}
     `)
 
   switch (result.status) {
@@ -293,9 +377,22 @@ export async function retryAwareRequest<T extends {headers: Headers; status: num
 
   let result = await makeVerboseRequest(requestOptions)
 
+  let bodyPreview: string | undefined
+  try {
+    bodyPreview = await debugBodyFromResult(result)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // ignore body preview errors
+  }
+
+  const httpStatus = debugStatusCodeFromResult(result)
+
   outputDebug(`Request to ${result.sanitizedUrl} completed in ${result.duration} ms
+With HTTP status: ${httpStatus ?? 'unknown'}
 With response headers:
 ${result.sanitizedHeaders}
+With response body:
+${bodyPreview ?? ''}
     `)
 
   while (true) {
