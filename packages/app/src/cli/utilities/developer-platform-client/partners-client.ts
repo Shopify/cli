@@ -14,7 +14,11 @@ import {
   AppLogsResponse,
   createUnauthorizedHandler,
 } from '../developer-platform-client.js'
-import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {
+  fetchCurrentAccountInformation,
+  getAlias,
+  PartnersSession,
+} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -159,7 +163,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedPartners, updateSessionAliasIfEmpty} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -239,6 +243,8 @@ export class PartnersClient implements DeveloperPlatformClient {
       }
       const accountInfo = await fetchCurrentAccountInformation(this, userId)
       this._session = {token, businessPlatformToken: '', accountInfo, userId}
+
+      await updateSessionAliasIfEmpty(userId, getAlias(accountInfo))
     }
     return this._session
   }
@@ -623,13 +629,13 @@ export class PartnersClient implements DeveloperPlatformClient {
 
       if (!response.ok) {
         return {
-          errors: data.errors || [`Request failed with status ${response.status}`],
+          errors: data.errors ?? [`Request failed with status ${response.status}`],
           status: response.status,
         }
       }
 
       return {
-        app_logs: data.app_logs || [],
+        app_logs: data.app_logs ?? [],
         cursor: data.cursor,
         status: response.status,
       }
