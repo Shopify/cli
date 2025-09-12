@@ -50,6 +50,11 @@ export default class Deploy extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_NO_BUILD',
       default: false,
     }),
+    'skip-tests': Flags.boolean({
+      description: 'Skip running function tests before deployment.',
+      env: 'SHOPIFY_FLAG_SKIP_TESTS',
+      default: false,
+    }),
     message: Flags.string({
       hidden: false,
       description:
@@ -118,6 +123,7 @@ export default class Deploy extends AppLinkedCommand {
       version: flags.version,
       commitReference: flags['source-control-url'],
       skipBuild: flags['no-build'],
+      skipTests: flags['skip-tests'],
     })
 
     return {app: result.app}
