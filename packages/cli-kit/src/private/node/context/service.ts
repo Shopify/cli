@@ -24,3 +24,13 @@ export function serviceEnvironment(env = process.env): Environment {
     return Environment.Production
   }
 }
+
+/**
+ * Returns true if the environment is local.
+ *
+ * @param env - Environment variables.
+ * @returns True if the environment is local.
+ */
+export function isLocalEnvironment(env = process.env): boolean {
+  return serviceEnvironment(env) === Environment.Local
+}

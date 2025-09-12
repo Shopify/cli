@@ -3,6 +3,7 @@ import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/lo
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
 import {hashString} from '../../public/node/crypto.js'
+import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {settings} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -23,6 +24,7 @@ vi.mock('@bugsnag/js', () => {
 vi.mock('./cli.js')
 vi.mock('./context/local.js')
 vi.mock('../../public/node/crypto.js')
+vi.mock('../../private/node/context/service.js')
 vi.mock('@oclif/core', () => ({
   settings: {
     debug: false,
@@ -37,8 +39,8 @@ beforeEach(() => {
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
   vi.mocked(isUnitTest).mockReturnValue(true)
   onNotify.mockClear()
-  delete process.env.SHOPIFY_SERVICE_ENV
   vi.mocked(settings).debug = false
+  vi.mocked(isLocalEnvironment).mockReturnValue(false)
 })
 
 describe('errorHandler', async () => {
@@ -119,9 +121,9 @@ describe('bugsnag metadata', () => {
 })
 
 describe('skips sending errors to Bugsnag', () => {
-  test('when SHOPIFY_SERVICE_ENV is local', async () => {
+  test('when using local services', async () => {
     // Given
-    process.env.SHOPIFY_SERVICE_ENV = 'local'
+    vi.mocked(isLocalEnvironment).mockReturnValue(true)
     const mockOutput = mockAndCaptureOutput()
     const toThrow = new Error('In test')
 
