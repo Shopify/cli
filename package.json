@@ -22,7 +22,7 @@
     "lint": "nx run-many --target=lint --all --skip-nx-cache",
     "create-homebrew-pr": "bin/create-homebrew-pr.js",
     "refresh-code-documentation": "nx run-many --target=refresh-code-documentation --all --skip-nx-cache",
-    "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme",
+    "refresh-manifests": "nx run-many --target=refresh-manifests --all --skip-nx-cache && bin/prettify-manifests.js && pnpm refresh-readme && node bin/upload-sourcemaps-all.js",
     "refresh-readme": "nx run-many --target=refresh-readme --all --skip-nx-cache",
     "release": "./bin/release",
     "post-release": "./bin/post-release",

@@ -45,7 +45,7 @@
     "clean": "nx clean",
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
-    "prepack": "NODE_ENV=production node ../../bin/update-bugsnag create-app && cp ../../README.md README.md",
+    "prepack": "cp ../../README.md README.md",
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
