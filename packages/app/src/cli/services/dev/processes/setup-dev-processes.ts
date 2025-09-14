@@ -202,7 +202,7 @@ export async function setupDevProcesses({
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
-  const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort, network.reverseProxyCert)
+  const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort, network.reverseProxyCert, commandOptions)
 
   return {
     processes: processesWithProxy,
@@ -219,7 +219,8 @@ const stripUndefineds = <T>(process: T | undefined | false): process is T => {
 async function setPortsAndAddProxyProcess(
   processes: DevProcesses,
   proxyPort: number,
-  reverseProxyCert?: LocalhostCert,
+  reverseProxyCert: LocalhostCert | undefined,
+  commandOptions: DevOptions,
 ): Promise<DevProcesses> {
   // Convert processes that use proxying to have a port number and register their mapping rules
   const processesAndRules = await Promise.all(
