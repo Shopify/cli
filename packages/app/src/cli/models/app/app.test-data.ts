@@ -325,6 +325,7 @@ export async function testAppConfigExtensions(emptyConfig = false, directory?: s
 export async function testAppAccessConfigExtension(
   emptyConfig = false,
   directory?: string,
+  useLegacyInstallFlow = true,
 ): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
@@ -334,7 +335,7 @@ export async function testAppAccessConfigExtension(
         },
         access_scopes: {
           scopes: 'read_products,write_products',
-          use_legacy_install_flow: true,
+          use_legacy_install_flow: useLegacyInstallFlow,
         },
         auth: {
           redirect_urls: ['https://example.com/auth/callback'],
