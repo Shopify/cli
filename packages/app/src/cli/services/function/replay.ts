@@ -54,7 +54,10 @@ export async function replay(options: ReplayOptions) {
 
   try {
     const apiKey = options.app.configuration.client_id
-    const functionRunsDir = joinPath(getLogsDir(), apiKey)
+    
+    // First try app's .shopify/logs directory, then fall back to system logs
+    const appLogsDir = joinPath(app.directory, '.shopify', 'logs', apiKey)
+    const functionRunsDir = existsSync(appLogsDir) ? appLogsDir : joinPath(getLogsDir(), apiKey)
 
     const selectedRun = options.log
       ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
