@@ -447,11 +447,7 @@ export class App<
   }
 
   getLogsDir() {
-    // Create directory name using app name + partial client_id for uniqueness
-    const clientId = String(this.configuration.client_id || 'unknown')
-    const shortClientId = clientId.substring(0, 8)
-    const dirName = `${this.name}-${shortClientId}`
-    return joinPath(this.directory, '.shopify', 'logs', dirName)
+    return joinPath(this.directory, '.shopify', 'logs')
   }
 
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
