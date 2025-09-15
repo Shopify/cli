@@ -55,13 +55,3 @@ export async function fetchCurrentAccountInformation(
     return {type: 'UnknownAccount'}
   }
 }
-
-export function getAlias(account: AccountInfo): string | undefined {
-  if (isUserAccount(account)) {
-    return account.email
-  }
-  if (isServiceAccount(account)) {
-    return account.orgName
-  }
-  return undefined
-}
