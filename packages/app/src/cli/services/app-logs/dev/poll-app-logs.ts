@@ -39,7 +39,7 @@ export const pollAppLogs = async ({
   storeName: string
   organizationId: string
   abortSignal?: AbortSignal
-  appDirectory?: string
+  appDirectory: string
 }) => {
   if (abortSignal?.aborted) {
     return

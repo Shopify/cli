@@ -8,7 +8,6 @@ import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
@@ -54,10 +53,7 @@ export async function replay(options: ReplayOptions) {
 
   try {
     const apiKey = options.app.configuration.client_id
-    
-    // First try app's .shopify/logs directory, then fall back to system logs
-    const appLogsDir = joinPath(app.directory, '.shopify', 'logs', apiKey)
-    const functionRunsDir = existsSync(appLogsDir) ? appLogsDir : joinPath(getLogsDir(), apiKey)
+    const functionRunsDir = joinPath(app.directory, '.shopify', 'logs', apiKey)
 
     const selectedRun = options.log
       ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)
