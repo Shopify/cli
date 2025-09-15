@@ -232,7 +232,6 @@ ${outputToken.json(applications)}
   }
 
   const completeSession = {...currentSession, ...newSession} as Session
-  completeSession.identity.alias = alias ?? currentSession?.identity.alias
   const newSessionId = completeSession.identity.userId
   const updatedSessions: Sessions = {
     ...sessions,

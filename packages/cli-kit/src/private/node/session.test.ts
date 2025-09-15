@@ -504,28 +504,17 @@ describe('ensureAuthenticated alias functionality', () => {
     expect(got).toEqual(validTokens)
   })
 
-  test('sets alias during refresh token flow', async () => {
+  test('preserves existing alias during refresh token flow', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    const expectedSessionWithAlias = {
-      ...validSessions,
-      [fqdn]: {
-        [userId]: {
-          ...validSessions[fqdn]![userId]!,
-          identity: {
-            ...validSessions[fqdn]![userId]!.identity,
-            alias: 'updated-alias',
-          },
-        },
-      },
-    }
 
     // When
     const got = await ensureAuthenticated(defaultApplications, process.env, {alias: 'updated-alias'})
 
     // Then
-    expect(storeSessions).toBeCalledWith(expectedSessionWithAlias)
+    // The alias parameter is ignored during refresh - the session keeps its existing alias
+    expect(storeSessions).toBeCalledWith(validSessions)
     expect(got).toEqual(validTokens)
   })
 
