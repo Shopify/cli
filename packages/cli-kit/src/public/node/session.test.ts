@@ -5,7 +5,6 @@ import {
   ensureAuthenticatedPartners,
   ensureAuthenticatedStorefront,
   ensureAuthenticatedThemes,
-  updateSessionAliasIfEmpty,
 } from './session.js'
 
 import {getPartnersToken} from './environment.js'
@@ -16,7 +15,6 @@ import {
   exchangeCliTokenForAppManagementAccessToken,
   exchangeCliTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
-import * as sessionStore from '../../private/node/session/store.js'
 import {vi, describe, expect, test} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -271,49 +269,5 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       businessPlatformToken: 'business-platform-token',
     })
     expect(ensureAuthenticated).not.toHaveBeenCalled()
-  })
-})
-
-describe('updateSessionAliasIfEmpty', () => {
-  test('updates alias when current alias is empty', async () => {
-    // Given
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue(undefined)
-
-    // When
-    await updateSessionAliasIfEmpty('user1', 'New Alias')
-
-    // Then
-    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('user1')
-    expect(sessionStore.updateSessionAlias).toHaveBeenCalledWith('user1', 'New Alias')
-  })
-
-  test('does not update alias when current alias exists', async () => {
-    // Given
-    vi.mocked(sessionStore.getSessionAlias).mockResolvedValue('Existing Alias')
-
-    // When
-    await updateSessionAliasIfEmpty('user1', 'New Alias')
-
-    // Then
-    expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('user1')
-    expect(sessionStore.updateSessionAlias).not.toHaveBeenCalled()
-  })
-
-  test('does nothing when alias parameter is undefined', async () => {
-    // When
-    await updateSessionAliasIfEmpty('user1', undefined)
-
-    // Then
-    expect(sessionStore.getSessionAlias).not.toHaveBeenCalled()
-    expect(sessionStore.updateSessionAlias).not.toHaveBeenCalled()
-  })
-
-  test('does nothing when alias parameter is empty string', async () => {
-    // When
-    await updateSessionAliasIfEmpty('user1', '')
-
-    // Then
-    expect(sessionStore.getSessionAlias).not.toHaveBeenCalled()
-    expect(sessionStore.updateSessionAlias).not.toHaveBeenCalled()
   })
 })
