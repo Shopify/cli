@@ -61,6 +61,7 @@ const FUNCTION_PAYLOAD = {
   function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
   logs: LOGS,
   fuel_consumed: 512436,
+  target: 'test.run',
   export: 'run',
 }
 const FAILURE_PAYLOAD = {
@@ -71,6 +72,7 @@ const FAILURE_PAYLOAD = {
   function_id: 'e57b4d31-2038-49ff-a0a1-1eea532414f7',
   logs: LOGS,
   error_type: FUNCTION_ERROR,
+  target: 'test.run',
   export: 'run',
 }
 
