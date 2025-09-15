@@ -109,7 +109,7 @@ Or, run the \`help\` command to get this information right in your terminal.
       anchorLink: 'help',
       title: 'Where to get help',
       sectionContent: `
-- [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development.
+- [Shopify Community Forums](https://community.shopify.dev/c/shopify-cli-libraries/14) - Visit our forums to connect with the community and learn more about Shopify CLI development.
 - [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
 `,
     },

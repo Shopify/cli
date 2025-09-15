@@ -5,6 +5,7 @@ import {createFetchError} from '../errors.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
@@ -27,7 +28,7 @@ export async function render(session: DevServerSession, context: DevServerRender
         ...defaultHeaders(),
       },
     }).catch((error) => {
-      throw createFetchError(error, url)
+      throw createFetchError(recordError(error), url)
     })
   } else {
     outputDebug(`→ Rendering ${url}...`)
@@ -40,7 +41,7 @@ export async function render(session: DevServerSession, context: DevServerRender
         ...defaultHeaders(),
       },
     }).catch((error) => {
-      throw createFetchError(error, url)
+      throw createFetchError(recordError(error), url)
     })
   }
 

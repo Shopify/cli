@@ -6,6 +6,7 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -309,6 +310,6 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   } as RequestInit & {duplex?: 'half'})
     .then((response) => patchProxiedResponseHeaders(ctx, response))
     .catch((error: Error) => {
-      throw createFetchError(error, url)
+      throw createFetchError(recordError(error), url)
     })
 }
