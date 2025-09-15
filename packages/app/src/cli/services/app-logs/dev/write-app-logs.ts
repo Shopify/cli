@@ -1,7 +1,8 @@
 import {AppLogData} from '../types.js'
 import {toFormattedAppLogJson} from '../utils.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {writeLog, getLogsDir} from '@shopify/cli-kit/node/logs'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {getLogsDir} from '@shopify/cli-kit/node/logs'
+import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {Writable} from 'stream'
 
@@ -16,6 +17,7 @@ export const writeAppLogsToFile = async ({
   apiKey,
   stdout,
   storeName,
+  appDirectory,
 }: {
   appLog: AppLogData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,16 +25,29 @@ export const writeAppLogsToFile = async ({
   apiKey: string
   stdout: Writable
   storeName: string
+  appDirectory?: string
 }): Promise<AppLogFile> => {
   const identifier = randomUUID().substring(0, 6)
 
   const formattedTimestamp = formatTimestampToFilename(appLog.log_timestamp)
   const fileName = `${formattedTimestamp}_${appLog.source_namespace}_${appLog.source}_${identifier}.json`
-  const path = joinPath(apiKey, fileName)
-  const fullOutputPath = joinPath(getLogsDir(), path)
+  const logContent = toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName})
+
+  // Determine the full output path based on whether we have an app directory
+  let fullOutputPath: string
+  if (appDirectory) {
+    // Write to app's .shopify/logs directory
+    fullOutputPath = joinPath(appDirectory, '.shopify', 'logs', apiKey, fileName)
+  } else {
+    // Fall back to system logs directory
+    fullOutputPath = joinPath(getLogsDir(), apiKey, fileName)
+  }
 
   try {
-    await writeLog(path, toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName}))
+    // Ensure parent directory exists and write the file
+    await mkdir(dirname(fullOutputPath))
+    await writeFile(fullOutputPath, logContent)
+
     return {
       fullOutputPath,
       identifier,
