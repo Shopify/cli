@@ -13,6 +13,7 @@ import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
 import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
+import NetworkCheck from './cli/commands/network-check.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import StoreCommands from '@shopify/store'
@@ -152,6 +153,7 @@ export const COMMANDS: any = {
   'notifications:list': List,
   'notifications:generate': Generate,
   'cache:clear': ClearCache,
+  'network-check': NetworkCheck,
 }
 
 export default runShopifyCLI

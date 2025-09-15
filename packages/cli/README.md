@@ -53,6 +53,7 @@
 * [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
 * [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
 * [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
+* [`shopify network-check`](#shopify-network-check)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins install PLUGIN`](#shopify-plugins-install-plugin)
@@ -1460,6 +1461,18 @@ FLAGS
 
 DESCRIPTION
   Upgrade Remix and Hydrogen npm dependencies.
+```
+
+## `shopify network-check`
+
+Check the network connection
+
+```
+USAGE
+  $ shopify network-check
+
+DESCRIPTION
+  Check the network connection
 ```
 
 ## `shopify plugins add PLUGIN`
