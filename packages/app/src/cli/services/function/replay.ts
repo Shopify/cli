@@ -52,8 +52,7 @@ export async function replay(options: ReplayOptions) {
   const abortController = new AbortController()
 
   try {
-    const apiKey = options.app.configuration.client_id
-    const functionRunsDir = joinPath(app.directory, '.shopify', 'logs', apiKey)
+    const functionRunsDir = app.getLogsDir()
 
     const selectedRun = options.log
       ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)

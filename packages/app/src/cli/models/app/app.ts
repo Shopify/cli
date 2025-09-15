@@ -318,6 +318,7 @@ export interface AppInterface<
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
   generateExtensionTypes(): Promise<void>
+  getLogsDir(): string
 }
 
 type AppConstructor<
@@ -443,6 +444,14 @@ export class App<
 
   get hiddenConfig() {
     return this._hiddenConfig
+  }
+
+  getLogsDir() {
+    // Create directory name using app name + partial client_id for uniqueness
+    const clientId = String(this.configuration.client_id || 'unknown')
+    const shortClientId = clientId.substring(0, 8)
+    const dirName = `${this.name}-${shortClientId}`
+    return joinPath(this.directory, '.shopify', 'logs', dirName)
   }
 
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {

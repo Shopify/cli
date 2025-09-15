@@ -13,18 +13,16 @@ interface AppLogFile {
 export const writeAppLogsToFile = async ({
   appLog,
   appLogPayload,
-  apiKey,
   stdout,
   storeName,
-  appDirectory,
+  logsDir,
 }: {
   appLog: AppLogData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   appLogPayload: any
-  apiKey: string
   stdout: Writable
   storeName: string
-  appDirectory: string
+  logsDir: string
 }): Promise<AppLogFile> => {
   const identifier = randomUUID().substring(0, 6)
 
@@ -32,8 +30,8 @@ export const writeAppLogsToFile = async ({
   const fileName = `${formattedTimestamp}_${appLog.source_namespace}_${appLog.source}_${identifier}.json`
   const logContent = toFormattedAppLogJson({appLog, appLogPayload, prettyPrint: true, storeName})
 
-  // Write to app's .shopify/logs directory
-  const fullOutputPath = joinPath(appDirectory, '.shopify', 'logs', apiKey, fileName)
+  // Write to the provided logs directory
+  const fullOutputPath = joinPath(logsDir, fileName)
 
   try {
     // Ensure parent directory exists and write the file
