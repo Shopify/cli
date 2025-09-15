@@ -301,12 +301,13 @@ async function executeCompleteFlow(applications: OAuthApplications, alias?: stri
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
-  const defaultAlias = alias ?? identityToken.userId
-  const finalAlias = await renderTextPrompt({
-    message: 'Enter an alias to identify this account',
-    defaultValue: defaultAlias,
-    allowEmpty: false,
-  })
+  const finalAlias =
+    alias ??
+    (await renderTextPrompt({
+      message: 'Enter an alias to identify this account',
+      defaultValue: identityToken.userId,
+      allowEmpty: false,
+    }))
 
   const session: Session = {
     identity: {

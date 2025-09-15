@@ -1,4 +1,4 @@
-import {ApplicationToken, Sessions} from './schema.js'
+import {Sessions} from './schema.js'
 import {store, fetch, remove, getSessionAlias, updateSessionAlias, findSessionByAlias} from './store.js'
 import {getSessions, removeSessions, setSessions, removeCurrentSessionId} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
@@ -232,17 +232,17 @@ describe('session store', () => {
         'identity.fqdn.com': {
           user1: {
             identity: {
-              ...mockSessions['identity.fqdn.com'].user1.identity,
+              ...mockSessions['identity.fqdn.com']!.user1!.identity,
               alias: 'Duplicate Alias',
             },
-            applications: mockSessions['identity.fqdn.com'].user1.applications,
+            applications: mockSessions['identity.fqdn.com']!.user1!.applications,
           },
           user2: {
             identity: {
-              ...mockSessions['identity.fqdn.com'].user2.identity,
+              ...mockSessions['identity.fqdn.com']!.user2!.identity,
               alias: 'Duplicate Alias',
             },
-            applications: mockSessions['identity.fqdn.com'].user2.applications,
+            applications: mockSessions['identity.fqdn.com']!.user2!.applications,
           },
         },
       }
@@ -256,30 +256,3 @@ describe('session store', () => {
     })
   })
 })
-
-function testSession(): Sessions {
-  const testToken: ApplicationToken = {
-    accessToken: 'access',
-    expiresAt: new Date(),
-    scopes: [],
-  }
-  return {
-    'accounts.shopify.com': {
-      '1234-5678': {
-        identity: {
-          accessToken: 'accessToken',
-          refreshToken: 'refreshToken',
-          expiresAt: new Date(),
-          scopes: ['foo'],
-          userId: '1234-5678',
-          alias: '1234-5678',
-        },
-        applications: {
-          adminApi: testToken,
-          partnersApi: testToken,
-          storefrontRendererApi: testToken,
-        },
-      },
-    },
-  }
-}
