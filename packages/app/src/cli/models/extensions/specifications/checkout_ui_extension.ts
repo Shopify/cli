@@ -20,14 +20,8 @@ const checkoutSpec = createExtensionSpecification({
   identifier: 'checkout_ui_extension',
   dependency,
   schema: CheckoutSchema,
-  appModuleFeatures: (_) => [
-    'ui_preview',
-    'bundling',
-    'cart_url',
-    'esbuild',
-    'single_js_entry_path',
-    'generates_source_maps',
-  ],
+  appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path', 'generates_source_maps'],
+  buildConfig: {mode: 'ui'},
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extension_points,

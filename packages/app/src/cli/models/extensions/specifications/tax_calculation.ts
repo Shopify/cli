@@ -22,7 +22,8 @@ const TaxCalculationsSchema = BaseSchema.extend({
 const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   schema: TaxCalculationsSchema,
-  appModuleFeatures: (_) => ['bundling'],
+  appModuleFeatures: (_) => [],
+  buildConfig: {mode: 'tax_calculation'},
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.production_api_base_url,
