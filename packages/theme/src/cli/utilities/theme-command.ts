@@ -14,6 +14,7 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
@@ -99,6 +100,10 @@ export default abstract class ThemeCommand extends Command {
       const commandName = this.constructor.name.toLowerCase()
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
+
+      if (flags.path && !fileExistsSync(flags.path)) {
+        throw new AbortError(`Path does not exist: ${flags.path}`)
+      }
 
       await this.command(flags, session)
       await this.logAnalyticsData(session)
