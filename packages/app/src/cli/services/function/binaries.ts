@@ -203,12 +203,52 @@ export function trampolineBinary() {
   return _trampoline
 }
 
+const downloadsInProgress = new Map<string, Promise<void>>()
+
 export async function downloadBinary(bin: DownloadableBinary) {
   const isDownloaded = await fileExists(bin.path)
   if (isDownloaded) {
     return
   }
 
+  // Downloads cannot run concurrently with `exec` since the `moveFile`
+  // operation is not atomic. It will delete the destination file if it exists
+  // which will cause `exec` to break if it tries to execute the file before
+  // the source file has been moved.
+  // We prevent downloads from happening concurrently with `exec` by enforcing
+  // that only one download happens for an executable. If we get here, we check
+  // if a download is in progress, wait for it to finish, and return without
+  // downloading again. If it's not in progress, then we start the download.
+  const downloadPromise = downloadsInProgress.get(bin.path)
+  if (downloadPromise) {
+    await downloadPromise
+    // Return now since we can assume it's downloaded. If it's not, an exception should've
+    // been thrown before which will cause the user-level operation to fail anyway.
+    return
+  }
+
+  // Do not perform any `await`s until we've called `downloadsInProgress.set`.
+  // Calling `await` before that can cause a different JS task to become active
+  // and start a concurrent download for this binary.
+
+  // My mental model is `performDownload` without the `await` will run
+  // synchronously until the first `await` in the function and then
+  // immediately return the promise which we then immediately store. Since JS
+  // doesn't have preemptive concurrency, we should be able to safely assume a
+  // different task in the task queue will not run in between starting
+  // `downloadFn` and the `set` operation on the following line.
+  const downloadOp = performDownload(bin)
+  downloadsInProgress.set(bin.path, downloadOp)
+  // Ensure we clean the entry if there's a failure.
+  try {
+    // Wait for the download to finish
+    await downloadOp
+  } finally {
+    downloadsInProgress.delete(bin.path)
+  }
+}
+
+async function performDownload(bin: DownloadableBinary) {
   const url = bin.downloadUrl(process.platform, process.arch)
   outputDebug(`Downloading ${bin.name} ${bin.version} from ${url} to ${bin.path}`)
   const dir = dirname(bin.path)

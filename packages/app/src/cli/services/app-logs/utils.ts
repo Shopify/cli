@@ -45,6 +45,7 @@ export function parseFunctionRunPayload(payload: string): FunctionRunLog {
     logs: parsedPayload.logs,
     functionId: parsedPayload.function_id,
     fuelConsumed: parsedPayload.fuel_consumed,
+    target: parsedPayload.target,
     errorMessage: parsedPayload.error_message,
     errorType: parsedPayload.error_type,
     inputQueryVariablesMetafieldValue: parsedIqvValue,
