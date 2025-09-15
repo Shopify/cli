@@ -123,8 +123,8 @@ async function generateExtension({name, type, directory, extraArgs, env}: Genera
       ],
       {env},
     )
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    assert.ok(true)
+  } catch (error) {
+    console.error(`Failed to generate extension: ${name} of type ${type}`, error)
+    throw error
   }
 }

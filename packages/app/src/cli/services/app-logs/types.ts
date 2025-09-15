@@ -36,6 +36,7 @@ export class FunctionRunLog {
   logs: string
   functionId: string
   fuelConsumed: number
+  target: string
   errorMessage: string | null
   errorType: string | null
   inputQueryVariablesMetafieldValue: unknown
@@ -51,6 +52,7 @@ export class FunctionRunLog {
     logs,
     functionId,
     fuelConsumed,
+    target,
     errorMessage,
     errorType,
     inputQueryVariablesMetafieldValue,
@@ -65,6 +67,7 @@ export class FunctionRunLog {
     logs: string
     functionId: string
     fuelConsumed: number
+    target: string
     errorMessage: string | null
     errorType: string | null
     inputQueryVariablesMetafieldValue: unknown
@@ -79,6 +82,7 @@ export class FunctionRunLog {
     this.logs = logs
     this.functionId = functionId
     this.fuelConsumed = fuelConsumed
+    this.target = target
     this.errorMessage = errorMessage
     this.errorType = errorType
     this.inputQueryVariablesMetafieldValue = inputQueryVariablesMetafieldValue

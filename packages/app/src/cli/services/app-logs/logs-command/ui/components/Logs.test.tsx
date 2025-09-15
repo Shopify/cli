@@ -86,6 +86,7 @@ const appLogFunctionRunOutputs = ({
     logs: LOGS,
     functionId: FUNCTION_ID,
     fuelConsumed: FUEL_CONSUMED,
+    target: 'test.run',
     errorMessage: 'errorMessage',
     errorType: 'errorType',
     inputQueryVariablesMetafieldValue: '{"key":"value"}',
