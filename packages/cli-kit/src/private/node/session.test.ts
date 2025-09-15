@@ -25,6 +25,8 @@ import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {getPartnersToken} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
+import {renderTextPrompt} from '../../public/node/ui.js'
+import {terminalSupportsPrompting} from '../../public/node/system.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -110,6 +112,8 @@ vi.mock('../../store')
 vi.mock('../../public/node/environment.js')
 vi.mock('./session/device-authorization')
 vi.mock('./conf-store')
+vi.mock('../../public/node/ui.js')
+vi.mock('../../public/node/system.js')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
@@ -134,6 +138,8 @@ beforeEach(() => {
     interval: 5,
   })
   vi.mocked(pollForDeviceAuthorization).mockResolvedValue(validIdentityToken)
+  vi.mocked(renderTextPrompt).mockResolvedValue(userId)
+  vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -141,6 +147,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(renderTextPrompt).mockResolvedValue(userId)
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
@@ -148,7 +155,12 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     // Then
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Enter an alias to identify this account',
+      defaultValue: userId,
+      allowEmpty: false,
+    })
+    expect(storeSessions).toHaveBeenCalledOnce()
     expect(got).toEqual(validTokens)
 
     // The userID is cached in memory and the secureStore is not accessed again
@@ -457,6 +469,7 @@ describe('ensureAuthenticated alias functionality', () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(renderTextPrompt).mockResolvedValue('work-account')
     const expectedSessionWithAlias = {
       ...validSessions,
       [fqdn]: {
@@ -522,6 +535,7 @@ describe('ensureAuthenticated alias functionality', () => {
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
     vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+    vi.mocked(renderTextPrompt).mockResolvedValue('fallback-alias')
     const expectedSessionWithAlias = {
       ...validSessions,
       [fqdn]: {

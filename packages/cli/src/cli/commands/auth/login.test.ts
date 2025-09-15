@@ -9,27 +9,27 @@ describe('Login command', () => {
   test('runs login without alias flag', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(promptSessionSelect).mockResolvedValue({userId: 'test-user-id'})
+    vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
 
     // When
     await Login.run([])
 
     // Then
     expect(promptSessionSelect).toHaveBeenCalledWith(undefined)
-    expect(outputMock.output()).toBe('')
+    expect(outputMock.output()).toMatch('Current account: test-account.')
   })
 
   test('runs login with alias flag', async () => {
     // Given
     const outputMock = mockAndCaptureOutput()
-    vi.mocked(promptSessionSelect).mockResolvedValue({userId: 'test-user-id'})
+    vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
 
     // When
     await Login.run(['--alias', 'my-work-account'])
 
     // Then
     expect(promptSessionSelect).toHaveBeenCalledWith('my-work-account')
-    expect(outputMock.output()).toBe('')
+    expect(outputMock.output()).toMatch('Current account: test-account.')
   })
 
   test('displays flags correctly in help', () => {

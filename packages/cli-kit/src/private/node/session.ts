@@ -22,6 +22,7 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {AdminSession} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
+import {renderTextPrompt} from '../../public/node/ui.js'
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -211,7 +212,7 @@ ${outputToken.json(applications)}
   if (validationResult === 'needs_full_auth') {
     throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications)
+    newSession = await executeCompleteFlow(applications, alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
@@ -220,7 +221,7 @@ ${outputToken.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications)
+        newSession = await executeCompleteFlow(applications, alias)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -271,8 +272,9 @@ The CLI is currently unable to prompt for reauthentication.`,
  * Execute the full authentication flow.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
+ * @param alias - Optional alias to use for the session.
  */
-async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
+async function executeCompleteFlow(applications: OAuthApplications, alias?: string): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -299,12 +301,22 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
+  const defaultAlias = alias ?? identityToken.userId
+  const finalAlias = await renderTextPrompt({
+    message: 'Enter an alias to identify this account',
+    defaultValue: defaultAlias,
+    allowEmpty: false,
+  })
+
   const session: Session = {
-    identity: identityToken,
+    identity: {
+      ...identityToken,
+      alias: finalAlias,
+    },
     applications: result,
   }
 
-  outputCompleted('Logged in.')
+  outputCompleted(`Logged in.`)
 
   return session
 }
