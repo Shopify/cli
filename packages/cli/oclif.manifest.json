@@ -6338,10 +6338,15 @@
       "hiddenAliases": [
       ],
       "id": "theme:publish",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
+      "strict": true,
       "summary": "Set a remote theme as the live theme."
     },
     "theme:pull": {
