@@ -72,3 +72,26 @@ export async function updateSessionAlias(userId: string, alias: string): Promise
   sessions[fqdn][userId].identity.alias = alias
   await store(sessions)
 }
+
+/**
+ * Finds a session by its alias.
+ *
+ * @param alias - The alias to search for
+ * @returns The user ID if found, otherwise undefined
+ */
+export async function findSessionByAlias(alias: string): Promise<string | undefined> {
+  const sessions = await fetch()
+  if (!sessions) return undefined
+
+  const fqdn = await identityFqdn()
+  const fqdnSessions = sessions[fqdn]
+  if (!fqdnSessions) return undefined
+
+  for (const [userId, session] of Object.entries(fqdnSessions)) {
+    if (session.identity.alias === alias) {
+      return userId
+    }
+  }
+
+  return undefined
+}

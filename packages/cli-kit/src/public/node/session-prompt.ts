@@ -1,4 +1,4 @@
-import {renderSelectPrompt} from './ui.js'
+import {renderSelectPrompt, renderTextPrompt} from './ui.js'
 import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import {setCurrentSessionId} from '../../private/node/conf-store.js'
@@ -39,13 +39,14 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
  * Prompts the user to select from existing sessions or log in with a different account.
  *
  * This function:
- * 1. Fetches existing sessions from storage using `store.fetch()`
- * 2. Shows a prompt with all available sessions by their display labels
- * 3. Includes an option to "Log in with a different account"
- * 4. If an existing session is chosen, calls `setCurrentSessionId(userId)`
- * 5. If new login is chosen, calls `ensureAuthenticatedUser()`.
+ * 1. If alias is provided, tries to switch to that session directly
+ * 2. Otherwise, fetches existing sessions from storage using `store.fetch()`
+ * 3. Shows a prompt with all available sessions by their display labels
+ * 4. Includes an option to "Log in with a different account"
+ * 5. If an existing session is chosen, calls `setCurrentSessionId(userId)`
+ * 6. If new login is chosen, calls `ensureAuthenticatedUser()`.
  *
- * @param alias - Optional alias to use for the new session if created.
+ * @param alias - Optional alias to switch to or use for the new session if created.
  * @example
  * ```typescript
  * import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
@@ -59,6 +60,15 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
 export async function promptSessionSelect(alias?: string): Promise<{userId: string}> {
   const sessions = await sessionStore.fetch()
   const fqdn = await identityFqdn()
+
+  // If alias is provided, try to switch to that session
+  if (alias) {
+    const userId = await sessionStore.findSessionByAlias(alias)
+    if (userId) {
+      setCurrentSessionId(userId)
+      return {userId}
+    }
+  }
 
   const choices: SessionChoice[] = []
 
@@ -83,13 +93,20 @@ export async function promptSessionSelect(alias?: string): Promise<{userId: stri
   }
 
   if (selectedValue === NEW_LOGIN_VALUE) {
-    const result = await ensureAuthenticatedUser({}, {forceNewSession: true, alias})
+    const result = await ensureAuthenticatedUser({}, {forceNewSession: true})
+    // Always prompt for alias after successful login
+    const newAlias = await renderTextPrompt({
+      message: 'Enter an alias for this account',
+      defaultValue: alias ?? '',
+      allowEmpty: false,
+    })
+    await sessionStore.updateSessionAlias(result.userId, newAlias)
     return result
-  } else {
-    setCurrentSessionId(selectedValue)
-    if (alias) {
-      await sessionStore.updateSessionAlias(selectedValue, alias)
-    }
-    return {userId: selectedValue}
   }
+
+  setCurrentSessionId(selectedValue)
+  if (alias) {
+    await sessionStore.updateSessionAlias(selectedValue, alias)
+  }
+  return {userId: selectedValue}
 }

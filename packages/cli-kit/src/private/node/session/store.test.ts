@@ -1,5 +1,5 @@
 import {ApplicationToken, Sessions} from './schema.js'
-import {store, fetch, remove, getSessionAlias, updateSessionAlias} from './store.js'
+import {store, fetch, remove, getSessionAlias, updateSessionAlias, findSessionByAlias} from './store.js'
 import {getSessions, removeSessions, setSessions, removeCurrentSessionId} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
@@ -177,6 +177,82 @@ describe('session store', () => {
 
       // Then
       expect(setSessions).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('findSessionByAlias', () => {
+    test('returns userId for existing alias', async () => {
+      // Given
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
+
+      // When
+      const result = await findSessionByAlias('Work Account')
+
+      // Then
+      expect(result).toBe('user1')
+    })
+
+    test('returns undefined for non-existent alias', async () => {
+      // Given
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
+
+      // When
+      const result = await findSessionByAlias('Nonexistent Alias')
+
+      // Then
+      expect(result).toBeUndefined()
+    })
+
+    test('returns undefined when no sessions exist', async () => {
+      // Given
+      vi.mocked(getSessions).mockReturnValue(undefined)
+
+      // When
+      const result = await findSessionByAlias('Work Account')
+
+      // Then
+      expect(result).toBeUndefined()
+    })
+
+    test('returns undefined when fqdn does not exist', async () => {
+      // Given
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
+      vi.mocked(identityFqdn).mockResolvedValue('different.fqdn.com')
+
+      // When
+      const result = await findSessionByAlias('Work Account')
+
+      // Then
+      expect(result).toBeUndefined()
+    })
+
+    test('returns first matching userId when multiple sessions have same alias', async () => {
+      // Given
+      const sessionsWithDuplicateAlias = {
+        'identity.fqdn.com': {
+          user1: {
+            identity: {
+              ...mockSessions['identity.fqdn.com'].user1.identity,
+              alias: 'Duplicate Alias',
+            },
+            applications: mockSessions['identity.fqdn.com'].user1.applications,
+          },
+          user2: {
+            identity: {
+              ...mockSessions['identity.fqdn.com'].user2.identity,
+              alias: 'Duplicate Alias',
+            },
+            applications: mockSessions['identity.fqdn.com'].user2.applications,
+          },
+        },
+      }
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(sessionsWithDuplicateAlias))
+
+      // When
+      const result = await findSessionByAlias('Duplicate Alias')
+
+      // Then
+      expect(result).toMatch(/^user[12]$/)
     })
   })
 })

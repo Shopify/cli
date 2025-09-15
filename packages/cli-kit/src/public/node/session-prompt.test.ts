@@ -1,5 +1,5 @@
 import {promptSessionSelect} from './session-prompt.js'
-import {renderSelectPrompt} from './ui.js'
+import {renderSelectPrompt, renderTextPrompt} from './ui.js'
 import {ensureAuthenticatedUser} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import {setCurrentSessionId} from '../../private/node/conf-store.js'
@@ -46,6 +46,8 @@ describe('promptSessionSelect', () => {
     vi.mocked(identityFqdn).mockResolvedValue('identity.fqdn.com')
     vi.mocked(ensureAuthenticatedUser).mockResolvedValue({userId: 'new-user-id'})
     vi.mocked(sessionStore.updateSessionAlias).mockResolvedValue()
+    vi.mocked(renderTextPrompt).mockResolvedValue('new-alias')
+    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue(undefined)
   })
 
   test('prompts user to create new session when no existing sessions', async () => {
@@ -57,20 +59,33 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: undefined})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Enter an alias for this account',
+      defaultValue: '',
+      allowEmpty: false,
+    })
+    expect(sessionStore.updateSessionAlias).toHaveBeenCalledWith('new-user-id', 'new-alias')
     expect(result).toEqual({userId: 'new-user-id'})
   })
 
   test('prompts user to create new session with alias when no existing sessions', async () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(undefined)
+    vi.mocked(renderTextPrompt).mockResolvedValue('custom-alias')
 
     // When
     const result = await promptSessionSelect('my-alias')
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: 'my-alias'})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Enter an alias for this account',
+      defaultValue: 'my-alias',
+      allowEmpty: false,
+    })
+    expect(sessionStore.updateSessionAlias).toHaveBeenCalledWith('new-user-id', 'custom-alias')
     expect(result).toEqual({userId: 'new-user-id'})
   })
 
@@ -141,7 +156,13 @@ describe('promptSessionSelect', () => {
     const result = await promptSessionSelect()
 
     // Then
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: undefined})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Enter an alias for this account',
+      defaultValue: '',
+      allowEmpty: false,
+    })
+    expect(sessionStore.updateSessionAlias).toHaveBeenCalledWith('new-user-id', 'new-alias')
     expect(result).toEqual({userId: 'new-user-id'})
   })
 
@@ -149,12 +170,19 @@ describe('promptSessionSelect', () => {
     // Given
     vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
     vi.mocked(renderSelectPrompt).mockResolvedValue('NEW_LOGIN')
+    vi.mocked(renderTextPrompt).mockResolvedValue('custom-alias')
 
     // When
     const result = await promptSessionSelect('work-alias')
 
     // Then
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: 'work-alias'})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(renderTextPrompt).toHaveBeenCalledWith({
+      message: 'Enter an alias for this account',
+      defaultValue: 'work-alias',
+      allowEmpty: false,
+    })
+    expect(sessionStore.updateSessionAlias).toHaveBeenCalledWith('new-user-id', 'custom-alias')
     expect(result).toEqual({userId: 'new-user-id'})
   })
 
@@ -184,5 +212,37 @@ describe('promptSessionSelect', () => {
     expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
     expect(sessionStore.updateSessionAlias).not.toHaveBeenCalled()
     expect(result).toEqual({userId: 'user1'})
+  })
+
+  test('switches to existing session when alias is provided and found', async () => {
+    // Given
+    vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
+    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue('user1')
+
+    // When
+    const result = await promptSessionSelect('Work Account')
+
+    // Then
+    expect(sessionStore.findSessionByAlias).toHaveBeenCalledWith('Work Account')
+    expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
+    expect(renderSelectPrompt).not.toHaveBeenCalled()
+    expect(ensureAuthenticatedUser).not.toHaveBeenCalled()
+    expect(result).toEqual({userId: 'user1'})
+  })
+
+  test('shows session selection when alias is not found', async () => {
+    // Given
+    vi.mocked(sessionStore.fetch).mockResolvedValue(mockSessions)
+    vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue(undefined)
+    vi.mocked(renderSelectPrompt).mockResolvedValue('user2')
+
+    // When
+    const result = await promptSessionSelect('Non-existent Alias')
+
+    // Then
+    expect(sessionStore.findSessionByAlias).toHaveBeenCalledWith('Non-existent Alias')
+    expect(renderSelectPrompt).toHaveBeenCalled()
+    expect(setCurrentSessionId).toHaveBeenCalledWith('user2')
+    expect(result).toEqual({userId: 'user2'})
   })
 })
