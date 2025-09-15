@@ -3304,6 +3304,173 @@ describe('WebhooksSchema', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
+  test('accepts webhook subscription with payload_query', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/webhooks',
+          payload_query: 'query { product { id title } }',
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts webhook subscription with complex multiline payload_query', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['orders/create'],
+          uri: 'https://example.com/webhooks',
+          payload_query: `
+            query getOrderDetails($id: ID!) {
+              order(id: $id) {
+                id
+                name
+                totalPrice
+                lineItems(first: 50) {
+                  edges {
+                    node {
+                      id
+                      title
+                      quantity
+                      variant {
+                        id
+                        price
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          `,
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts webhook subscription with all fields including payload_query', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com/webhooks',
+          include_fields: ['id', 'title', 'vendor'],
+          filter: 'vendor:acme',
+          payload_query: 'query { product { id title vendor tags } }',
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts multiple webhook subscriptions with different payload_queries', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/products',
+          payload_query: 'query { product { id title } }',
+        },
+        {
+          topics: ['orders/create'],
+          uri: 'https://example.com/orders',
+          payload_query: 'query { order { id totalPrice } }',
+        },
+        {
+          topics: ['customers/create'],
+          uri: 'https://example.com/customers',
+          // No payload_query for this subscription
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks.subscriptions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({topics: ['customers/create']}),
+        expect.objectContaining({topics: ['orders/create']}),
+        expect.objectContaining({topics: ['products/create']}),
+      ]),
+    )
+  })
+
+  test('accepts webhook subscription with payload_query containing GraphQL fragments', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/update'],
+          uri: 'https://example.com/webhooks',
+          payload_query: `
+            fragment ProductFields on Product {
+              id
+              title
+              description
+              vendor
+            }
+
+            fragment VariantFields on ProductVariant {
+              id
+              price
+              sku
+            }
+
+            query {
+              product {
+                ...ProductFields
+                variants(first: 10) {
+                  edges {
+                    node {
+                      ...VariantFields
+                    }
+                  }
+                }
+              }
+            }
+          `,
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts webhook subscription with empty payload_query', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/webhooks',
+          payload_query: '',
+        },
+      ],
+    }
+
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
     const expectedFormatted = outputContent`\n${outputToken.errorText(

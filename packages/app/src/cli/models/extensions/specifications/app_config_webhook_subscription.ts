@@ -14,6 +14,7 @@ interface TransformedWebhookSubscription {
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
+  payload_query?: string
 }
 
 export const SingleWebhookSubscriptionSchema = zod.object({
