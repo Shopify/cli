@@ -141,6 +141,26 @@ describe('javy', () => {
     expect(fetch).toHaveBeenCalledOnce()
     await expect(fileExists(javy.path)).resolves.toBeTruthy()
   })
+
+  test('handles concurrent downloads of Javy', async () => {
+    // Given
+    await removeFile(javy.path)
+    await expect(fileExists(javy.path)).resolves.toBeFalsy()
+    vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('javy binary')))
+
+    // When
+    await Promise.all([
+      downloadBinary(javy),
+      downloadBinary(javy),
+      downloadBinary(javy),
+      downloadBinary(javy),
+      downloadBinary(javy),
+    ])
+
+    // Then
+    expect(fetch).toHaveBeenCalledOnce()
+    await expect(fileExists(javy.path)).resolves.toBeTruthy()
+  })
 })
 
 describe('javy-plugin', () => {
