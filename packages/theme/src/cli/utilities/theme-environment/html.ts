@@ -9,6 +9,7 @@ import {defineEventHandler, getCookie, type H3Event, type EventHandler} from 'h3
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -58,12 +59,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
           // Fallback to proxying to see if that works:
           const proxyResponse = await tryProxyRequest(event, ctx, response)
           if (proxyResponse) {
-            logRequestLine(event, proxyResponse)
+            logRequestLine(event, proxyResponse, ctx)
             return proxyResponse
           }
         }
 
-        logRequestLine(event, response)
+        logRequestLine(event, response, ctx)
 
         return patchRenderingResponse(ctx, response, (body) => {
           assertThemeId(response, body, String(theme.id))
@@ -81,6 +82,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
           outputDebug(
             `Theme ID mismatch: expected ${error.getExpectedThemeId()} but got ${error.getActualThemeId()}; refreshing session...`,
           )
+
+          recordEvent('theme-service:error-page:theme-id-mismatch')
 
           if (ctx.session.refresh) {
             themeIdMismatchRedirects++
@@ -137,6 +140,8 @@ function createErrorPageResponse(
   options: Parameters<typeof getErrorPage>[0],
 ) {
   const errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx)
+
+  recordEvent('theme-service:error-page:rendered')
 
   return new Response(errorPageHtml, {
     ...responseInit,

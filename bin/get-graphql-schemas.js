@@ -29,14 +29,14 @@ const schemas = [
     localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
   },
   {
-    owner: 'Shopify',
-    repo: 'business-platform',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
   },
   {
-    owner: 'Shopify',
-    repo: 'business-platform',
+    owner: 'shop',
+    repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
     localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
   },
@@ -71,7 +71,28 @@ const schemas = [
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
   },
+  // Store package schemas
+  {
+    owner: 'shop',
+    repo: 'world',
+    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
+    localPath: './packages/store/src/cli/api/graphql/admin/admin_schema.graphql',
+    usesLfs: true,
+  },
+  {
+    owner: 'shop',
+    repo: 'world',
+    pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
+    localPath: './packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
+  },
+  {
+    owner: 'shop',
+    repo: 'world',
+    pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
+    localPath: './packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+  },
 ]
+
 
 /**
  * @param {Schema} schema
@@ -147,32 +168,6 @@ async function fetchFiles() {
 /**
  * @returns {Promise<void>}
  */
-async function fetchFilesFromSpin() {
-  for (const schema of schemas) {
-    const owner = schema.owner
-    const repoName = schema.repo
-
-    const remotePath = `~/src/github.com/${owner}/${repoName}/${schema.pathToFile}`
-    const localPath = schema.localPath
-    try {
-      await runCommand('spin', ['copy', `${process.env.SPIN_INSTANCE}:${remotePath}`, localPath])
-    } catch(e) {
-      if (e.message.match(/scp.*No such file or directory/)) {
-        // Assume we need to just fetch the file from GitHub
-        console.log(`Cannot find file for ${schema.repo} in Spin, fetching from GitHub instead...`)
-        await withOctokit(schema.owner, async (octokit) => {
-          await fetchFileForSchema(schema, octokit)
-        })
-      } else {
-        throw e
-      }
-    }
-  }
-}
-
-/**
- * @returns {Promise<void>}
- */
 async function fetchFilesFromLocal() {
   for (const schema of schemas) {
     const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${schema.repo}`).toString().split('/areas')[0].trim()
@@ -185,8 +180,6 @@ async function fetchFilesFromLocal() {
 
 if (process.env.SHOPIFY_SERVICE_ENV === 'local') {
   fetchFilesFromLocal()
-} else if (process.env.SHOPIFY_SERVICE_ENV === 'spin') {
-  fetchFilesFromSpin()
 } else {
   fetchFiles()
 }

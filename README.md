@@ -13,7 +13,7 @@ Learn more in the [commands docs](./packages/cli/README.md#commands).
 
 <p>&nbsp;</p>
 
-### Before you begin ###
+## Before you begin
 
 Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [npm](https://docs.npmjs.com/getting-started) (or another package manager of your choice).
 
@@ -41,7 +41,7 @@ To work with themes, the CLI needs to be installed globally with:
 
 You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
 
-Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/themes/tools/cli)
+Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/storefronts/themes/tools/cli)
 
 <p>&nbsp;</p>
 

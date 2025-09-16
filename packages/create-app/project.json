@@ -43,20 +43,6 @@
         "cwd": "packages/create-app"
       }
     },
-    "test": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest run",
-        "cwd": "packages/create-app"
-      }
-    },
-    "test:watch": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "pnpm vitest watch",
-        "cwd": "packages/create-app"
-      }
-    },
     "type-check": {
       "executor": "nx:run-commands",
       "options": {

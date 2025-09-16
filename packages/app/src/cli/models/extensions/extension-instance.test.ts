@@ -17,7 +17,7 @@ import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -129,9 +129,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
           type: 'ui_extension',
           handle: 'scriptToMove',
           directory: outputPath,
+          uid: 'uid1',
         })
-        const someDirPath = joinPath(bundleDirectory, 'some_dir')
-        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+        const someDirPath = joinPath(bundleDirectory, 'uid1')
+        const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
         await mkdir(someDirPath)
         await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
@@ -141,7 +142,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'some_dir')
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(true)
@@ -158,9 +159,11 @@ describe('keepBuiltSourcemapsLocally', async () => {
           type: 'ui_extension',
           handle: 'scriptToMove',
           directory: outputPath,
+          uid: 'uid1',
         })
-        const someDirPath = joinPath(bundleDirectory, 'some_dir')
-        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+        const bundleInputPath = joinPath(bundleDirectory, extensionInstance.uid)
+        const someDirPath = joinPath(bundleDirectory, 'wrongUID')
+        const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
         await mkdir(someDirPath)
         await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
@@ -170,7 +173,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'other_dir')
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleInputPath)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
@@ -187,9 +190,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
           type: 'web_pixel_extension',
           handle: 'scriptToMove',
           directory: outputPath,
+          uid: 'uid1',
         })
-        const someDirPath = joinPath(bundleDirectory, 'some_dir')
-        const otherDirPath = joinPath(bundleDirectory, 'other_dir')
+        const someDirPath = joinPath(bundleDirectory, 'uid1')
+        const otherDirPath = joinPath(bundleDirectory, 'otherUID')
 
         await mkdir(someDirPath)
         await writeFile(joinPath(someDirPath, 'scriptToMove.js'), 'abc')
@@ -199,7 +203,7 @@ describe('keepBuiltSourcemapsLocally', async () => {
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js'), 'abc')
         await writeFile(joinPath(otherDirPath, 'scriptToIgnore.js.map'), 'abc map')
 
-        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory, 'some_dir')
+        await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
         expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
@@ -230,6 +234,39 @@ describe('build', async () => {
       // Then
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
+    })
+  })
+
+  test('does not copy shopify.extension.toml file when bundling theme extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extension = await testThemeExtensions(tmpDir)
+
+      const blocksDir = joinPath(tmpDir, 'blocks')
+      await mkdir(blocksDir)
+
+      await writeFile(joinPath(blocksDir, 'product.liquid'), '<div>Product block</div>')
+      await writeFile(joinPath(tmpDir, 'shopify.extension.toml'), '[extensions]')
+
+      const bundleDirectory = joinPath(tmpDir, 'bundle')
+      await mkdir(bundleDirectory)
+
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: vi.fn()}),
+        stderr: new Writable({write: vi.fn()}),
+        app: testApp(),
+        environment: 'production',
+      }
+
+      // When
+      await extension.copyIntoBundle(options, bundleDirectory, 'uuid')
+
+      // Then
+      const outputTomlPath = joinPath(extension.outputPath, 'shopify.extension.toml')
+      expect(fileExistsSync(outputTomlPath)).toBe(false)
+
+      const outputProductPath = joinPath(extension.outputPath, 'blocks', 'product.liquid')
+      expect(fileExistsSync(outputProductPath)).toBe(true)
     })
   })
 })
@@ -494,12 +531,24 @@ describe('draftMessages', async () => {
       expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
     })
 
-    test('returns non-random UUID based on handle when strategy is dynamic', async () => {
+    test('returns a custom string when strategy is dynamic and it is a webhook subscription extension without filters', async () => {
       // Given
       const extensionInstance = await testSingleWebhookSubscriptionExtension()
-
       // Then
-      expect(extensionInstance.uid).toBe(nonRandomUUID(extensionInstance.handle))
+      expect(extensionInstance.uid).toBe('orders/delete::undefined::https://my-app.com/webhooks')
+    })
+
+    test('returns a custom string when strategy is dynamic and it is a webhook subscription extension with filters', async () => {
+      // Given
+      const extensionInstance = await testSingleWebhookSubscriptionExtension({
+        config: {
+          topic: 'orders/delete',
+          uri: 'https://my-app.com/webhooks',
+          filter: '123',
+        },
+      })
+      // Then
+      expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
     })
   })
 })

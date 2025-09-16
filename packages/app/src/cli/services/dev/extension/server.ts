@@ -42,6 +42,6 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   const httpServer = createServer(httpApp)
-  httpServer.listen(options.devOptions.port)
+  httpServer.listen(options.devOptions.port, 'localhost')
   return httpServer
 }

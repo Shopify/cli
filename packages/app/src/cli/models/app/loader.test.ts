@@ -4,7 +4,6 @@ import {
   loadApp,
   loadDotEnv,
   parseConfigurationObject,
-  parseHumanReadableError,
   checkFolderIsValidApp,
   AppLoaderMode,
   getAppConfigurationState,
@@ -12,6 +11,7 @@ import {
   reloadApp,
   loadHiddenConfig,
 } from './loader.js'
+import {parseHumanReadableError} from './error-parsing.js'
 import {App, AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {configurationFileNames, blocks} from '../../constants.js'
@@ -436,6 +436,41 @@ wrong = "property"
 
     // When
     await expect(loadTestingApp()).rejects.toThrow(/Invalid extension type "invalid_type"/)
+  })
+
+  test('loads only known extension types when mode is local', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // Create two extensions: one known and one unknown
+    const knownBlockConfiguration = `
+      name = "my_extension"
+      type = "theme"
+      `
+    await writeBlockConfig({
+      blockConfiguration: knownBlockConfiguration,
+      name: 'my-known-extension',
+    })
+    await writeFile(joinPath(blockPath('my-known-extension'), 'index.js'), '')
+
+    const unknownBlockConfiguration = `
+      name = "unknown_extension"
+      type = "unknown_type"
+      `
+    await writeBlockConfig({
+      blockConfiguration: unknownBlockConfiguration,
+      name: 'my-unknown-extension',
+    })
+    await writeFile(joinPath(blockPath('my-unknown-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp({mode: 'local'})
+
+    // Then
+    expect(app.allExtensions).toHaveLength(1)
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
+    expect(app.allExtensions[0]!.configuration.type).toBe('theme')
+    expect(app.errors).toBeUndefined()
   })
 
   test('throws if 2 or more extensions have the same handle', async () => {
@@ -2342,7 +2377,7 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
-  test('preserves values from the previous app when reloading', async () => {
+  test('regenerates devApplicationURLs when reloading', async () => {
     // Given
     const appConfiguration = `
       name = "my-app"
@@ -2355,6 +2390,11 @@ wrong = "property"
 
       [auth]
       redirect_urls = ["https://example.com/auth"]
+
+      [app_proxy]
+      url = "https://example.com"
+      subpath = "updated"
+      prefix = "new"
     `
     await writeConfig(appConfiguration)
 
@@ -2381,11 +2421,16 @@ wrong = "property"
       userProvidedConfigName: undefined,
     })) as AppLinkedInterface
 
-    // Set some values that should be preserved
+    // Set some values that should be regenerated
     const customDevUUID = 'custom-dev-uuid'
     const customAppURLs = {
       applicationUrl: 'http://custom.dev',
       redirectUrlWhitelist: ['http://custom.dev/auth'],
+      appProxy: {
+        proxyUrl: 'https://example.com',
+        proxySubPath: 'initial',
+        proxySubPathPrefix: 'old',
+      },
     }
     app.allExtensions[0]!.devUUID = customDevUUID
     app.setDevApplicationURLs(customAppURLs)
@@ -2395,7 +2440,19 @@ wrong = "property"
 
     // Then
     expect(reloadedApp.allExtensions[0]?.devUUID).toBe(customDevUUID)
-    expect(reloadedApp.devApplicationURLs).toEqual(customAppURLs)
+    expect(reloadedApp.devApplicationURLs).toEqual({
+      applicationUrl: 'http://custom.dev',
+      redirectUrlWhitelist: [
+        'http://custom.dev/auth/callback',
+        'http://custom.dev/auth/shopify/callback',
+        'http://custom.dev/api/auth/callback',
+      ],
+      appProxy: {
+        proxyUrl: 'https://custom.dev',
+        proxySubPath: 'updated',
+        proxySubPathPrefix: 'new',
+      },
+    })
     expect(reloadedApp.name).toBe(app.name)
     expect(reloadedApp.packageManager).toBe(app.packageManager)
     expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
@@ -2547,7 +2604,7 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(AbortError)
   })
 
-  test('loads the app with an unsupported config property, under failure mode (default)', async () => {
+  test('loads the app with an unsupported config property', async () => {
     const linkedAppConfigurationWithExtraConfig = `
     name = "for-testing"
     client_id = "1234567890"
@@ -2574,42 +2631,6 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(
       'Unsupported section(s) in app configuration: and_another, something_else',
     )
-  })
-
-  test('loads the app with an unsupported config property, under passthrough mode', async () => {
-    vi.stubEnv('SHOPIFY_CLI_DISABLE_UNSUPPORTED_CONFIG_PROPERTY_CHECKS', '1')
-    const linkedAppConfigurationWithExtraConfig = `
-    name = "for-testing"
-    client_id = "1234567890"
-    application_url = "https://example.com/lala"
-    embedded = true
-
-    [build]
-    include_config_on_deploy = true
-
-    [webhooks]
-    api_version = "2023-07"
-
-    [auth]
-    redirect_urls = [ "https://example.com/api/auth" ]
-
-    [something_else]
-    not_valid = true
-
-    [and_another]
-    bad = true
-    `
-    await writeConfig(linkedAppConfigurationWithExtraConfig)
-
-    const app = await loadTestingApp()
-    expect(app.allExtensions.map((ext) => ext.specification.identifier).sort()).toEqual([
-      'app_access',
-      'app_home',
-      'branding',
-      'webhooks',
-    ])
-
-    vi.unstubAllEnvs()
   })
 })
 
@@ -2793,46 +2814,25 @@ describe('parseConfigurationObject', () => {
       roles: 1,
     }
 
-    const errorObject = [
-      {
-        code: 'invalid_union',
-        unionErrors: [
-          {
-            issues: [
-              {
-                code: 'invalid_type',
-                expected: 'array',
-                received: 'number',
-                path: ['roles'],
-                message: 'Expected array, received number',
-              },
-            ],
-            name: 'ZodError',
-          },
-          {
-            issues: [
-              {
-                expected: "'frontend' | 'backend' | 'background'",
-                received: 'number',
-                code: 'invalid_type',
-                path: ['type'],
-                message: "Expected 'frontend' | 'backend' | 'background', received number",
-              },
-            ],
-            name: 'ZodError',
-          },
-        ],
-        path: [],
-        message: 'Invalid input',
-      },
-    ]
-    const expectedFormatted = outputContent`\n${outputToken.errorText(
-      'Validation errors',
-    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
     await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
 
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    // Verify the function was called and capture the actual error structure
+    expect(abortOrReport).toHaveBeenCalledOnce()
+    const callArgs = abortOrReport.mock.calls[0]!
+    const actualErrorMessage = callArgs[0]
+
+    // Convert TokenizedString to regular string for testing
+    const errorString = actualErrorMessage.value
+
+    // The enhanced union handling should show only the most relevant errors
+    // instead of showing all variants, making it much more user-friendly
+    expect(errorString).toContain('[roles]: Expected array, received number')
+
+    // Should NOT show the confusing union variant breakdown
+    expect(errorString).not.toContain('Union validation failed')
+    expect(errorString).not.toContain('Option 1:')
+    expect(errorString).not.toContain('Option 2:')
   })
 })
 

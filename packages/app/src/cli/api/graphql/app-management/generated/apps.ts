@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -10,25 +9,7 @@ export type ListAppsQueryVariables = Types.Exact<{
 
 export type ListAppsQuery = {
   appsConnection?: {
-    edges: {
-      node: {
-        id: string
-        key: string
-        activeRelease: {
-          id: string
-          version: {
-            name: string
-            appModules: {
-              uuid: string
-              userIdentifier: string
-              handle: string
-              config: JsonMapType
-              specification: {identifier: string; externalIdentifier: string; name: string}
-            }[]
-          }
-        }
-      }
-    }[]
+    edges: {node: {id: string; key: string; activeRelease: {id: string; version: {name: string}}}}[]
     pageInfo: {hasNextPage: boolean}
   } | null
 }
@@ -92,20 +73,6 @@ export const ListApps = {
                                       kind: 'SelectionSet',
                                       selections: [
                                         {kind: 'Field', name: {kind: 'Name', value: 'name'}},
-                                        {
-                                          kind: 'Field',
-                                          name: {kind: 'Name', value: 'appModules'},
-                                          selectionSet: {
-                                            kind: 'SelectionSet',
-                                            selections: [
-                                              {
-                                                kind: 'FragmentSpread',
-                                                name: {kind: 'Name', value: 'ReleasedAppModule'},
-                                              },
-                                              {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-                                            ],
-                                          },
-                                        },
                                         {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                       ],
                                     },
@@ -134,32 +101,6 @@ export const ListApps = {
                   },
                 },
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: {kind: 'Name', value: 'ReleasedAppModule'},
-      typeCondition: {kind: 'NamedType', name: {kind: 'Name', value: 'AppModule'}},
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {kind: 'Field', name: {kind: 'Name', value: 'uuid'}},
-          {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
-          {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
-          {kind: 'Field', name: {kind: 'Name', value: 'config'}},
-          {
-            kind: 'Field',
-            name: {kind: 'Name', value: 'specification'},
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
-                {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
-                {kind: 'Field', name: {kind: 'Name', value: 'name'}},
               ],
             },
           },

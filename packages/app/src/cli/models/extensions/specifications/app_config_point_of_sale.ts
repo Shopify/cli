@@ -1,8 +1,8 @@
 import {createConfigExtensionSpecification, TransformationConfig} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const PosConfigurationSchema = BaseSchema.extend({
+const PosConfigurationSchema = BaseSchemaWithoutHandle.extend({
   pos: zod
     .object({
       embedded: zod.boolean({invalid_type_error: 'Value must be Boolean'}),

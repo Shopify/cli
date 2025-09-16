@@ -7,15 +7,12 @@ import {
 } from '../../prompts/dev.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {ClientName} from '../../utilities/developer-platform-client.js'
-import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {isSpinEnvironment} from '@shopify/cli-kit/node/context/spin'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev')
 vi.mock('./fetch')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/context/spin')
 
 const ORG1: Organization = {
   id: '1',
@@ -53,10 +50,6 @@ const STORE3: OrganizationStore = {
 }
 
 const defaultShowDomainOnPrompt = false
-
-beforeEach(() => {
-  vi.mocked(isSpinEnvironment).mockReturnValue(false)
-})
 
 describe('selectStore', async () => {
   test('prompts user to select', async () => {
@@ -143,27 +136,6 @@ describe('selectStore', async () => {
       }),
     )
     expect(confirmConversionToTransferDisabledStorePrompt).toHaveBeenCalled()
-  })
-
-  test('not prompts user to convert store to non-transferable if selection is invalid inside spin instance and first party', async () => {
-    // Given
-    vi.mocked(selectStorePrompt).mockResolvedValueOnce(STORE2)
-    vi.mocked(isSpinEnvironment).mockReturnValue(true)
-    vi.mocked(firstPartyDev).mockReturnValue(true)
-    const developerPlatformClient = testDeveloperPlatformClient({clientName: ClientName.Partners})
-
-    // When
-    const got = await selectStore({stores: [STORE1, STORE2], hasMorePages: false}, ORG1, developerPlatformClient)
-
-    // Then
-    expect(got).toEqual(STORE2)
-    expect(developerPlatformClient.convertToTransferDisabledStore).not.toHaveBeenCalled()
-    expect(selectStorePrompt).toHaveBeenCalledWith(
-      expect.objectContaining({
-        stores: [STORE1, STORE2],
-        showDomainOnPrompt: defaultShowDomainOnPrompt,
-      }),
-    )
   })
 
   test('throws if store is non convertible', async () => {

@@ -1,5 +1,64 @@
 # @shopify/app
 
+## 3.84.0
+
+### Minor Changes
+
+- 6efb593: Relative app proxy urls. App proxy url values that start with / are automatically prepended with the application_url
+
+### Patch Changes
+
+- f3d3326: Added an app information box to the `app dev` command, to make current app information more accessible. Press 'i' to access it.
+- 2c2999c: Bump theme-tools packages
+- Updated dependencies [1f4fd78]
+- Updated dependencies [e301450]
+- Updated dependencies [9b872dc]
+- Updated dependencies [b382a89]
+- Updated dependencies [d2ad0b4]
+- Updated dependencies [864c687]
+- Updated dependencies [828bf47]
+- Updated dependencies [b47f879]
+- Updated dependencies [1161f7a]
+- Updated dependencies [52f999f]
+- Updated dependencies [281b50b]
+- Updated dependencies [4839fb0]
+- Updated dependencies [40e2d6f]
+- Updated dependencies [45ff625]
+- Updated dependencies [2c2999c]
+- Updated dependencies [f330c9f]
+- Updated dependencies [d19e3d7]
+- Updated dependencies [bfc6325]
+- Updated dependencies [62d6b9a]
+- Updated dependencies [9dd353c]
+- Updated dependencies [a12a7cc]
+  - @shopify/theme@3.84.0
+  - @shopify/cli-kit@3.84.0
+  - @shopify/plugin-cloudflare@3.84.0
+
+## 3.83.0
+
+### Minor Changes
+
+- e66b6e3: Opt-out removed for validation of unsupported app configuration sections
+- 0718cf2: Remove opt-out of TOML patching with SHOPIFY_CLI_DISABLE_WASM_TOML_PATCH
+- 39dbde0: Add `--no-build` flag to `shopify app deploy`. When provided, the deploy command will assume you have already run `shopify app build` or otherwise put build files in place.
+
+### Patch Changes
+
+- 478adc7: Make dev store creation link clickable
+- 5349676: Fix issue in `app build` when the app has certain extension types
+- 4ff98f1: Bump theme-tools packages
+- Updated dependencies [bb061b9]
+- Updated dependencies [521fb07]
+- Updated dependencies [b1feb1d]
+- Updated dependencies [ee353e9]
+- Updated dependencies [f4f29ec]
+- Updated dependencies [4ff98f1]
+- Updated dependencies [e73e9a5]
+  - @shopify/theme@3.83.0
+  - @shopify/cli-kit@3.83.0
+  - @shopify/plugin-cloudflare@3.83.0
+
 ## 3.82.0
 
 ### Minor Changes

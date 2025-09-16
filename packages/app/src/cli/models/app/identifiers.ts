@@ -33,7 +33,7 @@ export interface Identifiers {
 }
 
 type UuidOnlyIdentifiers = Omit<Identifiers, 'extensionIds' | 'extensionsNonUuidManaged'>
-type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release'
+type UpdateAppIdentifiersCommand = 'dev' | 'deploy' | 'release' | 'import-extensions'
 interface UpdateAppIdentifiersOptions {
   app: AppInterface
   identifiers: UuidOnlyIdentifiers
@@ -47,7 +47,7 @@ interface UpdateAppIdentifiersOptions {
  * @returns An copy of the app with the environment updated to reflect the updated identifiers.
  */
 export async function updateAppIdentifiers(
-  {app, identifiers, command}: UpdateAppIdentifiersOptions,
+  {app, identifiers, command, developerPlatformClient}: UpdateAppIdentifiersOptions,
   systemEnvironment = process.env,
 ): Promise<AppInterface> {
   let dotenvFile = app.dotenv
@@ -71,7 +71,12 @@ export async function updateAppIdentifiers(
   })
 
   const contentIsEqual = deepCompare(dotenvFile.variables, updatedVariables)
-  const writeToFile = !contentIsEqual && (command === 'deploy' || command === 'release')
+  const writeToFile =
+    (!contentIsEqual &&
+      (command === 'deploy' || command === 'release') &&
+      !developerPlatformClient.supportsAtomicDeployments) ||
+    command === 'import-extensions'
+
   dotenvFile.variables = updatedVariables
 
   if (writeToFile) {
@@ -79,10 +84,11 @@ export async function updateAppIdentifiers(
     const envFileContent = dotEnvFileExists ? await readFile(dotenvFile.path) : ''
     const updatedEnvFileContent = patchEnvFile(envFileContent, updatedVariables)
     await writeFile(dotenvFile.path, updatedEnvFileContent)
+
+    // eslint-disable-next-line require-atomic-updates
+    app.dotenv = dotenvFile
   }
 
-  // eslint-disable-next-line require-atomic-updates
-  app.dotenv = dotenvFile
   return app
 }
 
@@ -95,7 +101,6 @@ interface GetAppIdentifiersOptions {
  */
 export function getAppIdentifiers(
   {app}: GetAppIdentifiersOptions,
-  developerPlatformClient: DeveloperPlatformClient,
   systemEnvironment = process.env,
 ): Partial<UuidOnlyIdentifiers> {
   const envVariables = {
@@ -107,9 +112,6 @@ export function getAppIdentifiers(
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
-    }
-    if (developerPlatformClient.supportsAtomicDeployments) {
-      extensionsIdentifiers[extension.localIdentifier] = extension.uid
     }
   }
   app.allExtensions.forEach(processExtension)

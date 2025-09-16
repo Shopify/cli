@@ -6,6 +6,9 @@ packages/cli-kit/src/private/themes/* @shopify/developer-tools @shopify/app-inne
 packages/cli-kit/src/public/**/themes/* @shopify/developer-tools @shopify/app-inner-loop
 packages/theme/** @shopify/developer-tools @shopify/app-inner-loop
 
+# Bulk Data Management and CLI owners should review changes to the store package
+packages/store/** @shopify/bulk-data-management-eng @shopify/app-inner-loop
+
 # These are metafiles that can be reviewed by anyone
 .changeset/* @shopify/developer-tools @shopify/app-inner-loop
 .github/CODEOWNERS @shopify/developer-tools @shopify/app-inner-loop

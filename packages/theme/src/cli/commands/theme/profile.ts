@@ -4,6 +4,7 @@ import {profile} from '../../services/profile.js'
 import {ensureThemeStore} from '../../utilities/theme-store.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
+import {validateThemePassword} from '../../services/flags-validation.js'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -42,10 +43,13 @@ export default class Profile extends ThemeCommand {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Profile)
+
+    validateThemePassword(flags.password)
+
     const store = ensureThemeStore(flags)
     const {password: themeAccessPassword} = flags
 
-    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword, [], true)
+    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword)
     let filter
     if (flags.theme) {
       filter = {filter: {theme: flags.theme}}

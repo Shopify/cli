@@ -24,8 +24,10 @@ describe('writeManifestToBundle', () => {
         manifest: async () => manifestContent,
       } as unknown as AppInterface
 
+      const appManifest = await mockApp.manifest(undefined)
+
       // When
-      await writeManifestToBundle(mockApp, tmpDir)
+      await writeManifestToBundle(appManifest, tmpDir)
 
       // Then
       const manifestPath = joinPath(tmpDir, 'manifest.json')

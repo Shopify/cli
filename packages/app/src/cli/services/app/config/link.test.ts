@@ -13,7 +13,7 @@ import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {MinimalAppIdentifiers, AppApiKeyAndOrgId, OrganizationApp} from '../../../models/organization.js'
+import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -49,7 +49,7 @@ const DEFAULT_REMOTE_CONFIGURATION = {
 
 function buildDeveloperPlatformClient(extraFields: Partial<DeveloperPlatformClient> = {}): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
-    async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
+    async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
       switch (apiKey) {
         case 'api-key':
           return testOrganizationApp({developerPlatformClient: this as DeveloperPlatformClient})
@@ -807,7 +807,7 @@ embedded = false
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
       vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
       vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
-        return (await developerPlatformClient.appFromIdentifiers({apiKey, organizationId: '1'}))!
+        return (await developerPlatformClient.appFromIdentifiers(apiKey))!
       })
 
       // When
@@ -1662,6 +1662,85 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+handle = "handle"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/create" ]
+  uri = "https://my-app.com/webhooks"
+
+[pos]
+embedded = false
+`
+      expect(content).toEqual(expectedContent)
+    })
+  })
+
+  test('existing config is respected when isNewApp is true, config is current and client_id is not the same as remote app and config name is provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        developerPlatformClient,
+        isNewApp: true,
+        configName: 'staging',
+      }
+      const localApp = {
+        configuration: {
+          path: joinPath(tmp, 'shopify.app.staging.toml'),
+          name: 'my app',
+          client_id: 'invalid_client_id_from_template',
+          webhooks: {
+            api_version: '2023-04',
+            subscriptions: [{topics: ['products/create'], uri: 'https://my-app.com/webhooks'}],
+          },
+          application_url: 'https://myapp.com',
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: 'my-store.myshopify.com',
+            include_config_on_deploy: true,
+          },
+          access_scopes: {
+            scopes: 'write_products',
+          },
+        } as CurrentAppConfiguration,
+      }
+
+      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+      const remoteConfiguration = {
+        ...DEFAULT_REMOTE_CONFIGURATION,
+        handle: 'handle',
+      }
+      vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(remoteConfiguration)
+
+      // When
+      await link(options)
+
+      // Then
+      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"

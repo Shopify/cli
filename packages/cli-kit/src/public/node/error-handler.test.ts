@@ -3,6 +3,8 @@ import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/lo
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
 import {hashString} from '../../public/node/crypto.js'
+import {isLocalEnvironment} from '../../private/node/context/service.js'
+import {settings} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
@@ -22,13 +24,23 @@ vi.mock('@bugsnag/js', () => {
 vi.mock('./cli.js')
 vi.mock('./context/local.js')
 vi.mock('../../public/node/crypto.js')
+vi.mock('../../private/node/context/service.js')
+vi.mock('@oclif/core', () => ({
+  settings: {
+    debug: false,
+  },
+  Interfaces: {},
+}))
 
 beforeEach(() => {
   vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'vitest', metadata: {}})
   vi.mocked(macAddress).mockResolvedValue('macAddress')
-  vi.mocked(cloudEnvironment).mockReturnValue({platform: 'spin', editor: false})
+  vi.mocked(cloudEnvironment).mockReturnValue({platform: 'localhost', editor: false})
   vi.mocked(hashString).mockReturnValue('hashed-macaddress')
   vi.mocked(isUnitTest).mockReturnValue(true)
+  onNotify.mockClear()
+  vi.mocked(settings).debug = false
+  vi.mocked(isLocalEnvironment).mockReturnValue(false)
 })
 
 describe('errorHandler', async () => {
@@ -108,7 +120,43 @@ describe('bugsnag metadata', () => {
   })
 })
 
-describe('send to Bugsnag', () => {
+describe('skips sending errors to Bugsnag', () => {
+  test('when using local services', async () => {
+    // Given
+    vi.mocked(isLocalEnvironment).mockReturnValue(true)
+    const mockOutput = mockAndCaptureOutput()
+    const toThrow = new Error('In test')
+
+    // When
+    const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(res.reported).toEqual(false)
+    expect(res.error).toEqual(toThrow)
+    expect(res.unhandled).toBeUndefined()
+    expect(onNotify).not.toHaveBeenCalled()
+    expect(mockOutput.debug()).toMatch('Skipping Bugsnag report')
+  })
+
+  test('when settings.debug is true', async () => {
+    // Given
+    vi.mocked(settings).debug = true
+    const mockOutput = mockAndCaptureOutput()
+    const toThrow = new Error('In test')
+
+    // When
+    const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')
+
+    // Then
+    expect(res.reported).toEqual(false)
+    expect(res.error).toEqual(toThrow)
+    expect(res.unhandled).toBeUndefined()
+    expect(onNotify).not.toHaveBeenCalled()
+    expect(mockOutput.debug()).toMatch('Skipping Bugsnag report')
+  })
+})
+
+describe('sends errors to Bugsnag', () => {
   test('processes Error instances as unhandled', async () => {
     const toThrow = new Error('In test')
     const res = await sendErrorToBugsnag(toThrow, 'unexpected_error')

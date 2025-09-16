@@ -6,6 +6,7 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
+import {recordError} from '@shopify/cli-kit/node/analytics'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
@@ -23,6 +24,7 @@ const IGNORED_ENDPOINTS = [
   '/shopify/monorail',
   '/mini-profiler-resources',
   '/web-pixels-manager',
+  '/web-pixels@',
   '/wpm',
   '/services/',
 ]
@@ -46,7 +48,7 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
 
       return proxyStorefrontRequest(event, ctx)
         .then(async (response) => {
-          logRequestLine(event, response)
+          logRequestLine(event, response, ctx)
 
           if (response.ok) {
             const fileName = pathname.split('/').at(-1) ?? ''
@@ -171,10 +173,21 @@ export async function patchRenderingResponse(
   rawResponse: Response,
   patchCallback?: (html: string) => string | undefined,
 ): Promise<Response> {
+  // 3xx responses should be returned
+  if (rawResponse.status >= 300 && rawResponse.status < 400) {
+    return rawResponse
+  }
+
   const response = patchProxiedResponseHeaders(ctx, rawResponse)
 
-  // Ensure the content type indicates UTF-8 charset:
-  response.headers.set('content-type', 'text/html; charset=utf-8')
+  // Only set HTML content-type for actual HTML responses, preserve JSON content-type:
+  const originalContentType = rawResponse.headers.get('content-type')
+  const isJsonResponse = originalContentType?.includes('application/json')
+
+  if (!isJsonResponse) {
+    // Ensure the content type indicates UTF-8 charset for HTML responses:
+    response.headers.set('content-type', 'text/html; charset=utf-8')
+  }
 
   let html = await response.text()
   html = injectCdnProxy(html, ctx)
@@ -297,6 +310,6 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   } as RequestInit & {duplex?: 'half'})
     .then((response) => patchProxiedResponseHeaders(ctx, response))
     .catch((error: Error) => {
-      throw createFetchError(error, url)
+      throw createFetchError(recordError(error), url)
     })
 }

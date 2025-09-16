@@ -1,10 +1,10 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {BaseSchema} from '../schemas.js'
+import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 
-const AppAccessSchema = BaseSchema.extend({
+const AppAccessSchema = BaseSchemaWithoutHandle.extend({
   access: zod
     .object({
       admin: zod
@@ -46,7 +46,15 @@ const appAccessSpec = createConfigExtensionSpecification({
   identifier: AppAccessSpecIdentifier,
   schema: AppAccessSchema,
   transformConfig: AppAccessTransformConfig,
-  getDevSessionUpdateMessage: async (config) => {
+  getDevSessionUpdateMessages: async (config) => {
+    const hasAccessModule = config.access_scopes !== undefined
+    const isLegacyInstallFlow = config.access_scopes?.use_legacy_install_flow === true
+    const hasNoScopes = config.access_scopes?.scopes == null && config.access_scopes?.required_scopes == null
+
+    if (isLegacyInstallFlow || (hasAccessModule && hasNoScopes)) {
+      return [`Using legacy install flow - access scopes are not auto-granted`]
+    }
+
     const scopesString = config.access_scopes?.scopes
       ? config.access_scopes.scopes
           .split(',')
@@ -54,7 +62,7 @@ const appAccessSpec = createConfigExtensionSpecification({
           .join(', ')
       : config.access_scopes?.required_scopes?.join(', ')
 
-    return scopesString ? `Access scopes auto-granted: ${scopesString}` : `App has been installed`
+    return scopesString ? [`Access scopes auto-granted: ${scopesString}`] : [`App has been installed`]
   },
   patchWithAppDevURLs: (config, urls) => {
     if (urls.redirectUrlWhitelist) {

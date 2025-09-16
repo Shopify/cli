@@ -14,8 +14,16 @@ vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
   },
 }))
 
-const extension1 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1'})
-const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2', uid: 'uid2'})
+const extension1 = await testUIExtension({
+  type: 'ui_extension',
+  directory: '/extensions/ui_extension_1',
+  uid: 'uid1',
+})
+const extension2 = await testUIExtension({
+  type: 'ui_extension',
+  directory: '/extensions/ui_extension_2',
+  uid: 'uid2',
+})
 
 describe('app-watcher-esbuild', () => {
   const options: DevAppWatcherOptions = {
@@ -186,7 +194,7 @@ describe('app-watcher-esbuild', () => {
     await mgr.rebuildContext(ext)
 
     // Get the built file
-    const builtFile = joinPath(outputRoot, ext.uid, 'dist', `${ext.handle}.js`)
+    const builtFile = joinPath(outputRoot, ext.getOutputFolderId(), 'dist', `${ext.handle}.js`)
     await expect(fs.fileExists(builtFile)).resolves.toBe(true)
     const content = await fs.readFile(builtFile, {encoding: 'utf8'})
 

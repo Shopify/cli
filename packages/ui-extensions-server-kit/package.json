@@ -34,8 +34,7 @@
     "lint": "nx lint",
     "lint:fix": "nx lint:fix",
     "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
-    "test": "nx run ui-extensions-server-kit:test",
-    "test:watch": "nx test:watch"
+    "vitest": "vitest"
   },
   "eslintConfig": {
     "extends": [
@@ -60,7 +59,7 @@
     "jsdom": "^20.0.3",
     "react": "^17.0.2",
     "vi-fetch": "^0.8.0",
-    "vite": "6.3.5"
+    "vite": "6.3.6"
   },
   "peerDependencies": {
     "react": "^17.0.2"

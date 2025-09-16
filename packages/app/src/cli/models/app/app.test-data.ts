@@ -17,7 +17,6 @@ import {
   MinimalAppIdentifiers,
   OrganizationApp,
   MinimalOrganizationApp,
-  AppApiKeyAndOrgId,
   OrganizationSource,
 } from '../organization.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
@@ -202,6 +201,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
     grantedScopes: [],
     disabledFlags: ['5b25141b'],
     flags: [],
+    developerPlatformClient: testDeveloperPlatformClient(),
   }
   return {...defaultApp, ...app}
 }
@@ -219,6 +219,7 @@ export async function testUIExtension(
     name: uiExtension?.name ?? 'test-ui-extension',
     type: uiExtension?.type ?? 'product_subscription',
     handle: uiExtension?.handle ?? 'test-ui-extension',
+    uid: uiExtension?.uid ?? undefined,
     metafields: [],
     capabilities: {
       block_progress: false,
@@ -324,6 +325,7 @@ export async function testAppConfigExtensions(emptyConfig = false, directory?: s
 export async function testAppAccessConfigExtension(
   emptyConfig = false,
   directory?: string,
+  useLegacyInstallFlow = true,
 ): Promise<ExtensionInstance> {
   const configuration = emptyConfig
     ? ({} as unknown as BaseConfigType)
@@ -333,7 +335,7 @@ export async function testAppAccessConfigExtension(
         },
         access_scopes: {
           scopes: 'read_products,write_products',
-          use_legacy_install_flow: true,
+          use_legacy_install_flow: useLegacyInstallFlow,
         },
         auth: {
           redirect_urls: ['https://example.com/auth/callback'],
@@ -1417,16 +1419,16 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   const clientStub: DeveloperPlatformClient = {
     clientName: ClientName.AppManagement,
     webUiName: 'Test Dashboard',
-    requiresOrganization: false,
     supportsAtomicDeployments: false,
     supportsDevSessions: stubs.supportsDevSessions ?? false,
     supportsStoreSearch: false,
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
+    supportsDashboardManagedExtensions: true,
     session: () => Promise.resolve(testPartnersUserSession),
     unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
     accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
-    appFromIdentifiers: (_app: AppApiKeyAndOrgId) => Promise.resolve(testOrganizationApp()),
+    appFromIdentifiers: (_apiKey: string) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
     appsForOrg: (_organizationId: string) => Promise.resolve({apps: [testOrganizationApp()], hasMorePages: false}),
@@ -1503,7 +1505,6 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       retVal[
         key as keyof Omit<
           DeveloperPlatformClient,
-          | 'requiresOrganization'
           | 'supportsAtomicDeployments'
           | 'clientName'
           | 'webUiName'
@@ -1511,6 +1512,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
           | 'supportsStoreSearch'
           | 'organizationSource'
           | 'bundleFormat'
+          | 'supportsDashboardManagedExtensions'
         >
       ] = vi.fn().mockImplementation(value)
     }

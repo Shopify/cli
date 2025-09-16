@@ -1,8 +1,9 @@
-import {themeFlags} from '../../flags.js'
+import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {pull, PullFlags} from '../../services/pull.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 export default class Pull extends ThemeCommand {
   static summary = 'Download your remote theme files locally.'
@@ -16,6 +17,7 @@ If no theme is specified, then you're prompted to select the theme to pull from 
   static flags = {
     ...globalFlags,
     ...themeFlags,
+    ...globFlags('download'),
     theme: Flags.string({
       char: 't',
       description: 'Theme ID or name of the remote theme.',
@@ -35,18 +37,6 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       char: 'n',
       description: `Prevent deleting local files that don't exist remotely.`,
       env: 'SHOPIFY_FLAG_NODELETE',
-    }),
-    only: Flags.string({
-      char: 'o',
-      multiple: true,
-      description: 'Download only the specified files (Multiple flags allowed).',
-      env: 'SHOPIFY_FLAG_ONLY',
-    }),
-    ignore: Flags.string({
-      char: 'x',
-      multiple: true,
-      description: 'Skip downloading the specified files (Multiple flags allowed).',
-      env: 'SHOPIFY_FLAG_IGNORE',
     }),
     force: Flags.boolean({
       hidden: true,
@@ -73,6 +63,8 @@ If no theme is specified, then you're prompted to select the theme to pull from 
       noColor: flags['no-color'],
     }
 
+    recordTiming('theme-command:pull')
     await pull(pullFlags)
+    recordTiming('theme-command:pull')
   }
 }

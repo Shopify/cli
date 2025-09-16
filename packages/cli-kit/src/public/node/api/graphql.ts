@@ -65,21 +65,18 @@ type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> 
   queryAsString: string
   variables?: Variables
   unauthorizedHandler?: UnauthorizedHandler
-  requestBehaviour?: RequestModeInput
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
   query: RequestDocument
   variables?: Variables
   unauthorizedHandler?: UnauthorizedHandler
-  requestBehaviour?: RequestModeInput
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
   unauthorizedHandler?: UnauthorizedHandler
-  requestBehaviour?: RequestModeInput
 }
 
 export interface GraphQLResponseOptions<T> {
@@ -116,7 +113,7 @@ async function createGraphQLClient({
 async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
   const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler, cacheOptions} =
     options
-  const requestBehaviour = requestMode(options.preferredBehaviour ?? 'default')
+  const behaviour = requestMode(options.preferredBehaviour ?? 'default')
 
   let {headers, client} = await createGraphQLClient({url, addedHeaders, token})
   debugLogRequestInfo(api, queryAsString, url, variables, headers)
@@ -128,7 +125,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
     try {
       // mapping signal to any due to polyfill meaning types don't exactly match (but are functionally equivalent)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      client.requestConfig.signal = abortSignalFromRequestBehaviour(requestBehaviour) as any
+      client.requestConfig.signal = abortSignalFromRequestBehaviour(behaviour) as any
       fullResponse = await client.rawRequest<TResult>(queryAsString, variables)
       await logLastRequestIdFromResponse(fullResponse)
       return fullResponse
@@ -164,7 +161,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
 
   const request = () =>
     retryAwareRequest(
-      {request: rawGraphQLRequest, url, ...requestBehaviour},
+      {request: rawGraphQLRequest, url, ...behaviour},
       responseOptions?.handleErrors === false ? undefined : errorHandler(api),
     )
 

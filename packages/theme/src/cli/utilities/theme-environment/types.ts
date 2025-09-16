@@ -81,6 +81,11 @@ export interface DevServerContext {
   directory: string
 
   /**
+   * Identifies whether this context is for a theme or a theme extension.
+   */
+  type: 'theme' | 'theme-extension'
+
+  /**
    * Additional options for the development server.
    */
   options: {

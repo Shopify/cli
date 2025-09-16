@@ -172,18 +172,7 @@ describe('refresh access tokens', () => {
     const got = () => refreshAccessToken(identityToken)
 
     // Then
-    await expect(got).rejects.toThrowError(
-      'You are not authorized to use the CLI to develop in the provided store.' +
-        '\n\n' +
-        "You can't use Shopify CLI with development stores if you only have Partner " +
-        'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
-        'you should be the store owner or create a staff account on the store.' +
-        '\n\n' +
-        "If you're the store owner, then you need to log in to the store directly using the " +
-        'store URL at least once before you log in using Shopify CLI. ' +
-        'Logging in to the Shopify admin directly connects the development ' +
-        'store with your Shopify login.',
-    )
+    await expect(got).rejects.toThrowError('You are not authorized to use the CLI to develop in the provided store.')
   })
 
   describe('when there is a store in the request params', () => {
@@ -198,16 +187,7 @@ describe('refresh access tokens', () => {
 
       // Then
       await expect(got).rejects.toThrowError(
-        'You are not authorized to use the CLI to develop in the provided store: bob.myshopify.com' +
-          '\n\n' +
-          "You can't use Shopify CLI with development stores if you only have Partner " +
-          'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
-          'you should be the store owner or create a staff account on the store.' +
-          '\n\n' +
-          "If you're the store owner, then you need to log in to the store directly using the " +
-          'store URL at least once before you log in using Shopify CLI. ' +
-          'Logging in to the Shopify admin directly connects the development ' +
-          'store with your Shopify login.',
+        'You are not authorized to use the CLI to develop in the provided store: bob.myshopify.com',
       )
     })
   })

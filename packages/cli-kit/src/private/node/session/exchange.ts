@@ -196,17 +196,9 @@ interface TokenRequestResult {
 }
 
 function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
-  const invalidTargetErrorMessage =
-    `You are not authorized to use the CLI to develop in the provided store${store ? `: ${store}` : '.'}` +
-    '\n\n' +
-    "You can't use Shopify CLI with development stores if you only have Partner " +
-    'staff member access. If you want to use Shopify CLI to work on a development store, then ' +
-    'you should be the store owner or create a staff account on the store.' +
-    '\n\n' +
-    "If you're the store owner, then you need to log in to the store directly using the " +
-    'store URL at least once before you log in using Shopify CLI. ' +
-    'Logging in to the Shopify admin directly connects the development ' +
-    'store with your Shopify login.'
+  const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
+    store ? `: ${store}` : '.'
+  }`
 
   if (error === 'invalid_grant') {
     // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
@@ -219,7 +211,11 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
     return new InvalidRequestError()
   }
   if (error === 'invalid_target') {
-    return new InvalidTargetError(invalidTargetErrorMessage)
+    return new InvalidTargetError(invalidTargetErrorMessage, '', [
+      'Ensure you have logged in to the store using the Shopify admin at least once.',
+      'Ensure you are the store owner, or have a staff account if you are attempting to log in to a development store.',
+      'Ensure you are using the permanent store domain, not a vanity domain.',
+    ])
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
   return new AbortError(error)

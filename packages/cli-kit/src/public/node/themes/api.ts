@@ -3,6 +3,7 @@ import {buildTheme} from './factories.js'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
+import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
 import {ThemePublish} from '../../../cli/api/graphql/admin/generated/theme_publish.js'
 import {ThemeCreate} from '../../../cli/api/graphql/admin/generated/theme_create.js'
 import {GetThemeFileBodies} from '../../../cli/api/graphql/admin/generated/get_theme_file_bodies.js'
@@ -27,19 +28,20 @@ import {adminRequestDoc} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
 import {outputDebug} from '../output.js'
+import {recordTiming, recordEvent, recordError} from '../analytics.js'
 
 export type ThemeParams = Partial<Pick<Theme, 'name' | 'role' | 'processing' | 'src'>>
 export type AssetParams = Pick<ThemeAsset, 'key'> & Partial<Pick<ThemeAsset, 'value' | 'attachment'>>
 const SkeletonThemeCdn = 'https://cdn.shopify.com/static/online-store/theme-skeleton.zip'
 const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useNetworkLevelRetry: true,
-  useAbortSignal: true,
-  timeoutMs: 90 * 1000,
+  useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
 }
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const gid = composeThemeGid(id)
+  recordEvent('theme-api:fetch-theme')
 
   try {
     const {theme} = await adminRequestDoc({
@@ -47,6 +49,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
       session,
       variables: {id: gid},
       responseOptions: {handleErrors: false},
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (theme) {
@@ -59,7 +62,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
     }
 
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_error) {
+  } catch (error) {
     /**
      * Consumers of this and other theme APIs in this file expect either a theme
      * or `undefined`.
@@ -67,6 +70,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
      * Error handlers should not inspect GraphQL error messages directly, as
      * they are internationalized.
      */
+    recordError(error)
     outputDebug(`Error fetching theme with ID: ${id}`)
   }
 }
@@ -74,6 +78,7 @@ export async function fetchTheme(id: number, session: AdminSession): Promise<The
 export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
   const themes: Theme[] = []
   let after: string | null = null
+  recordEvent('theme-api:fetch-themes')
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
@@ -82,6 +87,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
       session,
       variables: {after},
       responseOptions: {handleErrors: false},
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
     if (!response.themes) {
       unexpectedGraphQLError('Failed to fetch themes')
@@ -108,6 +114,7 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
 
 export async function themeCreate(params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const themeSource = params.src ?? SkeletonThemeCdn
+  recordEvent('theme-api:create-theme')
   const {themeCreate} = await adminRequestDoc({
     query: ThemeCreate,
     session,
@@ -117,7 +124,7 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
       role: (params.role ?? DEVELOPMENT_THEME_ROLE).toUpperCase() as ThemeRole,
     },
     responseOptions: {handleErrors: false},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 
   if (!themeCreate) {
@@ -127,7 +134,7 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
   const {theme, userErrors} = themeCreate
   if (userErrors.length) {
     const userErrors = themeCreate.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(userErrors)
+    throw recordError(new AbortError(userErrors))
   }
 
   if (!theme) {
@@ -144,6 +151,7 @@ export async function themeCreate(params: ThemeParams, session: AdminSession): P
 export async function fetchThemeAssets(id: number, filenames: Key[], session: AdminSession): Promise<ThemeAsset[]> {
   const assets: ThemeAsset[] = []
   let after: string | null = null
+  recordEvent('theme-api:fetch-assets')
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
@@ -152,7 +160,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
       session,
       variables: {id: themeGid(id), filenames, after},
       responseOptions: {handleErrors: false},
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!response.theme?.files?.nodes || !response.theme?.files?.pageInfo) {
@@ -188,6 +196,7 @@ export async function fetchThemeAssets(id: number, filenames: Key[], session: Ad
 export async function deleteThemeAssets(id: number, filenames: Key[], session: AdminSession): Promise<Result[]> {
   const batchSize = 50
   const results: Result[] = []
+  recordEvent('theme-api:delete-assets')
 
   for (let i = 0; i < filenames.length; i += batchSize) {
     const batch = filenames.slice(i, i + batchSize)
@@ -199,7 +208,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
         themeId: composeThemeGid(id),
         files: batch,
       },
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!themeFilesDelete) {
@@ -217,6 +226,7 @@ export async function deleteThemeAssets(id: number, filenames: Key[], session: A
     if (userErrors.length > 0) {
       userErrors.forEach((error) => {
         if (error.filename) {
+          recordError(`Asset deletion failed for ${error.filename}: ${error.message}`)
           results.push({
             key: error.filename,
             success: false,
@@ -239,11 +249,16 @@ export async function bulkUploadThemeAssets(
   session: AdminSession,
 ): Promise<Result[]> {
   const results: Result[] = []
+  recordEvent('theme-api:bulk-upload-assets')
   for (let i = 0; i < assets.length; i += 50) {
     const chunk = assets.slice(i, i + 50)
     const files = prepareFilesForUpload(chunk)
+
+    recordTiming('theme-api:upload-files')
     // eslint-disable-next-line no-await-in-loop
     const uploadResults = await uploadFiles(id, files, session)
+    recordTiming('theme-api:upload-files')
+
     results.push(...processUploadResults(uploadResults))
   }
   return results
@@ -280,7 +295,7 @@ async function uploadFiles(
     query: ThemeFilesUpsert,
     session,
     variables: {themeId: themeGid(themeId), files},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
 }
 
@@ -307,6 +322,7 @@ function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[]
     if (!error.filename) {
       unexpectedGraphQLError(`Error uploading theme files: ${error.message}`)
     }
+    recordError(`Asset upload failed for ${error.filename}: ${error.message}`)
     results.push({
       key: error.filename,
       success: false,
@@ -321,6 +337,7 @@ function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[]
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
   const checksums: Checksum[] = []
   let after: string | null = null
+  recordEvent('theme-api:fetch-checksums')
 
   while (true) {
     // eslint-disable-next-line no-await-in-loop
@@ -329,12 +346,12 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
       session,
       variables: {id: themeGid(id), after},
       responseOptions: {handleErrors: false},
-      requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+      preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
     })
 
     if (!response?.theme?.files?.nodes || !response?.theme?.files?.pageInfo) {
       const userErrors = response.theme?.files?.userErrors.map((error) => error.filename).join(', ')
-      throw new AbortError(`Failed to fetch checksums for: ${userErrors}`)
+      throw recordError(new AbortError(`Failed to fetch checksums for: ${userErrors}`))
     }
 
     const {nodes, pageInfo} = response.theme.files
@@ -360,12 +377,13 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
   if (name) {
     input.name = name
   }
+  recordEvent('theme-api:update-theme')
 
   const {themeUpdate} = await adminRequestDoc({
     query: ThemeUpdate,
     session,
     variables: {id: composeThemeGid(id), input},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themeUpdate) {
     // An unexpected error occurred during the GraphQL request execution
@@ -375,7 +393,7 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
   const {theme, userErrors} = themeUpdate
   if (userErrors.length) {
     const userErrors = themeUpdate.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(userErrors)
+    throw recordError(new AbortError(userErrors))
   }
 
   if (!theme) {
@@ -391,11 +409,12 @@ export async function themeUpdate(id: number, params: ThemeParams, session: Admi
 }
 
 export async function themePublish(id: number, session: AdminSession): Promise<Theme | undefined> {
+  recordEvent('theme-api:publish-theme')
   const {themePublish} = await adminRequestDoc({
     query: ThemePublish,
     session,
     variables: {id: composeThemeGid(id)},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themePublish) {
     // An unexpected error occurred during the GraphQL request execution
@@ -405,7 +424,7 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
   const {theme, userErrors} = themePublish
   if (userErrors.length) {
     const userErrors = themePublish.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(userErrors)
+    throw recordError(new AbortError(userErrors))
   }
 
   if (!theme) {
@@ -421,11 +440,12 @@ export async function themePublish(id: number, session: AdminSession): Promise<T
 }
 
 export async function themeDelete(id: number, session: AdminSession): Promise<boolean | undefined> {
+  recordEvent('theme-api:delete-theme')
   const {themeDelete} = await adminRequestDoc({
     query: ThemeDelete,
     session,
     variables: {id: composeThemeGid(id)},
-    requestBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
   })
   if (!themeDelete) {
     // An unexpected error occurred during the GraphQL request execution
@@ -435,7 +455,7 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
   const {deletedThemeId, userErrors} = themeDelete
   if (userErrors.length) {
     const userErrors = themeDelete.userErrors.map((error) => error.message).join(', ')
-    throw new AbortError(userErrors)
+    throw recordError(new AbortError(userErrors))
   }
 
   if (!deletedThemeId) {
@@ -446,7 +466,77 @@ export async function themeDelete(id: number, session: AdminSession): Promise<bo
   return true
 }
 
+export interface ThemeDuplicateResult {
+  theme?: Theme
+  userErrors: {field?: string[] | null; message: string}[]
+  requestId?: string
+}
+
+export async function themeDuplicate(
+  id: number,
+  name: string | undefined,
+  session: AdminSession,
+): Promise<ThemeDuplicateResult> {
+  let requestId: string | undefined
+  recordEvent('theme-api:duplicate-theme')
+
+  const {themeDuplicate} = await adminRequestDoc({
+    query: ThemeDuplicate,
+    session,
+    variables: {id: composeThemeGid(id), name},
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+    version: '2025-10',
+    responseOptions: {
+      onResponse: (response) => {
+        requestId = response.headers.get('x-request-id') ?? undefined
+      },
+    },
+  })
+
+  if (!themeDuplicate) {
+    // An unexpected error occurred during the GraphQL request execution
+    recordError('Failed to duplicate theme')
+    return {
+      theme: undefined,
+      userErrors: [{message: 'Failed to duplicate theme'}],
+      requestId,
+    }
+  }
+
+  const {newTheme, userErrors} = themeDuplicate
+
+  if (userErrors.length > 0) {
+    return {
+      theme: undefined,
+      userErrors,
+      requestId,
+    }
+  }
+
+  if (!newTheme) {
+    // An unexpected error if neither theme nor userErrors are returned
+    return {
+      theme: undefined,
+      userErrors: [{message: 'Failed to duplicate theme'}],
+      requestId,
+    }
+  }
+
+  const theme = buildTheme({
+    id: parseGid(newTheme.id),
+    name: newTheme.name,
+    role: newTheme.role.toLowerCase(),
+  })
+
+  return {
+    theme,
+    userErrors: [],
+    requestId,
+  }
+}
+
 export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, session: AdminSession) {
+  recordEvent('theme-api:fetch-metafield-definitions')
   const {metafieldDefinitions} = await adminRequestDoc({
     query: MetafieldDefinitionsByOwnerType,
     session,
@@ -466,6 +556,7 @@ export async function metafieldDefinitionsByOwnerType(type: MetafieldOwnerType, 
 }
 
 export async function passwordProtected(session: AdminSession): Promise<boolean> {
+  recordEvent('theme-api:check-password-protection')
   const {onlineStore} = await adminRequestDoc({
     query: OnlineStorePasswordProtection,
     session,
@@ -480,7 +571,7 @@ export async function passwordProtected(session: AdminSession): Promise<boolean>
 }
 
 function unexpectedGraphQLError(message: string): never {
-  throw new AbortError(message)
+  throw recordError(new AbortError(message))
 }
 
 function themeGid(id: number): string {
@@ -509,7 +600,7 @@ export async function parseThemeFileContent(
         return {attachment: Buffer.from(arrayBuffer).toString('base64')}
       } catch (error) {
         // Raise error if we can't download the file
-        throw new AbortError(`Error downloading content from URL: ${body.url}`)
+        throw recordError(new AbortError(`Error downloading content from URL: ${body.url}`))
       }
   }
 }

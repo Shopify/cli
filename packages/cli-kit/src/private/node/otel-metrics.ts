@@ -5,7 +5,6 @@ import {
   DefaultOtelServiceOptions,
 } from '../../public/node/vendor/otel-js/service/DefaultOtelService/DefaultOtelService.js'
 import {isUnitTest, opentelemetryDomain} from '../../public/node/context/local.js'
-import {isSpinEnvironment} from '../../public/node/context/spin.js'
 import {ValueType} from '@opentelemetry/api'
 
 type MetricRecorder =
@@ -118,12 +117,12 @@ function defaultOtelOptions(): Omit<DefaultOtelServiceOptions, 'env' | 'otelEndp
 /**
  * Create the metric recorder for this command.
  *
- * If metric logging is disabled, or we are running in a unit test or Spin, we record to the console.
+ * If metric logging is disabled, or we are running in a unit test, we record to the console.
  *
  */
 function createMetricRecorder(options: CreateMetricRecorderOptions): MetricRecorder {
   let recorder: MetricRecorder = 'console'
-  if (!(options.skipMetricAnalytics || isUnitTest() || isSpinEnvironment())) {
+  if (!(options.skipMetricAnalytics || isUnitTest())) {
     recorder = {
       type: 'otel',
       otel: globalOtelService(options),

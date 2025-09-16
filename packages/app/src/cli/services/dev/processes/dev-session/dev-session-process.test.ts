@@ -186,7 +186,7 @@ describe('pushUpdatesForDevSession', () => {
   test('handles scope changes and displays updated message', async () => {
     // Given
     vi.mocked(buildAppURLForWeb).mockResolvedValue('https://test.myshopify.com/admin/apps/test')
-    const appAccess = await testAppAccessConfigExtension()
+    const appAccess = await testAppAccessConfigExtension(false, undefined, false)
     const event = {extensionEvents: [{type: 'updated', extension: appAccess}], app}
     const contextSpy = vi.spyOn(outputContext, 'useConcurrentOutputContext')
 

@@ -33,3 +33,22 @@ export const themeFlags = {
     multiple: true,
   }),
 }
+
+const globQuotesDescription = "Wrap the value in double quotes if you're using wildcards."
+
+export const globFlags = (action: 'download' | 'upload') => ({
+  only: Flags.string({
+    char: 'o',
+    multiple: true,
+    description: `${
+      action.charAt(0).toUpperCase() + action.slice(1)
+    } only the specified files (Multiple flags allowed). ${globQuotesDescription}`,
+    env: 'SHOPIFY_FLAG_ONLY',
+  }),
+  ignore: Flags.string({
+    char: 'x',
+    multiple: true,
+    description: `Skip ${action}ing the specified files (Multiple flags allowed). ${globQuotesDescription}`,
+    env: 'SHOPIFY_FLAG_IGNORE',
+  }),
+})

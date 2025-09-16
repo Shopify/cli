@@ -143,6 +143,7 @@ describe('setup-dev-processes', () => {
       organizationId: '5678',
       grantedScopes: [],
       flags: [],
+      developerPlatformClient,
     }
 
     const graphiqlKey = 'somekey'
@@ -332,6 +333,7 @@ describe('setup-dev-processes', () => {
       organizationId: '5678',
       grantedScopes: [],
       flags: [],
+      developerPlatformClient,
     }
 
     const res = await setupDevProcesses({
@@ -426,6 +428,7 @@ describe('setup-dev-processes', () => {
       organizationId: '5678',
       grantedScopes: [],
       flags: [],
+      developerPlatformClient,
     }
 
     const graphiqlKey = 'somekey'
@@ -522,6 +525,7 @@ describe('setup-dev-processes', () => {
       organizationId: '5678',
       grantedScopes: [],
       flags: [],
+      developerPlatformClient,
     }
 
     const graphiqlKey = 'somekey'
@@ -617,6 +621,7 @@ describe('setup-dev-processes', () => {
       organizationId: '5678',
       grantedScopes: [],
       flags: [],
+      developerPlatformClient,
     }
 
     const graphiqlKey = 'somekey'

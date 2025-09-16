@@ -359,6 +359,118 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
     // When/Then
     await expect(app.preDeployValidation()).resolves.not.toThrow()
   })
+
+  test('does not throw an error when only compliance webhooks are used with legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            compliance_topics: ['customers/data_request', 'customers/redact', 'shop/redact'],
+            uri: '/webhooks',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('throws an error when both app-specific and compliance webhooks are used with legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            topics: ['orders/create'],
+            uri: '/webhooks/orders',
+          },
+          {
+            compliance_topics: ['customers/redact'],
+            uri: '/webhooks/compliance',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).rejects.toThrow(
+      new AbortError(
+        'App-specific webhook subscriptions are not supported when use_legacy_install_flow is enabled.',
+        `To use app-specific webhooks, you need to:
+1. Remove 'use_legacy_install_flow = true' from your configuration
+2. Run 'shopify app deploy' to sync your scopes with the Partner Dashboard
+
+Alternatively, continue using shop-specific webhooks with the legacy install flow.
+
+Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app-installation`,
+      ),
+    )
+  })
+
+  test('does not throw an error for subscription with empty topics array and legacy install flow', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            topics: [],
+            uri: '/webhooks',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
+
+  test('does not throw an error for subscription with only compliance_topics and no topics field', async () => {
+    // Given
+    const configuration: CurrentAppConfiguration = {
+      ...DEFAULT_CONFIG,
+      access_scopes: {
+        scopes: 'read_orders',
+        use_legacy_install_flow: true,
+      },
+      webhooks: {
+        api_version: '2024-07',
+        subscriptions: [
+          {
+            // Only compliance_topics, no topics field at all
+            compliance_topics: ['customers/data_request'],
+            uri: '/webhooks/gdpr',
+          },
+        ],
+      },
+    }
+    const app = testApp({configuration})
+
+    // When/Then
+    await expect(app.preDeployValidation()).resolves.not.toThrow()
+  })
 })
 
 describe('validateFunctionExtensionsWithUiHandle', () => {
@@ -557,6 +669,26 @@ describe('allExtensions', () => {
     expect(app.allExtensions).toContain(configExtension)
   })
 
+  test('includes configuration extensions by default when include_config_on_deploy is undefined', async () => {
+    const configExtension = await testAppAccessConfigExtension()
+    const app = testApp(
+      {
+        configuration: {
+          ...CORRECT_CURRENT_APP_SCHEMA,
+          build: {
+            automatically_update_urls_on_dev: true,
+            dev_store_url: 'https://google.com',
+            include_config_on_deploy: undefined,
+          },
+        },
+        allExtensions: [configExtension],
+      },
+      'current',
+    )
+
+    expect(app.allExtensions).toContain(configExtension)
+  })
+
   test('does not include configuration extensions when include_config_on_deploy is disabled', async () => {
     const configuration = {
       ...CORRECT_CURRENT_APP_SCHEMA,
@@ -577,28 +709,6 @@ describe('allExtensions', () => {
 
     expect(app.allExtensions).toHaveLength(0)
   })
-
-  test('includes configuration extensions when using App Management API, ignoring include_config_on_deploy', async () => {
-    const configuration = {
-      ...CORRECT_CURRENT_APP_SCHEMA,
-      organization_id: '12345',
-      build: {
-        automatically_update_urls_on_dev: true,
-        dev_store_url: 'https://google.com',
-        include_config_on_deploy: false,
-      },
-    }
-    const configExtension = await testAppAccessConfigExtension()
-    const app = testApp(
-      {
-        configuration,
-        allExtensions: [configExtension],
-      },
-      'current',
-    )
-
-    expect(app.allExtensions).toContain(configExtension)
-  })
 })
 
 describe('manifest', () => {
@@ -616,7 +726,12 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest()
+    const manifest = await app.manifest({
+      app: 'API_KEY',
+      extensions: {app_access: 'UUID_A'},
+      extensionIds: {},
+      extensionsNonUuidManaged: {},
+    })
 
     // Then
     expect(manifest).toEqual({
@@ -627,6 +742,7 @@ describe('manifest', () => {
           type: 'app_access_external',
           handle: 'app_access',
           uid: appAccessModule.uid,
+          uuid: 'UUID_A',
           assets: appAccessModule.uid,
           target: appAccessModule.contextValue,
           config: expect.objectContaining({
@@ -664,7 +780,7 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest()
+    const manifest = await app.manifest(undefined)
 
     // Then
     expect(manifest).toEqual({
@@ -722,7 +838,7 @@ describe('manifest', () => {
     })
 
     // When
-    const manifest = await app.manifest()
+    const manifest = await app.manifest(undefined)
 
     // Then
     expect(manifest).toEqual({

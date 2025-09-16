@@ -19,7 +19,7 @@ export interface themepush {
   '-e, --environment <value>'?: string
 
   /**
-   * Skip uploading the specified files (Multiple flags allowed).
+   * Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.
    * @environment SHOPIFY_FLAG_IGNORE
    */
   '-x, --ignore <value>'?: string
@@ -49,7 +49,7 @@ export interface themepush {
   '-n, --nodelete'?: ''
 
   /**
-   * Push only the specified files (Multiple flags allowed).
+   * Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.
    * @environment SHOPIFY_FLAG_ONLY
    */
   '-o, --only <value>'?: string

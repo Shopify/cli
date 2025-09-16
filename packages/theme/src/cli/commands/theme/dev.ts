@@ -5,10 +5,13 @@ import {dev} from '../../services/dev.js'
 import {DevelopmentThemeManager} from '../../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
+import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
+import {validateThemePassword} from '../../services/flags-validation.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import type {ErrorOverlayMode, LiveReload} from '../../utilities/theme-environment/types.js'
 
 export default class Dev extends ThemeCommand {
@@ -126,8 +129,12 @@ You can run this command only in a directory that matches the [default Shopify t
     let flags = parsed.flags as typeof parsed.flags & FlagValues
     const {ignore = [], only = []} = flags
 
+    validateThemePassword(flags.password)
+
     const store = ensureThemeStore(flags)
     const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+
+    recordEvent('theme-command:dev:single-env:authenticated')
 
     let theme: Theme
 
@@ -141,6 +148,11 @@ You can run this command only in a directory that matches the [default Shopify t
       const overwriteJson = flags['theme-editor-sync'] && theme.createdAtRuntime
 
       flags = {...flags, theme: theme.id.toString(), 'overwrite-json': overwriteJson}
+    }
+
+    const confirmed = await ensureLiveThemeConfirmed(theme, 'start development mode')
+    if (!confirmed) {
+      return
     }
 
     await dev({

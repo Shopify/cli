@@ -67,6 +67,7 @@
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
 * [`shopify theme dev`](#shopify-theme-dev)
+* [`shopify theme duplicate`](#shopify-theme-duplicate)
 * [`shopify theme info`](#shopify-theme-info)
 * [`shopify theme init [name] [flags]`](#shopify-theme-init-name-flags)
 * [`shopify theme language-server`](#shopify-theme-language-server)
@@ -170,8 +171,8 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-color] [--no-release]
-    [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
+  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
+    [--no-release] [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              The name of the app configuration.
@@ -179,6 +180,9 @@ FLAGS
       --client-id=<value>           The Client ID of your app.
       --message=<value>             Optional message that will be associated with this version. This is for internal use
                                     only and won't be available externally.
+      --no-build                    Use with caution: Skips building any elements of the app that require building. You
+                                    should ensure your app has been prepared in advance, such as by running `shopify app
+                                    build` or by caching build artifacts.
       --no-color                    Disable color output.
       --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
       --path=<value>                The path to your app directory.
@@ -303,8 +307,6 @@ DESCRIPTION
   Stop the app preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
-
-  It's valid only for apps created on the Next-Gen Dev Platform.
 ```
 
 ## `shopify app env pull`
@@ -1066,8 +1068,7 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 USAGE
   $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
     [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
-    [--env-file <value>] [--host] [--inspector-port <value>] [--legacy-runtime] [--path <value>] [--port <value>]
-    [--sourcemap] [--verbose]
+    [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>] [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
@@ -1086,12 +1087,9 @@ FLAGS
                                  Defaults to the '.env' located in your project path `--path`.
   --host                         Expose the server to the local network
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               [Classic Remix Compiler] Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
-  --[no-]sourcemap               [Classic Remix Compiler] Controls whether server sourcemaps are generated. Default to
-                                 `true`. Deactivate `--no-sourcemaps`.
   --verbose                      Outputs more information about the command's execution.
 
 DESCRIPTION
@@ -1166,8 +1164,9 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
-             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
+             route to generate. One of
+             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
 
 FLAGS
   -f, --force                 Overwrites the destination directory and files if they already exist.
@@ -1310,8 +1309,8 @@ Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 USAGE
   $ shopify hydrogen preview [--codegen-config-path <value> [--codegen --build]] [--debug] [--entry <value> ] [--env
-    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--legacy-runtime] [--path <value>]
-    [--port <value>] [--verbose] [--watch ]
+    <value> | --env-branch <value>] [--env-file <value>] [--inspector-port <value>] [--path <value>] [--port <value>]
+    [--verbose] [--watch ]
 
 FLAGS
   --build                        Builds the app before starting the preview server.
@@ -1327,7 +1326,6 @@ FLAGS
   --env-file=<value>             [default: .env] Path to an environment file to override existing environment variables.
                                  Defaults to the '.env' located in your project path `--path`.
   --inspector-port=<value>       The port where the inspector is available. Defaults to 9229.
-  --legacy-runtime               Runs the app in a Node.js sandbox instead of an Oxygen worker.
   --path=<value>                 The path to the directory of the Hydrogen storefront. Defaults to the current directory
                                  where the command is run.
   --port=<value>                 The port to run the server on. Defaults to 3000.
@@ -1931,6 +1929,65 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
+## `shopify theme duplicate`
+
+Duplicates a theme from your theme library.
+
+```
+USAGE
+  $ shopify theme duplicate
+  $ shopify theme duplicate --theme 10 --name 'New Theme'
+
+FLAGS
+  -e, --environment=<value>...  The environment to apply to the current command.
+  -f, --force                   Force the duplicate operation to run without prompts or confirmations.
+  -j, --json                    Output the result as JSON.
+  -n, --name=<value>            Name of the newly duplicated theme.
+  -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
+                                (example.myshopify.com, https://example.myshopify.com).
+  -t, --theme=<value>           Theme ID or name of the remote theme.
+      --no-color                Disable color output.
+      --password=<value>        Password generated from the Theme Access app.
+      --verbose                 Increase the verbosity of the output.
+
+DESCRIPTION
+  Duplicates a theme from your theme library.
+
+  If you want to duplicate your local theme, you need to run `shopify theme push` first.
+
+  If no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in
+  your store. You're asked to confirm that you want to duplicate the specified theme.
+
+  Prompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used,
+  therefore you must specify a theme ID using the `--theme` flag.
+
+  You can optionally name the duplicated theme using the `--name` flag.
+
+  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a
+  machine-readable input for scripts or continuous integration.
+
+  Sample JSON output:
+
+  ```json
+  {
+  "theme": {
+  "id": 108267175958,
+  "name": "A Duplicated Theme",
+  "role": "unpublished",
+  "shop": "mystore.myshopify.com"
+  }
+  }
+  ```
+
+  ```json
+  {
+  "message": "The theme 'Summer Edition' could not be duplicated due to errors",
+  "errors": ["Maximum number of themes reached"],
+  "requestId": "12345-abcde-67890"
+  }
+  ```
+```
+
 ## `shopify theme info`
 
 Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
@@ -1970,8 +2027,8 @@ ARGUMENTS
 
 FLAGS
   -l, --latest             Downloads the latest release of the `clone-url`
-  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme] The Git URL to clone from. Defaults to
-                           Shopify's Skeleton theme.
+  -u, --clone-url=<value>  [default: https://github.com/Shopify/skeleton-theme.git] The Git URL to clone from. Defaults
+                           to Shopify's Skeleton theme.
       --no-color           Disable color output.
       --path=<value>       The path where you want to run the command. Defaults to the current working directory.
       --verbose            Increase the verbosity of the output.
@@ -1982,8 +2039,8 @@ DESCRIPTION
   Clones a Git repository to your local machine to use as the starting point for building a theme.
 
   If no Git repository is specified, then this command creates a copy of Shopify's "Skeleton theme"
-  (https://github.com/Shopify/skeleton-theme), with the specified name in the current folder. If no name is provided,
-  then you're prompted to enter one.
+  (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is
+  provided, then you're prompted to enter one.
 
   > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting
   point. However, the theme that you submit needs to be "substantively different from existing themes"
@@ -2206,11 +2263,13 @@ FLAGS
   -e, --environment=<value>...  The environment to apply to the current command.
   -l, --live                    Pull theme files from your remote live theme.
   -n, --nodelete                Prevent deleting local files that don't exist remotely.
-  -o, --only=<value>...         Download only the specified files (Multiple flags allowed).
+  -o, --only=<value>...         Download only the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
-  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
@@ -2240,13 +2299,15 @@ FLAGS
   -j, --json                    Output the result as JSON.
   -l, --live                    Push theme files from your remote live theme.
   -n, --nodelete                Prevent deleting remote files that don't exist locally.
-  -o, --only=<value>...         Push only the specified files (Multiple flags allowed).
+  -o, --only=<value>...         Upload only the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
   -p, --publish                 Publish as the live theme after uploading.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
   -u, --unpublished             Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed).
+  -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed). Wrap the value in double
+                                quotes if you're using wildcards.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.

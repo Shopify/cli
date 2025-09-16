@@ -12,6 +12,7 @@ export type ActiveAppReleaseFromApiKeyQuery = {
   app: {
     id: string
     key: string
+    organizationId: string
     activeRoot: {clientCredentials: {secrets: {key: string}[]}}
     activeRelease: {
       id: string
@@ -22,7 +23,8 @@ export type ActiveAppReleaseFromApiKeyQuery = {
           userIdentifier: string
           handle: string
           config: JsonMapType
-          specification: {identifier: string; externalIdentifier: string; name: string}
+          target?: string | null
+          specification: {identifier: string; externalIdentifier: string; name: string; managementExperience: string}
         }[]
       }
     }
@@ -79,6 +81,7 @@ export const ActiveAppReleaseFromApiKey = {
           {kind: 'Field', name: {kind: 'Name', value: 'userIdentifier'}},
           {kind: 'Field', name: {kind: 'Name', value: 'handle'}},
           {kind: 'Field', name: {kind: 'Name', value: 'config'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'target'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'specification'},
@@ -88,6 +91,7 @@ export const ActiveAppReleaseFromApiKey = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'name'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'managementExperience'}},
               ],
             },
           },
@@ -103,6 +107,7 @@ export const ActiveAppReleaseFromApiKey = {
         selections: [
           {kind: 'Field', name: {kind: 'Name', value: 'id'}},
           {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+          {kind: 'Field', name: {kind: 'Name', value: 'organizationId'}},
           {
             kind: 'Field',
             name: {kind: 'Name', value: 'activeRoot'},

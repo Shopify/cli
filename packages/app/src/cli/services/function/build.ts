@@ -92,7 +92,7 @@ async function buildJSFunctionWithoutTasks(
   }
 }
 
-export async function buildJSFunctionWithTasks(
+async function buildJSFunctionWithTasks(
   fun: ExtensionInstance<FunctionConfigType>,
   options: JSFunctionBuildOptions,
   builder: JavyBuilder,
@@ -331,7 +331,7 @@ export async function installJavy(app: AppInterface) {
   await Promise.all(downloadPromises)
 }
 
-export interface JavyBuilder {
+interface JavyBuilder {
   bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions): Promise<BuildResult>
   compile(
     fun: ExtensionInstance<FunctionConfigType>,
@@ -340,7 +340,7 @@ export interface JavyBuilder {
   ): Promise<void>
 }
 
-export const DefaultJavyBuilder: JavyBuilder = {
+const DefaultJavyBuilder: JavyBuilder = {
   async bundle(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
     return bundleExtension(fun, options)
   },

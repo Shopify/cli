@@ -32,7 +32,7 @@ export interface RemoteSource {
 }
 
 export interface LocalSource {
-  uid?: string
+  uid: string
   localIdentifier: string
   graphQLType: string
   type: string

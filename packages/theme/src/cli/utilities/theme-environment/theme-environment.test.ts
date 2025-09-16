@@ -89,6 +89,7 @@ describe('setupDevServer', () => {
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: 'tmp',
+    type: 'theme',
     options: {
       ignore: ['assets/*.json'],
       only: ['templates/*.liquid'],
@@ -802,6 +803,43 @@ describe('setupDevServer', () => {
 
       await expect(dispatchEvent('/non-renderable-path?unknown=xyz')).resolves.toHaveProperty('status', 200)
       expect(fetchStub).toHaveBeenCalledOnce()
+    })
+
+    test('only handles compiled assets for theme context, not theme-extension context', async () => {
+      // Given
+      const fetchStub = vi.fn(async () => new Response('mocked compiled asset', {status: 200}))
+      const themeExtensionContext = {
+        ...defaultServerContext,
+        type: 'theme-extension' as const,
+      }
+      const themeExtServer = setupDevServer(developmentTheme, themeExtensionContext)
+
+      vi.stubGlobal('fetch', fetchStub)
+
+      // When
+      const event = createH3Event({url: '/compiled_assets/styles.css'})
+      await themeExtServer.dispatchEvent(event)
+
+      // Then
+      expect(fetchStub).toHaveBeenCalledOnce()
+      expect(fetchStub).toHaveBeenCalledWith(
+        new URL(`https://${defaultServerContext.session.storeFqdn}/compiled_assets/styles.css?${targetQuerystring}`),
+        expect.objectContaining({
+          method: 'GET',
+          redirect: 'manual',
+          headers: {referer},
+        }),
+      )
+
+      // Reset for comparison with theme context
+      fetchStub.mockClear()
+
+      // When requesting the same compiled asset with theme context
+      const themeEvent = createH3Event({url: '/compiled_assets/styles.css'})
+      await server.dispatchEvent(themeEvent)
+
+      // Then it should handle it locally, not proxy
+      expect(fetchStub).not.toHaveBeenCalled()
     })
 
     test('renders error page on network errors with hot reload script injected', async () => {

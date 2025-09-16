@@ -3,7 +3,7 @@ import {
   GatedExtensionTemplate,
   allowedTemplates,
   diffAppModules,
-  encodedGidFromOrganizationId,
+  encodedGidFromOrganizationIdForBP,
   encodedGidFromShopId,
   versionDeepLink,
 } from './app-management-client.js'
@@ -25,15 +25,19 @@ import {CreateApp} from '../../api/graphql/app-management/generated/create-app.j
 import {AppVersions, AppVersionsQuery} from '../../api/graphql/app-management/generated/app-versions.js'
 import {AppVersionsQuerySchema} from '../../api/graphql/get_versions_list.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
+import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
+import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {describe, expect, test, vi} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {
   businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
+  businessPlatformRequestDoc,
 } from '@shopify/cli-kit/node/api/business-platform'
 import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
 import {BugError} from '@shopify/cli-kit/node/error'
@@ -84,6 +88,7 @@ function moduleFromExtension(extension: ExtensionInstance) {
       identifier: extension.specification.identifier,
       externalIdentifier: extension.specification.externalIdentifier,
       name: extension.specification.externalName,
+      managementExperience: 'cli',
     },
   }
 }
@@ -148,7 +153,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
       },
     }
@@ -175,7 +180,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
         flag_notAllowedFlag: false,
       },
@@ -200,7 +205,7 @@ describe('templateSpecifications', () => {
     }`,
       token: 'business-platform-token',
       organizationId: orgApp.organizationId,
-      variables: {organizationId: encodedGidFromOrganizationId(orgApp.organizationId)},
+      variables: {organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId)},
       unauthorizedHandler: {
         type: 'token_refresh',
         handler: expect.any(Function),
@@ -224,7 +229,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockImplementation(mockedFetch)
     const mockedFetchFlagsResponse: OrganizationBetaFlagsQuerySchema = {
       organization: {
-        id: encodedGidFromOrganizationId(orgApp.organizationId),
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
       },
     }
@@ -347,10 +352,9 @@ describe('searching for apps', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: orgId,
       query: ListApps,
       token: 'token',
-      variables: {query: queryVariable},
+      variables: {query: queryVariable, organizationId: orgId},
       unauthorizedHandler: {
         type: 'token_refresh',
         handler: expect.any(Function),
@@ -410,10 +414,10 @@ describe('createApp', () => {
       variables: {},
     })
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: org.id,
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: 'gid://shopify/Organization/1',
         initialVersion: {
           source: {
             name: 'app-name',
@@ -499,10 +503,10 @@ describe('createApp', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: org.id,
       query: CreateApp,
       token: 'token',
       variables: {
+        organizationId: 'gid://shopify/Organization/1',
         initialVersion: {
           source: {
             name: 'app-name',
@@ -722,15 +726,20 @@ describe('deploy', () => {
     const versionTag = '1.0.0'
     const message = 'Test deploy'
     const commitReference = 'https://github.com/org/repo/commit/123'
-    const appModules = [
-      {
-        uid: 'branding',
-        config: JSON.stringify({name: 'Test App'}),
-        handle: 'test-app',
-        specificationIdentifier: BrandingSpecIdentifier,
-        context: 'unused-context',
-      },
-    ]
+    const manifest = {
+      name: 'Test App',
+      handle: 'test-app',
+      modules: [
+        {
+          type: BrandingSpecIdentifier,
+          handle: 'test-app',
+          uid: 'branding',
+          assets: 'branding',
+          target: 'unused-context',
+          config: {name: 'Test App'},
+        },
+      ],
+    }
 
     const mockResponse = {
       appVersionCreate: {
@@ -754,10 +763,11 @@ describe('deploy', () => {
 
     // When
     await client.deploy({
+      appManifest: manifest,
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
-      appModules,
+      appModules: [],
       organizationId: 'gid://shopify/Organization/123',
       versionTag,
       message,
@@ -767,7 +777,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: {
@@ -775,6 +784,7 @@ describe('deploy', () => {
         version: {
           source: {
             name: 'Test App',
+            handle: 'test-app',
             modules: [
               {
                 uid: 'branding',
@@ -782,172 +792,7 @@ describe('deploy', () => {
                 handle: 'test-app',
                 config: {name: 'Test App'},
                 target: 'unused-context',
-              },
-            ],
-          },
-        },
-        metadata: {
-          versionTag,
-          message,
-          sourceControlUrl: commitReference,
-        },
-      },
-      requestOptions: {requestMode: 'slow-request'},
-      unauthorizedHandler: {
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      },
-    })
-  })
-
-  test('includes the target property when context is provided', async () => {
-    // Given
-    const versionTag = '1.0.0'
-    const message = 'Test deploy'
-    const commitReference = 'https://github.com/org/repo/commit/123'
-    const appModules = [
-      {
-        uid: 'payments_extension uuid',
-        config: JSON.stringify({name: 'Test App'}),
-        handle: 'test-app',
-        specificationIdentifier: 'payments_extension',
-        context: 'payments.offsite.render',
-      },
-    ]
-
-    const mockResponse = {
-      appVersionCreate: {
-        version: {
-          id: 'gid://shopify/Version/1',
-          metadata: {
-            versionTag,
-            message,
-            sourceControlUrl: commitReference,
-          },
-          appModules: [
-            {
-              uuid: 'some_uuid',
-            },
-          ],
-        },
-        userErrors: [],
-      },
-    }
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    await client.deploy({
-      apiKey: 'api-key',
-      appId: 'gid://shopify/App/123',
-      name: 'Test App',
-      appModules,
-      organizationId: 'gid://shopify/Organization/123',
-      versionTag,
-      message,
-      commitReference,
-      skipPublish: true,
-    })
-
-    // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
-      query: expect.anything(),
-      token: 'token',
-      variables: {
-        appId: 'gid://shopify/App/123',
-        version: {
-          source: {
-            name: 'Test App',
-            modules: [
-              {
-                uid: 'payments_extension uuid',
-                type: 'payments_extension',
-                handle: 'test-app',
-                config: {name: 'Test App'},
-                target: 'payments.offsite.render',
-              },
-            ],
-          },
-        },
-        metadata: {
-          versionTag,
-          message,
-          sourceControlUrl: commitReference,
-        },
-      },
-      requestOptions: {requestMode: 'slow-request'},
-      unauthorizedHandler: {
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      },
-    })
-  })
-
-  test('does not include target property when context is empty', async () => {
-    // Given
-    const versionTag = '1.0.0'
-    const message = 'Test deploy'
-    const commitReference = 'https://github.com/org/repo/commit/123'
-    const appModules = [
-      {
-        uid: 'branding',
-        config: JSON.stringify({name: 'Test App'}),
-        handle: 'test-app',
-        specificationIdentifier: BrandingSpecIdentifier,
-        context: '',
-      },
-    ]
-
-    const mockResponse = {
-      appVersionCreate: {
-        version: {
-          id: 'gid://shopify/Version/1',
-          metadata: {
-            versionTag,
-            message,
-            sourceControlUrl: commitReference,
-          },
-          appModules: [
-            {
-              uuid: 'some_uuid',
-            },
-          ],
-        },
-        userErrors: [],
-      },
-    }
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    await client.deploy({
-      apiKey: 'api-key',
-      appId: 'gid://shopify/App/123',
-      name: 'Test App',
-      appModules,
-      organizationId: 'gid://shopify/Organization/123',
-      versionTag,
-      message,
-      commitReference,
-      skipPublish: true,
-    })
-
-    // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
-      query: expect.anything(),
-      token: 'token',
-      variables: {
-        appId: 'gid://shopify/App/123',
-        version: {
-          source: {
-            name: 'Test App',
-            modules: [
-              {
-                uid: 'branding',
-                type: BrandingSpecIdentifier,
-                handle: 'test-app',
-                config: {name: 'Test App'},
-                // The target property should not be present
+                assets: 'branding',
               },
             ],
           },
@@ -983,6 +828,7 @@ describe('deploy', () => {
 
     // When
     await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
@@ -994,7 +840,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: expect.anything(),
       token: 'token',
       variables: {
@@ -1004,61 +849,6 @@ describe('deploy', () => {
         },
         metadata: expect.any(Object),
       },
-      requestOptions: {requestMode: 'slow-request'},
-      unauthorizedHandler: {
-        handler: expect.any(Function),
-        type: 'token_refresh',
-      },
-    })
-  })
-
-  test('updates name from branding module if present', async () => {
-    // Given
-    const appModules = [
-      {
-        uuid: 'branding',
-        config: JSON.stringify({name: 'Updated App Name'}),
-        handle: 'branding',
-        specificationIdentifier: BrandingSpecIdentifier,
-        context: 'unused-context',
-      },
-    ]
-    const mockResponse = {
-      appVersionCreate: {
-        version: {
-          id: 'gid://shopify/Version/1',
-          metadata: {},
-          appModules: [],
-        },
-        userErrors: [],
-      },
-    }
-    vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    await client.deploy({
-      apiKey: 'api-key',
-      appId: 'gid://shopify/App/123',
-      name: 'Original Name',
-      appModules,
-      organizationId: 'gid://shopify/Organization/123',
-      versionTag: '1.0.0',
-      skipPublish: true,
-    })
-
-    // Then
-    expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
-      query: expect.anything(),
-      token: 'token',
-      variables: expect.objectContaining({
-        version: {
-          source: {
-            name: 'Updated App Name',
-            modules: expect.any(Array),
-          },
-        },
-      }),
       requestOptions: {requestMode: 'slow-request'},
       unauthorizedHandler: {
         handler: expect.any(Function),
@@ -1090,6 +880,7 @@ describe('deploy', () => {
 
     // When
     const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
@@ -1124,6 +915,7 @@ describe('deploy', () => {
 
     // When
     const result = await client.deploy({
+      appManifest: {name: 'Test App', handle: 'test-app', modules: []},
       apiKey: 'api-key',
       appId: 'gid://shopify/App/123',
       name: 'Test App',
@@ -1193,7 +985,6 @@ describe('deploy', () => {
 
     // Then
     expect(vi.mocked(appManagementRequestDoc)).toHaveBeenCalledWith({
-      organizationId: 'gid://shopify/Organization/123',
       query: AppVersions,
       token: 'token',
       variables: expect.objectContaining({appId}),
@@ -1258,7 +1049,7 @@ describe('AppManagementClient', () => {
 
       const app: MinimalAppIdentifiers = {
         apiKey: 'test-api-key',
-        organizationId: 'test-org-id',
+        organizationId: '213141',
         id: 'test-app-id',
       }
 
@@ -1268,12 +1059,12 @@ describe('AppManagementClient', () => {
 
       // Then
       expect(appManagementRequestDoc).toHaveBeenCalledWith({
-        organizationId: app.organizationId,
         query: CreateAssetUrl,
         token: 'token',
-        variables: expect.objectContaining({
+        variables: {
           sourceExtension: 'BR' as SourceExtension,
-        }),
+          organizationId: 'gid://shopify/Organization/213141',
+        },
         unauthorizedHandler: {
           handler: expect.any(Function),
           type: 'token_refresh',
@@ -1361,5 +1152,502 @@ describe('ensureUserAccessToStore', () => {
     await expect(client.ensureUserAccessToStore('123', store)).rejects.toThrowError(
       'Failed to provision user access to store: error1, error2',
     )
+  })
+})
+
+describe('appExtensionRegistrations', () => {
+  const client = new AppManagementClient()
+  const organizationId = 'org123'
+  const apiKey = 'api-key-123'
+  const appId = 'app-id-123'
+  const appIdentifiers: MinimalAppIdentifiers = {organizationId, apiKey, id: appId}
+
+  const createMockAppModuleVersion = (overrides: Partial<any> = {}) => ({
+    registrationId: 'mock-registration-id',
+    registrationUuid: 'mock-uuid',
+    registrationTitle: 'Mock Extension',
+    type: 'ui_extension',
+    specification: {
+      identifier: 'ui_extension',
+      name: 'UI Extension',
+      experience: 'extension' as const,
+      options: {
+        managementExperience: 'cli' as const,
+      },
+    },
+    ...overrides,
+  })
+
+  test('returns categorized registrations when activeAppVersion is provided', async () => {
+    // Given
+    const configModule = createMockAppModuleVersion({
+      registrationId: BrandingSpecIdentifier,
+      registrationTitle: 'Config Extension',
+      type: 'config_extension',
+    })
+
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-1',
+      registrationTitle: 'Regular Extension',
+    })
+
+    const dashboardManagedModule = createMockAppModuleVersion({
+      registrationId: 'dashboard-1',
+      registrationTitle: 'Dashboard Extension',
+      specification: {
+        identifier: 'dashboard_extension',
+        name: 'Dashboard Extension',
+        experience: 'extension' as const,
+        options: {
+          managementExperience: 'dashboard' as const,
+        },
+      },
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [configModule, extensionModule, dashboardManagedModule],
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result).toEqual({
+      app: {
+        configurationRegistrations: [
+          {
+            id: BrandingSpecIdentifier,
+            uuid: 'mock-uuid',
+            title: 'Config Extension',
+            type: 'config_extension',
+          },
+        ],
+        extensionRegistrations: [
+          {
+            id: 'extension-1',
+            uuid: 'mock-uuid',
+            title: 'Regular Extension',
+            type: 'ui_extension',
+          },
+        ],
+        dashboardManagedExtensionRegistrations: [
+          {
+            id: 'dashboard-1',
+            uuid: 'mock-uuid',
+            title: 'Dashboard Extension',
+            type: 'ui_extension',
+          },
+        ],
+      },
+    })
+  })
+
+  test('fetches activeAppVersion when not provided', async () => {
+    // Given
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-1',
+      registrationTitle: 'Extension from API',
+    })
+
+    // Mock the activeAppVersion method
+    const activeAppVersionSpy = vi.spyOn(client, 'activeAppVersion').mockResolvedValueOnce({
+      appModuleVersions: [extensionModule],
+    })
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers)
+
+    // Then
+    expect(activeAppVersionSpy).toHaveBeenCalledWith(appIdentifiers)
+    expect(result).toEqual({
+      app: {
+        configurationRegistrations: [],
+        extensionRegistrations: [
+          {
+            id: 'extension-1',
+            uuid: 'mock-uuid',
+            title: 'Extension from API',
+            type: 'ui_extension',
+          },
+        ],
+        dashboardManagedExtensionRegistrations: [],
+      },
+    })
+  })
+
+  test('correctly categorizes multiple config extensions', async () => {
+    // Given
+    const configExtensionIds = [BrandingSpecIdentifier, AppHomeSpecIdentifier, AppAccessSpecIdentifier]
+    const configModules = configExtensionIds.map((id: string, index: number) =>
+      createMockAppModuleVersion({
+        registrationId: id,
+        registrationTitle: `Config Extension ${index}`,
+        type: 'config_extension',
+      }),
+    )
+
+    const activeAppVersion = {
+      appModuleVersions: configModules,
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result.app.configurationRegistrations).toHaveLength(3)
+    expect(result.app.extensionRegistrations).toHaveLength(0)
+    expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(0)
+  })
+
+  test('handles empty appModuleVersions', async () => {
+    // Given
+    const activeAppVersion = {
+      appModuleVersions: [],
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result).toEqual({
+      app: {
+        configurationRegistrations: [],
+        extensionRegistrations: [],
+        dashboardManagedExtensionRegistrations: [],
+      },
+    })
+  })
+
+  test('handles modules without specification', async () => {
+    // Given
+    const moduleWithoutSpec = createMockAppModuleVersion({
+      registrationId: 'no-spec-1',
+      registrationTitle: 'No Spec Extension',
+      specification: undefined,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [moduleWithoutSpec],
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(0)
+  })
+
+  test('correctly handles mixed extension types', async () => {
+    // Given
+    const modules = [
+      // Config extensions
+      ...[BrandingSpecIdentifier, AppHomeSpecIdentifier].map((id: string) =>
+        createMockAppModuleVersion({
+          registrationId: id,
+          registrationTitle: `Config ${id}`,
+          type: 'config',
+        }),
+      ),
+      // Regular CLI-managed extensions
+      createMockAppModuleVersion({
+        registrationId: 'cli-1',
+        registrationTitle: 'CLI Extension 1',
+      }),
+      createMockAppModuleVersion({
+        registrationId: 'cli-2',
+        registrationTitle: 'CLI Extension 2',
+      }),
+      // Dashboard-managed extensions
+      createMockAppModuleVersion({
+        registrationId: 'dashboard-1',
+        registrationTitle: 'Dashboard Extension 1',
+        specification: {
+          identifier: 'dashboard_ext',
+          name: 'Dashboard Extension',
+          experience: 'extension' as const,
+          options: {
+            managementExperience: 'dashboard' as const,
+          },
+        },
+      }),
+      createMockAppModuleVersion({
+        registrationId: 'dashboard-2',
+        registrationTitle: 'Dashboard Extension 2',
+        specification: {
+          identifier: 'dashboard_ext',
+          name: 'Dashboard Extension',
+          experience: 'extension' as const,
+          options: {
+            managementExperience: 'dashboard' as const,
+          },
+        },
+      }),
+    ]
+
+    const activeAppVersion = {
+      appModuleVersions: modules,
+    }
+
+    // When
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    // Then
+    expect(result.app.configurationRegistrations).toHaveLength(2)
+    expect(result.app.extensionRegistrations).toHaveLength(2)
+    expect(result.app.dashboardManagedExtensionRegistrations).toHaveLength(2)
+  })
+
+  test('includes activeVersion with config when config is present', async () => {
+    const configData = {name: 'Test Extension', enabled: true}
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-config',
+      registrationTitle: 'Extension With Config',
+      config: configData,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-config',
+      uuid: 'mock-uuid',
+      title: 'Extension With Config',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+      },
+    })
+  })
+
+  test('includes activeVersion with config and context when both are present', async () => {
+    const configData = {name: 'Test Extension', enabled: true}
+    const contextData = 'some-context-value'
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-config-and-context',
+      registrationTitle: 'Extension With Config And Context',
+      config: configData,
+      target: contextData,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-config-and-context',
+      uuid: 'mock-uuid',
+      title: 'Extension With Config And Context',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+        context: contextData,
+      },
+    })
+  })
+
+  test('excludes activeVersion when config is not present', async () => {
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-without-config',
+      registrationTitle: 'Extension Without Config',
+      config: undefined,
+      target: 'some-context',
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-without-config',
+      uuid: 'mock-uuid',
+      title: 'Extension Without Config',
+      type: 'ui_extension',
+      activeVersion: undefined,
+    })
+  })
+
+  test('includes only config when context is not present', async () => {
+    const configData = {name: 'Test Extension', enabled: false}
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-config-only',
+      registrationTitle: 'Extension With Config Only',
+      config: configData,
+      target: undefined,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-config-only',
+      uuid: 'mock-uuid',
+      title: 'Extension With Config Only',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+      },
+    })
+  })
+
+  test('handles empty config object correctly', async () => {
+    const configData = {}
+    const extensionModule = createMockAppModuleVersion({
+      registrationId: 'extension-with-empty-config',
+      registrationTitle: 'Extension With Empty Config',
+      config: configData,
+    })
+
+    const activeAppVersion = {
+      appModuleVersions: [extensionModule],
+    }
+
+    const result = await client.appExtensionRegistrations(appIdentifiers, activeAppVersion)
+
+    expect(result.app.extensionRegistrations).toHaveLength(1)
+    expect(result.app.extensionRegistrations[0]).toEqual({
+      id: 'extension-with-empty-config',
+      uuid: 'mock-uuid',
+      title: 'Extension With Empty Config',
+      type: 'ui_extension',
+      activeVersion: {
+        config: JSON.stringify(configData),
+      },
+    })
+  })
+})
+
+describe('organizations', () => {
+  test('returns empty array when currentUserAccount is null', async () => {
+    // Given
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
+      currentUserAccount: null,
+    })
+
+    // When
+    const result = await client.organizations()
+
+    // Then
+    expect(result).toEqual([])
+    expect(businessPlatformRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: ListOrganizations,
+        token: 'business-platform-token',
+      }),
+    )
+  })
+
+  test('returns organizations with unique names', async () => {
+    // Given
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const mockResponse = {
+      currentUserAccount: {
+        uuid: 'user-123',
+        organizationsWithAccessToDestination: {
+          nodes: [
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMQ==', name: 'Org One'},
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMg==', name: 'Org Two'},
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMw==', name: 'Org Three'},
+          ],
+        },
+      },
+    }
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result = await client.organizations()
+
+    // Then
+    expect(result).toEqual([
+      {id: '1', businessName: 'Org One', source: 'BusinessPlatform'},
+      {id: '2', businessName: 'Org Two', source: 'BusinessPlatform'},
+      {id: '3', businessName: 'Org Three', source: 'BusinessPlatform'},
+    ])
+  })
+
+  test('appends ID to businessName when organizations have duplicate names', async () => {
+    // Given
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const mockResponse = {
+      currentUserAccount: {
+        uuid: 'user-123',
+        organizationsWithAccessToDestination: {
+          nodes: [
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMQ==', name: 'My Org'},
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMg==', name: 'My Org'},
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMw==', name: 'Other Org'},
+            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vNA==', name: 'My Org'},
+          ],
+        },
+      },
+    }
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result = await client.organizations()
+
+    // Then
+    expect(result).toEqual([
+      {
+        id: '1',
+        businessName: 'My Org (1)',
+        source: 'BusinessPlatform',
+      },
+      {
+        id: '2',
+        businessName: 'My Org (2)',
+        source: 'BusinessPlatform',
+      },
+      {
+        id: '3',
+        businessName: 'Other Org (3)',
+        source: 'BusinessPlatform',
+      },
+      {
+        id: '4',
+        businessName: 'My Org (4)',
+        source: 'BusinessPlatform',
+      },
+    ])
+  })
+
+  test('returns empty array when organizationsWithAccessToDestination is empty', async () => {
+    // Given
+    const client = new AppManagementClient()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const mockResponse = {
+      currentUserAccount: {
+        uuid: 'user-123',
+        organizationsWithAccessToDestination: {
+          nodes: [],
+        },
+      },
+    }
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce(mockResponse)
+
+    // When
+    const result = await client.organizations()
+
+    // Then
+    expect(result).toEqual([])
   })
 })

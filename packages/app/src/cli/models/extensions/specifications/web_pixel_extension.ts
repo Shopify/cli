@@ -30,7 +30,8 @@ const webPixelSpec = createExtensionSpecification({
   dependency,
   partnersWebIdentifier: 'web_pixel',
   schema: WebPixelSchema,
-  appModuleFeatures: (_) => ['bundling', 'esbuild', 'single_js_entry_path'],
+  appModuleFeatures: (_) => ['esbuild', 'single_js_entry_path'],
+  buildConfig: {mode: 'ui'},
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtime_context,

@@ -17,7 +17,6 @@ import {
 import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
-  AppApiKeyAndOrgId,
   MinimalOrganizationApp,
   Organization,
   OrganizationApp,
@@ -215,11 +214,11 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly clientName = ClientName.Partners
   public readonly webUiName = 'Partner Dashboard'
   public readonly supportsAtomicDeployments = false
-  public readonly requiresOrganization = false
   public readonly supportsDevSessions = false
   public readonly supportsStoreSearch = false
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
+  public readonly supportsDashboardManagedExtensions = true
   private _session: PartnersSession | undefined
 
   constructor(session?: PartnersSession) {
@@ -284,7 +283,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return (await this.session()).accountInfo
   }
 
-  async appFromIdentifiers({apiKey}: AppApiKeyAndOrgId): Promise<OrganizationApp | undefined> {
+  async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
     const variables: FindAppQueryVariables = {apiKey}
     const res: FindAppQuerySchema = await this.request(FindAppQuery, variables)
     const app = res.app
@@ -365,9 +364,22 @@ export class PartnersClient implements DeveloperPlatformClient {
       }
     })
 
+    let counter = 0
+    const templatesWithPriority = templates.map((template) => ({
+      ...template,
+      sortPriority: template.sortPriority ?? counter++,
+    }))
+
+    const groupOrder: string[] = []
+    for (const template of templatesWithPriority) {
+      if (template.group && !groupOrder.includes(template.group)) {
+        groupOrder.push(template.group)
+      }
+    }
+
     return {
-      templates,
-      groupOrder: [],
+      templates: templatesWithPriority,
+      groupOrder,
     }
   }
 

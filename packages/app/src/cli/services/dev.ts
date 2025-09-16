@@ -37,13 +37,14 @@ import {AppConfigurationUsedByCli} from '../models/extensions/specifications/typ
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ports} from '../constants.js'
 import {generateCertificate} from '../utilities/mkcert.js'
+import {throwUidMappingError} from '../prompts/uid-mapping-error.js'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
 import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
-import {renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
 import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
@@ -113,7 +114,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain, app.configSchema)
+    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain)
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
@@ -166,29 +167,6 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     developerPlatformClient,
   )
 
-  // Remove for GA
-  if (developerPlatformClient.supportsDevSessions) {
-    renderInfo({
-      // eslint-disable-next-line @shopify/cli/banner-headline-format
-      headline: [`You're experiencing a whole new`, {command: 'shopify app dev'}],
-      body: [
-        {
-          link: {
-            label: 'See documentation for details',
-            url: 'https://shopify.dev/beta/next-gen-dev-platform/shopify-app-dev',
-          },
-        },
-        'and',
-        {
-          link: {
-            label: 'report issues and feedback via the dev community',
-            url: 'https://community.shopify.dev/new-topic?category=shopify-cli-libraries&tags=new-app-dev-command',
-          },
-        },
-      ],
-    })
-  }
-
   return {
     storeFqdn: store.shopDomain,
     storeId: store.shopId,
@@ -206,6 +184,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 
 async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
   await warnIfScopesDifferBeforeDev(devConfig)
+  await blockIfMigrationIncomplete(devConfig)
 }
 
 /**
@@ -256,6 +235,21 @@ export async function warnIfScopesDifferBeforeDev({
         nextSteps,
       })
     }
+  }
+}
+
+export async function blockIfMigrationIncomplete(devConfig: DevConfig) {
+  const {developerPlatformClient, remoteApp} = devConfig
+  if (!developerPlatformClient.supportsDevSessions) return
+
+  const extensions = (await developerPlatformClient.appExtensionRegistrations(remoteApp)).app.extensionRegistrations
+  if (
+    !extensions
+      // Ignore webhook subscriptions because they do need UIDs but shouldn't block dev
+      .filter((extension) => extension.type.toLowerCase() !== 'webhook_subscription')
+      .every((extension) => extension.id)
+  ) {
+    throwUidMappingError()
   }
 }
 
@@ -441,6 +435,10 @@ async function launchDevProcesses({
     developerPreview: developerPreviewController(apiKey, developerPlatformClient),
     shopFqdn: config.storeFqdn,
     devSessionStatusManager,
+    appURL: config.localApp.devApplicationURLs?.applicationUrl,
+    appName: config.remoteApp.title,
+    organizationName: config.commandOptions.organization.businessName,
+    configPath: config.localApp.configuration.path,
   })
 }
 

@@ -60,11 +60,9 @@ export interface ExtensionBuildOptions {
  * @param options - Build options.
  */
 export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
-  if (options.environment === 'development') return
-
   options.stdout.write(`Running theme check on your Theme app extension...`)
   const offenses = await runThemeCheck(extension.directory)
-  options.stdout.write(offenses)
+  if (offenses) options.stdout.write(offenses)
 }
 
 /**
@@ -186,9 +184,7 @@ export async function buildFunctionExtension(
     }
 
     if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
-      const base64Contents = await readFile(extension.outputPath, {encoding: 'base64'})
-      await touchFile(bundlePath)
-      await writeFile(bundlePath, base64Contents)
+      await bundleFunctionExtension(extension.outputPath, bundlePath)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -208,6 +204,13 @@ export async function buildFunctionExtension(
   } finally {
     await releaseLock()
   }
+}
+
+export async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
+  outputDebug(`Converting WASM from ${wasmPath} to base64 in ${bundlePath}`)
+  const base64Contents = await readFile(wasmPath, {encoding: 'base64'})
+  await touchFile(bundlePath)
+  await writeFile(bundlePath, base64Contents)
 }
 
 async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {

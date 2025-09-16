@@ -13,6 +13,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 
 interface PullOptions {
   path: string
@@ -91,6 +92,7 @@ export interface PullFlags {
  * @param flags - All flags are optional.
  */
 export async function pull(flags: PullFlags): Promise<void> {
+  recordTiming('theme-service:pull:setup')
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
   const store = ensureThemeStore({store: flags.store})
@@ -112,6 +114,7 @@ export async function pull(flags: PullFlags): Promise<void> {
       theme: development ? `${developmentTheme?.id}` : flags.theme,
     },
   })
+  recordTiming('theme-service:pull:setup')
 
   await executePull(theme, adminSession, {
     path: path ?? cwd(),
@@ -130,9 +133,11 @@ export async function pull(flags: PullFlags): Promise<void> {
  * @param options - the options that modify how the theme gets downloaded
  */
 async function executePull(theme: Theme, session: AdminSession, options: PullOptions) {
+  recordTiming('theme-service:pull:file-system')
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
   const [remoteChecksums] = await Promise.all([fetchChecksums(theme.id, session), themeFileSystem.ready()])
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
+  recordTiming('theme-service:pull:file-system')
 
   const store = session.storeFqdn
   const themeId = theme.id

@@ -30,6 +30,7 @@ import appPOSSpec from '../../models/extensions/specifications/app_config_point_
 import appWebhookSubscriptionSpec from '../../models/extensions/specifications/app_config_webhook_subscription.js'
 import {getModulesToMigrate} from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {setPathValue} from '@shopify/cli-kit/common/object'
@@ -884,12 +885,12 @@ describe('ensureExtensionsIds: Migrates extension', () => {
       },
     })
 
-    expect(migrateExtensionsToUIExtension).toBeCalledWith(
+    expect(migrateExtensionsToUIExtension).toBeCalledWith({
       extensionsToMigrate,
-      opts.appId,
+      appId: opts.appId,
       remoteExtensions,
-      opts.developerPlatformClient,
-    )
+      migrationClient: expect.any(PartnersClient),
+    })
   })
 })
 

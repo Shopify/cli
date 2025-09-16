@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
@@ -18,6 +18,7 @@ import {
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
+  bundleFunctionExtension,
 } from '../../services/build/extension.js'
 import {bundleThemeExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
@@ -29,7 +30,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
@@ -224,10 +225,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return this.specification.buildValidation(this)
   }
 
-  async keepBuiltSourcemapsLocally(bundleDirectory: string, extensionId: string): Promise<void> {
+  async keepBuiltSourcemapsLocally(inputPath: string): Promise<void> {
     if (!this.isSourceMapGeneratingExtension) return Promise.resolve()
-
-    const inputPath = joinPath(bundleDirectory, extensionId)
 
     const pathsToMove = await glob(`**/${this.handle}.js.map`, {
       cwd: inputPath,
@@ -247,6 +246,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const fqdn = await partnersFqdn()
     const parnersPath = this.specification.partnersWebIdentifier
     return `https://${fqdn}/${options.orgId}/apps/${options.appId}/extensions/${parnersPath}/${options.extensionId}`
+  }
+
+  getOutputFolderId(outputId?: string) {
+    // Ideally we want to return `this.uid` always. To keep supporting Partners API we accept a value to override that.
+
+    return outputId ?? this.uid
   }
 
   // UI Specific properties
@@ -335,45 +340,61 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    if (this.isThemeExtension) {
-      return buildThemeExtension(this, options)
-    } else if (this.isFunctionExtension) {
-      return buildFunctionExtension(this, options)
-    } else if (this.features.includes('esbuild')) {
-      return buildUIExtension(this, options)
-    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
-      return buildFlowTemplateExtension(this, options)
-    }
+    const mode = this.specification.buildConfig.mode
 
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    if (this.type === 'tax_calculation') {
-      await touchFile(this.outputPath)
-      await writeFile(this.outputPath, '(()=>{})();')
+    switch (mode) {
+      case 'theme':
+        return buildThemeExtension(this, options)
+      case 'function':
+        return buildFunctionExtension(this, options)
+      case 'ui':
+        return buildUIExtension(this, options)
+      case 'flow':
+        return buildFlowTemplateExtension(this, options)
+      case 'tax_calculation':
+        await touchFile(this.outputPath)
+        await writeFile(this.outputPath, '(()=>{})();')
+        break
+      case 'none':
+        break
     }
   }
 
-  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, identifiers?: Identifiers) {
-    const extensionId = this.getOutputFolderId(identifiers?.extensions[this.localIdentifier])
-
-    if (this.features.includes('bundling')) {
-      // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionId)
-    }
+  async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
 
     await this.build(options)
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
     }
 
-    await this.keepBuiltSourcemapsLocally(bundleDirectory, extensionId)
+    const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
+    await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
-  getOutputFolderId(extensionId?: string) {
-    return extensionId ?? this.uid ?? this.handle
+  async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
+    const defaultOutputPath = this.outputPath
+
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
+
+    const buildMode = this.specification.buildConfig.mode
+
+    if (this.isThemeExtension) {
+      await bundleThemeExtension(this, options)
+    } else if (buildMode !== 'none') {
+      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
+      if (await fileExists(defaultOutputPath)) {
+        await copyFile(defaultOutputPath, this.outputPath)
+
+        if (buildMode === 'function') {
+          await bundleFunctionExtension(this.outputPath, this.outputPath)
+        }
+      }
+    }
   }
 
-  getOutputPathForDirectory(directory: string, extensionId?: string) {
-    const id = this.getOutputFolderId(extensionId)
+  getOutputPathForDirectory(directory: string, outputId?: string) {
+    const id = this.getOutputFolderId(outputId)
     const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
@@ -408,19 +429,18 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const uuid = this.isUUIDStrategyExtension
       ? identifiers.extensions[this.localIdentifier]!
       : identifiers.extensionsNonUuidManaged[this.localIdentifier]!
-    const uid = this.isUUIDStrategyExtension ? this.uid : uuid
 
     return {
       ...result,
-      uid,
+      uid: this.uid,
       uuid,
       specificationIdentifier: developerPlatformClient.toExtensionGraphQLType(this.graphQLType),
     }
   }
 
-  async getDevSessionUpdateMessage(): Promise<string | undefined> {
-    if (!this.specification.getDevSessionUpdateMessage) return undefined
-    return this.specification.getDevSessionUpdateMessage(this.configuration)
+  async getDevSessionUpdateMessages(): Promise<string[] | undefined> {
+    if (!this.specification.getDevSessionUpdateMessages) return undefined
+    return this.specification.getDevSessionUpdateMessages(this.configuration)
   }
 
   /**
@@ -462,7 +482,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'uuid':
         return this.configuration.uid ?? nonRandomUUID(this.handle)
       case 'dynamic':
-        return nonRandomUUID(this.handle)
+        // NOTE: This is a temporary special case for webhook subscriptions.
+        // We're directly checking for webhook properties and casting the configuration
+        // instead of using a proper dynamic strategy implementation.
+        // To remove this special case:
+        // 1. Implement a proper dynamic UID strategy for webhooks in the server-side specification
+        // 2. Update the CLI to use that strategy instead of this hardcoded logic
+        // Related issues: PR #559094 in old Core repo
+        if ('topic' in this.configuration && 'uri' in this.configuration) {
+          const subscription = this.configuration as unknown as SingleWebhookSubscriptionType
+          return `${subscription.topic}::${subscription.filter}::${subscription.uri}`.substring(0, MAX_UID_LENGTH)
+        } else {
+          return nonRandomUUID(JSON.stringify(this.configuration))
+        }
     }
   }
 }

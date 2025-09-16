@@ -17,7 +17,6 @@ export type ExtensionFeature =
   | 'ui_preview'
   | 'function'
   | 'theme'
-  | 'bundling'
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
@@ -47,6 +46,9 @@ export interface Asset {
   content: string
 }
 
+interface BuildConfig {
+  mode: 'ui' | 'theme' | 'flow' | 'function' | 'tax_calculation' | 'none'
+}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -60,6 +62,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   surface: string
   registrationLimit: number
   experience: ExtensionExperience
+  buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
@@ -74,7 +77,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
-  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
+  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 
   /**
@@ -186,7 +189,8 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
-    getDevSessionUpdateMessage: spec.getDevSessionUpdateMessage,
+    getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
+    buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
   const merged = {...defaults, ...spec}
 
@@ -231,7 +235,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
-  getDevSessionUpdateMessage?: (config: TConfiguration) => Promise<string>
+  getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
@@ -245,7 +249,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
-    getDevSessionUpdateMessage: spec.getDevSessionUpdateMessage,
+    getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
 }

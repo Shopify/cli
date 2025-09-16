@@ -21,6 +21,8 @@ export type Scalars = {
   ActionAuditID: {input: any; output: any}
   /** The ID for a Address. */
   AddressID: {input: any; output: any}
+  /** The ID for a BulkDataOperation. */
+  BulkDataOperationID: {input: any; output: any}
   /** The ID for a BusinessUser. */
   BusinessUserID: {input: any; output: any}
   /** A signed decimal number, which supports arbitrary precision and is serialized as a string. */
@@ -46,6 +48,8 @@ export type Scalars = {
   OrganizationID: {input: any; output: any}
   /** The ID for a OrganizationUser. */
   OrganizationUserID: {input: any; output: any}
+  /** The ID for a PersonAlias. */
+  PersonAliasID: {input: any; output: any}
   /** The ID for a Person. */
   PersonID: {input: any; output: any}
   /** The ID for a Principal. */
@@ -58,6 +62,8 @@ export type Scalars = {
   PropertyTransferRequestID: {input: any; output: any}
   /** The ID for a Role. */
   RoleID: {input: any; output: any}
+  /** The ID for a Shop. */
+  ShopID: {input: any; output: any}
   /** The ID for a ShopifyShop. */
   ShopifyShopID: {input: any; output: any}
   /** The ID for a StoreAdditionRequest. */

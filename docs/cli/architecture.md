@@ -17,9 +17,14 @@ and that you can find the component you are looking for more easily.
 | Package | Description | Examples |
 | ------- | ----------- | ------ |
 | @shopify/create-app | Contains an executable that guides the user through the process of creating a new Shopify app | Executable and init command |
-| @shopify/create-hydrogen | Contains an executable that guides the user through the process of creating a new Hydrogen storefront | Executable and init command |
 | @shopify/cli | Contains the CLI executable that glues all the commands provided by the features under it | Executable and init command |
 | @shopify/app | Contains the logic for creating, building, serving, and deploying Shopify apps | Commands, App model, Deployment tool. |
 | @shopify/theme |  Contains the logic for creating, building, and pushing themes. | Commands, Theme server and checker. |
-| @shopify/hydrogen |  Contains the logic for building Hydrogen storefronts | Commands, Theme server and checker. |
 | @shopify/cli-kit | Contains models and utilities that are shared across all the features | Authentication handler, Admin API Client, Session manager. |
+
+<br/>
+
+`@shopify/hydrogen` and `@shopify/create-hydrogen` packages used to be part of this repository, but they have been moved. For details about these packages, please visit:
+
+- [@shopify/hydrogen](https://github.com/Shopify/hydrogen/tree/main/packages/hydrogen)
+- [@shopify/create-hydrogen](https://github.com/Shopify/hydrogen/tree/main/packages/create-hydrogen)

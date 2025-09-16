@@ -37,6 +37,7 @@ const OUTPUT = {test: 'output'}
 const INPUT = {test: 'input'}
 const INPUT_BYTES = 10
 const OUTPUT_BYTES = 10
+const TARGET = 'test.run'
 
 const NETWORK_ACCESS_HTTP_REQUEST = {
   url: 'https://api.example.com/hello',
@@ -100,6 +101,7 @@ const POLL_APP_LOGS_FOR_LOGS_RESPONSE = {
         function_id: FUNCTION_ID,
         logs: LOGS,
         fuel_consumed: FUEL_CONSUMED,
+        target: TARGET,
       }),
       log_type: LOG_TYPE,
       cursor: RETURNED_CURSOR,
@@ -217,6 +219,9 @@ describe('usePollAppLogs', () => {
 
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
+
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
 
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
@@ -340,6 +345,9 @@ describe('usePollAppLogs', () => {
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
+
     // Initial invocation, 401 returned
     expect(mockedPollAppLogs).toHaveBeenNthCalledWith(1, {
       pollOptions: {
@@ -354,6 +362,10 @@ describe('usePollAppLogs', () => {
 
     // Follow up invocation, which invokes resubscribeCallback
     await vi.advanceTimersToNextTimerAsync()
+
+    // Wait for the second async polling function call to execute
+    await waitForMockCalls(mockedPollAppLogs, 2)
+
     expect(mockedPollAppLogs).toHaveBeenNthCalledWith(2, {
       pollOptions: {jwtToken: NEW_JWT_TOKEN, cursor: '', filters: EMPTY_FILTERS},
       developerPlatformClient: mockedDeveloperPlatformClient,
@@ -524,4 +536,28 @@ function renderHook<THookResult>(renderHookCallback: () => THookResult) {
   render(<MockComponent />)
 
   return result
+}
+
+async function waitForMockCalls(mockFn: any, expectedCallCount: number, timeoutMs = 2000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(
+      () =>
+        reject(
+          new Error(
+            `Mock timeout: expected ${expectedCallCount} calls, got ${mockFn.mock.calls.length} after ${timeoutMs}ms`,
+          ),
+        ),
+      timeoutMs,
+    )
+
+    const check = () => {
+      if (mockFn.mock.calls.length >= expectedCallCount) {
+        clearTimeout(timeout)
+        resolve()
+      } else {
+        setImmediate(check)
+      }
+    }
+    check()
+  })
 }

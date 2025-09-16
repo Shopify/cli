@@ -327,13 +327,13 @@ export class DevSession {
       .filter((ext) => !updatedUids.includes(ext.uid))
       .map((ext) => ext.uid)
 
-    const appManifest = await appEvent.app.manifest()
+    const appManifest = await appEvent.app.manifest(undefined)
 
     // Only use inherited for UPDATE session. Create still needs the manifest in the bundle.
     if (this.statusManager.status.isReady) {
       appManifest.modules = appManifest.modules.filter((module) => updatedUids.includes(module.uid))
     } else {
-      await writeManifestToBundle(appEvent.app, this.bundlePath)
+      await writeManifestToBundle(appManifest, this.bundlePath)
     }
 
     const existingDirs = await readdir(this.bundlePath)

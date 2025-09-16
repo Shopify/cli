@@ -22,12 +22,7 @@ import {
   appFromIdentifiers,
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
-import {
-  Flag,
-  DeveloperPlatformClient,
-  sniffServiceOptionsAndAppConfigToSelectPlatformClient,
-  CreateAppOptions,
-} from '../../../utilities/developer-platform-client.js'
+import {Flag, DeveloperPlatformClient, CreateAppOptions} from '../../../utilities/developer-platform-client.js'
 import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
@@ -50,7 +45,6 @@ export interface LinkOptions {
   appId?: string
   organizationId?: string
   configName?: string
-  baseConfigName?: string
   developerPlatformClient?: DeveloperPlatformClient
   isNewApp?: boolean
 }
@@ -128,18 +122,12 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
   appDirectory: string
   developerPlatformClient: DeveloperPlatformClient
 }> {
-  let developerPlatformClient = await sniffServiceOptionsAndAppConfigToSelectPlatformClient(options)
-
   const {creationOptions, appDirectory: possibleAppDirectory} = await getAppCreationDefaultsFromLocalApp(options)
   const appDirectory = possibleAppDirectory ?? options.directory
 
   if (options.apiKey) {
     // Remote API Key provided by the caller, so use that app specifically
-    const remoteApp = await appFromIdentifiers({
-      apiKey: options.apiKey,
-      developerPlatformClient,
-      organizationId: options.organizationId,
-    })
+    const remoteApp = await appFromIdentifiers({apiKey: options.apiKey})
     if (!remoteApp) {
       const errorMessage = InvalidApiKeyErrorMessage(options.apiKey)
       throw new AbortError(errorMessage.message, errorMessage.tryMessage)
@@ -149,13 +137,13 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     return {
       remoteApp,
       appDirectory,
-      developerPlatformClient,
+      developerPlatformClient: remoteApp.developerPlatformClient,
     }
   }
 
   const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
 
-  developerPlatformClient = remoteApp.developerPlatformClient ?? developerPlatformClient
+  const developerPlatformClient = remoteApp.developerPlatformClient
 
   return {
     remoteApp,
@@ -189,7 +177,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       specifications: await loadLocalExtensionsSpecifications(),
       directory: options.directory,
       mode: 'report',
-      userProvidedConfigName: options.baseConfigName,
+      userProvidedConfigName: options.configName,
       remoteFlags: undefined,
     })
 
@@ -264,7 +252,7 @@ async function loadLocalAppOptions(
       specifications,
       directory: options.directory,
       mode: 'report',
-      userProvidedConfigName: options.baseConfigName,
+      userProvidedConfigName: options.configName,
       remoteFlags,
     })
     const configuration = app.configuration
@@ -332,13 +320,14 @@ async function loadConfigurationFileName(
     format: 'legacy' | 'current'
   },
 ): Promise<AppConfigurationFileName> {
-  // If the user has already selected a config name, use that
-  const cache = getCachedCommandInfo()
-  if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
-
+  // config name from the options takes precedence over everything else
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
+
+  // otherwise, use the cached config name if it exists
+  const cache = getCachedCommandInfo()
+  if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
 
   if (localAppInfo.format === 'legacy') {
     return configurationFileNames.app
@@ -388,7 +377,6 @@ async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
       {
         client_id: remoteApp.apiKey,
         path: configFilePath,
-        ...(developerPlatformClient.requiresOrganization ? {organization_id: remoteApp.organizationId} : {}),
         ...remoteAppConfiguration,
       },
       replaceLocalArrayStrategy,

@@ -20,6 +20,7 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
+import {throwUidMappingError} from '../../prompts/uid-mapping-error.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -33,21 +34,23 @@ export interface ConfigExtensionIdentifiersBreakdown {
 
 export interface ExtensionIdentifierBreakdownInfo {
   title: string
+  uid: string | undefined
   experience: 'extension' | 'dashboard'
 }
 
-export function buildExtensionBreakdownInfo(title: string): ExtensionIdentifierBreakdownInfo {
-  return {title, experience: 'extension'}
+export function buildExtensionBreakdownInfo(title: string, uid: string | undefined): ExtensionIdentifierBreakdownInfo {
+  return {title, uid, experience: 'extension'}
 }
 
 export function buildDashboardBreakdownInfo(title: string): ExtensionIdentifierBreakdownInfo {
-  return {title, experience: 'dashboard'}
+  return {title, uid: undefined, experience: 'dashboard'}
 }
 
 export interface ExtensionIdentifiersBreakdown {
   onlyRemote: ExtensionIdentifierBreakdownInfo[]
   toCreate: ExtensionIdentifierBreakdownInfo[]
   toUpdate: ExtensionIdentifierBreakdownInfo[]
+  unchanged: ExtensionIdentifierBreakdownInfo[]
 }
 
 export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploymentIdsPresenceOptions): Promise<{
@@ -60,6 +63,14 @@ export async function extensionsIdentifiersDeployBreakdown(options: EnsureDeploy
   remoteExtensionsRegistrations: RemoteExtensionRegistrations
 }> {
   let remoteExtensionsRegistrations = await fetchRemoteExtensionsRegistrations(options)
+
+  if (options.force && !options.developerPlatformClient.supportsDashboardManagedExtensions) {
+    const unMigratedextensions = remoteExtensionsRegistrations.app.extensionRegistrations.filter((ext) => !ext.id)
+
+    if (unMigratedextensions.length > 0) {
+      throwUidMappingError()
+    }
+  }
 
   const extensionsToConfirm = await ensureExtensionsIds(options, remoteExtensionsRegistrations.app)
 
@@ -107,7 +118,7 @@ export async function extensionsIdentifiersReleaseBreakdown(
           extension.specification.experience === 'extension' &&
           extension.specification.identifier !== 'webhook_subscription',
       )
-      .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle))
+      .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle, undefined))
   const mapIsDashboard = (extensions: AppVersionsDiffExtensionSchema[]) =>
     extensions
       .filter((extension) => extension.specification.options.managementExperience === 'dashboard')
@@ -116,7 +127,8 @@ export async function extensionsIdentifiersReleaseBreakdown(
   const extensionIdentifiersBreakdown = {
     onlyRemote: [...mapIsExtension(versionsDiff.removed), ...mapIsDashboard(versionsDiff.removed)],
     toCreate: [...mapIsExtension(versionsDiff.added), ...mapIsDashboard(versionsDiff.added)],
-    toUpdate: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
+    toUpdate: [],
+    unchanged: [...mapIsExtension(versionsDiff.updated), ...mapIsDashboard(versionsDiff.updated)],
   }
 
   return {extensionIdentifiersBreakdown, versionDetails}
@@ -193,6 +205,19 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
         subscription.uri = `${removeTrailingSlash(baselineConfig.application_url)}${subscription.uri}`
       }
       return subscription
+    })
+
+    // Sort webhook subscriptions by uri & topics in both baseline and remote config
+    // Ensuring that deepCompare will not fail if the order is different
+    baselineConfig.webhooks.subscriptions.sort((webhookA, webhookB) => {
+      const keyA = webhookA.uri + (webhookA.topics?.sort().join(',') ?? '')
+      const keyB = webhookB.uri + (webhookB.topics?.sort().join(',') ?? '')
+      return keyA.localeCompare(keyB)
+    })
+    remoteConfig.webhooks?.subscriptions?.sort((webhookA, webhookB) => {
+      const keyA = webhookA.uri + (webhookA.topics?.sort().join(',') ?? '')
+      const keyB = webhookB.uri + (webhookB.topics?.sort().join(',') ?? '')
+      return keyA.localeCompare(keyB)
     })
   }
 
@@ -318,22 +343,27 @@ function loadLocalExtensionsIdentifiersBreakdown({
   extensionsToCreate: LocalSource[]
   dashboardOnlyExtensions: RemoteSource[]
 }): ExtensionIdentifiersBreakdown {
-  const identifiersToUpdate = Object.keys(localRegistration).map(buildExtensionBreakdownInfo)
-  const identifiersToCreate = localSourceToCreate.map((source) => buildExtensionBreakdownInfo(source.localIdentifier))
+  const identifiersToUpdate = Object.keys(localRegistration).map((identifier) =>
+    buildExtensionBreakdownInfo(identifier, undefined),
+  )
+  const identifiersToCreate = localSourceToCreate.map((source) =>
+    buildExtensionBreakdownInfo(source.localIdentifier, undefined),
+  )
   const dashboardToUpdate = dashboardOnlyExtensions
     .filter((dashboard) => !Object.values(localRegistration).includes(dashboard.uuid))
     .map((dashboard) => buildDashboardBreakdownInfo(dashboard.title))
   return {
     onlyRemote: [] as ExtensionIdentifierBreakdownInfo[],
     toCreate: [] as ExtensionIdentifierBreakdownInfo[],
-    toUpdate: [...identifiersToUpdate, ...identifiersToCreate, ...dashboardToUpdate],
+    toUpdate: [] as ExtensionIdentifierBreakdownInfo[],
+    unchanged: [...identifiersToUpdate, ...identifiersToCreate, ...dashboardToUpdate],
   }
 }
 
 async function resolveRemoteExtensionIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
   remoteApp: MinimalOrganizationApp,
-  localRegistration: IdentifiersExtensions,
+  validMatches: IdentifiersExtensions,
   toCreate: LocalSource[],
   dashboardOnly: RemoteSource[],
   specs: ExtensionSpecification[],
@@ -342,11 +372,17 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
   const version = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
   if (!version) return
 
-  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(version, localRegistration, toCreate, specs)
+  const extensionIdentifiersBreakdown = loadExtensionsIdentifiersBreakdown(
+    version,
+    validMatches,
+    toCreate,
+    specs,
+    developerPlatformClient,
+  )
 
   const dashboardOnlyFinal = dashboardOnly.filter(
     (dashboardOnly) =>
-      !Object.values(localRegistration).includes(dashboardOnly.uuid) &&
+      !Object.values(validMatches).includes(dashboardOnly.uuid) &&
       !toCreate.map((source) => source.localIdentifier).includes(dashboardOnly.uuid),
   )
   const dashboardIdentifiersBreakdown = loadDashboardIdentifiersBreakdown(dashboardOnlyFinal, version)
@@ -355,40 +391,73 @@ async function resolveRemoteExtensionIdentifiersBreakdown(
     onlyRemote: [...extensionIdentifiersBreakdown.onlyRemote, ...dashboardIdentifiersBreakdown.onlyRemote],
     toCreate: [...extensionIdentifiersBreakdown.toCreate, ...dashboardIdentifiersBreakdown.toCreate],
     toUpdate: [...extensionIdentifiersBreakdown.toUpdate, ...dashboardIdentifiersBreakdown.toUpdate],
+    unchanged: [...extensionIdentifiersBreakdown.unchanged, ...dashboardIdentifiersBreakdown.unchanged],
   }
 }
 
 function loadExtensionsIdentifiersBreakdown(
   activeAppVersion: AppVersion,
-  localRegistration: IdentifiersExtensions,
+  validMatches: IdentifiersExtensions,
   toCreate: LocalSource[],
   specs: ExtensionSpecification[],
+  developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter(
     (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
   )
 
-  const extensionsToUpdate = Object.entries(localRegistration)
-    .filter(([_identifier, uuid]) => extensionModules.map((module) => module.registrationUuid!).includes(uuid))
+  // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
+  // In Partners, we keep the legacy match of only UUID.
+  function moduleHasUUIDorUID(module: AppModuleVersion, identifier: string) {
+    const UuidMatch = module.registrationUuid === identifier
+    const UidMatch = module.registrationId === identifier
+    const pendingMigration = module.registrationId.length === 0
+
+    if (developerPlatformClient.supportsAtomicDeployments) {
+      return UidMatch || (pendingMigration && UuidMatch)
+    } else {
+      return UuidMatch
+    }
+  }
+
+  const allExistingExtensions = Object.entries(validMatches)
+    .filter(([_identifier, uuid]) => extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
     .map(([identifier, _uuid]) => identifier)
 
-  let extensionsToCreate = Object.entries(localRegistration)
-    .filter(([_identifier, uuid]) => !extensionModules.map((module) => module.registrationUuid!).includes(uuid))
-    .map(([identifier, _uuid]) => identifier)
-  extensionsToCreate = Array.from(new Set(extensionsToCreate.concat(toCreate.map((source) => source.localIdentifier))))
+  // If registationId is empty, it means the extension doesn't have a UID yet, so this deploy will create one.
+  const extensionsBeingMigratedToDevDash = extensionModules.filter((module) => module.registrationId === '')
+  const extensionsToUpdate = allExistingExtensions.filter((identifier) =>
+    extensionsBeingMigratedToDevDash.some((module) => module.registrationUuid === validMatches[identifier]),
+  )
+
+  const unchangedExtensions = allExistingExtensions.filter(
+    (identifier) =>
+      !extensionsBeingMigratedToDevDash.some((module) => module.registrationUuid === validMatches[identifier]),
+  )
+
+  const extensionsToCreate = Object.entries(validMatches)
+    .filter(([_identifier, uuid]) => !extensionModules.some((module) => moduleHasUUIDorUID(module, uuid)))
+    .map(([identifier, uuid]) => ({title: identifier, uid: uuid}))
+  const originalToCreate = toCreate.map((source) => ({title: source.localIdentifier, uid: source.uid}))
+
+  originalToCreate.forEach((source) => {
+    const index = extensionsToCreate.findIndex((extension) => extension.title === source.title)
+    index === -1 ? extensionsToCreate.push(source) : (extensionsToCreate[index] = source)
+  })
 
   const extensionsOnlyRemote = extensionModules
     .filter(
       (module) =>
-        !Object.values(localRegistration).includes(module.registrationUuid!) &&
-        !toCreate.map((source) => source.localIdentifier).includes(module.registrationUuid!),
+        !Object.values(validMatches).some((uuid) => moduleHasUUIDorUID(module, uuid)) &&
+        !toCreate.map((source) => source.localIdentifier).some((identifier) => moduleHasUUIDorUID(module, identifier)),
     )
-    .map((module) => module.registrationTitle)
+    .map((module) => ({title: module.registrationTitle, uid: module.registrationId}))
 
   return {
-    onlyRemote: extensionsOnlyRemote.map(buildExtensionBreakdownInfo),
-    toCreate: extensionsToCreate.map(buildExtensionBreakdownInfo),
-    toUpdate: extensionsToUpdate.map(buildExtensionBreakdownInfo),
+    onlyRemote: extensionsOnlyRemote.map(({title, uid}) => buildExtensionBreakdownInfo(title, uid)),
+    toCreate: extensionsToCreate.map(({title, uid}) => buildExtensionBreakdownInfo(title, uid)),
+    toUpdate: extensionsToUpdate.map((title) => buildExtensionBreakdownInfo(title, undefined)),
+    unchanged: unchangedExtensions.map((title) => buildExtensionBreakdownInfo(title, undefined)),
   }
 }
 
@@ -417,6 +486,7 @@ function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[],
   return {
     onlyRemote,
     toCreate,
-    toUpdate,
+    toUpdate: [],
+    unchanged: toUpdate,
   }
 }

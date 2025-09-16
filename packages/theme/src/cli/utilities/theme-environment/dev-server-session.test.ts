@@ -2,6 +2,7 @@ import {
   abortOnMissingRequiredFile,
   getStorefrontSessionCookiesWithVerification,
   initializeDevServerSession,
+  fetchDevServerSession,
 } from './dev-server-session.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -86,6 +87,30 @@ describe('verifyRequiredFilesExist', () => {
 })
 
 describe('dev server session', async () => {
+  describe('fetchDevServerSession', async () => {
+    test('calls ensureAuthenticatedThemes with noPrompt: true', async () => {
+      // Given
+      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
+        _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
+        storefront_digest: 'digest_value',
+      })
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
+        token: 'token_1',
+        storeFqdn,
+      })
+
+      // When
+      await fetchDevServerSession(themeId, adminSession, 'admin-password')
+
+      // Then
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(storeFqdn, 'admin-password', [], {
+        forceRefresh: false,
+        noPrompt: true,
+      })
+    })
+  })
+
   describe('initializeDevServerSession', async () => {
     test('returns a session', async () => {
       // Given

@@ -8,7 +8,6 @@ import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderSuccess,
-  renderWarning,
   InlineToken,
   LinkToken,
 } from '@shopify/cli-kit/node/ui'
@@ -18,12 +17,13 @@ import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
 
 interface DeleteOptions {
   selectTheme: boolean
+  environment?: string[]
   development: boolean
   force: boolean
   themes: string[]
 }
 
-export async function themesDelete(adminSession: AdminSession, options: DeleteOptions) {
+export async function themesDelete(adminSession: AdminSession, options: DeleteOptions, multiEnvironment?: boolean) {
   let themeIds = options.themes
   if (options.development) {
     const theme = await new DevelopmentThemeManager(adminSession).find()
@@ -33,7 +33,7 @@ export async function themesDelete(adminSession: AdminSession, options: DeleteOp
   const store = adminSession.storeFqdn
   const themes = await findThemesByDeleteOptions(adminSession, {...options, themes: themeIds, development: false})
 
-  if (!options.force && !(await isConfirmed(themes, store))) {
+  if (!options.force && !multiEnvironment && !(await isConfirmed(themes, store))) {
     return
   }
 
@@ -46,11 +46,13 @@ export async function themesDelete(adminSession: AdminSession, options: DeleteOp
     }),
   )
 
+  const environment = options.environment ? [{subdued: `Environment: ${options.environment}\n\n`}] : []
+
   renderSuccess({
     body: pluralize(
       themes,
-      (themes) => [`The following themes were deleted from ${store}:`, themesComponent(themes)],
-      (theme) => ['The theme', ...themeComponent(theme), `was deleted from ${store}.`],
+      (themes) => [...environment, `The following themes were deleted from ${store}:`, themesComponent(themes)],
+      (theme) => [...environment, 'The theme', ...themeComponent(theme), `was deleted from ${store}.`],
     ),
   })
 }
@@ -87,18 +89,4 @@ async function isConfirmed(themes: Theme[], store: string) {
   }
 
   return renderConfirmationPrompt(options)
-}
-
-export function renderDeprecatedArgsWarning(argv: string[]) {
-  const ids = argv.join(' ')
-
-  renderWarning({
-    body: [
-      'Positional arguments are deprecated. Use the',
-      {command: '--theme'},
-      'flag instead:\n\n',
-      {command: `$ shopify theme delete --theme ${ids}`},
-      {char: '.'},
-    ],
-  })
 }

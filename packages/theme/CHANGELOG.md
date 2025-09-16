@@ -1,5 +1,54 @@
 # @shopify/theme
 
+## 3.84.0
+
+### Minor Changes
+
+- 1f4fd78: Allow multi-environment theme commands to accept flags from CLI
+- 9b872dc: Update fetched AI instructions
+- b382a89: Prompt for confirmation before running multi-environment theme commands that allow `--force` flag
+- 281b50b: Allow theme rename command to be run with multiple environments
+- d19e3d7: Uses \_shopify_essential cookie for storefront authentication
+- a12a7cc: Allow commands run with multiple environments to require "one of" a list of flags
+
+### Patch Changes
+
+- e301450: Remove request logs from the theme app extensions development server for a cleaner developer experience
+- d2ad0b4: Fixed theme dev error on HTTP 304 patched responses
+- 828bf47: Fixed issue with json files being returned as html/text content type in theme dev
+- b47f879: Removed workflows folder in .github when cloning skeleton theme
+- 1161f7a: Update docs for 'ignore' and 'only' flags for theme push/pull
+- 52f999f: Provide error when using non-theme access app password
+- 4839fb0: Remove .git dir after initializing new theme
+- 45ff625: Add store domain logging for theme commands and update monorail with new theme related even types
+- 2c2999c: Bump theme-tools packages
+- f330c9f: Add a warning for users declaring multiple environments in a command that only supports a single environment
+- bfc6325: Prevent `shopify app dev` sessions from opening multiple tabs in the browser during re-authentication
+- 9dd353c: Fix `shopify app dev` to serve local assets as expected
+- Updated dependencies [9b872dc]
+- Updated dependencies [864c687]
+- Updated dependencies [40e2d6f]
+- Updated dependencies [62d6b9a]
+  - @shopify/cli-kit@3.84.0
+
+## 3.83.0
+
+### Minor Changes
+
+- 521fb07: Add new `theme duplicate` command to duplicate store themes
+
+### Patch Changes
+
+- bb061b9: Fix performance issue on `shopify theme dev` command
+- ee353e9: No longer abort theme GraphQL requests on the client side
+- f4f29ec: Clean up theme command to run either single/no environment or multiple environments
+- 4ff98f1: Bump theme-tools packages
+- Updated dependencies [521fb07]
+- Updated dependencies [b1feb1d]
+- Updated dependencies [ee353e9]
+- Updated dependencies [e73e9a5]
+  - @shopify/cli-kit@3.83.0
+
 ## 3.82.0
 
 ### Patch Changes

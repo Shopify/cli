@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
+import {Identifiers} from './identifiers.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
@@ -79,7 +80,6 @@ function fixSingleWildcards(value: string[] | undefined) {
  */
 export const AppSchema = zod.object({
   client_id: zod.string(),
-  organization_id: zod.string().optional(),
   build: zod
     .object({
       automatically_update_urls_on_dev: zod.boolean().optional(),
@@ -207,7 +207,7 @@ export function appHiddenConfigPath(appDirectory: string) {
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */
 export function filterNonVersionedAppFields(configuration: object): string[] {
-  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path')
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path', 'organization_id')
   return Object.keys(configuration).filter((fieldName) => {
     return !builtInFieldNames.includes(fieldName)
   })
@@ -313,7 +313,7 @@ export interface AppInterface<
    * If creating an app on the platform based on this app and its configuration, what default options should the app take?
    */
   creationDefaultOptions(): CreateAppOptions
-  manifest: () => Promise<AppManifest>
+  manifest: (identifiers: Identifiers | undefined) => Promise<AppManifest>
   removeExtension: (extensionUid: string) => void
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
@@ -395,8 +395,8 @@ export class App<
   }
 
   get allExtensions() {
-    if (this.includeConfigOnDeploy) return this.realExtensions
-    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+    if (this.includeConfigOnDeploy === false) return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+    return this.realExtensions
   }
 
   get draftableExtensions() {
@@ -405,17 +405,12 @@ export class App<
     )
   }
 
-  get appManagementApiEnabled() {
-    if (isLegacyAppSchema(this.configuration)) return false
-    return this.configuration.organization_id !== undefined
-  }
-
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {
     this.patchAppConfiguration(devApplicationURLs)
     this.realExtensions.forEach((ext) => ext.patchWithAppDevURLs(devApplicationURLs))
   }
 
-  async manifest(): Promise<AppManifest> {
+  async manifest(identifiers: Identifiers | undefined): Promise<AppManifest> {
     const modules = await Promise.all(
       this.realExtensions.map(async (module) => {
         const config = await module.deployConfig({
@@ -426,6 +421,7 @@ export class App<
           type: module.externalType,
           handle: module.handle,
           uid: module.uid,
+          uuid: identifiers?.extensions[module.localIdentifier],
           assets: module.uid,
           target: module.contextValue,
           config: (config ?? {}) as JsonMapType,
@@ -550,7 +546,6 @@ export class App<
 
   get includeConfigOnDeploy() {
     if (isLegacyAppSchema(this.configuration)) return false
-    if (this.appManagementApiEnabled) return true
     return this.configuration.build?.include_config_on_deploy
   }
 
@@ -580,7 +575,10 @@ export class App<
   private validateWebhookLegacyFlowCompatibility(): void {
     if (!isCurrentAppSchema(this.configuration)) return
 
-    const hasAppSpecificWebhooks = (this.configuration.webhooks?.subscriptions?.length ?? 0) > 0
+    const hasAppSpecificWebhooks =
+      this.configuration.webhooks?.subscriptions?.some(
+        (subscription) => subscription.topics && subscription.topics.length > 0,
+      ) ?? false
     const usesLegacyInstallFlow = this.configuration.access_scopes?.use_legacy_install_flow === true
 
     if (hasAppSpecificWebhooks && usesLegacyInstallFlow) {

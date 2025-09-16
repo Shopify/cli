@@ -197,6 +197,26 @@ describe('dev proxy', () => {
       // Stores _shopify_essential for the following requests
       expect(ctx.session.sessionCookies).toHaveProperty('_shopify_essential', ':AZFbAlZ..yAAH:')
     })
+
+    test('handles 304 Not Modified responses without crashing', async () => {
+      // Create 304 response with no body as per HTTP spec
+      const notModifiedResponse = new Response(null, {
+        status: 304,
+        statusText: 'Not Modified',
+        headers: {
+          etag: '"abc123"',
+          'cache-control': 'max-age=3600',
+          'x-request-id': 'test-123',
+        },
+      })
+
+      const result = await patchRenderingResponse(ctx, notModifiedResponse)
+
+      expect(result.status).toBe(304)
+      expect(result.statusText).toBe('Not Modified')
+      expect(result.headers.get('etag')).toBe('"abc123"')
+      expect(result.body).toBeNull()
+    })
   })
 
   describe('getProxyStorefrontHeaders', () => {
@@ -234,6 +254,17 @@ describe('dev proxy', () => {
     test('should proxy Cart requests as they are not supported by the SFR client', () => {
       const event = createH3Event('GET', '/cart/some-path')
       expect(canProxyRequest(event)).toBeTruthy()
+    })
+
+    test('should proxy cart.json and other cart-related JSON endpoints', () => {
+      const cartJsonEvent = createH3Event('GET', '/cart.json')
+      expect(canProxyRequest(cartJsonEvent)).toBeTruthy()
+
+      const collectionsJsonEvent = createH3Event('GET', '/collections.json')
+      expect(canProxyRequest(collectionsJsonEvent)).toBeTruthy()
+
+      const productsJsonEvent = createH3Event('GET', '/products/handle.json')
+      expect(canProxyRequest(productsJsonEvent)).toBeTruthy()
     })
 
     test('should proxy Checkout requests as they are not supported by the SFR client', () => {
