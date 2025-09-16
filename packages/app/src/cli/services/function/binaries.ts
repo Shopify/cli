@@ -20,7 +20,8 @@ export const PREFERRED_JAVY_PLUGIN_VERSION = 'v2'
 
 const BINARYEN_VERSION = '123.0.0'
 
-export const TRAMPOLINE_VERSION = 'v1.0.2'
+export const V1_TRAMPOLINE_VERSION = 'v1.0.2'
+export const V2_TRAMPOLINE_VERSION = 'v2.0.0'
 
 interface DownloadableBinary {
   path: string
@@ -169,7 +170,6 @@ class WasmOptExecutable implements DownloadableBinary {
 }
 
 let _wasmOpt: DownloadableBinary
-let _trampoline: DownloadableBinary
 
 export function javyBinary(version: string = PREFERRED_JAVY_VERSION) {
   return new Executable('javy', version, 'bytecodealliance/javy') as DownloadableBinary
@@ -191,16 +191,13 @@ export function wasmOptBinary() {
   return _wasmOpt
 }
 
-export function trampolineBinary() {
-  if (!_trampoline) {
-    _trampoline = new Executable(
-      'shopify-function-trampoline',
-      TRAMPOLINE_VERSION,
-      'Shopify/shopify-function-wasm-api',
-      `shopify_function_trampoline/${TRAMPOLINE_VERSION}`,
-    )
-  }
-  return _trampoline
+export function trampolineBinary(version: string) {
+  return new Executable(
+    'shopify-function-trampoline',
+    version,
+    'Shopify/shopify-function-wasm-api',
+    `shopify_function_trampoline/${version}`,
+  )
 }
 
 const downloadsInProgress = new Map<string, Promise<void>>()

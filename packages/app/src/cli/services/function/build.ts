@@ -7,6 +7,8 @@ import {
   deriveJavaScriptBinaryDependencies,
   BinaryDependencies,
   trampolineBinary,
+  V2_TRAMPOLINE_VERSION,
+  V1_TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -17,7 +19,7 @@ import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/out
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
-import {findPathUp, inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {findPathUp, inTemporaryDirectory, readFile, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -258,7 +260,19 @@ export async function runWasmOpt(modulePath: string) {
 }
 
 export async function runTrampoline(modulePath: string) {
-  const trampoline = trampolineBinary()
+  let trampolineVersion
+  const importedModules = await importedWasmModules(modulePath)
+  if (importedModules.includes('shopify_function_v1')) {
+    trampolineVersion = V1_TRAMPOLINE_VERSION
+  } else if (importedModules.includes('shopify_function_v2')) {
+    trampolineVersion = V2_TRAMPOLINE_VERSION
+  }
+
+  if (!trampolineVersion) {
+    return
+  }
+
+  const trampoline = trampolineBinary(trampolineVersion)
   await downloadBinary(trampoline)
 
   const command = trampoline.path
@@ -266,6 +280,19 @@ export async function runTrampoline(modulePath: string) {
   const args = ['-i', modulePath, '-o', modulePath]
   outputDebug(`Applying trampoline to the wasm binary with command: ${command} ${args.join(' ')}`)
   await exec(command, args)
+}
+
+async function importedWasmModules(modulePath: string): Promise<string[]> {
+  const moduleBytes = new Uint8Array(readFileSync(modulePath))
+  const isValid = WebAssembly.validate(moduleBytes)
+  if (!isValid) {
+    return []
+  }
+  const module = new WebAssembly.Module(moduleBytes)
+  const imports = WebAssembly.Module.imports(module)
+  // Sets preserve insertion order so the returned array should be
+  // deterministic when given the same Wasm module
+  return [...new Set(imports.map((importItem) => importItem.module))]
 }
 
 export async function runJavy(
