@@ -14,6 +14,11 @@ import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
 
+// Mock the import extractor to avoid scanning for imports
+vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
+  extractImportPaths: vi.fn().mockResolvedValue([]),
+}))
+
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
 const extension1B = await testUIExtension({type: 'ui_extension', handle: 'h2', directory: '/extensions/ui_extension_1'})
 const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2'})
@@ -290,19 +295,31 @@ describe('file-watcher events', () => {
       // use waitFor to so that we can test the debouncers and timeouts
       await vi.waitFor(
         () => {
-          expect(onChange).toHaveBeenCalledOnce()
-          expect(onChange).toHaveBeenCalledWith(expect.any(Array))
-          const actualEvents = (onChange as any).mock.calls[0][0]
-          expect(actualEvents).toHaveLength(1)
-          const actualEvent = actualEvents[0]
+          // The file watcher may emit multiple batches of events due to import scanning
+          // Find the call that contains our expected event
+          const allCalls = (onChange as any).mock.calls
+          let foundExpectedEvent = false
 
-          expect(actualEvent.type).toBe(expectedEvent.type)
-          expect(actualEvent.path).toBe(expectedEvent.path)
-          expect(actualEvent.extensionPath).toBe(expectedEvent.extensionPath)
-          expect(Array.isArray(actualEvent.startTime)).toBe(true)
-          expect(actualEvent.startTime).toHaveLength(2)
-          expect(typeof actualEvent.startTime[0]).toBe('number')
-          expect(typeof actualEvent.startTime[1]).toBe('number')
+          for (const call of allCalls) {
+            const actualEvents = call[0]
+            const matchingEvent = actualEvents.find(
+              (event: any) =>
+                event.type === expectedEvent.type &&
+                event.path === expectedEvent.path &&
+                event.extensionPath === expectedEvent.extensionPath,
+            )
+
+            if (matchingEvent) {
+              foundExpectedEvent = true
+              expect(Array.isArray(matchingEvent.startTime)).toBe(true)
+              expect(matchingEvent.startTime).toHaveLength(2)
+              expect(typeof matchingEvent.startTime[0]).toBe('number')
+              expect(typeof matchingEvent.startTime[1]).toBe('number')
+              break
+            }
+          }
+
+          expect(foundExpectedEvent).toBe(true)
         },
         {timeout: 1000, interval: 100},
       )

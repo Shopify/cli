@@ -1,12 +1,13 @@
 /* eslint-disable no-case-declarations */
 import {AppLinkedInterface} from '../../../models/app/app.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {configurationFileNames} from '../../../constants.js'
-import {dirname, isSubpath, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {dirname, isSubpath, joinPath, normalizePath, relativePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
-import {fileExistsSync, matchGlob, readFileSync, glob} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ignore from 'ignore'
 import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
@@ -57,6 +58,8 @@ export class FileWatcher {
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
+  // Map of imported file paths to the extension paths that import them
+  private readonly importedFileToExtensions = new Map<string, Set<string>>()
 
   constructor(
     app: AppLinkedInterface,
@@ -72,7 +75,10 @@ export class FileWatcher {
      * to avoid emitting too many events in a short period.
      */
     this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: true, trailing: true})
-    this.updateApp(app)
+    this.app = app
+    this.extensionPaths = this.app.realExtensions
+      .map((ext) => normalizePath(ext.directory))
+      .filter((dir) => dir !== this.app.directory)
   }
 
   onChange(listener: (events: WatcherEvent[]) => void) {
@@ -87,9 +93,7 @@ export class FileWatcher {
 
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
-    // Scan for imports in the watched paths
-    const importedPaths = await this.scanDirectoriesForImports(fullExtensionDirectories)
-    console.log('Imported paths to watch: ', importedPaths)
+    const importedPaths = await this.scanExtensionsForImports()
     watchPaths.push(...importedPaths)
 
     this.watcher = chokidar.watch(watchPaths, {
@@ -110,7 +114,7 @@ export class FileWatcher {
     this.options.signal.addEventListener('abort', this.close)
   }
 
-  updateApp(app: AppLinkedInterface) {
+  async updateApp(app: AppLinkedInterface) {
     this.app = app
     this.extensionPaths = this.app.realExtensions
       .map((ext) => normalizePath(ext.directory))
@@ -118,49 +122,100 @@ export class FileWatcher {
     this.extensionPaths.forEach((path) => {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
+    // Refresh import map when app is updated
+    const importedPaths = await this.scanExtensionsForImports()
+
+    // Add new imported paths to the watcher
+    if (this.watcher) {
+      this.watcher.add(importedPaths)
+    }
   }
 
   /**
-   * Scans directories for imports before starting the watcher
+   * Scans each extension for imports and tracks which files are imported by which extensions
    */
-  private async scanDirectoriesForImports(directories: string[]): Promise<string[]> {
-    const supportedExtensions = ['.js', '.ts', '.jsx', '.tsx', '.mjs', '.cjs', '.rs']
+  private async scanExtensionsForImports(): Promise<string[]> {
+    this.importedFileToExtensions.clear()
+    const allImportedPaths = new Set<string>()
 
-    // Find all source files in the directories
-    const patterns = directories.flatMap((dir) => supportedExtensions.map((ext) => joinPath(dir, `**/*${ext}`)))
+    // Process each extension to find its imports
+    const importPromises = this.app.realExtensions.map(async (extension) => {
+      try {
+        const entryFiles = await this.getExtensionEntryFiles(extension)
+        const allImports: string[] = []
 
-    const files = await glob(patterns, {
-      ignore: [
-        '**/node_modules/**',
-        '**/.git/**',
-        '**/*.test.*',
-        '**/dist/**',
-        '**/generated/**',
-        '**/.turbo/**',
-        '**/coverage/**',
-      ],
-      absolute: true,
-      onlyFiles: true,
+        // Extract imports from all entry files in parallel
+        const importResults = await Promise.all(entryFiles.map((entryFile) => extractImportPaths(entryFile)))
+        importResults.forEach((imports) => allImports.push(...imports))
+        return {extension, imports: allImports}
+      } catch (error) {
+        if (error instanceof Error) {
+          outputDebug(`Failed to extract imports for extension at ${extension.directory}: ${error.message}`)
+        } else {
+          throw error
+        }
+        return {extension, imports: []}
+      }
     })
 
-    outputDebug(`Scanning ${files.length} source files for imports...`)
+    const results = await Promise.all(importPromises)
 
-    // Extract imports from all files in parallel
-    const importPromises = files.map((file: string) => {
-      return extractImportPaths(file)
-    })
-    const allImports = await Promise.all(importPromises)
-    const uniqueImports = [...new Set(allImports.flat())]
+    // Process the results
+    for (const {extension, imports} of results) {
+      // Track which extension imports each file
+      for (const importPath of imports) {
+        // Ensure we have an absolute, normalized path
+        const resolvedImportPath = resolvePath(importPath)
+        const normalizedImportPath = normalizePath(resolvedImportPath)
 
-    // Filter out paths that are already in the watch list
-    const newImports = uniqueImports.filter((path) => {
-      const normalizedPath = normalizePath(path)
-      return !directories.some((dir) => isSubpath(normalizePath(dir), normalizedPath))
-    })
+        // Skip files that are already in the extension directory
+        if (isSubpath(normalizePath(extension.directory), normalizedImportPath)) continue
 
-    outputDebug(`Found ${newImports.length} imported files to watch`)
+        // Add to the global set of imported paths (use the resolved path for watching)
+        allImportedPaths.add(resolvedImportPath)
 
-    return newImports
+        // Track which extension imports this file (use normalized path for lookup)
+        if (!this.importedFileToExtensions.has(normalizedImportPath)) {
+          this.importedFileToExtensions.set(normalizedImportPath, new Set())
+        }
+        const extensionSet = this.importedFileToExtensions.get(normalizedImportPath)
+        if (extensionSet) {
+          extensionSet.add(normalizePath(extension.directory))
+        }
+      }
+    }
+
+    return Array.from(allImportedPaths)
+  }
+
+  /**
+   * Gets the entry files for an extension by checking various sources
+   */
+  private async getExtensionEntryFiles(extension: ExtensionInstance): Promise<string[]> {
+    const entryFiles: string[] = []
+
+    // First, check if we have an explicit entrySourceFilePath
+    if (extension.entrySourceFilePath) {
+      entryFiles.push(extension.entrySourceFilePath)
+      return entryFiles
+    }
+
+    // For UI extensions, check targeting/extension_points configuration
+    const config = extension.configuration
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const targetingConfig = (config as any).targeting || (config as any).extension_points
+    if (targetingConfig && Array.isArray(targetingConfig)) {
+      for (const target of targetingConfig) {
+        if (target.module) {
+          const modulePath = joinPath(extension.directory, target.module)
+          if (fileExistsSync(modulePath)) {
+            entryFiles.push(modulePath)
+          }
+        }
+      }
+    }
+
+    return entryFiles
   }
 
   /**
@@ -206,6 +261,12 @@ export class FileWatcher {
   private shouldIgnoreEvent(event: WatcherEvent) {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
 
+    // Check if this is an imported file event - never ignore these
+    const normalizedEventPath = normalizePath(event.path)
+    if (this.importedFileToExtensions.has(normalizedEventPath)) {
+      return false
+    }
+
     const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
     const watchPaths = extension?.devSessionWatchPaths
     const ignoreInstance = this.ignored[event.extensionPath]
@@ -223,19 +284,51 @@ export class FileWatcher {
 
   private readonly handleFileEvent = (event: string, path: string) => {
     const startTime = startHRTime()
+    const normalizedPath = normalizePath(path)
     const isConfigAppPath = path === this.app.configuration.path
-    const extensionPath =
-      this.extensionPaths.find((dir) => isSubpath(dir, path)) ?? (isConfigAppPath ? this.app.directory : 'unknown')
+    const directExtensionPath = this.extensionPaths.find((dir) => isSubpath(dir, normalizedPath))
     const isExtensionToml = path.endsWith('.extension.toml')
-    const isUnknownExtension = extensionPath === 'unknown'
 
     outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
 
-    if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
-      // Ignore an event if it's not part of an existing extension
-      // Except if it is a toml file (either app config or extension config)
-      return
+    // Check if this is an imported file that affects multiple extensions
+    if (!directExtensionPath && !isConfigAppPath) {
+      // Try multiple path formats to find the file in the import map
+      const resolvedPath = resolvePath(path)
+      const normalizedResolvedPath = normalizePath(resolvedPath)
+
+      const affectedExtensions =
+        this.importedFileToExtensions.get(normalizedPath) ??
+        this.importedFileToExtensions.get(path) ??
+        this.importedFileToExtensions.get(resolvedPath) ??
+        this.importedFileToExtensions.get(normalizedResolvedPath)
+
+      if (affectedExtensions && affectedExtensions.size > 0) {
+        // Trigger events for all extensions that import this file
+        for (const extensionPath of affectedExtensions) {
+          this.handleEventForExtension(event, path, extensionPath, startTime)
+        }
+        return
+      }
     }
+
+    // Handle regular extension files
+    const extensionPath = directExtensionPath ?? (isConfigAppPath ? this.app.directory : 'unknown')
+    this.handleEventForExtension(event, path, extensionPath, startTime, isExtensionToml, isConfigAppPath)
+  }
+
+  private handleEventForExtension(
+    event: string,
+    path: string,
+    extensionPath: string,
+    startTime: StartTime,
+    isExtensionTomlParam?: boolean,
+    isConfigAppPathParam?: boolean,
+  ) {
+    // Determine file type if not provided
+    const isExtensionToml = isExtensionTomlParam ?? path.endsWith('.extension.toml')
+    const isConfigAppPath = isConfigAppPathParam ?? path === this.app.configuration.path
+    const isUnknownExtension = extensionPath === 'unknown'
 
     switch (event) {
       case 'change':

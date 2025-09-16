@@ -147,22 +147,35 @@ function extractRustImports(content: string, filePath: string): string[] {
   const tree = rustParser.parse(content)
   const imports: string[] = []
 
+  // Regex fallback for #[path] attributes
+  const pathRegex = /#\[path\s*=\s*"([^"]+)"\]/g
+  let match
+  while ((match = pathRegex.exec(content)) !== null) {
+    const pathValue = match[1]
+    if (pathValue) {
+      const resolvedPath = joinPath(dirname(filePath), pathValue)
+      if (fileExistsSync(resolvedPath)) {
+        imports.push(resolvedPath)
+      }
+    }
+  }
+
   try {
     // Query for Rust imports and modules
     const query = new Parser.Query(
       rustParser.getLanguage(),
       `
-      ; mod declarations
+      ; all mod declarations
       (mod_item
         name: (identifier) @mod_name)
 
-      ; mod with path attribute
-      (mod_item
-        (attribute_item
-          (attribute
-            (identifier) @attr (#eq? @attr "path")
-            arguments: (token_tree (string_literal) @path)))
-        name: (identifier) @mod_name)
+      ; string literals in path attributes
+      (attribute_item
+        (attribute
+          (identifier) @attr
+          (token_tree
+            (string_literal) @path))
+        (#eq? @attr "path"))
     `,
     )
 
@@ -184,8 +197,12 @@ function extractRustImports(content: string, filePath: string): string[] {
           // Handle explicit path attribute
           const cleanPath = text.replace(/['"]/g, '')
           const resolvedPath = joinPath(dirname(filePath), cleanPath)
+          outputDebug(`Rust #[path] attribute: ${cleanPath} resolved to ${resolvedPath}`)
           if (fileExistsSync(resolvedPath)) {
+            outputDebug(`Path exists, adding to imports: ${resolvedPath}`)
             imports.push(resolvedPath)
+          } else {
+            outputDebug(`Path does not exist: ${resolvedPath}`)
           }
           break
         }
