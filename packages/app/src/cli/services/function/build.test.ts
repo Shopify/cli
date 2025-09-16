@@ -297,6 +297,21 @@ describe('runTrampoline', () => {
     expect(exec).not.toHaveBeenCalled()
   })
 
+  test('does not run trampoline if Wasm module is invalid', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension()
+    const modulePath = ourFunction.outputPath
+    const invalidWasmModule = Buffer.from([])
+    vi.mocked(readFileSync).mockReturnValue(invalidWasmModule)
+
+    // When
+    const got = runTrampoline(modulePath)
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).not.toHaveBeenCalled()
+  })
+
   test('runs v1 trampoline on v1 module', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
