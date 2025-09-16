@@ -14,7 +14,6 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
-  buildFlowTemplateExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
@@ -135,7 +134,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    return this.isFunctionExtension ? 'index.wasm' : `${this.handle}.js`
+    const mode = this.specification.buildConfig.mode
+    if (mode === 'copy_files' || mode === 'theme') {
+      return ''
+    } else if (mode === 'function') {
+      return 'index.wasm'
+    } else {
+      return `${this.handle}.js`
+    }
   }
 
   constructor(options: {
@@ -344,13 +350,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     switch (mode) {
       case 'theme':
-        return buildThemeExtension(this, options)
+        await buildThemeExtension(this, options)
+        return bundleThemeExtension(this, options)
       case 'function':
         return buildFunctionExtension(this, options)
       case 'ui':
         return buildUIExtension(this, options)
-      case 'flow':
-        return buildFlowTemplateExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
@@ -371,9 +376,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
 
     await this.build(options)
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    }
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
@@ -402,7 +404,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
     const id = this.getOutputFolderId(outputId)
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
+    const outputFile = this.outputFileName === '' ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
 
