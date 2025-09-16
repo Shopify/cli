@@ -130,6 +130,10 @@ export interface ExtensionPayload {
       name: string
       version: string
     }
+    error?: {
+      message: string
+      file?: string
+    }
   }
   uuid: string
   version: string

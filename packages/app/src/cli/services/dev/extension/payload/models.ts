@@ -60,6 +60,10 @@ export interface UIExtensionPayload {
     hidden: boolean
     status: ExtensionAssetBuildStatus
     localizationStatus: ExtensionAssetBuildStatus
+    error?: {
+      message: string
+      file?: string
+    }
   }
   extensionPoints: string[] | null | DevNewExtensionPointSchema[]
   localization: Localization | null
