@@ -1065,7 +1065,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         await expect(extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)).rejects.toThrow(
           new AbortError(
             'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version.',
-            'Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example 2025.10.0, in your dependencies.',
+            'Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~2025.10.0, in your dependencies.',
           ),
         )
 
@@ -1211,7 +1211,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
 
         // Then - should generate union type for shared module
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api | import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify: \n    import('@shopify/ui-extensions/admin.product-details.action.render').Api |\n    import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
         )
       })
     })
@@ -1272,7 +1272,7 @@ Please check the configuration in ${uiExtension.configurationPath}`),
         // Then - should generate union types for shared files
         // when targets are from different surfaces (admin vs checkout)
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api | import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify: \n    import('@shopify/ui-extensions/admin.product-details.action.render').Api |\n    import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
         )
       })
     })

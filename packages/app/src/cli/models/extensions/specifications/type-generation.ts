@@ -2,7 +2,6 @@ import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import ts from 'typescript'
-import {init, parse} from 'es-module-lexer'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -63,21 +62,43 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
 
 async function parseAndResolveImports(filePath: string): Promise<string[]> {
   try {
-    await init
-
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
 
     // Load TypeScript configuration once
     const {compilerOptions} = loadTsConfig(filePath)
 
-    const [imports] = parse(content)
+    // Determine script kind based on file extension
+    let scriptKind = ts.ScriptKind.JSX
+    if (filePath.endsWith('.ts')) {
+      scriptKind = ts.ScriptKind.TS
+    } else if (filePath.endsWith('.tsx')) {
+      scriptKind = ts.ScriptKind.TSX
+    }
+
+    const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, scriptKind)
 
     const processedImports = new Set<string>()
+    const importPaths: string[] = []
 
-    for (const pattern of imports) {
-      const importPath = pattern.n
+    const visit = (node: ts.Node): void => {
+      if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        importPaths.push(node.moduleSpecifier.text)
+      } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+        const firstArg = node.arguments[0]
+        if (firstArg && ts.isStringLiteral(firstArg)) {
+          importPaths.push(firstArg.text)
+        }
+      } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        importPaths.push(node.moduleSpecifier.text)
+      }
 
+      ts.forEachChild(node, visit)
+    }
+
+    visit(sourceFile)
+
+    for (const importPath of importPaths) {
       // Skip if already processed
       if (!importPath || processedImports.has(importPath)) {
         continue
@@ -149,7 +170,7 @@ export function createTypeDefinition(
         // Throw specific error for the target that failed, matching the original getSharedTypeDefinition behavior
         throw new AbortError(
           `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
-          `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ${year}.${month}.0, in your dependencies.`,
+          `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~${year}.${month}.0, in your dependencies.`,
         )
       }
     }
@@ -160,8 +181,8 @@ export function createTypeDefinition(
       const target = targets[0] ?? ''
       return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: import('@shopify/ui-extensions/${target}').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`
     } else if (targets.length > 1) {
-      const unionType = targets.map((target) => `import('@shopify/ui-extensions/${target}').Api`).join(' | ')
-      return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: ${unionType};\n  const globalThis: { shopify: typeof shopify };\n}\n`
+      const unionType = targets.map((target) => `    import('@shopify/ui-extensions/${target}').Api`).join(' |\n')
+      return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: \n${unionType};\n  const globalThis: { shopify: typeof shopify };\n}\n`
     }
 
     return null
@@ -173,7 +194,7 @@ export function createTypeDefinition(
     const {year, month} = parseApiVersion(apiVersion) ?? {year: 2025, month: 10}
     throw new AbortError(
       `Type reference could not be found. You might be using the wrong @shopify/ui-extensions version.`,
-      `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ${year}.${month}.0, in your dependencies.`,
+      `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~${year}.${month}.0, in your dependencies.`,
     )
   }
 }
