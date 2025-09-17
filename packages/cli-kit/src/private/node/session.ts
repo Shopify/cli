@@ -18,7 +18,7 @@ import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError, BugError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
-import {AdminSession} from '../../public/node/session.js'
+import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 
 /**
@@ -197,8 +197,9 @@ ${outputToken.json(applications)}
 
   let newSession = {}
 
-  function throwOnNoPrompt() {
+  async function throwOnNoPrompt() {
     if (!noPrompt) return
+    await logout()
     throw new AbortError(
       `The currently available CLI credentials are invalid.
 
@@ -208,7 +209,7 @@ The CLI is currently unable to prompt for reauthentication.`,
   }
 
   if (validationResult === 'needs_full_auth') {
-    throwOnNoPrompt()
+    await throwOnNoPrompt()
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications, fqdn)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
@@ -217,7 +218,7 @@ The CLI is currently unable to prompt for reauthentication.`,
       newSession = await refreshTokens(fqdnSession.identity, applications, fqdn)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        throwOnNoPrompt()
+        await throwOnNoPrompt()
         newSession = await executeCompleteFlow(applications, fqdn)
       } else if (error instanceof InvalidRequestError) {
         await secureStore.remove()
