@@ -75,6 +75,7 @@ export default abstract class ThemeCommand extends Command {
     _flags: FlagValues,
     _session?: AdminSession,
     _multiEnvironment = false,
+    _args?: ArgOutput,
     _context?: {stdout?: Writable; stderr?: Writable},
   ): Promise<void> {}
 
@@ -87,10 +88,12 @@ export default abstract class ThemeCommand extends Command {
     const klass = this.constructor as unknown as Input<TFlags, TGlobalFlags, TArgs> & {
       multiEnvironmentsFlags: RequiredFlags
       flags: FlagOutput
+      args: ArgOutput
     }
     const requiredFlags = klass.multiEnvironmentsFlags
-    const {flags} = await this.parse(klass)
+    const {args, flags} = await this.parse(klass)
     const commandRequiresAuth = 'password' in klass.flags
+
     const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
 
     // Single environment or no environment
@@ -100,7 +103,7 @@ export default abstract class ThemeCommand extends Command {
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
-      await this.command(flags, session)
+      await this.command(flags, session, false, args)
       await this.logAnalyticsData(session)
       return
     }
@@ -268,7 +271,7 @@ export default abstract class ThemeCommand extends Command {
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
-                await this.command(flags, session, true, {stdout, stderr})
+                await this.command(flags, session, true, {}, {stdout, stderr})
                 await this.logAnalyticsData(session)
               })
 
