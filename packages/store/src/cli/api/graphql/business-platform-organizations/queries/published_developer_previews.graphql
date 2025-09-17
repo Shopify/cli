@@ -1,0 +1,8 @@
+query PublishedDeveloperPreviewsQuery {
+  publishedDeveloperPreviews {
+
+      handle
+      name
+
+  }
+}
