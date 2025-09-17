@@ -347,14 +347,6 @@ describe('file-watcher events', () => {
       // Create test extension
       const testFunction = await testFunctionExtension({
         dir: extensionDir,
-        config: {
-          name: 'my-function',
-          type: 'product_discounts',
-          build: {
-            command: 'cargo build',
-            path: 'target/release/my-function.wasm',
-          },
-        },
       })
       testFunction.entrySourceFilePath = mainFile
 
@@ -404,27 +396,11 @@ describe('file-watcher events', () => {
       // Create test extensions
       const testFunction1 = await testFunctionExtension({
         dir: extension1Dir,
-        config: {
-          name: 'function1',
-          type: 'product_discounts',
-          build: {
-            command: 'cargo build',
-            path: 'target/release/function1.wasm',
-          },
-        },
       })
       testFunction1.entrySourceFilePath = mainFile1
 
       const testFunction2 = await testFunctionExtension({
         dir: extension2Dir,
-        config: {
-          name: 'function2',
-          type: 'order_discounts',
-          build: {
-            command: 'cargo build',
-            path: 'target/release/function2.wasm',
-          },
-        },
       })
       testFunction2.entrySourceFilePath = mainFile2
 
@@ -472,14 +448,6 @@ describe('file-watcher events', () => {
 
       const testFunction = await testFunctionExtension({
         dir: extensionDir,
-        config: {
-          name: 'my-function',
-          type: 'product_discounts',
-          build: {
-            command: 'cargo build',
-            path: 'target/release/my-function.wasm',
-          },
-        },
       })
       testFunction.entrySourceFilePath = mainFile
 
@@ -538,14 +506,6 @@ describe('file-watcher events', () => {
 
       const testFunction = await testFunctionExtension({
         dir: extensionDir,
-        config: {
-          name: 'my-function',
-          type: 'product_discounts',
-          build: {
-            command: 'cargo build',
-            path: 'target/release/my-function.wasm',
-          },
-        },
       })
       testFunction.entrySourceFilePath = mainFile
 

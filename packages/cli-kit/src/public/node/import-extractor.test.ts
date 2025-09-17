@@ -219,7 +219,7 @@ describe('extractImportPaths', () => {
         const nestedDir = joinPath(tmpDir, 'nested', 'deep')
         const targetFile = joinPath(nestedDir, 'target.rs')
 
-        await mkdir(nestedDir, {recursive: true})
+        await mkdir(nestedDir)
         await writeFile(targetFile, 'pub const VALUE: i32 = 42;')
         await writeFile(
           mainFile,
