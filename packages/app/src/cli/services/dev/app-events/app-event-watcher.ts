@@ -151,7 +151,7 @@ export class AppEventWatcher extends EventEmitter {
           if (!appEvent) return
 
           this.app = appEvent.app
-          if (appEvent.appWasReloaded) await this.fileWatcher?.updateApp(this.app)
+          if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.esbuildManager.updateContexts(appEvent)
 
           // Find affected created/updated extensions and build them

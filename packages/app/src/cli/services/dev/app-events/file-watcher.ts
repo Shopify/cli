@@ -93,7 +93,7 @@ export class FileWatcher {
 
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
-    const importedPaths = await this.scanExtensionsForImports()
+    const importedPaths = this.scanExtensionsForImports()
     watchPaths.push(...importedPaths)
 
     this.watcher = chokidar.watch(watchPaths, {
@@ -114,7 +114,7 @@ export class FileWatcher {
     this.options.signal.addEventListener('abort', this.close)
   }
 
-  async updateApp(app: AppLinkedInterface) {
+  updateApp(app: AppLinkedInterface) {
     this.app = app
     this.extensionPaths = this.app.realExtensions
       .map((ext) => normalizePath(ext.directory))
@@ -123,7 +123,7 @@ export class FileWatcher {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
     // Refresh import map when app is updated
-    const importedPaths = await this.scanExtensionsForImports()
+    const importedPaths = this.scanExtensionsForImports()
 
     // Add new imported paths to the watcher
     if (this.watcher) {
@@ -134,53 +134,48 @@ export class FileWatcher {
   /**
    * Scans each extension for imports and tracks which files are imported by which extensions
    */
-  private async scanExtensionsForImports(): Promise<string[]> {
+  private scanExtensionsForImports(): string[] {
     this.importedFileToExtensions.clear()
     const allImportedPaths = new Set<string>()
 
     // Process each extension to find its imports
-    const importPromises = this.app.realExtensions.map(async (extension) => {
+    for (const extension of this.app.realExtensions) {
       try {
-        const entryFiles = await this.getExtensionEntryFiles(extension)
+        const entryFiles = this.getExtensionEntryFiles(extension)
         const allImports: string[] = []
 
-        // Extract imports from all entry files in parallel
-        const importResults = await Promise.all(entryFiles.map((entryFile) => extractImportPaths(entryFile)))
-        importResults.forEach((imports) => allImports.push(...imports))
-        return {extension, imports: allImports}
+        // Extract imports from all entry files
+        for (const entryFile of entryFiles) {
+          const imports = extractImportPaths(entryFile)
+          allImports.push(...imports)
+        }
+
+        // Track which extension imports each file
+        for (const importPath of allImports) {
+          // Ensure we have an absolute, normalized path
+          const resolvedImportPath = resolvePath(importPath)
+          const normalizedImportPath = normalizePath(resolvedImportPath)
+
+          // Skip files that are already in the extension directory
+          if (isSubpath(normalizePath(extension.directory), normalizedImportPath)) continue
+
+          // Add to the global set of imported paths (use the resolved path for watching)
+          allImportedPaths.add(resolvedImportPath)
+
+          // Track which extension imports this file (use normalized path for lookup)
+          if (!this.importedFileToExtensions.has(normalizedImportPath)) {
+            this.importedFileToExtensions.set(normalizedImportPath, new Set())
+          }
+          const extensionSet = this.importedFileToExtensions.get(normalizedImportPath)
+          if (extensionSet) {
+            extensionSet.add(normalizePath(extension.directory))
+          }
+        }
       } catch (error) {
         if (error instanceof Error) {
           outputDebug(`Failed to extract imports for extension at ${extension.directory}: ${error.message}`)
         } else {
           throw error
-        }
-        return {extension, imports: []}
-      }
-    })
-
-    const results = await Promise.all(importPromises)
-
-    // Process the results
-    for (const {extension, imports} of results) {
-      // Track which extension imports each file
-      for (const importPath of imports) {
-        // Ensure we have an absolute, normalized path
-        const resolvedImportPath = resolvePath(importPath)
-        const normalizedImportPath = normalizePath(resolvedImportPath)
-
-        // Skip files that are already in the extension directory
-        if (isSubpath(normalizePath(extension.directory), normalizedImportPath)) continue
-
-        // Add to the global set of imported paths (use the resolved path for watching)
-        allImportedPaths.add(resolvedImportPath)
-
-        // Track which extension imports this file (use normalized path for lookup)
-        if (!this.importedFileToExtensions.has(normalizedImportPath)) {
-          this.importedFileToExtensions.set(normalizedImportPath, new Set())
-        }
-        const extensionSet = this.importedFileToExtensions.get(normalizedImportPath)
-        if (extensionSet) {
-          extensionSet.add(normalizePath(extension.directory))
         }
       }
     }
@@ -191,7 +186,7 @@ export class FileWatcher {
   /**
    * Gets the entry files for an extension by checking various sources
    */
-  private async getExtensionEntryFiles(extension: ExtensionInstance): Promise<string[]> {
+  private getExtensionEntryFiles(extension: ExtensionInstance): string[] {
     const entryFiles: string[] = []
 
     // First, check if we have an explicit entrySourceFilePath
@@ -216,6 +211,62 @@ export class FileWatcher {
     }
 
     return entryFiles
+  }
+
+  /**
+   * Rescans imports for a specific extension and updates the watcher
+   * This method never throws - all errors are handled internally
+   */
+  private rescanExtensionImports(extensionPath: string): void {
+    try {
+      const extension = this.app.realExtensions.find((ext) => normalizePath(ext.directory) === extensionPath)
+      if (!extension) return
+
+      const entryFiles = this.getExtensionEntryFiles(extension)
+      const newImports: string[] = []
+
+      // Extract imports from all entry files
+      for (const entryFile of entryFiles) {
+        const imports = extractImportPaths(entryFile)
+        newImports.push(...imports)
+      }
+
+      // Remove old imports for this extension from the map
+      for (const [importPath, extensions] of this.importedFileToExtensions.entries()) {
+        extensions.delete(extensionPath)
+        if (extensions.size === 0) {
+          this.importedFileToExtensions.delete(importPath)
+        }
+      }
+
+      // Add new imports to the map and collect new paths to watch
+      const newPaths: string[] = []
+      for (const importPath of newImports) {
+        const resolvedImportPath = resolvePath(importPath)
+        const normalizedImportPath = normalizePath(resolvedImportPath)
+
+        // Skip imports within the extension directory
+        if (isSubpath(extensionPath, normalizedImportPath)) continue
+
+        if (!this.importedFileToExtensions.has(normalizedImportPath)) {
+          this.importedFileToExtensions.set(normalizedImportPath, new Set())
+          newPaths.push(resolvedImportPath)
+        }
+        const extensionSet = this.importedFileToExtensions.get(normalizedImportPath)
+        if (extensionSet) {
+          extensionSet.add(extensionPath)
+        }
+      }
+
+      // Add new paths to the watcher
+      if (newPaths.length > 0 && this.watcher) {
+        outputDebug(`Adding ${newPaths.length} new imported paths to watcher for ${extension.handle}`)
+        this.watcher.add(newPaths)
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      outputDebug(`Failed to rescan imports for extension at ${extensionPath}: ${error}`)
+    }
   }
 
   /**
@@ -341,6 +392,7 @@ export class FileWatcher {
           this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           this.pushEvent({type: 'file_updated', path, extensionPath, startTime})
+          this.rescanExtensionImports(normalizePath(extensionPath))
         }
         break
       case 'add':
@@ -349,6 +401,7 @@ export class FileWatcher {
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isExtensionToml) {
           this.pushEvent({type: 'file_created', path, extensionPath, startTime})
+          this.rescanExtensionImports(normalizePath(extensionPath))
           break
         }
         let totalWaitedTime = 0

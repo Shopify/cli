@@ -2,47 +2,25 @@ import {readFileSync, fileExistsSync} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {outputDebug} from './output.js'
 import Parser from 'tree-sitter'
+import javascript from 'tree-sitter-javascript'
+// @ts-expect-error - tree-sitter-typescript doesn't provide type declarations for subpath imports
+import typescript from 'tree-sitter-typescript/bindings/node/typescript.js'
+// @ts-expect-error - tree-sitter-typescript doesn't provide type declarations for subpath imports
+import tsx from 'tree-sitter-typescript/bindings/node/tsx.js'
+import rust from 'tree-sitter-rust'
 
-// These imports will need to be installed via npm
-let javascript: unknown
-let typescript: unknown
-let tsx: unknown
-let rust: unknown
+// Initialize parsers at module load time
+const jsParser = new Parser()
+jsParser.setLanguage(javascript)
 
-// Parser instances
-let jsParser: Parser | undefined
-let tsParser: Parser | undefined
-let tsxParser: Parser | undefined
-let rustParser: Parser | undefined
+const tsParser = new Parser()
+tsParser.setLanguage(typescript)
 
-// Lazy load the language parsers
-async function loadParsers(): Promise<void> {
-  const [js, ts, tsxModule, rustModule] = await Promise.all([
-    import('tree-sitter-javascript'),
-    // @ts-expect-error - tree-sitter-typescript doesn't provide type declarations for subpath imports
-    import('tree-sitter-typescript/bindings/node/typescript.js'),
-    // @ts-expect-error - tree-sitter-typescript doesn't provide type declarations for subpath imports
-    import('tree-sitter-typescript/bindings/node/tsx.js'),
-    import('tree-sitter-rust'),
-  ])
-  javascript = js.default
-  typescript = ts.default
-  tsx = tsxModule.default
-  rust = rustModule.default
+const tsxParser = new Parser()
+tsxParser.setLanguage(tsx)
 
-  // Initialize parsers
-  jsParser = new Parser()
-  jsParser.setLanguage(javascript)
-
-  tsParser = new Parser()
-  tsParser.setLanguage(typescript)
-
-  tsxParser = new Parser()
-  tsxParser.setLanguage(tsx)
-
-  rustParser = new Parser()
-  rustParser.setLanguage(rust)
-}
+const rustParser = new Parser()
+rustParser.setLanguage(rust)
 
 /**
  * Extracts import paths from a source file.
@@ -51,9 +29,7 @@ async function loadParsers(): Promise<void> {
  * @param filePath - Path to the file to analyze.
  * @returns Array of absolute paths to imported files.
  */
-export async function extractImportPaths(filePath: string): Promise<string[]> {
-  await loadParsers()
-
+export function extractImportPaths(filePath: string): string[] {
   const content = readFileSync(filePath).toString()
   const ext = filePath.substring(filePath.lastIndexOf('.'))
 
@@ -147,19 +123,6 @@ function extractRustImports(content: string, filePath: string): string[] {
   const tree = rustParser.parse(content)
   const imports: string[] = []
 
-  // Regex fallback for #[path] attributes
-  const pathRegex = /#\[path\s*=\s*"([^"]+)"\]/g
-  let match
-  while ((match = pathRegex.exec(content)) !== null) {
-    const pathValue = match[1]
-    if (pathValue) {
-      const resolvedPath = joinPath(dirname(filePath), pathValue)
-      if (fileExistsSync(resolvedPath)) {
-        imports.push(resolvedPath)
-      }
-    }
-  }
-
   try {
     // Query for Rust imports and modules
     const query = new Parser.Query(
@@ -169,13 +132,12 @@ function extractRustImports(content: string, filePath: string): string[] {
       (mod_item
         name: (identifier) @mod_name)
 
-      ; string literals in path attributes
+      ; #[path = "..."] attributes
       (attribute_item
         (attribute
-          (identifier) @attr
-          (token_tree
-            (string_literal) @path))
-        (#eq? @attr "path"))
+          (identifier) @attr_name
+          (string_literal) @path_value)
+        (#eq? @attr_name "path"))
     `,
     )
 
@@ -193,16 +155,12 @@ function extractRustImports(content: string, filePath: string): string[] {
           }
           break
         }
-        case 'path': {
+        case 'path_value': {
           // Handle explicit path attribute
           const cleanPath = text.replace(/['"]/g, '')
           const resolvedPath = joinPath(dirname(filePath), cleanPath)
-          outputDebug(`Rust #[path] attribute: ${cleanPath} resolved to ${resolvedPath}`)
           if (fileExistsSync(resolvedPath)) {
-            outputDebug(`Path exists, adding to imports: ${resolvedPath}`)
             imports.push(resolvedPath)
-          } else {
-            outputDebug(`Path does not exist: ${resolvedPath}`)
           }
           break
         }
