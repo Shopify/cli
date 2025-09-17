@@ -342,7 +342,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
   async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
     const {app} = await this.activeAppVersionRawResult(apiKey)
     const {name, appModules} = app.activeRelease.version
-    const appAccessModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_access')
     const appHomeModule = appModules.find((mod) => mod.specification.externalIdentifier === 'app_home')
     const apiSecretKeys = app.activeRoot.clientCredentials.secrets.map((secret) => ({secret: secret.key}))
     return {
@@ -351,7 +350,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       apiKey: app.key,
       apiSecretKeys,
       organizationId: String(numberFromGid(app.organizationId)),
-      grantedScopes: (appAccessModule?.config?.scopes as string[] | undefined) ?? [],
+      grantedScopes: app.activeRoot.grantedShopifyApprovalScopes,
       applicationUrl: appHomeModule?.config?.app_url as string | undefined,
       flags: [],
       developerPlatformClient: this,
