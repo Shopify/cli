@@ -1,0 +1,11 @@
+query UserInfo {
+  currentUserAccount {
+    uuid
+    email
+    organizations(first: 2){
+      nodes {
+        name
+      }
+    }
+  }
+}
