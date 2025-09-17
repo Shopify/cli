@@ -7,9 +7,10 @@ export async function fetchExtensionTemplates(
   developerPlatformClient: DeveloperPlatformClient,
   app: MinimalAppIdentifiers,
   availableSpecifications: string[],
+  shouldUsePolarisUnified?: boolean,
 ): Promise<ExtensionTemplatesResult> {
   const {templates: remoteTemplates, groupOrder} = await developerPlatformClient.templateSpecifications(app)
-  const polarisUnifiedEnabled = isPolarisUnifiedEnabled()
+  const polarisUnifiedEnabled = shouldUsePolarisUnified ?? isPolarisUnifiedEnabled()
 
   const filteredTemplates = remoteTemplates
     .filter(
