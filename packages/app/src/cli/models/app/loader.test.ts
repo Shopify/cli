@@ -39,8 +39,11 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {captureOutput} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../services/local-storage.js')
+// Mock captureOutput to prevent executing `npm prefix` inside getPackageManager
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
@@ -267,6 +270,7 @@ wrong = "property"
   test('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
@@ -280,6 +284,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
     const yarnLockPath = joinPath(tmpDir, yarnLockfile)
     await writeFile(yarnLockPath, '')
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
