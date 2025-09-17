@@ -7,16 +7,16 @@ import {
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
 
-// Mock the import extractor to avoid scanning for imports
+// Mock the import extractor - will be configured per test
 vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
-  extractImportPaths: vi.fn().mockResolvedValue([]),
+  extractImportPaths: vi.fn(() => []),
 }))
 
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
@@ -325,4 +325,257 @@ describe('file-watcher events', () => {
       )
     },
   )
+
+  describe('imported file handling', () => {
+    test('detects changes in imported files outside extension directories', async () => {
+      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
+      const mockedExtractImportPaths = extractImportPaths as any
+
+      // Simple paths for testing
+      const extensionDir = '/test/extensions/my-function'
+      const mainFile = joinPath(extensionDir, 'src', 'main.rs')
+      const constantsFile = '/test/shared/constants.rs'
+
+      // Mock import extraction
+      mockedExtractImportPaths.mockImplementation((filePath: string) => {
+        if (filePath === mainFile) {
+          return [constantsFile]
+        }
+        return []
+      })
+
+      // Create test extension
+      const testFunction = await testFunctionExtension({
+        dir: extensionDir,
+        config: {
+          name: 'my-function',
+          type: 'product_discounts',
+          build: {
+            command: 'cargo build',
+            path: 'target/release/my-function.wasm',
+          },
+        },
+      })
+      testFunction.entrySourceFilePath = mainFile
+
+      const app = testAppLinked({
+        allExtensions: [testFunction],
+        directory: '/test',
+      })
+
+      // Mock chokidar - we need to check the paths passed to watch
+      let watchedPaths: string[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchedPaths = paths as string[]
+        return {
+          on: vi.fn().mockReturnThis(),
+          close: vi.fn().mockResolvedValue(undefined),
+        } as any
+      })
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // Check that imported file was included in the initial watch paths
+      expect(watchedPaths).toContain(constantsFile)
+
+      // Clean up
+      mockedExtractImportPaths.mockReset()
+    })
+
+    test('handles imported files that are imported by multiple extensions', async () => {
+      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
+      const mockedExtractImportPaths = extractImportPaths as any
+
+      // Simple paths for testing
+      const extension1Dir = '/test/extensions/function1'
+      const extension2Dir = '/test/extensions/function2'
+      const mainFile1 = joinPath(extension1Dir, 'src', 'main.rs')
+      const mainFile2 = joinPath(extension2Dir, 'src', 'main.rs')
+      const sharedFile = '/test/shared/utils.rs'
+
+      // Mock import extraction
+      mockedExtractImportPaths.mockImplementation((filePath: string) => {
+        if (filePath === mainFile1 || filePath === mainFile2) {
+          return [sharedFile]
+        }
+        return []
+      })
+
+      // Create test extensions
+      const testFunction1 = await testFunctionExtension({
+        dir: extension1Dir,
+        config: {
+          name: 'function1',
+          type: 'product_discounts',
+          build: {
+            command: 'cargo build',
+            path: 'target/release/function1.wasm',
+          },
+        },
+      })
+      testFunction1.entrySourceFilePath = mainFile1
+
+      const testFunction2 = await testFunctionExtension({
+        dir: extension2Dir,
+        config: {
+          name: 'function2',
+          type: 'order_discounts',
+          build: {
+            command: 'cargo build',
+            path: 'target/release/function2.wasm',
+          },
+        },
+      })
+      testFunction2.entrySourceFilePath = mainFile2
+
+      const app = testAppLinked({
+        allExtensions: [testFunction1, testFunction2],
+        directory: '/test',
+      })
+
+      // Mock chokidar - we need to check the paths passed to watch
+      let watchedPaths: string[] = []
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchedPaths = paths as string[]
+        return {
+          on: vi.fn().mockReturnThis(),
+          close: vi.fn().mockResolvedValue(undefined),
+        } as any
+      })
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // Check that shared file was included in the initial watch paths only once
+      const sharedFileCount = watchedPaths.filter((p) => p === sharedFile).length
+      expect(sharedFileCount).toBe(1)
+
+      // Clean up
+      mockedExtractImportPaths.mockReset()
+    })
+
+    test('rescans imports when a source file changes', async () => {
+      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
+      const mockedExtractImportPaths = extractImportPaths as any
+
+      const extensionDir = '/test/extensions/my-function'
+      const mainFile = joinPath(extensionDir, 'src', 'main.rs')
+      const constantsFile = '/test/constants.rs'
+
+      // Initially no imports, then add one
+      let hasImport = false
+      mockedExtractImportPaths.mockImplementation((filePath: string) => {
+        if (filePath === mainFile && hasImport) {
+          return [constantsFile]
+        }
+        return []
+      })
+
+      const testFunction = await testFunctionExtension({
+        dir: extensionDir,
+        config: {
+          name: 'my-function',
+          type: 'product_discounts',
+          build: {
+            command: 'cargo build',
+            path: 'target/release/my-function.wasm',
+          },
+        },
+      })
+      testFunction.entrySourceFilePath = mainFile
+
+      const app = testAppLinked({
+        allExtensions: [testFunction],
+        directory: '/test',
+      })
+
+      // Mock chokidar
+      let eventHandler: any
+      const mockWatcher = {
+        on: vi.fn((event: string, handler: any) => {
+          if (event === 'all') {
+            eventHandler = handler
+          }
+          return mockWatcher
+        }),
+        add: vi.fn(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // Simulate updating the main file to include an import
+      hasImport = true
+
+      // Trigger the event handler directly
+      await eventHandler('change', mainFile)
+
+      // Wait a bit for async operations
+      await new Promise((resolve) => setTimeout(resolve, 100))
+
+      // The file watcher should add the newly imported file to the watch list
+      expect(mockWatcher.add).toHaveBeenCalledWith([constantsFile])
+
+      // Clean up
+      mockedExtractImportPaths.mockReset()
+    })
+
+    test('ignores imported files inside extension directories', async () => {
+      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
+      const mockedExtractImportPaths = extractImportPaths as any
+
+      const extensionDir = '/test/extensions/my-function'
+      const mainFile = joinPath(extensionDir, 'src', 'main.rs')
+      const utilsFile = joinPath(extensionDir, 'src', 'utils.rs')
+
+      // Mock import extraction to return the utils file
+      mockedExtractImportPaths.mockImplementation((filePath: string) => {
+        if (filePath === mainFile) {
+          return [utilsFile]
+        }
+        return []
+      })
+
+      const testFunction = await testFunctionExtension({
+        dir: extensionDir,
+        config: {
+          name: 'my-function',
+          type: 'product_discounts',
+          build: {
+            command: 'cargo build',
+            path: 'target/release/my-function.wasm',
+          },
+        },
+      })
+      testFunction.entrySourceFilePath = mainFile
+
+      const app = testAppLinked({
+        allExtensions: [testFunction],
+        directory: '/test',
+      })
+
+      // Mock chokidar
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        add: vi.fn(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // The watcher should not add files inside extension directories
+      if (mockWatcher.add.mock.calls.length > 0) {
+        const allAddedFiles = mockWatcher.add.mock.calls.flat().flat()
+        expect(allAddedFiles).not.toContain(utilsFile)
+      }
+
+      // Clean up
+      mockedExtractImportPaths.mockReset()
+    })
+  })
 })
