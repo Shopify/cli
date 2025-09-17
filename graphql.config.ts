@@ -86,5 +86,6 @@ export default {
     // Store package projects
     storeAdmin: projectFactory('admin', 'admin_schema.graphql', 'store'),
     storeBusinessPlatformDestinations: projectFactory('business-platform-destinations', 'destinations_schema.graphql', 'store'),
+    storeBusinessPlatformOrganizations: projectFactory('business-platform-organizations', 'organizations_schema.graphql', 'store'),
   },
 }

@@ -63,6 +63,8 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify store create`](#shopify-store-create)
+* [`shopify store list`](#shopify-store-list)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -1715,6 +1717,34 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify store create`
+
+List your development stores.
+
+```
+USAGE
+  $ shopify store create
+
+DESCRIPTION
+  List your development stores.
+
+  Display a list of development stores in your organization.
+```
+
+## `shopify store list`
+
+List your development stores.
+
+```
+USAGE
+  $ shopify store list
+
+DESCRIPTION
+  List your development stores.
+
+  Display a list of development stores in your organization.
 ```
 
 ## `shopify theme check`
