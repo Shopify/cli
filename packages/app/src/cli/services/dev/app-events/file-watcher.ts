@@ -93,7 +93,7 @@ export class FileWatcher {
 
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
-    const importedPaths = this.scanExtensionsForImports()
+    const importedPaths = await this.scanExtensionsForImports()
     watchPaths.push(...importedPaths)
 
     this.watcher = chokidar.watch(watchPaths, {
@@ -114,7 +114,7 @@ export class FileWatcher {
     this.options.signal.addEventListener('abort', this.close)
   }
 
-  updateApp(app: AppLinkedInterface) {
+  async updateApp(app: AppLinkedInterface) {
     this.app = app
     this.extensionPaths = this.app.realExtensions
       .map((ext) => normalizePath(ext.directory))
@@ -122,10 +122,8 @@ export class FileWatcher {
     this.extensionPaths.forEach((path) => {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
-    // Refresh import map when app is updated
-    const importedPaths = this.scanExtensionsForImports()
+    const importedPaths = await this.scanExtensionsForImports()
 
-    // Add new imported paths to the watcher
     if (this.watcher) {
       this.watcher.add(importedPaths)
     }
@@ -134,48 +132,51 @@ export class FileWatcher {
   /**
    * Scans each extension for imports and tracks which files are imported by which extensions
    */
-  private scanExtensionsForImports(): string[] {
+  private async scanExtensionsForImports(): Promise<string[]> {
     this.importedFileToExtensions.clear()
     const allImportedPaths = new Set<string>()
 
-    // Process each extension to find its imports
-    for (const extension of this.app.realExtensions) {
-      try {
-        const entryFiles = this.getExtensionEntryFiles(extension)
-        const allImports: string[] = []
+    // Extract imports from all extensions in parallel
+    const extensionResults = await Promise.all(
+      this.app.realExtensions.map(async (extension) => {
+        try {
+          const entryFiles = this.getExtensionEntryFiles(extension)
+          const allImports: string[] = []
 
-        // Extract imports from all entry files
-        for (const entryFile of entryFiles) {
-          const imports = extractImportPaths(entryFile)
-          allImports.push(...imports)
-        }
-
-        // Track which extension imports each file
-        for (const importPath of allImports) {
-          // Ensure we have an absolute, normalized path
-          const resolvedImportPath = resolvePath(importPath)
-          const normalizedImportPath = normalizePath(resolvedImportPath)
-
-          // Skip files that are already in the extension directory
-          if (isSubpath(normalizePath(extension.directory), normalizedImportPath)) continue
-
-          // Add to the global set of imported paths (use the resolved path for watching)
-          allImportedPaths.add(resolvedImportPath)
-
-          // Track which extension imports this file (use normalized path for lookup)
-          if (!this.importedFileToExtensions.has(normalizedImportPath)) {
-            this.importedFileToExtensions.set(normalizedImportPath, new Set())
+          // Extract imports from all entry files
+          for (const entryFile of entryFiles) {
+            const imports = extractImportPaths(entryFile)
+            allImports.push(...imports)
           }
-          const extensionSet = this.importedFileToExtensions.get(normalizedImportPath)
-          if (extensionSet) {
-            extensionSet.add(normalizePath(extension.directory))
-          }
+
+          return {extension, imports: allImports}
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch (error) {
+          outputDebug(`Failed to extract imports for extension at ${extension.directory}: ${error}`)
+          return {extension, imports: []}
         }
-      } catch (error) {
-        if (error instanceof Error) {
-          outputDebug(`Failed to extract imports for extension at ${extension.directory}: ${error.message}`)
-        } else {
-          throw error
+      }),
+    )
+
+    // Process results and update maps
+    for (const {extension, imports} of extensionResults) {
+      for (const importPath of imports) {
+        const resolvedImportPath = resolvePath(importPath)
+        const normalizedImportPath = normalizePath(resolvedImportPath)
+
+        // Skip files that are already in the extension directory
+        if (isSubpath(normalizePath(extension.directory), normalizedImportPath)) continue
+
+        // Add to the global set of imported paths (use the resolved path for watching)
+        allImportedPaths.add(resolvedImportPath)
+
+        // Track which extension imports this file (use normalized path for lookup)
+        if (!this.importedFileToExtensions.has(normalizedImportPath)) {
+          this.importedFileToExtensions.set(normalizedImportPath, new Set())
+        }
+        const extensionSet = this.importedFileToExtensions.get(normalizedImportPath)
+        if (extensionSet) {
+          extensionSet.add(normalizePath(extension.directory))
         }
       }
     }
