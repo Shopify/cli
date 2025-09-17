@@ -3,8 +3,7 @@ import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import {handleCtrlC} from '../../ui.js'
-import {useStdin, useInput} from 'ink'
+import {useExitOnCtrlC} from '../hooks/use-exit-on-ctrl-c.js'
 import React, {useRef, useState} from 'react'
 
 export interface Task<TContext = unknown> {
@@ -69,7 +68,6 @@ function Tasks<TContext>({
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)
-  const {isRawModeSupported} = useStdin()
 
   const runTasks = async () => {
     for (const task of tasks) {
@@ -99,16 +97,7 @@ function Tasks<TContext>({
     },
   })
 
-  useInput(
-    (input, key) => {
-      handleCtrlC(input, key)
-
-      if (key.return) {
-        return null
-      }
-    },
-    {isActive: Boolean(isRawModeSupported)},
-  )
+  useExitOnCtrlC()
 
   const {isAborted} = useAbortSignal(abortSignal)
 
