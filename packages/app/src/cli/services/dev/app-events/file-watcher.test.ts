@@ -7,12 +7,13 @@ import {
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
-import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
+import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
 
 // Mock the import extractor - will be configured per test
 vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
@@ -328,7 +329,6 @@ describe('file-watcher events', () => {
 
   describe('imported file handling', () => {
     test('detects changes in imported files outside extension directories', async () => {
-      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
       const mockedExtractImportPaths = extractImportPaths as any
 
       // Simple paths for testing
@@ -384,7 +384,6 @@ describe('file-watcher events', () => {
     })
 
     test('handles imported files that are imported by multiple extensions', async () => {
-      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
       const mockedExtractImportPaths = extractImportPaths as any
 
       // Simple paths for testing
@@ -448,7 +447,7 @@ describe('file-watcher events', () => {
       await fileWatcher.start()
 
       // Check that shared file was included in the initial watch paths only once
-      const sharedFileCount = watchedPaths.filter((p) => p === sharedFile).length
+      const sharedFileCount = watchedPaths.filter((path) => path === sharedFile).length
       expect(sharedFileCount).toBe(1)
 
       // Clean up
@@ -456,7 +455,6 @@ describe('file-watcher events', () => {
     })
 
     test('rescans imports when a source file changes', async () => {
-      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
       const mockedExtractImportPaths = extractImportPaths as any
 
       const extensionDir = '/test/extensions/my-function'
@@ -524,7 +522,6 @@ describe('file-watcher events', () => {
     })
 
     test('ignores imported files inside extension directories', async () => {
-      const {extractImportPaths} = await import('@shopify/cli-kit/node/import-extractor')
       const mockedExtractImportPaths = extractImportPaths as any
 
       const extensionDir = '/test/extensions/my-function'

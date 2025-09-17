@@ -1,7 +1,7 @@
-import {describe, test, expect, beforeEach, afterEach} from 'vitest'
-import {extractImportPaths} from './import-extractor.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath} from './path.js'
+import {extractImportPaths} from './import-extractor.js'
+import {describe, test, expect} from 'vitest'
 
 describe('extractImportPaths', () => {
   describe('JavaScript imports', () => {
@@ -48,7 +48,8 @@ describe('extractImportPaths', () => {
 
         const imports = extractImportPaths(mainFile)
         expect(imports).toContain(utilsFile)
-        expect(imports).not.toContain('path') // Built-in modules should not be included
+        // Built-in modules should not be included
+        expect(imports).not.toContain('path')
       })
     })
 
@@ -237,7 +238,7 @@ describe('extractImportPaths', () => {
         const imports = extractImportPaths(mainFile)
         expect(imports).toContain(targetFile)
         // Should not have duplicates
-        expect(imports.filter((p) => p === targetFile)).toHaveLength(1)
+        expect(imports.filter((path) => path === targetFile)).toHaveLength(1)
       })
     })
   })
