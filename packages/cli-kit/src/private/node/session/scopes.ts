@@ -52,7 +52,7 @@ function defaultApiScopes(api: API): string[] {
     case 'partners':
       return ['cli']
     case 'business-platform':
-      return ['destinations', 'store-management', 'on-demand-user-access']
+      return ['destinations', 'store-management', 'on-demand-user-access', 'shop-create']
     case 'app-management':
       return ['app-management']
     default:
@@ -80,6 +80,8 @@ function scopeTransform(scope: string): string {
       return 'https://api.shopify.com/auth/organization.on-demand-user-access'
     case 'app-management':
       return 'https://api.shopify.com/auth/organization.apps.manage'
+    case 'shop-create':
+      return 'https://api.shopify.com/auth/shop.create'
     default:
       return scope
   }
