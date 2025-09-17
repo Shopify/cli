@@ -304,7 +304,7 @@ export class FileWatcher {
 
   /**
    * Whether an event should be ignored or not based on the extension's watch paths and gitignore file.
-   * Never ignores extension create/delete events.
+   * Never ignores extension create/delete events or imported file events.
    *
    * If the affected extension defines custom watch paths, ignore the event if the path is not in the list
    * ELSE, if the extension has a custom gitignore file, ignore the event if the path matches the patterns
@@ -314,8 +314,10 @@ export class FileWatcher {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
 
     // Check if this is an imported file event - never ignore these
-    const normalizedEventPath = normalizePath(event.path)
-    if (this.importedFileToExtensions.has(normalizedEventPath)) {
+    // Import map uses normalized resolved paths
+    const resolvedPath = resolvePath(event.path)
+    const normalizedResolvedPath = normalizePath(resolvedPath)
+    if (this.importedFileToExtensions.has(normalizedResolvedPath)) {
       return false
     }
 
@@ -345,15 +347,9 @@ export class FileWatcher {
 
     // Check if this is an imported file that affects multiple extensions
     if (!directExtensionPath && !isConfigAppPath) {
-      // Try multiple path formats to find the file in the import map
       const resolvedPath = resolvePath(path)
       const normalizedResolvedPath = normalizePath(resolvedPath)
-
-      const affectedExtensions =
-        this.importedFileToExtensions.get(normalizedPath) ??
-        this.importedFileToExtensions.get(path) ??
-        this.importedFileToExtensions.get(resolvedPath) ??
-        this.importedFileToExtensions.get(normalizedResolvedPath)
+      const affectedExtensions = this.importedFileToExtensions.get(normalizedResolvedPath)
 
       if (affectedExtensions && affectedExtensions.size > 0) {
         // Trigger events for all extensions that import this file
