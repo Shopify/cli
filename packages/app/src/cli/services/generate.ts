@@ -65,8 +65,8 @@ async function handlePolarisUnifiedChoice(hasUIExtenstions: boolean): Promise<bo
     return isPolarisUnifiedEnabled()
   }
 
-  if (!hasUIExtenstions) {
-    return false
+  if (hasUIExtenstions) {
+    return true
   }
 
   return renderSelectPrompt({
