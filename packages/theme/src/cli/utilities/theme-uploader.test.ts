@@ -437,6 +437,17 @@ describe('theme-uploader', () => {
   })
 
   test('should create batches for files when bulk upload request size limit is reached', async () => {
+    const originalByteLength = Buffer.byteLength
+    const byteLengthSpy = vi.spyOn(Buffer, 'byteLength')
+
+    // Mock the byte length to return the max batch bytesize
+    byteLengthSpy.mockImplementation((value: any, encoding?: BufferEncoding) => {
+      if (typeof value === 'string' && value === 'some_settings_data') {
+        return MAX_BATCH_BYTESIZE
+      }
+      return originalByteLength(value, encoding)
+    })
+
     // Given
     const remoteChecksums: Checksum[] = []
     const themeFileSystem = fakeThemeFileSystem(
@@ -448,7 +459,6 @@ describe('theme-uploader', () => {
             key: 'config/settings_data.json',
             checksum: '2',
             value: 'some_settings_data',
-            stats: {size: MAX_BATCH_BYTESIZE, mtime: 0},
           },
         ],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
@@ -467,6 +477,8 @@ describe('theme-uploader', () => {
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(3)
+
+    byteLengthSpy.mockRestore()
   })
 
   test('should retry failed uploads', async () => {
