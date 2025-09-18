@@ -2470,12 +2470,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--alias <value>",
                 "value": "string",
-                "description": "An alias to identify the session.",
+                "description": "Alias of the session you want to login to.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
               }
             ],
-            "value": "export interface authlogin {\n  /**\n   * An alias to identify the session.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n}"
+            "value": "export interface authlogin {\n  /**\n   * Alias of the session you want to login to.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n}"
           }
         }
       }
