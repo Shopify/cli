@@ -8,7 +8,6 @@ import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {readFile} from '@shopify/cli-kit/node/fs'
-import {getLogsDir} from '@shopify/cli-kit/node/logs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
@@ -53,8 +52,7 @@ export async function replay(options: ReplayOptions) {
   const abortController = new AbortController()
 
   try {
-    const apiKey = options.app.configuration.client_id
-    const functionRunsDir = joinPath(getLogsDir(), apiKey)
+    const functionRunsDir = app.getLogsDir()
 
     const selectedRun = options.log
       ? await getRunFromIdentifier(functionRunsDir, extension.handle, options.log)

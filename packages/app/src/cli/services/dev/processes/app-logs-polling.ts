@@ -6,7 +6,7 @@ import {subscribeToAppLogs} from '../../app-logs/utils.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher, AppEvent} from '../app-events/app-event-watcher.js'
 
-import {createLogsDir} from '@shopify/cli-kit/node/logs'
+import {mkdir} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 function hasFunctionExtensions(app: AppLinkedInterface): boolean {
@@ -66,7 +66,7 @@ export async function setupAppLogsPollingProcess({
 
 export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPollingOptions> = async (
   {stdout, stderr: _stderr, abortSignal: _abortSignal},
-  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, appWatcher, localApp: _localApp},
+  {developerPlatformClient, appLogsSubscribeVariables, storeName, organizationId, appWatcher, localApp},
 ) => {
   async function startPolling(abortSignal?: AbortSignal) {
     const jwtToken = await subscribeToAppLogs(
@@ -76,13 +76,12 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       stdout,
     )
 
-    const apiKey = appLogsSubscribeVariables.apiKey
-    await createLogsDir(apiKey)
+    const logsDir = localApp.getLogsDir()
+    await mkdir(logsDir)
 
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken},
-      apiKey,
       resubscribeCallback: () => {
         return subscribeToAppLogs(developerPlatformClient, appLogsSubscribeVariables, organizationId)
       },
@@ -90,6 +89,7 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
       storeName,
       organizationId,
       abortSignal,
+      logsDir,
     })
   }
 
