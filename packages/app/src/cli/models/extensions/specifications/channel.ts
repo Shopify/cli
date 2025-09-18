@@ -6,6 +6,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 const ChannelSpecificationSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('channel_config'),
   name: zod.string().optional(),
+  description: zod.string().optional(),
 })
 
 const SUBDIRECTORY_NAME = 'specifications'
@@ -23,6 +24,7 @@ const channelSpecificationSpec = createExtensionSpecification({
     return {
       handle: config.handle,
       name: config.name,
+      description: config.description,
     }
   },
 })
