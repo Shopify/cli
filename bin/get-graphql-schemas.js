@@ -196,7 +196,7 @@ async function fetchFilesFromSpin() {
  */
 async function fetchFilesFromLocal() {
   for (const schema of schemas) {
-    const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${schema.repo === 'world' ? '//' : schema.repo}`).toString().split('/areas')[0].trim()
+    const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${schema.repo}`).toString().split('/areas')[0].trim()
     const sourcePath = path.join(localRepoDirectory, schema.pathToFile)
     console.log('Copying', sourcePath, 'to', schema.localPath)
     fs.copyFileSync(sourcePath, schema.localPath)
