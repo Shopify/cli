@@ -28,6 +28,7 @@ import gatherSensitiveMetadata from './hooks/sensitive_metadata.js'
 import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
+import FunctionGenerateFixture from './commands/app/function/generate-fixture.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -53,6 +54,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
   'app:function:typegen': FunctionTypegen,
+  'app:function:generate:fixture': FunctionGenerateFixture,
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
