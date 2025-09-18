@@ -60,6 +60,8 @@ export class FileWatcher {
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
   // Map of imported file paths to the extension paths that import them
   private readonly importedFileToExtensions = new Map<string, Set<string>>()
+  // Promise to coordinate rescan operations and prevent concurrent rescanning
+  private rescanPromise: Promise<void> | null = null
 
   constructor(
     app: AppLinkedInterface,
@@ -218,7 +220,28 @@ export class FileWatcher {
    * Rescans imports for a specific extension and updates the watcher
    * This method never throws - all errors are handled internally
    */
-  private rescanExtensionImports(extensionPath: string): void {
+  private async rescanExtensionImports(extensionPath: string): Promise<void> {
+    // If there's already a rescan in progress, wait for it to complete first
+    if (this.rescanPromise) {
+      outputDebug(`Waiting for existing rescan to complete before rescanning ${extensionPath}`)
+      await this.rescanPromise
+    }
+
+    // Create a new promise for this rescan operation
+    this.rescanPromise = this.doRescanExtensionImports(extensionPath)
+
+    try {
+      await this.rescanPromise
+    } finally {
+      // Clear the promise when done
+      this.rescanPromise = null
+    }
+  }
+
+  /**
+   * Performs the actual rescan of extension imports
+   */
+  private async doRescanExtensionImports(extensionPath: string): Promise<void> {
     try {
       const extension = this.app.realExtensions.find((ext) => normalizePath(ext.directory) === extensionPath)
       if (!extension) return
@@ -389,7 +412,8 @@ export class FileWatcher {
           this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           this.pushEvent({type: 'file_updated', path, extensionPath, startTime})
-          this.rescanExtensionImports(normalizePath(extensionPath))
+          // eslint-disable-next-line no-void
+          void this.rescanExtensionImports(normalizePath(extensionPath))
         }
         break
       case 'add':
@@ -398,7 +422,8 @@ export class FileWatcher {
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isExtensionToml) {
           this.pushEvent({type: 'file_created', path, extensionPath, startTime})
-          this.rescanExtensionImports(normalizePath(extensionPath))
+          // eslint-disable-next-line no-void
+          void this.rescanExtensionImports(normalizePath(extensionPath))
           break
         }
         let totalWaitedTime = 0

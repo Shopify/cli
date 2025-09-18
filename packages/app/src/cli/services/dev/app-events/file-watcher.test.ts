@@ -534,5 +534,90 @@ describe('file-watcher events', () => {
       // Clean up
       mockedExtractImportPaths.mockReset()
     })
+
+    test('handles rapid file changes without hanging', async () => {
+      const mockedExtractImportPaths = extractImportPaths as any
+
+      // Create a test setup with multiple extensions and shared files
+      const extension1Dir = '/test/extensions/ext1'
+      const extension2Dir = '/test/extensions/ext2'
+      const sharedFile = '/test/shared/utils.js'
+
+      const ext1 = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'ext1',
+        directory: extension1Dir,
+      })
+      ext1.entrySourceFilePath = joinPath(extension1Dir, 'index.js')
+
+      const ext2 = await testUIExtension({
+        type: 'ui_extension',
+        handle: 'ext2',
+        directory: extension2Dir,
+      })
+      ext2.entrySourceFilePath = joinPath(extension2Dir, 'index.js')
+
+      const app = testAppLinked({
+        allExtensions: [ext1, ext2],
+      })
+
+      // Mock import extraction
+      mockedExtractImportPaths.mockImplementation((filePath: string) => {
+        if (filePath.includes('index.js')) {
+          return [sharedFile]
+        }
+        return []
+      })
+
+      let eventHandler: any
+      const events: WatcherEvent[] = []
+      const onChange = (newEvents: WatcherEvent[]) => {
+        events.push(...newEvents)
+      }
+
+      const mockWatcher = {
+        on: vi.fn((event: string, handler: any) => {
+          if (event === 'all') {
+            eventHandler = handler
+          }
+          return mockWatcher
+        }),
+        add: vi.fn(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      fileWatcher.onChange(onChange)
+      await fileWatcher.start()
+
+      // Create a timeout to ensure we don't hang
+      const timeout = setTimeout(() => {
+        throw new Error('Test timed out - possible infinite loop')
+      }, 5000)
+
+      try {
+        // Trigger multiple rapid changes on files imported by multiple extensions
+        await eventHandler('change', sharedFile)
+        await eventHandler('change', joinPath(extension1Dir, 'index.js'))
+        await eventHandler('change', sharedFile)
+        await eventHandler('change', joinPath(extension2Dir, 'index.js'))
+
+        // Wait for debounced events
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        // Should have processed events without hanging
+        expect(events.length).toBeGreaterThan(0)
+        expect(events.some((event) => event.type === 'file_updated')).toBe(true)
+
+        clearTimeout(timeout)
+      } catch (error) {
+        clearTimeout(timeout)
+        throw error
+      }
+
+      // Clean up
+      mockedExtractImportPaths.mockReset()
+    })
   })
 })
