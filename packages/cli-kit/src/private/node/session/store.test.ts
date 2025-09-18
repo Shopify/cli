@@ -1,5 +1,5 @@
 import {Sessions} from './schema.js'
-import {store, fetch, remove, getSessionAlias, updateSessionAlias, findSessionByAlias} from './store.js'
+import {store, fetch, remove, getSessionAlias, findSessionByAlias} from './store.js'
 import {getSessions, removeSessions, setSessions, removeCurrentSessionId} from '../conf-store.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
@@ -128,55 +128,6 @@ describe('session store', () => {
 
       // Then
       expect(result).toBeUndefined()
-    })
-  })
-
-  describe('updateSessionAlias', () => {
-    test('updates alias for existing user', async () => {
-      // Given
-      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
-      const expectedSessions = structuredClone(mockSessions)
-      expectedSessions['identity.fqdn.com']!.user1!.identity.alias = 'New Alias'
-
-      // When
-      await updateSessionAlias('user1', 'New Alias')
-
-      // Then
-      expect(setSessions).toHaveBeenCalledWith(JSON.stringify(expectedSessions))
-    })
-
-    test('does nothing for non-existent user', async () => {
-      // Given
-      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
-
-      // When
-      await updateSessionAlias('nonexistent', 'New Alias')
-
-      // Then
-      expect(setSessions).not.toHaveBeenCalled()
-    })
-
-    test('does nothing when no sessions exist', async () => {
-      // Given
-      vi.mocked(getSessions).mockReturnValue(undefined)
-
-      // When
-      await updateSessionAlias('user1', 'New Alias')
-
-      // Then
-      expect(setSessions).not.toHaveBeenCalled()
-    })
-
-    test('does nothing when fqdn does not exist', async () => {
-      // Given
-      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
-      vi.mocked(identityFqdn).mockResolvedValue('different.fqdn.com')
-
-      // When
-      await updateSessionAlias('user1', 'New Alias')
-
-      // Then
-      expect(setSessions).not.toHaveBeenCalled()
     })
   })
 

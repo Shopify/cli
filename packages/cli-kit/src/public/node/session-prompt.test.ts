@@ -175,7 +175,6 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
-    expect(sessionStore.updateSessionAlias).not.toHaveBeenCalled()
     expect(result).toEqual('Work Account')
   })
 

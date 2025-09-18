@@ -57,23 +57,6 @@ export async function getSessionAlias(userId: string): Promise<string | undefine
 }
 
 /**
- * Updates the session alias with a more human-readable display name if available.
- *
- * @param userId - The user ID of the session to update
- * @param alias - The alias to update the session with
- */
-export async function updateSessionAlias(userId: string, alias: string): Promise<void> {
-  const sessions = await fetch()
-  if (!sessions) return
-
-  const fqdn = await identityFqdn()
-  if (!sessions[fqdn] || !sessions[fqdn][userId]) return
-
-  sessions[fqdn][userId].identity.alias = alias
-  await store(sessions)
-}
-
-/**
  * Finds a session by its alias.
  *
  * @param alias - The alias to search for
