@@ -38,7 +38,6 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
 /**
  * Handles the new login flow.
  *
- * @param defaultAlias - The default alias to suggest.
  * @returns The alias of the authenticated user.
  */
 async function handleNewLogin(): Promise<string> {
