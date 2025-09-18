@@ -58,7 +58,7 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: undefined})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('new-alias')
   })
@@ -73,7 +73,7 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: 'my-alias'})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('custom-alias')
   })
@@ -145,7 +145,7 @@ describe('promptSessionSelect', () => {
     const result = await promptSessionSelect()
 
     // Then
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: undefined})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('new-alias')
   })
@@ -160,7 +160,7 @@ describe('promptSessionSelect', () => {
     const result = await promptSessionSelect('work-alias')
 
     // Then
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true, alias: 'work-alias'})
+    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('custom-alias')
   })

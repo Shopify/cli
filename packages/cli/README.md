@@ -795,7 +795,7 @@ USAGE
   $ shopify auth login [--alias <value>]
 
 FLAGS
-  --alias=<value>  An alias to identify the session.
+  --alias=<value>  Alias of the session you want to login to.
 
 DESCRIPTION
   Logs you in to your Shopify account.

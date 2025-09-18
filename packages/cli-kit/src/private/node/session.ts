@@ -14,6 +14,7 @@ import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
+import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
@@ -22,7 +23,25 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {AdminSession} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
-import {renderTextPrompt} from '../../public/node/ui.js'
+import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
+
+/**
+ * Fetches the user's email from the Business Platform API
+ * @param businessPlatformToken - The business platform token
+ * @returns The user's email address or undefined if not found
+ */
+async function fetchEmail(businessPlatformToken: string | undefined): Promise<string | undefined> {
+  if (!businessPlatformToken) return undefined
+
+  try {
+    const userEmailResult = await businessPlatformRequest<UserEmailQuery>(UserEmailQueryString, businessPlatformToken)
+    return userEmailResult.currentUserAccount?.email
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(outputContent`Failed to fetch user email: ${(error as Error).message ?? String(error)}`)
+    return undefined
+  }
+}
 
 /**
  * A scope supported by the Shopify Admin API.
@@ -162,7 +181,6 @@ export interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
   forceNewSession?: boolean
-  alias?: string
 }
 
 /**
@@ -176,7 +194,7 @@ export interface EnsureAuthenticatedAdditionalOptions {
 export async function ensureAuthenticated(
   applications: OAuthApplications,
   _env?: NodeJS.ProcessEnv,
-  {forceRefresh = false, noPrompt = false, forceNewSession = false, alias}: EnsureAuthenticatedAdditionalOptions = {},
+  {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
 
@@ -212,7 +230,7 @@ ${outputToken.json(applications)}
   if (validationResult === 'needs_full_auth') {
     throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications, alias)
+    newSession = await executeCompleteFlow(applications)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
@@ -221,7 +239,7 @@ ${outputToken.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications, alias)
+        newSession = await executeCompleteFlow(applications)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -273,7 +291,7 @@ The CLI is currently unable to prompt for reauthentication.`,
  * @param applications - An object containing the applications we need to be authenticated with.
  * @param alias - Optional alias to use for the session.
  */
-async function executeCompleteFlow(applications: OAuthApplications, alias?: string): Promise<Session> {
+async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -300,18 +318,14 @@ async function executeCompleteFlow(applications: OAuthApplications, alias?: stri
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
-  const finalAlias =
-    alias ??
-    (await renderTextPrompt({
-      message: 'Enter an alias to identify this account',
-      defaultValue: identityToken.userId,
-      allowEmpty: false,
-    }))
+  // Get the alias for the session (email or userId)
+  const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
+  const alias = (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
 
   const session: Session = {
     identity: {
       ...identityToken,
-      alias: finalAlias,
+      alias,
     },
     applications: result,
   }

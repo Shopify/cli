@@ -8,7 +8,7 @@ export default class Login extends Command {
 
   static flags = {
     alias: Flags.string({
-      description: 'An alias to identify the session.',
+      description: 'Alias of the session you want to login to.',
       env: 'SHOPIFY_FLAG_AUTH_ALIAS',
     }),
   }

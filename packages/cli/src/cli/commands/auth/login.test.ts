@@ -38,7 +38,7 @@ describe('Login command', () => {
 
     // Then
     expect(flags.alias).toBeDefined()
-    expect(flags.alias.description).toBe('An alias to identify the session.')
+    expect(flags.alias.description).toBe('Alias of the session you want to login to.')
     expect(flags.alias.env).toBe('SHOPIFY_FLAG_AUTH_ALIAS')
   })
 })

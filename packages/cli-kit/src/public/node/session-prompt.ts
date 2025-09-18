@@ -41,8 +41,8 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
  * @param defaultAlias - The default alias to suggest.
  * @returns The alias of the authenticated user.
  */
-async function handleNewLogin(defaultAlias?: string): Promise<string> {
-  const result = await ensureAuthenticatedUser({}, {forceNewSession: true, alias: defaultAlias})
+async function handleNewLogin(): Promise<string> {
+  const result = await ensureAuthenticatedUser({}, {forceNewSession: true})
   const alias = await sessionStore.getSessionAlias(result.userId)
   return alias ?? result.userId
 }
@@ -77,7 +77,7 @@ async function getAllChoices(): Promise<SessionChoice[]> {
  * - If alias is provided, tries to switch to that session directly
  * - Otherwise, shows a prompt with all available sessions and the option to log in with a different account.
  *
- * @param alias - Optional alias to switch to or use for the new session if created.
+ * @param alias - Optional alias of the account to switch to.
  * @returns Promise with the alias of the chosen session.
  */
 export async function promptSessionSelect(alias?: string): Promise<string> {
@@ -93,14 +93,12 @@ export async function promptSessionSelect(alias?: string): Promise<string> {
   let selectedValue = NEW_LOGIN_VALUE
 
   if (choices.length > 0) {
-    selectedValue = await renderSelectPrompt({
-      message: 'Which account would you like to use?',
-      choices,
-    })
+    const message = 'Which account would you like to use?'
+    selectedValue = await renderSelectPrompt({message, choices})
   }
 
   if (selectedValue === NEW_LOGIN_VALUE) {
-    return handleNewLogin(alias)
+    return handleNewLogin()
   }
 
   setCurrentSessionId(selectedValue)
