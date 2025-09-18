@@ -1821,7 +1821,7 @@
           "type": "option"
         },
         "template": {
-          "description": "The app template. Accepts one of the following:\n       - <remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
+          "description": "The app template. Accepts one of the following:\n       - <reactRouter|remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
           "env": "SHOPIFY_FLAG_TEMPLATE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6364,10 +6364,15 @@
       "hiddenAliases": [
       ],
       "id": "theme:publish",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
+      "strict": true,
       "summary": "Set a remote theme as the live theme."
     },
     "theme:pull": {

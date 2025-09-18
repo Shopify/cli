@@ -20,7 +20,7 @@ import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
 import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/environment.js'
-import {AdminSession} from '../../public/node/session.js'
+import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
@@ -228,7 +228,7 @@ ${outputToken.json(applications)}
   let newSession = {}
 
   if (validationResult === 'needs_full_auth') {
-    throwOnNoPrompt(noPrompt)
+    await throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
@@ -238,7 +238,7 @@ ${outputToken.json(applications)}
       newSession = await refreshTokens(currentSession!, applications)
     } catch (error) {
       if (error instanceof InvalidGrantError) {
-        throwOnNoPrompt(noPrompt)
+        await throwOnNoPrompt(noPrompt)
         newSession = await executeCompleteFlow(applications)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
@@ -275,8 +275,9 @@ ${outputToken.json(applications)}
   return tokens
 }
 
-function throwOnNoPrompt(noPrompt: boolean) {
+async function throwOnNoPrompt(noPrompt: boolean) {
   if (!noPrompt) return
+  await logout()
   throw new AbortError(
     `The currently available CLI credentials are invalid.
 

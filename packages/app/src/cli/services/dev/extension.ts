@@ -148,6 +148,11 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       if (!event.extension.isPreviewable) continue
       const status = event.buildResult?.status === 'ok' ? 'success' : 'error'
 
+      const error =
+        event.buildResult?.status === 'error'
+          ? {message: event.buildResult.error, file: event.buildResult.file}
+          : undefined
+
       switch (event.type) {
         case EventType.Created:
           payloadOptions.extensions.push(event.extension)
@@ -159,7 +164,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
           await payloadStore.addExtension(event.extension, bundlePath)
           break
         case EventType.Updated:
-          await payloadStore.updateExtension(event.extension, payloadOptions, bundlePath, {status})
+          await payloadStore.updateExtension(event.extension, payloadOptions, bundlePath, {status, error})
           break
         case EventType.Deleted:
           payloadOptions.extensions = payloadOptions.extensions.filter((ext) => ext.devUUID !== event.extension.devUUID)

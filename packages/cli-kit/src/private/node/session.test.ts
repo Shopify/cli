@@ -14,7 +14,7 @@ import {
   InvalidGrantError,
 } from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
-import {store as storeSessions, fetch as fetchSessions} from './session/store.js'
+import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} from './session/store.js'
 import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
@@ -177,19 +177,19 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('throws an error if there is no session and prompting is disabled', async () => {
+  test('throws an error and logs out if there is no session and prompting is disabled,', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
 
     // When
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow(
+    await expect(ensureAuthenticated(defaultApplications, process.env, {noPrompt: true})).rejects.toThrow(
       `The currently available CLI credentials are invalid.
 
 The CLI is currently unable to prompt for reauthentication.`,
     )
+    expect(secureRemove).toHaveBeenCalled()
 
     // Then
     await expect(getLastSeenAuthMethod()).resolves.toEqual('none')

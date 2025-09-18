@@ -34,7 +34,7 @@ export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
 export {push, pull, fetchStoreThemes} from '@shopify/theme'
 
-export const HydrogenInitHook = HydrogenHooks.init
+export const HydrogenInitHook: unknown = HydrogenHooks.init
 
 // Setup global support for environment variable based proxy configuration.
 createGlobalProxyAgent({
