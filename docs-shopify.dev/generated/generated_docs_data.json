@@ -2437,6 +2437,53 @@
     "related": []
   },
   {
+    "name": "auth login",
+    "description": "Logs you in to your Shopify account.",
+    "overviewPreviewDescription": "Logs you in to your Shopify account.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "auth login",
+            "code": "shopify auth login [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "auth login"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `auth login` command:",
+        "type": "authlogin",
+        "typeDefinitions": {
+          "authlogin": {
+            "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+            "name": "authlogin",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--alias <value>",
+                "value": "string",
+                "description": "Alias of the session you want to login to.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_AUTH_ALIAS"
+              }
+            ],
+            "value": "export interface authlogin {\n  /**\n   * Alias of the session you want to login to.\n   * @environment SHOPIFY_FLAG_AUTH_ALIAS\n   */\n  '--alias <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "general commands",
+    "related": []
+  },
+  {
     "name": "auth logout",
     "description": "Logs you out of the Shopify account or Partner account and store.",
     "overviewPreviewDescription": "Logs you out of the Shopify account or Partner account and store.",

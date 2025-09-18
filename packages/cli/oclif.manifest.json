@@ -2398,6 +2398,32 @@
       "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     },
+    "auth:login": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Logs you in to your Shopify account.",
+      "enableJsonFlag": false,
+      "flags": {
+        "alias": {
+          "description": "Alias of the session you want to login to.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "alias",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "auth:login",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
     "auth:logout": {
       "aliases": [
       ],

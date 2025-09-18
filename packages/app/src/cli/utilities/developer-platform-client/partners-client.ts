@@ -623,13 +623,13 @@ export class PartnersClient implements DeveloperPlatformClient {
 
       if (!response.ok) {
         return {
-          errors: data.errors || [`Request failed with status ${response.status}`],
+          errors: data.errors ?? [`Request failed with status ${response.status}`],
           status: response.status,
         }
       }
 
       return {
-        app_logs: data.app_logs || [],
+        app_logs: data.app_logs ?? [],
         cursor: data.cursor,
         status: response.status,
       }
