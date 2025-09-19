@@ -76,7 +76,7 @@ export class FileWatcher {
      * This function will be called at most once every DEFAULT_DEBOUNCE_TIME_IN_MS
      * to avoid emitting too many events in a short period.
      */
-    this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: true, trailing: true})
+    this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: false, trailing: true})
     this.app = app
     this.extensionPaths = this.app.realExtensions
       .map((ext) => normalizePath(ext.directory))
@@ -131,11 +131,6 @@ export class FileWatcher {
    * Scans extensions for imports and tracks which files are imported by which extensions
    */
   async scanExtensionsForImports(extensions: ExtensionInstance[] = this.app.nonConfigExtensions): Promise<string[]> {
-    console.log(
-      'scanExtensionsForImports',
-      extensions.map((ext) => ext.handle),
-    )
-
     this.clearImportMappingsForExtensions(extensions)
 
     // Extract imports from all extensions in parallel
@@ -306,7 +301,17 @@ export class FileWatcher {
     }
 
     // If the event is already in the list, don't push it again
-    if (this.currentEvents.some((extEvent) => extEvent.path === event.path && extEvent.type === event.type)) return
+    // Check path, type, AND extensionPath to properly handle shared files
+    if (
+      this.currentEvents.some(
+        (extEvent) =>
+          extEvent.path === event.path &&
+          extEvent.type === event.type &&
+          extEvent.extensionPath === event.extensionPath,
+      )
+    )
+      return
+
     this.currentEvents.push(event)
     this.debouncedEmit()
   }

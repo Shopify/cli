@@ -1,26 +1,23 @@
 import {FileWatcher, OutputContextOptions, WatcherEvent} from './file-watcher.js'
 import {
-  testApp,
   testAppAccessConfigExtension,
   testAppConfigExtensions,
   testAppLinked,
   testFunctionExtension,
   testUIExtension,
-  placeholderAppConfiguration,
 } from '../../../models/app/app.test-data.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
 
 // Mock the import extractor - will be configured per test
 vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractImportPaths: vi.fn(() => []),
-  extractImportPathsFromContent: vi.fn(() => []),
 }))
 
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
@@ -443,9 +440,7 @@ describe('file-watcher events', () => {
       // Initially no imports, then add one
       let hasImport = false
       mockedExtractImportPaths.mockImplementation((filePath: string) => {
-        console.log('extractImportPaths called with:', filePath, 'hasImport:', hasImport)
         if (filePath === mainFile && hasImport) {
-          console.log('Returning constantsFile:', constantsFile)
           return [constantsFile]
         }
         return []
@@ -638,71 +633,6 @@ describe('file-watcher events', () => {
 
       // Clean up
       mockedExtractImportPaths.mockReset()
-    })
-  })
-
-  describe('UI extensions with generated content', () => {
-    test.skip('extracts imports from generated UI extension content', async () => {
-      await inTemporaryDirectory(async (tmpDir) => {
-        // Given
-        const moduleFile = joinPath(tmpDir, 'src', 'MyExtension.js')
-        const uiExtension = await testUIExtension({
-          directory: tmpDir,
-          configuration: {
-            name: 'test-ui',
-            type: 'checkout_ui_extension',
-            extension_points: [
-              {
-                target: 'purchase.checkout.block.render',
-                module: './src/MyExtension.js',
-                build_manifest: {
-                  assets: {
-                    main: {
-                      module: './src/MyExtension.js',
-                      filepath: '/test-ui-extension.js',
-                    },
-                  },
-                },
-              },
-            ],
-          },
-        })
-
-        const app = testApp({
-          realExtensions: [uiExtension],
-          directory: tmpDir,
-          configuration: placeholderAppConfiguration,
-        })
-
-        // Mock the import extractor for content
-        const {extractImportPathsFromContent} = await import('@shopify/cli-kit/node/import-extractor')
-        const mockedExtractImportPathsFromContent = vi.mocked(extractImportPathsFromContent)
-        mockedExtractImportPathsFromContent.mockImplementation((content, _contextPath) => {
-          if (content.includes('./src/MyExtension.js')) {
-            return [moduleFile]
-          }
-          return []
-        })
-
-        // Create shared module file
-        await mkdir(dirname(moduleFile))
-        await writeFile(moduleFile, 'export default () => {}')
-
-        const fileWatcher = new FileWatcher(app, outputOptions)
-
-        // When
-        const importedPaths = await fileWatcher.scanExtensionsForImports()
-
-        // Then
-        expect(importedPaths).toContain(moduleFile)
-        expect(mockedExtractImportPathsFromContent).toHaveBeenCalledWith(
-          expect.stringContaining(`import './src/MyExtension.js'`),
-          tmpDir,
-        )
-
-        // Clean up
-        mockedExtractImportPathsFromContent.mockReset()
-      })
     })
   })
 })
