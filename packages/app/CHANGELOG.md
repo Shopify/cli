@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.84.2
+
+### Patch Changes
+
+- 67d7646: Fix checkout extensions development on the new Dev Dashboard
+  - @shopify/cli-kit@3.84.2
+  - @shopify/theme@3.84.2
+  - @shopify/plugin-cloudflare@3.84.2
+
 ## 3.84.1
 
 ### Patch Changes

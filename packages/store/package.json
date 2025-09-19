@@ -1,6 +1,6 @@
 {
   "name": "@shopify/store",
-  "version": "3.84.1",
+  "version": "3.84.2",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for managing store data.",
@@ -44,7 +44,7 @@
   "dependencies": {
     "@graphql-typed-document-node/core": "3.2.0",
     "@oclif/core": "4.4.0",
-    "@shopify/cli-kit": "3.84.1",
+    "@shopify/cli-kit": "3.84.2",
     "graphql-request": "6.1.0"
   },
   "devDependencies": {},
