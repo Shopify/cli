@@ -18,6 +18,7 @@ import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
 // Mock the import extractor - will be configured per test
 vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractImportPaths: vi.fn(() => []),
+  extractJSImports: vi.fn(() => []),
 }))
 
 const extension1 = await testUIExtension({type: 'ui_extension', handle: 'h1', directory: '/extensions/ui_extension_1'})
