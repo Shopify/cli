@@ -85,6 +85,9 @@ class TestThemeCommandWithUnionFlags extends TestThemeCommand {
     }),
   }
 }
+class TestThemeCommandWithPath extends TestThemeCommand {
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'path']
+}
 
 class TestUnauthenticatedThemeCommand extends ThemeCommand {
   static flags = {
@@ -400,6 +403,31 @@ describe('ThemeCommand', () => {
       const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
       expect(renderConcurrentProcesses).toHaveLength(2)
       expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['development', 'production'])
+    })
+
+    test('should not execute commands in environments that are missing required flags even if they have a default value', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', path: '/a/path'})
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithPath(
+        ['--environment', 'development', '--environment', 'env-missing-store', '--environment', 'path-defaults-to-cwd'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(renderConcurrentProcesses).toHaveLength(1)
+      expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['development'])
     })
 
     test('should not execute commands in environments that are missing required "one of" flags', async () => {
