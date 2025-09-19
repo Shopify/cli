@@ -215,8 +215,11 @@ export default abstract class ThemeCommand extends Command {
             const usedFlag = Array.isArray(flag) ? flag.find((flag) => flags[flag]) : flag
             if (usedFlag === 'password') return `password`
             if (usedFlag === 'path' && typeof flags.path === 'string') {
-              const lastSegment = flags.path.split('/').pop() || flags.path
-              return `path: .../${lastSegment}`
+              const splits = flags.path.split(/[/\\]/)
+              if (splits.length === 1) return `path: ${flags.path}`
+              const first = splits[0] === '' ? `/${splits[1]}` : splits[0]
+              const last = splits.at(-1)
+              return `path: ${first}/.../${last}`
             }
             return usedFlag && `${usedFlag}: ${flags[usedFlag]}`
           })

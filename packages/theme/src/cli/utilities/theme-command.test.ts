@@ -338,8 +338,8 @@ describe('ThemeCommand', () => {
     test('confirmation prompts should display correctly formatted flag values', async () => {
       // Given
       vi.mocked(loadEnvironment)
-        .mockResolvedValueOnce({store: 'store1.myshopify.com', password: 'password1', path: 'a/path/to/a-theme'})
-        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: 'a/path/to/another-theme'})
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', password: 'password1', path: '/home/path/to/theme1'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: '/home/path/to/theme2'})
 
       await CommandConfig.load()
       const command = new TestThemeCommandWithPathFlag(
@@ -357,8 +357,8 @@ describe('ThemeCommand', () => {
           message: ['Run testthemecommandwithpathflag in the following environments?'],
           infoTable: {
             Environment: [
-              ['development', {subdued: 'store: store1.myshopify.com, password, path: .../a-theme'}],
-              ['staging', {subdued: 'store: store2.myshopify.com, password, path: .../another-theme'}],
+              ['development', {subdued: 'store: store1.myshopify.com, password, path: /home/.../theme1'}],
+              ['staging', {subdued: 'store: store2.myshopify.com, password, path: /home/.../theme2'}],
             ],
           },
           confirmationMessage: 'Yes, proceed',
