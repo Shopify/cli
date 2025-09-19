@@ -70,7 +70,14 @@ describe('pull', () => {
     // Then
     expect(findDevelopmentThemeSpy).not.toHaveBeenCalled()
     expect(fetchDevelopmentThemeSpy).toHaveBeenCalledOnce()
-    expect(downloadTheme).toHaveBeenCalledWith(theme, adminSession, [], localThemeFileSystem, expect.any(Object))
+    expect(downloadTheme).toHaveBeenCalledWith(
+      theme,
+      adminSession,
+      [],
+      localThemeFileSystem,
+      expect.any(Object),
+      undefined,
+    )
   })
 
   test('should pass the development theme to downloadtheme if development flag is provided', async () => {
@@ -103,6 +110,8 @@ describe('pull', () => {
     expect(vi.mocked(ensureDirectoryConfirmed)).toHaveBeenCalledWith(
       false,
       'The current Git directory has uncommitted changes. Do you want to proceed?',
+      undefined,
+      undefined,
     )
   })
 

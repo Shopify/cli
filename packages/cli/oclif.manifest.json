@@ -6500,6 +6500,16 @@
       "hiddenAliases": [
       ],
       "id": "theme:pull",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "path",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
