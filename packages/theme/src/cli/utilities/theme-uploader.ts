@@ -80,13 +80,13 @@ export function uploadTheme(
 
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
 
-      const timeout = options.multiEnvironment ? 4000 : 1000
+      const updateInterval = options.multiEnvironment ? 4000 : 1000
 
       await renderTasksToStdErr(
         createIntervalTask({
           promise: uploadPromise,
           titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
-          timeout,
+          updateInterval,
         }),
         context?.stderr,
         options?.multiEnvironment,
@@ -97,7 +97,7 @@ export function uploadTheme(
         createIntervalTask({
           promise: deletePromise,
           titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-          timeout,
+          updateInterval,
         }),
         context?.stderr,
         options?.multiEnvironment,
@@ -118,11 +118,11 @@ export function uploadTheme(
 function createIntervalTask({
   promise,
   titleGetter,
-  timeout,
+  updateInterval,
 }: {
   promise: Promise<unknown>
   titleGetter: () => string
-  timeout: number
+  updateInterval: number
 }) {
   const tasks: Task[] = []
 
@@ -132,7 +132,7 @@ function createIntervalTask({
       task: async () => {
         const result = await Promise.race([
           promise,
-          new Promise((resolve) => setTimeout(() => resolve('timeout'), timeout)),
+          new Promise((resolve) => setTimeout(() => resolve('timeout'), updateInterval)),
         ])
 
         if (result === 'timeout') {
