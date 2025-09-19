@@ -10,9 +10,10 @@ const hillString = '▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆
 interface LoadingBarProps {
   title: string
   noColor?: boolean
+  noProgressBar?: boolean
 }
 
-const LoadingBar = ({title, noColor}: React.PropsWithChildren<LoadingBarProps>) => {
+const LoadingBar = ({title, noColor, noProgressBar}: React.PropsWithChildren<LoadingBarProps>) => {
   const {twoThirds} = useLayout()
   let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   if (noColor ?? !shouldDisplayColors()) {
@@ -21,7 +22,7 @@ const LoadingBar = ({title, noColor}: React.PropsWithChildren<LoadingBarProps>) 
 
   return (
     <Box flexDirection="column">
-      <TextAnimation text={loadingBar} maxWidth={twoThirds} />
+      {!noProgressBar && <TextAnimation text={loadingBar} maxWidth={twoThirds} />}
       <Text>{title} ...</Text>
     </Box>
   )

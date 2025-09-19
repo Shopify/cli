@@ -1,19 +1,22 @@
 import {partitionThemeFiles} from './theme-fs.js'
 import {rejectGeneratedStaticAssets} from './asset-checksum.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
+import {renderTasksToStdErr} from './theme-ui.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {Writable} from 'stream'
 
 interface UploadOptions {
   nodelete?: boolean
   deferPartialWork?: boolean
   backgroundWorkCatch?: (error: Error) => never
+  environment?: string
+  multiEnvironment?: boolean
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -39,11 +42,12 @@ export function uploadTheme(
   checksums: Checksum[],
   themeFileSystem: ThemeFileSystem,
   options: UploadOptions = {},
+  context?: {stdout?: Writable; stderr?: Writable},
 ) {
   const remoteChecksums = rejectGeneratedStaticAssets(checksums)
   const uploadResults = new Map<string, Result>()
   const getProgress = (params: {current: number; total: number}) =>
-    `[${Math.round((params.current / params.total) * 100)}%]`
+    params.total === 0 ? `[100%]` : `[${Math.round((params.current / params.total) * 100)}%]`
 
   const themeCreationPromise = ensureThemeCreation(theme, session, remoteChecksums)
 
@@ -53,7 +57,6 @@ export function uploadTheme(
 
   const deleteJobPromise = uploadJobPromise
     .then((result) => result.promise)
-    .then(() => reportFailedUploads(uploadResults))
     .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
 
   const workPromise = options?.deferPartialWork
@@ -61,7 +64,7 @@ export function uploadTheme(
     : deleteJobPromise.then((result) => result.promise)
 
   if (options?.backgroundWorkCatch) {
-    // Aggregate all backgorund work in a single promise and handle errors
+    // Aggregate all background work in a single promise and handle errors
     Promise.all([
       themeCreationPromise,
       uploadJobPromise.then((result) => result.promise),
@@ -76,12 +79,17 @@ export function uploadTheme(
       if (options?.deferPartialWork) return
 
       const {progress: uploadProgress, promise: uploadPromise} = await uploadJobPromise
+
+      const updateInterval = options.multiEnvironment ? 4000 : 1000
+
       await renderTasksToStdErr(
         createIntervalTask({
           promise: uploadPromise,
           titleGetter: () => `Uploading files to remote theme ${getProgress(uploadProgress)}`,
-          timeout: 1000,
+          updateInterval,
         }),
+        context?.stderr,
+        options?.multiEnvironment,
       )
 
       const {progress: deleteProgress, promise: deletePromise} = await deleteJobPromise
@@ -89,9 +97,20 @@ export function uploadTheme(
         createIntervalTask({
           promise: deletePromise,
           titleGetter: () => `Cleaning your remote theme ${getProgress(deleteProgress)}`,
-          timeout: 1000,
+          updateInterval,
         }),
+        context?.stderr,
+        options?.multiEnvironment,
       )
+
+      await renderTasksToStdErr(
+        [{title: 'Theme upload complete', task: async () => {}}],
+        context?.stderr,
+        options?.multiEnvironment,
+      )
+
+      // Report any failed uploads after all progress rendering is complete
+      reportFailedUploads(uploadResults, options?.environment)
     },
   }
 }
@@ -99,11 +118,11 @@ export function uploadTheme(
 function createIntervalTask({
   promise,
   titleGetter,
-  timeout,
+  updateInterval,
 }: {
   promise: Promise<unknown>
   titleGetter: () => string
-  timeout: number
+  updateInterval: number
 }) {
   const tasks: Task[] = []
 
@@ -113,7 +132,7 @@ function createIntervalTask({
       task: async () => {
         const result = await Promise.race([
           promise,
-          new Promise((resolve) => setTimeout(() => resolve('timeout'), timeout)),
+          new Promise((resolve) => setTimeout(() => resolve('timeout'), updateInterval)),
         ])
 
         if (result === 'timeout') {
@@ -465,11 +484,12 @@ async function handleFailedUploads(
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
 }
 
-function reportFailedUploads(uploadResults: Map<string, Result>) {
+function reportFailedUploads(uploadResults: Map<string, Result>, environment?: string) {
   for (const [key, result] of uploadResults.entries()) {
     if (!result.success) {
       const errorMessage = result.errors?.asset?.join('\n') ?? 'File upload failed'
-      renderThrownError(key, new Error(errorMessage))
+      const headline = environment ? `[${environment}] ${key}` : key
+      renderThrownError(headline, new Error(errorMessage))
     }
   }
 }
