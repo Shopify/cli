@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.85.0
+
+### Minor Changes
+
+- 6497461: Add `auth login` command with multi-session support
+
 ## 3.84.0
 
 ### Minor Changes
