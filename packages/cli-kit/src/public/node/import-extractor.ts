@@ -1,4 +1,4 @@
-import {readFileSync, fileExistsSync} from './fs.js'
+import {readFileSync, fileExistsSync, isDirectorySync} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {outputDebug} from './output.js'
 import Parser from 'tree-sitter'
@@ -50,7 +50,14 @@ export function extractImportPaths(filePath: string): string[] {
   }
 }
 
-function extractJSImports(content: string, filePath: string): string[] {
+/**
+ * Extracts import paths from a JavaScript content.
+ *
+ * @param content - The content to extract imports from.
+ * @param filePath - The path to the file to extract imports from.
+ * @returns Array of absolute paths to imported files.
+ */
+export function extractJSImports(content: string, filePath: string): string[] {
   if (!jsParser) return []
   const tree = jsParser.parse(content)
   return extractJSLikeImports(tree, content, filePath, jsParser)
@@ -175,7 +182,7 @@ function extractRustImports(content: string, filePath: string): string[] {
 }
 
 function resolveJSImport(importPath: string, fromFile: string): string | null {
-  const basePath = dirname(fromFile)
+  const basePath = isDirectorySync(fromFile) ? fromFile : dirname(fromFile)
   const possiblePaths = [
     joinPath(basePath, importPath),
     joinPath(basePath, `${importPath}.js`),

@@ -309,6 +309,17 @@ export async function isDirectory(path: string): Promise<boolean> {
 }
 
 /**
+ * Check whether a path is a directory.
+ *
+ * @param path - Path to check.
+ * @returns True if the path is a directory, false otherwise.
+ */
+export function isDirectorySync(path: string): boolean {
+  outputDebug(outputContent`Checking if ${outputToken.path(path)} is a directory...`)
+  return fsStatSync(path).isDirectory()
+}
+
+/**
  * Get the size of a file.
  *
  * @param path - Path to the file.

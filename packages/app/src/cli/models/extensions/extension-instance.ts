@@ -33,6 +33,7 @@ import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {extractJSImports} from '@shopify/cli-kit/node/import-extractor'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
@@ -261,6 +262,21 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
     const relativeImportPath = this.entrySourceFilePath.replace(this.directory, '')
     return {main: `import '.${relativeImportPath}';`}
+  }
+
+  /**
+   * Gets the entry files for this extension by checking various sources.
+   * For UI extensions, this returns the generated bundle content rather than file paths.
+   * @returns Object with either entryFiles array or generatedContent string
+   */
+  getExtensionEntryFiles(): string[] {
+    // For UI extensions, use the generated bundle content
+    if (this.specification.identifier === 'ui_extension') {
+      const {main} = this.getBundleExtensionStdinContent()
+      return extractJSImports(main, this.directory)
+    }
+
+    return [this.entrySourceFilePath]
   }
 
   shouldFetchCartUrl(): boolean {
