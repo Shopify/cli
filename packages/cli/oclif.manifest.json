@@ -1821,7 +1821,7 @@
           "type": "option"
         },
         "template": {
-          "description": "The app template. Accepts one of the following:\n       - <remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
+          "description": "The app template. Accepts one of the following:\n       - <reactRouter|remix|none>\n       - Any GitHub repo with optional branch and subpath, e.g., https://github.com/Shopify/<repository>/[subpath]#[branch]",
           "env": "SHOPIFY_FLAG_TEMPLATE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -2397,6 +2397,32 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
+    },
+    "auth:login": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Logs you in to your Shopify account.",
+      "enableJsonFlag": false,
+      "flags": {
+        "alias": {
+          "description": "Alias of the session you want to login to.",
+          "env": "SHOPIFY_FLAG_AUTH_ALIAS",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "alias",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "auth:login",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
     },
     "auth:logout": {
       "aliases": [
@@ -5095,6 +5121,9 @@
       "hiddenAliases": [
       ],
       "id": "theme:check",
+      "multiEnvironmentsFlags": [
+        "path"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6338,10 +6367,15 @@
       "hiddenAliases": [
       ],
       "id": "theme:publish",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme"
+      ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
-      "strict": false,
+      "strict": true,
       "summary": "Set a remote theme as the live theme."
     },
     "theme:pull": {

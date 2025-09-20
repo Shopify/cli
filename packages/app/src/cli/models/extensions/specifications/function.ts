@@ -80,7 +80,8 @@ const functionSpec = createExtensionSpecification({
     'pickup_point_delivery_option_generator',
   ],
   schema: FunctionExtensionSchema,
-  appModuleFeatures: (_) => ['function', 'bundling'],
+  appModuleFeatures: (_) => ['function'],
+  buildConfig: {mode: 'function'},
   deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined
     const moduleId = randomUUID()

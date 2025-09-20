@@ -2,10 +2,9 @@ import {ExtensionBuildOptions} from '../build/extension.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
-import {flowTemplateExtensionFiles} from '../../utilities/extensions/flow-template.js'
 import {context as esContext, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile} from '@shopify/cli-kit/node/fs'
+import {copyFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
@@ -73,13 +72,26 @@ export async function bundleThemeExtension(
     files.map(function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
       const outputFile = joinPath(extension.outputPath, relativePathName)
+      if (filepath === outputFile) return
       return copyFile(filepath, outputFile)
     }),
   )
 }
 
-export async function bundleFlowTemplateExtension(extension: ExtensionInstance): Promise<void> {
-  const files = await flowTemplateExtensionFiles(extension)
+export async function copyFilesForExtension(
+  extension: ExtensionInstance,
+  options: ExtensionBuildOptions,
+  includePatterns: string[],
+  ignoredPatterns: string[] = [],
+): Promise<void> {
+  options.stdout.write(`Copying files for extension ${extension.localIdentifier}...`)
+  const include = includePatterns.map((pattern) => joinPath('**', pattern))
+  const ignored = ignoredPatterns.map((pattern) => joinPath('**', pattern))
+  const files = await glob(include, {
+    absolute: true,
+    cwd: extension.directory,
+    ignore: ignored,
+  })
 
   await Promise.all(
     files.map(function (filepath) {
@@ -89,6 +101,7 @@ export async function bundleFlowTemplateExtension(extension: ExtensionInstance):
       return copyFile(filepath, outputFile)
     }),
   )
+  options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
 function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: BundleOptions) {

@@ -17,7 +17,6 @@ export type ExtensionFeature =
   | 'ui_preview'
   | 'function'
   | 'theme'
-  | 'bundling'
   | 'cart_url'
   | 'esbuild'
   | 'single_js_entry_path'
@@ -47,6 +46,9 @@ export interface Asset {
   content: string
 }
 
+type BuildConfig =
+  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none'}
+  | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -60,6 +62,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   surface: string
   registrationLimit: number
   experience: ExtensionExperience
+  buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
@@ -187,6 +190,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
+    buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
   const merged = {...defaults, ...spec}
 

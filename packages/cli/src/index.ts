@@ -3,6 +3,7 @@ import VersionCommand from './cli/commands/version.js'
 import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
+import Login from './cli/commands/auth/login.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
@@ -33,7 +34,7 @@ export {hooks as PluginHook} from '@oclif/plugin-plugins'
 export {AppSensitiveMetadataHook, AppInitHook, AppPublicMetadataHook} from '@shopify/app'
 export {push, pull, fetchStoreThemes} from '@shopify/theme'
 
-export const HydrogenInitHook = HydrogenHooks.init
+export const HydrogenInitHook: unknown = HydrogenHooks.init
 
 // Setup global support for environment variable based proxy configuration.
 createGlobalProxyAgent({
@@ -143,6 +144,7 @@ export const COMMANDS: any = {
   version: VersionCommand,
   help: HelpCommand,
   'auth:logout': Logout,
+  'auth:login': Login,
   'debug:command-flags': CommandFlags,
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,

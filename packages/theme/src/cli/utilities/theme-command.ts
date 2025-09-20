@@ -14,6 +14,7 @@ import {
   renderError,
 } from '@shopify/cli-kit/node/ui'
 import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
 import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
@@ -100,6 +101,10 @@ export default abstract class ThemeCommand extends Command {
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
 
+      if (flags.path && !fileExistsSync(flags.path)) {
+        throw new AbortError(`Path does not exist: ${flags.path}`)
+      }
+
       await this.command(flags, session)
       await this.logAnalyticsData(session)
       return
@@ -137,12 +142,8 @@ export default abstract class ThemeCommand extends Command {
    * @param flagsWithoutDefaults - Flags provided via the CLI
    * @returns The map of environments
    */
-  private async loadEnvironments(
-    environments: EnvironmentName[],
-    flags: FlagValues,
-    flagsWithoutDefaults: FlagValues,
-  ): Promise<Map<EnvironmentName, FlagValues>> {
-    const environmentMap = new Map<EnvironmentName, FlagValues>()
+  private async loadEnvironments(environments: EnvironmentName[], flags: FlagValues, flagsWithoutDefaults: FlagValues) {
+    const environmentMap = new Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues}>()
 
     for (const environmentName of environments) {
       // eslint-disable-next-line no-await-in-loop
@@ -157,10 +158,13 @@ export default abstract class ThemeCommand extends Command {
       }
 
       environmentMap.set(environmentName, {
-        ...flags,
-        ...environmentFlags,
-        ...flagsWithoutDefaults,
-        environment: [environmentName],
+        flags: {
+          ...flags,
+          ...environmentFlags,
+          ...flagsWithoutDefaults,
+          environment: [environmentName],
+        },
+        validationFlags: {...environmentFlags, ...flagsWithoutDefaults} as FlagValues,
       })
     }
 
@@ -175,21 +179,21 @@ export default abstract class ThemeCommand extends Command {
    * @returns An object containing valid and invalid environment arrays
    */
   private async validateEnvironments(
-    environmentMap: Map<EnvironmentName, FlagValues>,
+    environmentMap: Map<EnvironmentName, {flags: FlagValues; validationFlags: FlagValues}>,
     requiredFlags: Exclude<RequiredFlags, null>,
     requiresAuth: boolean,
   ) {
     const valid: ValidEnvironment[] = []
     const invalid: {environment: EnvironmentName; reason: string}[] = []
 
-    for (const [environmentName, environmentFlags] of environmentMap) {
-      const validationResult = this.validConfig(environmentFlags, requiredFlags, environmentName)
+    for (const [environmentName, {flags, validationFlags}] of environmentMap) {
+      const validationResult = this.validConfig(validationFlags, requiredFlags, environmentName)
       if (validationResult !== true) {
         const missingFlagsText = validationResult.join(', ')
         invalid.push({environment: environmentName, reason: `Missing flags: ${missingFlagsText}`})
         continue
       }
-      valid.push({environment: environmentName, flags: environmentFlags, requiresAuth})
+      valid.push({environment: environmentName, flags, requiresAuth})
     }
 
     return {valid, invalid}

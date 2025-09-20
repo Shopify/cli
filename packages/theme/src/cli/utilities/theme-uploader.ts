@@ -357,10 +357,14 @@ function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): Checksu
   const checksums: ChecksumWithSize[] = []
 
   localThemeFileSystem.files.forEach((file, key) => {
+    // Text files: use UTF-8 byte count
+    // Binary files: use base64 length
+    const size = file.value ? Buffer.byteLength(file.value, 'utf8') : file.attachment?.length ?? 0
+
     checksums.push({
       key,
       checksum: file.checksum,
-      size: file.stats?.size ?? 0,
+      size,
     })
   })
 

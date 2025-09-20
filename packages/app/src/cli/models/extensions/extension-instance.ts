@@ -14,13 +14,12 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
-  buildFlowTemplateExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
   bundleFunctionExtension,
 } from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -44,8 +43,6 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
 ]
-
-type BuildMode = 'theme' | 'function' | 'ui' | 'flow' | 'tax_calculation' | 'none'
 
 /**
  * Class that represents an instance of a local extension
@@ -137,7 +134,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    return this.isFunctionExtension ? 'index.wasm' : `${this.handle}.js`
+    const mode = this.specification.buildConfig.mode
+    if (mode === 'copy_files' || mode === 'theme') {
+      return ''
+    } else if (mode === 'function') {
+      return 'index.wasm'
+    } else {
+      return `${this.handle}.js`
+    }
   }
 
   constructor(options: {
@@ -342,36 +346,36 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.buildMode(options)
+    const mode = this.specification.buildConfig.mode
 
     switch (mode) {
       case 'theme':
-        return buildThemeExtension(this, options)
+        await buildThemeExtension(this, options)
+        return bundleThemeExtension(this, options)
       case 'function':
         return buildFunctionExtension(this, options)
       case 'ui':
         return buildUIExtension(this, options)
-      case 'flow':
-        return buildFlowTemplateExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
         break
+      case 'copy_files':
+        return copyFilesForExtension(
+          this,
+          options,
+          this.specification.buildConfig.filePatterns,
+          this.specification.buildConfig.ignoredFilePatterns,
+        )
       case 'none':
         break
     }
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    if (this.features.includes('bundling')) {
-      // Modules that are going to be inclued in the bundle should be built in the bundle directory
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    }
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
 
     await this.build(options)
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    }
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
@@ -380,11 +384,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
     const defaultOutputPath = this.outputPath
 
-    if (this.features.includes('bundling')) {
-      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
-    }
+    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
-    const buildMode = this.buildMode(options)
+    const buildMode = this.specification.buildConfig.mode
 
     if (this.isThemeExtension) {
       await bundleThemeExtension(this, options)
@@ -402,7 +404,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
     const id = this.getOutputFolderId(outputId)
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
+    const outputFile = this.outputFileName === '' ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
 
@@ -462,25 +464,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
-  }
-
-  private buildMode(options: ExtensionBuildOptions): BuildMode {
-    if (this.isThemeExtension) {
-      return 'theme'
-    } else if (this.isFunctionExtension) {
-      return 'function'
-    } else if (this.features.includes('esbuild')) {
-      return 'ui'
-    } else if (this.specification.identifier === 'flow_template' && options.environment === 'production') {
-      return 'flow'
-    }
-
-    // Workaround for tax_calculations because they remote spec NEEDS a valid js file to be included.
-    if (this.type === 'tax_calculation') {
-      return 'tax_calculation'
-    }
-
-    return 'none'
   }
 
   private buildHandle() {

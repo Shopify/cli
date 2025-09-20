@@ -213,6 +213,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Post the knip results
+        if: github.event.pull_request.user.login != 'dependabot[bot]'
         uses: codex-/knip-reporter@f717532b6707d95de06b9bb2eb8ece46393f018f # pin@v2
         with:
           verbose: true
@@ -220,7 +221,7 @@ jobs:
   pr-platform-agnostic-graphql-schema:
     name: '[PR] Check graphql-codegen has been run'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
     timeout-minutes: 30
     strategy:
       matrix:

@@ -43,7 +43,7 @@ describe('useSelfAdjustingInterval', () => {
   })
 
   test('calls callback immediately and sets up next interval', async () => {
-    const callback = vi.fn().mockResolvedValue({retryIntervalMs: 1000})
+    const callback = vi.fn(() => Promise.resolve({retryIntervalMs: 1000}))
 
     renderHook(() => useSelfAdjustingInterval(callback))
 
@@ -59,9 +59,9 @@ describe('useSelfAdjustingInterval', () => {
   test('adjusts interval based on callback return value', async () => {
     const callback = vi
       .fn()
-      .mockResolvedValueOnce({retryIntervalMs: 1000})
-      .mockResolvedValueOnce({retryIntervalMs: 2000})
-      .mockResolvedValueOnce({retryIntervalMs: null})
+      .mockImplementationOnce(() => Promise.resolve({retryIntervalMs: 1000}))
+      .mockImplementationOnce(() => Promise.resolve({retryIntervalMs: 2000}))
+      .mockImplementationOnce(() => Promise.resolve({retryIntervalMs: null}))
     renderHook(() => useSelfAdjustingInterval(callback))
 
     // Initial call
@@ -82,7 +82,7 @@ describe('useSelfAdjustingInterval', () => {
   })
 
   test('deals with the callback throwing an error', async () => {
-    const callback = vi.fn().mockRejectedValue(new Error('test error'))
+    const callback = vi.fn(() => Promise.reject(new Error('test error')))
     const {lastResult} = renderHook(() => useSelfAdjustingInterval(callback))
 
     await vi.advanceTimersByTimeAsync(0)
@@ -91,7 +91,7 @@ describe('useSelfAdjustingInterval', () => {
   })
 
   test('cleans up timeout on unmount', async () => {
-    const callback = vi.fn().mockResolvedValue({retryIntervalMs: 1000})
+    const callback = vi.fn(() => Promise.resolve({retryIntervalMs: 1000}))
 
     const {unmount} = renderHook(() => useSelfAdjustingInterval(callback))
 

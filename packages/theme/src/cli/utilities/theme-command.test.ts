@@ -6,6 +6,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {renderConcurrent, renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -84,6 +85,9 @@ class TestThemeCommandWithUnionFlags extends TestThemeCommand {
     }),
   }
 }
+class TestThemeCommandWithPath extends TestThemeCommand {
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'path']
+}
 
 class TestUnauthenticatedThemeCommand extends ThemeCommand {
   static flags = {
@@ -121,6 +125,7 @@ describe('ThemeCommand', () => {
     }
     vi.mocked(ensureThemeStore).mockReturnValue('test-store.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
+    vi.mocked(fileExistsSync).mockReturnValue(true)
   })
 
   describe('run', () => {
@@ -206,6 +211,16 @@ describe('ThemeCommand', () => {
           showTimestamps: true,
         }),
       )
+    })
+
+    test("throws an AbortError if the path doesn't exist", async () => {
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+
+      vi.mocked(fileExistsSync).mockReturnValue(false)
+
+      await expect(command.run()).rejects.toThrow(AbortError)
+      expect(fileExistsSync).toHaveBeenCalledWith('current/working/directory')
     })
   })
 
@@ -390,6 +405,31 @@ describe('ThemeCommand', () => {
       expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['development', 'production'])
     })
 
+    test('should not execute commands in environments that are missing required flags even if they have a default value', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', path: '/a/path'})
+        .mockResolvedValueOnce({})
+        .mockResolvedValueOnce({store: 'store3.myshopify.com'})
+
+      vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithPath(
+        ['--environment', 'development', '--environment', 'env-missing-store', '--environment', 'path-defaults-to-cwd'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      const renderConcurrentProcesses = vi.mocked(renderConcurrent).mock.calls[0]?.[0]?.processes
+      expect(renderConcurrentProcesses).toHaveLength(1)
+      expect(renderConcurrentProcesses?.map((process) => process.prefix)).toEqual(['development'])
+    })
+
     test('should not execute commands in environments that are missing required "one of" flags', async () => {
       // Given
       vi.mocked(loadEnvironment)
@@ -483,7 +523,6 @@ describe('ThemeCommand', () => {
       const environmentConfig = {store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
       vi.mocked(renderConfirmationPrompt).mockResolvedValue(true)
-      vi.mocked(fileExistsSync).mockReturnValue(true)
 
       await CommandConfig.load()
       const command = new TestThemeCommand(

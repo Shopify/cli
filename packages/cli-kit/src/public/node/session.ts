@@ -1,7 +1,7 @@
 import {BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
-import * as secureStore from '../../private/node/session/store.js'
+import * as sessionStore from '../../private/node/session/store.js'
 import {
   exchangeCustomPartnerToken,
   exchangeCliTokenForAppManagementAccessToken,
@@ -12,6 +12,7 @@ import {
   AdminAPIScope,
   AppManagementAPIScope,
   BusinessPlatformScope,
+  EnsureAuthenticatedAdditionalOptions,
   PartnersAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
@@ -28,9 +29,20 @@ export interface AdminSession {
   storeFqdn: string
 }
 
-interface EnsureAuthenticatedAdditionalOptions {
-  noPrompt?: boolean
-  forceRefresh?: boolean
+/**
+ * Ensure that we have a valid session with no particular scopes.
+ *
+ * @param env - Optional environment variables to use.
+ * @param options - Optional extra options to use.
+ * @returns The user ID.
+ */
+export async function ensureAuthenticatedUser(
+  env = process.env,
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<{userId: string}> {
+  outputDebug(outputContent`Ensuring that the user is authenticated with no particular scopes`)
+  const tokens = await ensureAuthenticated({}, env, options)
+  return {userId: tokens.userId}
 }
 
 /**
@@ -221,5 +233,5 @@ ${outputToken.json(scopes)}
  * @returns A promise that resolves when the logout is complete.
  */
 export function logout(): Promise<void> {
-  return secureStore.remove()
+  return sessionStore.remove()
 }
