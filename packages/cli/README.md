@@ -212,8 +212,8 @@ Run the app.
 
 ```
 USAGE
-  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--localhost-port
-    <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
+  $ shopify app dev [--checkout-cart-url <value>] [--client-id <value> | -c <value>] [--host <value>]
+    [--localhost-port <value>] [--no-color] [--no-update] [--notify <value>] [--path <value>] [--reset | ]
     [--skip-dependencies-installation] [-s <value>] [--subscription-product-url <value>] [-t <value>]
     [--theme-app-extension-port <value>] [--use-localhost | [--tunnel-url <value> | ]] [--verbose]
 
@@ -224,6 +224,8 @@ FLAGS
       --checkout-cart-url=<value>         Resource URL for checkout UI extension. Format:
                                           "/cart/{productVariantID}:{productQuantity}"
       --client-id=<value>                 The Client ID of your app.
+      --host=<value>                      [default: localhost] Set which network interface the web server listens on.
+                                          The default value is localhost.
       --localhost-port=<value>            Port to use for localhost.
       --no-color                          Disable color output.
       --no-update                         Skips the Partners Dashboard URL update step.

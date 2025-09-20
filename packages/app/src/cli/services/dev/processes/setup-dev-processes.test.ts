@@ -313,6 +313,8 @@ describe('setup-dev-processes', () => {
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
       host: '0.0.0.0', // Docker host setting
+      directory: '',
+      update: false,
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -332,6 +334,7 @@ describe('setup-dev-processes', () => {
     
     // Create simple app without theme extensions to avoid the theme API calls
     const localApp = testAppWithConfig({
+      config: {},
       app: testAppLinked({
         allExtensions: [await testUIExtension({type: 'web_pixel_extension'})],
         webs: [{
@@ -359,6 +362,7 @@ describe('setup-dev-processes', () => {
       storeId,
       commandOptions,
       network,
+      partnerUrlsUpdated: true,
       graphiqlPort,
     })
 
@@ -392,7 +396,7 @@ describe('setup-dev-processes', () => {
         redirectUrlWhitelist: ['https://example.com/redirect'],
       },
     }
-    const localApp = testAppWithConfig()
+    const localApp = testAppWithConfig({config: {}})
     vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
