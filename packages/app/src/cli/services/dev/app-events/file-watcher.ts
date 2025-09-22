@@ -1,5 +1,4 @@
 /* eslint-disable no-case-declarations */
-import {ImportManager} from './import-manager.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
@@ -58,8 +57,8 @@ export class FileWatcher {
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
-  // Manager for handling import scanning and tracking
-  private readonly importManager = new ImportManager()
+  // Map to track which files are watched by which extensions
+  private readonly fileToExtensions = new Map<string, Set<ExtensionInstance>>()
 
   constructor(
     app: AppLinkedInterface,
@@ -93,8 +92,8 @@ export class FileWatcher {
 
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
-    const importedPaths = await this.scanExtensionsForImports()
-    watchPaths.push(...importedPaths)
+    // Initialize file tracking for all extensions
+    await this.initializeFileTracking()
 
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
@@ -110,7 +109,10 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', this.handleFileEvent)
+    this.watcher.on('all', (event, path) => {
+      // eslint-disable-next-line no-void
+      void this.handleFileEvent(event, path)
+    })
     this.options.signal.addEventListener('abort', this.close)
   }
 
@@ -122,28 +124,49 @@ export class FileWatcher {
     this.extensionPaths.forEach((path) => {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
-    const importedPaths = await this.importManager.scanExtensionsForImports(this.app)
 
-    // Update the watcher with imported paths if needed
-    if (importedPaths.length > 0 && this.watcher) {
-      outputDebug(`Updating watcher with ${importedPaths.length} imported paths`)
-      this.watcher.add(importedPaths)
-    }
+    // Re-initialize file tracking for all extensions
+    await this.initializeFileTracking()
   }
 
   /**
-   * Scans extensions for imports and tracks which files are imported by which extensions
+   * Initializes file tracking for all extensions
    */
-  async scanExtensionsForImports(extensions: ExtensionInstance[] = this.app.nonConfigExtensions): Promise<string[]> {
-    const importedPaths = await this.importManager.scanExtensionsForImports(this.app, extensions)
+  private async initializeFileTracking(): Promise<void> {
+    this.fileToExtensions.clear()
 
-    // Update the watcher with any new imported paths
-    if (importedPaths.length > 0 && this.watcher) {
-      outputDebug(`Updating watcher with ${importedPaths.length} imported paths`)
-      this.watcher.add(importedPaths)
+    // Get all files that need to be watched from all extensions
+    const allWatchedFiles = new Set<string>()
+
+    // Use Promise.all to avoid sequential awaits in loop
+    const extensionWatchedFiles = await Promise.all(
+      this.app.realExtensions.map(async (extension) => ({
+        extension,
+        watchedFiles: await extension.watchedFiles(),
+      })),
+    )
+
+    for (const {extension, watchedFiles} of extensionWatchedFiles) {
+      for (const file of watchedFiles) {
+        const normalizedPath = normalizePath(file)
+        allWatchedFiles.add(normalizedPath)
+
+        // Track which extensions are watching this file
+        if (!this.fileToExtensions.has(normalizedPath)) {
+          this.fileToExtensions.set(normalizedPath, new Set())
+        }
+        const extensions = this.fileToExtensions.get(normalizedPath)
+        if (extensions) {
+          extensions.add(extension)
+        }
+      }
     }
 
-    return importedPaths
+    // Add all watched files to the watcher
+    if (this.watcher && allWatchedFiles.size > 0) {
+      outputDebug(`Adding ${allWatchedFiles.size} files to watcher`)
+      this.watcher.add(Array.from(allWatchedFiles))
+    }
   }
 
   /**
@@ -190,7 +213,7 @@ export class FileWatcher {
 
   /**
    * Whether an event should be ignored or not based on the extension's watch paths and gitignore file.
-   * Never ignores extension create/delete events or imported file events.
+   * Never ignores extension create/delete events.
    *
    * If the affected extension defines custom watch paths, ignore the event if the path is not in the list
    * ELSE, if the extension has a custom gitignore file, ignore the event if the path matches the patterns
@@ -198,11 +221,6 @@ export class FileWatcher {
    */
   private shouldIgnoreEvent(event: WatcherEvent) {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
-
-    // Check if this is an imported file event - never ignore these
-    if (this.importManager.getExtensionsImportingFile(event.path)) {
-      return false
-    }
 
     const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
     const watchPaths = extension?.devSessionWatchPaths
@@ -219,7 +237,7 @@ export class FileWatcher {
     return false
   }
 
-  private readonly handleFileEvent = (event: string, path: string) => {
+  private readonly handleFileEvent = async (event: string, path: string) => {
     const startTime = startHRTime()
     const normalizedPath = normalizePath(path)
     const isConfigAppPath = path === this.app.configuration.path
@@ -228,20 +246,33 @@ export class FileWatcher {
 
     outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
 
-    // Check if this is an imported file that affects multiple extensions
-    if (!directExtensionPath && !isConfigAppPath) {
-      const affectedExtensions = this.importManager.getExtensionsImportingFile(path)
+    // Check if this file is being watched by any extensions
+    const watchingExtensions = this.fileToExtensions.get(normalizedPath)
 
-      if (affectedExtensions && affectedExtensions.size > 0) {
-        // Trigger events for all extensions that import this file
-        for (const extensionPath of affectedExtensions) {
-          this.handleEventForExtension(event, path, extensionPath, startTime)
-        }
-        // Rescan imports for all affected extensions
-        // eslint-disable-next-line no-void
-        void this.importManager.rescanExtensionImports(this.app, Array.from(affectedExtensions))
-        return
+    if (watchingExtensions && watchingExtensions.size > 0 && !directExtensionPath && !isConfigAppPath) {
+      // This is an imported file that affects multiple extensions
+      for (const extension of watchingExtensions) {
+        this.handleEventForExtension(event, path, extension.directory, startTime)
       }
+
+      // Rescan imports for affected extensions if this is an entry file change
+      if (event === 'change' || event === 'add') {
+        const extensionsToRescan = [...watchingExtensions].filter((ext) => {
+          const entryFiles = ext.getExtensionEntryFiles()
+          return entryFiles.some((entryFile) => normalizePath(entryFile) === normalizedPath)
+        })
+
+        if (extensionsToRescan.length > 0) {
+          await Promise.all(
+            extensionsToRescan.map(async (ext) => {
+              await ext.rescanImports()
+              // Re-initialize file tracking to update the mappings
+              await this.initializeFileTracking()
+            }),
+          )
+        }
+      }
+      return
     }
 
     // Handle regular extension files
@@ -280,7 +311,7 @@ export class FileWatcher {
             if (entryFiles.some((entryFile) => normalizePath(entryFile) === normalizePath(path))) {
               // This is an entry file that might have changed imports - rescan
               // eslint-disable-next-line no-void
-              void this.importManager.rescanExtensionImports(this.app, [normalizePath(extensionPath)])
+              void extension.rescanImports().then(() => this.initializeFileTracking())
             }
           }
         }
@@ -298,7 +329,7 @@ export class FileWatcher {
             if (entryFiles.some((entryFile) => normalizePath(entryFile) === normalizePath(path))) {
               // This is an entry file that might have imports - rescan
               // eslint-disable-next-line no-void
-              void this.importManager.rescanExtensionImports(this.app, [normalizePath(extensionPath)])
+              void extension.rescanImports().then(() => this.initializeFileTracking())
             }
           }
           break
