@@ -2,13 +2,19 @@ import {handlePolarisUnifiedChoice} from './generate.js'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 import {isPolarisUnifiedEnabled} from '@shopify/cli-kit/node/is-polaris-unified-enabled'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {describe, expect, vi, test} from 'vitest'
+import {isCI} from '@shopify/cli-kit/node/system'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/is-polaris-unified-enabled')
 vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('@shopify/cli-kit/node/system')
 
 describe('handlePolarisUnifiedChoice', () => {
+  beforeEach(() => {
+    vi.mocked(isCI).mockReturnValue(false)
+  })
+
   test('returns true when POLARIS_UNIFIED env var is set to true', async () => {
     // Given
     vi.mocked(isPolarisUnifiedEnabled).mockReturnValue(true)
