@@ -65,7 +65,7 @@ export async function handlePolarisUnifiedChoice(): Promise<boolean> {
   }
 
   // Don't show interactive prompt during unit tests
-  if (isUnitTest() || process.env.TESTING_POLARIS_CHOICE !== 'true') {
+  if (isUnitTest()) {
     return false
   }
 
