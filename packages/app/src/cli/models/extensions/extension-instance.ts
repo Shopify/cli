@@ -30,7 +30,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename, normalizePath, resolvePath, isSubpath} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {extractJSImports, extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
@@ -479,27 +479,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
    * This includes files in the extension directory (respecting watch paths and gitignore)
    * as well as any imported files from outside the extension directory
    */
-  async watchedFiles(): Promise<string[]> {
+  watchedFiles(): string[] {
     const watchedFiles: string[] = []
 
     // Add extension directory files based on devSessionWatchPaths or all files
     const watchPaths = this.devSessionWatchPaths
     if (watchPaths) {
       // If custom watch paths are defined, only watch those
-      const files = await Promise.all(
-        watchPaths.map((pattern) =>
-          glob(pattern, {
-            cwd: this.directory,
-            absolute: true,
-            followSymbolicLinks: false,
-            ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
-          }),
-        ),
+      const files = watchPaths.flatMap((pattern) =>
+        globSync(pattern, {
+          cwd: this.directory,
+          absolute: true,
+          followSymbolicLinks: false,
+          ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
+        }),
       )
       watchedFiles.push(...files.flat())
     } else {
       // Watch all files in the extension directory (excluding common ignored patterns)
-      const allFiles = await glob('**/*', {
+      const allFiles = globSync('**/*', {
         cwd: this.directory,
         absolute: true,
         followSymbolicLinks: false,
@@ -509,7 +507,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     // Add imported files from outside the extension directory
-    const importedFiles = await this.scanImports()
+    const importedFiles = this.scanImports()
     watchedFiles.push(...importedFiles)
 
     // Return unique normalized paths
@@ -529,7 +527,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
    * Scans for imports in this extension's entry files
    * Returns absolute paths of imported files that are outside the extension directory
    */
-  private async scanImports(): Promise<string[]> {
+  private scanImports(): string[] {
     // Return cached paths if available
     if (this.cachedImportPaths) {
       return this.cachedImportPaths

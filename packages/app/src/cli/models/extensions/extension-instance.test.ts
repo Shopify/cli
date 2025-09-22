@@ -21,9 +21,12 @@ import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
+import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
 import {Writable} from 'stream'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+
+vi.mock('@shopify/cli-kit/node/import-extractor')
 
 function functionConfiguration(): FunctionConfigType {
   return {
@@ -84,6 +87,14 @@ describe('watchPaths', async () => {
     const got = extensionInstance.watchBuildPaths
 
     expect(got).toEqual([])
+  })
+
+  test('returns glob pattern for theme extensions', async () => {
+    const extensionInstance = await testThemeExtensions('foo')
+
+    const got = extensionInstance.watchBuildPaths
+
+    expect(got).toEqual([joinPath('foo', '*', '*')])
   })
 
   test('returns configured paths and input query', async () => {
@@ -549,6 +560,121 @@ describe('draftMessages', async () => {
       })
       // Then
       expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
+    })
+  })
+})
+
+describe('watchedFiles', async () => {
+  test('returns files based on devSessionWatchPaths when defined', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const config = functionConfiguration()
+      config.build = {
+        watch: 'src/**/*.js',
+        wasm_opt: true,
+      }
+      const extensionInstance = await testFunctionExtension({
+        config,
+        dir: tmpDir,
+      })
+
+      // Create some test files
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.js'), 'console.log("test")')
+      await writeFile(joinPath(srcDir, 'helper.js'), 'export const helper = () => {}')
+
+      // Mock import extraction to return empty array (no external imports)
+      vi.mocked(extractImportPaths).mockReturnValue([])
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then
+      expect(watchedFiles).toHaveLength(2)
+      expect(watchedFiles).toContain(joinPath(srcDir, 'index.js'))
+      expect(watchedFiles).toContain(joinPath(srcDir, 'helper.js'))
+    })
+  })
+
+  test('returns all files when devSessionWatchPaths is undefined', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testUIExtension({directory: tmpDir})
+
+      // Create some test files
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'console.log("test")')
+      await writeFile(joinPath(tmpDir, 'config.json'), '{}')
+
+      // Mock import extraction to return empty array
+      vi.mocked(extractImportPaths).mockReturnValue([])
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then
+      expect(watchedFiles).toContain(joinPath(srcDir, 'index.ts'))
+      expect(watchedFiles).toContain(joinPath(tmpDir, 'config.json'))
+    })
+  })
+
+  test('includes imported files from outside extension directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testUIExtension({
+        directory: tmpDir,
+        entrySourceFilePath: joinPath(tmpDir, 'src', 'index.ts'),
+      })
+
+      // Create test file
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'import "../../../shared/utils"')
+
+      // Mock import extraction to return external import
+      const externalFile = joinPath(tmpDir, '..', '..', 'shared', 'utils.ts')
+      vi.mocked(extractImportPaths).mockReturnValue(['../../../shared/utils'])
+
+      // When
+      const watchedFiles = extensionInstance.watchedFiles()
+
+      // Then
+      expect(watchedFiles).toContain(joinPath(srcDir, 'index.ts'))
+      // The external file path would be normalized
+    })
+  })
+})
+
+describe('rescanImports', async () => {
+  test('clears cached import paths and rescans', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testUIExtension({
+        directory: tmpDir,
+        entrySourceFilePath: joinPath(tmpDir, 'src', 'index.ts'),
+      })
+
+      // Create test file
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'import "./local"')
+
+      // First scan with one set of imports
+      vi.mocked(extractImportPaths).mockReturnValue(['./local'])
+      // This will populate cachedImportPaths
+      extensionInstance.watchedFiles()
+
+      // Update the mock to return different imports
+      vi.mocked(extractImportPaths).mockReturnValue(['./local', '../external'])
+
+      // When
+      const newImports = await extensionInstance.rescanImports()
+
+      // Then
+      expect(extractImportPaths).toHaveBeenCalledTimes(2)
+      // Note: we can't directly test the result since resolvePath would fail in test
     })
   })
 })

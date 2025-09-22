@@ -73,7 +73,7 @@ export class FileWatcher {
      * This function will be called at most once every DEFAULT_DEBOUNCE_TIME_IN_MS
      * to avoid emitting too many events in a short period.
      */
-    this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: false, trailing: true})
+    this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: true, trailing: true})
     this.app = app
     this.extensionPaths = this.app.realExtensions
       .map((ext) => normalizePath(ext.directory))
@@ -204,7 +204,6 @@ export class FileWatcher {
       return
 
     this.currentEvents.push(event)
-    this.debouncedEmit()
   }
 
   /**
@@ -219,7 +218,7 @@ export class FileWatcher {
     if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
 
     const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
-    const watchPaths = extension?.devSessionWatchPaths
+    const watchPaths = extension?.watchedFiles()
     const ignoreInstance = this.ignored[event.extensionPath]
 
     if (watchPaths) {
@@ -242,13 +241,13 @@ export class FileWatcher {
 
     if (isConfigAppPath) {
       this.handleEventForExtension(event, path, this.app.directory, startTime)
-      return
+    } else {
+      const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
+      for (const extensionPath of affectedExtensions ?? []) {
+        this.handleEventForExtension(event, path, extensionPath, startTime)
+      }
     }
-
-    const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
-    for (const extensionPath of affectedExtensions ?? []) {
-      this.handleEventForExtension(event, path, extensionPath, startTime)
-    }
+    this.debouncedEmit()
   }
 
   private handleEventForExtension(event: string, path: string, extensionPath: string, startTime: StartTime) {
