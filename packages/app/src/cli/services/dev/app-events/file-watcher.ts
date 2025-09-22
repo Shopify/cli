@@ -255,22 +255,15 @@ export class FileWatcher {
         this.handleEventForExtension(event, path, extension.directory, startTime)
       }
 
-      // Rescan imports for affected extensions if this is an entry file change
-      if (event === 'change' || event === 'add') {
-        const extensionsToRescan = [...watchingExtensions].filter((ext) => {
-          const entryFiles = ext.getExtensionEntryFiles()
-          return entryFiles.some((entryFile) => normalizePath(entryFile) === normalizedPath)
-        })
-
-        if (extensionsToRescan.length > 0) {
-          await Promise.all(
-            extensionsToRescan.map(async (ext) => {
-              await ext.rescanImports()
-              // Re-initialize file tracking to update the mappings
-              await this.initializeFileTracking()
-            }),
-          )
-        }
+      // Rescan imports for affected extensions on any non-config file change
+      if ((event === 'change' || event === 'add') && !isExtensionToml) {
+        await Promise.all(
+          [...watchingExtensions].map(async (ext) => {
+            await ext.rescanImports()
+          }),
+        )
+        // Re-initialize file tracking once after all rescans
+        await this.initializeFileTracking()
       }
       return
     }
@@ -304,15 +297,11 @@ export class FileWatcher {
           this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           this.pushEvent({type: 'file_updated', path, extensionPath, startTime})
-          // Check if this is a source file that might have changed imports
+          // Rescan imports on any non-config file change
           const extension = this.app.realExtensions.find((ext) => normalizePath(ext.directory) === extensionPath)
           if (extension) {
-            const entryFiles = extension.getExtensionEntryFiles()
-            if (entryFiles.some((entryFile) => normalizePath(entryFile) === normalizePath(path))) {
-              // This is an entry file that might have changed imports - rescan
-              // eslint-disable-next-line no-void
-              void extension.rescanImports().then(() => this.initializeFileTracking())
-            }
+            // eslint-disable-next-line no-void
+            void extension.rescanImports().then(() => this.initializeFileTracking())
           }
         }
         break
@@ -322,15 +311,11 @@ export class FileWatcher {
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isExtensionToml) {
           this.pushEvent({type: 'file_created', path, extensionPath, startTime})
-          // Check if this is a source file that might have imports
+          // Rescan imports on any non-config file addition
           const extension = this.app.realExtensions.find((ext) => normalizePath(ext.directory) === extensionPath)
           if (extension) {
-            const entryFiles = extension.getExtensionEntryFiles()
-            if (entryFiles.some((entryFile) => normalizePath(entryFile) === normalizePath(path))) {
-              // This is an entry file that might have imports - rescan
-              // eslint-disable-next-line no-void
-              void extension.rescanImports().then(() => this.initializeFileTracking())
-            }
+            // eslint-disable-next-line no-void
+            void extension.rescanImports().then(() => this.initializeFileTracking())
           }
           break
         }
