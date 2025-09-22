@@ -17,6 +17,7 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../mode
 import {OrganizationApp} from '../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {isCI} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -64,8 +65,8 @@ export async function handlePolarisUnifiedChoice(): Promise<boolean> {
     return true
   }
 
-  // Don't show interactive prompt during unit tests
-  if (isUnitTest()) {
+  // Don't show interactive prompt during unit tests or in CI
+  if (isUnitTest() || isCI()) {
     return false
   }
 
