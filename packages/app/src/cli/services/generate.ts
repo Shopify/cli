@@ -16,7 +16,7 @@ import {ExtensionTemplate} from '../models/app/template.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -39,8 +39,7 @@ interface GenerateOptions {
 
 async function generate(options: GenerateOptions) {
   const {app, developerPlatformClient, remoteApp, specifications, template} = options
-  const hasUIExtenstions = specifications.some((spec) => spec.identifier === 'ui_extension')
-  const polarisUnified = await handlePolarisUnifiedChoice(hasUIExtenstions)
+  const polarisUnified = await handlePolarisUnifiedChoice()
   const availableSpecifications = specifications.map((spec) => spec.identifier)
   const {templates: extensionTemplates, groupOrder} = await fetchExtensionTemplates(
     developerPlatformClient,
@@ -60,20 +59,21 @@ async function generate(options: GenerateOptions) {
   renderSuccessMessage(generatedExtension, app.packageManager)
 }
 
-async function handlePolarisUnifiedChoice(hasUIExtenstions: boolean): Promise<boolean> {
-  if (process.env.POLARIS_UNIFIED !== undefined) {
-    return isPolarisUnifiedEnabled()
+export async function handlePolarisUnifiedChoice(): Promise<boolean> {
+  if (isPolarisUnifiedEnabled()) {
+    return true
   }
 
-  if (hasUIExtenstions) {
-    return true
+  // Don't show interactive prompt during unit tests
+  if (isUnitTest() || process.env.TESTING_POLARIS_CHOICE !== 'true') {
+    return false
   }
 
   return renderSelectPrompt({
     message: 'Which template type would you like?',
     choices: [
       {label: 'Polaris Unified (Recommended)', value: true},
-      {label: 'Polaris Legacy (Deprecated)', value: false},
+      {label: 'Standard (React)', value: false},
     ],
     defaultValue: true,
   })
