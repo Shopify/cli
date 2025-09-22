@@ -1,8 +1,7 @@
 /* eslint-disable no-case-declarations */
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
-import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {dirname, isSubpath, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
@@ -50,6 +49,7 @@ export interface OutputContextOptions {
 
 export class FileWatcher {
   private currentEvents: WatcherEvent[] = []
+  // Tracks created extension directories for extension lifecycle events
   private extensionPaths: string[] = []
   private app: AppLinkedInterface
   private readonly options: OutputContextOptions
@@ -57,8 +57,8 @@ export class FileWatcher {
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
-  // Map to track which files are watched by which extensions
-  private readonly fileToExtensions = new Map<string, Set<ExtensionInstance>>()
+  // Map of file paths to the extensions that watch them
+  private readonly extensionWatchedFiles = new Map<string, Set<string>>()
 
   constructor(
     app: AppLinkedInterface,
@@ -92,8 +92,9 @@ export class FileWatcher {
 
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
-    // Initialize file tracking for all extensions
-    await this.initializeFileTracking()
+    // Get all watched files from extensions and add them to watch paths
+    const allWatchedFiles = await this.getAllWatchedFiles()
+    watchPaths.push(...allWatchedFiles)
 
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
@@ -109,10 +110,7 @@ export class FileWatcher {
       ignoreInitial: true,
     })
 
-    this.watcher.on('all', (event, path) => {
-      // eslint-disable-next-line no-void
-      void this.handleFileEvent(event, path)
-    })
+    this.watcher.on('all', this.handleFileEvent)
     this.options.signal.addEventListener('abort', this.close)
   }
 
@@ -125,48 +123,46 @@ export class FileWatcher {
       this.ignored[path] ??= this.createIgnoreInstance(path)
     })
 
-    // Re-initialize file tracking for all extensions
-    await this.initializeFileTracking()
+    // Update watcher with new watched files (this also updates the watchedFiles set)
+    const allWatchedFiles = await this.getAllWatchedFiles()
+    if (this.watcher && allWatchedFiles.length > 0) {
+      outputDebug(`Updating watcher with ${allWatchedFiles.length} files`)
+      this.watcher.add(allWatchedFiles)
+    }
   }
 
   /**
-   * Initializes file tracking for all extensions
+   * Gets all files that need to be watched from all extensions
    */
-  private async initializeFileTracking(): Promise<void> {
-    this.fileToExtensions.clear()
+  private async getAllWatchedFiles(): Promise<string[]> {
+    this.extensionWatchedFiles.clear()
 
-    // Get all files that need to be watched from all extensions
-    const allWatchedFiles = new Set<string>()
-
-    // Use Promise.all to avoid sequential awaits in loop
-    const extensionWatchedFiles = await Promise.all(
-      this.app.realExtensions.map(async (extension) => ({
+    const extensionResults = await Promise.all(
+      this.app.nonConfigExtensions.map(async (extension) => ({
         extension,
         watchedFiles: await extension.watchedFiles(),
       })),
     )
 
-    for (const {extension, watchedFiles} of extensionWatchedFiles) {
+    const allFiles = new Set<string>()
+    for (const {extension, watchedFiles} of extensionResults) {
+      const extensionDir = normalizePath(extension.directory)
       for (const file of watchedFiles) {
         const normalizedPath = normalizePath(file)
-        allWatchedFiles.add(normalizedPath)
+        allFiles.add(normalizedPath)
 
-        // Track which extensions are watching this file
-        if (!this.fileToExtensions.has(normalizedPath)) {
-          this.fileToExtensions.set(normalizedPath, new Set())
+        // Track which extensions watch this file
+        if (!this.extensionWatchedFiles.has(normalizedPath)) {
+          this.extensionWatchedFiles.set(normalizedPath, new Set())
         }
-        const extensions = this.fileToExtensions.get(normalizedPath)
-        if (extensions) {
-          extensions.add(extension)
+        const extensionsSet = this.extensionWatchedFiles.get(normalizedPath)
+        if (extensionsSet) {
+          extensionsSet.add(extensionDir)
         }
       }
     }
 
-    // Add all watched files to the watcher
-    if (this.watcher && allWatchedFiles.size > 0) {
-      outputDebug(`Adding ${allWatchedFiles.size} files to watcher`)
-      this.watcher.add(Array.from(allWatchedFiles))
-    }
+    return Array.from(allFiles)
   }
 
   /**
@@ -237,72 +233,34 @@ export class FileWatcher {
     return false
   }
 
-  private readonly handleFileEvent = async (event: string, path: string) => {
+  private readonly handleFileEvent = (event: string, path: string) => {
     const startTime = startHRTime()
     const normalizedPath = normalizePath(path)
     const isConfigAppPath = path === this.app.configuration.path
-    const directExtensionPath = this.extensionPaths.find((dir) => isSubpath(dir, normalizedPath))
-    const isExtensionToml = path.endsWith('.extension.toml')
 
     outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
 
-    // Check if this file is being watched by any extensions
-    const watchingExtensions = this.fileToExtensions.get(normalizedPath)
-
-    if (watchingExtensions && watchingExtensions.size > 0 && !directExtensionPath && !isConfigAppPath) {
-      // This is an imported file that affects multiple extensions
-      for (const extension of watchingExtensions) {
-        this.handleEventForExtension(event, path, extension.directory, startTime)
-      }
-
-      // Rescan imports for affected extensions on any non-config file change
-      if ((event === 'change' || event === 'add') && !isExtensionToml) {
-        await Promise.all(
-          [...watchingExtensions].map(async (ext) => {
-            await ext.rescanImports()
-          }),
-        )
-        // Re-initialize file tracking once after all rescans
-        await this.initializeFileTracking()
-      }
+    if (isConfigAppPath) {
+      this.handleEventForExtension(event, path, this.app.directory, startTime)
       return
     }
 
-    // Handle regular extension files
-    const extensionPath = directExtensionPath ?? (isConfigAppPath ? this.app.directory : 'unknown')
-    this.handleEventForExtension(event, path, extensionPath, startTime, isExtensionToml, isConfigAppPath)
+    const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
+    for (const extensionPath of affectedExtensions ?? []) {
+      this.handleEventForExtension(event, path, extensionPath, startTime)
+    }
   }
 
-  private handleEventForExtension(
-    event: string,
-    path: string,
-    extensionPath: string,
-    startTime: StartTime,
-    isExtensionTomlParam?: boolean,
-    isConfigAppPathParam?: boolean,
-  ) {
-    // Determine file type if not provided
-    const isExtensionToml = isExtensionTomlParam ?? path.endsWith('.extension.toml')
-    const isConfigAppPath = isConfigAppPathParam ?? path === this.app.configuration.path
-    const isUnknownExtension = extensionPath === 'unknown'
+  private handleEventForExtension(event: string, path: string, extensionPath: string, startTime: StartTime) {
+    const isExtensionToml = path.endsWith('.extension.toml')
+    const isConfigAppPath = path === this.app.configuration.path
 
     switch (event) {
       case 'change':
-        if (isUnknownExtension) {
-          // If the extension path is unknown, it means the extension was just created.
-          // We need to wait for the lock file to disappear before triggering the event.
-          return
-        }
         if (isExtensionToml || isConfigAppPath) {
           this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
           this.pushEvent({type: 'file_updated', path, extensionPath, startTime})
-          // Rescan imports on any non-config file change
-          const extension = this.app.realExtensions.find((ext) => normalizePath(ext.directory) === extensionPath)
-          if (extension) {
-            // eslint-disable-next-line no-void
-            void extension.rescanImports().then(() => this.initializeFileTracking())
-          }
         }
         break
       case 'add':
@@ -311,12 +269,6 @@ export class FileWatcher {
         // We need to wait for the lock file to disappear before triggering the event.
         if (!isExtensionToml) {
           this.pushEvent({type: 'file_created', path, extensionPath, startTime})
-          // Rescan imports on any non-config file addition
-          const extension = this.app.realExtensions.find((ext) => normalizePath(ext.directory) === extensionPath)
-          if (extension) {
-            // eslint-disable-next-line no-void
-            void extension.rescanImports().then(() => this.initializeFileTracking())
-          }
           break
         }
         let totalWaitedTime = 0
@@ -348,8 +300,6 @@ export class FileWatcher {
           this.pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
         } else {
           setTimeout(() => {
-            // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
-            if (!this.extensionPaths.includes(extensionPath)) return
             this.pushEvent({type: 'file_deleted', path, extensionPath, startTime})
           }, FILE_DELETE_TIMEOUT_IN_MS)
         }
