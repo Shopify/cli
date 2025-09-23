@@ -1,8 +1,11 @@
 import {themeFlags} from '../../../flags.js'
 import {metafieldsPull, MetafieldsPullFlags} from '../../../services/metafields-pull.js'
-import ThemeCommand from '../../../utilities/theme-command.js'
+import ThemeCommand, {RequiredFlags} from '../../../utilities/theme-command.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
+import {InferredFlags} from '@oclif/core/interfaces'
+
+type MetafieldsFlags = InferredFlags<typeof MetafieldsPull.flags>
 
 export default class MetafieldsPull extends ThemeCommand {
   static summary = 'Download metafields definitions from your shop into a local file.'
@@ -24,8 +27,9 @@ If the metafields file already exists, it will be overwritten.`
     }),
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(MetafieldsPull)
+  static multiEnvironmentsFlags: RequiredFlags = null
+
+  async command(flags: MetafieldsFlags) {
     const args: MetafieldsPullFlags = {
       path: flags.path,
       password: flags.password,

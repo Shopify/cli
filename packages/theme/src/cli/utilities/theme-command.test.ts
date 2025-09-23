@@ -4,10 +4,10 @@ import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {renderConcurrent, renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath} from '@shopify/cli-kit/node/path'
+import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -120,6 +120,10 @@ class TestUnauthenticatedThemeCommand extends ThemeCommand {
   }
 }
 
+class TestNoMultiEnvThemeCommand extends TestThemeCommand {
+  static multiEnvironmentsFlags: RequiredFlags = null
+}
+
 describe('ThemeCommand', () => {
   let mockSession: AdminSession
 
@@ -226,6 +230,31 @@ describe('ThemeCommand', () => {
 
       await expect(command.run()).rejects.toThrow(AbortError)
       expect(fileExistsSync).toHaveBeenCalledWith('current/working/directory')
+    })
+
+    test('multiple environments provided - displays warning if not allowed', async () => {
+      // Given
+      const environmentConfig = {store: 'store.myshopify.com'}
+      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
+
+      vi.mocked(renderConcurrent).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestNoMultiEnvThemeCommand(
+        ['--environment', 'development', '--environment', 'staging'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(renderWarning).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: 'This command does not support multiple environments.',
+        }),
+      )
     })
   })
 
