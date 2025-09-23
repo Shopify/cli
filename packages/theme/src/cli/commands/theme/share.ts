@@ -7,6 +7,7 @@ import {getRandomName} from '@shopify/cli-kit/common/string'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+import {ArgOutput} from '@shopify/cli-kit/node/base-command'
 import {Writable} from 'stream'
 
 type ShareFlags = InferredFlags<typeof Share.flags>
@@ -36,6 +37,7 @@ export default class Share extends ThemeCommand {
     flags: ShareFlags,
     adminSession: AdminSession,
     multiEnvironment: boolean,
+    _args?: ArgOutput,
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     const pushFlags: PushFlags = {

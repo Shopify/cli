@@ -6,6 +6,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
+import {ArgOutput} from '@shopify/cli-kit/node/base-command'
 import {Writable} from 'stream'
 
 type PushFlags = InferredFlags<typeof Push.flags>
@@ -105,6 +106,7 @@ export default class Push extends ThemeCommand {
     flags: PushFlags,
     adminSession: AdminSession,
     multiEnvironment: boolean,
+    _args?: ArgOutput,
     context?: {stdout?: Writable; stderr?: Writable},
   ) {
     recordTiming('theme-command:push')
