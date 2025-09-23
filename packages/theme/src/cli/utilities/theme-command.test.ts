@@ -7,6 +7,7 @@ import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {renderConcurrent, renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -67,6 +68,10 @@ class TestThemeCommandWithForce extends TestThemeCommand {
       env: 'SHOPIFY_FLAG_FORCE',
     }),
   }
+}
+
+class TestThemeCommandWithPathFlag extends TestThemeCommandWithForce {
+  static multiEnvironmentsFlags: RequiredFlags = ['store', 'password', 'path']
 }
 
 class TestThemeCommandWithUnionFlags extends TestThemeCommand {
@@ -331,6 +336,38 @@ describe('ThemeCommand', () => {
         }),
       )
       expect(renderConcurrent).toHaveBeenCalledOnce()
+    })
+
+    test('confirmation prompts should display correctly formatted flag values', async () => {
+      // Given
+      vi.mocked(loadEnvironment)
+        .mockResolvedValueOnce({store: 'store1.myshopify.com', password: 'password1', path: '/home/path/to/theme1'})
+        .mockResolvedValueOnce({store: 'store2.myshopify.com', password: 'password2', path: '/home/path/to/theme2'})
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithPathFlag(
+        ['--environment', 'development', '--environment', 'staging'],
+        CommandConfig,
+      )
+
+      // When
+      await command.run()
+
+      // Then
+      expect(renderConfirmationPrompt).toHaveBeenCalledOnce()
+      expect(renderConfirmationPrompt).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: ['Run testthemecommandwithpathflag in the following environments?'],
+          infoTable: {
+            Environment: [
+              ['development', {subdued: 'store: store1.myshopify.com, password, path: /home/.../theme1'}],
+              ['staging', {subdued: 'store: store2.myshopify.com, password, path: /home/.../theme2'}],
+            ],
+          },
+          confirmationMessage: 'Yes, proceed',
+          cancellationMessage: 'Cancel',
+        }),
+      )
     })
 
     test('should not execute command if confirmation is cancelled', async () => {
@@ -600,13 +637,13 @@ describe('ThemeCommand', () => {
       expect(commandCalls).toHaveLength(3)
 
       const themeEnvFlags = commandCalls[0]?.flags
-      expect(themeEnvFlags?.path).toEqual('theme/path')
+      expect(themeEnvFlags?.path).toEqual(resolvePath('theme/path'))
       expect(themeEnvFlags?.store).toEqual('store1.myshopify.com')
       expect(themeEnvFlags?.theme).toEqual('theme1.myshopify.com')
       expect(themeEnvFlags?.['no-color']).toEqual(true)
 
       const developmentEnvFlags = commandCalls[1]?.flags
-      expect(developmentEnvFlags?.path).toEqual('development/path')
+      expect(developmentEnvFlags?.path).toEqual(resolvePath('development/path'))
       expect(developmentEnvFlags?.store).toEqual('store2.myshopify.com')
       expect(developmentEnvFlags?.development).toEqual(true)
       expect(developmentEnvFlags?.['no-color']).toEqual(true)

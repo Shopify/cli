@@ -15,7 +15,7 @@ import {
   promptThemeName,
   UNPUBLISHED_THEME_ROLE,
 } from '@shopify/cli-kit/node/themes/utils'
-import {renderConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -45,7 +45,7 @@ const adminSession = {token: '', storeFqdn: ''}
 
 describe('push', () => {
   beforeEach(() => {
-    vi.mocked(uploadTheme).mockResolvedValue({
+    vi.mocked(uploadTheme).mockReturnValue({
       workPromise: Promise.resolve(),
       uploadResults: new Map(),
       renderThemeSyncProgress: () => Promise.resolve(),
@@ -61,7 +61,7 @@ describe('push', () => {
     vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
 
     // When
-    await push({...defaultFlags, publish: true})
+    await push({...defaultFlags, publish: true}, adminSession)
 
     // Then
     expect(themePublish).toHaveBeenCalledWith(theme.id, adminSession)
@@ -89,14 +89,14 @@ describe('push', () => {
       success: true,
     })
 
-    vi.mocked(uploadTheme).mockResolvedValue({
+    vi.mocked(uploadTheme).mockReturnValue({
       workPromise: Promise.resolve(),
       uploadResults,
       renderThemeSyncProgress: () => Promise.resolve(),
     })
 
     // When
-    await push({...defaultFlags, json: true})
+    await push({...defaultFlags, json: true}, adminSession)
 
     // Then
     expect(outputResult).toHaveBeenCalledWith(
@@ -129,7 +129,7 @@ describe('push', () => {
       const flags = {...defaultFlags, strict: false}
 
       // When
-      await push(flags)
+      await push(flags, adminSession)
 
       // Then
       expect(runThemeCheck).not.toHaveBeenCalled()
@@ -153,7 +153,7 @@ describe('push', () => {
       })
 
       // When/Then
-      await expect(push({...defaultFlags, strict: true})).rejects.toThrow(AbortError)
+      await expect(push({...defaultFlags, strict: true}, adminSession)).rejects.toThrow(AbortError)
     })
 
     test('blocks push when both warnings and errors exist', async () => {
@@ -183,7 +183,7 @@ describe('push', () => {
       })
 
       // When/Then
-      await expect(push({...defaultFlags, strict: true})).rejects.toThrow(AbortError)
+      await expect(push({...defaultFlags, strict: true}, adminSession)).rejects.toThrow(AbortError)
     })
 
     test('continues push when no offenses exist', async () => {
@@ -194,7 +194,7 @@ describe('push', () => {
       })
 
       // When/Then
-      await expect(push({...defaultFlags, strict: true})).resolves.not.toThrow()
+      await expect(push({...defaultFlags, strict: true}, adminSession)).resolves.not.toThrow()
     })
 
     test('continues push when only warnings exist', async () => {
@@ -215,7 +215,7 @@ describe('push', () => {
       })
 
       // When/Then
-      await expect(push({...defaultFlags, strict: true})).resolves.not.toThrow()
+      await expect(push({...defaultFlags, strict: true}, adminSession)).resolves.not.toThrow()
     })
 
     test('passes the --json flag to theme check as output format', async () => {
@@ -236,7 +236,7 @@ describe('push', () => {
       })
 
       // When/Then
-      await push({...defaultFlags, strict: true, json: true})
+      await push({...defaultFlags, strict: true, json: true}, adminSession)
       expect(runThemeCheck).toHaveBeenCalledWith(path, 'json')
     })
   })
@@ -360,5 +360,26 @@ describe('createOrSelectTheme', async () => {
 
     // Then
     expect(promptThemeName).toHaveBeenCalledWith('Name of the new theme')
+  })
+
+  describe('when run during a multi environment command', () => {
+    test('displays error when live theme is selected without allow-live flag', async () => {
+      // Given
+      vi.mocked(findOrSelectTheme).mockResolvedValue(buildTheme({id: 3, name: 'Live Theme', role: LIVE_THEME_ROLE})!)
+      const flags: PushFlags = {live: true, environment: ['production']}
+
+      // When
+      const theme = await createOrSelectTheme(adminSession, flags, true)
+
+      // Then
+      expect(theme).toBeUndefined()
+      expect(renderError).toHaveBeenCalledWith({
+        headline: 'Environment: production',
+        body: [
+          `Can't push theme files to the live theme on ${adminSession.storeFqdn}`,
+          'Use the --allow-live flag to push to a live theme.',
+        ],
+      })
+    })
   })
 })

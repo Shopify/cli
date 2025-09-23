@@ -1,9 +1,14 @@
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
-import {push, PushFlags} from '../../services/push.js'
+import {push} from '../../services/push.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+import {InferredFlags} from '@oclif/core/interfaces'
+import {Writable} from 'stream'
+
+type PushFlags = InferredFlags<typeof Push.flags>
 
 export default class Push extends ThemeCommand {
   static summary = 'Uploads your local theme files to the connected store, overwriting the remote version if specified.'
@@ -91,33 +96,28 @@ export default class Push extends ThemeCommand {
       description: 'Require theme check to pass without errors before pushing. Warnings are allowed.',
       env: 'SHOPIFY_FLAG_STRICT_PUSH',
     }),
+    environment: themeFlags.environment,
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Push)
+  static multiEnvironmentsFlags = ['store', 'password', 'path', ['live', 'development', 'theme']]
 
-    const pushFlags: PushFlags = {
-      path: flags.path,
-      password: flags.password,
-      store: flags.store,
-      theme: flags.theme,
-      development: flags.development,
-      live: flags.live,
-      unpublished: flags.unpublished,
-      nodelete: flags.nodelete,
-      only: flags.only,
-      ignore: flags.ignore,
-      json: flags.json,
-      allowLive: flags['allow-live'],
-      publish: flags.publish,
-      force: flags.force,
-      noColor: flags['no-color'],
-      verbose: flags.verbose,
-      strict: flags.strict,
-    }
-
+  async command(
+    flags: PushFlags,
+    adminSession: AdminSession,
+    multiEnvironment: boolean,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ) {
     recordTiming('theme-command:push')
-    await push(pushFlags)
+    await push(
+      {
+        ...flags,
+        allowLive: flags['allow-live'],
+        noColor: flags['no-color'],
+      },
+      adminSession,
+      multiEnvironment,
+      context,
+    )
     recordTiming('theme-command:push')
   }
 }

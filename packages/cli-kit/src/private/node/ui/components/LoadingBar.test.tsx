@@ -204,4 +204,16 @@ describe('LoadingBar', () => {
     // Then
     expect(frame1()).toBe(frame2())
   })
+
+  test('hides progress bar when noProgressBar is true', async () => {
+    // Given
+    vi.mocked(shouldDisplayColors).mockReturnValue(true)
+    const title = 'task 1'
+
+    // When
+    const {lastFrame} = render(<LoadingBar title={title} noProgressBar />)
+
+    // Then
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`"task 1 ..."`)
+  })
 })
