@@ -49,7 +49,6 @@ export interface OutputContextOptions {
 
 export class FileWatcher {
   private currentEvents: WatcherEvent[] = []
-  // Tracks created extension directories for extension lifecycle events
   private extensionPaths: string[] = []
   private app: AppLinkedInterface
   private readonly options: OutputContextOptions
@@ -74,40 +73,18 @@ export class FileWatcher {
      * to avoid emitting too many events in a short period.
      */
     this.debouncedEmit = debounce(this.emitEvents.bind(this), debounceTime, {leading: true, trailing: true})
-    this.app = app
-    this.extensionPaths = this.app.realExtensions
-      .map((ext) => normalizePath(ext.directory))
-      .filter((dir) => dir !== this.app.directory)
+    this.updateApp(app)
   }
 
   onChange(listener: (events: WatcherEvent[]) => void) {
     this.onChangeCallback = listener
   }
 
-  async start(): Promise<void> {
-    await this.startWatcher()
-  }
-
-  async updateApp(app: AppLinkedInterface) {
-    this.app = app
-    this.extensionPaths = this.app.nonConfigExtensions
-      .map((ext) => normalizePath(ext.directory))
-      .filter((dir) => dir !== this.app.directory)
-    this.extensionPaths.forEach((path) => {
-      this.ignored[path] ??= this.createIgnoreInstance(path)
-    })
-
-    await this.startWatcher()
-  }
-
   /**
-   * Refreshes the file watcher by closing the current watcher and creating a new one
-   * with updated watched files. This ensures the watcher picks up any changes in
-   * what files need to be watched.
+   * Starts a new file watcher, and closes the previous one if it exists.
+   * This ensures the watcher picks up any changes in what files need to be watched.
    */
-  async startWatcher(): Promise<void> {
-    outputDebug('Starting file watcher...', this.options.stdout)
-
+  async start(): Promise<void> {
     const extensionDirectories = [...(this.app.configuration.extension_directories ?? ['extensions'])]
     const fullExtensionDirectories = extensionDirectories.map((directory) => joinPath(this.app.directory, directory))
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
@@ -116,13 +93,10 @@ export class FileWatcher {
     const allWatchedFiles = this.getAllWatchedFiles()
     watchPaths.push(...allWatchedFiles)
 
-    const {default: chokidar} = await import('chokidar')
-
-    if (this.watcher) {
-      await this.watcher.close()
-    }
+    this.close()
 
     // Create new watcher
+    const {default: chokidar} = await import('chokidar')
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
         '**/node_modules/**',
@@ -138,9 +112,24 @@ export class FileWatcher {
     })
 
     this.watcher.on('all', this.handleFileEvent)
-    this.options.signal.addEventListener('abort', this.close)
+    this.addAbortListener()
 
     outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
+  }
+
+  updateApp(app: AppLinkedInterface) {
+    this.app = app
+    this.extensionPaths = this.app.nonConfigExtensions
+      .map((ext) => normalizePath(ext.directory))
+      .filter((dir) => dir !== this.app.directory)
+    this.extensionPaths.forEach((path) => {
+      this.ignored[path] ??= this.createIgnoreInstance(path)
+    })
+  }
+
+  private addAbortListener() {
+    this.options.signal.removeEventListener('abort', this.close)
+    this.options.signal.addEventListener('abort', this.close)
   }
 
   /**
@@ -321,9 +310,11 @@ export class FileWatcher {
   }
 
   private readonly close = () => {
+    if (!this.watcher) return
+
     outputDebug(`Closing file watcher`, this.options.stdout)
     this.watcher
-      ?.close()
+      .close()
       .then(() => outputDebug(`File watching closed`, this.options.stdout))
       .catch((error: Error) => outputDebug(`File watching failed to close: ${error.message}`, this.options.stderr))
   }

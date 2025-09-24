@@ -452,6 +452,9 @@ describe('app-event-watcher', () => {
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
         await flushPromises()
+        // Wait for the async setTimeout in MockFileWatcher
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        await flushPromises()
 
         // Then
         expect(errorHandler).toHaveBeenCalledWith(uncaughtError)
@@ -491,8 +494,11 @@ class MockFileWatcher extends FileWatcher {
   }
 
   async start(): Promise<void> {
+    // Trigger events asynchronously to allow AppEventWatcher to complete initialization
     if (this.listener) {
-      this.listener(this.events)
+      setTimeout(() => {
+        this.listener?.(this.events)
+      }, 0)
     }
   }
 
@@ -500,11 +506,7 @@ class MockFileWatcher extends FileWatcher {
     this.listener = listener
   }
 
-  async updateApp(_app: AppLinkedInterface): Promise<void> {
-    // Mock implementation
-  }
-
-  async startWatcher(): Promise<void> {
+  updateApp(_app: AppLinkedInterface): void {
     // Mock implementation
   }
 }

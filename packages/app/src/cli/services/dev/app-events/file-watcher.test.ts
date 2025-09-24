@@ -631,7 +631,7 @@ describe('file-watcher events', () => {
       expect(mockClose).not.toHaveBeenCalled()
 
       // When refreshing
-      await fileWatcher.startWatcher()
+      await fileWatcher.start()
 
       // Then
       expect(mockClose).toHaveBeenCalledTimes(1)

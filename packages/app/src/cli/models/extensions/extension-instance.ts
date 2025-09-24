@@ -28,11 +28,12 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, basename, normalizePath, resolvePath, isSubpath} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {extractJSImports, extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
+import {uniq} from '@shopify/cli-kit/common/array'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
@@ -468,27 +469,17 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     // Add extension directory files based on devSessionWatchPaths or all files
     const watchPaths = this.devSessionWatchPaths
-    if (watchPaths) {
-      // If custom watch paths are defined, only watch those
-      const files = watchPaths.flatMap((pattern) =>
-        globSync(pattern, {
-          cwd: this.directory,
-          absolute: true,
-          followSymbolicLinks: false,
-          ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
-        }),
-      )
-      watchedFiles.push(...files.flat())
-    } else {
-      // Watch all files in the extension directory (excluding common ignored patterns)
-      const allFiles = globSync('**/*', {
+
+    const patterns = watchPaths ?? ['**/*']
+    const files = patterns.flatMap((pattern) =>
+      globSync(pattern, {
         cwd: this.directory,
         absolute: true,
         followSymbolicLinks: false,
         ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
-      })
-      watchedFiles.push(...allFiles)
-    }
+      }),
+    )
+    watchedFiles.push(...files.flat())
 
     // Add imported files from outside the extension directory
     const importedFiles = this.scanImports()
@@ -500,11 +491,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   /**
    * Rescans imports for this extension and updates the cached import paths
-   * Returns the new list of imported files
+   * Returns true if the imports changed
    */
-  async rescanImports(): Promise<string[]> {
+  async rescanImports(): Promise<boolean> {
+    const oldImportPaths = this.cachedImportPaths
     this.cachedImportPaths = undefined
-    return this.scanImports()
+    this.scanImports()
+    return oldImportPaths !== this.cachedImportPaths
   }
 
   /**
@@ -513,7 +506,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
    */
   private scanImports(): string[] {
     // Return cached paths if available
-    if (this.cachedImportPaths) {
+    if (this.cachedImportPaths !== undefined) {
       return this.cachedImportPaths
     }
 
@@ -525,27 +518,21 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         // Extract import paths from the entry file
         const fileImports = extractImportPaths(entryFile)
 
-        // Resolve and filter imports to only include files outside the extension directory
         for (const importPath of fileImports) {
-          const resolvedPath = resolvePath(importPath)
-          const normalizedPath = normalizePath(resolvedPath)
-
-          // Only include files that are outside the extension directory
-          if (!isSubpath(normalizePath(this.directory), normalizedPath)) {
-            imports.push(normalizedPath)
-          }
+          const normalizedPath = normalizePath(resolvePath(importPath))
+          imports.push(normalizedPath)
         }
       }
 
       // Cache and return unique paths
-      this.cachedImportPaths = [...new Set(imports)]
+      this.cachedImportPaths = uniq(imports) ?? []
       outputDebug(`Found ${this.cachedImportPaths.length} external imports for extension ${this.handle}`)
       return this.cachedImportPaths
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       outputDebug(`Failed to scan imports for extension ${this.handle}: ${error}`)
       this.cachedImportPaths = []
-      return []
+      return this.cachedImportPaths
     }
   }
 
