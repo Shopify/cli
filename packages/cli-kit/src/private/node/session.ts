@@ -118,6 +118,7 @@ type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'cus
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
+let authenticationPromise: Promise<OAuthSession> | null = null
 
 /**
  * Retrieves the user ID from the current session or returns 'unknown' if not found.
@@ -196,83 +197,99 @@ export async function ensureAuthenticated(
   _env?: NodeJS.ProcessEnv,
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
-  const fqdn = await identityFqdn()
+  // If an authentication is already in progress, wait for it to complete and return its result.
+  if (authenticationPromise) {
+    outputDebug('An authentication process is already in progress. Waiting for it to complete...')
+    return authenticationPromise
+  }
 
-  const previousStoreFqdn = applications.adminApi?.storeFqdn
-  if (previousStoreFqdn) {
-    const normalizedStoreName = await normalizeStoreFqdn(previousStoreFqdn)
-    if (previousStoreFqdn === applications.adminApi?.storeFqdn) {
-      applications.adminApi.storeFqdn = normalizedStoreName
+  authenticationPromise = (async () => {
+    const fqdn = await identityFqdn()
+
+    const previousStoreFqdn = applications.adminApi?.storeFqdn
+    if (previousStoreFqdn) {
+      const normalizedStoreName = await normalizeStoreFqdn(previousStoreFqdn)
+      if (previousStoreFqdn === applications.adminApi?.storeFqdn) {
+        applications.adminApi.storeFqdn = normalizedStoreName
+      }
     }
-  }
 
-  const sessions = (await sessionStore.fetch()) ?? {}
+    const sessions = (await sessionStore.fetch()) ?? {}
 
-  let currentSessionId = getCurrentSessionId()
-  if (!currentSessionId) {
-    const userIds = Object.keys(sessions[fqdn] ?? {})
-    if (userIds.length > 0) currentSessionId = userIds[0]
-  }
-  const currentSession: Session | undefined =
-    currentSessionId && !forceNewSession ? sessions[fqdn]?.[currentSessionId] : undefined
-  const scopes = getFlattenScopes(applications)
+    let currentSessionId = getCurrentSessionId()
+    if (!currentSessionId) {
+      const userIds = Object.keys(sessions[fqdn] ?? {})
+      if (userIds.length > 0) currentSessionId = userIds[0]
+    }
+    const currentSession: Session | undefined =
+      currentSessionId && !forceNewSession ? sessions[fqdn]?.[currentSessionId] : undefined
+    const scopes = getFlattenScopes(applications)
 
-  outputDebug(outputContent`Validating existing session against the scopes:
+    outputDebug(outputContent`Validating existing session against the scopes:
 ${outputToken.json(scopes)}
 For applications:
 ${outputToken.json(applications)}
 `)
 
-  const validationResult = await validateSession(scopes, applications, currentSession)
+    const validationResult = await validateSession(scopes, applications, currentSession)
 
-  let newSession = {}
+    let newSession = {}
 
-  if (validationResult === 'needs_full_auth') {
-    await throwOnNoPrompt(noPrompt)
-    outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications)
-  } else if (validationResult === 'needs_refresh' || forceRefresh) {
-    outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      newSession = await refreshTokens(currentSession!, applications)
-    } catch (error) {
-      if (error instanceof InvalidGrantError) {
-        await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications)
-      } else if (error instanceof InvalidRequestError) {
-        await sessionStore.remove()
-        throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
-      } else {
-        throw error
+    if (validationResult === 'needs_full_auth') {
+      await throwOnNoPrompt(noPrompt)
+      outputDebug(outputContent`Initiating the full authentication flow...`)
+      newSession = await executeCompleteFlow(applications)
+    } else if (validationResult === 'needs_refresh' || forceRefresh) {
+      outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        newSession = await refreshTokens(currentSession!, applications)
+      } catch (error) {
+        if (error instanceof InvalidGrantError) {
+          await throwOnNoPrompt(noPrompt)
+          newSession = await executeCompleteFlow(applications)
+        } else if (error instanceof InvalidRequestError) {
+          await sessionStore.remove()
+          throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
+        } else {
+          throw error
+        }
       }
     }
+
+    const completeSession = {...currentSession, ...newSession} as Session
+    const newSessionId = completeSession.identity.userId
+    const updatedSessions: Sessions = {
+      ...sessions,
+      [fqdn]: {...sessions[fqdn], [newSessionId]: completeSession},
+    }
+
+    // Save the new session info if it has changed
+    if (!isEmpty(newSession)) {
+      await sessionStore.store(updatedSessions)
+      setCurrentSessionId(newSessionId)
+    }
+
+    const tokens = await tokensFor(applications, completeSession)
+
+    // Overwrite partners token if using a custom CLI Token
+    const envToken = getPartnersToken()
+    if (envToken && applications.partnersApi) {
+      tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
+    }
+
+    setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
+    setLastSeenUserIdAfterAuth(tokens.userId)
+    return tokens
+  })()
+
+  try {
+    return await authenticationPromise
+  } finally {
+    // Release the lock.This can not be a race condition because we are waiting for the promise to resolve/reject.
+    // eslint-disable-next-line require-atomic-updates
+    authenticationPromise = null
   }
-
-  const completeSession = {...currentSession, ...newSession} as Session
-  const newSessionId = completeSession.identity.userId
-  const updatedSessions: Sessions = {
-    ...sessions,
-    [fqdn]: {...sessions[fqdn], [newSessionId]: completeSession},
-  }
-
-  // Save the new session info if it has changed
-  if (!isEmpty(newSession)) {
-    await sessionStore.store(updatedSessions)
-    setCurrentSessionId(newSessionId)
-  }
-
-  const tokens = await tokensFor(applications, completeSession)
-
-  // Overwrite partners token if using a custom CLI Token
-  const envToken = getPartnersToken()
-  if (envToken && applications.partnersApi) {
-    tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
-  }
-
-  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
-  setLastSeenUserIdAfterAuth(tokens.userId)
-  return tokens
 }
 
 async function throwOnNoPrompt(noPrompt: boolean) {
