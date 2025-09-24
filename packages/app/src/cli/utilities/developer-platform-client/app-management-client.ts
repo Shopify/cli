@@ -1007,6 +1007,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       query: DevSessionCreate,
       shopFqdn,
       variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? ''},
+      requestOptions: {requestMode: 'slow-request'},
     })
   }
 
