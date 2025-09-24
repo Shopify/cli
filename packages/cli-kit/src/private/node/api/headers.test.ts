@@ -1,4 +1,4 @@
-import {buildHeaders, sanitizedHeadersOutput} from './headers.js'
+import {buildHeaders, sanitizedHeadersOutput, GraphQLClientError} from './headers.js'
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {randomUUID} from '../../../public/node/crypto.js'
 import {firstPartyDev, isUnitTest} from '../../../public/node/context/local.js'
@@ -95,5 +95,35 @@ describe('common API methods', () => {
        - Keep-Alive: timeout=30
        - Content-Type: application/json"
     `)
+  })
+})
+
+describe('GraphQLClientError', () => {
+  test('sets custom tryMessage for 403 status code', () => {
+    // Given
+    const message = 'Forbidden access'
+    const statusCode = 403
+
+    // When
+    const error = new GraphQLClientError(message, statusCode)
+
+    // Then
+    expect(error.message).toBe(message)
+    expect(error.statusCode).toBe(403)
+    expect(error.tryMessage).toBe('Ensure you are using the correct account. You can switch with `shopify auth login`')
+  })
+
+  test('does not set tryMessage for non-403 status codes', () => {
+    // Given
+    const message = 'Server error'
+    const statusCode = 500
+
+    // When
+    const error = new GraphQLClientError(message, statusCode)
+
+    // Then
+    expect(error.message).toBe(message)
+    expect(error.statusCode).toBe(500)
+    expect(error.tryMessage).toBeNull()
   })
 })

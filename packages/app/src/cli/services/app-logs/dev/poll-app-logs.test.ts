@@ -10,6 +10,7 @@ import camelcaseKeys from 'camelcase-keys'
 
 const JWT_TOKEN = 'jwtToken'
 const API_KEY = 'apiKey'
+const TEST_LOGS_DIR = '/test/logs/dir'
 
 vi.mock('./write-app-logs.js')
 vi.mock('@shopify/cli-kit/node/http')
@@ -247,11 +248,11 @@ describe('pollAppLogs', () => {
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
-      apiKey: API_KEY,
       developerPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
     })
     await vi.advanceTimersToNextTimerAsync()
 
@@ -261,9 +262,9 @@ describe('pollAppLogs', () => {
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[0],
       appLogPayload: appLogPayloadZero,
-      apiKey: API_KEY,
       stdout,
       storeName: 'storeName',
+      logsDir: TEST_LOGS_DIR,
     })
 
     const appLogPayloadOne = new FunctionRunLog(
@@ -272,16 +273,16 @@ describe('pollAppLogs', () => {
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[1],
       appLogPayload: appLogPayloadOne,
-      apiKey: API_KEY,
       stdout,
       storeName: 'storeName',
+      logsDir: TEST_LOGS_DIR,
     })
     expect(writeAppLogsToFile).toHaveBeenCalledWith({
       appLog: RESPONSE_DATA.app_logs[2],
       appLogPayload: JSON.parse(RESPONSE_DATA.app_logs[2]!.payload),
-      apiKey: API_KEY,
       stdout,
       storeName: 'storeName',
+      logsDir: TEST_LOGS_DIR,
     })
 
     expect(components.useConcurrentOutputContext).toHaveBeenCalledWith(
@@ -352,11 +353,11 @@ describe('pollAppLogs', () => {
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
-      apiKey: API_KEY,
       developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
     })
 
     expect(MOCKED_RESUBSCRIBE_CALLBACK).toHaveBeenCalled()
@@ -374,11 +375,11 @@ describe('pollAppLogs', () => {
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
-      apiKey: API_KEY,
       developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
     })
 
     expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.', stdout)
@@ -400,11 +401,11 @@ describe('pollAppLogs', () => {
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
-      apiKey: API_KEY,
       developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
     })
 
     // Then
@@ -443,11 +444,11 @@ describe('pollAppLogs', () => {
     await pollAppLogs({
       stdout,
       appLogsFetchInput: {jwtToken: JWT_TOKEN},
-      apiKey: API_KEY,
       developerPlatformClient: mockedDeveloperPlatformClient,
       resubscribeCallback: MOCKED_RESUBSCRIBE_CALLBACK,
       storeName: 'storeName',
       organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
     })
 
     // When/Then

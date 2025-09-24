@@ -13,6 +13,11 @@ import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {InferredArgs, InferredFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
+
+type InitFlags = InferredFlags<typeof Init.flags>
+type InitArgs = InferredArgs<typeof Init.args>
 
 export default class Init extends ThemeCommand {
   static summary = 'Clones a Git repository to use as a starting point for building a new theme.'
@@ -52,8 +57,7 @@ export default class Init extends ThemeCommand {
     }),
   }
 
-  async run(): Promise<void> {
-    const {args, flags} = await this.parse(Init)
+  async command(flags: InitFlags, _adminSession: AdminSession, _multiEnvironment: boolean, args: InitArgs) {
     const name = args.name || (await this.promptName(flags.path))
     const repoUrl = flags['clone-url']
     const destination = joinPath(flags.path, name)

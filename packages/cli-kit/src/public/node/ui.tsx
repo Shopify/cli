@@ -30,6 +30,7 @@ import {TextPrompt, TextPromptProps} from '../../private/node/ui/components/Text
 import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui/components/AutocompletePrompt.js'
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
+import {SingleTask} from '../../private/node/ui/components/SingleTask.js'
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -461,6 +462,7 @@ export function renderTable<T extends ScalarDict>({renderOptions, ...props}: Ren
 
 interface RenderTasksOptions {
   renderOptions?: RenderOptions
+  noProgressBar?: boolean
 }
 
 /**
@@ -470,16 +472,47 @@ interface RenderTasksOptions {
  * Installing dependencies ...
  */
 // eslint-disable-next-line max-params
-export async function renderTasks<TContext>(tasks: Task<TContext>[], {renderOptions}: RenderTasksOptions = {}) {
+export async function renderTasks<TContext>(
+  tasks: Task<TContext>[],
+  {renderOptions, noProgressBar}: RenderTasksOptions = {},
+) {
   // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} />, {
+    render(<Tasks tasks={tasks} onComplete={resolve} noProgressBar={noProgressBar} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     })
       .then(() => {})
       .catch(reject)
   })
+}
+
+/**
+ * Awaits a single promise and displays a loading bar while it's in progress. The promise's result is returned.
+ * @param options - Configuration object
+ * @param options.title - The title to display with the loading bar
+ * @param options.taskPromise - The promise to track
+ * @param renderOptions - Optional render configuration
+ * @returns The result of the promise
+ * @example
+ * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
+ * Loading app ...
+ */
+// eslint-disable-next-line max-params
+export async function renderSingleTask<T>(
+  {title, taskPromise}: {title: string; taskPromise: Promise<T> | (() => Promise<T>)},
+  {renderOptions}: RenderTasksOptions = {},
+) {
+  const promise = typeof taskPromise === 'function' ? taskPromise() : taskPromise
+  const [_renderResult, taskResult] = await Promise.all([
+    render(<SingleTask title={title} taskPromise={promise} />, {
+      ...renderOptions,
+      exitOnCtrlC: false,
+    }),
+    promise,
+  ])
+
+  return taskResult
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {

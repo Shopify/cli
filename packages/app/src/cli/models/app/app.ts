@@ -319,6 +319,7 @@ export interface AppInterface<
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
   generateExtensionTypes(): Promise<void>
+  getLogsDir(): string
 }
 
 type AppConstructor<
@@ -448,6 +449,10 @@ export class App<
 
   get hiddenConfig() {
     return this._hiddenConfig
+  }
+
+  getLogsDir() {
+    return joinPath(this.directory, '.shopify', 'logs')
   }
 
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {

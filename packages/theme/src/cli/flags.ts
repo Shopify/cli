@@ -1,6 +1,8 @@
 import {Flags} from '@oclif/core'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {renderError} from '@shopify/cli-kit/node/ui'
 
 /**
  * An object that contains the flags that
@@ -10,7 +12,21 @@ export const themeFlags = {
   path: Flags.string({
     description: 'The path where you want to run the command. Defaults to the current working directory.',
     env: 'SHOPIFY_FLAG_PATH',
-    parse: async (input) => resolvePath(input),
+    parse: async (input) => {
+      const resolvedPath = resolvePath(input)
+
+      if (fileExistsSync(resolvedPath)) {
+        return resolvedPath
+      }
+
+      // We can't use AbortError because oclif catches it and adds its own
+      // messaging that breaks our UI
+      renderError({
+        headline: "A path was explicitly provided but doesn't exist.",
+        body: [`Please check the path and try again: ${resolvedPath}`],
+      })
+      process.exit(1)
+    },
     default: async () => cwd(),
     noCacheDefault: true,
   }),
