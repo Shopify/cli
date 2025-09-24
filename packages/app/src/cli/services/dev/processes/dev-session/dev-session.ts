@@ -221,6 +221,22 @@ export class DevSession {
       await this.logger.debug('❌ App preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
+
+      // Check for app uninstallation error
+      if (result.status === 'remote-error') {
+        const errors = result.error
+
+        // Check for the specific error message indicating app uninstallation
+        const hasInstallationError = errors.some((err) =>
+          err.message.includes("The app isn't installed on the specified store"),
+        )
+
+        if (hasInstallationError) {
+          await this.handleAppUninstalled()
+          return
+        }
+      }
+
       if (result.error instanceof Error && result.error.cause === 'validation-error') {
         this.statusManager.setMessage('VALIDATION_ERROR')
       } else {
@@ -393,6 +409,30 @@ export class DevSession {
     const errors = result.devSessionUpdate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'updated'}
+  }
+
+  /**
+   * Handle app uninstallation by gracefully shutting down the dev session
+   */
+  private async handleAppUninstalled() {
+    // Log a clear message about what happened
+    await this.logger.info('')
+    await this.logger.info('App has been uninstalled from the store.')
+    await this.logger.info('Run `shopify app dev` to reinstall and continue development.')
+
+    // Update status to indicate the session is ending
+    this.statusManager.updateStatus({
+      isReady: false,
+      statusMessage: {
+        message: 'App uninstalled - shutting down',
+        type: 'error',
+      },
+    })
+
+    // Exit gracefully - this mimics what happens when user presses 'q'
+    if (!isUnitTest()) {
+      process.exit(0)
+    }
   }
 
   /**
