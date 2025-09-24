@@ -85,17 +85,44 @@ export class FileWatcher {
   }
 
   async start(): Promise<void> {
-    const {default: chokidar} = await import('chokidar')
+    await this.startWatcher()
+  }
+
+  async updateApp(app: AppLinkedInterface) {
+    this.app = app
+    this.extensionPaths = this.app.nonConfigExtensions
+      .map((ext) => normalizePath(ext.directory))
+      .filter((dir) => dir !== this.app.directory)
+    this.extensionPaths.forEach((path) => {
+      this.ignored[path] ??= this.createIgnoreInstance(path)
+    })
+
+    await this.startWatcher()
+  }
+
+  /**
+   * Refreshes the file watcher by closing the current watcher and creating a new one
+   * with updated watched files. This ensures the watcher picks up any changes in
+   * what files need to be watched.
+   */
+  async startWatcher(): Promise<void> {
+    outputDebug('Starting file watcher...', this.options.stdout)
 
     const extensionDirectories = [...(this.app.configuration.extension_directories ?? ['extensions'])]
     const fullExtensionDirectories = extensionDirectories.map((directory) => joinPath(this.app.directory, directory))
-
     const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
 
-    // Get all watched files from extensions and add them to watch paths
-    const allWatchedFiles = await this.getAllWatchedFiles()
+    // Get all watched files from extensions
+    const allWatchedFiles = this.getAllWatchedFiles()
     watchPaths.push(...allWatchedFiles)
 
+    const {default: chokidar} = await import('chokidar')
+
+    if (this.watcher) {
+      await this.watcher.close()
+    }
+
+    // Create new watcher
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
         '**/node_modules/**',
@@ -112,37 +139,20 @@ export class FileWatcher {
 
     this.watcher.on('all', this.handleFileEvent)
     this.options.signal.addEventListener('abort', this.close)
-  }
 
-  async updateApp(app: AppLinkedInterface) {
-    this.app = app
-    this.extensionPaths = this.app.realExtensions
-      .map((ext) => normalizePath(ext.directory))
-      .filter((dir) => dir !== this.app.directory)
-    this.extensionPaths.forEach((path) => {
-      this.ignored[path] ??= this.createIgnoreInstance(path)
-    })
-
-    // Update watcher with new watched files (this also updates the watchedFiles set)
-    const allWatchedFiles = await this.getAllWatchedFiles()
-    if (this.watcher && allWatchedFiles.length > 0) {
-      outputDebug(`Updating watcher with ${allWatchedFiles.length} files`)
-      this.watcher.add(allWatchedFiles)
-    }
+    outputDebug(`File watcher started with ${watchPaths.length} paths`, this.options.stdout)
   }
 
   /**
    * Gets all files that need to be watched from all extensions
    */
-  private async getAllWatchedFiles(): Promise<string[]> {
+  private getAllWatchedFiles(): string[] {
     this.extensionWatchedFiles.clear()
 
-    const extensionResults = await Promise.all(
-      this.app.nonConfigExtensions.map(async (extension) => ({
-        extension,
-        watchedFiles: await extension.watchedFiles(),
-      })),
-    )
+    const extensionResults = this.app.nonConfigExtensions.map((extension) => ({
+      extension,
+      watchedFiles: extension.watchedFiles(),
+    }))
 
     const allFiles = new Set<string>()
     for (const {extension, watchedFiles} of extensionResults) {

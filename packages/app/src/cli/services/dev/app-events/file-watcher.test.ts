@@ -326,7 +326,6 @@ describe('file-watcher events', () => {
     'The event $name returns the expected WatcherEvent',
     async ({fileSystemEvents, expectedEvent}) => {
       // Simplified - these complex multi-event scenarios are better tested in integration tests
-      return
     },
   )
 
@@ -604,6 +603,41 @@ describe('file-watcher events', () => {
         clearTimeout(timeout)
         throw error
       }
+    })
+  })
+
+  describe('refreshWatchedFiles', () => {
+    test('closes and recreates the watcher with updated paths', async () => {
+      // Given
+      const mockClose = vi.fn().mockResolvedValue(undefined)
+      let watchCalls = 0
+      const watchedPaths: string[][] = []
+
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchCalls++
+        watchedPaths.push(paths as string[])
+        return {
+          on: vi.fn().mockReturnThis(),
+          add: vi.fn(),
+          close: mockClose,
+        } as any
+      })
+
+      const fileWatcher = new FileWatcher(defaultApp, outputOptions)
+      await fileWatcher.start()
+
+      // Initial watcher should be created
+      expect(watchCalls).toBe(1)
+      expect(mockClose).not.toHaveBeenCalled()
+
+      // When refreshing
+      await fileWatcher.startWatcher()
+
+      // Then
+      expect(mockClose).toHaveBeenCalledTimes(1)
+      expect(watchCalls).toBe(2)
+      // Should have same paths
+      expect(watchedPaths[1]).toEqual(watchedPaths[0])
     })
   })
 })

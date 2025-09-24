@@ -1,5 +1,5 @@
 /* eslint-disable tsdoc/syntax */
-import {FileWatcher, OutputContextOptions, WatcherEvent} from './file-watcher.js'
+import {FileWatcher, OutputContextOptions} from './file-watcher.js'
 import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
@@ -10,6 +10,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {deepCopy, deepCompare} from '@shopify/cli-kit/common/object'
 import {formatMessagesSync, Message} from 'esbuild'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import EventEmitter from 'events'
@@ -145,26 +146,23 @@ export class AppEventWatcher extends EventEmitter {
       await this.buildExtensions(this.initialEvents)
     }
 
-    await this.refreshWatchedFiles()
+    await this.refreshExtensionMappings()
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
     this.fileWatcher.onChange((events) => {
-      // Fix events with "unknown" extension paths by mapping to actual affected extensions
-      const fixedEvents = this.fixUnknownExtensionPaths(events)
-
-      handleWatcherEvents(fixedEvents, this.app, this.options)
+      handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
           if (!appEvent) return
 
           this.app = appEvent.app
-          if (appEvent.appWasReloaded) {
-            await this.fileWatcher?.updateApp(this.app)
-          }
           await this.esbuildManager.updateContexts(appEvent)
 
-          // Check if we need to rescan imports for any affected extensions
-          await this.rescanImports(appEvent)
+          const importsChanged = await this.rescanImports(appEvent)
+
+          if (appEvent.appWasReloaded ?? importsChanged) {
+            await this.fileWatcher?.updateApp(this.app)
+          }
 
           // Find affected created/updated extensions and build them
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
@@ -292,9 +290,12 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   /**
-   * Refreshes the tracked files for all extensions
+   * Refreshes the mapping of tracked files per extension
    */
-  private async refreshWatchedFiles(): Promise<void> {
+  private async refreshExtensionMappings(): Promise<boolean> {
+    // Create a deep copy of the current mapping to compare later
+    const oldFileToExtensions = deepCopy(this.fileToExtensions)
+
     this.fileToExtensions.clear()
 
     // Get all files that need to be watched from all extensions
@@ -302,9 +303,9 @@ export class AppEventWatcher extends EventEmitter {
 
     // Use Promise.all to avoid sequential awaits in loop
     const extensionWatchedFiles = await Promise.all(
-      this.app.realExtensions.map(async (extension) => ({
+      this.app.nonConfigExtensions.map(async (extension) => ({
         extension,
-        watchedFiles: await extension.watchedFiles(),
+        watchedFiles: extension.watchedFiles(),
       })),
     )
 
@@ -324,47 +325,22 @@ export class AppEventWatcher extends EventEmitter {
       }
     }
 
-    outputDebug(`Tracking ${allWatchedFiles.size} files`)
-  }
-
-  /**
-   * Fixes events with "unknown" extension paths by creating separate events for each affected extension
-   */
-  private fixUnknownExtensionPaths(events: WatcherEvent[]): WatcherEvent[] {
-    const fixedEvents: WatcherEvent[] = []
-
-    for (const event of events) {
-      if (event.extensionPath === 'unknown') {
-        // This is an imported file - create events for all extensions that watch it
-        const normalizedPath = normalizePath(event.path)
-        const watchingExtensions = this.fileToExtensions.get(normalizedPath)
-
-        if (watchingExtensions && watchingExtensions.size > 0) {
-          // Create a separate event for each watching extension
-          for (const extension of watchingExtensions) {
-            fixedEvents.push({
-              ...event,
-              extensionPath: extension.directory,
-            })
-          }
-        }
-        // If no extensions are watching this file, skip the event
-      } else {
-        // Regular event - keep as is
-        fixedEvents.push(event)
-      }
+    const updatedMappings = !deepCompare(oldFileToExtensions, this.fileToExtensions)
+    if (updatedMappings) {
+      outputDebug(`Updated tracking of ${allWatchedFiles.size} files`)
     }
 
-    return fixedEvents
+    return updatedMappings
   }
 
   /**
    * Handles import rescanning for affected extensions
+   * Returns true if the imports changed
    */
-  private async rescanImports(appEvent: AppEvent): Promise<void> {
+  private async rescanImports(appEvent: AppEvent): Promise<boolean> {
     // Don't rescan for config files
     const isConfigFile = appEvent.path.endsWith('.toml')
-    if (isConfigFile) return
+    if (isConfigFile) return false
 
     const normalizedPath = normalizePath(appEvent.path)
     const extensionsToRescan = Array.from(this.fileToExtensions.get(normalizedPath) ?? [])
@@ -377,7 +353,8 @@ export class AppEventWatcher extends EventEmitter {
         }),
       )
       // Refresh watched files after rescanning
-      await this.refreshWatchedFiles()
+      return this.refreshExtensionMappings()
     }
+    return false
   }
 }

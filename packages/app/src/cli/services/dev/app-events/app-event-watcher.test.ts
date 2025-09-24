@@ -499,4 +499,12 @@ class MockFileWatcher extends FileWatcher {
   onChange(listener: (events: WatcherEvent[]) => void) {
     this.listener = listener
   }
+
+  async updateApp(_app: AppLinkedInterface): Promise<void> {
+    // Mock implementation
+  }
+
+  async startWatcher(): Promise<void> {
+    // Mock implementation
+  }
 }

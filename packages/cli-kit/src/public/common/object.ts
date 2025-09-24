@@ -4,6 +4,7 @@ import {Dictionary, ObjectIterator, PropertyPath, ValueKeyIteratee} from 'lodash
 import lodashPickBy from 'lodash/pickBy.js'
 import lodashMapValues from 'lodash/mapValues.js'
 import lodashIsEqual from 'lodash/isEqual.js'
+import lodashCloneDeep from 'lodash/cloneDeep.js'
 import differenceWith from 'lodash/differenceWith.js'
 import fromPairs from 'lodash/fromPairs.js'
 import toPairs from 'lodash/toPairs.js'
@@ -79,6 +80,16 @@ export function deepDifference(one: object, two: object): [object, object] {
   const changes = differenceWith(toPairs(one), toPairs(two), deepCompare)
   const changes2 = differenceWith(toPairs(two), toPairs(one), deepCompare)
   return [fromPairs(changes), fromPairs(changes2)]
+}
+
+/**
+ * Creates a deep copy of an object, cloning values recursively.
+ *
+ * @param source - The object to deep copy.
+ * @returns A new object with copied values.
+ */
+export function deepCopy<T>(source: T): T {
+  return lodashCloneDeep(source)
 }
 
 /**
