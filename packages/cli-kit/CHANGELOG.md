@@ -1,5 +1,19 @@
 # @shopify/cli-kit
 
+## 3.85.0
+
+### Minor Changes
+
+- b855ec1: Allow theme push and share commands to be called with multiple environments
+- 74fc99c: Commands that don't require authentication should not create sessions when ran with multiple environments
+- 1416fe1: Ensure user provided flag values override defaults in commands with multiple environments
+- 6497461: Add `auth login` command with multi-session support
+
+### Patch Changes
+
+- a883d5b: Remove redundant calls to normalizeStoreFqdn in requests
+- be916a1: Fix theme event reporting for monorail
+
 ## 3.84.0
 
 ### Minor Changes

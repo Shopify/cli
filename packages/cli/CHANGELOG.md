@@ -1,5 +1,18 @@
 # @shopify/cli
 
+## 3.85.0
+
+### Minor Changes
+
+- b855ec1: Allow theme push and share commands to be called with multiple environments
+- 809d355: Display warning when multiple environment flags are provided to profile, metafields pull, open, dev, or console theme commands
+- 6497461: Add `auth login` command with multi-session support
+- f8df96b: Allow theme pull command to be called with multiple environments
+
+### Patch Changes
+
+- 4d377e8: Remove leftover references to CLI2 from theme commands
+
 ## 3.84.0
 
 ### Minor Changes
