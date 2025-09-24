@@ -316,31 +316,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return watchPaths
   }
 
-  get watchBuildPaths() {
-    if (this.isFunctionExtension) {
-      const config = this.configuration as unknown as FunctionConfigType
-      const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
-
-      if (!this.isJavaScript && configuredPaths.length === 0) {
-        return null
-      }
-
-      const watchPaths: string[] = configuredPaths ?? []
-      if (this.isJavaScript && configuredPaths.length === 0) {
-        watchPaths.push(joinPath('src', '**', '*.{js,ts}'))
-      }
-      watchPaths.push(joinPath('**', '!(.)*.graphql'))
-
-      return watchPaths.map((path) => joinPath(this.directory, path))
-    } else if (this.isESBuildExtension) {
-      return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
-    } else if (this.isThemeExtension) {
-      return [joinPath(this.directory, '*', '*')]
-    } else {
-      return []
-    }
-  }
-
   async watchConfigurationPaths() {
     if (this.isAppConfigExtension) {
       return [this.configurationPath]
