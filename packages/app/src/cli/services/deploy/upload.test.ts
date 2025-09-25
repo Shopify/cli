@@ -478,7 +478,7 @@ describe('deploymentErrorsToCustomSections', () => {
       },
       {
         title: 'admin-link',
-        body: '\n1 error found in your extension. Fix these issues in the Partner Dashboard and try deploying again.',
+        body: '\n1 error found in your extensions. Fix these issues and try deploying again.',
       },
     ])
   })
