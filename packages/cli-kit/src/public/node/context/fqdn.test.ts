@@ -209,4 +209,12 @@ describe('normalizeStore', () => {
     // Then
     expect(got).toEqual('example.myshopify.io')
   })
+
+  test('parses store name with admin', async () => {
+    // When
+    const got = await normalizeStoreFqdn('https://example.myshopify.com/admin/')
+
+    // Then
+    expect(got).toEqual('example.myshopify.com')
+  })
 })
