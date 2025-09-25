@@ -32,7 +32,7 @@ export class StoreExportOperation implements StoreOperation {
   async execute(fromStore: string, toFile: string, flags: FlagOptions): Promise<void> {
     this.fromArg = fromStore
 
-    const sourceShopDomain = await normalizeStoreFqdn(fromStore)
+    const sourceShopDomain = normalizeStoreFqdn(fromStore)
 
     const apiShopId = await this.validateShop(sourceShopDomain)
 

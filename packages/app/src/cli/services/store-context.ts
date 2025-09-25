@@ -56,7 +56,7 @@ export async function storeContext({
   }
 
   await logMetadata(selectedStore, forceReselectStore)
-  selectedStore.shopDomain = await normalizeStoreFqdn(selectedStore.shopDomain)
+  selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)
 
   // Save the selected store in the hidden config file
   if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {

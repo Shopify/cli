@@ -28,8 +28,8 @@ export class StoreCopyOperation implements StoreOperation {
     this.fromArg = fromStore
     this.toArg = toStore
 
-    const sourceShopDomain = await normalizeStoreFqdn(fromStore)
-    const targetShopDomain = await normalizeStoreFqdn(toStore)
+    const sourceShopDomain = normalizeStoreFqdn(fromStore)
+    const targetShopDomain = normalizeStoreFqdn(toStore)
 
     const apiShopId = await this.validateShops(sourceShopDomain, targetShopDomain)
 

@@ -39,7 +39,7 @@ export class StoreImportOperation implements StoreOperation {
 
     await this.validateInputFile(fromFile)
 
-    const targetShopDomain = await normalizeStoreFqdn(toStore)
+    const targetShopDomain = normalizeStoreFqdn(toStore)
     const apiShopId = await this.validateShop(targetShopDomain)
 
     if (!flags['no-prompt']) {
