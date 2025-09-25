@@ -11,6 +11,7 @@ query ListAppDevStores($searchTerm: String) {
           storeType
           primaryDomain
           shortName
+          url
         }
       }
       pageInfo {
