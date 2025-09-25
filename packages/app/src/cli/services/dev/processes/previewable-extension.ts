@@ -60,7 +60,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     signal: abortSignal,
     url: proxyUrl,
     port,
-    storeFqdn: await normalizeStoreFqdn(storeFqdn),
+    storeFqdn: normalizeStoreFqdn(storeFqdn),
     storeId,
     apiKey,
     grantedScopes,
