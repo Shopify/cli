@@ -1,5 +1,40 @@
 # @shopify/theme
 
+## 3.85.0
+
+### Minor Changes
+
+- c2b6097: Abort theme commands if path doesn't exist
+- 7f54a36: Ensure commands run in multiple environments use the correct store URL
+- b855ec1: Allow theme push and share commands to be called with multiple environments
+- 84a7b10: Remove deprecated positional arguments from theme delete command
+- 74fc99c: Commands that don't require authentication should not create sessions when ran with multiple environments
+- 9966ba6: Allow commands run in multiple environments to act on the same store URL
+- acf3248: Allow theme check command to be called with multiple environments
+- 1416fe1: Ensure user provided flag values override defaults in commands with multiple environments
+- 1ee6a38: Allow theme delete command to be called with multiple environments
+- 809d355: Display warning when multiple environment flags are provided to profile, metafields pull, open, dev, or console theme commands
+- f8df96b: Allow theme pull command to be called with multiple environments
+- c5e181c: Extend ThemeCommand's command method to accept both flags and arguments from CLI
+
+### Patch Changes
+
+- 87bedd2: No longer raise password errors when users use custom app passwords on `shopify theme pull/push` commands
+- 9574ca8: Allow publish command to be called with multiple environments
+- 4d377e8: Remove leftover references to CLI2 from theme commands
+- c12289e: Moved analytics logging in theme command layer to ensure we properly log all events
+- abff4d4: Fixed issue with theme.toml files that have a store name without the full domain from being parsed in multi-environment mode
+- 8702cdc: Fix theme file size calculation to improve upload batching reliability
+- f1f5581: Improve `shopify theme dev` to prevent accidental updates to live themes
+- 95c82ef: Bump theme-tool packages
+- Updated dependencies [b855ec1]
+- Updated dependencies [a883d5b]
+- Updated dependencies [74fc99c]
+- Updated dependencies [be916a1]
+- Updated dependencies [1416fe1]
+- Updated dependencies [6497461]
+  - @shopify/cli-kit@3.85.0
+
 ## 3.84.0
 
 ### Minor Changes
