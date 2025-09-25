@@ -204,9 +204,15 @@ export async function findNearestTsConfigDir(
   extensionDirectory: string,
 ): Promise<string | undefined> {
   const fromDirectory = dirname(fromFile)
-  const tsconfigPath = await findPathUp('tsconfig.json', {cwd: fromDirectory, type: 'file', stopAt: extensionDirectory})
+  const tsconfigPath = await findPathUp('tsconfig.json', {cwd: fromDirectory, type: 'file'})
 
   if (tsconfigPath) {
-    return dirname(tsconfigPath)
+    // Normalize both paths for cross-platform comparison
+    const normalizedTsconfigPath = resolvePath(tsconfigPath)
+    const normalizedExtensionDirectory = resolvePath(extensionDirectory)
+
+    if (normalizedTsconfigPath.startsWith(normalizedExtensionDirectory)) {
+      return dirname(tsconfigPath)
+    }
   }
 }
