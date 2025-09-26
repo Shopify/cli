@@ -118,7 +118,7 @@ type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'cus
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
-let authenticationPromise: Promise<OAuthSession> | null = null
+const authenticationInProgress = new Map<string, Promise<OAuthSession>>()
 
 /**
  * Retrieves the user ID from the current session or returns 'unknown' if not found.
@@ -197,15 +197,17 @@ export async function ensureAuthenticated(
   _env?: NodeJS.ProcessEnv,
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
-  // If an authentication is already in progress, wait for it to complete and return its result.
-  if (authenticationPromise) {
-    outputDebug('An authentication process is already in progress. Waiting for it to complete...')
-    return authenticationPromise
+  const store = applications.adminApi?.storeFqdn ?? 'no-store'
+
+  // If an authentication is already in progress for this store, wait for it to complete and return its result.
+  const existingAuthPromise = authenticationInProgress.get(store)
+  if (existingAuthPromise) {
+    outputDebug(`Authentication already in progress for store ${store}, waiting...`)
+    return existingAuthPromise
   }
 
-  authenticationPromise = (async () => {
+  const authPromise = (async (): Promise<OAuthSession> => {
     const fqdn = await identityFqdn()
-
     const previousStoreFqdn = applications.adminApi?.storeFqdn
     if (previousStoreFqdn) {
       const normalizedStoreName = await normalizeStoreFqdn(previousStoreFqdn)
@@ -282,13 +284,12 @@ ${outputToken.json(applications)}
     setLastSeenUserIdAfterAuth(tokens.userId)
     return tokens
   })()
+  authenticationInProgress.set(store, authPromise)
 
   try {
-    return await authenticationPromise
+    return await authPromise
   } finally {
-    // Release the lock.This can not be a race condition because we are waiting for the promise to resolve/reject.
-    // eslint-disable-next-line require-atomic-updates
-    authenticationPromise = null
+    authenticationInProgress.delete(store)
   }
 }
 

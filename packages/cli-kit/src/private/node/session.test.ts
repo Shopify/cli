@@ -693,4 +693,24 @@ describe('ensureAuthenticated concurrent flows', () => {
     expect(exchangeAccessForApplicationTokens).toHaveBeenCalledTimes(1)
     expect(storeSessions).toHaveBeenCalledTimes(1)
   })
+
+  test('allows concurrent authentication for different stores (multi-environment support)', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+
+    const store1Applications = {adminApi: {scopes: [], storeFqdn: 'store1.myshopify.com'}}
+    const store2Applications = {adminApi: {scopes: [], storeFqdn: 'store2.myshopify.com'}}
+
+    // When
+    const [result1, result2] = await Promise.all([
+      ensureAuthenticated(store1Applications),
+      ensureAuthenticated(store2Applications),
+    ])
+
+    // Then
+    expect(exchangeAccessForApplicationTokens).toHaveBeenCalledTimes(2)
+    expect(result1.userId).toBe(userId)
+    expect(result2.userId).toBe(userId)
+  })
 })
