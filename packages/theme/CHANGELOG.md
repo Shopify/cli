@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.85.1
+
+### Patch Changes
+
+- d59a924: Bump theme-tools packages
+  - @shopify/cli-kit@3.85.1
+
 ## 3.85.0
 
 ### Minor Changes
