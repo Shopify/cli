@@ -1,5 +1,15 @@
 # @shopify/app
 
+## 3.85.1
+
+### Patch Changes
+
+- 0c9f5bb: Bump theme-tools packages
+- Updated dependencies [0c9f5bb]
+  - @shopify/theme@3.85.1
+  - @shopify/cli-kit@3.85.1
+  - @shopify/plugin-cloudflare@3.85.1
+
 ## 3.85.0
 
 ### Minor Changes
