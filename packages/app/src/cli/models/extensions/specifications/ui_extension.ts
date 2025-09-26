@@ -1,17 +1,14 @@
+import {findAllImportedFiles, createTypeDefinition, findNearestTsConfigDir, parseApiVersion} from './type-generation.js'
 import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {fileExists, findPathUp} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativizePath} from '@shopify/cli-kit/node/path'
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
 
 const dependency = '@shopify/checkout-ui-extensions'
 
@@ -158,46 +155,101 @@ const uiExtensionSpec = createExtensionSpecification({
     }
 
     const {configuration} = extension
+
+    // Track all files and their associated targets
+    const fileToTargetsMap = new Map<string, string[]>()
+
+    // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
       const fullPath = joinPath(extension.directory, extensionPoint.module)
       const exists = await fileExists(fullPath)
       if (!exists) continue
 
-      const mainTsConfigDir = await findNearestTsConfigDir(fullPath, extension.directory)
-      if (!mainTsConfigDir) continue
+      // Add main module
+      const currentTargets = fileToTargetsMap.get(fullPath) ?? []
+      currentTargets.push(extensionPoint.target)
+      fileToTargetsMap.set(fullPath, currentTargets)
 
-      const mainTypeFilePath = joinPath(mainTsConfigDir, 'shopify.d.ts')
-      const mainTypes = getSharedTypeDefinition(
-        fullPath,
-        mainTypeFilePath,
-        extensionPoint.target,
-        configuration.api_version,
-      )
-      if (mainTypes) {
-        const currentTypes = typeDefinitionsByFile.get(mainTypeFilePath) ?? new Set<string>()
-        currentTypes.add(mainTypes)
-        typeDefinitionsByFile.set(mainTypeFilePath, currentTypes)
+      // Add should render module if present
+      if (extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]?.module) {
+        const shouldRenderPath = joinPath(
+          extension.directory,
+          extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module,
+        )
+        const shouldRenderExists = await fileExists(shouldRenderPath)
+        if (shouldRenderExists) {
+          const shouldRenderTargets = fileToTargetsMap.get(shouldRenderPath) ?? []
+          shouldRenderTargets.push(getShouldRenderTarget(extensionPoint.target))
+          fileToTargetsMap.set(shouldRenderPath, shouldRenderTargets)
+        }
+      }
+    }
+
+    // Second pass: find all imported files from each entry point
+    for await (const extensionPoint of configuration.extension_points) {
+      const fullPath = joinPath(extension.directory, extensionPoint.module)
+      const exists = await fileExists(fullPath)
+      if (!exists) continue
+
+      // Find all imported files recursively
+      const importedFiles = await findAllImportedFiles(fullPath)
+
+      // Associate imported files with this extension point's target
+      for (const importedFile of importedFiles) {
+        const currentTargets = fileToTargetsMap.get(importedFile) ?? []
+        currentTargets.push(extensionPoint.target)
+        fileToTargetsMap.set(importedFile, currentTargets)
       }
 
+      // Also process should_render imports if present
       if (extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]?.module) {
-        const shouldRenderTsConfigDir = await findNearestTsConfigDir(
-          joinPath(extension.directory, extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module),
+        const shouldRenderPath = joinPath(
           extension.directory,
+          extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module,
         )
-        if (!shouldRenderTsConfigDir) continue
-
-        const shouldRenderTypeFilePath = joinPath(shouldRenderTsConfigDir, 'shopify.d.ts')
-        const shouldRenderTypes = getSharedTypeDefinition(
-          joinPath(extension.directory, extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender].module),
-          shouldRenderTypeFilePath,
-          getShouldRenderTarget(extensionPoint.target),
-          configuration.api_version,
-        )
-        if (shouldRenderTypes) {
-          const currentTypes = typeDefinitionsByFile.get(shouldRenderTypeFilePath) ?? new Set<string>()
-          currentTypes.add(shouldRenderTypes)
-          typeDefinitionsByFile.set(shouldRenderTypeFilePath, currentTypes)
+        const shouldRenderExists = await fileExists(shouldRenderPath)
+        if (shouldRenderExists) {
+          const shouldRenderImports = await findAllImportedFiles(shouldRenderPath)
+          for (const importedFile of shouldRenderImports) {
+            const currentTargets = fileToTargetsMap.get(importedFile) ?? []
+            currentTargets.push(getShouldRenderTarget(extensionPoint.target))
+            fileToTargetsMap.set(importedFile, currentTargets)
+          }
         }
+      }
+    }
+
+    // Third pass: generate type definitions for all files
+    for await (const [filePath, targets] of fileToTargetsMap.entries()) {
+      const tsConfigDir = await findNearestTsConfigDir(filePath, extension.directory)
+      if (!tsConfigDir) continue
+
+      const typeFilePath = joinPath(tsConfigDir, 'shopify.d.ts')
+
+      // Remove duplicates from targets
+      const uniqueTargets = [...new Set(targets)]
+
+      try {
+        const typeDefinition = createTypeDefinition(filePath, typeFilePath, uniqueTargets, configuration.api_version)
+        if (typeDefinition) {
+          const currentTypes = typeDefinitionsByFile.get(typeFilePath) ?? new Set<string>()
+          currentTypes.add(typeDefinition)
+          typeDefinitionsByFile.set(typeFilePath, currentTypes)
+        }
+      } catch (error) {
+        // Only throw if this is an entry point file (required)
+        const isEntryPoint = configuration.extension_points.some(
+          (ep) =>
+            joinPath(extension.directory, ep.module) === filePath ||
+            (ep.build_manifest.assets[AssetIdentifier.ShouldRender]?.module &&
+              joinPath(extension.directory, ep.build_manifest.assets[AssetIdentifier.ShouldRender].module) ===
+                filePath),
+        )
+
+        if (isEntryPoint) {
+          throw error
+        }
+        // Silently skip imported files that can't be resolved
       }
     }
   },
@@ -269,53 +321,15 @@ function isRemoteDomExtension(
   config: ExtensionInstance['configuration'],
 ): config is ExtensionInstance<{api_version: string}>['configuration'] {
   const apiVersion = config.api_version
-  const [year, month] = apiVersion?.split('-').map((part: string) => parseInt(part, 10)) ?? []
-  if (!year || !month) {
+  if (!apiVersion) {
     return false
   }
-
+  const {year, month} = parseApiVersion(apiVersion) ?? {year: 0, month: 0}
   return year > 2025 || (year === 2025 && month >= 10)
 }
 
 export function getShouldRenderTarget(target: string) {
   return target.replace(/\.render$/, '.should-render')
-}
-
-function convertApiVersionToSemver(apiVersion: string): string {
-  const [year, month] = apiVersion.split('-')
-  if (!year || !month) {
-    throw new AbortError('Invalid API version format. Expected format: YYYY-MM')
-  }
-  return `${year}.${month}.0`
-}
-
-function getSharedTypeDefinition(fullPath: string, typeFilePath: string, target: string, apiVersion: string) {
-  try {
-    // Check if target types can be found
-    // We try to resolve from the module's path first with the app root as the fallback in case dependencies are hoisted to the shared workspace
-    require.resolve(`@shopify/ui-extensions/${target}`, {paths: [fullPath, typeFilePath]})
-
-    return `//@ts-ignore\ndeclare module './${relativizePath(fullPath, dirname(typeFilePath))}' {
-  const shopify: import('@shopify/ui-extensions/${target}').Api;
-  const globalThis: { shopify: typeof shopify };
-}\n`
-  } catch (_) {
-    throw new AbortError(
-      `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
-      `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ${convertApiVersionToSemver(
-        apiVersion,
-      )}, in your dependencies.`,
-    )
-  }
-}
-
-async function findNearestTsConfigDir(fromFile: string, extensionDirectory: string): Promise<string | undefined> {
-  const fromDirectory = dirname(fromFile)
-  const tsconfigPath = await findPathUp('tsconfig.json', {cwd: fromDirectory, type: 'file', stopAt: extensionDirectory})
-
-  if (tsconfigPath) {
-    return dirname(tsconfigPath)
-  }
 }
 
 export default uiExtensionSpec
