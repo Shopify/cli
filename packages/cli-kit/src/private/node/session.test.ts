@@ -626,3 +626,91 @@ describe('ensureAuthenticated email fetch functionality', () => {
     expect(got).toEqual(validTokens)
   })
 })
+
+describe('ensureAuthenticated concurrent flows', () => {
+  test('multiple concurrent authentication calls share the same result', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+
+    // When
+    const promise1 = ensureAuthenticated(defaultApplications)
+    const promise2 = ensureAuthenticated(defaultApplications)
+    const promise3 = ensureAuthenticated(defaultApplications)
+
+    const results = await Promise.all([promise1, promise2, promise3])
+
+    // Then
+    expect(exchangeAccessForApplicationTokens).toHaveBeenCalledTimes(1)
+    expect(refreshAccessToken).not.toHaveBeenCalled()
+    expect(businessPlatformRequest).toHaveBeenCalledTimes(1)
+    expect(storeSessions).toHaveBeenCalledTimes(1)
+
+    expect(results).toEqual([validTokens, validTokens, validTokens])
+  })
+
+  test('multiple concurrent flows all fail together when authentication fails', async () => {
+    // Given
+    const authError = new Error('Authentication failed')
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+    vi.mocked(exchangeAccessForApplicationTokens).mockRejectedValue(authError)
+
+    // When
+    const promise1 = ensureAuthenticated(defaultApplications)
+    const promise2 = ensureAuthenticated(defaultApplications)
+    const promise3 = ensureAuthenticated(defaultApplications)
+
+    const results = await Promise.allSettled([promise1, promise2, promise3])
+
+    // Then
+    expect(exchangeAccessForApplicationTokens).toHaveBeenCalledTimes(1)
+
+    results.forEach((result) => {
+      expect(result.status).toBe('rejected')
+      if (result.status === 'rejected') {
+        expect(result.reason).toEqual(authError)
+      }
+    })
+  })
+
+  test('lock is released after previous flows complete', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+
+    // When
+    await ensureAuthenticated(defaultApplications)
+
+    // Reset mocks for second authentication
+    vi.mocked(exchangeAccessForApplicationTokens).mockClear()
+    vi.mocked(storeSessions).mockClear()
+
+    // When
+    await ensureAuthenticated(defaultApplications)
+
+    // Then
+    expect(exchangeAccessForApplicationTokens).toHaveBeenCalledTimes(1)
+    expect(storeSessions).toHaveBeenCalledTimes(1)
+  })
+
+  test('allows concurrent authentication for different stores (multi-environment support)', async () => {
+    // Given
+    vi.mocked(validateSession).mockResolvedValue('needs_full_auth')
+    vi.mocked(fetchSessions).mockResolvedValue(undefined)
+
+    const store1Applications = {adminApi: {scopes: [], storeFqdn: 'store1.myshopify.com'}}
+    const store2Applications = {adminApi: {scopes: [], storeFqdn: 'store2.myshopify.com'}}
+
+    // When
+    const [result1, result2] = await Promise.all([
+      ensureAuthenticated(store1Applications),
+      ensureAuthenticated(store2Applications),
+    ])
+
+    // Then
+    expect(exchangeAccessForApplicationTokens).toHaveBeenCalledTimes(2)
+    expect(result1.userId).toBe(userId)
+    expect(result2.userId).toBe(userId)
+  })
+})
