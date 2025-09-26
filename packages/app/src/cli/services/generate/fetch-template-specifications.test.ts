@@ -1,13 +1,7 @@
 import {fetchExtensionTemplates} from './fetch-template-specifications.js'
 import {ExtensionFlavorValue} from './extension.js'
 import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
-import {ExtensionFlavor} from '../../models/app/template.js'
-import {describe, expect, test, vi} from 'vitest'
-import * as experimentModule from '@shopify/cli-kit/node/is-polaris-unified-enabled'
-
-vi.mock('@shopify/cli-kit/node/is-polaris-unified-enabled', () => ({
-  isPolarisUnifiedEnabled: vi.fn().mockReturnValue(false),
-}))
+import {describe, expect, test} from 'vitest'
 
 describe('fetchTemplateSpecifications', () => {
   test('returns the remote specs', async () => {
@@ -34,12 +28,7 @@ describe('fetchTemplateSpecifications', () => {
   })
 
   describe('ui_extension', () => {
-    const preactFlavor: ExtensionFlavor = {
-      name: 'Preact',
-      value: 'preact' as ExtensionFlavorValue,
-    }
-
-    const oldFlavors = [
+    const allFlavors = [
       {
         name: 'JavaScript React',
         value: 'react' as ExtensionFlavorValue,
@@ -60,8 +49,11 @@ describe('fetchTemplateSpecifications', () => {
         value: 'typescript' as ExtensionFlavorValue,
         path: 'admin-action',
       },
+      {
+        name: 'Preact',
+        value: 'preact' as ExtensionFlavorValue,
+      },
     ]
-    const allFlavors = [...oldFlavors, preactFlavor]
 
     async function getTemplates() {
       const {templates} = await fetchExtensionTemplates(
@@ -90,86 +82,12 @@ describe('fetchTemplateSpecifications', () => {
       return templates
     }
 
-    test('returns only the preact flavor when POLARIS_UNIFIED is enabled', async () => {
-      // Given
-      vi.spyOn(experimentModule, 'isPolarisUnifiedEnabled').mockReturnValueOnce(true)
-
+    test('includes all flavors', async () => {
       // When
       const templates = await getTemplates()
 
       // Then
-      expect(templates[0]!.supportedFlavors).toEqual([preactFlavor])
-    })
-
-    test('excludes the preact flavor by default', async () => {
-      // When
-      const templates = await getTemplates()
-
-      // Then
-      expect(templates[0]!.supportedFlavors).toEqual(oldFlavors)
-    })
-
-    test('filter out templates that have no flavors available by default', async () => {
-      // When
-      const {templates} = await fetchExtensionTemplates(
-        testDeveloperPlatformClient({
-          templateSpecifications: () =>
-            Promise.resolve({
-              templates: [
-                {
-                  identifier: 'ui_extension',
-                  name: 'UI Extension',
-                  defaultName: 'ui-extension',
-                  group: 'Merchant Admin',
-                  supportLinks: [],
-                  type: 'ui_extension',
-                  url: 'https://github.com/Shopify/extensions-templates',
-                  extensionPoints: [],
-                  supportedFlavors: [preactFlavor],
-                },
-              ],
-              groupOrder: [],
-            }),
-        }),
-        testOrganizationApp(),
-        ['ui_extension'],
-      )
-
-      // Then
-      expect(templates).toEqual([])
-    })
-
-    test('filter out templates that have no flavors available POLARIS_UNIFIED is enabled', async () => {
-      // Given
-      vi.spyOn(experimentModule, 'isPolarisUnifiedEnabled').mockReturnValueOnce(true)
-
-      // When
-      const {templates} = await fetchExtensionTemplates(
-        testDeveloperPlatformClient({
-          templateSpecifications: () =>
-            Promise.resolve({
-              templates: [
-                {
-                  identifier: 'ui_extension',
-                  name: 'UI Extension',
-                  defaultName: 'ui-extension',
-                  group: 'Merchant Admin',
-                  supportLinks: [],
-                  type: 'ui_extension',
-                  url: 'https://github.com/Shopify/extensions-templates',
-                  extensionPoints: [],
-                  supportedFlavors: oldFlavors,
-                },
-              ],
-              groupOrder: [],
-            }),
-        }),
-        testOrganizationApp(),
-        ['ui_extension'],
-      )
-
-      // Then
-      expect(templates).toEqual([])
+      expect(templates[0]!.supportedFlavors).toEqual(allFlavors)
     })
   })
 })
