@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.85.2
+
+### Patch Changes
+
+- 40934d7: Add support for generating types for files imported by the main extension file
+  - @shopify/cli-kit@3.85.2
+  - @shopify/theme@3.85.2
+  - @shopify/plugin-cloudflare@3.85.2
+
 ## 3.85.1
 
 ### Patch Changes
