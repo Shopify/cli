@@ -193,6 +193,11 @@ export async function buildFunctionExtension(
   }
 }
 
+export async function buildTaxCalculationExtension(extension: ExtensionInstance): Promise<void> {
+  await touchFile(extension.outputPath)
+  await writeFile(extension.outputPath, '(()=>{})();')
+}
+
 export async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
   outputDebug(`Converting WASM from ${wasmPath} to base64 in ${bundlePath}`)
   const base64Contents = await readFile(wasmPath, {encoding: 'base64'})
