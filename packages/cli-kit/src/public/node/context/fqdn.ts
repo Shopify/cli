@@ -59,6 +59,21 @@ export async function appManagementFqdn(): Promise<string> {
 }
 
 /**
+ * It returns the Dev Store API service we should interact with.
+ *
+ * @returns Fully-qualified domain of the Dev Store service we should interact with.
+ */
+export async function devStoreFqdn(): Promise<string> {
+  const environment = serviceEnvironment()
+  const productionFqdn = 'app.shopify.com'
+  switch (environment) {
+    case 'local':
+      return new DevServerCore().host('app')
+    default:
+      return productionFqdn
+  }
+}
+/**
  * It returns the App Dev API service we should interact with.
  *
  * @param storeFqdn - The store FQDN.
