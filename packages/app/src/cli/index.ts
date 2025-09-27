@@ -13,6 +13,8 @@ import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
 import FetchSchema from './commands/app/function/schema.js'
 import FunctionTypegen from './commands/app/function/typegen.js'
+import Test from './commands/app/test.js'
+import TestExtension from './commands/app/test/extension.js'
 import AppGenerateExtension from './commands/app/generate/extension.js'
 import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
@@ -43,6 +45,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:info': AppInfo,
   'app:init': Init,
   'app:release': Release,
+  'app:test': Test,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
   'app:env:pull': EnvPull,
@@ -53,6 +56,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:function:run': FunctionRun,
   'app:function:schema': FetchSchema,
   'app:function:typegen': FunctionTypegen,
+  'app:test:extension': TestExtension,
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
