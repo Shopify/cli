@@ -126,6 +126,18 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+
+          // Mark @shopify/* files as in-project, including chunks
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ;(event as any).errors?.forEach((error: any) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            error.stacktrace?.forEach((stackFrame: any) => {
+              if (stackFrame.file && stackFrame.file.startsWith('@shopify/')) {
+                // All @shopify/* files are our code, including chunks
+                stackFrame.inProject = true
+              }
+            })
+          })
         }
         const errorHandler = (error: unknown) => {
           if (error) {
@@ -173,6 +185,14 @@ export function cleanStackFrameFilePath({
     return path.joinPath(matchingPluginPath.name, path.relativePath(matchingPluginPath.pluginPath, fullLocation))
   }
 
+  // Check if this is a main CLI package path (e.g., /path/to/cli/packages/cli/dist/index.js)
+  // and convert it to match uploaded sourcemap structure (e.g., @shopify/cli/dist/index.js)
+  const packagesMatch = fullLocation.match(/(?:^|\/)packages\/([\w-]+)\/(dist\/.+)$/)
+  if (packagesMatch) {
+    const [, packageName, distPath] = packagesMatch
+    return `@shopify/${packageName}/${distPath}`
+  }
+
   // strip prefix up to node_modules folder, so we can normalize error reporting
   return currentFilePath.replace(/.*node_modules\//, '')
 }
@@ -201,7 +221,13 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
     event.errors.forEach((error: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       error.stacktrace.forEach((stackFrame: any) => {
-        stackFrame.file = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+        const cleanedPath = cleanStackFrameFilePath({currentFilePath: stackFrame.file, projectRoot, pluginLocations})
+        stackFrame.file = cleanedPath
+        
+        // Mark @shopify/* files as in-project, including chunks
+        if (cleanedPath.startsWith('@shopify/')) {
+          stackFrame.inProject = true
+        }
       })
     })
     try {
