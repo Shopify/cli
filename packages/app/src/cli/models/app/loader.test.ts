@@ -3407,6 +3407,73 @@ describe('getAppConfigurationState', () => {
 })
 
 describe('loadConfigForAppCreation', () => {
+  test('returns correct configuration for the current react router config', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+scopes = "write_products"
+
+[webhooks]
+api_version = "2025-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: ['write_products'],
+        name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
+      })
+    })
+  })
+
+  test('returns correct configuration for the current react router config with DCDD', async () => {
+    // Given
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+scopes = "write_products"
+
+# Product metafield for tracking demo products created by this template
+[product.metafields.app.demo_info]
+type = "single_line_text_field"
+name = "Demo Source Info"
+description = "Tracks products created by the Shopify app template for development"
+access.admin = "merchant_read_write"
+
+[webhooks]
+api_version = "2025-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      // Then
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: ['write_products'],
+        name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
+      })
+    })
+  })
+
   test('returns correct configuration for a basic app with no webs', async () => {
     // Given
     await inTemporaryDirectory(async (tmpDir) => {
