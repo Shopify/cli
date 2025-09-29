@@ -16,6 +16,7 @@ import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
+import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
@@ -121,11 +122,13 @@ export async function sendErrorToBugsnag(
 
     if (report) {
       initializeBugsnag()
+      const userId = await getLastSeenUserIdAfterAuth()
       await new Promise((resolve, reject) => {
         outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+          event.setUser(userId)
         }
         const errorHandler = (error: unknown) => {
           if (error) {
