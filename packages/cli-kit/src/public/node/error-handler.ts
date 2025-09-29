@@ -21,26 +21,9 @@ import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
-// Allowed slice names for error analytics grouping. This is populated from the
-// loaded OCLIF config at runtime.
-let ALLOWED_SLICE_NAMES: Set<string> | undefined
-
-export function computeAllowedSliceNames(config: Interfaces.Config): Set<string> {
-  const names = new Set<string>()
-  const commands = (config.commands ?? []) as Array<{id?: string}>
-  for (const cmd of commands) {
-    // Command IDs are typically colon-separated (e.g. app:build). We take the first token.
-    const id = (cmd as unknown as {id?: string}).id
-    if (!id) continue
-    const first = id.split(':')[0]?.trim()
-    if (first) names.add(first)
-  }
-  return names
-}
-
-export function initializeAllowedSliceNames(config: Interfaces.Config): void {
-  ALLOWED_SLICE_NAMES = computeAllowedSliceNames(config)
-}
+// Allowed slice names for error analytics grouping.
+// Hardcoded list per product slices to keep analytics consistent.
+const ALLOWED_SLICE_NAMES = new Set<string>(['app', 'theme', 'hydrogen', 'store'])
 
 export async function errorHandler(
   error: Error & {exitCode?: number | undefined},
@@ -151,11 +134,6 @@ export async function sendErrorToBugsnag(
           const {commandStartOptions} = metadata.getAllSensitiveMetadata()
           const {startCommand} = commandStartOptions ?? {}
           if (startCommand) {
-            if (!ALLOWED_SLICE_NAMES) {
-              throw new Error(
-                'Internal error: allowed slice names not initialized. Ensure registerCleanBugsnagErrorsFromWithinPlugins() ran.',
-              )
-            }
             const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
             const sliceName = ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
             event.addMetadata('custom', {slice_name: sliceName})
@@ -216,8 +194,6 @@ export function cleanStackFrameFilePath({
  *
  */
 export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interfaces.Config): Promise<void> {
-  // Update allowed slice names dynamically based on loaded commands
-  initializeAllowedSliceNames(config)
   // Bugsnag have their own plug-ins that use this private field
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

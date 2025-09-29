@@ -1,11 +1,4 @@
-import {
-  errorHandler,
-  cleanStackFrameFilePath,
-  addBugsnagMetadata,
-  sendErrorToBugsnag,
-  computeAllowedSliceNames,
-  registerCleanBugsnagErrorsFromWithinPlugins,
-} from './error-handler.js'
+import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
 import * as metadata from './metadata.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/local.js'
 import {mockAndCaptureOutput} from './testing/output.js'
@@ -224,33 +217,7 @@ describe('sends errors to Bugsnag', () => {
     expect(mockOutput.debug()).toMatch('Error reporting to Bugsnag: Error: Bugsnag is down')
   })
 
-  test('logs and suppresses when allowed slice names not initialized', async () => {
-    // Reset module state to ensure ALLOWED_SLICE_NAMES is undefined
-    vi.resetModules()
-
-    await metadata.addSensitiveMetadata(() => ({
-      commandStartOptions: {startTime: Date.now(), startCommand: 'app dev', startArgs: []},
-    }))
-
-    const mockOutput = mockAndCaptureOutput()
-
-    const res = await sendErrorToBugsnag(new Error('boom'), 'unexpected_error')
-    expect(res.reported).toEqual(false)
-    expect(mockOutput.debug()).toMatch(
-      'Error reporting to Bugsnag: Error: Internal error: allowed slice names not initialized.',
-    )
-  })
-
   test('attaches custom metadata with allowed slice_name when startCommand is present', async () => {
-    // Initialize allowed slice names to include 'app' using a mock config
-    await registerCleanBugsnagErrorsFromWithinPlugins({
-      // Minimal shape required by the function
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      commands: [{id: 'app:dev'}] as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      plugins: new Map() as any,
-    } as unknown as any)
-
     await metadata.addSensitiveMetadata(() => ({
       commandStartOptions: {startTime: Date.now(), startCommand: 'app dev', startArgs: []},
     }))
@@ -275,14 +242,6 @@ describe('sends errors to Bugsnag', () => {
   })
 
   test('defaults slice_name to cli when first word not allowed', async () => {
-    // Initialize allowed slice names to known set that does not include 'version'
-    await registerCleanBugsnagErrorsFromWithinPlugins({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      commands: [{id: 'app:dev'}] as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      plugins: new Map() as any,
-    } as unknown as any)
-
     await metadata.addSensitiveMetadata(() => ({
       commandStartOptions: {startTime: Date.now(), startCommand: 'version', startArgs: []},
     }))
@@ -291,18 +250,5 @@ describe('sends errors to Bugsnag', () => {
 
     expect(lastBugsnagEvent).toBeDefined()
     expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('custom', {slice_name: 'cli'})
-  })
-})
-
-describe('computeAllowedSliceNames', () => {
-  test('derives first tokens from command IDs', () => {
-    const names = computeAllowedSliceNames({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      commands: [{id: 'app:build'}, {id: 'theme:pull'}, {id: 'version'}, {id: undefined as any}] as any,
-    } as unknown as any)
-    expect(names.has('app')).toBe(true)
-    expect(names.has('theme')).toBe(true)
-    expect(names.has('version')).toBe(true)
-    expect(names.has('store')).toBe(false)
   })
 })
