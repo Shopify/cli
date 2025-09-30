@@ -243,7 +243,7 @@ describe('sends errors to Bugsnag', () => {
     expect(res.reported).toEqual(true)
     expect(capturedEventHandler).toHaveBeenCalled()
 
-    const mockEvent = capturedEventHandler.mock.calls[0][0]
+    const mockEvent = capturedEventHandler.mock.calls[0]![0]
     expect(mockEvent.setUser).toHaveBeenCalledWith(testUserId)
     expect(mockEvent.severity).toEqual('error')
     expect(mockEvent.unhandled).toEqual(true)
@@ -262,7 +262,7 @@ describe('sends errors to Bugsnag', () => {
     expect(res.reported).toEqual(true)
     expect(capturedEventHandler).toHaveBeenCalled()
 
-    const mockEvent = capturedEventHandler.mock.calls[0][0]
+    const mockEvent = capturedEventHandler.mock.calls[0]![0]
     expect(mockEvent.setUser).toHaveBeenCalledWith('unknown')
   })
 
