@@ -285,8 +285,8 @@ importers:
         specifier: 3.85.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 11.1.3
-        version: 11.1.3(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@24.7.0)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@24.7.0)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.6(@types/node@24.7.0)(jiti@2.4.2)(sass@1.89.1)(yaml@2.8.1))
+        specifier: 11.1.5
+        version: 11.1.5(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@24.7.0)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@24.7.0)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.6(@types/node@24.7.0)(jiti@2.4.2)(sass@1.89.1)(yaml@2.8.1))
       '@shopify/cli-kit':
         specifier: 3.85.0
         version: link:../cli-kit
@@ -879,26 +879,26 @@ packages:
     peerDependencies:
       graphql: '*'
 
-  '@ast-grep/napi-darwin-arm64@0.11.0':
-    resolution: {integrity: sha512-IxY3b102tNNm+cYLngZvUKzM1fNKCpDDWz69Yt+QnKCZNx10Hvd7mqrYE2aXTtkaNalmg/p1n6kMA8KmshGgCA==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
-
   '@ast-grep/napi-darwin-arm64@0.33.0':
     resolution: {integrity: sha512-FsBQiBNGbqeU6z2sjFgnV6MXuBa0wYUb4PViMnqsKLeWiO7kRii5crmXLCtdTD2hufXTG6Rll8X46AkYOAwGGQ==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [darwin]
 
-  '@ast-grep/napi-darwin-x64@0.11.0':
-    resolution: {integrity: sha512-6afu1fNUwTkyE7tknVx8+d+BPKVL3623QLI9uJbJ0SZQShzSb1+dRegT4NpzPaPtFdPkflh6KfvOQ4chTw8hUg==}
+  '@ast-grep/napi-darwin-arm64@0.34.1':
+    resolution: {integrity: sha512-SzXXx2ya6xDKBaHZv20P9Qza5FaWE6lMBu00yegJVYRs7+0feBJ+10dvbv9fm+7RJ91Tw0V0G92Sgdg9lysBwA==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [arm64]
     os: [darwin]
 
   '@ast-grep/napi-darwin-x64@0.33.0':
     resolution: {integrity: sha512-rWo1wG7fc7K20z9ExIeN6U4QqjHhoQSpBDDnmxKTR0nIwPfyMq338sS4sWZomutxprcZDtWrekxH1lXjNvfuiA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  '@ast-grep/napi-darwin-x64@0.34.1':
+    resolution: {integrity: sha512-LIeTaB0IgNGyyU5sMW2cUHjWWW/sNjEqseMmpHLft7+LEXK7ojr4NDUN33cKtrRgEfwpvVXjXh5sgLqm343ecg==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [darwin]
@@ -909,20 +909,32 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@ast-grep/napi-linux-arm64-gnu@0.34.1':
+    resolution: {integrity: sha512-zi/JKIYDsucSfMHhb2W33AVw8Q6bF9MBV6FrYF98UWpJJoWXUPzPqVM09NANyWM0lypGiWuHk//JCwHndeCiSA==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+
   '@ast-grep/napi-linux-arm64-musl@0.33.0':
     resolution: {integrity: sha512-oUGZgCaVCijFgvC+X52ttgoWUqgrIsSVJZgn+1VBY3n4mpzcoYAghFomSUbRTBUL2ebvZweA33Klqks4okY61w==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
 
-  '@ast-grep/napi-linux-x64-gnu@0.11.0':
-    resolution: {integrity: sha512-Rm0biBfIxg14tL9yAMxW6RngAEA2vYLIq1guff6Uc9Vb7yQ3HE8dnW8WAysyieIqXdVkraTTV2ZwfoUqeKfc1Q==}
+  '@ast-grep/napi-linux-arm64-musl@0.34.1':
+    resolution: {integrity: sha512-IXdqwTbkdqHrcuQb448Qzd82QdTqVFe/f0sSkFYQTic8P2qNzmiHsVnxgEFsQPPbe09BVAoZ885j3OnaNfcDYA==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [arm64]
     os: [linux]
 
   '@ast-grep/napi-linux-x64-gnu@0.33.0':
     resolution: {integrity: sha512-QTAkfxQSsOGRza0hnkeAgJDQqR00iDerRNq42dOGIzgF+Kse491By3UmBEMG4oCbv17yYcBBlknQkzKSKtigjw==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+
+  '@ast-grep/napi-linux-x64-gnu@0.34.1':
+    resolution: {integrity: sha512-on4LyIeN/zN7SIh8zr5v+NTzVu3kXm2mG28ib1Qe9GVcf35dz52ckf7bilulayKSa2MHZWAXMjuc6NYMiNEw+w==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -933,11 +945,11 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@ast-grep/napi-win32-arm64-msvc@0.11.0':
-    resolution: {integrity: sha512-TfX6KXxtXGQS/sWzJ1wWwWbpm3OJWpqiWGttpifSGs6DJmzfwuK0b63yX5JlhNXeUVqXkZyfYqIh5RPIPOtXSA==}
+  '@ast-grep/napi-linux-x64-musl@0.34.1':
+    resolution: {integrity: sha512-l1R5L9LOp0jTPjs8C+LUndZOA8cRw7PFlvoVxVbi2jCfcns00dqatSYc4yA/ke6ng2K0LSxjoV/jS8tefve0sA==}
     engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [win32]
+    cpu: [x64]
+    os: [linux]
 
   '@ast-grep/napi-win32-arm64-msvc@0.33.0':
     resolution: {integrity: sha512-ijmFQcFc32JOIQlSfnhDJpb3qFb2RhrRqfeY0EHHN1xRSGwZHfsHTSS66nKR2sREmxTIMgxXOtylKicbyyMVKA==}
@@ -945,10 +957,10 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@ast-grep/napi-win32-ia32-msvc@0.11.0':
-    resolution: {integrity: sha512-oQGbxYYfQn6LPbMKQ1T2cjQ+DelYDO06w/gFPmdWrE6M/YUIv+KfKdEscBkr3ehJyvXZW5h3vmxuApiMuCyfAQ==}
+  '@ast-grep/napi-win32-arm64-msvc@0.34.1':
+    resolution: {integrity: sha512-eVsdMtnY7jmN2xQjYY9gaqIxRHA44+QYivlP1uLbg8w3P4YlZWTFgOJ7aa357Hg/257mjeQCpodCkr0lGRsSYQ==}
     engines: {node: '>= 10'}
-    cpu: [ia32]
+    cpu: [arm64]
     os: [win32]
 
   '@ast-grep/napi-win32-ia32-msvc@0.33.0':
@@ -957,10 +969,10 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@ast-grep/napi-win32-x64-msvc@0.11.0':
-    resolution: {integrity: sha512-qrXI4+S8W7IF6e1nlDYX2KfdzxGHyAOj5kGvWk+TqBuAnA0rWQ513hJzdviiGpbB5VPnJkEhOVsDets8acKd6w==}
+  '@ast-grep/napi-win32-ia32-msvc@0.34.1':
+    resolution: {integrity: sha512-jDW6jfoxEeYMM8hrPSiOz4iUIN+O7VTTlqU5TWDdlFX8HJYLF4SrNFEZl+Gz5B0Ph5LTjKPZFk6sd+DC1zt9+A==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [ia32]
     os: [win32]
 
   '@ast-grep/napi-win32-x64-msvc@0.33.0':
@@ -969,12 +981,18 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@ast-grep/napi@0.11.0':
-    resolution: {integrity: sha512-b+R8h20+ClsYZBJqcyguLy4THfGmg2a54HgfZ0a1vdCkfe9ftjblALiZf2DsOc0+Si8BDWd09TMNn2psUuibJA==}
+  '@ast-grep/napi-win32-x64-msvc@0.34.1':
+    resolution: {integrity: sha512-ttBFcTugjzEbYRPBo400NfPU+3ukBxeOxpeYLBZ1yIYqbgekPnD4WItiowsX5/hd0wHcX3T50FdthlJRmOXubQ==}
     engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
 
   '@ast-grep/napi@0.33.0':
     resolution: {integrity: sha512-6heRMmomhSD0dkummRQ+R4xWXXmc41OaDPoPI49mKJXPyvwJPdPZUcQjXdIitOVL4uJV+qM2ZBucDPENDBSixw==}
+    engines: {node: '>= 10'}
+
+  '@ast-grep/napi@0.34.1':
+    resolution: {integrity: sha512-SZAXFjgSqr7TfdW+ZJZ5LMkC226vJCAHAU5VvaluG2maT/LdkaUN3RwV+emdcEXIrUOqKB98+WSobhqOsKYuNw==}
     engines: {node: '>= 10'}
 
   '@aws-crypto/crc32@5.2.0':
@@ -1789,9 +1807,6 @@ packages:
   '@bugsnag/browser@8.6.0':
     resolution: {integrity: sha512-7UGqTGnQqXUQ09gOlWbDTFUSbeLIIrP+hML3kTOq8Zdc8nP/iuOEflXGLV2TxWBWW8xIUPc928caFPr9EcaDuw==}
 
-  '@bugsnag/core@8.2.0':
-    resolution: {integrity: sha512-dFSs80ZwJ508nlC6UTLTUMdHgTaHY5UKvMiuHqstCQrQrOjqFcIv+x4o+l2WrSyOpoYhHAxDlKfzKN8AjwslQw==}
-
   '@bugsnag/core@8.6.0':
     resolution: {integrity: sha512-94Jo443JegaiKV8z8NXMFdyTGubiUnwppWhq3kG2ldlYKtEvrmIaO5+JA58B6oveySvoRu3cCe2W9ysY7G7mDw==}
 
@@ -1800,9 +1815,6 @@ packages:
 
   '@bugsnag/js@8.6.0':
     resolution: {integrity: sha512-U+ofNTTMA2Z6tCrOhK/QhHBhLoQHoalk8Y82WWc7FAcVSoJZYadND/QuXUriNRZpC4YgJ/s/AxPeQ2y+WvMxzw==}
-
-  '@bugsnag/node@8.2.0':
-    resolution: {integrity: sha512-6XC/KgX61m6YFgsBQP/GaH1UzlJkJmpi3AwlZQLsXloRh3O9lM/0EIk6+2sZm+vlz+GwxCFavcuIDgVmH/qi7Q==}
 
   '@bugsnag/node@8.6.0':
     resolution: {integrity: sha512-O91sELo6zBjflVeP3roRC9l68iYaafVs5lz2N0FDkrT08mP2UljtNWpjjoR/0h1so5Ny1OxHgnZ1IrsXhz5SMQ==}
@@ -3418,15 +3430,15 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
-  '@shopify/cli-hydrogen@11.1.3':
-    resolution: {integrity: sha512-3x3ooh1Rhml0UnTCFwlTJdWmeKqiQS8/3Hb3cB6CJgoUwiZuNprumeeiQZgtSSGVgYJHbD5kot/QhzaRnENX+Q==}
+  '@shopify/cli-hydrogen@11.1.5':
+    resolution: {integrity: sha512-KnyKdJ2EZI44YzRK8mWifP7g0ndm3Q9daPdq2da84EnXpZ+a7AHSruud95b1fANawVBoK7i6RIeDrgcwmri0NA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
-      '@react-router/dev': 7.6.0
+      '@react-router/dev': 7.9.2
       '@shopify/hydrogen-codegen': ^0.3.3
-      '@shopify/mini-oxygen': ^3.2.1
+      '@shopify/mini-oxygen': ^4.0.0
       graphql-config: ^5.0.3
       vite: 6.3.6
     peerDependenciesMeta:
@@ -6060,10 +6072,6 @@ packages:
   get-caller-file@2.0.5:
     resolution: {integrity: sha512-DyFP3BM/3YHTQOCUL/w0OZHR0lpKeGrxotcHWcqNEdnltqFwXVfhEBQ94eIo34AfQpo0rGki4cyIiftY06h2Fg==}
     engines: {node: 6.* || 8.* || >= 10.*}
-
-  get-east-asian-width@1.3.0:
-    resolution: {integrity: sha512-vpeMIQKxczTD/0s2CdEWHcb0eeJe6TFjxb+J5xgX7hScxqrGuyjmv4c1D4A/gelKfyox0gJJwIHF+fLjeaM8kQ==}
-    engines: {node: '>=18'}
 
   get-east-asian-width@1.4.0:
     resolution: {integrity: sha512-QZjmEOC+IT1uk6Rx0sX22V6uHWVwbdbxf1faPqJ1QhLdGgsRGCZoyaQBm/piRdJy/D2um6hM1UP7ZEeQ4EkP+Q==}
@@ -9509,59 +9517,59 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@ast-grep/napi-darwin-arm64@0.11.0':
-    optional: true
-
   '@ast-grep/napi-darwin-arm64@0.33.0':
     optional: true
 
-  '@ast-grep/napi-darwin-x64@0.11.0':
+  '@ast-grep/napi-darwin-arm64@0.34.1':
     optional: true
 
   '@ast-grep/napi-darwin-x64@0.33.0':
     optional: true
 
+  '@ast-grep/napi-darwin-x64@0.34.1':
+    optional: true
+
   '@ast-grep/napi-linux-arm64-gnu@0.33.0':
+    optional: true
+
+  '@ast-grep/napi-linux-arm64-gnu@0.34.1':
     optional: true
 
   '@ast-grep/napi-linux-arm64-musl@0.33.0':
     optional: true
 
-  '@ast-grep/napi-linux-x64-gnu@0.11.0':
+  '@ast-grep/napi-linux-arm64-musl@0.34.1':
     optional: true
 
   '@ast-grep/napi-linux-x64-gnu@0.33.0':
     optional: true
 
+  '@ast-grep/napi-linux-x64-gnu@0.34.1':
+    optional: true
+
   '@ast-grep/napi-linux-x64-musl@0.33.0':
     optional: true
 
-  '@ast-grep/napi-win32-arm64-msvc@0.11.0':
+  '@ast-grep/napi-linux-x64-musl@0.34.1':
     optional: true
 
   '@ast-grep/napi-win32-arm64-msvc@0.33.0':
     optional: true
 
-  '@ast-grep/napi-win32-ia32-msvc@0.11.0':
+  '@ast-grep/napi-win32-arm64-msvc@0.34.1':
     optional: true
 
   '@ast-grep/napi-win32-ia32-msvc@0.33.0':
     optional: true
 
-  '@ast-grep/napi-win32-x64-msvc@0.11.0':
+  '@ast-grep/napi-win32-ia32-msvc@0.34.1':
     optional: true
 
   '@ast-grep/napi-win32-x64-msvc@0.33.0':
     optional: true
 
-  '@ast-grep/napi@0.11.0':
-    optionalDependencies:
-      '@ast-grep/napi-darwin-arm64': 0.11.0
-      '@ast-grep/napi-darwin-x64': 0.11.0
-      '@ast-grep/napi-linux-x64-gnu': 0.11.0
-      '@ast-grep/napi-win32-arm64-msvc': 0.11.0
-      '@ast-grep/napi-win32-ia32-msvc': 0.11.0
-      '@ast-grep/napi-win32-x64-msvc': 0.11.0
+  '@ast-grep/napi-win32-x64-msvc@0.34.1':
+    optional: true
 
   '@ast-grep/napi@0.33.0':
     optionalDependencies:
@@ -9574,6 +9582,18 @@ snapshots:
       '@ast-grep/napi-win32-arm64-msvc': 0.33.0
       '@ast-grep/napi-win32-ia32-msvc': 0.33.0
       '@ast-grep/napi-win32-x64-msvc': 0.33.0
+
+  '@ast-grep/napi@0.34.1':
+    optionalDependencies:
+      '@ast-grep/napi-darwin-arm64': 0.34.1
+      '@ast-grep/napi-darwin-x64': 0.34.1
+      '@ast-grep/napi-linux-arm64-gnu': 0.34.1
+      '@ast-grep/napi-linux-arm64-musl': 0.34.1
+      '@ast-grep/napi-linux-x64-gnu': 0.34.1
+      '@ast-grep/napi-linux-x64-musl': 0.34.1
+      '@ast-grep/napi-win32-arm64-msvc': 0.34.1
+      '@ast-grep/napi-win32-ia32-msvc': 0.34.1
+      '@ast-grep/napi-win32-x64-msvc': 0.34.1
 
   '@aws-crypto/crc32@5.2.0':
     dependencies:
@@ -10933,7 +10953,7 @@ snapshots:
       '@babel/parser': 7.28.4
       '@babel/template': 7.27.2
       '@babel/types': 7.28.4
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -10951,14 +10971,6 @@ snapshots:
     dependencies:
       '@bugsnag/core': 8.6.0
 
-  '@bugsnag/core@8.2.0':
-    dependencies:
-      '@bugsnag/cuid': 3.2.1
-      '@bugsnag/safe-json-stringify': 6.0.0
-      error-stack-parser: 2.1.4
-      iserror: 0.0.2
-      stack-generator: 2.0.10
-
   '@bugsnag/core@8.6.0':
     dependencies:
       '@bugsnag/cuid': 3.2.1
@@ -10973,15 +10985,6 @@ snapshots:
     dependencies:
       '@bugsnag/browser': 8.6.0
       '@bugsnag/node': 8.6.0
-
-  '@bugsnag/node@8.2.0':
-    dependencies:
-      '@bugsnag/core': 8.2.0
-      byline: 5.0.0
-      error-stack-parser: 2.1.4
-      iserror: 0.0.2
-      pump: 3.0.2
-      stack-generator: 2.0.10
 
   '@bugsnag/node@8.6.0':
     dependencies:
@@ -12340,7 +12343,7 @@ snapshots:
     dependencies:
       string-width: 5.1.2
       string-width-cjs: string-width@4.2.3
-      strip-ansi: 7.1.2
+      strip-ansi: 7.1.0
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
@@ -12490,7 +12493,7 @@ snapshots:
       ignore: 5.3.2
       minimatch: 9.0.3
       nx: 21.5.2
-      semver: 7.7.2
+      semver: 7.6.3
       tmp: 0.2.4
       tslib: 2.8.1
       yargs-parser: 21.1.1
@@ -12502,7 +12505,7 @@ snapshots:
       ignore: 5.3.2
       minimatch: 9.0.3
       nx: 21.6.3
-      semver: 7.7.2
+      semver: 7.6.3
       tmp: 0.2.4
       tslib: 2.8.1
       yargs-parser: 21.1.1
@@ -12559,7 +12562,7 @@ snapshots:
       ora: 5.3.0
       picocolors: 1.1.1
       picomatch: 4.0.2
-      semver: 7.7.2
+      semver: 7.6.3
       source-map-support: 0.5.19
       tinyglobby: 0.2.15
       tslib: 2.8.1
@@ -12657,7 +12660,7 @@ snapshots:
       clean-stack: 3.0.1
       cli-progress: 3.12.0
       color: 4.2.3
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       ejs: 3.1.10
       get-package-type: 0.1.0
       globby: 11.1.0
@@ -12712,7 +12715,7 @@ snapshots:
       is-wsl: 2.2.0
       lilconfig: 3.1.3
       minimatch: 9.0.5
-      semver: 7.7.2
+      semver: 7.6.3
       string-width: 4.2.3
       supports-color: 8.1.1
       tinyglobby: 0.2.15
@@ -12733,12 +12736,12 @@ snapshots:
 
   '@oclif/plugin-help@6.2.33':
     dependencies:
-      '@oclif/core': 4.5.4
+      '@oclif/core': 4.5.3
 
   '@oclif/plugin-not-found@3.2.68(@types/node@18.19.70)':
     dependencies:
       '@inquirer/prompts': 7.8.6(@types/node@18.19.70)
-      '@oclif/core': 4.5.4
+      '@oclif/core': 4.5.3
       ansis: 3.17.0
       fast-levenshtein: 3.0.0
     transitivePeerDependencies:
@@ -12762,7 +12765,7 @@ snapshots:
 
   '@oclif/plugin-warn-if-update-available@3.1.48':
     dependencies:
-      '@oclif/core': 4.5.4
+      '@oclif/core': 4.5.3
       ansis: 3.17.0
       debug: 4.4.3(supports-color@8.1.1)
       http-call: 5.3.0
@@ -13221,9 +13224,9 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/cli-hydrogen@11.1.3(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@24.7.0)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@24.7.0)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.6(@types/node@24.7.0)(jiti@2.4.2)(sass@1.89.1)(yaml@2.8.1))':
+  '@shopify/cli-hydrogen@11.1.5(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@24.7.0)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@24.7.0)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.6(@types/node@24.7.0)(jiti@2.4.2)(sass@1.89.1)(yaml@2.8.1))':
     dependencies:
-      '@ast-grep/napi': 0.11.0
+      '@ast-grep/napi': 0.34.1
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
       '@shopify/oxygen-cli': 4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)
@@ -13232,7 +13235,7 @@ snapshots:
       chokidar: 3.5.3
       cli-truncate: 4.0.0
       diff: 5.2.0
-      get-east-asian-width: 1.3.0
+      get-east-asian-width: 1.4.0
       get-port: 7.1.0
       gunzip-maybe: 1.4.2
       prettier: 2.8.8
@@ -13348,9 +13351,9 @@ snapshots:
 
   '@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)':
     dependencies:
-      '@bugsnag/core': 8.2.0
+      '@bugsnag/core': 8.6.0
       '@bugsnag/js': 8.6.0
-      '@bugsnag/node': 8.2.0
+      '@bugsnag/node': 8.6.0
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
@@ -14167,7 +14170,7 @@ snapshots:
     dependencies:
       '@typescript-eslint/tsconfig-utils': 8.43.0(typescript@5.8.3)
       '@typescript-eslint/types': 8.43.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       typescript: 5.8.3
     transitivePeerDependencies:
       - supports-color
@@ -14247,7 +14250,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.7.2
+      semver: 7.6.3
       tsutils: 3.21.0(typescript@5.8.3)
     optionalDependencies:
       typescript: 5.8.3
@@ -14262,7 +14265,7 @@ snapshots:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.7.2
+      semver: 7.6.3
       ts-api-utils: 1.4.3(typescript@5.8.3)
     optionalDependencies:
       typescript: 5.8.3
@@ -14294,7 +14297,7 @@ snapshots:
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.7.2
+      semver: 7.6.3
       ts-api-utils: 2.1.0(typescript@5.8.3)
       typescript: 5.8.3
     transitivePeerDependencies:
@@ -14310,7 +14313,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.8.3)
       eslint: 8.57.1
       eslint-scope: 5.1.1
-      semver: 7.7.2
+      semver: 7.6.3
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -16562,8 +16565,6 @@ snapshots:
 
   get-caller-file@2.0.5: {}
 
-  get-east-asian-width@1.3.0: {}
-
   get-east-asian-width@1.4.0: {}
 
   get-intrinsic@1.3.0:
@@ -16896,7 +16897,7 @@ snapshots:
   http-call@5.3.0:
     dependencies:
       content-type: 1.0.5
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       is-retry-allowed: 1.2.0
       is-stream: 2.0.1
       parse-json: 4.0.0
@@ -17501,7 +17502,7 @@ snapshots:
       acorn: 8.15.0
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1
-      semver: 7.7.2
+      semver: 7.6.3
 
   jsonc-parser@3.2.0: {}
 
@@ -17701,7 +17702,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.7.2
+      semver: 7.6.3
 
   make-error@1.3.6: {}
 
@@ -17959,7 +17960,7 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.7.2
+      semver: 7.6.3
       validate-npm-package-license: 3.0.4
 
   normalize-path@2.1.1:
@@ -17974,7 +17975,7 @@ snapshots:
     dependencies:
       hosted-git-info: 7.0.2
       proc-log: 3.0.0
-      semver: 7.7.2
+      semver: 7.6.3
       validate-npm-package-name: 5.0.1
 
   npm-package-arg@11.0.3:
@@ -18025,7 +18026,7 @@ snapshots:
       open: 8.4.2
       ora: 5.3.0
       resolve.exports: 2.0.3
-      semver: 7.7.2
+      semver: 7.6.3
       string-width: 4.2.3
       tar-stream: 2.2.0
       tmp: 0.2.4
@@ -19202,7 +19203,7 @@ snapshots:
       get-stdin: 9.0.0
       git-hooks-list: 3.2.0
       is-plain-obj: 4.1.0
-      semver: 7.7.2
+      semver: 7.6.3
       sort-object-keys: 1.1.3
       tinyglobby: 0.2.15
 
@@ -19315,8 +19316,8 @@ snapshots:
   string-width@7.2.0:
     dependencies:
       emoji-regex: 10.5.0
-      get-east-asian-width: 1.3.0
-      strip-ansi: 7.1.2
+      get-east-asian-width: 1.4.0
+      strip-ansi: 7.1.0
 
   string.prototype.includes@2.0.1:
     dependencies:

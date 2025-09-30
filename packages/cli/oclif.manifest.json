@@ -2810,14 +2810,6 @@
           "required": false,
           "type": "option"
         },
-        "diff": {
-          "allowNo": false,
-          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "hidden": true,
-          "name": "diff",
-          "required": false,
-          "type": "boolean"
-        },
         "disable-route-warning": {
           "allowNo": false,
           "description": "Disables any warnings about missing standard routes.",
@@ -2933,14 +2925,6 @@
           "required": false,
           "type": "option"
         },
-        "diff": {
-          "allowNo": false,
-          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "hidden": true,
-          "name": "diff",
-          "required": false,
-          "type": "boolean"
-        },
         "force-sfapi-version": {
           "description": "Force generating Storefront API types for a specific version instead of using the one provided in Hydrogen. A token can also be provided with this format: `<version>:<token>`.",
           "hasDynamicHelp": false,
@@ -3040,14 +3024,6 @@
       "descriptionWithMarkdown": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
       "enableJsonFlag": false,
       "flags": {
-        "diff": {
-          "allowNo": false,
-          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "hidden": true,
-          "name": "diff",
-          "required": false,
-          "type": "boolean"
-        },
         "entry": {
           "description": "Entry file for the worker. Defaults to `./server`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_ENTRY",
@@ -3121,14 +3097,6 @@
           "required": false,
           "type": "option"
         },
-        "diff": {
-          "allowNo": false,
-          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "hidden": true,
-          "name": "diff",
-          "required": false,
-          "type": "boolean"
-        },
         "entry": {
           "description": "Entry file for the worker. Defaults to `./server`.",
           "env": "SHOPIFY_HYDROGEN_FLAG_ENTRY",
@@ -3174,6 +3142,13 @@
           "env": "SHOPIFY_HYDROGEN_FLAG_FORCE",
           "name": "force",
           "required": false,
+          "type": "boolean"
+        },
+        "force-client-sourcemap": {
+          "allowNo": false,
+          "description": "Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.",
+          "env": "SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP",
+          "name": "force-client-sourcemap",
           "type": "boolean"
         },
         "json-output": {
@@ -3305,12 +3280,11 @@
           "required": false,
           "type": "option"
         },
-        "customer-account-push__unstable": {
+        "customer-account-push": {
           "allowNo": false,
-          "description": "Use tunneling for local development and push the tunneling domain to admin. Required to use Customer Account API's Oauth flow",
+          "description": "Use tunneling for local development and push the tunneling domain to admin. Required to use Customer Account API's OAuth flow",
           "env": "SHOPIFY_HYDROGEN_FLAG_CUSTOMER_ACCOUNT_PUSH",
-          "hidden": true,
-          "name": "customer-account-push__unstable",
+          "name": "customer-account-push",
           "required": false,
           "type": "boolean"
         },
@@ -3319,14 +3293,6 @@
           "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
           "env": "SHOPIFY_HYDROGEN_FLAG_DEBUG",
           "name": "debug",
-          "type": "boolean"
-        },
-        "diff": {
-          "allowNo": false,
-          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "hidden": true,
-          "name": "diff",
-          "required": false,
           "type": "boolean"
         },
         "disable-deps-optimizer": {
@@ -4040,17 +4006,6 @@
           "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
           "env": "SHOPIFY_HYDROGEN_FLAG_DEBUG",
           "name": "debug",
-          "type": "boolean"
-        },
-        "diff": {
-          "allowNo": false,
-          "dependsOn": [
-            "build"
-          ],
-          "description": "Applies the current files on top of Hydrogen's starter template in a temporary directory.",
-          "hidden": true,
-          "name": "diff",
-          "required": false,
           "type": "boolean"
         },
         "entry": {
