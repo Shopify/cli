@@ -3,6 +3,7 @@ import {chmod, createFileWriteStream, fileExists, inTemporaryDirectory, mkdir, m
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {PipelineSource} from 'stream'
 import {pipeline} from 'stream/promises'
 import stream from 'node:stream/promises'
@@ -10,18 +11,18 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-export const PREFERRED_FUNCTION_RUNNER_VERSION = 'v9.1.0'
+export const PREFERRED_FUNCTION_RUNNER_VERSION = '9.1.1'
 
 // Javy dependencies.
-export const PREFERRED_JAVY_VERSION = 'v6.0.0'
+export const PREFERRED_JAVY_VERSION = '7.0.0'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
-export const PREFERRED_JAVY_PLUGIN_VERSION = 'v3'
+export const PREFERRED_JAVY_PLUGIN_VERSION = '3'
 
 const BINARYEN_VERSION = '123.0.0'
 
-export const V1_TRAMPOLINE_VERSION = 'v1.0.2'
-export const V2_TRAMPOLINE_VERSION = 'v2.0.0'
+export const V1_TRAMPOLINE_VERSION = '1.0.2'
+export const V2_TRAMPOLINE_VERSION = '2.0.1'
 
 interface DownloadableBinary {
   path: string
@@ -43,9 +44,9 @@ export interface BinaryDependencies {
 export function deriveJavaScriptBinaryDependencies(version: string): BinaryDependencies | null {
   if (version === '0' || version === '1') {
     return {
-      functionRunner: 'v7.0.1',
-      javy: 'v4.0.0',
-      javyPlugin: 'v1',
+      functionRunner: '7.0.1',
+      javy: '4.0.0',
+      javyPlugin: '1',
     }
   } else if (version === '2') {
     return {
@@ -67,11 +68,19 @@ class Executable implements DownloadableBinary {
   readonly path: string
   readonly release: string
   private readonly gitHubRepo: string
+  private readonly supportsWindowsOnArm: boolean
 
-  constructor(name: string, version: string, gitHubRepo: string, release = version) {
+  constructor(
+    name: string,
+    version: string,
+    gitHubRepo: string,
+    supportsWindowsOnArm: boolean,
+    release = `v${version}`,
+  ) {
     this.name = name
     this.version = version
     this.release = release
+    this.supportsWindowsOnArm = supportsWindowsOnArm
 
     let filename: string
     // add version to the filename
@@ -115,13 +124,15 @@ class Executable implements DownloadableBinary {
     }
 
     const archPlatform = `${arch}-${platform}`
-    // These are currently the same between both binaries _coincidentally_.
     const supportedTargets = ['arm-linux', 'arm-macos', 'x86_64-macos', 'x86_64-windows', 'x86_64-linux']
+    if (this.supportsWindowsOnArm) {
+      supportedTargets.push('arm-windows')
+    }
     if (!supportedTargets.includes(archPlatform)) {
       throw Error(`Unsupported platform/architecture combination ${processPlatform}/${processArch}`)
     }
 
-    return `https://github.com/${this.gitHubRepo}/releases/download/${this.release}/${this.name}-${archPlatform}-${this.version}.gz`
+    return `https://github.com/${this.gitHubRepo}/releases/download/${this.release}/${this.name}-${archPlatform}-v${this.version}.gz`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -135,13 +146,18 @@ class JavyPlugin implements DownloadableBinary {
   readonly path: string
 
   constructor(version: string) {
-    this.name = `shopify_functions_javy_${version}`
+    this.name = `shopify_functions_javy_v${version}`
     this.version = version
-    this.path = joinPath(dirname(fileURLToPath(import.meta.url)), '..', 'bin', `shopify_functions_javy_${version}.wasm`)
+    this.path = joinPath(
+      dirname(fileURLToPath(import.meta.url)),
+      '..',
+      'bin',
+      `shopify_functions_javy_v${version}.wasm`,
+    )
   }
 
   downloadUrl(_processPlatform: string, _processArch: string) {
-    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_${this.version}.wasm`
+    return `https://cdn.shopify.com/shopifycloud/shopify-functions-javy-plugin/shopify_functions_javy_v${this.version}.wasm`
   }
 
   async processResponse(responseStream: PipelineSource<unknown>, outputStream: fs.WriteStream): Promise<void> {
@@ -172,7 +188,12 @@ class WasmOptExecutable implements DownloadableBinary {
 let _wasmOpt: DownloadableBinary
 
 export function javyBinary(version: string = PREFERRED_JAVY_VERSION) {
-  return new Executable('javy', version, 'bytecodealliance/javy') as DownloadableBinary
+  return new Executable(
+    'javy',
+    version,
+    'bytecodealliance/javy',
+    versionSatisfies(version, '>=7.0.0'),
+  ) as DownloadableBinary
 }
 
 export function javyPluginBinary(version: string = PREFERRED_JAVY_PLUGIN_VERSION) {
@@ -180,7 +201,12 @@ export function javyPluginBinary(version: string = PREFERRED_JAVY_PLUGIN_VERSION
 }
 
 export function functionRunnerBinary(version: string = PREFERRED_FUNCTION_RUNNER_VERSION) {
-  return new Executable('function-runner', version, 'Shopify/function-runner') as DownloadableBinary
+  return new Executable(
+    'function-runner',
+    version,
+    'Shopify/function-runner',
+    versionSatisfies(version, '>=9.1.1'),
+  ) as DownloadableBinary
 }
 
 export function wasmOptBinary() {
@@ -196,7 +222,8 @@ export function trampolineBinary(version: string) {
     'shopify-function-trampoline',
     version,
     'Shopify/shopify-function-wasm-api',
-    `shopify_function_trampoline/${version}`,
+    versionSatisfies(version, '>=2.0.1'),
+    `shopify_function_trampoline/v${version}`,
   )
 }
 
