@@ -21,6 +21,10 @@ import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
 
+// Allowed slice names for error analytics grouping.
+// Hardcoded list per product slices to keep analytics consistent.
+const ALLOWED_SLICE_NAMES = new Set<string>(['app', 'theme', 'hydrogen', 'store'])
+
 export async function errorHandler(
   error: Error & {exitCode?: number | undefined},
   config?: Interfaces.Config,
@@ -126,6 +130,14 @@ export async function sendErrorToBugsnag(
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+          // Attach command metadata so we know which CLI command triggered the error
+          const {commandStartOptions} = metadata.getAllSensitiveMetadata()
+          const {startCommand} = commandStartOptions ?? {}
+          if (startCommand) {
+            const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
+            const sliceName = ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
+            event.addMetadata('custom', {slice_name: sliceName})
+          }
         }
         const errorHandler = (error: unknown) => {
           if (error) {
