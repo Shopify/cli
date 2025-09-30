@@ -324,8 +324,8 @@ importers:
         specifier: 11.7.3
         version: 11.7.3
       '@bugsnag/js':
-        specifier: 7.25.0
-        version: 7.25.0
+        specifier: 8.6.0
+        version: 8.6.0
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.10.0)
@@ -1804,32 +1804,26 @@ packages:
     resolution: {integrity: sha512-bkFqkLhh3pMBUQQkpVgWDWq/lqzc2678eUyDlTBhRqhCHFguYYGM0Efga7tYk4TogG/3x0EEl66/OQ+WGbWB/Q==}
     engines: {node: '>=6.9.0'}
 
-  '@bugsnag/browser@7.25.0':
-    resolution: {integrity: sha512-PzzWy5d9Ly1CU1KkxTB6ZaOw/dO+CYSfVtqxVJccy832e6+7rW/dvSw5Jy7rsNhgcKSKjZq86LtNkPSvritOLA==}
-
-  '@bugsnag/browser@8.2.0':
-    resolution: {integrity: sha512-C4BfE3eVsjOAqoXbdrPXfKbgp/hz2H7mKBU0p11Jf9uz+5gUCfZK+39JLrQKvRXwqoDcTlBSfz9Xz5kXLyHg2Q==}
-
-  '@bugsnag/core@7.25.0':
-    resolution: {integrity: sha512-JZLak1b5BVzy77CPcklViZrppac/pE07L3uSDmfSvFYSCGReXkik2txOgV05VlF9EDe36dtUAIIV7iAPDfFpQQ==}
+  '@bugsnag/browser@8.6.0':
+    resolution: {integrity: sha512-7UGqTGnQqXUQ09gOlWbDTFUSbeLIIrP+hML3kTOq8Zdc8nP/iuOEflXGLV2TxWBWW8xIUPc928caFPr9EcaDuw==}
 
   '@bugsnag/core@8.2.0':
     resolution: {integrity: sha512-dFSs80ZwJ508nlC6UTLTUMdHgTaHY5UKvMiuHqstCQrQrOjqFcIv+x4o+l2WrSyOpoYhHAxDlKfzKN8AjwslQw==}
 
+  '@bugsnag/core@8.6.0':
+    resolution: {integrity: sha512-94Jo443JegaiKV8z8NXMFdyTGubiUnwppWhq3kG2ldlYKtEvrmIaO5+JA58B6oveySvoRu3cCe2W9ysY7G7mDw==}
+
   '@bugsnag/cuid@3.2.1':
     resolution: {integrity: sha512-zpvN8xQ5rdRWakMd/BcVkdn2F8HKlDSbM3l7duueK590WmI1T0ObTLc1V/1e55r14WNjPd5AJTYX4yPEAFVi+Q==}
 
-  '@bugsnag/js@7.25.0':
-    resolution: {integrity: sha512-d8n8SyKdRUz8jMacRW1j/Sj/ckhKbIEp49+Dacp3CS8afRgfMZ//NXhUFFXITsDP5cXouaejR9fx4XVapYXNgg==}
-
-  '@bugsnag/js@8.2.0':
-    resolution: {integrity: sha512-DTtQwV1Ly5VXSOnVtzW8gSwB+ld3qIc/h0yMS836DEYUfA3V9JPwJE3+2EbD8Ea2ogkDWZ+a0jl0SNSNGiOmfA==}
-
-  '@bugsnag/node@7.25.0':
-    resolution: {integrity: sha512-KlxBaJ8EREEsfKInybAjTO9LmdDXV3cUH5+XNXyqUZrcRVuPOu4j4xvljh+n24ifok/wbFZTKVXUzrN4iKIeIA==}
+  '@bugsnag/js@8.6.0':
+    resolution: {integrity: sha512-U+ofNTTMA2Z6tCrOhK/QhHBhLoQHoalk8Y82WWc7FAcVSoJZYadND/QuXUriNRZpC4YgJ/s/AxPeQ2y+WvMxzw==}
 
   '@bugsnag/node@8.2.0':
     resolution: {integrity: sha512-6XC/KgX61m6YFgsBQP/GaH1UzlJkJmpi3AwlZQLsXloRh3O9lM/0EIk6+2sZm+vlz+GwxCFavcuIDgVmH/qi7Q==}
+
+  '@bugsnag/node@8.6.0':
+    resolution: {integrity: sha512-O91sELo6zBjflVeP3roRC9l68iYaafVs5lz2N0FDkrT08mP2UljtNWpjjoR/0h1so5Ny1OxHgnZ1IrsXhz5SMQ==}
 
   '@bugsnag/safe-json-stringify@6.0.0':
     resolution: {integrity: sha512-htzFO1Zc57S8kgdRK9mLcPVTW1BY2ijfH7Dk2CeZmspTWKdKqSo1iwmqrq2WtRjFlo8aRZYgLX0wFrDXF/9DLA==}
@@ -10895,21 +10889,9 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@bugsnag/browser@7.25.0':
+  '@bugsnag/browser@8.6.0':
     dependencies:
-      '@bugsnag/core': 7.25.0
-
-  '@bugsnag/browser@8.2.0':
-    dependencies:
-      '@bugsnag/core': 8.2.0
-
-  '@bugsnag/core@7.25.0':
-    dependencies:
-      '@bugsnag/cuid': 3.2.1
-      '@bugsnag/safe-json-stringify': 6.0.0
-      error-stack-parser: 2.1.4
-      iserror: 0.0.2
-      stack-generator: 2.0.10
+      '@bugsnag/core': 8.6.0
 
   '@bugsnag/core@8.2.0':
     dependencies:
@@ -10919,30 +10901,33 @@ snapshots:
       iserror: 0.0.2
       stack-generator: 2.0.10
 
+  '@bugsnag/core@8.6.0':
+    dependencies:
+      '@bugsnag/cuid': 3.2.1
+      '@bugsnag/safe-json-stringify': 6.0.0
+      error-stack-parser: 2.1.4
+      iserror: 0.0.2
+      stack-generator: 2.0.10
+
   '@bugsnag/cuid@3.2.1': {}
 
-  '@bugsnag/js@7.25.0':
+  '@bugsnag/js@8.6.0':
     dependencies:
-      '@bugsnag/browser': 7.25.0
-      '@bugsnag/node': 7.25.0
+      '@bugsnag/browser': 8.6.0
+      '@bugsnag/node': 8.6.0
 
-  '@bugsnag/js@8.2.0':
+  '@bugsnag/node@8.2.0':
     dependencies:
-      '@bugsnag/browser': 8.2.0
-      '@bugsnag/node': 8.2.0
-
-  '@bugsnag/node@7.25.0':
-    dependencies:
-      '@bugsnag/core': 7.25.0
+      '@bugsnag/core': 8.2.0
       byline: 5.0.0
       error-stack-parser: 2.1.4
       iserror: 0.0.2
       pump: 3.0.2
       stack-generator: 2.0.10
 
-  '@bugsnag/node@8.2.0':
+  '@bugsnag/node@8.6.0':
     dependencies:
-      '@bugsnag/core': 8.2.0
+      '@bugsnag/core': 8.6.0
       byline: 5.0.0
       error-stack-parser: 2.1.4
       iserror: 0.0.2
@@ -13240,7 +13225,7 @@ snapshots:
   '@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)':
     dependencies:
       '@bugsnag/core': 8.2.0
-      '@bugsnag/js': 8.2.0
+      '@bugsnag/js': 8.6.0
       '@bugsnag/node': 8.2.0
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit

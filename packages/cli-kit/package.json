@@ -100,7 +100,7 @@
   },
   "dependencies": {
     "@apidevtools/json-schema-ref-parser": "11.7.3",
-    "@bugsnag/js": "7.25.0",
+    "@bugsnag/js": "8.6.0",
     "@graphql-typed-document-node/core": "3.2.0",
     "@iarna/toml": "2.2.5",
     "@oclif/core": "4.5.3",
