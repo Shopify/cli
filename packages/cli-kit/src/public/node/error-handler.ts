@@ -295,5 +295,10 @@ function initializeBugsnag() {
       notify: 'https://error-analytics-production.shopifysvc.com',
       sessions: 'https://error-analytics-sessions-production.shopifysvc.com',
     },
+    // Set the project root to `null` to prevent the default behavior of
+    // Bugsnag which is to set it to the cwd. That is unhelpful for us because
+    // the cwd can be anywhere in the user's filesystem, not necessarily
+    // related to the CLI codebase.
+    projectRoot: null,
   })
 }
