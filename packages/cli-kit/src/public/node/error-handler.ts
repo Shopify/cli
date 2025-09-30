@@ -13,7 +13,7 @@ import {
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
-import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
+import {reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -273,7 +273,6 @@ function initializeBugsnag() {
   // @ts-ignore
   Bugsnag.start({
     appType: 'node',
-    apiKey: bugsnagApiKey,
     logger: null,
     appVersion: CLI_KIT_VERSION,
     autoTrackSessions: false,

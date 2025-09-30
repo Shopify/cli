@@ -12,7 +12,6 @@ import tmp from 'tmp';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const appVersion = JSON.parse(fs.readFileSync(`${__dirname}/../packages/cli/package.json`)).version;
-const apiKey = '9e1e6889176fd0c795d5c659225e0fae';
 
 const packageName = process.argv[2];
 if (!packageName) {
@@ -42,7 +41,6 @@ if (!packageName) {
           console.log('Uploading to Bugsnag');
           process.chdir(temporaryDirectory);
           await node.uploadMultiple({
-            apiKey,
             appVersion,
             overwrite: true,
             directory: '.',
@@ -65,7 +63,7 @@ if (!packageName) {
       fs.rmSync(sourcemap);
     }
 
-    await reportBuild({apiKey, appVersion}, {})
+    await reportBuild({appVersion}, {})
     console.log('Build reported!')
   } catch (err) {
     console.log('Failed to report build!', err.message)
