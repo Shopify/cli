@@ -1,4 +1,5 @@
 import {errorHandler, cleanStackFrameFilePath, addBugsnagMetadata, sendErrorToBugsnag} from './error-handler.js'
+import * as metadata from './metadata.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/local.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
@@ -10,6 +11,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 const onNotify = vi.fn()
 const capturedEventHandler = vi.fn()
+let lastBugsnagEvent: {addMetadata: ReturnType<typeof vi.fn>} | undefined
 
 vi.mock('process')
 vi.mock('@bugsnag/js', () => {
@@ -22,12 +24,15 @@ vi.mock('@bugsnag/js', () => {
           severity: '',
           unhandled: false,
           setUser: vi.fn(),
+          addMetadata: vi.fn(),
         }
         eventHandler(mockEvent)
         capturedEventHandler(mockEvent)
+        lastBugsnagEvent = mockEvent as any
         callback(null)
       },
       isStarted: () => true,
+      addOnError: vi.fn(),
     },
   }
 })
@@ -51,6 +56,7 @@ beforeEach(() => {
   vi.mocked(isUnitTest).mockReturnValue(true)
   onNotify.mockClear()
   capturedEventHandler.mockClear()
+  lastBugsnagEvent = undefined
   vi.mocked(settings).debug = false
   vi.mocked(isLocalEnvironment).mockReturnValue(false)
   vi.mocked(getLastSeenUserIdAfterAuth).mockResolvedValue('test-user-id-123')
@@ -258,5 +264,40 @@ describe('sends errors to Bugsnag', () => {
 
     const mockEvent = capturedEventHandler.mock.calls[0][0]
     expect(mockEvent.setUser).toHaveBeenCalledWith('unknown')
+  })
+
+  test('attaches custom metadata with allowed slice_name when startCommand is present', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'app dev', startArgs: []},
+    }))
+
+    await sendErrorToBugsnag(new Error('boom'), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('custom', {slice_name: 'app'})
+  })
+
+  test('does not attach custom slice_name when startCommand is missing', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: undefined as unknown as string, startArgs: []},
+    }))
+
+    await sendErrorToBugsnag(new Error('boom'), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    const calls = (lastBugsnagEvent!.addMetadata as any).mock.calls as any[]
+    const customCall = calls.find(([section]: [string]) => section === 'custom')
+    expect(customCall).toBeUndefined()
+  })
+
+  test('defaults slice_name to cli when first word not allowed', async () => {
+    await metadata.addSensitiveMetadata(() => ({
+      commandStartOptions: {startTime: Date.now(), startCommand: 'version', startArgs: []},
+    }))
+
+    await sendErrorToBugsnag(new Error('boom'), 'unexpected_error')
+
+    expect(lastBugsnagEvent).toBeDefined()
+    expect(lastBugsnagEvent!.addMetadata).toHaveBeenCalledWith('custom', {slice_name: 'cli'})
   })
 })
