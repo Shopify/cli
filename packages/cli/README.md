@@ -999,9 +999,9 @@ Builds and deploys a Hydrogen storefront to Oxygen.
 ```
 USAGE
   $ shopify hydrogen deploy [--auth-bypass-token-duration <value> --auth-bypass-token] [--build-command <value>]
-    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--json-output]
-    [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path <value>]
-    [--preview] [-s <value>] [-t <value>]
+    [--entry <value>] [--env <value> | --env-branch <value>] [--env-file <value>] [-f] [--force-client-sourcemap]
+    [--json-output] [--lockfile-check] [--metadata-description <value>] [--metadata-user <value>] [--no-verify] [--path
+    <value>] [--preview] [-s <value>] [-t <value>]
 
 FLAGS
   -f, --force                               Forces a deployment to proceed if there are uncommited changes in its Git
@@ -1024,6 +1024,8 @@ FLAGS
                                             name.
       --env-file=<value>                    Path to an environment file to override existing environment variables for
                                             the deployment.
+      --force-client-sourcemap              Client sourcemapping is avoided by default because it makes backend code
+                                            visible in the browser. Use this flag to force enabling it.
       --[no-]json-output                    Create a JSON file containing the deployment details in CI environments.
                                             Defaults to true, use `--no-json-output` to disable.
       --[no-]lockfile-check                 Checks that there is exactly one valid lockfile in the project. Defaults to
@@ -1047,14 +1049,17 @@ Runs Hydrogen storefront in an Oxygen worker for development.
 
 ```
 USAGE
-  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--debug] [--disable-deps-optimizer]
-    [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> | --env-branch <value>]
-    [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>] [--verbose]
+  $ shopify hydrogen dev [--codegen-config-path <value> --codegen] [--customer-account-push] [--debug]
+    [--disable-deps-optimizer] [--disable-version-check] [--disable-virtual-routes] [--entry <value>] [--env <value> |
+    --env-branch <value>] [--env-file <value>] [--host] [--inspector-port <value>] [--path <value>] [--port <value>]
+    [--verbose]
 
 FLAGS
   --codegen                      Automatically generates GraphQL types for your project’s Storefront API queries.
   --codegen-config-path=<value>  Specifies a path to a codegen configuration file. Defaults to `<root>/codegen.ts` if
                                  this file exists.
+  --customer-account-push        Use tunneling for local development and push the tunneling domain to admin. Required to
+                                 use Customer Account API's OAuth flow
   --debug                        Enables inspector connections to the server with a debugger such as Visual Studio Code
                                  or Chrome DevTools.
   --disable-deps-optimizer       Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically
