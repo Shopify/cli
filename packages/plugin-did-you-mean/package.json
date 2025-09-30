@@ -1,6 +1,6 @@
 {
   "name": "@shopify/plugin-did-you-mean",
-  "version": "3.85.3",
+  "version": "3.85.4",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "bugs": {
@@ -42,7 +42,7 @@
   },
   "dependencies": {
     "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.85.3",
+    "@shopify/cli-kit": "3.85.4",
     "n-gram": "2.0.2"
   },
   "devDependencies": {

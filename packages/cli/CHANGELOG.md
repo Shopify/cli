@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.85.4
+
+### Patch Changes
+
+- c14ac7e: Update cli-hydrogen 11.1.4
+
 ## 3.85.3
 
 ### Patch Changes
