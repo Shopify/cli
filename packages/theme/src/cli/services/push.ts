@@ -8,6 +8,7 @@ import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
+import {ensureListingExists} from '../utilities/theme-listing.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -163,6 +164,10 @@ export async function push(
     !(await ensureDirectoryConfirmed(force, undefined, environment, multiEnvironment))
   ) {
     return
+  }
+
+  if (flags.listing) {
+    await ensureListingExists(workingDirectory, flags.listing)
   }
 
   const selectedTheme: Theme | undefined = await createOrSelectTheme(session, flags, multiEnvironment)
