@@ -460,6 +460,82 @@ describe('getLastSeenUserIdAfterAuth', () => {
   })
 })
 
+describe('setLastSeenUserIdAfterAuth', () => {
+  beforeEach(() => {
+    // Reset the userId before each test
+    setLastSeenUserIdAfterAuth(undefined as any)
+  })
+
+  test('sets the userId correctly', async () => {
+    // Given
+    const testUserId = 'test-user-id-123'
+
+    // When
+    setLastSeenUserIdAfterAuth(testUserId)
+
+    // Then
+    const retrievedUserId = await getLastSeenUserIdAfterAuth()
+    expect(retrievedUserId).toBe(testUserId)
+  })
+
+  test('overwrites existing userId when called multiple times', async () => {
+    // Given
+    const firstUserId = 'first-user-id'
+    const secondUserId = 'second-user-id'
+
+    // When
+    setLastSeenUserIdAfterAuth(firstUserId)
+    let retrievedUserId = await getLastSeenUserIdAfterAuth()
+    expect(retrievedUserId).toBe(firstUserId)
+
+    setLastSeenUserIdAfterAuth(secondUserId)
+    retrievedUserId = await getLastSeenUserIdAfterAuth()
+
+    // Then
+    expect(retrievedUserId).toBe(secondUserId)
+  })
+
+  test('handles empty string userId', async () => {
+    // Given
+    const emptyUserId = ''
+
+    // When
+    setLastSeenUserIdAfterAuth(emptyUserId)
+
+    // Then
+    const retrievedUserId = await getLastSeenUserIdAfterAuth()
+    // Empty string is falsy, so it falls back to 'unknown'
+    expect(retrievedUserId).toBe('unknown')
+  })
+
+  test('handles undefined userId', async () => {
+    // Given & When
+    setLastSeenUserIdAfterAuth(undefined as any)
+
+    // Then
+    const retrievedUserId = await getLastSeenUserIdAfterAuth()
+    // Undefined is falsy, so it falls back to 'unknown'
+    expect(retrievedUserId).toBe('unknown')
+  })
+
+  test('persists userId across multiple getLastSeenUserIdAfterAuth calls', async () => {
+    // Given
+    const testUserId = 'persistent-user-id'
+    setLastSeenUserIdAfterAuth(testUserId)
+
+    // When - Call getLastSeenUserIdAfterAuth multiple times
+    const firstCall = await getLastSeenUserIdAfterAuth()
+    const secondCall = await getLastSeenUserIdAfterAuth()
+    const thirdCall = await getLastSeenUserIdAfterAuth()
+
+    // Then - All calls should return the same userId and fetchSessions should not be called
+    expect(firstCall).toBe(testUserId)
+    expect(secondCall).toBe(testUserId)
+    expect(thirdCall).toBe(testUserId)
+    expect(fetchSessions).not.toHaveBeenCalled()
+  })
+})
+
 describe('getLastSeenAuthMethod', () => {
   beforeEach(() => {
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
