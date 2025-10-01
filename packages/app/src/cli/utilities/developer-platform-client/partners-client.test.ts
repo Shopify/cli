@@ -1,4 +1,5 @@
 import {PartnersClient} from './partners-client.js'
+import {clearAllGlobalSessions} from './global-session-store.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
@@ -11,10 +12,15 @@ import {
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
+
+beforeEach(() => {
+  // Clear global sessions before each test
+  clearAllGlobalSessions()
+})
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',

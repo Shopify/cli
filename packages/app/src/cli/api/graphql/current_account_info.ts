@@ -1,8 +1,9 @@
-import {AccountInfo} from '../../services/context/partner-account-info.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AccountInfo} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {gql} from 'graphql-request'
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const CurrentAccountInfoQuery = gql`
   query currentAccountInfo {
     currentAccountInfo {

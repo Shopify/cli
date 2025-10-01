@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import {getGlobalSession, setGlobalSession} from './global-session-store.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
   AppVersion,
@@ -14,7 +15,7 @@ import {
   AppLogsResponse,
   createUnauthorizedHandler,
 } from '../developer-platform-client.js'
-import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {fetchCurrentAccountInformation} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -159,7 +160,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedPartners, Session} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -219,28 +220,34 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
   public readonly supportsDashboardManagedExtensions = true
-  private _session: PartnersSession | undefined
-
-  constructor(session?: PartnersSession) {
-    this._session = session
+  constructor(session?: Session) {
+    if (session) {
+      setGlobalSession(this.clientName, session)
+    }
   }
 
-  async session(): Promise<PartnersSession> {
-    if (!this._session) {
+  async session(): Promise<Session> {
+    const existingSession = getGlobalSession(this.clientName)
+    if (!existingSession) {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
       }
       const {token, userId} = await ensureAuthenticatedPartners()
-      this._session = {
+      // First, set a basic session to avoid circular dependency
+      const basicSession: Session = {
         token,
         businessPlatformToken: '',
         accountInfo: {type: 'UnknownAccount'},
         userId,
       }
+      setGlobalSession(this.clientName, basicSession)
+
+      // Now fetch the actual account info
       const accountInfo = await fetchCurrentAccountInformation(this, userId)
-      this._session = {token, businessPlatformToken: '', accountInfo, userId}
+      const fullSession: Session = {token, businessPlatformToken: '', accountInfo, userId}
+      setGlobalSession(this.clientName, fullSession)
     }
-    return this._session
+    return getGlobalSession(this.clientName)!
   }
 
   async request<T>(
@@ -279,7 +286,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return session.token
   }
 
-  async accountInfo(): Promise<PartnersSession['accountInfo']> {
+  async accountInfo(): Promise<Session['accountInfo']> {
     return (await this.session()).accountInfo
   }
 

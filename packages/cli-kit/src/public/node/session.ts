@@ -30,6 +30,52 @@ export interface AdminSession {
 }
 
 /**
+ * Session Object for developer platform clients, includes token and account info.
+ */
+export interface Session {
+  token: string
+  businessPlatformToken: string
+  accountInfo: AccountInfo
+  userId: string
+}
+
+export type AccountInfo = UserAccountInfo | ServiceAccountInfo | UnknownAccountInfo
+
+interface UserAccountInfo {
+  type: 'UserAccount'
+  email: string
+}
+
+interface ServiceAccountInfo {
+  type: 'ServiceAccount'
+  orgName: string
+}
+
+interface UnknownAccountInfo {
+  type: 'UnknownAccount'
+}
+
+/**
+ * Type guard to check if an AccountInfo is a UserAccountInfo.
+ *
+ * @param account - The account info to check.
+ * @returns True if the account is a UserAccountInfo, false otherwise.
+ */
+export function isUserAccount(account: AccountInfo): account is UserAccountInfo {
+  return account.type === 'UserAccount'
+}
+
+/**
+ * Type guard to check if an AccountInfo is a ServiceAccountInfo.
+ *
+ * @param account - The account info to check.
+ * @returns True if the account is a ServiceAccountInfo, false otherwise.
+ */
+export function isServiceAccount(account: AccountInfo): account is ServiceAccountInfo {
+  return account.type === 'ServiceAccount'
+}
+
+/**
  * Ensure that we have a valid session with no particular scopes.
  *
  * @param env - Optional environment variables to use.
