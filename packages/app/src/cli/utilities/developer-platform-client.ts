@@ -83,10 +83,10 @@ export interface AppVersionIdentifiers {
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = []
 
-  clients.push(new AppManagementClient())
+  clients.push(AppManagementClient.getInstance())
 
   if (!blockPartnersAccess()) {
-    clients.push(new PartnersClient())
+    clients.push(PartnersClient.getInstance())
   }
 
   return clients
@@ -96,12 +96,12 @@ export function selectDeveloperPlatformClient({
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return new PartnersClient()
+  return PartnersClient.getInstance()
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
-  if (organization.source === OrganizationSource.BusinessPlatform) return new AppManagementClient()
-  return new PartnersClient()
+  if (organization.source === OrganizationSource.BusinessPlatform) return AppManagementClient.getInstance()
+  return PartnersClient.getInstance()
 }
 
 export interface CreateAppOptions {

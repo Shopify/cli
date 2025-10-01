@@ -211,6 +211,8 @@ interface OrgAndAppsResponse {
 }
 
 export class PartnersClient implements DeveloperPlatformClient {
+  private static instance: PartnersClient | undefined
+
   public readonly clientName = ClientName.Partners
   public readonly webUiName = 'Partner Dashboard'
   public readonly supportsAtomicDeployments = false
@@ -221,8 +223,19 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly supportsDashboardManagedExtensions = true
   private _session: PartnersSession | undefined
 
-  constructor(session?: PartnersSession) {
+  private constructor(session?: PartnersSession) {
     this._session = session
+  }
+
+  static getInstance(session?: PartnersSession): PartnersClient {
+    if (!PartnersClient.instance) {
+      PartnersClient.instance = new PartnersClient(session)
+    }
+    return PartnersClient.instance
+  }
+
+  static resetInstance(): void {
+    PartnersClient.instance = undefined
   }
 
   async session(): Promise<PartnersSession> {

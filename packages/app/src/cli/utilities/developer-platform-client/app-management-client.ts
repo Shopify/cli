@@ -183,6 +183,8 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
+  private static instance: AppManagementClient | undefined
+
   public readonly clientName = ClientName.AppManagement
   public readonly webUiName = 'Developer Dashboard'
   public readonly supportsAtomicDeployments = true
@@ -193,8 +195,19 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly supportsDashboardManagedExtensions = false
   private _session: PartnersSession | undefined
 
-  constructor(session?: PartnersSession) {
+  private constructor(session?: PartnersSession) {
     this._session = session
+  }
+
+  static getInstance(session?: PartnersSession): AppManagementClient {
+    if (!AppManagementClient.instance) {
+      AppManagementClient.instance = new AppManagementClient(session)
+    }
+    return AppManagementClient.instance
+  }
+
+  static resetInstance(): void {
+    AppManagementClient.instance = undefined
   }
 
   async subscribeToAppLogs(
