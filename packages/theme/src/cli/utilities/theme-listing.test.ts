@@ -1,4 +1,4 @@
-import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
+import {getListingFilePath, updateSettingsDataForListing, ensureListingExists} from './theme-listing.js'
 import {test, describe, expect} from 'vitest'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -148,6 +148,48 @@ describe('theme-listing', () => {
 
         // Then
         expect(result).toBe(malformedJson)
+      })
+    })
+  })
+
+  describe('ensureListingExists', () => {
+    test('resolves when the listing preset directory exists', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const themeDir = joinPath(tmpDir, 'theme')
+        const listingDir = joinPath(themeDir, 'listings', 'modern')
+        await mkdir(listingDir, {recursive: true})
+
+        // When / Then (no throw)
+        await ensureListingExists(themeDir, 'modern')
+      })
+    })
+
+    test('throws with available presets listed when the preset is missing', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const themeDir = joinPath(tmpDir, 'theme')
+        const listingsRoot = joinPath(themeDir, 'listings')
+        await mkdir(joinPath(listingsRoot, 'modern'), {recursive: true})
+        await mkdir(joinPath(listingsRoot, 'classic'), {recursive: true})
+
+        // When / Then
+        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow(
+          'Listing preset "unknown" was not found.',
+        )
+
+        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('Available presets: "Modern"')
+        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('"Classic"')
+      })
+    })
+
+    test('throws with no presets message when listings directory does not exist', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const themeDir = joinPath(tmpDir, 'theme')
+
+        // When / Then
+        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('No presets found under "listings/"')
       })
     })
   })

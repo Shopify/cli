@@ -1,6 +1,7 @@
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 function isListingFile(fileKey: string): boolean {
   return (fileKey.startsWith('templates/') || fileKey.startsWith('sections/')) && fileKey.endsWith('.json')
@@ -39,4 +40,28 @@ export async function updateSettingsDataForListing(themeDirectory: string, listi
 
     throw error
   }
+}
+
+export async function ensureListingExists(themeDirectory: string, listingName: string): Promise<void> {
+  const listingsRoot = joinPath(themeDirectory, 'listings')
+  const dir = joinPath(listingsRoot, listingName)
+  const exists = await fileExists(dir)
+  if (exists) return
+
+  let available: string[] = []
+  if (await fileExists(listingsRoot)) {
+    available = await glob('*', {cwd: listingsRoot, onlyDirectories: true, deep: 1})
+  }
+
+  const availablePresetsMessage =
+    available.length > 0
+      ? `Available presets: ${available
+          .map((presetDirectoryName) => `"${capitalizeWords(presetDirectoryName)}"`)
+          .join(', ')}`
+      : 'No presets found under "listings/"'
+
+  throw new AbortError(
+    `Listing preset "${listingName}" was not found. ${availablePresetsMessage}.`,
+    `Add the preset to config/settings_data.json and its corresponding "listings/${listingName}" folder, or remove the --listing flag to use the default theme settings.`,
+  )
 }

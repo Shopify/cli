@@ -6,6 +6,7 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {ensureListingExists} from '../utilities/theme-listing.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -65,6 +66,10 @@ export async function dev(options: DevOptions) {
         url: 'https://shopify.dev/docs/storefronts/themes/tools/theme-access',
       },
     })
+  }
+
+  if (options.listing) {
+    await ensureListingExists(options.directory, options.listing)
   }
 
   const storefrontPasswordPromise = await isStorefrontPasswordProtected(options.adminSession).then((needsPassword) =>
