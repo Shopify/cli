@@ -49,6 +49,12 @@ export interface hydrogendeploy {
   '-f, --force'?: ''
 
   /**
+   * Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.
+   * @environment SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP
+   */
+  '--force-client-sourcemap'?: ''
+
+  /**
    * Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.
    *
    */
