@@ -261,6 +261,37 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       await removeThemeFile(root, fileKey)
     },
     write: async (asset: ThemeAsset) => {
+      // When a listing is active and the written asset is a template/section JSON file,
+      // use smart behavior:
+      // - If the corresponding listing file already exists, write to listings/<preset>/<key>
+      // - Otherwise, write to base <key>
+      const isTemplateOrSectionJson =
+        (asset.key.startsWith('templates/') || asset.key.startsWith('sections/')) && asset.key.endsWith('.json')
+
+      if (options?.listing && isTemplateOrSectionJson) {
+        const listingAssetKey = joinPath('listings', options.listing, asset.key)
+        const listingAbsolutePath = joinPath(root, listingAssetKey)
+        const listingFileExists = await fileExists(listingAbsolutePath)
+
+        // Keep checksum/value under the base key so checksums align with remote keys
+        files.set(
+          asset.key,
+          buildThemeAsset({
+            key: asset.key,
+            checksum: asset.checksum,
+            value: asset.value ?? '',
+            attachment: asset.attachment ?? '',
+          }),
+        )
+
+        if (listingFileExists) {
+          await writeThemeFile(root, {...asset, key: listingAssetKey})
+        } else {
+          await writeThemeFile(root, asset)
+        }
+        return
+      }
+
       files.set(
         asset.key,
         buildThemeAsset({
