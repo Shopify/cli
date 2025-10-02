@@ -7,6 +7,7 @@ import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
 import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
+import {parseJSON} from '../common/json.js'
 import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 import type {Writable} from 'stream'
@@ -406,7 +407,7 @@ export async function readAndParsePackageJson(packageJsonPath: string): Promise<
   if (!(await fileExists(packageJsonPath))) {
     throw new PackageJsonNotFoundError(dirname(packageJsonPath))
   }
-  return JSON.parse(await readFile(packageJsonPath))
+  return parseJSON(await readFile(packageJsonPath), packageJsonPath)
 }
 
 interface AddNPMDependenciesIfNeededOptions {
@@ -673,7 +674,7 @@ function argumentsToAddDependenciesWithBun(dependencies: string[], type: Depende
 export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{path: string; content: PackageJson}> {
   const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (packageJsonPath) {
-    const packageJson = JSON.parse(await readFile(packageJsonPath))
+    const packageJson = parseJSON<PackageJson>(await readFile(packageJsonPath), packageJsonPath)
     return {path: packageJsonPath, content: packageJson}
   } else {
     throw new FindUpAndReadPackageJsonNotFoundError(fromDirectory)
