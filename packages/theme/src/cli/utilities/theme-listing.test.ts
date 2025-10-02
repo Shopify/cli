@@ -173,13 +173,23 @@ describe('theme-listing', () => {
         await mkdir(joinPath(listingsRoot, 'modern'), {recursive: true})
         await mkdir(joinPath(listingsRoot, 'classic'), {recursive: true})
 
-        // When / Then
-        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow(
-          'Listing preset "unknown" was not found.',
-        )
+        // When
+        let errorMessage = ''
+        try {
+          await ensureListingExists(themeDir, 'unknown')
+        } catch (error) {
+          if (error instanceof Error) {
+            errorMessage = error.message
+          } else {
+            throw error
+          }
+        }
 
-        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('Available presets: "Modern"')
-        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('"Classic"')
+        // Then
+        expect(errorMessage).toContain('Listing preset "unknown" was not found.')
+        expect(errorMessage).toContain('Available presets:')
+        expect(errorMessage).toContain('"Modern"')
+        expect(errorMessage).toContain('"Classic"')
       })
     })
 
@@ -187,6 +197,18 @@ describe('theme-listing', () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const themeDir = joinPath(tmpDir, 'theme')
+
+        // When / Then
+        await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('No presets found under "listings/"')
+      })
+    })
+
+    test('throws with no presets message when listings directory exists but is empty', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const themeDir = joinPath(tmpDir, 'theme')
+        const listingsRoot = joinPath(themeDir, 'listings')
+        await mkdir(listingsRoot, {recursive: true})
 
         // When / Then
         await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('No presets found under "listings/"')
