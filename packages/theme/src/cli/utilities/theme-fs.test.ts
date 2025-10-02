@@ -11,6 +11,7 @@ import {
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
+import * as fsKit from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
 import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
@@ -592,6 +593,92 @@ describe('theme-fs', () => {
 
       // Then
       await changeEventPromise
+    })
+
+    test('writes template JSON into base when listing file does not exist', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: with Smart behavior, if overlay file does NOT exist yet, write to base
+      expect(writeFile).toHaveBeenCalledWith(`${root}/templates/index.json`, asset.value)
+    })
+
+    test('writes template JSON into listing folder when listing file already exists', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
+      // Simulate existing overlay file by making fileExists return true for the overlay check
+      vi.spyOn(fsKit, 'fileExists').mockResolvedValueOnce(true)
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: writes to overlay
+      expect(writeFile).toHaveBeenCalledWith(`${root}/listings/modern/templates/index.json`, asset.value)
+    })
+
+    test('writes section JSON into listing folder when listing is active', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: Smart behavior writes to base if overlay does not exist
+      expect(writeFile).toHaveBeenCalledWith(`${root}/sections/header.json`, asset.value)
+    })
+
+    test('writes section JSON into listing folder when listing file already exists', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
+      // Simulate existing overlay file by making fileExists return true for the overlay check
+      vi.spyOn(fsKit, 'fileExists').mockResolvedValueOnce(true)
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: writes to overlay
+      expect(writeFile).toHaveBeenCalledWith(`${root}/listings/modern/sections/header.json`, asset.value)
+    })
+
+    test('writes non-JSON files to base when listing is active', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'sections/announcement-bar.liquid', checksum: 'abc2', value: '{% comment %}x{% endcomment %}'}
+
+      // When
+      await themeFileSystem.write(asset as any)
+
+      // Then
+      expect(writeFile).toHaveBeenCalledWith(`${root}/sections/announcement-bar.liquid`, asset.value)
+    })
+
+    test('writes template JSON to base when no listing is specified', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      const asset = {key: 'templates/index.json', checksum: 'ef01', value: '{"sections":{}}'}
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then
+      expect(writeFile).toHaveBeenCalledWith(`${root}/templates/index.json`, asset.value)
     })
   })
 
