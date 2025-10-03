@@ -205,6 +205,35 @@ describe('refresh access tokens', () => {
     // Then
     return expect(got).rejects.toThrowError(AbortError)
   })
+
+  test('preserves the alias when refreshing access token', async () => {
+    // Given
+    const tokenWithAlias: IdentityToken = {
+      ...identityToken,
+      alias: 'my-custom-alias',
+    }
+    const refreshData = {
+      access_token: 'new_access_token',
+      refresh_token: 'new_refresh_token',
+      scope: 'new_scope',
+      expires_in: 7200,
+      id_token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiI1Njc4LTEyMzQifQ.2OGPUmd5MTEv-J5p3Ra4mskCN0635qN8lh3p5_BcoYY',
+    }
+    const response = new Response(JSON.stringify(refreshData))
+    vi.mocked(shopifyFetch).mockResolvedValue(response)
+
+    // When
+    const result = await refreshAccessToken(tokenWithAlias)
+
+    // Then
+    expect(result.accessToken).toBe('new_access_token')
+    expect(result.refreshToken).toBe('new_refresh_token')
+    expect(result.scopes).toEqual(['new_scope'])
+    // Original userId is preserved
+    expect(result.userId).toBe('1234-5678')
+    // Alias is preserved
+    expect(result.alias).toBe('my-custom-alias')
+  })
 })
 
 const tokenExchangeMethods = [
