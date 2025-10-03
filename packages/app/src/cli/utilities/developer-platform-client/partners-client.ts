@@ -14,7 +14,7 @@ import {
   AppLogsResponse,
   createUnauthorizedHandler,
 } from '../developer-platform-client.js'
-import {fetchCurrentAccountInformation, PartnersSession} from '../../../cli/services/context/partner-account-info.js'
+import {fetchCurrentAccountInformation} from '../../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -93,7 +93,7 @@ import {
   MigrateFlowExtensionMutation,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {UpdateURLsVariables, UpdateURLsSchema, UpdateURLsQuery} from '../../api/graphql/update_urls.js'
-import {CurrentAccountInfoQuery, CurrentAccountInfoSchema} from '../../api/graphql/current_account_info.js'
+import {CurrentAccountInfo, CurrentAccountInfoQuery} from '../../api/graphql/partners/generated/current-account-info.js'
 import {
   RemoteTemplateSpecificationsQuery,
   RemoteTemplateSpecificationsSchema,
@@ -159,7 +159,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
-import {ensureAuthenticatedPartners} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedPartners, Session} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -213,21 +213,7 @@ interface OrgAndAppsResponse {
 export class PartnersClient implements DeveloperPlatformClient {
   private static instance: PartnersClient | undefined
 
-  public readonly clientName = ClientName.Partners
-  public readonly webUiName = 'Partner Dashboard'
-  public readonly supportsAtomicDeployments = false
-  public readonly supportsDevSessions = false
-  public readonly supportsStoreSearch = false
-  public readonly organizationSource = OrganizationSource.Partners
-  public readonly bundleFormat = 'zip'
-  public readonly supportsDashboardManagedExtensions = true
-  private _session: PartnersSession | undefined
-
-  private constructor(session?: PartnersSession) {
-    this._session = session
-  }
-
-  static getInstance(session?: PartnersSession): PartnersClient {
+  static getInstance(session?: Session): PartnersClient {
     if (!PartnersClient.instance) {
       PartnersClient.instance = new PartnersClient(session)
     }
@@ -238,7 +224,21 @@ export class PartnersClient implements DeveloperPlatformClient {
     PartnersClient.instance = undefined
   }
 
-  async session(): Promise<PartnersSession> {
+  public readonly clientName = ClientName.Partners
+  public readonly webUiName = 'Partner Dashboard'
+  public readonly supportsAtomicDeployments = false
+  public readonly supportsDevSessions = false
+  public readonly supportsStoreSearch = false
+  public readonly organizationSource = OrganizationSource.Partners
+  public readonly bundleFormat = 'zip'
+  public readonly supportsDashboardManagedExtensions = true
+  private _session: Session | undefined
+
+  private constructor(session?: Session) {
+    this._session = session
+  }
+
+  async session(): Promise<Session> {
     if (!this._session) {
       if (isUnitTest()) {
         throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
@@ -292,7 +292,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     return session.token
   }
 
-  async accountInfo(): Promise<PartnersSession['accountInfo']> {
+  async accountInfo(): Promise<Session['accountInfo']> {
     return (await this.session()).accountInfo
   }
 
@@ -568,8 +568,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(UpdateURLsQuery, input)
   }
 
-  async currentAccountInfo(): Promise<CurrentAccountInfoSchema> {
-    return this.request(CurrentAccountInfoQuery)
+  async currentAccountInfo(): Promise<CurrentAccountInfoQuery> {
+    return this.requestDoc(CurrentAccountInfo)
   }
 
   async targetSchemaDefinition(

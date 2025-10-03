@@ -25,7 +25,6 @@ import {
   DevSessionDeleteOptions,
   UserError,
 } from '../developer-platform-client.js'
-import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -139,7 +138,7 @@ import {
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
@@ -185,21 +184,7 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 export class AppManagementClient implements DeveloperPlatformClient {
   private static instance: AppManagementClient | undefined
 
-  public readonly clientName = ClientName.AppManagement
-  public readonly webUiName = 'Developer Dashboard'
-  public readonly supportsAtomicDeployments = true
-  public readonly supportsDevSessions = true
-  public readonly supportsStoreSearch = true
-  public readonly organizationSource = OrganizationSource.BusinessPlatform
-  public readonly bundleFormat = 'br'
-  public readonly supportsDashboardManagedExtensions = false
-  private _session: PartnersSession | undefined
-
-  private constructor(session?: PartnersSession) {
-    this._session = session
-  }
-
-  static getInstance(session?: PartnersSession): AppManagementClient {
+  static getInstance(session?: Session): AppManagementClient {
     if (!AppManagementClient.instance) {
       AppManagementClient.instance = new AppManagementClient(session)
     }
@@ -208,6 +193,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
 
   static resetInstance(): void {
     AppManagementClient.instance = undefined
+  }
+
+  public readonly clientName = ClientName.AppManagement
+  public readonly webUiName = 'Developer Dashboard'
+  public readonly supportsAtomicDeployments = true
+  public readonly supportsDevSessions = true
+  public readonly supportsStoreSearch = true
+  public readonly organizationSource = OrganizationSource.BusinessPlatform
+  public readonly bundleFormat = 'br'
+  public readonly supportsDashboardManagedExtensions = false
+  private _session: Session | undefined
+
+  private constructor(session?: Session) {
+    this._session = session
   }
 
   async subscribeToAppLogs(
@@ -269,7 +268,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async session(): Promise<PartnersSession> {
+  async session(): Promise<Session> {
     if (!this._session) {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
@@ -348,7 +347,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return session.token
   }
 
-  async accountInfo(): Promise<PartnersSession['accountInfo']> {
+  async accountInfo(): Promise<Session['accountInfo']> {
     return (await this.session()).accountInfo
   }
 
