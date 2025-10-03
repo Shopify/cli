@@ -19,6 +19,8 @@ const javy = javyBinary()
 const javyPlugin = javyPluginBinary()
 const functionRunner = functionRunnerBinary()
 
+const oldJavy = javyBinary('6.0.0')
+
 vi.mock('@shopify/cli-kit/node/http', async () => {
   const actualImports = await vi.importActual('@shopify/cli-kit/node/http')
   return {
@@ -30,7 +32,7 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
 describe('javy', () => {
   test('properties are set correctly', () => {
     expect(javy.name).toBe('javy')
-    expect(javy.version).match(/^v\d\.\d\.\d$/)
+    expect(javy.version).match(/^\d\.\d\.\d$/)
     if (process.platform === 'win32') {
       expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}.exe`)
     } else {
@@ -117,13 +119,23 @@ describe('javy', () => {
       expect(() => javy.downloadUrl('darwin', arch)).toThrowError('Unsupported architecture ppc')
     })
 
-    test('Unsupported combination throws an error', () => {
+    test('Supported combination on preferred Javy succeeds', () => {
+      // When
+      const url = javy.downloadUrl('win32', 'arm')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-arm-windows-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('Unsupported combination on old Javy throws an error', () => {
       // When
       const arch = 'arm'
       const platform = 'win32'
 
       // Then
-      expect(() => javy.downloadUrl(platform, arch)).toThrowError(
+      expect(() => oldJavy.downloadUrl(platform, arch)).toThrowError(
         'Unsupported platform/architecture combination win32/arm',
       )
     })
@@ -167,7 +179,7 @@ describe('javy', () => {
 describe('javy-plugin', () => {
   test('properties are set correctly', () => {
     expect(javyPlugin.name).toBe('shopify_functions_javy_v3')
-    expect(javyPlugin.version).match(/^v\d+$/)
+    expect(javyPlugin.version).match(/^\d+$/)
     expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v3.wasm$/)
   })
 
@@ -199,7 +211,7 @@ describe('javy-plugin', () => {
 describe('functionRunner', () => {
   test('properties are set correctly', () => {
     expect(functionRunner.name).toBe('function-runner')
-    expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
+    expect(functionRunner.version).match(/^\d\.\d\.\d$/)
     if (process.platform === 'win32') {
       expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}.exe`)
     } else {
@@ -285,17 +297,6 @@ describe('functionRunner', () => {
       // Then
       expect(() => functionRunner.downloadUrl('darwin', arch)).toThrowError('Unsupported architecture ppc')
     })
-
-    test('Unsupported combination throws an error', () => {
-      // When
-      const arch = 'arm'
-      const platform = 'win32'
-
-      // Then
-      expect(() => functionRunner.downloadUrl(platform, arch)).toThrowError(
-        'Unsupported platform/architecture combination win32/arm',
-      )
-    })
   })
 
   test('downloads function-runner', async () => {
@@ -351,7 +352,7 @@ describe('trampoline', () => {
 
   test('v1 properties are set correctly', () => {
     expect(v1Trampoline.name).toBe('shopify-function-trampoline')
-    expect(v1Trampoline.version).match(/v1.\d.\d$/)
+    expect(v1Trampoline.version).match(/1.\d.\d$/)
     if (process.platform === 'win32') {
       expect(v1Trampoline.path).toContain(`shopify-function-trampoline-${V1_TRAMPOLINE_VERSION}.exe`)
     } else {
@@ -361,7 +362,7 @@ describe('trampoline', () => {
 
   test('v2 properties are set correctly', () => {
     expect(v2Trampoline.name).toBe('shopify-function-trampoline')
-    expect(v2Trampoline.version).match(/v2.\d.\d$/)
+    expect(v2Trampoline.version).match(/2.\d.\d$/)
     if (process.platform === 'win32') {
       expect(v2Trampoline.path).toContain(`shopify-function-trampoline-${V2_TRAMPOLINE_VERSION}.exe`)
     } else {
@@ -375,7 +376,7 @@ describe('trampoline', () => {
 
     // Then
     const expectedUrlRegex = new RegExp(
-      `https://github.com/Shopify/shopify-function-wasm-api/releases/download/shopify_function_trampoline/${v2Trampoline.version}/shopify-function-trampoline-x86_64-macos-${v2Trampoline.version}.gz`,
+      `https://github.com/Shopify/shopify-function-wasm-api/releases/download/shopify_function_trampoline/v${v2Trampoline.version}/shopify-function-trampoline-x86_64-macos-v${v2Trampoline.version}.gz`,
     )
     expect(url).toMatch(expectedUrlRegex)
   })
