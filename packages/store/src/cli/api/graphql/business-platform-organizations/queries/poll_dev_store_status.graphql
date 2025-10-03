@@ -1,0 +1,10 @@
+query OrganizationShopStatusQuery($shopDomain: String!) {
+ organization {
+   id
+   storeCreation(shopDomain: $shopDomain) {
+     status
+     __typename
+   }
+   __typename
+  }
+}
