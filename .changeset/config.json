@@ -12,7 +12,6 @@
     "@shopify/ui-extensions-dev-console-app",
     "@shopify/plugin-cloudflare",
     "@shopify/plugin-did-you-mean",
-    "@shopify/store"
   ]],
   "access": "public",
   "baseBranch": "main",

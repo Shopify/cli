@@ -71,26 +71,6 @@ const schemas = [
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
   },
-  // Store package schemas
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
-    localPath: './packages/store/src/cli/api/graphql/admin/admin_schema.graphql',
-    usesLfs: true,
-  },
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
-    localPath: './packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
-  },
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
-    localPath: './packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
-  },
 ]
 
 
