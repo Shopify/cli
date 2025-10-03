@@ -1,0 +1,9 @@
+{
+  "current": {
+    "store_name": "Production Store",
+    "theme_color": "#dc2626",
+    "enable_cart_drawer": false,
+    "environment": "production",
+    "new_feature_toggle": true
+  }
+}
