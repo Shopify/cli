@@ -20,6 +20,7 @@ export type FetchDevStoreByDomainQuery = {
           storeType?: Types.Store | null
           primaryDomain?: string | null
           shortName?: string | null
+          url?: string | null
         }
       }[]
     } | null
@@ -107,6 +108,7 @@ export const FetchDevStoreByDomain = {
                                   {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'shortName'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                                   {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                 ],
                               },

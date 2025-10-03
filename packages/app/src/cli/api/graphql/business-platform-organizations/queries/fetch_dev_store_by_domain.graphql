@@ -11,6 +11,7 @@
             storeType
             primaryDomain
             shortName
+            url
           }
         }
       }
