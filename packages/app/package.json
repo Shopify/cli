@@ -47,6 +47,7 @@
     ]
   },
   "dependencies": {
+    "@graphql-codegen/cli": "5.0.4",
     "@graphql-typed-document-node/core": "3.2.0",
     "@luckycatfactory/esbuild-graphql-loader": "3.8.1",
     "@oclif/core": "4.5.3",
