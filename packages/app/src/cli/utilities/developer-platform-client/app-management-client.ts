@@ -160,7 +160,7 @@ import {
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -1291,11 +1291,12 @@ function mapBusinessPlatformStoresToOrganizationStores(
   provisionable: boolean,
 ): OrganizationStore[] {
   return storesArray.map((store: ShopNode) => {
-    const {externalId, primaryDomain, name} = store
+    const {externalId, primaryDomain, name, url} = store
+    if (!url) throw new BugError('The selected store does not have a valid URL')
     return {
       shopId: externalId ? idFromEncodedGid(externalId) : undefined,
       link: primaryDomain,
-      shopDomain: primaryDomain,
+      shopDomain: normalizeStoreFqdn(url),
       shopName: name,
       transferDisabled: true,
       convertableToPartnerTest: true,
