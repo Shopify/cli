@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.85.1
+
+### Patch Changes
+
+- e81c29c: Remove POLARIS_UNIFIED flag
+
 ## 3.85.0
 
 ### Minor Changes
