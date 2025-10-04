@@ -18,7 +18,7 @@ export interface EvaluationConfig {
 
 export async function evaluate(config: EvaluationConfig): Promise<string | number | undefined> {
   try {
-    return evaluateSnippet(config)
+    return await evaluateSnippet(config)
 
     // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
   } catch (error: any) {
