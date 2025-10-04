@@ -40,7 +40,7 @@ export async function appDevRequestDoc<TResult, TVariables extends Variables>(
   options: AppDevRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   const api = 'App Dev'
-  const normalizedShopFqdn = await normalizeStoreFqdn(options.shopFqdn)
+  const normalizedShopFqdn = normalizeStoreFqdn(options.shopFqdn)
   const fqdn = await appDevFqdn(normalizedShopFqdn)
   const url = `https://${fqdn}/app_dev/unstable/graphql.json`
 
