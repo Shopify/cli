@@ -1,6 +1,5 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
 import {AppManagementClient} from './developer-platform-client/app-management-client.js'
-import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -57,6 +56,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {Session} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
@@ -226,14 +226,14 @@ export interface DeveloperPlatformClient {
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
   readonly supportsDashboardManagedExtensions: boolean
-  session: () => Promise<PartnersSession>
+  session: () => Promise<Session>
   /**
    * This is an unsafe method that should only be used when the session is expired.
    * It is not safe to use this method in other contexts as it may lead to race conditions.
    * Use only if you know what you are doing.
    */
   unsafeRefreshToken: () => Promise<string>
-  accountInfo: () => Promise<PartnersSession['accountInfo']>
+  accountInfo: () => Promise<Session['accountInfo']>
   appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>

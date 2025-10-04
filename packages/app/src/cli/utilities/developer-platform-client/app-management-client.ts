@@ -4,6 +4,7 @@ import {
   OrganizationBetaFlagsQueryVariables,
   organizationBetaFlagsQuery,
 } from './app-management-client/graphql/organization_beta_flags.js'
+import {getGlobalSession, setGlobalSession} from './global-session-store.js'
 import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
@@ -25,7 +26,6 @@ import {
   DevSessionDeleteOptions,
   UserError,
 } from '../developer-platform-client.js'
-import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -139,7 +139,7 @@ import {
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
@@ -191,10 +191,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
   public readonly supportsDashboardManagedExtensions = false
-  private _session: PartnersSession | undefined
-
-  constructor(session?: PartnersSession) {
-    this._session = session
+  constructor(session?: Session) {
+    if (session) {
+      setGlobalSession(this.clientName, session)
+    }
   }
 
   async subscribeToAppLogs(
@@ -256,8 +256,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async session(): Promise<PartnersSession> {
-    if (!this._session) {
+  async session(): Promise<Session> {
+    const existingSession = getGlobalSession(this.clientName)
+    if (!existingSession) {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
@@ -285,7 +286,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           throw new BugError('Multiple organizations found for the CLI token')
         }
 
-        this._session = {
+        const session: Session = {
           token: appManagementToken,
           businessPlatformToken,
           accountInfo: {
@@ -294,8 +295,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
           },
           userId,
         }
+        setGlobalSession(this.clientName, session)
       } else if (userInfoResult.currentUserAccount) {
-        this._session = {
+        const session: Session = {
           token: appManagementToken,
           businessPlatformToken,
           accountInfo: {
@@ -304,8 +306,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
           },
           userId,
         }
+        setGlobalSession(this.clientName, session)
       } else {
-        this._session = {
+        const session: Session = {
           token: appManagementToken,
           businessPlatformToken,
           accountInfo: {
@@ -313,9 +316,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
           },
           userId,
         }
+        setGlobalSession(this.clientName, session)
       }
     }
-    return this._session
+    return getGlobalSession(this.clientName)!
   }
 
   async token(): Promise<string> {
@@ -335,7 +339,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return session.token
   }
 
-  async accountInfo(): Promise<PartnersSession['accountInfo']> {
+  async accountInfo(): Promise<Session['accountInfo']> {
     return (await this.session()).accountInfo
   }
 

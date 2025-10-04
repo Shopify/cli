@@ -7,6 +7,7 @@ import {
   encodedGidFromShopId,
   versionDeepLink,
 } from './app-management-client.js'
+import {clearAllGlobalSessions} from './global-session-store.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
 import {
   testUIExtension,
@@ -31,7 +32,7 @@ import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {
@@ -92,6 +93,11 @@ function moduleFromExtension(extension: ExtensionInstance) {
     },
   }
 }
+
+beforeEach(() => {
+  // Clear global sessions before each test
+  clearAllGlobalSessions()
+})
 
 describe('diffAppModules', () => {
   test('extracts the added, removed and updated modules between two releases', () => {
