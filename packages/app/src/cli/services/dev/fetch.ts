@@ -1,16 +1,12 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {
-  AccountInfo,
-  fetchCurrentAccountInformation,
-  isServiceAccount,
-  isUserAccount,
-} from '../context/partner-account-info.js'
+import {fetchCurrentAccountInformation} from '../context/partner-account-info.js'
 import {
   DeveloperPlatformClient,
   allDeveloperPlatformClients,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
+import {AccountInfo, isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 

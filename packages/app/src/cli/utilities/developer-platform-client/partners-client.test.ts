@@ -11,10 +11,15 @@ import {
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test} from 'vitest'
+import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
+
+beforeEach(() => {
+  // Reset the singleton instance before each test
+  PartnersClient.resetInstance()
+})
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
@@ -76,7 +81,7 @@ const FETCH_ORG_RESPONSE_VALUE = {
 describe('createApp', () => {
   test('sends request to create app with launchable defaults and returns it', async () => {
     // Given
-    const partnersClient = new PartnersClient(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
     const localApp = testAppWithLegacyConfig({config: {scopes: 'write_products'}})
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
@@ -110,7 +115,7 @@ describe('createApp', () => {
 
   test('creates an app with non-launchable defaults', async () => {
     // Given
-    const partnersClient = new PartnersClient(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
@@ -142,7 +147,7 @@ describe('createApp', () => {
 
   test('throws error if requests has a user error', async () => {
     // Given
-    const partnersClient = new PartnersClient(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       appCreate: {app: {}, userErrors: [{message: 'some-error'}]},
@@ -159,7 +164,7 @@ describe('createApp', () => {
 describe('fetchApp', async () => {
   test('returns fetched apps', async () => {
     // Given
-    const partnersClient = new PartnersClient(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
     const partnerMarkedOrg = {...ORG1, source: 'Partners'}
 
@@ -176,7 +181,7 @@ describe('fetchApp', async () => {
 
   test('throws if there are no organizations', async () => {
     // Given
-    const partnersClient = new PartnersClient(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When
@@ -195,10 +200,33 @@ describe('PartnersClient', () => {
   describe('bundleFormat', () => {
     test('uses zip format', () => {
       // Given
-      const client = new PartnersClient()
+      const client = PartnersClient.getInstance()
 
       // Then
       expect(client.bundleFormat).toBe('zip')
     })
+  })
+})
+
+describe('singleton pattern', () => {
+  test('getInstance returns the same instance', () => {
+    // Given/When
+    const instance1 = PartnersClient.getInstance()
+    const instance2 = PartnersClient.getInstance()
+
+    // Then
+    expect(instance1).toBe(instance2)
+  })
+
+  test('resetInstance allows creating a new instance', () => {
+    // Given
+    const instance1 = PartnersClient.getInstance()
+
+    // When
+    PartnersClient.resetInstance()
+    const instance2 = PartnersClient.getInstance()
+
+    // Then
+    expect(instance1).not.toBe(instance2)
   })
 })

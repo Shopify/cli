@@ -9,7 +9,6 @@ import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
 import * as patchAppConfigurationFileModule from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
-import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   Organization,
@@ -36,6 +35,7 @@ import {
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -138,6 +138,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./deploy/mode.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context/partner-account-info.js')
+vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/select-app.js')
 vi.mock('../utilities/developer-platform-client.js')

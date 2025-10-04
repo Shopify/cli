@@ -298,6 +298,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
     const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
     await writeFile(pnpmLockPath, '')
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
