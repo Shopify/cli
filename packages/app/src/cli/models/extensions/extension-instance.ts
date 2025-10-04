@@ -28,10 +28,12 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {extractJSImports, extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
+import {uniq} from '@shopify/cli-kit/common/array'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
@@ -68,6 +70,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   handle: string
   specification: ExtensionSpecification
   uid: string
+  private cachedImportPaths?: string[]
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -269,6 +272,21 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return {main: `import '.${relativeImportPath}';`}
   }
 
+  /**
+   * Gets the entry files for this extension by checking various sources.
+   * For UI extensions, this returns the generated bundle content rather than file paths.
+   * @returns Object with either entryFiles array or generatedContent string
+   */
+  getExtensionEntryFiles(): string[] {
+    // For UI extensions, use the generated bundle content
+    if (this.specification.identifier === 'ui_extension') {
+      const {main} = this.getBundleExtensionStdinContent()
+      return extractJSImports(main, this.directory)
+    }
+
+    return [this.entrySourceFilePath]
+  }
+
   shouldFetchCartUrl(): boolean {
     return this.features.includes('cart_url')
   }
@@ -297,31 +315,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     watchPaths.push(joinPath(this.directory, '**.toml'))
 
     return watchPaths
-  }
-
-  get watchBuildPaths() {
-    if (this.isFunctionExtension) {
-      const config = this.configuration as unknown as FunctionConfigType
-      const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
-
-      if (!this.isJavaScript && configuredPaths.length === 0) {
-        return null
-      }
-
-      const watchPaths: string[] = configuredPaths ?? []
-      if (this.isJavaScript && configuredPaths.length === 0) {
-        watchPaths.push(joinPath('src', '**', '*.{js,ts}'))
-      }
-      watchPaths.push(joinPath('**', '!(.)*.graphql'))
-
-      return watchPaths.map((path) => joinPath(this.directory, path))
-    } else if (this.isESBuildExtension) {
-      return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
-    } else if (this.isThemeExtension) {
-      return [joinPath(this.directory, '*', '*')]
-    } else {
-      return []
-    }
   }
 
   async watchConfigurationPaths() {
@@ -464,6 +457,83 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
+  }
+
+  /**
+   * Returns all files that need to be watched for this extension
+   * This includes files in the extension directory (respecting watch paths and gitignore)
+   * as well as any imported files from outside the extension directory
+   */
+  watchedFiles(): string[] {
+    const watchedFiles: string[] = []
+
+    // Add extension directory files based on devSessionWatchPaths or all files
+    const watchPaths = this.devSessionWatchPaths
+
+    const patterns = watchPaths ?? ['**/*']
+    const files = patterns.flatMap((pattern) =>
+      globSync(pattern, {
+        cwd: this.directory,
+        absolute: true,
+        followSymbolicLinks: false,
+        ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
+      }),
+    )
+    watchedFiles.push(...files.flat())
+
+    // Add imported files from outside the extension directory
+    const importedFiles = this.scanImports()
+    watchedFiles.push(...importedFiles)
+
+    // Return unique normalized paths
+    return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
+  }
+
+  /**
+   * Rescans imports for this extension and updates the cached import paths
+   * Returns true if the imports changed
+   */
+  async rescanImports(): Promise<boolean> {
+    const oldImportPaths = this.cachedImportPaths
+    this.cachedImportPaths = undefined
+    this.scanImports()
+    return oldImportPaths !== this.cachedImportPaths
+  }
+
+  /**
+   * Scans for imports in this extension's entry files
+   * Returns absolute paths of imported files that are outside the extension directory
+   */
+  private scanImports(): string[] {
+    // Return cached paths if available
+    if (this.cachedImportPaths !== undefined) {
+      return this.cachedImportPaths
+    }
+
+    try {
+      const imports: string[] = []
+      const entryFiles = this.getExtensionEntryFiles()
+
+      for (const entryFile of entryFiles) {
+        // Extract import paths from the entry file
+        const fileImports = extractImportPaths(entryFile)
+
+        for (const importPath of fileImports) {
+          const normalizedPath = normalizePath(resolvePath(importPath))
+          imports.push(normalizedPath)
+        }
+      }
+
+      // Cache and return unique paths
+      this.cachedImportPaths = uniq(imports) ?? []
+      outputDebug(`Found ${this.cachedImportPaths.length} external imports for extension ${this.handle}`)
+      return this.cachedImportPaths
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      outputDebug(`Failed to scan imports for extension ${this.handle}: ${error}`)
+      this.cachedImportPaths = []
+      return this.cachedImportPaths
+    }
   }
 
   private buildHandle() {
