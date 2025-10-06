@@ -1292,11 +1292,12 @@ function mapBusinessPlatformStoresToOrganizationStores(
 ): OrganizationStore[] {
   return storesArray.map((store: ShopNode) => {
     const {externalId, primaryDomain, name, url} = store
-    if (!url) throw new BugError('The selected store does not have a valid URL')
+    const shopDomain = url ?? primaryDomain
+    if (!shopDomain) throw new BugError('The selected store does not have a valid URL')
     return {
       shopId: externalId ? idFromEncodedGid(externalId) : undefined,
       link: primaryDomain,
-      shopDomain: normalizeStoreFqdn(url),
+      shopDomain: normalizeStoreFqdn(shopDomain),
       shopName: name,
       transferDisabled: true,
       convertableToPartnerTest: true,
