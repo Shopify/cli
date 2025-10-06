@@ -215,4 +215,83 @@ describe('buildFunctionExtension', () => {
     ).rejects.toThrow(AbortError)
     expect(releaseLock).not.toHaveBeenCalled()
   })
+
+  test('handles function with undefined build config', async () => {
+    // Given
+    const configWithoutBuild = {
+      name: 'MyFunction',
+      type: 'product_discounts',
+      description: '',
+      configuration_ui: true,
+      api_version: '2022-07',
+      metafields: [],
+    } as unknown as FunctionConfigType
+
+    extension = await testFunctionExtension({config: configWithoutBuild, entryPath: 'src/index.js'})
+    vi.mocked(fileExistsSync).mockResolvedValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(buildJSFunction).toHaveBeenCalledWith(extension, {
+      stdout,
+      stderr,
+      signal,
+      app,
+      environment: 'production',
+    })
+    expect(releaseLock).toHaveBeenCalled()
+    // wasm_opt should not be called when build config is undefined
+    expect(runWasmOpt).not.toHaveBeenCalled()
+  })
+
+  test('handles function with build config but undefined path', async () => {
+    // Given
+    const configWithoutPath = {
+      name: 'MyFunction',
+      type: 'product_discounts',
+      description: '',
+      build: {
+        command: 'make build',
+        wasm_opt: true,
+        // path is undefined
+      },
+      configuration_ui: true,
+      api_version: '2022-07',
+      metafields: [],
+    } as unknown as FunctionConfigType
+
+    extension = await testFunctionExtension({config: configWithoutPath})
+    vi.mocked(fileExistsSync).mockResolvedValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(exec).toHaveBeenCalledWith('make', ['build'], {
+      stdout,
+      stderr,
+      cwd: extension.directory,
+      signal,
+    })
+    expect(releaseLock).toHaveBeenCalled()
+    expect(runWasmOpt).toHaveBeenCalled()
+  })
 })
