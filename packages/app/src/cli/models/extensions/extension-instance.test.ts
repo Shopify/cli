@@ -551,4 +551,59 @@ describe('draftMessages', async () => {
       expect(extensionInstance.uid).toBe('orders/delete::123::https://my-app.com/webhooks')
     })
   })
+
+  describe('outputPath for function extensions', async () => {
+    test('uses default path when build is undefined', async () => {
+      // Given
+      const config = {
+        name: 'foo',
+        type: 'function',
+        api_version: '2023-07',
+        configuration_ui: true,
+        // build is intentionally omitted to test undefined case
+      } as FunctionConfigType
+
+      const extensionInstance = await testFunctionExtension({
+        config,
+        dir: 'test-function',
+      })
+
+      // Then
+      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+    })
+
+    test('uses default path when build.path is undefined', async () => {
+      // Given
+      const config = functionConfiguration()
+      config.build = {
+        wasm_opt: true,
+        // path is not defined
+      }
+
+      const extensionInstance = await testFunctionExtension({
+        config,
+        dir: 'test-function',
+      })
+
+      // Then
+      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
+    })
+
+    test('uses custom path when build.path is defined', async () => {
+      // Given
+      const config = functionConfiguration()
+      config.build = {
+        wasm_opt: true,
+        path: 'custom/output.wasm',
+      }
+
+      const extensionInstance = await testFunctionExtension({
+        config,
+        dir: 'test-function',
+      })
+
+      // Then
+      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'custom/output.wasm'))
+    })
+  })
 })
