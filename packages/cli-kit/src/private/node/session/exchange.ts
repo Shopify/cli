@@ -65,7 +65,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
   }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-  return buildIdentityToken(value, currentToken.userId)
+  return buildIdentityToken(value, currentToken.userId, currentToken.alias)
 }
 
 /**
@@ -237,7 +237,11 @@ async function tokenRequest(params: {
   return err({error: payload.error, store: params.store})
 }
 
-function buildIdentityToken(result: TokenRequestResult, existingUserId?: string): IdentityToken {
+function buildIdentityToken(
+  result: TokenRequestResult,
+  existingUserId?: string,
+  existingAlias?: string,
+): IdentityToken {
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
 
@@ -251,6 +255,7 @@ function buildIdentityToken(result: TokenRequestResult, existingUserId?: string)
     expiresAt: new Date(Date.now() + result.expires_in * 1000),
     scopes: result.scope.split(' '),
     userId,
+    alias: existingAlias,
   }
 }
 
