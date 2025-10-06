@@ -303,7 +303,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   get watchBuildPaths() {
     if (this.isFunctionExtension) {
       const config = this.configuration as unknown as FunctionConfigType
-      const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
+      const configuredPaths = config.build?.watch ? [config.build.watch].flat() : []
 
       if (!this.isJavaScript && configuredPaths.length === 0) {
         return null

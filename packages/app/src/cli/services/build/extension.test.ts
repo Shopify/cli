@@ -48,7 +48,7 @@ describe('buildFunctionExtension', () => {
 
   test('delegates the build to system when the build command is present', async () => {
     // Given
-    extension.configuration.build.command = './scripts/build.sh argument'
+    extension.configuration.build!.command = './scripts/build.sh argument'
 
     // When
     await expect(
@@ -73,7 +73,7 @@ describe('buildFunctionExtension', () => {
 
   test('fails when is not a JS function and build command is not present', async () => {
     // Given
-    extension.configuration.build.command = undefined
+    extension.configuration.build!.command = undefined
 
     // Then
     await expect(
@@ -91,7 +91,7 @@ describe('buildFunctionExtension', () => {
   test('succeeds when is a JS function and build command is not present', async () => {
     // Given
     extension = await testFunctionExtension({config: defaultConfig, entryPath: 'src/index.js'})
-    extension.configuration.build.command = undefined
+    extension.configuration.build!.command = undefined
 
     // When
     await expect(
@@ -118,7 +118,7 @@ describe('buildFunctionExtension', () => {
   test('succeeds when is a JS function and build command is present', async () => {
     // Given
     extension = await testFunctionExtension({config: defaultConfig, entryPath: 'src/index.js'})
-    extension.configuration.build.command = './scripts/build.sh argument'
+    extension.configuration.build!.command = './scripts/build.sh argument'
 
     // When
     await expect(
@@ -182,7 +182,7 @@ describe('buildFunctionExtension', () => {
   test('skips wasm-opt execution when the disable-wasm-opt is true', async () => {
     // Given
     vi.mocked(fileExistsSync).mockResolvedValue(true)
-    extension.configuration.build.wasm_opt = false
+    extension.configuration.build!.wasm_opt = false
 
     // When
     await expect(
