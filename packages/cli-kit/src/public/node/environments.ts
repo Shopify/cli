@@ -27,8 +27,10 @@ function renderWarningIfNeeded(message: Parameters<typeof renderWarning>[0], sil
 
 /**
  * Loads environments from a file.
- * @param dir - The file path to load environments from.
- * @returns The loaded environments.
+ * @param environmentName - The name of the environment.
+ * @param fileName - The file name to load environments from.
+ * @param options - Optional configuration for loading.
+ * @returns The loaded environment.
  */
 export async function loadEnvironment(
   environmentName: string,
