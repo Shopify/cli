@@ -37,22 +37,11 @@ export async function loadEnvironment(
   fileName: string,
   options?: LoadEnvironmentOptions,
 ): Promise<JsonMap | undefined> {
-  const filePath = await environmentFilePath(fileName, options)
-  if (!filePath) {
-    renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
-    return undefined
-  }
-  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
-  const environments = environmentsJson.environments
+  const environments = await decodeEnvironments(fileName, options)
   if (!environments) {
-    renderWarningIfNeeded(
-      {
-        body: ['No environments found in', {command: filePath}, {char: '.'}],
-      },
-      options?.silent,
-    )
     return undefined
   }
+
   const environment = environments[environmentName] as JsonMap | undefined
 
   if (!environment) {
@@ -81,4 +70,28 @@ export async function environmentFilePath(
     cwd: basePath,
     type: 'file',
   })
+}
+
+async function decodeEnvironments(fileName: string, options?: LoadEnvironmentOptions): Promise<JsonMap | undefined> {
+  const filePath = await environmentFilePath(fileName, options)
+
+  if (!filePath) {
+    renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
+    return undefined
+  }
+
+  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
+  const environments = environmentsJson.environments
+
+  if (!environments) {
+    renderWarningIfNeeded(
+      {
+        body: ['No environments found in', {command: filePath}, {char: '.'}],
+      },
+      options?.silent,
+    )
+    return undefined
+  }
+
+  return environments
 }
