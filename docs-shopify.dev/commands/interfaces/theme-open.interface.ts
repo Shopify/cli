@@ -13,7 +13,7 @@ export interface themeopen {
   '-E, --editor'?: ''
 
   /**
-   * The environment to apply to the current command.
+   * The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.
    * @environment SHOPIFY_FLAG_ENVIRONMENT
    */
   '-e, --environment <value>'?: string

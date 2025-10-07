@@ -5,7 +5,7 @@ import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {loadEnvironment} from '@shopify/cli-kit/node/environments'
+import {loadEnvironment, expandEnvironmentPatterns} from '@shopify/cli-kit/node/environments'
 import {
   renderWarning,
   renderConcurrent,
@@ -75,7 +75,14 @@ export default abstract class ThemeCommand extends Command {
     const {args, flags} = await this.parse(klass)
     const commandRequiresAuth = 'password' in klass.flags
 
-    const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
+    const environmentPatterns = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(
+      Boolean,
+    )
+
+    const environments =
+      environmentPatterns.length > 0
+        ? await expandEnvironmentPatterns(environmentPatterns, 'shopify.theme.toml', {from: flags.path as string})
+        : []
 
     // Single environment or no environment
     if (environments.length <= 1) {

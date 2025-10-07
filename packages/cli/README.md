@@ -1714,7 +1714,8 @@ FLAGS
                                 theme-check:recommended, theme-check:all
                                 For backwards compatibility, :theme_app_extension is also supported
   -a, --auto-correct            Automatically fix offenses
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -o, --output=<option>         [default: text] The output format to use
                                 <options: text|json>
   -v, --version                 Print Theme Check version
@@ -1745,7 +1746,8 @@ USAGE
   $ shopify theme console --url /products/classic-leather-jacket
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
@@ -1776,7 +1778,8 @@ USAGE
 FLAGS
   -a, --show-all                Include others development themes in theme list.
   -d, --development             Delete your development theme.
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -f, --force                   Skip confirmation.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
@@ -1811,7 +1814,7 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...
-      The environment to apply to the current command.
+      The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.
 
   -n, --nodelete
       Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files
@@ -1920,7 +1923,8 @@ USAGE
   $ shopify theme duplicate --theme 10 --name 'New Theme'
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -f, --force                   Force the duplicate operation to run without prompts or confirmations.
   -j, --json                    Output the result as JSON.
   -n, --name=<value>            Name of the newly duplicated theme.
@@ -1980,7 +1984,8 @@ USAGE
 
 FLAGS
   -d, --development             Retrieve info from your development theme.
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -j, --json                    Output the result as JSON.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
@@ -2056,7 +2061,8 @@ USAGE
     [--path <value>] [--role live|unpublished|development] [-s <value>] [--verbose]
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -j, --json                    Output the result as JSON.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
@@ -2083,7 +2089,8 @@ USAGE
     [--verbose]
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
@@ -2111,7 +2118,8 @@ USAGE
 FLAGS
   -E, --editor                  Open the theme editor for the specified theme in the browser.
   -d, --development             Open your development theme.
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -l, --live                    Open your live (published) theme.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
@@ -2174,7 +2182,8 @@ USAGE
   $ shopify theme profile --url /products/classic-leather-jacket
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -j, --json                    Output the result as JSON.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
@@ -2205,7 +2214,8 @@ USAGE
     <value>] [--verbose]
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -f, --force                   Skip confirmation.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
@@ -2241,7 +2251,8 @@ USAGE
 
 FLAGS
   -d, --development             Pull theme files from your remote development theme.
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -l, --live                    Pull theme files from your remote live theme.
   -n, --nodelete                Prevent deleting local files that don't exist remotely.
   -o, --only=<value>...         Download only the specified files (Multiple flags allowed). Wrap the value in double
@@ -2276,7 +2287,8 @@ USAGE
 FLAGS
   -a, --allow-live              Allow push to a live theme.
   -d, --development             Push theme files from your remote development theme.
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -j, --json                    Output the result as JSON.
   -l, --live                    Push theme files from your remote live theme.
   -n, --nodelete                Prevent deleting remote files that don't exist locally.
@@ -2343,7 +2355,8 @@ USAGE
 
 FLAGS
   -d, --development             Rename your development theme.
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -l, --live                    Rename your remote live theme.
   -n, --name=<value>            The new name for the theme.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
@@ -2373,7 +2386,8 @@ USAGE
     [--verbose]
 
 FLAGS
-  -e, --environment=<value>...  The environment to apply to the current command.
+  -e, --environment=<value>...  The environment to apply to the current command. Wrap the value in double quotes if
+                                you're using wildcards.
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.

@@ -4915,7 +4915,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5038,7 +5038,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5139,7 +5139,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5243,7 +5243,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5440,7 +5440,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5548,7 +5548,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5744,7 +5744,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5856,7 +5856,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -5953,7 +5953,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6087,7 +6087,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6198,7 +6198,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6299,7 +6299,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6448,7 +6448,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6625,7 +6625,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6733,7 +6733,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6930,7 +6930,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,

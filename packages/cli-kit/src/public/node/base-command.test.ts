@@ -203,12 +203,19 @@ describe('applying environments', async () => {
     outputMock.clear()
 
     // When
-    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--environment', 'validEnvironment'])
+    await MockCommand.run([
+      '--path',
+      tmpDir,
+      '--environment',
+      'validEnvironment',
+      '--environment',
+      'environmentWithPassword',
+    ])
 
     // Then
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
-      environment: ['validEnvironment', 'validEnvironment'],
+      environment: ['validEnvironment', 'environmentWithPassword'],
       someStringWithDefault: 'default stringy',
     })
     expect(outputMock.info()).toEqual('')

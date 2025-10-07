@@ -3,7 +3,7 @@ import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {loadEnvironment} from '@shopify/cli-kit/node/environments'
+import {loadEnvironment, expandEnvironmentPatterns} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath} from '@shopify/cli-kit/node/path'
@@ -137,6 +137,7 @@ describe('ThemeCommand', () => {
     vi.mocked(ensureThemeStore).mockReturnValue('test-store.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
     vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(expandEnvironmentPatterns).mockImplementation(async (patterns) => patterns)
   })
 
   describe('run', () => {
