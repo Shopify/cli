@@ -132,3 +132,47 @@ describe('loading environments', async () => {
     })
   })
 })
+
+describe('getEnvironmentNames', () => {
+  test('returns all environment names', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(filePath, tomlEncode({environments: {environment1, environment2}}))
+
+      // When
+      const names = await environments.getEnvironmentNames(fileName, {from: tmpDir})
+
+      // Then
+      expect(names).toEqual(['environment1', 'environment2'])
+    })
+  })
+
+  describe('when no environment file exists', () => {
+    test('returns empty array', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // When
+        const names = await environments.getEnvironmentNames(fileName, {from: tmpDir})
+
+        // Then
+        expect(names).toEqual([])
+      })
+    })
+  })
+
+  describe('when environment file is empty', () => {
+    test('returns empty array', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const filePath = joinPath(tmpDir, fileName)
+        await writeFile(filePath, '# no content')
+
+        // When
+        const names = await environments.getEnvironmentNames(fileName, {from: tmpDir})
+
+        // Then
+        expect(names).toEqual([])
+      })
+    })
+  })
+})

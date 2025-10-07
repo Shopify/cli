@@ -95,3 +95,19 @@ async function decodeEnvironments(fileName: string, options?: LoadEnvironmentOpt
 
   return environments
 }
+
+/**
+ * Gets all available environment names from a file.
+ * @param fileName - The file name to load environments from.
+ * @param options - Optional configuration for loading.
+ * @returns Array of environment names, or empty array if none found.
+ */
+export async function getEnvironmentNames(fileName: string, options?: LoadEnvironmentOptions): Promise<string[]> {
+  const environments = await decodeEnvironments(fileName, options)
+
+  if (!environments) {
+    return []
+  }
+
+  return Object.keys(environments)
+}
