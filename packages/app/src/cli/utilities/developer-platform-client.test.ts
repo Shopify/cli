@@ -2,7 +2,8 @@ import {createUnauthorizedHandler, DeveloperPlatformClient} from './developer-pl
 import {describe, expect, test, vi} from 'vitest'
 
 describe('createUnauthorizedHandler', () => {
-  const mockToken = 'mock-refreshed-token'
+  const mockAppManagementToken = 'mock-app-management-token'
+  const mockBusinessPlatformToken = 'mock-business-platform-token'
   const createMockClient = () => {
     let tokenRefreshPromise: Promise<string> | undefined
     return {
@@ -13,17 +14,21 @@ describe('createUnauthorizedHandler', () => {
       clearCurrentlyRefreshingToken: () => {
         tokenRefreshPromise = undefined
       },
-      unsafeRefreshToken: vi.fn().mockResolvedValue(mockToken),
+      unsafeRefreshToken: vi.fn().mockResolvedValue(mockAppManagementToken),
+      session: vi.fn().mockResolvedValue({
+        token: mockAppManagementToken,
+        businessPlatformToken: mockBusinessPlatformToken,
+      }),
     } as unknown as DeveloperPlatformClient
   }
 
-  test('refreshes token on first attempt', async () => {
+  test('refreshes token on first attempt and returns appManagement token by default', async () => {
     const mockClient = createMockClient()
     const handler = createUnauthorizedHandler(mockClient)
 
     const result = await handler.handler()
 
-    expect(result).toEqual({token: mockToken})
+    expect(result).toEqual({token: mockAppManagementToken})
     expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 
@@ -35,7 +40,7 @@ describe('createUnauthorizedHandler', () => {
     handler.handler()
     const result = await handler.handler()
 
-    expect(result).toEqual({token: mockToken})
+    expect(result).toEqual({token: mockAppManagementToken})
     expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 
@@ -50,5 +55,25 @@ describe('createUnauthorizedHandler', () => {
 
     // The following is evidence that the finally block is called correctly
     expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(2)
+  })
+
+  test('returns businessPlatform token when tokenType is businessPlatform', async () => {
+    const mockClient = createMockClient()
+    const handler = createUnauthorizedHandler(mockClient, 'businessPlatform')
+
+    const result = await handler.handler()
+
+    expect(result).toEqual({token: mockBusinessPlatformToken})
+    expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
+  })
+
+  test('returns appManagement token when tokenType is appManagement', async () => {
+    const mockClient = createMockClient()
+    const handler = createUnauthorizedHandler(mockClient, 'appManagement')
+
+    const result = await handler.handler()
+
+    expect(result).toEqual({token: mockAppManagementToken})
+    expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 })
