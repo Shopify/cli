@@ -38,6 +38,7 @@ import {
   DeveloperPlatformClient,
   DevSessionCreateOptions,
   DevSessionDeleteOptions,
+  DevSessionHeartbeatOptions,
   DevSessionUpdateOptions,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
@@ -1492,6 +1493,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       Promise.resolve(`https://test.shopify.com/${app.organizationId}/apps/${app.id}`),
     devSessionCreate: (_input: DevSessionCreateOptions) => Promise.resolve({devSessionCreate: {userErrors: []}}),
     devSessionUpdate: (_input: DevSessionUpdateOptions) => Promise.resolve({devSessionUpdate: {userErrors: []}}),
+    devSessionHeartbeat: (_input: DevSessionHeartbeatOptions) =>
+      Promise.resolve({devSessionHeartbeat: {userErrors: []}}),
     devSessionDelete: (_input: DevSessionDeleteOptions) => Promise.resolve({devSessionDelete: {userErrors: []}}),
     getCreateDevStoreLink: (org: Organization) =>
       Promise.resolve(

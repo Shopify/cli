@@ -22,6 +22,7 @@ import {
   createUnauthorizedHandler,
   DevSessionUpdateOptions,
   DevSessionCreateOptions,
+  DevSessionHeartbeatOptions,
   DevSessionDeleteOptions,
   UserError,
 } from '../developer-platform-client.js'
@@ -86,6 +87,10 @@ import {
   DevSessionUpdateMutation,
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
+import {
+  DevSessionHeartbeat,
+  DevSessionHeartbeatMutation,
+} from '../../api/graphql/app-dev/generated/dev-session-heartbeat.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {
   FetchDevStoreByDomain,
@@ -1026,6 +1031,20 @@ export class AppManagementClient implements DeveloperPlatformClient {
       inheritedModuleUids,
     }
     return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
+  }
+
+  async devSessionHeartbeat({
+    appId,
+    shopFqdn,
+    buildStatus,
+    tunnelUrl,
+  }: DevSessionHeartbeatOptions): Promise<DevSessionHeartbeatMutation> {
+    const appIdNumber = String(numberFromGid(appId))
+    return this.appDevRequest({
+      query: DevSessionHeartbeat,
+      shopFqdn,
+      variables: {appId: appIdNumber, buildStatus, tunnelUrl},
+    })
   }
 
   async devSessionDelete({appId, shopFqdn}: DevSessionDeleteOptions): Promise<DevSessionDeleteMutation> {

@@ -161,7 +161,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
     this.outputPath = this.directory
     this.uid = this.buildUIDFromStrategy()
-    this.devUUID = `dev-${this.uid}`
+    this.devUUID = this.uid
 
     if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
       this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)

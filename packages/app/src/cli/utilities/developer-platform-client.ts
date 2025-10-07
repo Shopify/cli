@@ -50,6 +50,7 @@ import {
 } from '../api/graphql/partners/generated/update-draft.js'
 import {DevSessionCreateMutation} from '../api/graphql/app-dev/generated/dev-session-create.js'
 import {DevSessionUpdateMutation} from '../api/graphql/app-dev/generated/dev-session-update.js'
+import {DevSessionHeartbeatMutation} from '../api/graphql/app-dev/generated/dev-session-heartbeat.js'
 import {DevSessionDeleteMutation} from '../api/graphql/app-dev/generated/dev-session-delete.js'
 import {AppLogsOptions} from '../services/app-logs/utils.js'
 import {AppLogData} from '../services/app-logs/types.js'
@@ -164,6 +165,11 @@ export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   manifest: AppManifest
   inheritedModuleUids: string[]
+}
+
+export interface DevSessionHeartbeatOptions extends DevSessionSharedOptions {
+  buildStatus?: string
+  tunnelUrl?: string
 }
 
 export type DevSessionDeleteOptions = DevSessionSharedOptions
@@ -290,6 +296,7 @@ export interface DeveloperPlatformClient {
   appDeepLink: (app: MinimalAppIdentifiers) => Promise<string>
   devSessionCreate: (input: DevSessionCreateOptions) => Promise<DevSessionCreateMutation>
   devSessionUpdate: (input: DevSessionUpdateOptions) => Promise<DevSessionUpdateMutation>
+  devSessionHeartbeat: (input: DevSessionHeartbeatOptions) => Promise<DevSessionHeartbeatMutation>
   devSessionDelete: (input: DevSessionSharedOptions) => Promise<DevSessionDeleteMutation>
   getCreateDevStoreLink: (org: Organization) => Promise<TokenItem>
 }
