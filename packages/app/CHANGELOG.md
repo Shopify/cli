@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.85.5
+
+### Patch Changes
+
+- 06c6a87: Add verification support to alternative payment extensions (closed beta).
+  - @shopify/cli-kit@3.85.5
+  - @shopify/theme@3.85.5
+  - @shopify/plugin-cloudflare@3.85.5
+
 ## 3.85.4
 
 ### Patch Changes
