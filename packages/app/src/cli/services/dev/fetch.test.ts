@@ -51,8 +51,8 @@ describe('fetchOrganizations', async () => {
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG2]),
     }) as AppManagementClient
-    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
+    vi.mocked(PartnersClient.getInstance).mockReturnValue(partnersClient)
+    vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
 
     // When
     const got = await fetchOrganizations()
@@ -71,8 +71,8 @@ describe('fetchOrganizations', async () => {
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
     }) as AppManagementClient
-    vi.mocked(PartnersClient).mockReturnValue(partnersClient)
-    vi.mocked(AppManagementClient).mockReturnValue(appManagementClient)
+    vi.mocked(PartnersClient.getInstance).mockReturnValue(partnersClient)
+    vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
 
     // When
     const got = fetchOrganizations()

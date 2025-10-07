@@ -31,7 +31,7 @@ import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
-import {describe, expect, test, vi} from 'vitest'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {
@@ -48,6 +48,11 @@ vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/api/app-management')
 vi.mock('@shopify/cli-kit/node/api/webhooks')
+
+beforeEach(() => {
+  // Reset the singleton instance before each test
+  AppManagementClient.resetInstance()
+})
 
 const extensionA = await testUIExtension({uid: 'extension-a-uuid'})
 const extensionB = await testUIExtension({uid: 'extension-b-uuid'})
@@ -160,7 +165,7 @@ describe('templateSpecifications', () => {
     vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
     const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
@@ -188,7 +193,7 @@ describe('templateSpecifications', () => {
     vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
     const {templates: got} = await client.templateSpecifications(orgApp)
     const gotLabels = got.map((template) => template.name)
@@ -236,7 +241,7 @@ describe('templateSpecifications', () => {
     vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
     const {groupOrder} = await client.templateSpecifications(orgApp)
 
@@ -249,7 +254,7 @@ describe('templateSpecifications', () => {
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Failed to fetch'))
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     const got = client.templateSpecifications(testOrganizationApp())
 
     // Then
@@ -346,7 +351,7 @@ describe('searching for apps', () => {
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce(mockedFetchAppsResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const got = await client.appsForOrg(orgId, query)
 
@@ -377,7 +382,7 @@ describe('searching for apps', () => {
     vi.mocked(appManagementRequestDoc).mockResolvedValueOnce({})
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
 
     // Then
@@ -388,7 +393,7 @@ describe('searching for apps', () => {
 describe('createApp', () => {
   test('fetches latest stable API version for webhooks module', async () => {
     // Given
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     const org = testOrganization()
     const mockedApiVersionResult: PublicApiVersionsQuery = {
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
@@ -442,7 +447,7 @@ describe('createApp', () => {
   test('creates app successfully and returns expected app structure', async () => {
     // Given
     const appName = 'app-name'
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     const org = testOrganization()
     const expectedApp = {
       id: '1',
@@ -485,7 +490,7 @@ describe('createApp', () => {
 
   test('sets embedded to true in app home module', async () => {
     // Given
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     const org = testOrganization()
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce({
       publicApiVersions: [{handle: '2024-07'}, {handle: '2024-10'}, {handle: '2025-01'}, {handle: 'unstable'}],
@@ -540,7 +545,7 @@ describe('apiVersions', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const apiVersions = await client.apiVersions(orgId)
 
@@ -558,7 +563,7 @@ describe('topics', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const topics = await client.topics({api_version: '2024-07'}, orgId)
 
@@ -574,7 +579,7 @@ describe('topics', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const topics = await client.topics({api_version: 'invalid'}, orgId)
 
@@ -615,7 +620,7 @@ describe('sendSampleWebhook', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve(token)
     const result = await client.sendSampleWebhook(input, orgId)
 
@@ -664,7 +669,7 @@ describe('sendSampleWebhook', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve(token)
     const result = await client.sendSampleWebhook(input, orgId)
 
@@ -704,7 +709,7 @@ describe('sendSampleWebhook', () => {
     vi.mocked(webhooksRequestDoc).mockResolvedValueOnce(mockedResponse)
 
     // When
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const result = await client.sendSampleWebhook(input, orgId)
 
@@ -718,7 +723,7 @@ describe('sendSampleWebhook', () => {
 
 describe('deploy', () => {
   // Given
-  const client = new AppManagementClient()
+  const client = AppManagementClient.getInstance()
   client.token = () => Promise.resolve('token')
 
   test('creates version with correct metadata and modules', async () => {
@@ -933,7 +938,7 @@ describe('deploy', () => {
   test('queries for versions list', async () => {
     // Given
     const appId = 'gid://shopify/App/123'
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.token = () => Promise.resolve('token')
     const mockResponse: AppVersionsQuery = {
       app: {
@@ -1036,7 +1041,7 @@ describe('AppManagementClient', () => {
   describe('generateSignedUploadUrl', () => {
     test('passes Brotli format for uploads', async () => {
       // Given
-      const client = new AppManagementClient()
+      const client = AppManagementClient.getInstance()
       const mockResponse = {
         appRequestSourceUploadUrl: {
           sourceUploadUrl: 'https://example.com/upload-url',
@@ -1079,7 +1084,7 @@ describe('AppManagementClient', () => {
   describe('bundleFormat', () => {
     test('returns br for Brotli compression format', () => {
       // Given
-      const client = new AppManagementClient()
+      const client = AppManagementClient.getInstance()
 
       // Then
       expect(client.bundleFormat).toBe('br')
@@ -1094,7 +1099,7 @@ describe('ensureUserAccessToStore', () => {
     const store = testOrganizationStore({shopId: '456'})
     const token = 'business-platform-token'
 
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve(token)
 
     const mockResponse = {
@@ -1127,7 +1132,7 @@ describe('ensureUserAccessToStore', () => {
     // Given
     const store = testOrganizationStore({})
     store.provisionable = false
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
 
     // When
     await client.ensureUserAccessToStore('123', store)
@@ -1138,7 +1143,7 @@ describe('ensureUserAccessToStore', () => {
 
   test('handles failure', async () => {
     const store = testOrganizationStore({})
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
 
     const mockResponse = {
@@ -1156,7 +1161,7 @@ describe('ensureUserAccessToStore', () => {
 })
 
 describe('appExtensionRegistrations', () => {
-  const client = new AppManagementClient()
+  const client = AppManagementClient.getInstance()
   const organizationId = 'org123'
   const apiKey = 'api-key-123'
   const appId = 'app-id-123'
@@ -1534,7 +1539,7 @@ describe('appExtensionRegistrations', () => {
 describe('organizations', () => {
   test('returns empty array when currentUserAccount is null', async () => {
     // Given
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
 
     vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce({
@@ -1556,7 +1561,7 @@ describe('organizations', () => {
 
   test('returns organizations with unique names', async () => {
     // Given
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
     const mockResponse = {
       currentUserAccount: {
@@ -1585,7 +1590,7 @@ describe('organizations', () => {
 
   test('appends ID to businessName when organizations have duplicate names', async () => {
     // Given
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
     const mockResponse = {
       currentUserAccount: {
@@ -1632,7 +1637,7 @@ describe('organizations', () => {
 
   test('returns empty array when organizationsWithAccessToDestination is empty', async () => {
     // Given
-    const client = new AppManagementClient()
+    const client = AppManagementClient.getInstance()
     client.businessPlatformToken = () => Promise.resolve('business-platform-token')
     const mockResponse = {
       currentUserAccount: {
@@ -1649,5 +1654,28 @@ describe('organizations', () => {
 
     // Then
     expect(result).toEqual([])
+  })
+})
+
+describe('singleton pattern', () => {
+  test('getInstance returns the same instance', () => {
+    // Given/When
+    const instance1 = AppManagementClient.getInstance()
+    const instance2 = AppManagementClient.getInstance()
+
+    // Then
+    expect(instance1).toBe(instance2)
+  })
+
+  test('resetInstance allows creating a new instance', () => {
+    // Given
+    const instance1 = AppManagementClient.getInstance()
+
+    // When
+    AppManagementClient.resetInstance()
+    const instance2 = AppManagementClient.getInstance()
+
+    // Then
+    expect(instance1).not.toBe(instance2)
   })
 })

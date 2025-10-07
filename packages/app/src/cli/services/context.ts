@@ -5,7 +5,6 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import {setAppConfigValue, unsetAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
-import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {AppInterface, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
@@ -26,6 +25,7 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
+import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
