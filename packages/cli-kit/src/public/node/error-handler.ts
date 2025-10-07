@@ -133,6 +133,9 @@ export async function sendErrorToBugsnag(
           event.severity = 'error'
           event.unhandled = unhandled
           event.setUser(userId)
+          if (event?.errors?.[0]?.errorMessage && event?.errors?.[0]?.errorClass) {
+            event.groupingHash = event?.errors?.[0]?.errorMessage + event?.errors?.[0]?.errorClass
+          }
           // Attach command metadata so we know which CLI command triggered the error
           const {commandStartOptions} = metadata.getAllSensitiveMetadata()
           const {startCommand} = commandStartOptions ?? {}
