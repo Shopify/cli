@@ -111,6 +111,72 @@ describe('CustomOnsitePaymentsAppExtensionSchema', () => {
       ]),
     )
   })
+
+  test('validates a configuration with valid start_verification_session_url', async () => {
+    // Given
+    const configWithVerificationUrl = {
+      ...config,
+      start_verification_session_url: 'https://example.com/verify',
+    }
+
+    // When
+    const {success} = CustomOnsitePaymentsAppExtensionSchema.safeParse(configWithVerificationUrl)
+
+    // Then
+    expect(success).toBe(true)
+  })
+
+  test('validates a configuration without start_verification_session_url', async () => {
+    // Given
+    const configWithoutVerificationUrl = {
+      ...config,
+      start_verification_session_url: undefined,
+    }
+
+    // When
+    const {success} = CustomOnsitePaymentsAppExtensionSchema.safeParse(configWithoutVerificationUrl)
+
+    // Then
+    expect(success).toBe(true)
+  })
+
+  test('returns an error if start_verification_session_url is not a valid URL', async () => {
+    // When/Then
+    expect(() =>
+      CustomOnsitePaymentsAppExtensionSchema.parse({
+        ...config,
+        start_verification_session_url: 'not-a-valid-url',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          validation: 'url',
+          code: zod.ZodIssueCode.invalid_string,
+          message: 'Invalid url',
+          path: ['start_verification_session_url'],
+        },
+      ]),
+    )
+  })
+
+  test('returns an error if start_verification_session_url is an empty string', async () => {
+    // When/Then
+    expect(() =>
+      CustomOnsitePaymentsAppExtensionSchema.parse({
+        ...config,
+        start_verification_session_url: '',
+      }),
+    ).toThrowError(
+      new zod.ZodError([
+        {
+          validation: 'url',
+          code: zod.ZodIssueCode.invalid_string,
+          message: 'Invalid url',
+          path: ['start_verification_session_url'],
+        },
+      ]),
+    )
+  })
 })
 
 describe('customOnsitePaymentsAppExtensionDeployConfig', () => {
@@ -142,6 +208,38 @@ describe('customOnsitePaymentsAppExtensionDeployConfig', () => {
       checkout_payment_method_fields: config.checkout_payment_method_fields,
       modal_payment_method_fields: config.modal_payment_method_fields,
       ui_extension_handle: config.ui_extension_handle,
+    })
+  })
+
+  test('maps start_verification_session_url when provided in extension configuration', async () => {
+    // Given
+    const configWithVerificationUrl = {
+      ...config,
+      start_verification_session_url: 'https://example.com/verify',
+    }
+
+    // When
+    const result = await customOnsitePaymentsAppExtensionDeployConfig(configWithVerificationUrl)
+
+    // Then
+    expect(result).toMatchObject({
+      start_verification_session_url: 'https://example.com/verify',
+    })
+  })
+
+  test('does not include start_verification_session_url when not provided in extension configuration', async () => {
+    // Given
+    const configWithoutVerificationUrl = {
+      ...config,
+      start_verification_session_url: undefined,
+    }
+
+    // When
+    const result = await customOnsitePaymentsAppExtensionDeployConfig(configWithoutVerificationUrl)
+
+    // Then
+    expect(result).toMatchObject({
+      start_verification_session_url: undefined,
     })
   })
 })
