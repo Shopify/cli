@@ -4,6 +4,7 @@ import {cwd} from './path.js'
 import * as metadata from './metadata.js'
 import {renderWarning} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
+import {minimatch} from 'minimatch'
 
 export interface Environments {
   [name: string]: JsonMap
@@ -110,4 +111,37 @@ export async function getEnvironmentNames(fileName: string, options?: LoadEnviro
   }
 
   return Object.keys(environments)
+}
+
+/**
+ * Expands environment patterns (including globs) to actual environment names.
+ * @param patterns - Array of environment names or glob patterns.
+ * @param fileName - The file name to load environments from.
+ * @param options - Optional configuration for loading.
+ * @returns Array of matched environment names.
+ */
+export async function expandEnvironmentPatterns(
+  patterns: string[],
+  fileName: string,
+  options?: LoadEnvironmentOptions,
+): Promise<string[]> {
+  const allEnvironments = await getEnvironmentNames(fileName, options)
+  const matchedEnvironments = new Set<string>()
+
+  for (const pattern of patterns) {
+    const matches = allEnvironments.filter((env) => minimatch(env, pattern))
+
+    if (matches.length === 0) {
+      renderWarningIfNeeded(
+        {
+          body: [`Could not find any environments matching`, {command: pattern}],
+        },
+        options?.silent,
+      )
+    }
+
+    matches.forEach((match) => matchedEnvironments.add(match))
+  }
+
+  return Array.from(matchedEnvironments)
 }

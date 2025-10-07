@@ -176,3 +176,155 @@ describe('getEnvironmentNames', () => {
     })
   })
 })
+
+describe('expandEnvironmentPatterns', () => {
+  test('returns dedeuplicated environment names', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(
+        filePath,
+        tomlEncode({
+          environments: {
+            'us-production': {store: 'us-store'},
+            'ca-production': {store: 'ca-store'},
+          },
+        }),
+      )
+
+      // When
+      const expanded = await environments.expandEnvironmentPatterns(['us-production', 'us-production'], fileName, {
+        from: tmpDir,
+      })
+
+      // Then
+      expect(expanded).toEqual(['us-production'])
+    })
+  })
+
+  describe('when the pattern contains glob characters', () => {
+    test('expands glob pattern to return multiple environments', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const filePath = joinPath(tmpDir, fileName)
+        await writeFile(
+          filePath,
+          tomlEncode({
+            environments: {
+              'us-production': {store: 'us-store'},
+              'ca-production': {store: 'ca-store'},
+              'de-production': {store: 'de-store'},
+              'us-staging': {store: 'us-staging-store'},
+            },
+          }),
+        )
+
+        // When
+        const expanded = await environments.expandEnvironmentPatterns(['*-production'], fileName, {from: tmpDir})
+
+        // Then
+        expect(expanded.sort()).toEqual(['ca-production', 'de-production', 'us-production'])
+      })
+    })
+
+    test('supports question mark glob patterns', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const filePath = joinPath(tmpDir, fileName)
+        await writeFile(
+          filePath,
+          tomlEncode({
+            environments: {
+              'us-production': {store: 'us-store'},
+              'uk-production': {store: 'uk-store'},
+              'usa-production': {store: 'usa-store'},
+            },
+          }),
+        )
+
+        // When
+        const expanded = await environments.expandEnvironmentPatterns(['u?-production'], fileName, {from: tmpDir})
+
+        // Then
+        expect(expanded.sort()).toEqual(['uk-production', 'us-production'])
+      })
+    })
+
+    test('supports square bracket glob patterns', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const filePath = joinPath(tmpDir, fileName)
+        await writeFile(
+          filePath,
+          tomlEncode({
+            environments: {
+              'us-production': {store: 'us-store'},
+              'uk-production': {store: 'uk-store'},
+              'usa-production': {store: 'usa-store'},
+            },
+          }),
+        )
+
+        // When
+        const expanded = await environments.expandEnvironmentPatterns(['u[a-z]-production'], fileName, {from: tmpDir})
+
+        // Then
+        expect(expanded.sort()).toEqual(['uk-production', 'us-production'])
+      })
+    })
+
+    test('supports curly bracket glob patterns', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const filePath = joinPath(tmpDir, fileName)
+        await writeFile(
+          filePath,
+          tomlEncode({
+            environments: {
+              'us-production': {store: 'us-store'},
+              'uk-production': {store: 'uk-store'},
+              'usa-production': {store: 'usa-store'},
+            },
+          }),
+        )
+
+        // When
+        const expanded = await environments.expandEnvironmentPatterns(['{uk,us}-production'], fileName, {from: tmpDir})
+
+        // Then
+        expect(expanded.sort()).toEqual(['uk-production', 'us-production'])
+      })
+    })
+  })
+
+  test('renders a warning if no match is found', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+      const filePath = joinPath(tmpDir, fileName)
+      await writeFile(
+        filePath,
+        tomlEncode({
+          environments: {
+            'us-production': {store: 'us-store'},
+          },
+        }),
+      )
+
+      // When
+      const expanded = await environments.expandEnvironmentPatterns(['nonexistent'], fileName, {from: tmpDir})
+
+      // Then
+      expect(expanded).toEqual([])
+      expect(outputMock.warn()).toMatchInlineSnapshot(`
+        "╭─ warning ────────────────────────────────────────────────────────────────────╮
+        │                                                                              │
+        │  Could not find any environments matching \`nonexistent\`                      │
+        │                                                                              │
+        ╰──────────────────────────────────────────────────────────────────────────────╯
+        "
+      `)
+    })
+  })
+})
