@@ -24,6 +24,7 @@ import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI} from '@shopify/cli-kit/node/cli'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {FatalError} from '@shopify/cli-kit/node/error'
+import {Hook} from '@oclif/core'
 import fs from 'fs'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
