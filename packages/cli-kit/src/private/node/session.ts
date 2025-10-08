@@ -200,7 +200,7 @@ export async function ensureAuthenticated(
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
   if (previousStoreFqdn) {
-    const normalizedStoreName = await normalizeStoreFqdn(previousStoreFqdn)
+    const normalizedStoreName = normalizeStoreFqdn(previousStoreFqdn)
     if (previousStoreFqdn === applications.adminApi?.storeFqdn) {
       applications.adminApi.storeFqdn = normalizedStoreName
     }

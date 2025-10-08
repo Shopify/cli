@@ -139,8 +139,7 @@ export default abstract class ThemeCommand extends Command {
       })
 
       if (environmentFlags?.store && typeof environmentFlags.store === 'string') {
-        // eslint-disable-next-line no-await-in-loop
-        environmentFlags.store = await normalizeStoreFqdn(environmentFlags.store)
+        environmentFlags.store = normalizeStoreFqdn(environmentFlags.store)
       }
 
       if (environmentFlags?.path && typeof environmentFlags.path === 'string') {
