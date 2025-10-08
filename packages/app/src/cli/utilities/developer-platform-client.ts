@@ -296,24 +296,39 @@ export interface DeveloperPlatformClient {
 
 const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
 
-export function createUnauthorizedHandler(client: DeveloperPlatformClient): UnauthorizedHandler {
+/**
+ * Creates an unauthorized handler for a developer platform client that will refresh the token
+ * and return the appropriate token based on the token type.
+ * If the tokenType is 'businessPlatform', the handler will return the business platform token.
+ * Otherwise, it will return the default token (App Management API or Partners API).
+ * @param client - The developer platform client.
+ * @param tokenType - The type of token to return ('default' or 'businessPlatform')
+ * @returns The unauthorized handler.
+ */
+export function createUnauthorizedHandler(
+  client: DeveloperPlatformClient,
+  tokenType: 'default' | 'businessPlatform' = 'default',
+): UnauthorizedHandler {
   return {
     type: 'token_refresh',
     handler: async () => {
       let tokenRefresher = inProgressRefreshes.get(client)
       if (tokenRefresher) {
-        const token = await tokenRefresher
-        return {token}
+        await tokenRefresher
       } else {
         try {
           tokenRefresher = client.unsafeRefreshToken()
           inProgressRefreshes.set(client, tokenRefresher)
-          const token = await tokenRefresher
-          return {token}
+          await tokenRefresher
         } finally {
           inProgressRefreshes.delete(client)
         }
       }
+
+      // After refresh, get the appropriate token based on the request type
+      const session = await client.session()
+      const token = tokenType === 'businessPlatform' ? session.businessPlatformToken : session.token
+      return {token}
     },
   }
 }

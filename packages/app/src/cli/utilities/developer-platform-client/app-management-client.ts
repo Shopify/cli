@@ -285,7 +285,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           cacheExtraKey: userId,
         },
         token: businessPlatformToken,
-        unauthorizedHandler: this.createUnauthorizedHandler(),
+        unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
       })
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {
@@ -1104,7 +1104,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return businessPlatformRequestDoc({
       ...options,
       token: await this.businessPlatformToken(),
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
     })
   }
 
@@ -1114,7 +1114,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return businessPlatformOrganizationsRequestDoc({
       ...options,
       token: await this.businessPlatformToken(),
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
     })
   }
 
@@ -1138,8 +1138,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
   }
 
-  private createUnauthorizedHandler(): UnauthorizedHandler {
-    return createUnauthorizedHandler(this)
+  private createUnauthorizedHandler(tokenType: 'default' | 'businessPlatform' = 'default'): UnauthorizedHandler {
+    return createUnauthorizedHandler(this, tokenType)
   }
 }
 
