@@ -11,10 +11,10 @@ import fs from 'node:fs'
 import * as gzip from 'node:zlib'
 import {fileURLToPath} from 'node:url'
 
-export const PREFERRED_FUNCTION_RUNNER_VERSION = '9.1.1'
+export const PREFERRED_FUNCTION_RUNNER_VERSION = '9.1.2'
 
 // Javy dependencies.
-export const PREFERRED_JAVY_VERSION = '7.0.0'
+export const PREFERRED_JAVY_VERSION = '7.0.1'
 // The Javy plugin version should match the plugin version used in the
 // function-runner version specified above.
 export const PREFERRED_JAVY_PLUGIN_VERSION = '3'
