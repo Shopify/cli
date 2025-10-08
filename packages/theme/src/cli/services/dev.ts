@@ -6,6 +6,7 @@ import {isStorefrontPasswordProtected} from '../utilities/theme-environment/stor
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {emptyThemeExtFileSystem} from '../utilities/theme-fs-empty.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
+import {ensureListingExists} from '../utilities/theme-listing.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -36,11 +37,16 @@ interface DevOptions {
   ignore: string[]
   only: string[]
   notify?: string
+  listing?: string
 }
 
 export async function dev(options: DevOptions) {
   if (!(await hasRequiredThemeDirectories(options.directory)) && !(await ensureDirectoryConfirmed(options.force))) {
     return
+  }
+
+  if (options.listing) {
+    await ensureListingExists(options.directory, options.listing)
   }
 
   const storefrontPasswordPromise = await isStorefrontPasswordProtected(options.adminSession).then((needsPassword) =>
@@ -50,8 +56,9 @@ export async function dev(options: DevOptions) {
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const localThemeFileSystem = mountThemeFileSystem(options.directory, {
     filters: options,
-    notify: options.notify,
+    listing: options.listing,
     noDelete: options.noDelete,
+    notify: options.notify,
   })
 
   const host = options.host ?? DEFAULT_HOST

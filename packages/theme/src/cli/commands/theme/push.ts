@@ -97,6 +97,11 @@ export default class Push extends ThemeCommand {
       description: 'Require theme check to pass without errors before pushing. Warnings are allowed.',
       env: 'SHOPIFY_FLAG_STRICT_PUSH',
     }),
+    listing: Flags.string({
+      description:
+        'The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.',
+      env: 'SHOPIFY_FLAG_LISTING',
+    }),
     environment: themeFlags.environment,
   }
 
