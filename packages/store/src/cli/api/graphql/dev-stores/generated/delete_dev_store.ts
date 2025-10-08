@@ -4,7 +4,6 @@ import * as Types from './types.js'
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
 export type DeleteDevStoreMutationVariables = Types.Exact<{
-  shopId: Types.Scalars['ID']['input']
   organizationId: Types.Scalars['ID']['input']
 }>
 
@@ -20,11 +19,6 @@ export const DeleteDevStore = {
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'shopId'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}},
-        },
-        {
-          kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'organizationId'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'ID'}}},
         },
@@ -36,11 +30,6 @@ export const DeleteDevStore = {
             kind: 'Field',
             name: {kind: 'Name', value: 'devStoreDelete'},
             arguments: [
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'shopId'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'shopId'}},
-              },
               {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'organizationId'},

@@ -1,5 +1,5 @@
-mutation DeleteDevStore($shopId: ID!, $organizationId: ID!) {
-  devStoreDelete(shopId: $shopId, organizationId: $organizationId) {
+mutation DeleteDevStore($organizationId: ID!) {
+  devStoreDelete(organizationId: $organizationId) {
     success
   }
 }

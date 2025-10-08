@@ -44,7 +44,7 @@ interface Organization {
   source: OrganizationSource
 }
 
-interface OrganizationStore {
+export interface OrganizationStore {
   shopId: string
   link: string
   shopDomain: string
@@ -288,11 +288,11 @@ export class AppDevStoreClient {
   //   throw new BugError('Not implemented: convertToTransferDisabledStore')
   // }
 
-  async deleteDevStore(shopId: string, orgId: string): Promise<OrganizationStore> {
+  async deleteDevStore(orgId: string, shopFqdn: string): Promise<OrganizationStore> {
     const storesResult = await this.devStoresRequest({
       query: DeleteDevStore,
+      shopFqdn,
       variables: {
-        shopId,
         organizationId: orgId,
       },
     })

@@ -2,10 +2,11 @@ import {CacheOptions, GraphQLResponse, UnauthorizedHandler, graphqlRequestDoc} f
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import {RequestModeInput} from '../http.js'
-import {devStoreFqdn} from '../context/fqdn.js'
+import {devStoreFqdn, normalizeStoreFqdn} from '../context/fqdn.js'
 import Bottleneck from 'bottleneck'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
+import {serviceEnvironment} from '../../../private/node/context/service.js'
 
 // API Rate limiter for partners API (Limit is 10 requests per second)
 // Jobs are launched every 150ms to add an extra 50ms margin per request.
@@ -59,7 +60,7 @@ export interface RequestOptions {
  */
 export interface DevStoresRequestOptions<TResult, TVariables extends Variables> {
   query: TypedDocumentNode<TResult, TVariables>
-  organizationId: string
+  shopFqdn: string
   token: string
   variables?: TVariables
   cacheOptions?: CacheOptions
@@ -78,12 +79,15 @@ export async function devStoresRequestDoc<TResult, TVariables extends Variables>
 ): Promise<TResult> {
   const cacheExtraKey = options.cacheOptions?.cacheExtraKey ?? ''
   const newCacheOptions = options.cacheOptions ? {...options.cacheOptions, cacheExtraKey} : undefined
+  const normalizedShopFqdn = await normalizeStoreFqdn(options.shopFqdn)
+  const addedHeaders = serviceEnvironment() === 'local' ? {'x-forwarded-host': normalizedShopFqdn} : undefined
 
   const result = limiter.schedule<TResult>(async () =>
     graphqlRequestDoc<TResult, TVariables>({
       ...(await setupRequest(options.token)),
       query: options.query,
       variables: options.variables,
+      addedHeaders,
       cacheOptions: newCacheOptions,
       preferredBehaviour: options.requestOptions?.requestMode,
       unauthorizedHandler: options.unauthorizedHandler,
