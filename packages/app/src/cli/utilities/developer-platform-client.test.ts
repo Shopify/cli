@@ -67,9 +67,9 @@ describe('createUnauthorizedHandler', () => {
     expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 
-  test('returns appManagement token when tokenType is appManagement', async () => {
+  test('returns default token when tokenType is default', async () => {
     const mockClient = createMockClient()
-    const handler = createUnauthorizedHandler(mockClient, 'appManagement')
+    const handler = createUnauthorizedHandler(mockClient, 'default')
 
     const result = await handler.handler()
 

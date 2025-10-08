@@ -856,7 +856,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       token: await this.businessPlatformToken(),
       organizationId: String(numberFromGid(orgId)),
       variables,
-      unauthorizedHandler: this.createUnauthorizedHandler('appManagement'),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
     const provisionResult = fullResult.organizationUserProvisionShopAccess
     if (!provisionResult.success) {
@@ -1057,7 +1057,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       token: await this.businessPlatformToken(),
       organizationId,
       variables,
-      unauthorizedHandler: this.createUnauthorizedHandler('appManagement'),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
     const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
@@ -1072,7 +1072,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appManagementRequestDoc({
       ...options,
       token: await this.token(),
-      unauthorizedHandler: this.createUnauthorizedHandler('appManagement'),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
   }
 
@@ -1082,7 +1082,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDevRequestDoc({
       ...options,
       token: await this.token(),
-      unauthorizedHandler: this.createUnauthorizedHandler('appManagement'),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
   }
 
@@ -1112,7 +1112,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return functionsRequestDoc<TResult, TVariables>({
       ...options,
       token: await this.token(),
-      unauthorizedHandler: this.createUnauthorizedHandler('appManagement'),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
   }
 
@@ -1122,13 +1122,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return webhooksRequestDoc<TResult, TVariables>({
       ...options,
       token: await this.token(),
-      unauthorizedHandler: this.createUnauthorizedHandler('appManagement'),
+      unauthorizedHandler: this.createUnauthorizedHandler(),
     })
   }
 
-  private createUnauthorizedHandler(
-    tokenType: 'appManagement' | 'businessPlatform' = 'appManagement',
-  ): UnauthorizedHandler {
+  private createUnauthorizedHandler(tokenType: 'default' | 'businessPlatform' = 'default'): UnauthorizedHandler {
     return createUnauthorizedHandler(this, tokenType)
   }
 }
