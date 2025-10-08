@@ -27,7 +27,9 @@ const IGNORED_ENDPOINTS = [
   '/web-pixels@',
   '/wpm',
   '/services/',
-  '/cdn-cgi/challenge-platform', // Cloudflare's turnstile challenge #6416
+  '/api/collect',
+  // Cloudflare's turnstile challenge #6416
+  '/cdn-cgi/challenge-platform',
 ]
 
 const SESSION_COOKIE_NAME = '_shopify_essential'
