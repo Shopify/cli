@@ -25,6 +25,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {generate} from '@graphql-codegen/cli'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
@@ -79,7 +80,7 @@ async function buildJSFunctionWithoutTasks(
   if (!options.signal?.aborted) {
     options.stdout.write(`Building function ${fun.localIdentifier}...`)
     options.stdout.write(`Building GraphQL types...\n`)
-    await buildGraphqlTypes(fun, options)
+    await buildGraphqlTypes(fun)
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Bundling JS function...\n`)
@@ -104,7 +105,7 @@ async function buildJSFunctionWithTasks(
     {
       title: 'Building GraphQL types',
       task: async () => {
-        await buildGraphqlTypes(fun, options)
+        await buildGraphqlTypes(fun)
       },
     },
     {
@@ -122,19 +123,22 @@ async function buildJSFunctionWithTasks(
   ])
 }
 
-export async function buildGraphqlTypes(
-  fun: {directory: string; isJavaScript: boolean},
-  options: JSFunctionBuildOptions,
-) {
+export async function buildGraphqlTypes(fun: {directory: string; isJavaScript: boolean}) {
   if (!fun.isJavaScript) {
     throw new Error('GraphQL types can only be built for JavaScript functions')
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+    const packageJsonPath = joinPath(fun.directory, 'package.json')
+    const packageJson = JSON.parse(await readFile(packageJsonPath))
+
+    if (!packageJson.codegen) {
+      throw new AbortError('No `codegen` config found in package.json')
+    }
+
+    return generate({
+      ...packageJson.codegen,
       cwd: fun.directory,
-      stderr: options.stderr,
-      signal: options.signal,
     })
   })
 }
