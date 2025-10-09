@@ -23,8 +23,7 @@ import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import * as fsNode from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, readFile, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 import {generate} from '@graphql-codegen/cli'
 
@@ -90,7 +89,7 @@ describe('buildGraphqlTypes', () => {
         },
       },
     }
-    vi.spyOn(fsNode, 'readFile').mockImplementation(async (path: string) => {
+    vi.mocked(readFile).mockImplementation(async (path: string) => {
       if (path === joinPath(ourFunction.directory, 'package.json')) {
         return JSON.stringify(packageJson) as any
       }
@@ -102,7 +101,7 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
-    expect(fsNode.readFile).toHaveBeenCalledWith(joinPath(ourFunction.directory, 'package.json'))
+    expect(readFile).toHaveBeenCalledWith(joinPath(ourFunction.directory, 'package.json'))
     expect(vi.mocked(generate)).toHaveBeenCalledWith({
       cwd: ourFunction.directory,
       ...packageJson.codegen,
