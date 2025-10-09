@@ -13,11 +13,12 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
-import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
+import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 
 // Mock the import extractor - will be configured per test
 vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractImportPaths: vi.fn(() => []),
+  extractImportPathsRecursively: vi.fn(() => []),
   extractJSImports: vi.fn(() => []),
 }))
 
@@ -331,7 +332,7 @@ describe('file-watcher events', () => {
 
   describe('imported file handling', () => {
     test('detects changes in imported files outside extension directories', async () => {
-      const mockedExtractImportPaths = extractImportPaths as any
+      const mockedExtractImportPaths = extractImportPathsRecursively as any
 
       // Simple paths for testing
       const extensionDir = '/test/extensions/my-function'
@@ -380,7 +381,7 @@ describe('file-watcher events', () => {
     })
 
     test('handles imported files that are imported by multiple extensions', async () => {
-      const mockedExtractImportPaths = extractImportPaths as any
+      const mockedExtractImportPaths = extractImportPathsRecursively as any
 
       // Simple paths for testing
       const extension1Dir = '/test/extensions/function1'
@@ -435,7 +436,7 @@ describe('file-watcher events', () => {
     })
 
     test('rescans imports when a source file changes', async () => {
-      const mockedExtractImportPaths = extractImportPaths as any
+      const mockedExtractImportPaths = extractImportPathsRecursively as any
 
       const extensionDir = '/test/extensions/my-function'
       const mainFile = joinPath(extensionDir, 'src', 'main.rs')
@@ -509,7 +510,7 @@ describe('file-watcher events', () => {
     })
 
     test('ignores imported files inside extension directories', async () => {
-      const mockedExtractImportPaths = extractImportPaths as any
+      const mockedExtractImportPaths = extractImportPathsRecursively as any
 
       const extensionDir = '/test/extensions/my-function'
       const mainFile = joinPath(extensionDir, 'src', 'main.rs')

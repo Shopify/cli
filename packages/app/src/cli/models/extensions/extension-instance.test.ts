@@ -21,7 +21,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
-import {extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
+import {extractImportPaths, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {Writable} from 'stream'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -570,18 +570,18 @@ describe('rescanImports', async () => {
       await writeFile(joinPath(srcDir, 'index.ts'), 'import "./local"')
 
       // First scan with one set of imports
-      vi.mocked(extractImportPaths).mockReturnValue(['./local'])
+      vi.mocked(extractImportPathsRecursively).mockReturnValue(['./local'])
       // This will populate cachedImportPaths
       extensionInstance.watchedFiles()
 
       // Update the mock to return different imports
-      vi.mocked(extractImportPaths).mockReturnValue(['./local', '../external'])
+      vi.mocked(extractImportPathsRecursively).mockReturnValue(['./local', '../external'])
 
       // When
       const newImports = await extensionInstance.rescanImports()
 
       // Then
-      expect(extractImportPaths).toHaveBeenCalledTimes(2)
+      expect(extractImportPathsRecursively).toHaveBeenCalledTimes(2)
       // Note: we can't directly test the result since resolvePath would fail in test
     })
   })

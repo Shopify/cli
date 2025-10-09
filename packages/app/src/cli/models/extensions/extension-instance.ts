@@ -32,7 +32,7 @@ import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/n
 import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {extractJSImports, extractImportPaths} from '@shopify/cli-kit/node/import-extractor'
+import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {uniq} from '@shopify/cli-kit/common/array'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
@@ -515,8 +515,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       const entryFiles = this.getExtensionEntryFiles()
 
       for (const entryFile of entryFiles) {
-        // Extract import paths from the entry file
-        const fileImports = extractImportPaths(entryFile)
+        // Extract import paths recursively from the entry file and all its dependencies
+        const fileImports = extractImportPathsRecursively(entryFile)
 
         for (const importPath of fileImports) {
           const normalizedPath = normalizePath(resolvePath(importPath))
@@ -526,7 +526,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
       // Cache and return unique paths
       this.cachedImportPaths = uniq(imports) ?? []
-      outputDebug(`Found ${this.cachedImportPaths.length} external imports for extension ${this.handle}`)
+      outputDebug(`Found ${this.cachedImportPaths.length} external imports (recursively) for extension ${this.handle}`)
       return this.cachedImportPaths
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {

@@ -28,6 +28,49 @@ export function extractImportPaths(filePath: string): string[] {
 }
 
 /**
+ * Recursively extracts import paths from a source file and all its dependencies.
+ * Supports JavaScript, TypeScript, and Rust files.
+ * Handles circular dependencies by tracking visited files.
+ *
+ * @param filePath - Path to the file to analyze.
+ * @param visited - Set of already visited files to prevent infinite recursion.
+ * @returns Array of absolute paths to all imported files (including nested imports).
+ * @throws If an unexpected error occurs while processing files (not including ENOENT file not found errors).
+ */
+export function extractImportPathsRecursively(filePath: string, visited: Set<string> = new Set<string>()): string[] {
+  // Avoid processing the same file twice (handles circular dependencies)
+  if (visited.has(filePath)) {
+    return []
+  }
+
+  visited.add(filePath)
+
+  // Get direct imports from this file
+  const directImports = extractImportPaths(filePath)
+  const allImports = [...directImports]
+
+  // Recursively process each imported file
+  for (const importedFile of directImports) {
+    try {
+      if (fileExistsSync(importedFile) && !isDirectorySync(importedFile)) {
+        const nestedImports = extractImportPathsRecursively(importedFile, visited)
+        allImports.push(...nestedImports)
+      }
+    } catch (error) {
+      // Rethrow unexpected errors after checking for expected file read errors
+      if (error instanceof Error && error.message.includes('ENOENT')) {
+        // Skip files that don't exist or can't be read
+        continue
+      }
+      throw error
+    }
+  }
+
+  // Return unique list of imports
+  return [...new Set(allImports)]
+}
+
+/**
  * Extracts import paths from a JavaScript content.
  *
  * @param content - The content to extract imports from.
