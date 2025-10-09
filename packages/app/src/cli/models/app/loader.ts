@@ -32,7 +32,6 @@ import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
 import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
-import {UIExtensionSchemaType} from '../extensions/specifications/ui_extension.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
 import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
@@ -545,10 +544,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       }
     })
 
-    // Temporary code to validate that there is a single print action extension per target in an app.
-    // Should be replaced by core validation.
-    this.validatePrintActionExtensionsUniqueness(allExtensions)
-
     return allExtensions
   }
 
@@ -743,31 +738,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       this.errors.addError(configurationPath, errorMessage)
       return fallback
     }
-  }
-
-  private validatePrintActionExtensionsUniqueness(allExtensions: ExtensionInstance[]) {
-    const duplicates: {[key: string]: ExtensionInstance[]} = {}
-
-    allExtensions
-      .filter((ext) => ext.type === 'ui_extension')
-      .forEach((extension) => {
-        const points = extension.configuration.extension_points as UIExtensionSchemaType['extension_points']
-        const targets = points.flatMap((point) => point.target).filter((target) => printTargets.includes(target))
-        targets.forEach((target) => {
-          const targetExtensions = duplicates[target] ?? []
-          targetExtensions.push(extension)
-          duplicates[target] = targetExtensions
-
-          if (targetExtensions.length > 1) {
-            const extensionHandles = ['', ...targetExtensions.map((ext) => ext.configuration.handle)].join('\n  · ')
-            this.abortOrReport(
-              outputContent`A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target ${target}:${extensionHandles}`,
-              undefined,
-              extension.configurationPath,
-            )
-          }
-        })
-      })
   }
 
   private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {
@@ -1320,10 +1290,3 @@ export function isValidFormatAppConfigurationFileName(configName: string): confi
   }
   return false
 }
-
-const printTargets = [
-  'admin.order-details.print-action.render',
-  'admin.order-index.selection-print-action.render',
-  'admin.product-details.print-action.render',
-  'admin.product-index.selection-print-action.render',
-]
