@@ -33,8 +33,6 @@ export interface BuildManifest {
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
-export type UIExtensionSchemaType = zod.infer<typeof UIExtensionSchema>
-
 export const UIExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.literal('ui_extension'),
