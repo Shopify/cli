@@ -16,10 +16,15 @@ import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
+import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
 import {realpath} from 'fs/promises'
+
+// Allowed slice names for error analytics grouping.
+// Hardcoded list per product slices to keep analytics consistent.
+const ALLOWED_SLICE_NAMES = new Set<string>(['app', 'theme', 'hydrogen', 'store'])
 
 export async function errorHandler(
   error: Error & {exitCode?: number | undefined},
@@ -121,11 +126,21 @@ export async function sendErrorToBugsnag(
 
     if (report) {
       initializeBugsnag()
+      const userId = await getLastSeenUserIdAfterAuth()
       await new Promise((resolve, reject) => {
         outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
         const eventHandler = (event: Event) => {
           event.severity = 'error'
           event.unhandled = unhandled
+          event.setUser(userId)
+          // Attach command metadata so we know which CLI command triggered the error
+          const {commandStartOptions} = metadata.getAllSensitiveMetadata()
+          const {startCommand} = commandStartOptions ?? {}
+          if (startCommand) {
+            const firstWord = startCommand.trim().split(/\s+/)[0] ?? 'cli'
+            const sliceName = ALLOWED_SLICE_NAMES.has(firstWord) ? firstWord : 'cli'
+            event.addMetadata('custom', {slice_name: sliceName})
+          }
         }
         const errorHandler = (error: unknown) => {
           if (error) {
@@ -283,5 +298,10 @@ function initializeBugsnag() {
       notify: 'https://error-analytics-production.shopifysvc.com',
       sessions: 'https://error-analytics-sessions-production.shopifysvc.com',
     },
+    // Set the project root to `null` to prevent the default behavior of
+    // Bugsnag which is to set it to the cwd. That is unhelpful for us because
+    // the cwd can be anywhere in the user's filesystem, not necessarily
+    // related to the CLI codebase.
+    projectRoot: null,
   })
 }

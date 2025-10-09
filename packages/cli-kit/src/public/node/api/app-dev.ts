@@ -1,4 +1,5 @@
 import {graphqlRequestDoc, UnauthorizedHandler} from './graphql.js'
+import {RequestOptions} from './app-management.js'
 import {appDevFqdn, normalizeStoreFqdn} from '../context/fqdn.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import Bottleneck from 'bottleneck'
@@ -26,6 +27,7 @@ export interface AppDevRequestOptions<TResult, TVariables extends Variables> {
   token: string
   unauthorizedHandler: UnauthorizedHandler
   variables?: TVariables
+  requestOptions?: RequestOptions
 }
 /**
  * Executes an org-scoped GraphQL query against the App Management API.
@@ -38,7 +40,7 @@ export async function appDevRequestDoc<TResult, TVariables extends Variables>(
   options: AppDevRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   const api = 'App Dev'
-  const normalizedShopFqdn = await normalizeStoreFqdn(options.shopFqdn)
+  const normalizedShopFqdn = normalizeStoreFqdn(options.shopFqdn)
   const fqdn = await appDevFqdn(normalizedShopFqdn)
   const url = `https://${fqdn}/app_dev/unstable/graphql.json`
 
@@ -53,6 +55,7 @@ export async function appDevRequestDoc<TResult, TVariables extends Variables>(
       addedHeaders,
       variables: options.variables,
       unauthorizedHandler: options.unauthorizedHandler,
+      preferredBehaviour: options.requestOptions?.requestMode,
     }),
   )
 

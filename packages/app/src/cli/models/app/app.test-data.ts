@@ -24,7 +24,6 @@ import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {BaseConfigType} from '../extensions/schemas.js'
-import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {PaymentsAppExtensionConfigType} from '../extensions/specifications/payments_app_extension.js'
 import {
@@ -79,6 +78,7 @@ import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_ap
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -1223,7 +1223,7 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   themeAppExtensionTemplate,
 ]
 
-export const testPartnersUserSession: PartnersSession = {
+export const testPartnersUserSession: Session = {
   token: 'token',
   businessPlatformToken: 'businessPlatformToken',
   accountInfo: {
@@ -1520,7 +1520,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   return retVal as DeveloperPlatformClient
 }
 
-export const testPartnersServiceSession: PartnersSession = {
+export const testPartnersServiceSession: Session = {
   token: 'partnersToken',
   businessPlatformToken: 'businessPlatformToken',
   accountInfo: {

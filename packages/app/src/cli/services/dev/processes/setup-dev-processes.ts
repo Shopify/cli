@@ -90,7 +90,7 @@ export async function setupDevProcesses({
 }> {
   const apiKey = remoteApp.apiKey
   const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
-  const appPreviewUrl = await buildAppURLForWeb(storeFqdn, apiKey)
+  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
 

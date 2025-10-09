@@ -1,4 +1,4 @@
-import {AccountInfo} from '../services/context/partner-account-info.js'
+import {AccountInfo} from '@shopify/cli-kit/node/session'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 // max age is 72 hours (3 days)

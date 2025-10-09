@@ -14,6 +14,7 @@ interface TransformedWebhookSubscription {
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
+  payload_query?: string
 }
 
 export const SingleWebhookSubscriptionSchema = zod.object({
@@ -24,6 +25,7 @@ export const SingleWebhookSubscriptionSchema = zod.object({
   }),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  payload_query: zod.string({invalid_type_error: 'Value must be a string'}).trim().min(1).optional(),
 })
 
 /* this transforms webhooks remotely to be accepted by the TOML

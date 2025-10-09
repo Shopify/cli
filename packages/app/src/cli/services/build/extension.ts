@@ -151,7 +151,7 @@ export async function buildFunctionExtension(
   try {
     const bundlePath = extension.outputPath
     const relativeBuildPath =
-      (extension as ExtensionInstance<FunctionConfigType>).configuration.build.path ?? joinPath('dist', 'index.wasm')
+      (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ?? joinPath('dist', 'index.wasm')
 
     extension.outputPath = joinPath(extension.directory, relativeBuildPath)
 
@@ -161,7 +161,7 @@ export async function buildFunctionExtension(
       await buildOtherFunction(extension, options)
     }
 
-    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build.wasm_opt
+    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.wasm_opt
     if (fileExistsSync(extension.outputPath) && wasmOpt) {
       await runWasmOpt(extension.outputPath)
     }

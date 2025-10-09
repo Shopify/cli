@@ -1,6 +1,5 @@
 import {PartnersClient} from './developer-platform-client/partners-client.js'
 import {AppManagementClient} from './developer-platform-client/app-management-client.js'
-import {PartnersSession} from '../../cli/services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -57,6 +56,7 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {Session} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
@@ -83,10 +83,10 @@ export interface AppVersionIdentifiers {
 export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
   const clients: DeveloperPlatformClient[] = []
 
-  clients.push(new AppManagementClient())
+  clients.push(AppManagementClient.getInstance())
 
   if (!blockPartnersAccess()) {
-    clients.push(new PartnersClient())
+    clients.push(PartnersClient.getInstance())
   }
 
   return clients
@@ -96,12 +96,12 @@ export function selectDeveloperPlatformClient({
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return new PartnersClient()
+  return PartnersClient.getInstance()
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
-  if (organization.source === OrganizationSource.BusinessPlatform) return new AppManagementClient()
-  return new PartnersClient()
+  if (organization.source === OrganizationSource.BusinessPlatform) return AppManagementClient.getInstance()
+  return PartnersClient.getInstance()
 }
 
 export interface CreateAppOptions {
@@ -226,14 +226,14 @@ export interface DeveloperPlatformClient {
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
   readonly supportsDashboardManagedExtensions: boolean
-  session: () => Promise<PartnersSession>
+  session: () => Promise<Session>
   /**
    * This is an unsafe method that should only be used when the session is expired.
    * It is not safe to use this method in other contexts as it may lead to race conditions.
    * Use only if you know what you are doing.
    */
   unsafeRefreshToken: () => Promise<string>
-  accountInfo: () => Promise<PartnersSession['accountInfo']>
+  accountInfo: () => Promise<Session['accountInfo']>
   appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
@@ -296,24 +296,39 @@ export interface DeveloperPlatformClient {
 
 const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>>()
 
-export function createUnauthorizedHandler(client: DeveloperPlatformClient): UnauthorizedHandler {
+/**
+ * Creates an unauthorized handler for a developer platform client that will refresh the token
+ * and return the appropriate token based on the token type.
+ * If the tokenType is 'businessPlatform', the handler will return the business platform token.
+ * Otherwise, it will return the default token (App Management API or Partners API).
+ * @param client - The developer platform client.
+ * @param tokenType - The type of token to return ('default' or 'businessPlatform')
+ * @returns The unauthorized handler.
+ */
+export function createUnauthorizedHandler(
+  client: DeveloperPlatformClient,
+  tokenType: 'default' | 'businessPlatform' = 'default',
+): UnauthorizedHandler {
   return {
     type: 'token_refresh',
     handler: async () => {
       let tokenRefresher = inProgressRefreshes.get(client)
       if (tokenRefresher) {
-        const token = await tokenRefresher
-        return {token}
+        await tokenRefresher
       } else {
         try {
           tokenRefresher = client.unsafeRefreshToken()
           inProgressRefreshes.set(client, tokenRefresher)
-          const token = await tokenRefresher
-          return {token}
+          await tokenRefresher
         } finally {
           inProgressRefreshes.delete(client)
         }
       }
+
+      // After refresh, get the appropriate token based on the request type
+      const session = await client.session()
+      const token = tokenType === 'businessPlatform' ? session.businessPlatformToken : session.token
+      return {token}
     },
   }
 }

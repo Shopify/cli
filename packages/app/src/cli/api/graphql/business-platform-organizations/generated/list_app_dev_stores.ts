@@ -20,6 +20,7 @@ export type ListAppDevStoresQuery = {
           storeType?: Types.Store | null
           primaryDomain?: string | null
           shortName?: string | null
+          url?: string | null
         }
       }[]
       pageInfo: {hasNextPage: boolean}
@@ -108,6 +109,7 @@ export const ListAppDevStores = {
                                   {kind: 'Field', name: {kind: 'Name', value: 'storeType'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'primaryDomain'}},
                                   {kind: 'Field', name: {kind: 'Name', value: 'shortName'}},
+                                  {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                                   {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                                 ],
                               },

@@ -29,8 +29,10 @@ import {
   constants as fsConstants,
   existsSync as fsFileExistsSync,
   unlinkSync as fsUnlinkSync,
+  accessSync,
   ReadStream,
   WriteStream,
+  statSync,
 } from 'fs'
 import {
   mkdir as fsMkdir,
@@ -446,6 +448,32 @@ export async function fileHasExecutablePermissions(path: string): Promise<boolea
   try {
     await fsAccess(path, fsConstants.X_OK)
     return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+export function fileHasWritePermissions(path: string): boolean {
+  try {
+    accessSync(path, fsConstants.W_OK)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+export function unixFileIsOwnedByCurrentUser(path: string): boolean | undefined {
+  // process.getuid() is only available on Unix-like systems
+  if (process.platform === 'win32' || typeof process.getuid !== 'function') return undefined
+  if (!fileExistsSync(path)) return false
+
+  try {
+    const stats = statSync(path)
+    const currentUid = process.getuid()
+
+    return stats.uid === currentUid
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     return false

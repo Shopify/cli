@@ -298,6 +298,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
     const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
     await writeFile(pnpmLockPath, '')
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
@@ -3307,6 +3308,22 @@ describe('WebhooksSchema', () => {
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('accepts webhook subscription with payload_query', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/webhooks',
+          payload_query: 'query { product { id title } }',
+        },
+      ],
+    }
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {

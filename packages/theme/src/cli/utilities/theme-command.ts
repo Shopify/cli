@@ -88,8 +88,11 @@ export default abstract class ThemeCommand extends Command {
         throw new AbortError(`Path does not exist: ${flags.path}`)
       }
 
-      await this.command(flags, session, false, args)
-      await this.logAnalyticsData(session)
+      try {
+        await this.command(flags, session, false, args)
+      } finally {
+        await this.logAnalyticsData(session)
+      }
       return
     }
 
@@ -136,8 +139,7 @@ export default abstract class ThemeCommand extends Command {
       })
 
       if (environmentFlags?.store && typeof environmentFlags.store === 'string') {
-        // eslint-disable-next-line no-await-in-loop
-        environmentFlags.store = await normalizeStoreFqdn(environmentFlags.store)
+        environmentFlags.store = normalizeStoreFqdn(environmentFlags.store)
       }
 
       if (environmentFlags?.path && typeof environmentFlags.path === 'string') {
@@ -267,8 +269,11 @@ export default abstract class ThemeCommand extends Command {
                 const commandName = this.constructor.name.toLowerCase()
                 recordEvent(`theme-command:${commandName}:multi-env:authenticated`)
 
-                await this.command(flags, session, true, {}, {stdout, stderr})
-                await this.logAnalyticsData(session)
+                try {
+                  await this.command(flags, session, true, {}, {stdout, stderr})
+                } finally {
+                  await this.logAnalyticsData(session)
+                }
               })
 
               // eslint-disable-next-line no-catch-all/no-catch-all
@@ -371,7 +376,6 @@ export default abstract class ThemeCommand extends Command {
     if (!session) return
 
     const data = compileData()
-
     await addPublicMetadata(() => ({
       store_fqdn_hash: hashString(session.storeFqdn),
 

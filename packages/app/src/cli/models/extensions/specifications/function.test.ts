@@ -305,4 +305,27 @@ describe('functionConfiguration', () => {
       expect(got.ui?.ui_extension_handle).toBeUndefined()
     })
   })
+
+  test('accepts configuration without build section', async () => {
+    // Given
+    const configWithoutBuild = {
+      name: 'function',
+      type: 'function',
+      metafields: [],
+      description: 'my function',
+      // build section is omitted
+      configuration_ui: false,
+      api_version: '2022-07',
+    }
+
+    // When
+    const extension = await testFunctionExtension({
+      dir: '/function',
+      config: configWithoutBuild as FunctionConfigType,
+    })
+
+    // Then
+    expect(extension.configuration.build).toBeUndefined()
+    expect(extension.outputPath).toBe(joinPath('/function', 'dist', 'index.wasm'))
+  })
 })

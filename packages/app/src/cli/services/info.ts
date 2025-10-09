@@ -1,10 +1,10 @@
 import {outputEnv} from './app/env/show.js'
-import {isServiceAccount, isUserAccount} from './context/partner-account-info.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
+import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
 import {

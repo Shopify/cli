@@ -41,7 +41,7 @@ importers:
         version: 4.6.1(graphql@16.10.0)
       '@nx/eslint-plugin':
         specifier: 21.5.2
-        version: 21.5.2(@babel/traverse@7.28.4)(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(nx@21.5.2)(typescript@5.8.3)
+        version: 21.5.2(@babel/traverse@7.28.4)(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(nx@21.6.3)(typescript@5.8.3)
       '@nx/workspace':
         specifier: 21.5.2
         version: 21.5.2
@@ -115,8 +115,8 @@ importers:
         specifier: ^3.3.2
         version: 3.3.2
       nx:
-        specifier: 21.5.2
-        version: 21.5.2
+        specifier: 21.6.3
+        version: 21.6.3
       oclif:
         specifier: 4.22.22
         version: 4.22.22(@types/node@18.19.70)
@@ -163,13 +163,13 @@ importers:
         specifier: 4.5.3
         version: 4.5.3
       '@shopify/cli-kit':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../cli-kit
       '@shopify/function-runner':
         specifier: 4.1.1
         version: 4.1.1
       '@shopify/plugin-cloudflare':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../plugin-cloudflare
       '@shopify/polaris':
         specifier: 12.27.0
@@ -178,11 +178,11 @@ importers:
         specifier: 8.11.1
         version: 8.11.1(react@18.3.1)
       '@shopify/theme':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.22.0
-        version: 3.22.0
+        specifier: 3.23.0
+        version: 3.23.0
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
@@ -282,25 +282,22 @@ importers:
         specifier: 5.4.47
         version: 5.4.47
       '@shopify/app':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: 11.1.3
         version: 11.1.3(@graphql-codegen/cli@5.0.4(@parcel/watcher@2.5.1)(@types/node@24.4.0)(crossws@0.3.5)(enquirer@2.4.1)(graphql@16.10.0)(typescript@5.8.3))(graphql-config@5.1.5(@types/node@24.4.0)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.8.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.3.6(@types/node@24.4.0)(jiti@2.4.2)(sass@1.89.1)(yaml@2.8.1))
       '@shopify/cli-kit':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../plugin-cloudflare
       '@shopify/plugin-did-you-mean':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../plugin-did-you-mean
-      '@shopify/store':
-        specifier: 3.84.0
-        version: link:../store
       '@shopify/theme':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../theme
       '@types/global-agent':
         specifier: 3.0.0
@@ -324,8 +321,8 @@ importers:
         specifier: 11.7.3
         version: 11.7.3
       '@bugsnag/js':
-        specifier: 7.25.0
-        version: 7.25.0
+        specifier: 8.6.0
+        version: 8.6.0
       '@graphql-typed-document-node/core':
         specifier: 3.2.0
         version: 3.2.0(graphql@16.10.0)
@@ -563,10 +560,10 @@ importers:
         version: 0.25.5
     devDependencies:
       '@shopify/app':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../app
       '@shopify/cli-kit':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../cli-kit
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
@@ -666,7 +663,7 @@ importers:
         specifier: 4.5.3
         version: 4.5.3
       '@shopify/cli-kit':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
@@ -679,7 +676,7 @@ importers:
         specifier: 4.5.3
         version: 4.5.3
       '@shopify/cli-kit':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../cli-kit
       n-gram:
         specifier: 2.0.2
@@ -689,35 +686,20 @@ importers:
         specifier: ^3.1.4
         version: 3.2.1(vitest@3.2.1(@types/node@24.4.0)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.8.7(@types/node@24.4.0)(typescript@5.8.3))(sass@1.89.1)(yaml@2.8.1))
 
-  packages/store:
-    dependencies:
-      '@graphql-typed-document-node/core':
-        specifier: 3.2.0
-        version: 3.2.0(graphql@16.10.0)
-      '@oclif/core':
-        specifier: 4.5.3
-        version: 4.5.3
-      '@shopify/cli-kit':
-        specifier: 3.84.0
-        version: link:../cli-kit
-      graphql-request:
-        specifier: 6.1.0
-        version: 6.1.0(graphql@16.10.0)
-
   packages/theme:
     dependencies:
       '@oclif/core':
         specifier: 4.5.3
         version: 4.5.3
       '@shopify/cli-kit':
-        specifier: 3.84.0
+        specifier: 3.85.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 3.22.0
-        version: 3.22.0
+        specifier: 3.23.0
+        version: 3.23.0
       '@shopify/theme-language-server-node':
-        specifier: 2.19.0
-        version: 2.19.0
+        specifier: 2.20.0
+        version: 2.20.0
       chokidar:
         specifier: 3.6.0
         version: 3.6.0
@@ -747,7 +729,7 @@ importers:
         specifier: ^6.1.0
         version: 6.4.0(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@shopify/ui-extensions-server-kit':
-        specifier: 5.3.0
+        specifier: 5.3.1
         version: link:../ui-extensions-server-kit
       copy-to-clipboard:
         specifier: ^3.3.3
@@ -1804,32 +1786,26 @@ packages:
     resolution: {integrity: sha512-bkFqkLhh3pMBUQQkpVgWDWq/lqzc2678eUyDlTBhRqhCHFguYYGM0Efga7tYk4TogG/3x0EEl66/OQ+WGbWB/Q==}
     engines: {node: '>=6.9.0'}
 
-  '@bugsnag/browser@7.25.0':
-    resolution: {integrity: sha512-PzzWy5d9Ly1CU1KkxTB6ZaOw/dO+CYSfVtqxVJccy832e6+7rW/dvSw5Jy7rsNhgcKSKjZq86LtNkPSvritOLA==}
-
-  '@bugsnag/browser@8.2.0':
-    resolution: {integrity: sha512-C4BfE3eVsjOAqoXbdrPXfKbgp/hz2H7mKBU0p11Jf9uz+5gUCfZK+39JLrQKvRXwqoDcTlBSfz9Xz5kXLyHg2Q==}
-
-  '@bugsnag/core@7.25.0':
-    resolution: {integrity: sha512-JZLak1b5BVzy77CPcklViZrppac/pE07L3uSDmfSvFYSCGReXkik2txOgV05VlF9EDe36dtUAIIV7iAPDfFpQQ==}
+  '@bugsnag/browser@8.6.0':
+    resolution: {integrity: sha512-7UGqTGnQqXUQ09gOlWbDTFUSbeLIIrP+hML3kTOq8Zdc8nP/iuOEflXGLV2TxWBWW8xIUPc928caFPr9EcaDuw==}
 
   '@bugsnag/core@8.2.0':
     resolution: {integrity: sha512-dFSs80ZwJ508nlC6UTLTUMdHgTaHY5UKvMiuHqstCQrQrOjqFcIv+x4o+l2WrSyOpoYhHAxDlKfzKN8AjwslQw==}
 
+  '@bugsnag/core@8.6.0':
+    resolution: {integrity: sha512-94Jo443JegaiKV8z8NXMFdyTGubiUnwppWhq3kG2ldlYKtEvrmIaO5+JA58B6oveySvoRu3cCe2W9ysY7G7mDw==}
+
   '@bugsnag/cuid@3.2.1':
     resolution: {integrity: sha512-zpvN8xQ5rdRWakMd/BcVkdn2F8HKlDSbM3l7duueK590WmI1T0ObTLc1V/1e55r14WNjPd5AJTYX4yPEAFVi+Q==}
 
-  '@bugsnag/js@7.25.0':
-    resolution: {integrity: sha512-d8n8SyKdRUz8jMacRW1j/Sj/ckhKbIEp49+Dacp3CS8afRgfMZ//NXhUFFXITsDP5cXouaejR9fx4XVapYXNgg==}
-
-  '@bugsnag/js@8.2.0':
-    resolution: {integrity: sha512-DTtQwV1Ly5VXSOnVtzW8gSwB+ld3qIc/h0yMS836DEYUfA3V9JPwJE3+2EbD8Ea2ogkDWZ+a0jl0SNSNGiOmfA==}
-
-  '@bugsnag/node@7.25.0':
-    resolution: {integrity: sha512-KlxBaJ8EREEsfKInybAjTO9LmdDXV3cUH5+XNXyqUZrcRVuPOu4j4xvljh+n24ifok/wbFZTKVXUzrN4iKIeIA==}
+  '@bugsnag/js@8.6.0':
+    resolution: {integrity: sha512-U+ofNTTMA2Z6tCrOhK/QhHBhLoQHoalk8Y82WWc7FAcVSoJZYadND/QuXUriNRZpC4YgJ/s/AxPeQ2y+WvMxzw==}
 
   '@bugsnag/node@8.2.0':
     resolution: {integrity: sha512-6XC/KgX61m6YFgsBQP/GaH1UzlJkJmpi3AwlZQLsXloRh3O9lM/0EIk6+2sZm+vlz+GwxCFavcuIDgVmH/qi7Q==}
+
+  '@bugsnag/node@8.6.0':
+    resolution: {integrity: sha512-O91sELo6zBjflVeP3roRC9l68iYaafVs5lz2N0FDkrT08mP2UljtNWpjjoR/0h1so5Ny1OxHgnZ1IrsXhz5SMQ==}
 
   '@bugsnag/safe-json-stringify@6.0.0':
     resolution: {integrity: sha512-htzFO1Zc57S8kgdRK9mLcPVTW1BY2ijfH7Dk2CeZmspTWKdKqSo1iwmqrq2WtRjFlo8aRZYgLX0wFrDXF/9DLA==}
@@ -2413,6 +2389,7 @@ packages:
   '@graphql-tools/prisma-loader@8.0.17':
     resolution: {integrity: sha512-fnuTLeQhqRbA156pAyzJYN0KxCjKYRU5bz1q/SKOwElSnAU4k7/G1kyVsWLh7fneY78LoMNH5n+KlFV8iQlnyg==}
     engines: {node: '>=16.0.0'}
+    deprecated: 'This package was intended to be used with an older versions of Prisma.\nThe newer versions of Prisma has a different approach to GraphQL integration.\nTherefore, this package is no longer needed and has been deprecated and removed.\nLearn more: https://www.prisma.io/graphql'
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
 
@@ -2797,8 +2774,18 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
+  '@nx/nx-darwin-arm64@21.6.3':
+    resolution: {integrity: sha512-y/Wuo+FEky/ehah5UyERpQpUOm+KOc437zRwUrMGumNUFk73DaHVMmqABCZ1J5eqam60XgRZhq05qpRn+8dhtA==}
+    cpu: [arm64]
+    os: [darwin]
+
   '@nx/nx-darwin-x64@21.5.2':
     resolution: {integrity: sha512-YaLY2Cqbjrl+pDddHV7GFtokn81GLvoqg+i9k0Eiid8B0dDLBZpJ3VQKr4RkTzxBX38UuHbJUwrZc8L9z8vqEw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@nx/nx-darwin-x64@21.6.3':
+    resolution: {integrity: sha512-+9rogeP6EmlMBcUwflfOmFbQOWgAnJdupeJJuSenzWJCn/bE1C2iIGhuq4u4zajo2VceyN7uirlAWc8cQWCevw==}
     cpu: [x64]
     os: [darwin]
 
@@ -2807,8 +2794,18 @@ packages:
     cpu: [x64]
     os: [freebsd]
 
+  '@nx/nx-freebsd-x64@21.6.3':
+    resolution: {integrity: sha512-jrewLpv/J84ze+sC+P0x1INVuXTWqU4qdZIPe0ItrRMDMmxiHdhm6LtHEEo5JYezqM/LgB87yjFE49Qsudtadw==}
+    cpu: [x64]
+    os: [freebsd]
+
   '@nx/nx-linux-arm-gnueabihf@21.5.2':
     resolution: {integrity: sha512-lY2O1py8x+l39XAFFuplKlzouPC9K/gERYEB/b5jHGf7PGfNj0BX2MDmUztgTty6kKUnkRele39aSoQqWok0gA==}
+    cpu: [arm]
+    os: [linux]
+
+  '@nx/nx-linux-arm-gnueabihf@21.6.3':
+    resolution: {integrity: sha512-VyMIKSp1N2ulA2wkAKIH+9a8k4tl67bH2wnvYROTRnfFykeczodfOxWeCAggS//1ccBM05pRxBklMt7fgAqV8w==}
     cpu: [arm]
     os: [linux]
 
@@ -2817,8 +2814,18 @@ packages:
     cpu: [arm64]
     os: [linux]
 
+  '@nx/nx-linux-arm64-gnu@21.6.3':
+    resolution: {integrity: sha512-l6/YZp5MJ5TYWbHoaR31lsqd4Ia2AnaGSACeNCUAsUsUNaa099nwmvFaKQEJxUX1aMpe4kHLyVbomK7ydEX+pg==}
+    cpu: [arm64]
+    os: [linux]
+
   '@nx/nx-linux-arm64-musl@21.5.2':
     resolution: {integrity: sha512-oCSUwT0hORgFJWIGjwl6x4/2mVusw+3YAcSrvDePAXadjPSEMLZlJEE+4HExzqLFFBTxc+ucvyOIk08P4BtNJg==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@nx/nx-linux-arm64-musl@21.6.3':
+    resolution: {integrity: sha512-klidxt4eiSxgLa1LW7YUHstm3qsptz+XD1+3w0ofX1rkdVkK1afrfcolzoeZ5nc4Av7MzZB0g0PoFTGHUIBkrw==}
     cpu: [arm64]
     os: [linux]
 
@@ -2827,8 +2834,18 @@ packages:
     cpu: [x64]
     os: [linux]
 
+  '@nx/nx-linux-x64-gnu@21.6.3':
+    resolution: {integrity: sha512-B5ZvolVUIKKmacbZw1XD2nBIbebE2T6vBbMYq6kZP7PfSsfO5Y0HaWIsK8ulwCj35TPaEn9x/XbHJp5RakU7Ng==}
+    cpu: [x64]
+    os: [linux]
+
   '@nx/nx-linux-x64-musl@21.5.2':
     resolution: {integrity: sha512-KeS36526VruYO9HzhFGqhE5tbps7e94DV0b4j5wfPr7V51EfPzvjAiMWllsQDARv67wdbQ80c0Wg516XTlekgA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@nx/nx-linux-x64-musl@21.6.3':
+    resolution: {integrity: sha512-11L6SigPvjnIFbr4ivXlcH0fOPs55SvT8gkg2TOsSohKFY/Ze4O43NuoZe/7dilLjNgq8aWTbnbSuRK/kFGdBQ==}
     cpu: [x64]
     os: [linux]
 
@@ -2837,8 +2854,18 @@ packages:
     cpu: [arm64]
     os: [win32]
 
+  '@nx/nx-win32-arm64-msvc@21.6.3':
+    resolution: {integrity: sha512-hC84RvGp5YxGhQLitHcg3cohTy7sdsvIRIErq3EsJNlHIaUTZJAegno26sRpRE4Y/5G5RWqfzDCCERg9c3Askw==}
+    cpu: [arm64]
+    os: [win32]
+
   '@nx/nx-win32-x64-msvc@21.5.2':
     resolution: {integrity: sha512-Ur8GPdz52kLS5uE9IQf0wBtGyvQm4Y3M1ZDjRkR+oGf26aVGNTK6C0+kMJPuggR4Z6lurmHYA34ViGi2hHPPpA==}
+    cpu: [x64]
+    os: [win32]
+
+  '@nx/nx-win32-x64-msvc@21.6.3':
+    resolution: {integrity: sha512-vcnVwrTsOVdN6ovKO6qFDHXYRa+lxKFLRGCUHvJvjTOddT1/xJqkL8NE4i1YDWZiCQCck0BizR3Kvs+N0DqHoQ==}
     cpu: [x64]
     os: [win32]
 
@@ -3507,28 +3534,28 @@ packages:
       react: '>=16.8.0 <18.0.0'
       react-dom: '>=16.8.0 <18.0.0'
 
-  '@shopify/theme-check-common@3.22.0':
-    resolution: {integrity: sha512-+342yqLi4YAXZRO+H14GDfdja4pR2IOfY3egEyLcje92FXuXxzzQMfN+ET0JwHlpDIifumSkevY9QeIG/qqqxw==}
+  '@shopify/theme-check-common@3.23.0':
+    resolution: {integrity: sha512-g3aR7vw/hulA/ugGG8htRyoqiPsBhxEkQzVGivX5L1ymPYGFxt6ZwdhkpNLUEw+rWwP6fqnUoSjipbPtjYZjIQ==}
 
-  '@shopify/theme-check-docs-updater@3.22.0':
-    resolution: {integrity: sha512-8ZyB7D7hU+xtMU1yoRkWzXBNGD5wY22yAxBrEOeLlF7dYPpna9PEllJv5cqUTCMAoy2BlZQbLe4KWOSVQ/n47Q==}
+  '@shopify/theme-check-docs-updater@3.23.0':
+    resolution: {integrity: sha512-nfbRgouM3Adm9Zbljf3YHHi3YXVGHC45VJUkyVZ9T1d47RL1XfPzpximUai7OKA8CdN+SSYV2b9aBXb/T6QADA==}
     hasBin: true
 
-  '@shopify/theme-check-node@3.22.0':
-    resolution: {integrity: sha512-bPHN8NoiUBCRXcrtcZzCOsSqkVz1Hol7IRPlPuaaipKxhB8a5CbnwpCbhbuLKkBl86YEy9EZZX3QXp9roDtQUg==}
+  '@shopify/theme-check-node@3.23.0':
+    resolution: {integrity: sha512-EfzHWaXeq0ei/8wyuwh9qOUIkZbzFvTHjAB4BfbQpBZHbX82OUTCfhxSMsS7rqvk+mVSeaiMPq9ZVPf5iHri7w==}
 
-  '@shopify/theme-graph@0.2.0':
-    resolution: {integrity: sha512-79QuvxKu9VAtV214K/1DW/VOtRgn3MCQwuCaGC/estGnkJJ8xFZ2SNIkT1OtzvoPKmVWattUHeAYCwTPn07vfQ==}
+  '@shopify/theme-graph@0.2.1':
+    resolution: {integrity: sha512-S1DFAb71NqVzOr89Jh3OjVrT7tP/e0gbJHKp1gRG1/dGW7T0xCvZZGkhgNU04x5qJGY7umAkzI4oCvQWpv1ogg==}
     hasBin: true
 
   '@shopify/theme-hot-reload@0.0.18':
     resolution: {integrity: sha512-l+IBuk+rG5T+5PKYyPrwgh7PDCxmEMpBFJeen6PM+h6RI4CDhAGRaiwUo5eN1o1JX51HdHHCts3rTEW+KUgq+Q==}
 
-  '@shopify/theme-language-server-common@2.19.0':
-    resolution: {integrity: sha512-3pncj4WKkdO8m+cCqYf9gVe68lFA/2So2OMRo5NQjdJFNszWwZvGOaOfpBf2ZN5inItRYuNXx4GOcd/t3VEpNw==}
+  '@shopify/theme-language-server-common@2.20.0':
+    resolution: {integrity: sha512-NgkFR+UnvvJ2rtB1buYyEs4ed0sZuEe4g7Fu92UamKrJxAh3iWXnFtcLkPulIEgilNRN6PPp38f6mnVA/cBZrA==}
 
-  '@shopify/theme-language-server-node@2.19.0':
-    resolution: {integrity: sha512-ltvG0zwjcs7P6nTpVVCVPJDaPjfXqgBDKf/pajJW1Pa6LR61SNNrVguJYNznCzYkS7nx7lWHLfqd+uPk2953PA==}
+  '@shopify/theme-language-server-node@2.20.0':
+    resolution: {integrity: sha512-8iYQrzGdkmSIzG0XVKyKhksW75EV6zQfthQlkKeDPkn4//B5qCR4ftITc5igLx+ootOYG905ex/FyWy+yhsOlg==}
 
   '@shopify/toml-patch@0.3.0':
     resolution: {integrity: sha512-ruv2FT17FW3CfWx8jXEyfx3xZDdo22PDaFQ9R7QYOovXQbgQCIKY+5QjGVBA7jsyLm+Wa2ngVANmt7MS0M/g+w==}
@@ -4756,6 +4783,10 @@ packages:
 
   chalk@5.4.1:
     resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+
+  chalk@5.6.2:
+    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
   change-case-all@1.0.14:
@@ -6733,8 +6764,8 @@ packages:
     resolution: {integrity: sha512-6m+9Z3Gv9wN0WFVasqjCL/06+EFCMTqDEUl/b87HYK2rAPTyfz4ZIuSlPhY51PIQRWx5TaxeF1qmXKe9gfN3sA==}
     engines: {node: '>= 10.14.2'}
 
-  jest-diff@30.1.2:
-    resolution: {integrity: sha512-4+prq+9J61mOVXCa4Qp8ZjavdxzrWQXrI80GNxP8f4tkI2syPuPrJgdRPZRrfUTRvIoUwcmNLbqEJy9W800+NQ==}
+  jest-diff@30.2.0:
+    resolution: {integrity: sha512-dQHFo3Pt4/NLlG5z4PxZ/3yZTZ1C7s9hveiOj+GCN+uT109NC2QgsoVZsVOAvbJ3RgKkvyLGXZV9+piDpWbm6A==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   jest-get-type@26.3.0:
@@ -7428,6 +7459,18 @@ packages:
       '@swc/core':
         optional: true
 
+  nx@21.6.3:
+    resolution: {integrity: sha512-CD/R7JV9OWy1UNsm6BOAMvH7m7EpqDKVHbBjoR8wmxYaTKkOQ9lPpi5yYIyRPpONK/uHCqYyeKa2cM3zP6euqw==}
+    hasBin: true
+    peerDependencies:
+      '@swc-node/register': ^1.8.0
+      '@swc/core': ^1.3.85
+    peerDependenciesMeta:
+      '@swc-node/register':
+        optional: true
+      '@swc/core':
+        optional: true
+
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
@@ -7766,8 +7809,8 @@ packages:
     resolution: {integrity: sha512-7AeGuCYNGmycyQbCqd/3PWH4eOoX/OiCa0uphp57NVTeAGdJGaAliecxwBDHYQCIvrW7aDBZCYeNTP/WX69mkg==}
     engines: {node: '>= 10'}
 
-  pretty-format@30.0.5:
-    resolution: {integrity: sha512-D1tKtYvByrBkFLe2wHJl2bwMJIiT8rW+XA+TiataH79/FszLQMrpGEvzUVkzPau7OCO0Qnrhpe87PqtOAIB8Yw==}
+  pretty-format@30.2.0:
+    resolution: {integrity: sha512-9uBdv/B4EefsuAL+pWqueZyZS2Ba+LxfFeQ9DN14HU4bN8bhaxKdkpjpB6fs9+pSjIBu+FXQHImEg8j/Lw0+vA==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
   printable-characters@1.0.42:
@@ -10895,21 +10938,9 @@ snapshots:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
 
-  '@bugsnag/browser@7.25.0':
+  '@bugsnag/browser@8.6.0':
     dependencies:
-      '@bugsnag/core': 7.25.0
-
-  '@bugsnag/browser@8.2.0':
-    dependencies:
-      '@bugsnag/core': 8.2.0
-
-  '@bugsnag/core@7.25.0':
-    dependencies:
-      '@bugsnag/cuid': 3.2.1
-      '@bugsnag/safe-json-stringify': 6.0.0
-      error-stack-parser: 2.1.4
-      iserror: 0.0.2
-      stack-generator: 2.0.10
+      '@bugsnag/core': 8.6.0
 
   '@bugsnag/core@8.2.0':
     dependencies:
@@ -10919,30 +10950,33 @@ snapshots:
       iserror: 0.0.2
       stack-generator: 2.0.10
 
+  '@bugsnag/core@8.6.0':
+    dependencies:
+      '@bugsnag/cuid': 3.2.1
+      '@bugsnag/safe-json-stringify': 6.0.0
+      error-stack-parser: 2.1.4
+      iserror: 0.0.2
+      stack-generator: 2.0.10
+
   '@bugsnag/cuid@3.2.1': {}
 
-  '@bugsnag/js@7.25.0':
+  '@bugsnag/js@8.6.0':
     dependencies:
-      '@bugsnag/browser': 7.25.0
-      '@bugsnag/node': 7.25.0
+      '@bugsnag/browser': 8.6.0
+      '@bugsnag/node': 8.6.0
 
-  '@bugsnag/js@8.2.0':
+  '@bugsnag/node@8.2.0':
     dependencies:
-      '@bugsnag/browser': 8.2.0
-      '@bugsnag/node': 8.2.0
-
-  '@bugsnag/node@7.25.0':
-    dependencies:
-      '@bugsnag/core': 7.25.0
+      '@bugsnag/core': 8.2.0
       byline: 5.0.0
       error-stack-parser: 2.1.4
       iserror: 0.0.2
       pump: 3.0.2
       stack-generator: 2.0.10
 
-  '@bugsnag/node@8.2.0':
+  '@bugsnag/node@8.6.0':
     dependencies:
-      '@bugsnag/core': 8.2.0
+      '@bugsnag/core': 8.6.0
       byline: 5.0.0
       error-stack-parser: 2.1.4
       iserror: 0.0.2
@@ -12294,7 +12328,7 @@ snapshots:
     dependencies:
       string-width: 5.1.2
       string-width-cjs: string-width@4.2.3
-      strip-ansi: 7.1.0
+      strip-ansi: 7.1.2
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
@@ -12444,15 +12478,27 @@ snapshots:
       ignore: 5.3.2
       minimatch: 9.0.3
       nx: 21.5.2
-      semver: 7.6.3
+      semver: 7.7.2
       tmp: 0.2.4
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
-  '@nx/eslint-plugin@21.5.2(@babel/traverse@7.28.4)(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(nx@21.5.2)(typescript@5.8.3)':
+  '@nx/devkit@21.5.2(nx@21.6.3)':
     dependencies:
-      '@nx/devkit': 21.5.2(nx@21.5.2)
-      '@nx/js': 21.5.2(@babel/traverse@7.28.4)(nx@21.5.2)
+      ejs: 3.1.10
+      enquirer: 2.3.6
+      ignore: 5.3.2
+      minimatch: 9.0.3
+      nx: 21.6.3
+      semver: 7.7.2
+      tmp: 0.2.4
+      tslib: 2.8.1
+      yargs-parser: 21.1.1
+
+  '@nx/eslint-plugin@21.5.2(@babel/traverse@7.28.4)(@typescript-eslint/parser@7.18.0(eslint@8.57.1)(typescript@5.8.3))(eslint@8.57.1)(nx@21.6.3)(typescript@5.8.3)':
+    dependencies:
+      '@nx/devkit': 21.5.2(nx@21.6.3)
+      '@nx/js': 21.5.2(@babel/traverse@7.28.4)(nx@21.6.3)
       '@phenomnomnominal/tsquery': 5.0.1(typescript@5.8.3)
       '@typescript-eslint/parser': 7.18.0(eslint@8.57.1)(typescript@5.8.3)
       '@typescript-eslint/type-utils': 8.43.0(eslint@8.57.1)(typescript@5.8.3)
@@ -12474,7 +12520,7 @@ snapshots:
       - typescript
       - verdaccio
 
-  '@nx/js@21.5.2(@babel/traverse@7.28.4)(nx@21.5.2)':
+  '@nx/js@21.5.2(@babel/traverse@7.28.4)(nx@21.6.3)':
     dependencies:
       '@babel/core': 7.28.4
       '@babel/plugin-proposal-decorators': 7.28.0(@babel/core@7.28.4)
@@ -12483,7 +12529,7 @@ snapshots:
       '@babel/preset-env': 7.28.3(@babel/core@7.28.4)
       '@babel/preset-typescript': 7.27.1(@babel/core@7.28.4)
       '@babel/runtime': 7.28.4
-      '@nx/devkit': 21.5.2(nx@21.5.2)
+      '@nx/devkit': 21.5.2(nx@21.6.3)
       '@nx/workspace': 21.5.2
       '@zkochan/js-yaml': 0.0.7
       babel-plugin-const-enum: 1.2.0(@babel/core@7.28.4)
@@ -12501,7 +12547,7 @@ snapshots:
       ora: 5.3.0
       picocolors: 1.1.1
       picomatch: 4.0.2
-      semver: 7.6.3
+      semver: 7.7.2
       source-map-support: 0.5.19
       tinyglobby: 0.2.15
       tslib: 2.8.1
@@ -12516,31 +12562,61 @@ snapshots:
   '@nx/nx-darwin-arm64@21.5.2':
     optional: true
 
+  '@nx/nx-darwin-arm64@21.6.3':
+    optional: true
+
   '@nx/nx-darwin-x64@21.5.2':
+    optional: true
+
+  '@nx/nx-darwin-x64@21.6.3':
     optional: true
 
   '@nx/nx-freebsd-x64@21.5.2':
     optional: true
 
+  '@nx/nx-freebsd-x64@21.6.3':
+    optional: true
+
   '@nx/nx-linux-arm-gnueabihf@21.5.2':
+    optional: true
+
+  '@nx/nx-linux-arm-gnueabihf@21.6.3':
     optional: true
 
   '@nx/nx-linux-arm64-gnu@21.5.2':
     optional: true
 
+  '@nx/nx-linux-arm64-gnu@21.6.3':
+    optional: true
+
   '@nx/nx-linux-arm64-musl@21.5.2':
+    optional: true
+
+  '@nx/nx-linux-arm64-musl@21.6.3':
     optional: true
 
   '@nx/nx-linux-x64-gnu@21.5.2':
     optional: true
 
+  '@nx/nx-linux-x64-gnu@21.6.3':
+    optional: true
+
   '@nx/nx-linux-x64-musl@21.5.2':
+    optional: true
+
+  '@nx/nx-linux-x64-musl@21.6.3':
     optional: true
 
   '@nx/nx-win32-arm64-msvc@21.5.2':
     optional: true
 
+  '@nx/nx-win32-arm64-msvc@21.6.3':
+    optional: true
+
   '@nx/nx-win32-x64-msvc@21.5.2':
+    optional: true
+
+  '@nx/nx-win32-x64-msvc@21.6.3':
     optional: true
 
   '@nx/workspace@21.5.2':
@@ -13240,7 +13316,7 @@ snapshots:
   '@shopify/oxygen-cli@4.6.18(@oclif/core@3.26.5)(@shopify/cli-kit@packages+cli-kit)(graphql@16.10.0)':
     dependencies:
       '@bugsnag/core': 8.2.0
-      '@bugsnag/js': 8.2.0
+      '@bugsnag/js': 8.6.0
       '@bugsnag/node': 8.2.0
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
@@ -13324,7 +13400,7 @@ snapshots:
       react-dom: 18.3.1(react@17.0.2)
       react-reconciler: 0.26.2(react@17.0.2)
 
-  '@shopify/theme-check-common@3.22.0':
+  '@shopify/theme-check-common@3.23.0':
     dependencies:
       '@shopify/liquid-html-parser': 2.9.0
       cross-fetch: 4.1.0
@@ -13337,28 +13413,28 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-check-docs-updater@3.22.0':
+  '@shopify/theme-check-docs-updater@3.23.0':
     dependencies:
-      '@shopify/theme-check-common': 3.22.0
+      '@shopify/theme-check-common': 3.23.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-check-node@3.22.0':
+  '@shopify/theme-check-node@3.23.0':
     dependencies:
-      '@shopify/theme-check-common': 3.22.0
-      '@shopify/theme-check-docs-updater': 3.22.0
+      '@shopify/theme-check-common': 3.23.0
+      '@shopify/theme-check-docs-updater': 3.23.0
       glob: 8.1.0
       vscode-uri: 3.1.0
       yaml: 2.7.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-graph@0.2.0':
+  '@shopify/theme-graph@0.2.1':
     dependencies:
       '@shopify/liquid-html-parser': 2.9.0
-      '@shopify/theme-check-common': 3.22.0
+      '@shopify/theme-check-common': 3.23.0
       acorn: 8.15.0
       acorn-walk: 8.3.4
       vscode-uri: 3.1.0
@@ -13367,11 +13443,11 @@ snapshots:
 
   '@shopify/theme-hot-reload@0.0.18': {}
 
-  '@shopify/theme-language-server-common@2.19.0':
+  '@shopify/theme-language-server-common@2.20.0':
     dependencies:
       '@shopify/liquid-html-parser': 2.9.0
-      '@shopify/theme-check-common': 3.22.0
-      '@shopify/theme-graph': 0.2.0
+      '@shopify/theme-check-common': 3.23.0
+      '@shopify/theme-graph': 0.2.1
       '@vscode/web-custom-data': 0.4.13
       vscode-css-languageservice: 6.3.2
       vscode-json-languageservice: 5.5.0
@@ -13381,11 +13457,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-language-server-node@2.19.0':
+  '@shopify/theme-language-server-node@2.20.0':
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.22.0
-      '@shopify/theme-check-node': 3.22.0
-      '@shopify/theme-language-server-common': 2.19.0
+      '@shopify/theme-check-docs-updater': 3.23.0
+      '@shopify/theme-check-node': 3.23.0
+      '@shopify/theme-language-server-common': 2.20.0
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
@@ -14138,7 +14214,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       tsutils: 3.21.0(typescript@5.8.3)
     optionalDependencies:
       typescript: 5.8.3
@@ -14153,7 +14229,7 @@ snapshots:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.4.3(typescript@5.8.3)
     optionalDependencies:
       typescript: 5.8.3
@@ -14185,7 +14261,7 @@ snapshots:
       fast-glob: 3.3.3
       is-glob: 4.0.3
       minimatch: 9.0.5
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 2.1.0(typescript@5.8.3)
       typescript: 5.8.3
     transitivePeerDependencies:
@@ -14201,7 +14277,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.8.3)
       eslint: 8.57.1
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -14986,6 +15062,8 @@ snapshots:
       supports-color: 7.2.0
 
   chalk@5.4.1: {}
+
+  chalk@5.6.2: {}
 
   change-case-all@1.0.14:
     dependencies:
@@ -16928,7 +17006,7 @@ snapshots:
       ansi-escapes: 7.1.0
       ansi-styles: 6.2.3
       auto-bind: 5.0.1
-      chalk: 5.4.1
+      chalk: 5.6.2
       cli-boxes: 3.0.0
       cli-cursor: 4.0.0
       cli-truncate: 4.0.0
@@ -17275,12 +17353,12 @@ snapshots:
       jest-get-type: 26.3.0
       pretty-format: 26.6.2
 
-  jest-diff@30.1.2:
+  jest-diff@30.2.0:
     dependencies:
       '@jest/diff-sequences': 30.0.1
       '@jest/get-type': 30.1.0
       chalk: 4.1.2
-      pretty-format: 30.0.5
+      pretty-format: 30.2.0
 
   jest-get-type@26.3.0: {}
 
@@ -17383,7 +17461,7 @@ snapshots:
       acorn: 8.15.0
       eslint-visitor-keys: 3.4.3
       espree: 9.6.1
-      semver: 7.6.3
+      semver: 7.7.2
 
   jsonc-parser@3.2.0: {}
 
@@ -17583,7 +17661,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.2
 
   make-error@1.3.6: {}
 
@@ -17841,7 +17919,7 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.6.3
+      semver: 7.7.2
       validate-npm-package-license: 3.0.4
 
   normalize-path@2.1.1:
@@ -17856,7 +17934,7 @@ snapshots:
     dependencies:
       hosted-git-info: 7.0.2
       proc-log: 3.0.0
-      semver: 7.6.3
+      semver: 7.7.2
       validate-npm-package-name: 5.0.1
 
   npm-package-arg@11.0.3:
@@ -17898,7 +17976,7 @@ snapshots:
       flat: 5.0.2
       front-matter: 4.0.2
       ignore: 5.3.2
-      jest-diff: 30.1.2
+      jest-diff: 30.2.0
       jsonc-parser: 3.2.0
       lines-and-columns: 2.0.3
       minimatch: 9.0.3
@@ -17928,6 +18006,57 @@ snapshots:
       '@nx/nx-linux-x64-musl': 21.5.2
       '@nx/nx-win32-arm64-msvc': 21.5.2
       '@nx/nx-win32-x64-msvc': 21.5.2
+    transitivePeerDependencies:
+      - debug
+
+  nx@21.6.3:
+    dependencies:
+      '@napi-rs/wasm-runtime': 0.2.4
+      '@yarnpkg/lockfile': 1.1.0
+      '@yarnpkg/parsers': 3.0.2
+      '@zkochan/js-yaml': 0.0.7
+      axios: 1.12.2
+      chalk: 4.1.2
+      cli-cursor: 3.1.0
+      cli-spinners: 2.6.1
+      cliui: 8.0.1
+      dotenv: 16.4.7
+      dotenv-expand: 11.0.7
+      enquirer: 2.3.6
+      figures: 3.2.0
+      flat: 5.0.2
+      front-matter: 4.0.2
+      ignore: 5.3.2
+      jest-diff: 30.2.0
+      jsonc-parser: 3.2.0
+      lines-and-columns: 2.0.3
+      minimatch: 9.0.3
+      node-machine-id: 1.1.12
+      npm-run-path: 4.0.1
+      open: 8.4.2
+      ora: 5.3.0
+      resolve.exports: 2.0.3
+      semver: 7.7.2
+      string-width: 4.2.3
+      tar-stream: 2.2.0
+      tmp: 0.2.4
+      tree-kill: 1.2.2
+      tsconfig-paths: 4.2.0
+      tslib: 2.8.1
+      yaml: 2.8.1
+      yargs: 17.7.2
+      yargs-parser: 21.1.1
+    optionalDependencies:
+      '@nx/nx-darwin-arm64': 21.6.3
+      '@nx/nx-darwin-x64': 21.6.3
+      '@nx/nx-freebsd-x64': 21.6.3
+      '@nx/nx-linux-arm-gnueabihf': 21.6.3
+      '@nx/nx-linux-arm64-gnu': 21.6.3
+      '@nx/nx-linux-arm64-musl': 21.6.3
+      '@nx/nx-linux-x64-gnu': 21.6.3
+      '@nx/nx-linux-x64-musl': 21.6.3
+      '@nx/nx-win32-arm64-msvc': 21.6.3
+      '@nx/nx-win32-x64-msvc': 21.6.3
     transitivePeerDependencies:
       - debug
 
@@ -18054,7 +18183,7 @@ snapshots:
       bl: 4.1.0
       chalk: 4.1.2
       cli-cursor: 3.1.0
-      cli-spinners: 2.9.2
+      cli-spinners: 2.6.1
       is-interactive: 1.0.0
       log-symbols: 4.1.0
       strip-ansi: 6.0.1
@@ -18321,7 +18450,7 @@ snapshots:
       ansi-styles: 4.3.0
       react-is: 17.0.2
 
-  pretty-format@30.0.5:
+  pretty-format@30.2.0:
     dependencies:
       '@jest/schemas': 30.0.5
       ansi-styles: 5.2.0
@@ -19033,7 +19162,7 @@ snapshots:
       get-stdin: 9.0.0
       git-hooks-list: 3.2.0
       is-plain-obj: 4.1.0
-      semver: 7.6.3
+      semver: 7.7.2
       sort-object-keys: 1.1.3
       tinyglobby: 0.2.15
 
@@ -20111,7 +20240,7 @@ snapshots:
     dependencies:
       ansi-styles: 6.2.3
       string-width: 7.2.0
-      strip-ansi: 7.1.0
+      strip-ansi: 7.1.2
 
   wrappy@1.0.2: {}
 

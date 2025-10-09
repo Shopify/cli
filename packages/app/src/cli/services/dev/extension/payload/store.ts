@@ -23,8 +23,8 @@ export async function getExtensionsPayloadStoreRawPayload(
     app: {
       title: options.appName,
       apiKey: options.apiKey,
-      url: await buildAppURLForWeb(options.storeFqdn, options.apiKey),
-      mobileUrl: await buildAppURLForMobile(options.storeFqdn, options.apiKey),
+      url: buildAppURLForWeb(options.storeFqdn, options.apiKey),
+      mobileUrl: buildAppURLForMobile(options.storeFqdn, options.apiKey),
     },
     appId: options.id,
     version: options.manifestVersion,

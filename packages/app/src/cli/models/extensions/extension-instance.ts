@@ -172,7 +172,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     if (this.isFunctionExtension) {
       const config = this.configuration as unknown as FunctionConfigType
-      this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
+      const defaultPath = joinPath('dist', 'index.wasm')
+      this.outputPath = joinPath(this.directory, config.build?.path ?? defaultPath)
     }
   }
 
@@ -298,7 +299,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   // Functions specific properties
   get buildCommand() {
     const config = this.configuration as unknown as FunctionConfigType
-    return config.build.command
+    return config.build?.command
   }
 
   // Paths to be watched in a dev session

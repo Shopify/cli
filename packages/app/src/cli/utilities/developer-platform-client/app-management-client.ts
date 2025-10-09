@@ -25,7 +25,6 @@ import {
   DevSessionDeleteOptions,
   UserError,
 } from '../developer-platform-client.js'
-import {PartnersSession} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,
@@ -139,7 +138,7 @@ import {
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
@@ -160,7 +159,7 @@ import {
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {developerDashboardFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -183,6 +182,19 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 }
 
 export class AppManagementClient implements DeveloperPlatformClient {
+  private static instance: AppManagementClient | undefined
+
+  static getInstance(session?: Session): AppManagementClient {
+    if (!AppManagementClient.instance) {
+      AppManagementClient.instance = new AppManagementClient(session)
+    }
+    return AppManagementClient.instance
+  }
+
+  static resetInstance(): void {
+    AppManagementClient.instance = undefined
+  }
+
   public readonly clientName = ClientName.AppManagement
   public readonly webUiName = 'Developer Dashboard'
   public readonly supportsAtomicDeployments = true
@@ -191,9 +203,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
   public readonly supportsDashboardManagedExtensions = false
-  private _session: PartnersSession | undefined
+  private _session: Session | undefined
 
-  constructor(session?: PartnersSession) {
+  private constructor(session?: Session) {
     this._session = session
   }
 
@@ -256,7 +268,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async session(): Promise<PartnersSession> {
+  async session(): Promise<Session> {
     if (!this._session) {
       if (isUnitTest()) {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
@@ -273,7 +285,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           cacheExtraKey: userId,
         },
         token: businessPlatformToken,
-        unauthorizedHandler: this.createUnauthorizedHandler(),
+        unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
       })
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {
@@ -335,7 +347,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return session.token
   }
 
-  async accountInfo(): Promise<PartnersSession['accountInfo']> {
+  async accountInfo(): Promise<Session['accountInfo']> {
     return (await this.session()).accountInfo
   }
 
@@ -1007,6 +1019,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       query: DevSessionCreate,
       shopFqdn,
       variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? ''},
+      requestOptions: {requestMode: 'slow-request'},
     })
   }
 
@@ -1091,7 +1104,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return businessPlatformRequestDoc({
       ...options,
       token: await this.businessPlatformToken(),
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
     })
   }
 
@@ -1101,7 +1114,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return businessPlatformOrganizationsRequestDoc({
       ...options,
       token: await this.businessPlatformToken(),
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
     })
   }
 
@@ -1125,8 +1138,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
   }
 
-  private createUnauthorizedHandler(): UnauthorizedHandler {
-    return createUnauthorizedHandler(this)
+  private createUnauthorizedHandler(tokenType: 'default' | 'businessPlatform' = 'default'): UnauthorizedHandler {
+    return createUnauthorizedHandler(this, tokenType)
   }
 }
 
@@ -1290,11 +1303,13 @@ function mapBusinessPlatformStoresToOrganizationStores(
   provisionable: boolean,
 ): OrganizationStore[] {
   return storesArray.map((store: ShopNode) => {
-    const {externalId, primaryDomain, name} = store
+    const {externalId, primaryDomain, name, url} = store
+    const shopDomain = url ?? primaryDomain
+    if (!shopDomain) throw new BugError('The selected store does not have a valid URL')
     return {
       shopId: externalId ? idFromEncodedGid(externalId) : undefined,
       link: primaryDomain,
-      shopDomain: primaryDomain,
+      shopDomain: normalizeStoreFqdn(shopDomain),
       shopName: name,
       transferDisabled: true,
       convertableToPartnerTest: true,

@@ -18,15 +18,17 @@ interface UI {
 
 export type FunctionConfigType = zod.infer<typeof FunctionExtensionSchema>
 const FunctionExtensionSchema = BaseSchema.extend({
-  build: zod.object({
-    command: zod
-      .string()
-      .transform((value) => (value.trim() === '' ? undefined : value))
-      .optional(),
-    path: zod.string().optional(),
-    watch: zod.union([zod.string(), zod.string().array()]).optional(),
-    wasm_opt: zod.boolean().optional().default(true),
-  }),
+  build: zod
+    .object({
+      command: zod
+        .string()
+        .transform((value) => (value.trim() === '' ? undefined : value))
+        .optional(),
+      path: zod.string().optional(),
+      watch: zod.union([zod.string(), zod.string().array()]).optional(),
+      wasm_opt: zod.boolean().optional().default(true),
+    })
+    .optional(),
   name: zod.string(),
   type: zod.string(),
   configuration_ui: zod.boolean().optional().default(true),
