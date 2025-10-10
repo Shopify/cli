@@ -124,6 +124,12 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
+    'allow-live': Flags.boolean({
+      description: 'Allow development on a live theme.',
+      char: 'a',
+      env: 'SHOPIFY_FLAG_ALLOW_LIVE',
+      default: false,
+    }),
   }
 
   static multiEnvironmentsFlags: RequiredFlags = null
@@ -149,7 +155,7 @@ You can run this command only in a directory that matches the [default Shopify t
       flags = {...devFlags, theme: theme.id.toString(), store: adminSession.storeFqdn, 'overwrite-json': overwriteJson}
     }
 
-    const confirmed = await ensureLiveThemeConfirmed(theme, 'start development mode')
+    const confirmed = await ensureLiveThemeConfirmed(theme, 'start development mode', devFlags['allow-live'])
     if (!confirmed) {
       return
     }
