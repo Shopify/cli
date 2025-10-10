@@ -27,6 +27,7 @@ export interface DevProps {
   previewUrl: string
   graphiqlUrl?: string
   graphiqlPort: number
+  graphiqlAdvertiseUrl?: string
   app: {
     canEnablePreviewMode: boolean
     developmentStorePreviewEnabled?: boolean
@@ -54,6 +55,7 @@ const Dev: FunctionComponent<DevProps> = ({
   previewUrl,
   graphiqlUrl = '',
   graphiqlPort,
+  graphiqlAdvertiseUrl,
   app,
   pollingTime = 5000,
   developerPreview,
@@ -264,7 +266,7 @@ const Dev: FunctionComponent<DevProps> = ({
                 </Text>
                 {graphiqlUrl ? (
                   <Text>
-                    GraphiQL URL: <Link url={localhostGraphiqlUrl} />
+                    GraphiQL URL: <Link url={graphiqlAdvertiseUrl ?? localhostGraphiqlUrl} />
                   </Text>
                 ) : null}
               </>
