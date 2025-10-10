@@ -52,8 +52,8 @@ export async function ensureDirectoryConfirmed(
   return confirm
 }
 
-export async function ensureLiveThemeConfirmed(theme: Theme, action: string) {
-  if (theme.role !== LIVE_THEME_ROLE || !process.stdout.isTTY) {
+export async function ensureLiveThemeConfirmed(theme: Theme, action: string, allowLive: boolean) {
+  if (theme.role !== LIVE_THEME_ROLE || !process.stdout.isTTY || allowLive) {
     return true
   }
 
