@@ -81,6 +81,7 @@ async function contextDevServerContext(
     localThemeExtensionFileSystem,
     directory,
     type: 'theme-extension',
+    lastRequestedPath: '',
     options: {
       themeEditorSync: false,
       noDelete: false,

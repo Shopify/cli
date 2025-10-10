@@ -23,6 +23,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
+    ctx.lastRequestedPath = event.path
+
     const shouldRenderUploadErrorPage =
       ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0
 
