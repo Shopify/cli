@@ -4,6 +4,7 @@ import {cwd} from './path.js'
 import * as metadata from './metadata.js'
 import {renderWarning} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
+import {minimatch} from 'minimatch'
 
 export interface Environments {
   [name: string]: JsonMap
@@ -27,30 +28,21 @@ function renderWarningIfNeeded(message: Parameters<typeof renderWarning>[0], sil
 
 /**
  * Loads environments from a file.
- * @param dir - The file path to load environments from.
- * @returns The loaded environments.
+ * @param environmentName - The name of the environment.
+ * @param fileName - The file name to load environments from.
+ * @param options - Optional configuration for loading.
+ * @returns The loaded environment.
  */
 export async function loadEnvironment(
   environmentName: string,
   fileName: string,
   options?: LoadEnvironmentOptions,
 ): Promise<JsonMap | undefined> {
-  const filePath = await environmentFilePath(fileName, options)
-  if (!filePath) {
-    renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
-    return undefined
-  }
-  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
-  const environments = environmentsJson.environments
+  const environments = await decodeEnvironments(fileName, options)
   if (!environments) {
-    renderWarningIfNeeded(
-      {
-        body: ['No environments found in', {command: filePath}, {char: '.'}],
-      },
-      options?.silent,
-    )
     return undefined
   }
+
   const environment = environments[environmentName] as JsonMap | undefined
 
   if (!environment) {
@@ -79,4 +71,77 @@ export async function environmentFilePath(
     cwd: basePath,
     type: 'file',
   })
+}
+
+async function decodeEnvironments(fileName: string, options?: LoadEnvironmentOptions): Promise<JsonMap | undefined> {
+  const filePath = await environmentFilePath(fileName, options)
+
+  if (!filePath) {
+    renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
+    return undefined
+  }
+
+  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
+  const environments = environmentsJson.environments
+
+  if (!environments) {
+    renderWarningIfNeeded(
+      {
+        body: ['No environments found in', {command: filePath}, {char: '.'}],
+      },
+      options?.silent,
+    )
+    return undefined
+  }
+
+  return environments
+}
+
+/**
+ * Gets all available environment names from a file.
+ * @param fileName - The file name to load environments from.
+ * @param options - Optional configuration for loading.
+ * @returns Array of environment names, or empty array if none found.
+ */
+export async function getEnvironmentNames(fileName: string, options?: LoadEnvironmentOptions): Promise<string[]> {
+  const environments = await decodeEnvironments(fileName, options)
+
+  if (!environments) {
+    return []
+  }
+
+  return Object.keys(environments)
+}
+
+/**
+ * Expands environment patterns (including globs) to actual environment names.
+ * @param patterns - Array of environment names or glob patterns.
+ * @param fileName - The file name to load environments from.
+ * @param options - Optional configuration for loading.
+ * @returns Array of matched environment names.
+ */
+export async function expandEnvironmentPatterns(
+  patterns: string[],
+  fileName: string,
+  options?: LoadEnvironmentOptions,
+): Promise<string[]> {
+  const allEnvironments = await getEnvironmentNames(fileName, options)
+  const matchedEnvironments = new Set<string>()
+
+  for (const pattern of patterns) {
+    const matches = allEnvironments.filter((env) => minimatch(env, pattern))
+
+    if (matches.length === 0) {
+      renderWarningIfNeeded(
+        {
+          body: [`Could not find any environments matching`, {command: pattern}],
+        },
+        options?.silent,
+      )
+    }
+
+    matches.forEach((match) => matchedEnvironments.add(match))
+  }
+
+  return Array.from(matchedEnvironments)
 }
