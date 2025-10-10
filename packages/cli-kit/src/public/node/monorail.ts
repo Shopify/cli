@@ -209,14 +209,17 @@ export async function publishMonorailEvent<TSchemaId extends keyof Schemas, TPay
     const response = await fetch(url, {method: 'POST', body, headers}, 'non-blocking')
 
     if (response.status === 200) {
+      console.log('Monorail event sent')
       outputDebug(outputContent`Analytics event sent: ${outputToken.json(sanitizePayload(payload))}`)
       return {type: 'ok'}
     } else {
+      console.log('Monorail event failed')
       outputDebug(`Failed to report usage analytics: ${response.statusText}`)
       return {type: 'error', message: response.statusText}
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    console.log('Monorail event error')
     let message = 'Failed to report usage analytics'
     if (error instanceof Error) {
       message = message.concat(`: ${error.message}`)
