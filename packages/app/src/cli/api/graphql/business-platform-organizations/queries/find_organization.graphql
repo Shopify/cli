@@ -1,0 +1,6 @@
+query FindOrganization {
+  organization {
+    id
+    name
+  }
+}
