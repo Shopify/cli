@@ -1,6 +1,6 @@
 {
   "name": "@shopify/theme",
-  "version": "3.85.0",
+  "version": "3.84.0",
   "packageManager": "pnpm@10.11.1",
   "private": true,
   "description": "Utilities for building and publishing themes",
@@ -41,10 +41,10 @@
     ]
   },
   "dependencies": {
-    "@oclif/core": "4.5.3",
-    "@shopify/cli-kit": "3.85.0",
-    "@shopify/theme-check-node": "3.23.0",
-    "@shopify/theme-language-server-node": "2.20.0",
+    "@oclif/core": "4.4.0",
+    "@shopify/cli-kit": "3.84.0",
+    "@shopify/theme-check-node": "3.20.1",
+    "@shopify/theme-language-server-node": "2.17.5",
     "chokidar": "3.6.0",
     "h3": "1.13.0",
     "yaml": "2.7.0"

@@ -5633,6 +5633,102 @@
         "theme duplicate --theme 10 --name 'New Theme'"
       ]
     },
+    "theme:git-merge-preserve": {
+      "aliases": [
+      ],
+      "args": {
+        "base": {
+          "description": "Base/ancestor file path (%O)",
+          "name": "base",
+          "required": true
+        },
+        "current": {
+          "description": "Current branch file path (%A)",
+          "name": "current",
+          "required": true
+        },
+        "incoming": {
+          "description": "Incoming branch file path (%B)",
+          "name": "incoming",
+          "required": true
+        },
+        "markerSize": {
+          "description": "Conflict marker size (%L)",
+          "name": "markerSize",
+          "required": false
+        }
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Git merge driver for Shopify theme environment-specific files (internal use)",
+      "enableJsonFlag": false,
+      "flags": {
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [
+      ],
+      "id": "theme:git-merge-preserve",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true
+    },
+    "theme:git-setup": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "customPluginName": "@shopify/theme",
+      "description": "Setup Git merge strategies to eliminate conflicts when working with themes across multiple environments (dev, staging, production).",
+      "flags": {
+        "multi-environment": {
+          "allowNo": false,
+          "description": "Setup Git merge strategies for multi-environment themes",
+          "env": "SHOPIFY_FLAG_MULTI_ENVIRONMENT",
+          "name": "multi-environment",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "reset": {
+          "allowNo": false,
+          "description": "Reset Git configuration to remove Shopify theme customizations",
+          "env": "SHOPIFY_FLAG_RESET",
+          "name": "reset",
+          "type": "boolean"
+        },
+        "status": {
+          "allowNo": false,
+          "description": "Show current Git configuration status",
+          "env": "SHOPIFY_FLAG_STATUS",
+          "name": "status",
+          "type": "boolean"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "theme:git-setup",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Configure Git for conflict-free multi-environment theme development"
+    },
     "theme:info": {
       "aliases": [
       ],
