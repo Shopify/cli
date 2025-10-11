@@ -384,3 +384,34 @@ jobs:
         uses: mxschmitt/action-tmate@e5c7151931ca95bad1c6f4190c730ecf8c7dde48 # pin@v3
         with:
           limit-access-to-actor: true
+
+  required-checks:
+    name: 'Required Checks'
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - main
+      - pr-platform-agnostic
+      - pr-platform-agnostic-lint
+      - pr-platform-agnostic-bundle
+      - pr-platform-agnostic-knip
+      - pr-platform-agnostic-graphql-schema
+      - oclif-checks
+      - pr-platform-dependent
+      - pr-acceptance-tests
+      - pr-test-coverage
+      - manually-triggered
+    steps:
+      - name: Check job results
+        run: |
+          # This job will fail if any of the dependent jobs failed
+          # Jobs that were skipped (didn't run due to conditions) are considered OK
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more jobs failed"
+            exit 1
+          elif [[ "${{ contains(needs.*.result, 'cancelled') }}" == "true" ]]; then
+            echo "One or more jobs were cancelled"
+            exit 1
+          else
+            echo "All jobs succeeded or were skipped"
+          fi
