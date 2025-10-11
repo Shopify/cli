@@ -3,7 +3,11 @@ import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher, ExtensionEvent} from '../../app-events/app-event-watcher.js'
 import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
-import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
+import {
+  DevSessionCreateOptions,
+  DevSessionHeartbeatOptions,
+  DevSessionUpdateOptions,
+} from '../../../../utilities/developer-platform-client.js'
 import {AppManifest} from '../../../../models/app/app.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
@@ -41,6 +45,7 @@ export class DevSession {
   private readonly bundlePath: string
   private readonly appEventsProcessor: SerialBatchProcessor<AppEvent>
   private failedEvents: AppEvent[] = []
+  private heartbeatInterval?: NodeJS.Timeout
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -49,6 +54,16 @@ export class DevSession {
     this.appWatcher = processOptions.appWatcher
     this.bundlePath = processOptions.appWatcher.buildOutputPath
     this.appEventsProcessor = new SerialBatchProcessor((events: AppEvent[]) => this.processEvents(events))
+  }
+
+  /**
+   * Stop the heartbeat process
+   */
+  public stopHeartbeat() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval)
+      this.heartbeatInterval = undefined
+    }
   }
 
   private async start() {
@@ -217,6 +232,7 @@ export class DevSession {
       await this.logger.success(`✅ Ready, watching for changes in your app `)
       await this.logger.logExtensionUpdateMessages(event)
       this.statusManager.setMessage('READY')
+      this.startHeartbeat()
     } else if (result.status === 'aborted') {
       await this.logger.debug('❌ App preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
@@ -389,6 +405,7 @@ export class DevSession {
    * @param payload - The payload to update the dev session with
    */
   private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
+    console.log(JSON.stringify(payload.manifest, null, 2))
     const result = await this.options.developerPlatformClient.devSessionUpdate(payload)
     const errors = result.devSessionUpdate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
@@ -406,5 +423,38 @@ export class DevSession {
     const errors = result.devSessionCreate?.userErrors ?? []
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'created'}
+  }
+
+  /**
+   * Start the heartbeat process that sends periodic updates to the server
+   * The heartbeat runs every 3 seconds after the dev session is created
+   */
+  private startHeartbeat() {
+    // Clear any existing interval
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval)
+    }
+
+    // Send heartbeat every 3 seconds
+    this.heartbeatInterval = setInterval(() => {
+      this.sendHeartbeat().catch(async (error) => {
+        await this.logger.debug(`Heartbeat error: ${error.message}`)
+      })
+    }, 2000)
+  }
+
+  /**
+   * Send a heartbeat to the server with the current status
+   */
+  private async sendHeartbeat() {
+    const payload: DevSessionHeartbeatOptions = {
+      shopFqdn: this.options.storeFqdn,
+      appId: this.options.appId,
+      tunnelUrl: this.options.appLocalProxyURL,
+      buildStatus: this.statusManager.status.isReady ? 'ready' : 'building',
+    }
+
+    // await this.logger.info(`Sending heartbeat with payload: ${JSON.stringify(payload)}`)
+    await this.options.developerPlatformClient.devSessionHeartbeat(payload)
   }
 }
