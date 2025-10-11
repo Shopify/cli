@@ -8,10 +8,11 @@ import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
+import {isGitConfiguredForMultiEnv} from '../utilities/git-config.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputResult, outputInfo} from '@shopify/cli-kit/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
@@ -22,6 +23,7 @@ import {
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {insideGitDirectory} from '@shopify/cli-kit/node/git'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
 import {recordError, recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -185,6 +187,19 @@ export async function push(
     },
     context,
   )
+
+  // Provide contextual information about Git setup
+  await provideGitContextualInfo(workingDirectory)
+}
+
+/**
+ * Provide helpful information about Git setup for multi-environment development
+ */
+async function provideGitContextualInfo(rootPath: string): Promise<void> {
+  if ((await insideGitDirectory(rootPath)) && (await isGitConfiguredForMultiEnv(rootPath))) {
+    outputInfo('\n✅ Multi-environment Git merge configured')
+    outputInfo('Environment-specific settings will be preserved during Git merges')
+  }
 }
 
 /**

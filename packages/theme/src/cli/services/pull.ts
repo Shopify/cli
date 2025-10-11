@@ -6,6 +6,7 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {isGitConfiguredForMultiEnv} from '../utilities/git-config.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
@@ -13,6 +14,7 @@ import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {Writable} from 'stream'
 
@@ -144,6 +146,19 @@ export async function pull(
     },
     context,
   )
+
+  // Provide contextual information about Git setup
+  await provideGitContextualInfo(path ?? cwd())
+}
+
+/**
+ * Provide helpful information about Git setup for multi-environment development
+ */
+async function provideGitContextualInfo(rootPath: string): Promise<void> {
+  if ((await insideGitDirectory(rootPath)) && !(await isGitConfiguredForMultiEnv(rootPath))) {
+    outputInfo('\n💡 Working with multiple environments?')
+    outputInfo('Run "shopify theme git-setup --multi-environment" to eliminate merge conflicts')
+  }
 }
 
 /**
