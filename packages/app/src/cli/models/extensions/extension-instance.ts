@@ -273,21 +273,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return {main: `import '.${relativeImportPath}';`}
   }
 
-  /**
-   * Gets the entry files for this extension by checking various sources.
-   * For UI extensions, this returns the generated bundle content rather than file paths.
-   * @returns Object with either entryFiles array or generatedContent string
-   */
-  getExtensionEntryFiles(): string[] {
-    // For UI extensions, use the generated bundle content
-    if (this.specification.identifier === 'ui_extension') {
-      const {main} = this.getBundleExtensionStdinContent()
-      return extractJSImports(main, this.directory)
-    }
-
-    return [this.entrySourceFilePath]
-  }
-
   shouldFetchCartUrl(): boolean {
     return this.features.includes('cart_url')
   }
@@ -302,10 +287,28 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build?.command
   }
 
-  // Paths to be watched in a dev session
-  // Return undefiend if there aren't custom configured paths. (everything is watched)
+  /**
+   * Default entry paths to be watched in a dev session.
+   * It returns the entry source file path if defined,
+   * or the list of files generated from the bundle content (UI extensions).
+   * @returns Array of strings with the paths to be watched
+   */
+  devSessionDefaultWatchPaths(): string[] {
+    // For UI extensions, use the generated bundle content
+    if (this.specification.identifier === 'ui_extension') {
+      const {main, assets} = this.getBundleExtensionStdinContent()
+      const mainPaths = extractJSImports(main, this.directory)
+      const assetPaths = assets?.flatMap((asset) => extractJSImports(asset.content, this.directory)) ?? []
+      return mainPaths.concat(...assetPaths)
+    }
+
+    return [this.entrySourceFilePath]
+  }
+
+  // Custom paths to be watched in a dev session
+  // Return undefiend if there aren't custom configured paths (everything is watched)
   // If there are, include some default paths.
-  get devSessionWatchPaths() {
+  get devSessionCustomWatchPaths() {
     const config = this.configuration as unknown as FunctionConfigType
     if (!config.build || !config.build.watch) return undefined
 
@@ -512,10 +515,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     try {
-      const imports = this.getExtensionEntryFiles().flatMap((entryFile) => {
+      const imports = this.devSessionDefaultWatchPaths().flatMap((entryFile) => {
         return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
       })
-
       // Cache and return unique paths
       this.cachedImportPaths = uniq(imports) ?? []
       outputDebug(`Found ${this.cachedImportPaths.length} external imports (recursively) for extension ${this.handle}`)

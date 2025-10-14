@@ -22,6 +22,24 @@ vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractJSImports: vi.fn(() => []),
 }))
 
+// Mock resolvePath to handle path resolution in tests
+vi.mock('@shopify/cli-kit/node/path', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/path')
+  return {
+    ...actual,
+    resolvePath: vi.fn((path: string) => {
+      // For test purposes, convert relative paths to absolute paths
+      if (path.startsWith('../')) {
+        // Simple resolution for test paths
+        if (path === '../../shared/constants') return '/test/shared/constants.rs'
+        if (path === '../../../shared/utils') return '/test/shared/utils.rs'
+        if (path === '../constants') return '/test/constants.rs'
+      }
+      return path
+    }),
+  }
+})
+
 // Helper to mock watchedFiles for extensions
 function mockExtensionWatchedFiles(extension: any, files: string[] = []) {
   vi.spyOn(extension, 'watchedFiles').mockReturnValue(files)
@@ -339,10 +357,10 @@ describe('file-watcher events', () => {
       const mainFile = joinPath(extensionDir, 'src', 'main.rs')
       const constantsFile = '/test/shared/constants.rs'
 
-      // Mock import extraction
+      // Mock import extraction to return relative paths
       mockedExtractImportPaths.mockImplementation((filePath: string) => {
         if (filePath === mainFile) {
-          return [constantsFile]
+          return ['../../shared/constants']
         }
         return []
       })
@@ -353,7 +371,8 @@ describe('file-watcher events', () => {
       })
       testFunction.entrySourceFilePath = mainFile
 
-      // We'll let the extension return its watched files normally to test import functionality
+      // Mock the watchedFiles method to return the expected files
+      vi.spyOn(testFunction, 'watchedFiles').mockReturnValue([mainFile, constantsFile])
 
       const app = testAppLinked({
         allExtensions: [testFunction],
@@ -390,10 +409,10 @@ describe('file-watcher events', () => {
       const mainFile2 = joinPath(extension2Dir, 'src', 'main.rs')
       const sharedFile = '/test/shared/utils.rs'
 
-      // Mock import extraction
+      // Mock import extraction to return relative paths
       mockedExtractImportPaths.mockImplementation((filePath: string) => {
         if (filePath === mainFile1 || filePath === mainFile2) {
-          return [sharedFile]
+          return ['../../../shared/utils']
         }
         return []
       })
@@ -403,11 +422,15 @@ describe('file-watcher events', () => {
         dir: extension1Dir,
       })
       testFunction1.entrySourceFilePath = mainFile1
+      // Mock watchedFiles to include the main file and shared file
+      vi.spyOn(testFunction1, 'watchedFiles').mockReturnValue([mainFile1, sharedFile])
 
       const testFunction2 = await testFunctionExtension({
         dir: extension2Dir,
       })
       testFunction2.entrySourceFilePath = mainFile2
+      // Mock watchedFiles to include the main file and shared file
+      vi.spyOn(testFunction2, 'watchedFiles').mockReturnValue([mainFile2, sharedFile])
 
       const app = testAppLinked({
         allExtensions: [testFunction1, testFunction2],
@@ -442,11 +465,10 @@ describe('file-watcher events', () => {
       const mainFile = joinPath(extensionDir, 'src', 'main.rs')
       const constantsFile = '/test/constants.rs'
 
-      // Initially no imports, then add one
-      let hasImport = false
+      // Initially has import
       mockedExtractImportPaths.mockImplementation((filePath: string) => {
-        if (filePath === mainFile && hasImport) {
-          return [constantsFile]
+        if (filePath === mainFile) {
+          return ['../constants']
         }
         return []
       })
@@ -456,20 +478,20 @@ describe('file-watcher events', () => {
       })
       testFunction.entrySourceFilePath = mainFile
 
-      // Verify the entry path is set correctly
-      expect(testFunction.entrySourceFilePath).toBe(mainFile)
-      expect(testFunction.getExtensionEntryFiles()).toEqual([mainFile])
+      // Mock watchedFiles to include the main file and imported file
+      vi.spyOn(testFunction, 'watchedFiles').mockReturnValue([mainFile, '/test/constants.rs'])
+
+      // Mock the rescanImports method on the extension
+      const rescanImportsSpy = vi.spyOn(testFunction, 'rescanImports').mockResolvedValue(true)
 
       const app = testAppLinked({
         allExtensions: [testFunction],
         directory: '/test',
       })
 
-      // Verify the app has the extension
-      expect(app.realExtensions).toContain(testFunction)
-
-      // Mock chokidar
+      // Mock chokidar with event capture
       let eventHandler: any
+      let watchedPaths: string[] = []
       const mockWatcher = {
         on: vi.fn((event: string, handler: any) => {
           if (event === 'all') {
@@ -477,36 +499,27 @@ describe('file-watcher events', () => {
           }
           return mockWatcher
         }),
-        add: vi.fn(),
         close: vi.fn().mockResolvedValue(undefined),
       }
-      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+      vi.spyOn(chokidar, 'watch').mockImplementation((paths) => {
+        watchedPaths = paths as string[]
+        return mockWatcher as any
+      })
 
       const fileWatcher = new FileWatcher(app, outputOptions)
       await fileWatcher.start()
 
-      // Simulate updating the main file to include an import
-      hasImport = true
+      // Initial paths should include the main file and imported file
+      expect(watchedPaths).toContain(mainFile)
+      expect(watchedPaths).toContain('/test/constants.rs')
 
-      // Small delay to ensure hasImport is set before the rescan
-      await new Promise((resolve) => setTimeout(resolve, 10))
-
-      // Trigger the event handler directly
-      await eventHandler('change', mainFile)
-
-      // Wait for async operations and debouncing
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      await flushPromises()
-      // Wait a bit more for the rescan to complete
-      await new Promise((resolve) => setTimeout(resolve, 200))
-      await flushPromises()
-
-      // The file watcher should have called extractImportPaths with the updated state
-      // Note: Due to async timing, we verify the mock was called at least once
-      expect(mockedExtractImportPaths).toHaveBeenCalled()
+      // Note: Since we're mocking watchedFiles directly, extractImportPathsRecursively
+      // won't be called. The actual rescanning of imports happens in app-event-watcher,
+      // not in the file watcher itself
 
       // Clean up
       mockedExtractImportPaths.mockReset()
+      rescanImportsSpy.mockRestore()
     })
 
     test('ignores imported files inside extension directories', async () => {

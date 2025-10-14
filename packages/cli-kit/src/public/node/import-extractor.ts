@@ -34,7 +34,7 @@ export function extractImportPaths(filePath: string): string[] {
  *
  * @param filePath - Path to the file to analyze.
  * @param visited - Set of already visited files to prevent infinite recursion.
- * @returns Array of absolute paths to all imported files (including nested imports).
+ * @returns Array of absolute paths to the provided file and all imported files there (including nested imports).
  * @throws If an unexpected error occurs while processing files (not including ENOENT file not found errors).
  */
 export function extractImportPathsRecursively(filePath: string, visited: Set<string> = new Set<string>()): string[] {
@@ -47,7 +47,7 @@ export function extractImportPathsRecursively(filePath: string, visited: Set<str
 
   // Get direct imports from this file
   const directImports = extractImportPaths(filePath)
-  const allImports = [...directImports]
+  const allImports = [filePath, ...directImports]
 
   // Recursively process each imported file
   for (const importedFile of directImports) {

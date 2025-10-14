@@ -291,10 +291,11 @@ describe('extractImportPathsRecursively', () => {
       )
 
       const imports = extractImportPathsRecursively(mainFile)
+      expect(imports).toContain(mainFile)
       expect(imports).toContain(utilsFile)
       expect(imports).toContain(helpersFile)
       expect(imports).toContain(constantsFile)
-      expect(imports).toHaveLength(3)
+      expect(imports).toHaveLength(4)
     })
   })
 
@@ -367,10 +368,11 @@ describe('extractImportPathsRecursively', () => {
       )
 
       const imports = extractImportPathsRecursively(mainFile)
+      expect(imports).toContain(mainFile)
       expect(imports).toContain(componentFile)
       expect(imports).toContain(utilsFile)
       expect(imports).toContain(configFile)
-      expect(imports).toHaveLength(3)
+      expect(imports).toHaveLength(4)
     })
   })
 
@@ -389,9 +391,10 @@ describe('extractImportPathsRecursively', () => {
       )
 
       const imports = extractImportPathsRecursively(mainFile)
+      expect(imports).toContain(mainFile)
       expect(imports).toContain(existingFile)
       expect(imports).not.toContain(joinPath(tmpDir, 'missing.js'))
-      expect(imports).toHaveLength(1)
+      expect(imports).toHaveLength(2)
     })
   })
 
@@ -426,10 +429,11 @@ describe('extractImportPathsRecursively', () => {
       )
 
       const imports = extractImportPathsRecursively(mainFile)
+      expect(imports).toContain(mainFile)
       expect(imports).toContain(libFile)
       expect(imports).toContain(utilsFile)
       expect(imports).toContain(helpersFile)
-      expect(imports).toHaveLength(3)
+      expect(imports).toHaveLength(4)
     })
   })
 
@@ -462,9 +466,9 @@ describe('extractImportPathsRecursively', () => {
       await Promise.all(writePromises)
 
       const imports = extractImportPathsRecursively(files[0]!)
-      // Should find all files except the first one (which is the starting point)
-      expect(imports).toHaveLength(depth - 1)
-      for (let i = 1; i < depth; i++) {
+      // Should find all files including the starting file
+      expect(imports).toHaveLength(depth)
+      for (let i = 0; i < depth; i++) {
         expect(imports).toContain(files[i])
       }
     })
@@ -500,8 +504,9 @@ describe('extractImportPathsRecursively', () => {
       // When importing from './components', the resolveJSImport function returns the directory path
       // The recursive function doesn't currently handle following imports from directories
       // This is a known limitation of the current implementation
+      expect(imports).toContain(mainFile)
       expect(imports).toContain(componentsDir)
-      expect(imports).toHaveLength(1)
+      expect(imports).toHaveLength(2)
     })
   })
 
@@ -537,10 +542,11 @@ describe('extractImportPathsRecursively', () => {
       )
 
       const imports = extractImportPathsRecursively(mainFile)
+      expect(imports).toContain(mainFile)
       expect(imports).toContain(moduleA)
       expect(imports).toContain(moduleB)
       expect(imports).toContain(sharedModule)
-      expect(imports).toHaveLength(3)
+      expect(imports).toHaveLength(4)
       // Ensure sharedModule appears only once despite being imported by multiple files
       expect(imports.filter((imp) => imp === sharedModule)).toHaveLength(1)
     })
