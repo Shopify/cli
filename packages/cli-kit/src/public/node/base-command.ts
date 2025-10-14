@@ -1,5 +1,5 @@
 import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
-import {loadEnvironment, environmentFilePath} from './environments.js'
+import {loadEnvironment, environmentFilePath, expandEnvironmentPatterns} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
@@ -146,18 +146,31 @@ This flag is required in non-interactive terminal environments, such as a CI env
     const environmentFileExists = await environmentFilePath(environmentsFileName, {from: flags.path})
 
     // Handle both string and array cases for environment flag
-    let environments: string[] = []
+    let environmentPatterns: string[] = []
     if (flags.environment) {
-      environments = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
+      environmentPatterns = Array.isArray(flags.environment) ? flags.environment : [flags.environment]
     }
 
-    const environmentSpecified = environments.length > 0
+    const environmentSpecified = environmentPatterns.length > 0
 
     // Noop if no environment file exists and none was specified
     if (!environmentFileExists && !environmentSpecified) return originalResult
 
+    // Theme commands can have environment names with glob patterns, in order
+    // to check if there are multiple environments being specified we need to
+    // expand them before continuing even if other commands might not support
+    // multi environment behaviour.
+    const environments = await expandEnvironmentPatterns(environmentPatterns, environmentsFileName, {
+      from: flags.path,
+      silent: true,
+    })
+
     // Noop if multiple environments were specified (let commands handle this)
     if (environmentSpecified && environments.length > 1) return originalResult
+
+    // If no environments matched but one was specified we should return now and
+    // avoid loading a default environment
+    if (environments.length === 0 && environmentSpecified) return originalResult
 
     const {environment, isDefaultEnvironment} = await this.loadEnvironmentForCommand(
       flags.path,
