@@ -88,6 +88,9 @@ export interface Schemas {
       cmd_app_warning_api_key_deprecation_displayed?: Optional<boolean>
       cmd_app_deployment_mode?: Optional<string>
 
+      // Function related commands
+      cmd_app_function_run_invoked_by?: Optional<string>
+
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>
       cmd_dev_tunnel_custom_hash?: Optional<string>
