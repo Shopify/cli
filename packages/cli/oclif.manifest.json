@@ -1131,6 +1131,15 @@
           "name": "input",
           "type": "option"
         },
+        "invoked-by": {
+          "description": "Internal flag to track which client invoked this command.",
+          "env": "SHOPIFY_FLAG_INVOKED_BY",
+          "hasDynamicHelp": false,
+          "hidden": true,
+          "multiple": false,
+          "name": "invoked-by",
+          "type": "option"
+        },
         "json": {
           "allowNo": false,
           "char": "j",

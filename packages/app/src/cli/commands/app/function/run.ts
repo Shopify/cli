@@ -7,6 +7,7 @@ import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'
 
@@ -33,10 +34,23 @@ export default class FunctionRun extends AppUnlinkedCommand {
       description: 'Name of the WebAssembly export to invoke.',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
+    'invoked-by': Flags.string({
+      hidden: true,
+      description: 'Internal flag to track which client invoked this command.',
+      env: 'SHOPIFY_FLAG_INVOKED_BY',
+    }),
   }
 
   public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FunctionRun)
+
+    // Track which client invoked this command
+    const invokedBy = flags['invoked-by']
+    if (invokedBy) {
+      await addPublicMetadata(() => ({
+        cmd_app_function_run_invoked_by: invokedBy,
+      }))
+    }
 
     let functionExport = DEFAULT_FUNCTION_EXPORT
 
