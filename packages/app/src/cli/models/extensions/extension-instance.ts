@@ -471,10 +471,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   watchedFiles(): string[] {
     const watchedFiles: string[] = []
 
-    // Add extension directory files based on devSessionWatchPaths or all files
-    const watchPaths = this.devSessionWatchPaths
-
-    const patterns = watchPaths ?? ['**/*']
+    // Add extension directory files based on devSessionCustomWatchPaths or all files
+    const patterns = this.devSessionCustomWatchPaths ?? ['**/*']
     const files = patterns.flatMap((pattern) =>
       globSync(pattern, {
         cwd: this.directory,
@@ -485,11 +483,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     )
     watchedFiles.push(...files.flat())
 
-    // Add imported files from outside the extension directory
-    const importedFiles = this.scanImports()
-    watchedFiles.push(...importedFiles)
+    // Add imported files from outside the extension directory unless custom watch paths are defined
+    if (!this.devSessionCustomWatchPaths) {
+      const importedFiles = this.scanImports()
+      watchedFiles.push(...importedFiles)
+    }
 
-    // Return unique normalized paths
     return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
   }
 
