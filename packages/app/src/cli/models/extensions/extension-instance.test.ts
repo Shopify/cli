@@ -21,7 +21,7 @@ import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
-import {extractImportPaths, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {Writable} from 'stream'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -547,8 +547,9 @@ describe('watchedFiles', async () => {
       await writeFile(joinPath(srcDir, 'index.js'), 'console.log("test")')
       await writeFile(joinPath(srcDir, 'helper.js'), 'export const helper = () => {}')
 
-      // Mock import extraction to return empty array (no external imports)
-      vi.mocked(extractImportPaths).mockReturnValue([])
+      // Mock import extraction to return only the starting files (no external imports)
+      const indexFile = joinPath(srcDir, 'index.js')
+      vi.mocked(extractImportPathsRecursively).mockImplementation((filePath) => [filePath])
 
       // When
       const watchedFiles = extensionInstance.watchedFiles()
@@ -557,6 +558,9 @@ describe('watchedFiles', async () => {
       expect(watchedFiles).toHaveLength(2)
       expect(watchedFiles).toContain(joinPath(srcDir, 'index.js'))
       expect(watchedFiles).toContain(joinPath(srcDir, 'helper.js'))
+
+      // Clean up
+      vi.mocked(extractImportPathsRecursively).mockReset()
     })
   })
 
@@ -571,8 +575,8 @@ describe('watchedFiles', async () => {
       await writeFile(joinPath(srcDir, 'index.ts'), 'console.log("test")')
       await writeFile(joinPath(tmpDir, 'config.json'), '{}')
 
-      // Mock import extraction to return empty array
-      vi.mocked(extractImportPaths).mockReturnValue([])
+      // Mock import extraction to return only the starting files (no external imports)
+      vi.mocked(extractImportPathsRecursively).mockImplementation((filePath) => [filePath])
 
       // When
       const watchedFiles = extensionInstance.watchedFiles()
@@ -580,6 +584,9 @@ describe('watchedFiles', async () => {
       // Then
       expect(watchedFiles).toContain(joinPath(srcDir, 'index.ts'))
       expect(watchedFiles).toContain(joinPath(tmpDir, 'config.json'))
+
+      // Clean up
+      vi.mocked(extractImportPathsRecursively).mockReset()
     })
   })
 
@@ -598,14 +605,18 @@ describe('watchedFiles', async () => {
 
       // Mock import extraction to return external import
       const externalFile = joinPath(tmpDir, '..', '..', 'shared', 'utils.ts')
-      vi.mocked(extractImportPaths).mockReturnValue(['../../../shared/utils'])
+      const entryFile = joinPath(srcDir, 'index.ts')
+      vi.mocked(extractImportPathsRecursively).mockReturnValue([entryFile, externalFile])
 
       // When
       const watchedFiles = extensionInstance.watchedFiles()
 
       // Then
       expect(watchedFiles).toContain(joinPath(srcDir, 'index.ts'))
-      // The external file path would be normalized
+      expect(watchedFiles).toContain(externalFile)
+
+      // Clean up
+      vi.mocked(extractImportPathsRecursively).mockReset()
     })
   })
 })
@@ -624,6 +635,9 @@ describe('rescanImports', async () => {
       await mkdir(srcDir)
       await writeFile(joinPath(srcDir, 'index.ts'), 'import "./local"')
 
+      // Reset mock to ensure clean state
+      vi.mocked(extractImportPathsRecursively).mockReset()
+
       // First scan with one set of imports
       vi.mocked(extractImportPathsRecursively).mockReturnValue(['./local'])
       // This will populate cachedImportPaths
@@ -638,6 +652,9 @@ describe('rescanImports', async () => {
       // Then
       expect(extractImportPathsRecursively).toHaveBeenCalledTimes(2)
       // Note: we can't directly test the result since resolvePath would fail in test
+
+      // Clean up
+      vi.mocked(extractImportPathsRecursively).mockReset()
     })
   })
 })
