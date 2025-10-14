@@ -151,13 +151,9 @@ export class FileWatcher {
         allFiles.add(normalizedPath)
 
         // Track which extensions watch this file
-        if (!this.extensionWatchedFiles.has(normalizedPath)) {
-          this.extensionWatchedFiles.set(normalizedPath, new Set())
-        }
-        const extensionsSet = this.extensionWatchedFiles.get(normalizedPath)
-        if (extensionsSet) {
-          extensionsSet.add(extensionDir)
-        }
+        const extensionsSet = this.extensionWatchedFiles.get(normalizedPath) ?? new Set()
+        extensionsSet.add(extensionDir)
+        this.extensionWatchedFiles.set(normalizedPath, extensionsSet)
       }
     }
 

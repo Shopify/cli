@@ -512,18 +512,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     try {
-      const imports: string[] = []
-      const entryFiles = this.getExtensionEntryFiles()
-
-      for (const entryFile of entryFiles) {
-        // Extract import paths recursively from the entry file and all its dependencies
-        const fileImports = extractImportPathsRecursively(entryFile)
-
-        for (const importPath of fileImports) {
-          const normalizedPath = normalizePath(resolvePath(importPath))
-          imports.push(normalizedPath)
-        }
-      }
+      const imports = this.getExtensionEntryFiles().flatMap((entryFile) => {
+        return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
+      })
 
       // Cache and return unique paths
       this.cachedImportPaths = uniq(imports) ?? []
