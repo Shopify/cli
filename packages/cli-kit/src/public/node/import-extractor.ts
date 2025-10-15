@@ -52,6 +52,8 @@ export function extractImportPathsRecursively(filePath: string, visited: Set<str
   // Recursively process each imported file
   for (const importedFile of directImports) {
     try {
+      // Only process files that exist and are not directories
+      // Note: resolveJSImport already resolves directory imports to their index files
       if (fileExistsSync(importedFile) && !isDirectorySync(importedFile)) {
         const nestedImports = extractImportPathsRecursively(importedFile, visited)
         allImports.push(...nestedImports)
@@ -148,19 +150,37 @@ function extractRustImports(content: string, filePath: string): string[] {
 
 function resolveJSImport(importPath: string, fromFile: string): string | null {
   const basePath = fileExistsSync(fromFile) && isDirectorySync(fromFile) ? fromFile : dirname(fromFile)
+  const resolvedPath = joinPath(basePath, importPath)
+
+  // If the import path resolves to a directory, look for index files
+  if (fileExistsSync(resolvedPath) && isDirectorySync(resolvedPath)) {
+    const indexPaths = [
+      joinPath(resolvedPath, 'index.js'),
+      joinPath(resolvedPath, 'index.ts'),
+      joinPath(resolvedPath, 'index.tsx'),
+      joinPath(resolvedPath, 'index.jsx'),
+    ]
+
+    for (const indexPath of indexPaths) {
+      if (fileExistsSync(indexPath) && !isDirectorySync(indexPath)) {
+        return indexPath
+      }
+    }
+    // If no index file found, don't return the directory
+    return null
+  }
+
+  // Check for file with extensions
   const possiblePaths = [
-    joinPath(basePath, importPath),
-    joinPath(basePath, `${importPath}.js`),
-    joinPath(basePath, `${importPath}.ts`),
-    joinPath(basePath, `${importPath}.tsx`),
-    joinPath(basePath, `${importPath}.jsx`),
-    joinPath(basePath, importPath, 'index.js'),
-    joinPath(basePath, importPath, 'index.ts'),
-    joinPath(basePath, importPath, 'index.tsx'),
+    resolvedPath,
+    `${resolvedPath}.js`,
+    `${resolvedPath}.ts`,
+    `${resolvedPath}.tsx`,
+    `${resolvedPath}.jsx`,
   ]
 
   for (const path of possiblePaths) {
-    if (fileExistsSync(path)) {
+    if (fileExistsSync(path) && !isDirectorySync(path)) {
       return path
     }
   }

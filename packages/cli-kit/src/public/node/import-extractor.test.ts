@@ -112,9 +112,67 @@ describe('extractImportPaths', () => {
         )
 
         const imports = extractImportPaths(mainFile)
-        // The import extractor resolves './utils' to the directory path
+        // The import extractor resolves './utils' to the index file
         expect(imports).toHaveLength(1)
-        expect(imports[0]).toBe(utilsDir)
+        expect(imports[0]).toBe(utilsIndex)
+      })
+    })
+
+    test('resolves directory imports to various index file types', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Test with index.jsx
+        const jsxDir = joinPath(tmpDir, 'jsx-component')
+        const jsxIndex = joinPath(jsxDir, 'index.jsx')
+        await mkdir(jsxDir)
+        await writeFile(jsxIndex, 'export default () => <div />')
+
+        // Test with index.tsx
+        const tsxDir = joinPath(tmpDir, 'tsx-component')
+        const tsxIndex = joinPath(tsxDir, 'index.tsx')
+        await mkdir(tsxDir)
+        await writeFile(tsxIndex, 'export default () => <div />')
+
+        // Test with index.js (when importing from TypeScript)
+        const jsDir = joinPath(tmpDir, 'js-module')
+        const jsIndex = joinPath(jsDir, 'index.js')
+        await mkdir(jsDir)
+        await writeFile(jsIndex, 'module.exports = {}')
+        const mainFile = joinPath(tmpDir, 'main.ts')
+        await writeFile(
+          mainFile,
+          `
+          import jsxComponent from './jsx-component'
+          import tsxComponent from './tsx-component'
+          import jsModule from './js-module'
+        `,
+        )
+
+        const imports = extractImportPaths(mainFile)
+        expect(imports).toHaveLength(3)
+        expect(imports).toContain(jsxIndex)
+        expect(imports).toContain(tsxIndex)
+        expect(imports).toContain(jsIndex)
+      })
+    })
+
+    test('returns empty array when directory has no index file', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const mainFile = joinPath(tmpDir, 'main.js')
+        const emptyDir = joinPath(tmpDir, 'empty-dir')
+
+        await mkdir(emptyDir)
+        // Don't create any index file in the directory
+
+        await writeFile(
+          mainFile,
+          `
+          import something from './empty-dir'
+        `,
+        )
+
+        const imports = extractImportPaths(mainFile)
+        // Should return empty array since no index file exists
+        expect(imports).toHaveLength(0)
       })
     })
   })
@@ -501,12 +559,12 @@ describe('extractImportPathsRecursively', () => {
 
       const imports = extractImportPathsRecursively(mainFile)
 
-      // When importing from './components', the resolveJSImport function returns the directory path
-      // The recursive function doesn't currently handle following imports from directories
-      // This is a known limitation of the current implementation
+      // When importing from './components', it should resolve to index.js and recursively extract all imports
       expect(imports).toContain(mainFile)
-      expect(imports).toContain(componentsDir)
-      expect(imports).toHaveLength(2)
+      expect(imports).toContain(componentsIndex)
+      expect(imports).toContain(buttonFile)
+      expect(imports).toContain(inputFile)
+      expect(imports).toHaveLength(4)
     })
   })
 
