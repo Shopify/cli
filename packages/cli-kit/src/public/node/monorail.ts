@@ -57,6 +57,7 @@ export interface Schemas {
       cmd_all_exit?: Optional<string>
       cmd_all_force?: Optional<boolean>
       cmd_all_last_graphql_request_id?: Optional<string>
+      cmd_all_invoked_by?: Optional<string>
 
       cmd_all_timing_network_ms?: Optional<number>
       cmd_all_timing_prompts_ms?: Optional<number>
@@ -87,9 +88,6 @@ export interface Schemas {
       cmd_app_linked_config_uses_cli_managed_urls?: Optional<boolean>
       cmd_app_warning_api_key_deprecation_displayed?: Optional<boolean>
       cmd_app_deployment_mode?: Optional<string>
-
-      // Function related commands
-      cmd_app_function_run_invoked_by?: Optional<string>
 
       // Dev related commands
       cmd_dev_tunnel_type?: Optional<string>

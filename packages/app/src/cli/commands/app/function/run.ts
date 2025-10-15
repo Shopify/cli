@@ -40,10 +40,10 @@ export default class FunctionRun extends AppUnlinkedCommand {
     const {flags} = await this.parse(FunctionRun)
 
     // Track which client invoked this command
-    const invokedBy = process.env.SHOPIFY_FLAG_INVOKED_BY
+    const invokedBy = process.env.INVOKED_BY
     if (invokedBy) {
       await addPublicMetadata(() => ({
-        cmd_app_function_run_invoked_by: invokedBy,
+        cmd_all_invoked_by: invokedBy,
       }))
     }
 
