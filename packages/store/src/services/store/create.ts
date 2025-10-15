@@ -38,7 +38,7 @@ export async function create() {
     selectedDeveloperPreview = developerPreviews.publishedDeveloperPreviews[0].handle
   } else {
     selectedDeveloperPreview = await renderSelectPrompt({
-      message: 'Which DEveloperPReview?',
+      message: 'Which Developer Preview?',
       choices: developerPreviews.publishedDeveloperPreviews.map((preview) => ({
         label: preview.name,
         value: preview.handle,

@@ -88,6 +88,11 @@ export default {
       'organizations_schema.graphql',
       'store',
     ),
+    storeBusinessPlatformDestinations: projectFactory(
+      'business-platform-destinations',
+      'destinations_schema.graphql',
+      'store',
+    ),
     devStores: projectFactory('dev-stores', 'dev_stores_schema.graphql', 'store'),
   },
 }

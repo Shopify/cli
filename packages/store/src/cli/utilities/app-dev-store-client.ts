@@ -200,6 +200,7 @@ export class AppDevStoreClient {
       organizationId: orgId,
       variables: {
         shopName: 'New Store',
+        shopDomain: 'new-store.my.shop.dev',
         developerPreviewHandle: developerPreviewHandle ?? 'new_markets',
         prepopulateTestData: false,
         priceLookupKey: 'SHOPIFY_PLUS_APP_DEVELOPMENT',

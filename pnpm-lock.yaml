@@ -296,6 +296,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 3.85.0
         version: link:../plugin-did-you-mean
+      '@shopify/store':
+        specifier: 3.85.0
+        version: link:../store
       '@shopify/theme':
         specifier: 3.85.0
         version: link:../theme
@@ -685,6 +688,21 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
         version: 3.2.1(vitest@3.2.1(@types/node@24.4.0)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.8.7(@types/node@24.4.0)(typescript@5.8.3))(sass@1.89.1)(yaml@2.8.1))
+
+  packages/store:
+    dependencies:
+      '@graphql-typed-document-node/core':
+        specifier: 3.2.0
+        version: 3.2.0(graphql@16.10.0)
+      '@oclif/core':
+        specifier: 4.5.3
+        version: 4.5.3
+      '@shopify/cli-kit':
+        specifier: 3.85.0
+        version: link:../cli-kit
+      graphql-request:
+        specifier: 6.1.0
+        version: 6.1.0(graphql@16.10.0)
 
   packages/theme:
     dependencies:

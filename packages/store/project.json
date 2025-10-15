@@ -74,29 +74,16 @@
       "dependsOn": ["graphql-codegen:postfix"],
       "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
       "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/dev-stores/generated/**/*.ts"
       ],
       "options": {
         "commands": [
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.ts' --fix --rule '@typescript-eslint/ban-ts-comment: off' --rule 'eslint-comments/no-unused-disable: off'",
           "pnpm eslint 'src/cli/api/graphql/business-platform-destinations/generated/**/*.ts' --fix --rule '@typescript-eslint/ban-ts-comment: off' --rule 'eslint-comments/no-unused-disable: off'",
           "pnpm eslint 'src/cli/api/graphql/business-platform-organizations/generated/**/*.{ts,tsx}' --fix --rule '@typescript-eslint/ban-ts-comment: off' --rule 'eslint-comments/no-unused-disable: off'",
           "pnpm eslint 'src/cli/api/graphql/dev-stores/generated/**/*.{ts,tsx}' --fix --rule '@typescript-eslint/ban-ts-comment: off' --rule 'eslint-comments/no-unused-disable: off'"],
         "cwd": "packages/store"
-      }
-    },
-    "graphql-codegen:generate:admin": {
-      "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"],
-      "outputs": ["{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"],
-      "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=storeAdmin"
-        ],
-        "cwd": "{workspaceRoot}"
       }
     },
     "graphql-codegen:generate:business-platform-destinations": {
@@ -135,21 +122,18 @@
     "graphql-codegen:postfix": {
       "executor": "nx:run-commands",
       "dependsOn": [
-        "graphql-codegen:generate:admin",
         "graphql-codegen:generate:business-platform-destinations",
         "graphql-codegen:generate:business-platform-organizations",
         "graphql-codegen:generate:dev-stores"
       ],
       "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
       "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/dev-stores/generated/**/*.ts"
       ],
       "options": {
         "commands": [
-          "find ./packages/store/src/cli/api/graphql/admin/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
           "find ./packages/store/src/cli/api/graphql/business-platform-destinations/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
           "find ./packages/store/src/cli/api/graphql/business-platform-organizations/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;",
           "find ./packages/store/src/cli/api/graphql/dev-stores/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"

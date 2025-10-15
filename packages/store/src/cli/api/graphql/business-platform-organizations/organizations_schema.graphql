@@ -9072,6 +9072,11 @@ type Mutation {
   setOrganizationShopBillingAccountId(setOrganizationShopBillingAccountIdInput: SetOrganizationShopBillingAccountIdInput!): SetOrganizationShopBillingAccountIdResult!
 
   """
+  Set the test drive status for a shop
+  """
+  setShopTestDriveStatus(handle: String!, shopId: PropertyPublicID!, status: TestDriveShopStatus!): SetShopTestDriveStatusResult
+
+  """
   Setting up SAML integration.
   """
   setupSamlIntegration(setupSamlIntegrationInput: SetupSamlIntegrationInput!): SetupSamlIntegrationResult!
@@ -12126,6 +12131,23 @@ type ProxyRetailOnlyShopUserDeleteResult {
   userErrors: [UserError!]
 }
 
+type PublishedDeveloperPreviews {
+  """
+  Organization documentation URL.
+  """
+  documentationUrl: String!
+
+  """
+  Organization handle.
+  """
+  handle: String!
+
+  """
+  Organization name.
+  """
+  name: String!
+}
+
 type Query {
   """
   Returns the apps for the given shopify app gids.
@@ -12221,6 +12243,11 @@ type Query {
   Returns the property with the given identifier.
   """
   property(externalId: PropertyPublicID!, offeringHandle: String!): PropertyInterface
+
+  """
+  Returns the published developer previews.
+  """
+  publishedDeveloperPreviews: [PublishedDeveloperPreviews!]!
 
   """
   Check the retail employee identifier is valid
@@ -13227,6 +13254,10 @@ type SetOrganizationShopBillingAccountIdResult {
   The collection of user errors.
   """
   userErrors: [UserError!]
+}
+
+type SetShopTestDriveStatusResult {
+  success: Boolean!
 }
 
 input SetupSamlIntegrationInput {
