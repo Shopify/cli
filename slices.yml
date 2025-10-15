@@ -1,0 +1,46 @@
+version: 2
+
+slices:
+  - name: app
+    id: S-16e530
+    paths:
+      - packages/app/**/*
+    issue_tracking_url: https://github.com/shop/issues-develop
+    oncall_url: https://shopify.pagerduty.com/service-directory/P0XO5NR
+    stewards:
+      - 734
+    slack_channels:
+      - "#s-foundations-app-development"
+
+  - name: store
+    id: S-898e67
+    paths:
+      - packages/store/**/*
+    issue_tracking_url: https://github.com/shop/issues-develop
+    oncall_url: https://shopify.pagerduty.com/service-directory/P0XO5NR
+    stewards:
+      - 734
+    slack_channels:
+      - "#s-foundations-app-development"
+
+  - name: theme
+    id: S-a88083
+    paths:
+      - packages/theme/**/*
+    oncall_url: https://shopify.pagerduty.com/service-directory/PV6VND9
+    stewards:
+      - 13736
+    slack_channels:
+      - "#help-theme-platform"
+
+  - name: cli
+    id: S-ba4eb0
+    paths:
+      - packages/cli/**/*
+      - packages/cli-kit/**/*
+    issue_tracking_url: https://github.com/shop/issues-develop
+    oncall_url: https://shopify.pagerduty.com/service-directory/P0XO5NR
+    stewards:
+      - 734
+    slack_channels:
+      - "#s-foundations-app-development"
