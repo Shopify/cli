@@ -20,6 +20,7 @@ import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli
 import {commands as AppCommands} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
+import {commands as StoreCommands} from '@shopify/store'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI} from '@shopify/cli-kit/node/cli'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
@@ -93,6 +94,12 @@ appCommands.forEach((command) => {
   ;(AppCommands[command] as unknown as any).customPluginName = '@shopify/app'
 })
 
+const storeCommands = Object.keys(StoreCommands) as (keyof typeof StoreCommands)[]
+storeCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(StoreCommands[command] as any).customPluginName = '@shopify/store'
+})
+
 const themeCommands = Object.keys(ThemeCommands) as (keyof typeof ThemeCommands)[]
 themeCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,6 +138,7 @@ export const COMMANDS: any = {
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,
   ...HydrogenCommands,
+  ...StoreCommands,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,

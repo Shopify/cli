@@ -1,0 +1,138 @@
+# This file is auto-generated from the current state of the GraphQL API. Instead of editing this file,
+# please edit the ruby definition files and run `bin/rails graphql:schema:dump` to regenerate the schema.
+#
+# If you're just looking to browse, you may find it friendlier to use the graphiql browser which is
+# available in services-internal at https://app.shopify.com/services/internal/shops/14168/graphql.
+# Check out the "Docs" tab in the top right.
+
+schema {
+  query: QueryRoot
+  mutation: MutationRoot
+}
+
+"""
+A development store for testing Shopify apps.
+"""
+type DevStore {
+  """
+  The domain of the dev store.
+  """
+  domain: String!
+
+  """
+  Identifier for the dev store.
+  """
+  id: ID!
+
+  """
+  The name of the dev store.
+  """
+  name: String!
+}
+
+"""
+Return type for `devStoreDelete` mutation.
+"""
+type DevStoreDeletePayload {
+  """
+  Whether the deletion was successful.
+  """
+  success: Boolean!
+
+  """
+  Errors encountered during the mutation.
+  """
+  userErrors: [Error!]!
+}
+
+"""
+Represents an error in the input of a mutation.
+"""
+interface DisplayableError {
+  """
+  The path to the input field that caused the error.
+  """
+  field: [String!]
+
+  """
+  The error message.
+  """
+  message: String!
+}
+
+"""
+A dev stores error.
+"""
+type Error implements DisplayableError {
+  """
+  The error category.
+  """
+  category: String!
+
+  """
+  The path to the input field that caused the error.
+  """
+  field: [String!]
+
+  """
+  The error message.
+  """
+  message: String!
+
+  """
+  Details about the error.
+  """
+  on: JSON!
+}
+
+"""
+Represents a unique identifier, often used to refetch an object.
+The ID type appears in a JSON response as a String, but it is not intended to be human-readable.
+
+Example value: `"gid://shopify/Product/10079785100"`
+"""
+scalar ID
+
+"""
+A [JSON](https://www.json.org/json-en.html) object.
+
+Example value:
+`{
+  "product": {
+    "id": "gid://shopify/Product/1346443542550",
+    "title": "White T-shirt",
+    "options": [{
+      "name": "Size",
+      "values": ["M", "L"]
+    }]
+  }
+}`
+"""
+scalar JSON
+
+"""
+The schema's entry point for all dev stores mutation operations.
+"""
+type MutationRoot {
+  """
+  Deletes a development store.
+  """
+  devStoreDelete(
+    """
+    The ID of the organization which owns the shop to delete.
+    """
+    organizationId: ID!
+  ): DevStoreDeletePayload!
+}
+
+type QueryRoot {
+  """
+  A list of development stores.
+  """
+  devStores: [DevStore!]!
+
+  """
+  A simple ping-pong test.
+  """
+  ping: String!
+}

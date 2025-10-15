@@ -1,0 +1,5 @@
+mutation DeleteDevStore($organizationId: ID!) {
+  devStoreDelete(organizationId: $organizationId) {
+    success
+  }
+}
