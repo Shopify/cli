@@ -57,7 +57,8 @@ Learn more in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.d
 
 If you encounter issues using the CLI or have feedback you'd like to share with us, below are some options:
 
-- [Open a GitHub issue](https://github.com/Shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository
+- [File a bug report](https://community.shopify.dev/c/shopify-cli-libraries/14) - To report bugs create a post in Shopify CLI and Libraries on the dev community
+- [Ask a question or request a new feature](https://community.shopify.dev/c/dev-platform/32) - To ask a question or request a new feature create a post in Dev Platform on the dev community
 - [Shopify Community Forums](https://community.shopify.com/) - Visit our forums to connect with the community and learn more about Shopify CLI development
 - [CLI Documentation - Apps](https://shopify.dev/apps/tools/cli) - To view CLI documentation for app development
 - [CLI Documentation - Themes](https://shopify.dev/themes/tools/cli) - To view CLI documentation for theme development
