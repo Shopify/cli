@@ -25,6 +25,12 @@ export interface appfunctionrun {
   '-i, --input <value>'?: string
 
   /**
+   * The client that invoked this command.
+   * @environment SHOPIFY_FLAG_INVOKED_BY
+   */
+  '-b, --invoked-by <value>'?: string
+
+  /**
    * Output the result as JSON.
    * @environment SHOPIFY_FLAG_JSON
    */

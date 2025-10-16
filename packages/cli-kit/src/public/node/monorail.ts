@@ -57,7 +57,6 @@ export interface Schemas {
       cmd_all_exit?: Optional<string>
       cmd_all_force?: Optional<boolean>
       cmd_all_last_graphql_request_id?: Optional<string>
-      cmd_all_invoked_by?: Optional<string>
 
       cmd_all_timing_network_ms?: Optional<number>
       cmd_all_timing_prompts_ms?: Optional<number>
