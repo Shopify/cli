@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.86.0
+
+### Patch Changes
+
+- 7c417ca: Remove redundant Admin print action extension uniqueness validator
+- d59a924: Bump theme-tools packages
+- 8cce83b: Update Functions binaries to version supporting normalize method on JS strings
+- 835dd39: Add support for Windows on ARM cpus for Functions binaries
+- 0d80b3b: Fix automatic token refresh in some situations to avoid 401 errors
+- ccbd42a: Add support to `app dev` for dev stores with custom domains
+- Updated dependencies [a657b4b]
+- Updated dependencies [d59a924]
+- Updated dependencies [e81c29c]
+- Updated dependencies [7fad402]
+  - @shopify/theme@3.86.0
+  - @shopify/cli-kit@3.86.0
+  - @shopify/plugin-cloudflare@3.86.0
+
 ## 3.85.0
 
 ### Minor Changes

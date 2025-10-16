@@ -1,5 +1,15 @@
 # @shopify/cli
 
+## 3.86.0
+
+### Minor Changes
+
+- a657b4b: Add --allow-live flag to theme dev to allow development on live themes without confirmation
+
+### Patch Changes
+
+- e81c29c: Remove POLARIS_UNIFIED flag
+
 ## 3.85.0
 
 ### Minor Changes
