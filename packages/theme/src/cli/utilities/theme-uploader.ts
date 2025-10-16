@@ -32,8 +32,8 @@ type FileBatch = ChecksumWithSize[]
  */
 // Limits for Bulk Requests
 export const MAX_BATCH_FILE_COUNT = 20
-// 1MB
-export const MAX_BATCH_BYTESIZE = 1024 * 1024
+// 25KB
+export const MAX_BATCH_BYTESIZE = 25 * 1024
 export const MAX_UPLOAD_RETRY_COUNT = 2
 
 export function uploadTheme(

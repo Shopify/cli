@@ -82,6 +82,8 @@ function isARetryableNetworkError(error: unknown): boolean {
       'eai_again',
       'epipe',
       'the operation was aborted',
+      'ssl/tls alert bad record mac',
+      'tlsv1 alert decode error',
     ]
     const errorMessage = error.message.toLowerCase()
     const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
