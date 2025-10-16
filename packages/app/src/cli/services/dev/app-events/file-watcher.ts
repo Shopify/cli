@@ -8,7 +8,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
 import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
-import ignore from 'ignore'
+import ignore, {Ignore} from 'ignore'
 import {Writable} from 'stream'
 
 const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
@@ -55,7 +55,7 @@ export class FileWatcher {
   private onChangeCallback?: (events: WatcherEvent[]) => void
   private watcher?: FSWatcher
   private readonly debouncedEmit: () => void
-  private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
+  private readonly ignored: {[key: string]: Ignore | undefined} = {}
   // Map of file paths to the extensions that watch them
   private readonly extensionWatchedFiles = new Map<string, Set<string>>()
 
@@ -316,7 +316,7 @@ export class FileWatcher {
   }
 
   // Creates an "Ignore" instance for the given path if a .gitignore file exists, otherwise undefined
-  private createIgnoreInstance(path: string): ignore.Ignore | undefined {
+  private createIgnoreInstance(path: string): Ignore | undefined {
     const gitIgnorePath = joinPath(path, '.gitignore')
     if (!fileExistsSync(gitIgnorePath)) return undefined
     const gitIgnoreContent = readFileSync(gitIgnorePath)
@@ -324,6 +324,6 @@ export class FileWatcher {
       .split('\n')
       .map((pattern) => pattern.trim())
       .filter((pattern) => pattern !== '' && !pattern.startsWith('#'))
-    return ignore.default().add(gitIgnoreContent)
+    return ignore().add(gitIgnoreContent)
   }
 }
