@@ -34,7 +34,12 @@ vi.mock('../theme-uploader.js', async () => {
 })
 beforeEach(() => {
   vi.mocked(uploadTheme).mockImplementation(() => {
-    return {workPromise: Promise.resolve(), uploadResults: new Map(), renderThemeSyncProgress: () => Promise.resolve()}
+    return {
+      workPromise: Promise.resolve(),
+      uploadResults: new Map(),
+      renderThemeSyncProgress: () => Promise.resolve(),
+      syncRewrittenFilesPromise: Promise.resolve(),
+    }
   })
 })
 
@@ -126,6 +131,7 @@ describe('setupDevServer', () => {
       nodelete: true,
       deferPartialWork: true,
       backgroundWorkCatch: expect.any(Function),
+      handleRewrittenFiles: 'fix',
     })
   })
 
@@ -176,6 +182,7 @@ describe('setupDevServer', () => {
       nodelete: true,
       deferPartialWork: true,
       backgroundWorkCatch: expect.any(Function),
+      handleRewrittenFiles: 'fix',
     })
   })
 
