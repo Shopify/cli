@@ -74,6 +74,7 @@ export function buildHeaders(token?: string): {[key: string]: string} {
 export async function httpsAgent(): Promise<https.Agent> {
   return new https.Agent({
     rejectUnauthorized: true,
-    keepAlive: true,
+    // Temporarily disabled to test if connection reuse causes "bad record mac" errors
+    keepAlive: false,
   })
 }
