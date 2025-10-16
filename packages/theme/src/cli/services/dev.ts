@@ -100,7 +100,7 @@ export async function dev(options: DevOptions) {
     session.storefrontPassword = await storefrontPasswordPromise
   }
 
-  const {serverStart, renderDevSetupProgress} = setupDevServer(options.theme, ctx)
+  const {serverStart, renderDevSetupProgress, syncRewrittenFilesPromise} = setupDevServer(options.theme, ctx)
 
   if (!options['theme-editor-sync']) {
     session.storefrontPassword = await storefrontPasswordPromise
@@ -108,6 +108,7 @@ export async function dev(options: DevOptions) {
 
   await renderDevSetupProgress()
   await serverStart()
+  await syncRewrittenFilesPromise()
 
   renderLinks(urls)
   if (options.open) {

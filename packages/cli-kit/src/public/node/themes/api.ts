@@ -315,6 +315,10 @@ function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[]
       key: file.filename,
       success: true,
       operation: Operation.Upload,
+      asset: {
+        key: file.filename,
+        checksum: file.checksumMd5 ?? '',
+      },
     })
   })
 

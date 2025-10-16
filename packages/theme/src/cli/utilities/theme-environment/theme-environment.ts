@@ -25,6 +25,7 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
     serverStart: server.start,
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
+    syncRewrittenFilesPromise: () => envSetup.syncRewrittenFilesPromise,
   }
 }
 
@@ -44,6 +45,7 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
         nodelete: ctx.options.noDelete,
         deferPartialWork: true,
         backgroundWorkCatch: abort,
+        handleRewrittenFiles: 'fix',
       })
     })
     .catch(abort)
@@ -67,6 +69,7 @@ function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
 
       await renderThemeSyncProgress()
     },
+    syncRewrittenFilesPromise: uploadPromise.then((result) => result.syncRewrittenFilesPromise).catch(abort),
   }
 }
 
