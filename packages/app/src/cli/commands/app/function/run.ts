@@ -35,6 +35,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
     }),
     'invoked-by': Flags.string({
       char: 'b',
+      hidden: true,
       description: 'The client that invoked this command.',
       env: 'SHOPIFY_FLAG_INVOKED_BY',
     }),
