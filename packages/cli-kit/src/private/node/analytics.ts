@@ -97,7 +97,12 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
 export async function getSensitiveEnvironmentData(config: Interfaces.Config) {
   return {
     env_plugin_installed_all: JSON.stringify(getPluginNames(config)),
+    env_shopify_variables: JSON.stringify(getShopifyEnvironmentVariables()),
   }
+}
+
+function getShopifyEnvironmentVariables() {
+  return Object.fromEntries(Object.entries(process.env).filter(([key]) => key.startsWith('SHOPIFY_')))
 }
 
 function getPluginNames(config: Interfaces.Config) {

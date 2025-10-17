@@ -33,12 +33,6 @@ export default class FunctionRun extends AppUnlinkedCommand {
       description: 'Name of the WebAssembly export to invoke.',
       env: 'SHOPIFY_FLAG_EXPORT',
     }),
-    'invoked-by': Flags.string({
-      char: 'b',
-      hidden: true,
-      description: 'The client that invoked this command.',
-      env: 'SHOPIFY_FLAG_INVOKED_BY',
-    }),
   }
 
   public async run(): Promise<AppUnlinkedCommandOutput> {

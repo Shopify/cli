@@ -27,6 +27,7 @@ export interface Schemas {
 
       // Environment
       env_plugin_installed_all?: Optional<string>
+      env_shopify_variables?: Optional<string>
     }
     public: {
       business_platform_id?: Optional<number>
