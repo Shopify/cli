@@ -86,6 +86,11 @@ export interface DevServerContext {
   type: 'theme' | 'theme-extension'
 
   /**
+   * Tracks the last requested HTML path for keyboard shortcuts.
+   */
+  lastRequestedPath: string
+
+  /**
    * Additional options for the development server.
    */
   options: {
