@@ -1,5 +1,8 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: Shopify Partners Community 🙌
-    url: https://community.shopify.com/c/partners-and-developers/ct-p/appdev
-    about: Connect with Shopify and other Shopify Partners through our online communities!
+  - name: Bug report 🪲
+    url: https://community.shopify.dev/c/shopify-cli-libraries/14
+    about: File a bug report
+  - name: Feature request ✨
+    url: https://community.shopify.dev/c/dev-platform/32
+    about: Suggest a new feature, or changes to an existing one
