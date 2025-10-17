@@ -72,9 +72,6 @@ export abstract class FatalError extends Error {
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer.
  */
 export class AbortError extends FatalError {
-  nextSteps?: TokenItem<InlineToken>[]
-  customSections?: AlertCustomSection[]
-
   constructor(
     message: TokenItem | OutputMessage,
     tryMessage: TokenItem | OutputMessage | null = null,
