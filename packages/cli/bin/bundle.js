@@ -38,7 +38,7 @@ const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
 esBuild({
   bundle: true,
-  entryPoints: ['./src/**/*.ts'],
+  entryPoints: ['./src/index.ts'],
   outdir: './dist',
   platform: 'node',
   format: 'esm',

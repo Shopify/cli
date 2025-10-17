@@ -302,6 +302,6 @@ function initializeBugsnag() {
     // Bugsnag which is to set it to the cwd. That is unhelpful for us because
     // the cwd can be anywhere in the user's filesystem, not necessarily
     // related to the CLI codebase.
-    projectRoot: null,
+    projectRoot: undefined,
   })
 }
