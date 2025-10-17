@@ -293,6 +293,7 @@ export interface AppInterface<
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
+  nonConfigExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   errors?: AppErrors
   hiddenConfig: AppHiddenConfig
@@ -396,8 +397,12 @@ export class App<
   }
 
   get allExtensions() {
-    if (this.includeConfigOnDeploy === false) return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+    if (this.includeConfigOnDeploy === false) return this.nonConfigExtensions
     return this.realExtensions
+  }
+
+  get nonConfigExtensions() {
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
   get draftableExtensions() {

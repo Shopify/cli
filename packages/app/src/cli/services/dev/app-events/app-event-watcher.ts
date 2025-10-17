@@ -154,6 +154,8 @@ export class AppEventWatcher extends EventEmitter {
           if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.esbuildManager.updateContexts(appEvent)
 
+          await this.rescanImports(appEvent)
+
           // Find affected created/updated extensions and build them
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
 
@@ -291,5 +293,26 @@ export class AppEventWatcher extends EventEmitter {
       appURL: this.appURL,
     }
     await extension.buildForBundle(buildOptions, this.buildOutputPath)
+  }
+
+  /**
+   * Handles import rescanning for affected extensions
+   * Returns true if the imports changed
+   */
+  private async rescanImports(appEvent: AppEvent): Promise<void> {
+    // Don't rescan for config files
+    const isConfigFile = appEvent.path.endsWith('.toml')
+    if (isConfigFile) return
+
+    const affectedExtensions = appEvent.extensionEvents
+      .filter((extEvent) => extEvent.type !== EventType.Deleted)
+      .map((extEvent) => extEvent.extension)
+
+    // Rescan imports for all affected extensions
+    if (affectedExtensions.length > 0) {
+      const rescanResults = await Promise.all(affectedExtensions.map(async (ext) => ext.rescanImports()))
+      const watcherRefreshNeeded = rescanResults.some((changed) => changed)
+      if (watcherRefreshNeeded) await this.fileWatcher?.start()
+    }
   }
 }
