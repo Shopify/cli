@@ -1,5 +1,18 @@
 # @shopify/theme
 
+## 3.86.0
+
+### Minor Changes
+
+- a657b4b: Add --allow-live flag to theme dev to allow development on live themes without confirmation
+
+### Patch Changes
+
+- d59a924: Bump theme-tools packages
+- Updated dependencies [e81c29c]
+- Updated dependencies [7fad402]
+  - @shopify/cli-kit@3.86.0
+
 ## 3.85.0
 
 ### Minor Changes

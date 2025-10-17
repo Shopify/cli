@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.86.0
+
+### Patch Changes
+
+- e81c29c: Remove POLARIS_UNIFIED flag
+- 7fad402: Preserve session alias on token refresh
+
 ## 3.85.0
 
 ### Minor Changes
