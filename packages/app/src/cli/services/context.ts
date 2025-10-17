@@ -35,7 +35,7 @@ import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {
     message: outputContent`Invalid Client ID: ${apiKey}`,
-    tryMessage: outputContent`You can find the Client ID in the app settings in the Partners Dashboard.`,
+    tryMessage: outputContent`You can find the Client ID in the app settings in the Developer Dashboard.`,
   }
 }
 

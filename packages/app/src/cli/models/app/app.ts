@@ -596,7 +596,7 @@ export class App<
         'App-specific webhook subscriptions are not supported when use_legacy_install_flow is enabled.',
         `To use app-specific webhooks, you need to:
 1. Remove 'use_legacy_install_flow = true' from your configuration
-2. Run 'shopify app deploy' to sync your scopes with the Partner Dashboard
+2. Run 'shopify app deploy' to sync your scopes with the Developer Dashboard
 
 Alternatively, continue using shop-specific webhooks with the legacy install flow.
 
