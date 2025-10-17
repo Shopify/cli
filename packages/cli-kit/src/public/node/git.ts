@@ -85,7 +85,7 @@ export function addToGitIgnore(root: string, entry: string): void {
   const eol = detectEOL(gitIgnoreContent)
 
   const lines = gitIgnoreContent.split(eol).map((line) => line.trim())
-  const ignoreManager = ignore.default({allowRelativePaths: true}).add(lines)
+  const ignoreManager = ignore({allowRelativePaths: true}).add(lines)
 
   const isIgnoredEntry = ignoreManager.ignores(joinPath(entry))
   const isIgnoredEntryAsDir = ignoreManager.ignores(joinPath(entry, 'ignored.txt'))
