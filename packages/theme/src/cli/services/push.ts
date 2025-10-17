@@ -210,7 +210,10 @@ async function executePush(
     session,
     themeChecksums,
     themeFileSystem,
-    options,
+    {
+      ...options,
+      handleRewrittenFiles: 'warn',
+    },
     context,
   )
 
