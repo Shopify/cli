@@ -414,20 +414,19 @@ Run a function locally for testing.
 
 ```
 USAGE
-  $ shopify app function run [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-b <value>] [-j]
-    [--no-color] [--path <value>] [--reset | ] [--verbose]
+  $ shopify app function run [--client-id <value> | -c <value>] [-e <value>] [-i <value>] [-j] [--no-color] [--path
+    <value>] [--reset | ] [--verbose]
 
 FLAGS
-  -b, --invoked-by=<value>  The client that invoked this command.
-  -c, --config=<value>      The name of the app configuration.
-  -e, --export=<value>      Name of the WebAssembly export to invoke.
-  -i, --input=<value>       The input JSON to pass to the function. If omitted, standard input is used.
-  -j, --json                Output the result as JSON.
-      --client-id=<value>   The Client ID of your app.
-      --no-color            Disable color output.
-      --path=<value>        The path to your function directory.
-      --reset               Reset all your settings.
-      --verbose             Increase the verbosity of the output.
+  -c, --config=<value>     The name of the app configuration.
+  -e, --export=<value>     Name of the WebAssembly export to invoke.
+  -i, --input=<value>      The input JSON to pass to the function. If omitted, standard input is used.
+  -j, --json               Output the result as JSON.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
   Run a function locally for testing.

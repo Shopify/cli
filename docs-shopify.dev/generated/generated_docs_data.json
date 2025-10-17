@@ -1295,15 +1295,6 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
-                "name": "-b, --invoked-by <value>",
-                "value": "string",
-                "description": "The client that invoked this command.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_INVOKED_BY"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
-                "syntaxKind": "PropertySignature",
                 "name": "-c, --config <value>",
                 "value": "string",
                 "description": "The name of the app configuration.",
@@ -1338,7 +1329,7 @@
                 "environmentValue": "SHOPIFY_FLAG_JSON"
               }
             ],
-            "value": "export interface appfunctionrun {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Name of the WebAssembly export to invoke.\n   * @environment SHOPIFY_FLAG_EXPORT\n   */\n  '-e, --export <value>'?: string\n\n  /**\n   * The input JSON to pass to the function. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * The client that invoked this command.\n   * @environment SHOPIFY_FLAG_INVOKED_BY\n   */\n  '-b, --invoked-by <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface appfunctionrun {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Name of the WebAssembly export to invoke.\n   * @environment SHOPIFY_FLAG_EXPORT\n   */\n  '-e, --export <value>'?: string\n\n  /**\n   * The input JSON to pass to the function. If omitted, standard input is used.\n   * @environment SHOPIFY_FLAG_INPUT\n   */\n  '-i, --input <value>'?: string\n\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your function directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

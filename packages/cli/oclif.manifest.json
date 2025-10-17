@@ -1136,6 +1136,7 @@
           "description": "The client that invoked this command.",
           "env": "SHOPIFY_FLAG_INVOKED_BY",
           "hasDynamicHelp": false,
+          "hidden": true,
           "multiple": false,
           "name": "invoked-by",
           "type": "option"
