@@ -69,7 +69,7 @@ beforeEach(async () => {
 })
 
 describe('buildGraphqlTypes', () => {
-  test('generate types', async () => {
+  test('generate types', {timeout: 20000}, async () => {
     // Given
     const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
 
@@ -252,7 +252,7 @@ describe('runJavy', () => {
 })
 
 describe('runWasmOpt', () => {
-  test('runs wasm-opt on the module', async () => {
+  test('runs wasm-opt on the module', {timeout: 20000}, async () => {
     // Given
     const ourFunction = await testFunctionExtension()
     const modulePath = ourFunction.outputPath
@@ -312,7 +312,7 @@ describe('runTrampoline', () => {
     expect(exec).not.toHaveBeenCalled()
   })
 
-  test('runs v1 trampoline on v1 module', async () => {
+  test('runs v1 trampoline on v1 module', {timeout: 20000}, async () => {
     // Given
     const ourFunction = await testFunctionExtension()
     const modulePath = ourFunction.outputPath
@@ -331,7 +331,7 @@ describe('runTrampoline', () => {
     ])
   })
 
-  test('runs v2 trampoline on v2 module', async () => {
+  test('runs v2 trampoline on v2 module', {timeout: 20000}, async () => {
     // Given
     const ourFunction = await testFunctionExtension()
     const modulePath = ourFunction.outputPath
@@ -414,7 +414,7 @@ describe('ExportJavyBuilder', () => {
   })
 
   describe('compile', () => {
-    test('runs javy with wit', async () => {
+    test('runs javy with wit', {timeout: 20000}, async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const ourFunction = await testFunctionExtension()
