@@ -428,12 +428,17 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
-      if (websOfType[1]) {
+      if (websOfType.length > 1) {
+        const conflictingPaths = websOfType.map((web) => joinPath(web.directory, configurationFileNames.web))
+        const pathsList = conflictingPaths.map((path) => `  ${path}`).join('\n')
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const lastConflictingPath = conflictingPaths[conflictingPaths.length - 1]!
         this.abortOrReport(
-          outputContent`You can only have one web with the ${outputToken.yellow(webType)} role in your app`,
+          outputContent`You can only have one "web" configuration file with the ${outputToken.yellow(
+            webType,
+          )} role in your app.\n\nConflicting configurations found at:\n${pathsList}`,
           undefined,
-
-          joinPath(websOfType[1].directory, configurationFileNames.web),
+          lastConflictingPath,
         )
       }
     })

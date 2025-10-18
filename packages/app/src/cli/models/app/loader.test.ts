@@ -578,7 +578,18 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'backend'})
 
     // Then
-    await expect(loadTestingApp()).rejects.toThrow()
+    try {
+      await loadTestingApp()
+      expect.fail('Expected loadTestingApp to throw an error')
+    } catch (error) {
+      if (!(error instanceof AbortError)) {
+        throw error
+      }
+      expect(error.message).toContain('You can only have one "web" configuration file with the [33mbackend[39m role')
+      expect(error.message).toContain('Conflicting configurations found at:')
+      expect(error.message).toContain(joinPath(webDirectory, configurationFileNames.web))
+      expect(error.message).toContain(joinPath(anotherWebDirectory, configurationFileNames.web))
+    }
   })
 
   test('throws an error if there are multiple frontends', async () => {
@@ -590,7 +601,18 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'frontend'})
 
     // Then
-    await expect(loadTestingApp()).rejects.toThrow()
+    try {
+      await loadTestingApp()
+      expect.fail('Expected loadTestingApp to throw an error')
+    } catch (error) {
+      if (!(error instanceof AbortError)) {
+        throw error
+      }
+      expect(error.message).toContain('You can only have one "web" configuration file with the [33mfrontend[39m role')
+      expect(error.message).toContain('Conflicting configurations found at:')
+      expect(error.message).toContain(joinPath(webDirectory, configurationFileNames.web))
+      expect(error.message).toContain(joinPath(anotherWebDirectory, configurationFileNames.web))
+    }
   })
 
   test('loads the app with custom located web blocks', async () => {
