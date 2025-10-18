@@ -132,12 +132,16 @@ export class BaseOtelService implements OtelService {
         )
         if ('record' in instrument) {
           instrument.record(finalValue, finalLabels)
+          console.log('Otel metric sent')
         } else {
           instrument.add(finalValue, finalLabels)
+          console.log('Otel metric sent')
         }
         // We flush metrics after every record - we do not await as we fire & forget.
         // Catch any export errors to prevent unhandled rejections from crashing the CLI
-        void this.meterProvider.forceFlush({}).catch(() => {})
+        void this.meterProvider.forceFlush({}).catch((error) => {
+          console.log('Otel forceFlush error:', error)
+        })
       }
       record(firstValue, firstLabels)
       this.metrics.set(metricName, record)
