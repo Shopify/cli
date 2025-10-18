@@ -23,7 +23,7 @@ export const npmLockfile = 'package-lock.json'
 export const pnpmLockfile = 'pnpm-lock.yaml'
 
 /** The name of the bun lock file */
-export const bunLockfile = 'bun.lockb'
+export const bunLockfile = 'bun.lock'
 
 /** The name of the pnpm workspace file */
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
@@ -37,7 +37,7 @@ export const lockfilesByManager: {[key in PackageManager]: Lockfile | undefined}
   bun: bunLockfile,
   unknown: undefined,
 }
-export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb'
+export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lock'
 
 /**
  * A union type that represents the type of dependencies in the package.json
