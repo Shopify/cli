@@ -5,6 +5,7 @@ import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
+import {runTestsForExtensions} from '../../function/test-runner.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -141,6 +142,7 @@ export class AppEventWatcher extends EventEmitter {
     if (buildExtensionsFirst) {
       this.initialEvents = this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
       await this.buildExtensions(this.initialEvents)
+      await runTestsForExtensions(this.app, this.options)
     }
 
     this.fileWatcher = this.fileWatcher ?? new FileWatcher(this.app, this.options)
@@ -161,6 +163,9 @@ export class AppEventWatcher extends EventEmitter {
 
           // Build the created/updated extensions and update the extension events with the build result
           await this.buildExtensions(buildableEvents)
+          if (buildableEvents.some((extEvent) => extEvent.extension.isFunctionExtension)) {
+            await runTestsForExtensions(this.app, this.options)
+          }
 
           // Find deleted extensions and delete their previous build output
           await this.deleteExtensionsBuildOutput(appEvent)
