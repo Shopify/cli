@@ -1,0 +1,10 @@
+mutation DevSessionHeartbeat($appId: String!, $buildStatus: String, $tunnelUrl: String) {
+  devSessionHeartbeat(appId: $appId, buildStatus: $buildStatus, tunnelUrl: $tunnelUrl) {
+    userErrors {
+      message
+      on
+      field
+      category
+    }
+  }
+}
