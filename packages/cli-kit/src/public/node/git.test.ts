@@ -1,5 +1,14 @@
 import * as git from './git.js'
-import {appendFileSync, fileExistsSync, inTemporaryDirectory, readFileSync, writeFileSync} from './fs.js'
+import {
+  appendFileSync,
+  fileExists,
+  fileExistsSync,
+  glob,
+  inTemporaryDirectory,
+  isDirectory,
+  readFileSync,
+  writeFileSync,
+} from './fs.js'
 import {hasGit} from './context/local.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import simpleGit from 'simple-git'
@@ -38,6 +47,9 @@ vi.mock('./fs.js', async () => {
   return {
     ...fs,
     appendFileSync: vi.fn(),
+    fileExists: vi.fn(),
+    isDirectory: vi.fn(),
+    glob: vi.fn(),
   }
 })
 
@@ -150,6 +162,83 @@ describe('downloadRepository()', async () => {
     // Then
     expect(mockedClone).toHaveBeenCalledWith('http://repoUrl', destination, options)
     expect(mockCheckout).toHaveBeenCalledWith(expectedLatestTag)
+  })
+
+  test('throws when destination exists as a file', async () => {
+    await expect(async () => {
+      // Given
+      const repoUrl = 'http://repoUrl'
+      const destination = 'destination'
+      vi.mocked(fileExists).mockResolvedValue(true)
+      vi.mocked(isDirectory).mockResolvedValue(false)
+
+      // When
+      await git.downloadGitRepository({repoUrl, destination})
+
+      // Then
+    }).rejects.toThrowError(/Can't clone to/)
+  })
+
+  test('throws when destination directory is not empty', async () => {
+    await expect(async () => {
+      // Given
+      const repoUrl = 'http://repoUrl'
+      const destination = 'destination'
+      vi.mocked(fileExists).mockResolvedValue(true)
+      vi.mocked(isDirectory).mockResolvedValue(true)
+      vi.mocked(glob).mockResolvedValue(['file1.txt', 'file2.txt'])
+
+      // When
+      await git.downloadGitRepository({repoUrl, destination})
+
+      // Then
+    }).rejects.toThrowError(/already exists and is not empty/)
+  })
+
+  test('throws when destination contains only hidden files', async () => {
+    await expect(async () => {
+      // Given
+      const repoUrl = 'http://repoUrl'
+      const destination = 'destination'
+      vi.mocked(fileExists).mockResolvedValue(true)
+      vi.mocked(isDirectory).mockResolvedValue(true)
+      vi.mocked(glob).mockResolvedValue(['.git', '.DS_Store'])
+
+      // When
+      await git.downloadGitRepository({repoUrl, destination})
+
+      // Then
+    }).rejects.toThrowError(/already exists and is not empty/)
+  })
+
+  test('succeeds when destination directory is empty', async () => {
+    // Given
+    const repoUrl = 'http://repoUrl'
+    const destination = 'destination'
+    const options: any = {'--recurse-submodules': null}
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(isDirectory).mockResolvedValue(true)
+    vi.mocked(glob).mockResolvedValue([])
+
+    // When
+    await git.downloadGitRepository({repoUrl, destination})
+
+    // Then
+    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options)
+  })
+
+  test('succeeds when destination does not exist', async () => {
+    // Given
+    const repoUrl = 'http://repoUrl'
+    const destination = 'destination'
+    const options: any = {'--recurse-submodules': null}
+    vi.mocked(fileExists).mockResolvedValue(false)
+
+    // When
+    await git.downloadGitRepository({repoUrl, destination})
+
+    // Then
+    expect(mockedClone).toHaveBeenCalledWith(repoUrl, destination, options)
   })
 })
 

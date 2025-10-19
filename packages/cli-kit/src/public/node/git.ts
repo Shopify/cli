@@ -1,6 +1,15 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
 import {hasGit, isTerminalInteractive} from './context/local.js'
-import {appendFileSync, detectEOL, fileExistsSync, readFileSync, writeFileSync} from './fs.js'
+import {
+  appendFileSync,
+  detectEOL,
+  fileExists,
+  fileExistsSync,
+  glob,
+  isDirectory,
+  readFileSync,
+  writeFileSync,
+} from './fs.js'
 import {AbortError} from './error.js'
 import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
@@ -129,6 +138,32 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
     outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
     await ensureGitIsPresentOrAbort()
+
+    // Validate destination directory before attempting to clone
+    if (await fileExists(destination)) {
+      // Check if it's a directory
+      if (!(await isDirectory(destination))) {
+        throw new AbortError(
+          outputContent`Can't clone to ${outputToken.path(destination)}`,
+          "The path exists but isn't a directory.",
+        )
+      }
+
+      // Check if directory is empty
+      const entries = await glob(['*', '.*'], {
+        cwd: destination,
+        deep: 1,
+        onlyFiles: false,
+      })
+
+      if (entries.length > 0) {
+        throw new AbortError(
+          outputContent`Directory ${outputToken.path(destination)} already exists and is not empty`,
+          outputContent`Choose a different name or remove the existing directory first.`,
+        )
+      }
+    }
+
     const [repository, branch] = repoUrl.split('#')
     const options: TaskOptions = {'--recurse-submodules': null}
 
