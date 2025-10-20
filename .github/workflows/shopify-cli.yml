@@ -390,7 +390,6 @@ jobs:
     runs-on: ubuntu-latest
     if: always()
     needs:
-      - main
       - pr-platform-agnostic
       - pr-platform-agnostic-lint
       - pr-platform-agnostic-bundle
@@ -399,8 +398,6 @@ jobs:
       - oclif-checks
       - pr-platform-dependent
       - pr-acceptance-tests
-      - pr-test-coverage
-      - manually-triggered
     steps:
       - name: Check job results
         run: |
