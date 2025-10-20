@@ -542,6 +542,7 @@ function createTestContext(options?: {files?: [string, string][]}) {
       storeFqdn: 'my-store.myshopify.com',
       sessionCookies: {},
     },
+    lastRequestedPath: '',
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: 'tmp',

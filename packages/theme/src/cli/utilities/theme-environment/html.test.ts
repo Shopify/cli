@@ -35,7 +35,29 @@ describe('getHtmlHandler', async () => {
     options: {},
     localThemeExtensionFileSystem: emptyThemeExtFileSystem(),
     localThemeFileSystem: emptyThemeFileSystem(),
+    lastRequestedPath: '',
   } as unknown as DevServerContext
+
+  test('sets lastRequestedPath to the rendering URL', async () => {
+    const handler = getHtmlHandler(theme, ctx)
+
+    expect(ctx.lastRequestedPath).toStrictEqual('')
+
+    const event = createH3Event('GET', '/search?q=foo&options%5Bprefix%5D=last')
+
+    vi.mocked(render).mockResolvedValueOnce(
+      new Response('', {
+        status: 200,
+        headers: {
+          'x-request-id': 'test-request-id',
+        },
+      }),
+    )
+
+    await handler(event)
+
+    expect(ctx.lastRequestedPath).toStrictEqual('/search?q=foo&options%5Bprefix%5D=last')
+  })
 
   test('the development server session recovers when a theme id mismatch occurs', async () => {
     // Given

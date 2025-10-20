@@ -83,6 +83,7 @@ export async function dev(options: DevOptions) {
     localThemeExtensionFileSystem,
     directory: options.directory,
     type: 'theme',
+    lastRequestedPath: '',
     options: {
       themeEditorSync: options['theme-editor-sync'],
       host,
@@ -132,7 +133,12 @@ export async function dev(options: DevOptions) {
         openURLSafely(urls.preview, 'theme preview')
         break
       case 'e':
-        openURLSafely(urls.themeEditor, 'theme editor')
+        openURLSafely(
+          ctx.lastRequestedPath === '/'
+            ? urls.themeEditor
+            : `${urls.themeEditor}&previewPath=${encodeURIComponent(ctx.lastRequestedPath)}`,
+          'theme editor',
+        )
         break
       case 'g':
         openURLSafely(urls.giftCard, 'gift card preview')

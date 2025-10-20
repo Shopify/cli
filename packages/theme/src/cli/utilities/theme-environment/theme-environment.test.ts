@@ -86,6 +86,7 @@ describe('setupDevServer', () => {
       storeFqdn: 'my-store.myshopify.com',
       sessionCookies: {},
     },
+    lastRequestedPath: '',
     localThemeFileSystem,
     localThemeExtensionFileSystem,
     directory: 'tmp',
