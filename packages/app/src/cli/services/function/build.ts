@@ -127,7 +127,7 @@ export async function buildGraphqlTypes(
   options: JSFunctionBuildOptions,
 ) {
   if (!fun.isJavaScript) {
-    throw new Error('GraphQL types can only be built for JavaScript functions')
+    throw new AbortError('GraphQL types can only be built for JavaScript functions')
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
