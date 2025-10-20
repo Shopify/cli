@@ -5,6 +5,17 @@ import BaseCommand from '../base-command.js'
 import * as metadata from '../../../public/node/metadata.js'
 import {Command, Hook} from '@oclif/core'
 
+let postRunHookCompleted = false
+
+/**
+ * Check if post run hook has completed.
+ *
+ * @returns Whether post run hook has completed.
+ */
+export function postRunHookHasCompleted(): boolean {
+  return postRunHookCompleted
+}
+
 // This hook is called after each successful command run. More info: https://oclif.io/docs/hooks
 export const hook: Hook.Postrun = async ({config, Command}) => {
   await detectStopCommand(Command as unknown as typeof Command)
@@ -13,6 +24,7 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
 
   const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
+  postRunHookCompleted = true
 }
 
 /**

@@ -21,7 +21,7 @@
     "**/node_modules": true
   },
   "editor.formatOnSave": false,
-  "eslint.validate": ["javascript", "javascriptreact", "typescript"],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
   "[javascript]": {
     "editor.formatOnSave": true,
     "editor.defaultFormatter": "esbenp.prettier-vscode"
