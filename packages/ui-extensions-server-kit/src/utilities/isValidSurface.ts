@@ -1,4 +1,3 @@
-/* eslint-disable @shopify/strict-component-boundaries */
 import {AVAILABLE_SURFACES} from '../ExtensionServerClient/types'
 import type {Surface} from '../ExtensionServerClient/types'
 

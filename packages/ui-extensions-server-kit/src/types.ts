@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-invalid-void-type */
-/* eslint-disable @shopify/strict-component-boundaries */
+
 import {FlattenedLocalization, Localization} from './i18n'
 import './ExtensionServerClient/types'
 import type {Surface} from './ExtensionServerClient/types'
