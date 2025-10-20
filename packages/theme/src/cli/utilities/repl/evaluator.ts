@@ -17,17 +17,6 @@ export interface EvaluationConfig {
 }
 
 export async function evaluate(config: EvaluationConfig): Promise<string | number | undefined> {
-  try {
-    return evaluateSnippet(config)
-
-    // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    outputInfo(outputContent`${outputToken.errorText(error.message)}`)
-    outputDebug(error.stack || 'Error backtrace not found')
-  }
-}
-
-async function evaluateSnippet(config: EvaluationConfig): Promise<string | number | undefined> {
   return (
     (await evalResult(config)) ||
     (await evalContext(config)) ||
