@@ -388,7 +388,7 @@ jobs:
   required-checks:
     name: 'Required Checks'
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     needs:
       - pr-platform-agnostic
       - pr-platform-agnostic-lint
