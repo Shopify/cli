@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.86.1
+
+### Patch Changes
+
+- a80d5c9: Mock captcha and api-collect requests in CLI proxy.
+  - @shopify/cli-kit@3.86.1
+
 ## 3.86.0
 
 ### Minor Changes
