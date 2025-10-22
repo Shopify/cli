@@ -114,7 +114,10 @@ export function buildCookies(session: DevServerSession, ctx: Pick<DevServerRende
   })
 }
 
-function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBlockId, query}: DevServerRenderContext) {
+function buildStorefrontUrl(
+  session: DevServerSession,
+  {path, sectionId, appBlockId, query, themeId}: DevServerRenderContext,
+) {
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}${path}`
   const params = new URLSearchParams({
@@ -124,6 +127,10 @@ function buildStorefrontUrl(session: DevServerSession, {path, sectionId, appBloc
 
   for (const [key, value] of query) {
     params.append(key, value)
+  }
+
+  if (themeId) {
+    params.append('preview_theme_id', themeId)
   }
 
   // The Section Rendering API takes precendence over the Block Rendering API.
