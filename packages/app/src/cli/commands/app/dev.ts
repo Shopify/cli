@@ -70,6 +70,11 @@ export default class Dev extends AppLinkedCommand {
       description: 'Local port of the theme app extension development server.',
       env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_PORT',
     }),
+    'theme-app-extension-advertise-url': Flags.string({
+      hidden: false,
+      description: 'The URL shown in the terminal when the theme app extension development server is running.',
+      env: 'SHOPIFY_FLAG_THEME_APP_EXTENSION_ADVERTISE_URL',
+    }),
     notify: Flags.string({
       description:
         'The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.',
@@ -79,6 +84,11 @@ export default class Dev extends AppLinkedCommand {
       hidden: true,
       description: 'Local port of the GraphiQL development server.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_PORT',
+    }),
+    'graphiql-advertise-url': Flags.string({
+      hidden: true,
+      description: 'The URL shown in the terminal when the GraphiQL development server is running.',
+      env: 'SHOPIFY_FLAG_GRAPHIQL_ADVERTISE_URL',
     }),
     'graphiql-key': Flags.string({
       hidden: true,
@@ -134,8 +144,10 @@ export default class Dev extends AppLinkedCommand {
       checkoutCartUrl: flags['checkout-cart-url'],
       theme: flags.theme,
       themeExtensionPort: flags['theme-app-extension-port'],
+      themeExtensionAdvertiseUrl: flags['theme-app-extension-advertise-url'],
       notify: flags.notify,
       graphiqlPort: flags['graphiql-port'],
+      graphiqlAdvertiseUrl: flags['graphiql-advertise-url'],
       graphiqlKey: flags['graphiql-key'],
       tunnel: tunnelMode,
     }
