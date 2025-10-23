@@ -1,8 +1,11 @@
-import {fileExistsSync} from './fs.js'
+import {fileExistsSync, readFileSync} from './fs.js'
+import {outputDebug} from './output.js'
 import {cwd, joinPath, sniffForPath} from './path.js'
-import {execaSync} from 'execa'
+import {AbortError} from './error.js'
+import {parseJSON} from '../common/json.js'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/interfaces'
+import {execaSync} from 'execa'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
@@ -15,13 +18,33 @@ export class ShopifyConfig extends Config {
     if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
       path = execaSync('npm', ['prefix']).stdout.trim()
     }
-    if (fileExistsSync(joinPath(path, 'package.json'))) {
-      // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
-      // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
-      // 2. To allow the Hydrogen team to load a local version for testing.
-      options.pluginAdditions = {
-        core: ['@shopify/cli-hydrogen'],
-        path,
+    const packageJsonPath = joinPath(path, 'package.json')
+    if (fileExistsSync(packageJsonPath)) {
+      // Validate package.json before passing to OCLIF to avoid crashes from malformed JSON
+      try {
+        const packageJsonContent = readFileSync(packageJsonPath).toString()
+        parseJSON(packageJsonContent, packageJsonPath)
+
+        // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
+        // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
+        // 2. To allow the Hydrogen team to load a local version for testing.
+        options.pluginAdditions = {
+          core: ['@shopify/cli-hydrogen'],
+          path,
+        }
+      } catch (error) {
+        // If package.json is malformed (AbortError from parseJSON), log a debug warning and skip plugin loading
+        // This prevents the CLI from crashing while still allowing it to function
+        if (error instanceof AbortError) {
+          outputDebug(
+            `Skipping Hydrogen plugin loading due to invalid package.json: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          )
+        } else {
+          // Rethrow unexpected errors (e.g., file system errors)
+          throw error
+        }
       }
     }
     super(options)
