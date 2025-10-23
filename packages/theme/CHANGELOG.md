@@ -1,5 +1,20 @@
 # @shopify/theme
 
+## 3.87.0
+
+### Patch Changes
+
+- a80d5c9: Mock captcha and api-collect requests in CLI proxy.
+- 3ac7982: Editor shortcut (e) will now navigate to your most recently viewed template
+
+  Hitting `e` while your server is running (`shopify theme dev`) will now open
+  the theme editor in the Admin to the most recently rendered template that you
+  viewed in the browser (e.g. if you have multiple tabs open it will use the
+  one that was rendered most recently).
+
+- Updated dependencies [a407016]
+  - @shopify/cli-kit@3.87.0
+
 ## 3.86.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.87.0
+
+### Patch Changes
+
+- a407016: Fix: Validate directory before `git clone` attempts
+
 ## 3.86.0
 
 ### Patch Changes
