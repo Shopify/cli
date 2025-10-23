@@ -9,18 +9,6 @@
       "description": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a \"theme app extension\" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
       "descriptionWithMarkdown": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
       "flags": {
-        "api-key": {
-          "description": "Application's API key that will be exposed at build time.",
-          "env": "SHOPIFY_FLAG_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -258,18 +246,6 @@
       "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your \"web app\" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to \"deploy your web app\" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.\n  ",
       "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.\n  ",
       "flags": {
-        "api-key": {
-          "description": "The API key of your app.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -399,18 +375,6 @@
       "description": "Builds and previews your app on a development store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "descriptionWithMarkdown": "Builds and previews your app on a development store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "flags": {
-        "api-key": {
-          "description": "The API key of your app.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "checkout-cart-url": {
           "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
           "env": "SHOPIFY_FLAG_CHECKOUT_CART_URL",
@@ -932,18 +896,6 @@
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
-        "api-key": {
-          "description": "Application's API key",
-          "env": "SHOPIFY_FLAG_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1157,18 +1109,6 @@
       "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "flags": {
-        "api-key": {
-          "description": "The API key to fetch the schema with.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1335,18 +1275,6 @@
       "description": "Generates a new \"app extension\" (https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to \"Supported extensions\" (https://shopify.dev/docs/apps/structure/app-extensions/list).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to \"App structure\" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.\n  ",
       "descriptionWithMarkdown": "Generates a new [app extension](https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/structure/app-extensions/list).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.\n  ",
       "flags": {
-        "api-key": {
-          "description": "The API key of your app.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1482,18 +1410,6 @@
       "description": "\"DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "[DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "flags": {
-        "api-key": {
-          "description": "The API key to fetch the schema with.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -1856,18 +1772,6 @@
       "description": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "flags": {
-        "api-key": {
-          "description": "The API key of your app.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2062,18 +1966,6 @@
       "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "descriptionWithMarkdown": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "flags": {
-        "api-key": {
-          "description": "The API key of your app.",
-          "env": "SHOPIFY_FLAG_APP_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2172,18 +2064,6 @@
       "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "descriptionWithMarkdown": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "flags": {
-        "api-key": {
-          "description": "Application's API key to fetch versions for.",
-          "env": "SHOPIFY_FLAG_API_KEY",
-          "exclusive": [
-            "config"
-          ],
-          "hasDynamicHelp": false,
-          "hidden": true,
-          "multiple": false,
-          "name": "api-key",
-          "type": "option"
-        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",

@@ -1,7 +1,6 @@
 import {appFlags} from '../../../flags.js'
 import metadata from '../../../metadata.js'
 import generate from '../../../services/generate.js'
-import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
@@ -53,12 +52,6 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       options: ['vanilla-js', 'react', 'typescript', 'typescript-react', 'wasm', 'rust'],
       env: 'SHOPIFY_FLAG_FLAVOR',
     }),
-    'api-key': Flags.string({
-      hidden: true,
-      description: 'The API key of your app.',
-      env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
   }
 
   public static analyticsNameOverride(): string | undefined {
@@ -67,9 +60,6 @@ export default class AppGenerateExtension extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(AppGenerateExtension)
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    }
 
     await metadata.addPublicMetadata(() => ({
       cmd_scaffold_required_auth: true,
@@ -89,7 +79,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
 
     const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
-      clientId: flags['client-id'] ?? flags['api-key'],
+      clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })

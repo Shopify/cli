@@ -1,6 +1,5 @@
 import {appFlags} from '../../flags.js'
 import {dev, DevOptions} from '../../services/dev.js'
-import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {checkFolderIsValidApp} from '../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
@@ -21,12 +20,6 @@ export default class Dev extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    'api-key': Flags.string({
-      hidden: true,
-      description: 'The API key of your app.',
-      env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
     store: Flags.string({
       char: 's',
       description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
@@ -102,13 +95,6 @@ export default class Dev extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Dev)
 
-    if (!flags['api-key'] && process.env.SHOPIFY_API_KEY) {
-      flags['api-key'] = process.env.SHOPIFY_API_KEY
-    }
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    }
-
     const tunnelMode = await getTunnelMode({
       useLocalhost: flags['use-localhost'],
       tunnelUrl: flags['tunnel-url'],
@@ -127,7 +113,7 @@ export default class Dev extends AppLinkedCommand {
 
     const appContextResult = await linkedAppContext({
       directory: flags.path,
-      clientId: flags['client-id'] ?? flags['api-key'],
+      clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })

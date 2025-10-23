@@ -1,6 +1,5 @@
 import {appFlags} from '../../flags.js'
 import build from '../../services/build.js'
-import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {localAppContext} from '../../services/app-context.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../utilities/app-unlinked-command.js'
 import {Flags} from '@oclif/core'
@@ -25,20 +24,11 @@ export default class Build extends AppUnlinkedCommand {
       env: 'SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION',
       default: false,
     }),
-    'api-key': Flags.string({
-      hidden: true,
-      description: "Application's API key that will be exposed at build time.",
-      env: 'SHOPIFY_FLAG_API_KEY',
-      exclusive: ['config'],
-    }),
   }
 
   async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(Build)
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    }
-    const apiKey = flags['client-id'] ?? flags['api-key']
+    const clientId = flags['client-id']
 
     await addPublicMetadata(() => ({
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
@@ -49,7 +39,7 @@ export default class Build extends AppUnlinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey})
+    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: clientId})
 
     return {app}
   }
