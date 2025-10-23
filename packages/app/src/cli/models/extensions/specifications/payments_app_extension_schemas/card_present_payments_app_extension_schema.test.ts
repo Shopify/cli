@@ -14,7 +14,6 @@ const config: CardPresentPaymentsAppExtensionConfigType = {
   refund_session_url: 'http://foo.bar',
   capture_session_url: 'http://foo.bar',
   void_session_url: 'http://foo.bar',
-  sync_terminal_transaction_result_url: 'http://foo.bar',
   merchant_label: 'some-label',
   supported_countries: ['CA'],
   supported_payment_methods: ['PAYMENT_METHOD'],
@@ -129,34 +128,6 @@ describe('CardPresentPaymentsAppExtensionSchema', () => {
       ]),
     )
   })
-
-  test('validates with optional sync_terminal_transaction_result_url', async () => {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const {sync_terminal_transaction_result_url, ...rest} = config
-    const {success} = CardPresentPaymentsAppExtensionSchema.safeParse({
-      ...rest,
-    })
-
-    expect(success).toBe(true)
-  })
-
-  test('returns an error if sync_terminal_transaction_result_url is not a valid URL', async () => {
-    expect(() =>
-      CardPresentPaymentsAppExtensionSchema.parse({
-        ...config,
-        sync_terminal_transaction_result_url: 'not-a-url',
-      }),
-    ).toThrowError(
-      new zod.ZodError([
-        {
-          validation: 'url',
-          code: 'invalid_string',
-          message: 'Invalid url',
-          path: ['sync_terminal_transaction_result_url'],
-        },
-      ]),
-    )
-  })
 })
 
 describe('cardPresentPaymentsAppExtensionDeployConfig', () => {
@@ -172,7 +143,6 @@ describe('cardPresentPaymentsAppExtensionDeployConfig', () => {
       merchant_label: config.merchant_label,
       supported_countries: config.supported_countries,
       supported_payment_methods: config.supported_payment_methods,
-      sync_terminal_transaction_result_url: config.sync_terminal_transaction_result_url,
       test_mode_available: config.test_mode_available,
     })
   })
