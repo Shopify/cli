@@ -1,6 +1,5 @@
 import {generateSchemaService} from '../../../services/generate-schema.js'
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
-import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
@@ -20,13 +19,6 @@ export default class FetchSchema extends AppLinkedCommand {
     ...globalFlags,
     ...appFlags,
     ...functionFlags,
-    'api-key': Flags.string({
-      hidden: true,
-      name: 'API key',
-      description: 'The API key to fetch the schema with.',
-      env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
     stdout: Flags.boolean({
       description: 'Output the schema to stdout instead of writing to a file.',
       required: false,
@@ -37,14 +29,10 @@ export default class FetchSchema extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(FetchSchema)
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    }
-    const apiKey = flags['client-id'] ?? flags['api-key']
 
     const {app, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
-      clientId: apiKey,
+      clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })
