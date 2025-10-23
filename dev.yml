@@ -3,7 +3,6 @@ name: cli
 up:
   - node:
       version: 24.1.0
-      pnpm: 10.11.1
       package_manager: pnpm@10.11.1
       packages: []
   - packages:
