@@ -46,7 +46,6 @@ export default class FunctionInfo extends AppUnlinkedCommand {
       outputResult(
         JSON.stringify({
           functionRunnerPath: functionRunner.path,
-          functionRunnerVersion: functionRunner.version,
           functionInputQueryPath: queryPath,
           functionSchemaPath: schemaPath,
           functionWasmPath: ourFunction.outputPath,
@@ -54,9 +53,9 @@ export default class FunctionInfo extends AppUnlinkedCommand {
       )
     } else {
       outputResult(`functionRunnerPath: ${functionRunner.path}`)
-      outputResult(`functionRunnerVersion: ${functionRunner.version}`)
       outputResult(`functionInputQueryPath: ${queryPath}`)
       outputResult(`functionSchemaPath: ${schemaPath}`)
+      outputResult(`functionWasmPath: ${ourFunction.outputPath}`)
     }
 
     return {app}
