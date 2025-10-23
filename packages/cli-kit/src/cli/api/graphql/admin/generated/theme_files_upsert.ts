@@ -10,7 +10,7 @@ export type ThemeFilesUpsertMutationVariables = Types.Exact<{
 
 export type ThemeFilesUpsertMutation = {
   themeFilesUpsert?: {
-    upsertedThemeFiles?: {filename: string}[] | null
+    upsertedThemeFiles?: {filename: string; checksumMd5?: string | null}[] | null
     userErrors: {filename?: string | null; message: string}[]
   } | null
 }
@@ -71,6 +71,7 @@ export const ThemeFilesUpsert = {
                     kind: 'SelectionSet',
                     selections: [
                       {kind: 'Field', name: {kind: 'Name', value: 'filename'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'checksumMd5'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
                   },
