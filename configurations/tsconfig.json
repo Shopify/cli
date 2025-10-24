@@ -1,8 +1,8 @@
 {
     "compileOnSave": false,
     "compilerOptions": {
-      "lib": ["ES2020"],
-      "target": "ES2020",
+      "lib": ["ES2023"],
+      "target": "ES2023",
       "module": "NodeNext",
       "moduleResolution": "NodeNext",
       "esModuleInterop": true,
