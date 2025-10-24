@@ -11,6 +11,7 @@
 │  │  └─ show
 │  ├─ function
 │  │  ├─ build
+│  │  ├─ info
 │  │  ├─ replay
 │  │  ├─ run
 │  │  ├─ schema

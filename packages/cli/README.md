@@ -9,6 +9,7 @@
 * [`shopify app env pull`](#shopify-app-env-pull)
 * [`shopify app env show`](#shopify-app-env-show)
 * [`shopify app function build`](#shopify-app-function-build)
+* [`shopify app function info`](#shopify-app-function-info)
 * [`shopify app function replay`](#shopify-app-function-replay)
 * [`shopify app function run`](#shopify-app-function-run)
 * [`shopify app function schema`](#shopify-app-function-schema)
@@ -344,6 +345,30 @@ DESCRIPTION
   Compile a function to wasm.
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
+```
+
+## `shopify app function info`
+
+Get information about the function.
+
+```
+USAGE
+  $ shopify app function info [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -j, --json               Output the result as JSON.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your function directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Get information about the function.
+
+  Returns information about the function.
 ```
 
 ## `shopify app function replay`
