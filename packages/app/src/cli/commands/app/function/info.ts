@@ -11,8 +11,6 @@ export default class FunctionInfo extends AppUnlinkedCommand {
 
   static description = 'Returns information about the function.'
 
-  static hidden = true
-
   static flags = {
     ...globalFlags,
     ...appFlags,
@@ -32,8 +30,16 @@ export default class FunctionInfo extends AppUnlinkedCommand {
     const functionRunner = functionRunnerBinary()
     await downloadBinary(functionRunner)
 
-    const inputQueryPath = ourFunction?.configuration.targeting?.[0]?.input_query
-    const queryPath = inputQueryPath && `${ourFunction?.directory}/${inputQueryPath}`
+    const targeting: {[key: string]: {input_query?: string; export?: string}} = {}
+    ourFunction?.configuration.targeting?.forEach((target) => {
+      if (target.target) {
+        targeting[target.target] = {
+          ...(target.input_query && {inputQueryPath: `${ourFunction.directory}/${target.input_query}`}),
+          ...(target.export && {export: target.export}),
+        }
+      }
+    })
+
     const schemaPath = await getOrGenerateSchemaPath(
       ourFunction,
       flags.path,
@@ -46,16 +52,16 @@ export default class FunctionInfo extends AppUnlinkedCommand {
       outputResult(
         JSON.stringify({
           functionRunnerPath: functionRunner.path,
-          functionInputQueryPath: queryPath,
-          functionSchemaPath: schemaPath,
-          functionWasmPath: ourFunction.outputPath,
+          targeting,
+          schemaPath,
+          wasmPath: ourFunction.outputPath,
         }),
       )
     } else {
       outputResult(`functionRunnerPath: ${functionRunner.path}`)
-      outputResult(`functionInputQueryPath: ${queryPath}`)
-      outputResult(`functionSchemaPath: ${schemaPath}`)
-      outputResult(`functionWasmPath: ${ourFunction.outputPath}`)
+      outputResult(`targeting: ${JSON.stringify(targeting, null, 2)}`)
+      outputResult(`schemaPath: ${schemaPath}`)
+      outputResult(`wasmPath: ${ourFunction.outputPath}`)
     }
 
     return {app}
