@@ -50,12 +50,16 @@ export default class FunctionInfo extends AppUnlinkedCommand {
 
     if (flags.json) {
       outputResult(
-        JSON.stringify({
-          functionRunnerPath: functionRunner.path,
-          targeting,
-          schemaPath,
-          wasmPath: ourFunction.outputPath,
-        }),
+        JSON.stringify(
+          {
+            functionRunnerPath: functionRunner.path,
+            targeting,
+            schemaPath,
+            wasmPath: ourFunction.outputPath,
+          },
+          null,
+          2,
+        ),
       )
     } else {
       outputResult(`functionRunnerPath: ${functionRunner.path}`)
