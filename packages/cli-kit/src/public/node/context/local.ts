@@ -282,4 +282,14 @@ export function opentelemetryDomain(env = process.env): string {
   return isSet(domain) ? domain : 'https://otlp-http-production-cli.shopifysvc.com'
 }
 
+/**
+ * Returns true if badssl mode is enabled.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if SHOPIFY_CLI_BADSSL is truthy.
+ */
+export function badsslEnabled(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.badssl])
+}
+
 export type CIMetadata = Metadata
