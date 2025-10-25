@@ -373,9 +373,11 @@ export default abstract class ThemeCommand extends Command {
   }
 
   private async logAnalyticsData(session?: AdminSession): Promise<void> {
+    console.log('logAnalyticsData: session found')
     if (!session) return
-
+    console.log('logAnalyticsData: starting data compilation')
     const data = compileData()
+    console.log('logAnalyticsData: data compiled')
     await addPublicMetadata(() => ({
       store_fqdn_hash: hashString(session.storeFqdn),
 
@@ -387,5 +389,6 @@ export default abstract class ThemeCommand extends Command {
     await addSensitiveMetadata(() => ({
       store_fqdn: session.storeFqdn,
     }))
+    console.log('Data logged', JSON.stringify(data))
   }
 }
