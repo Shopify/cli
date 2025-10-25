@@ -915,7 +915,7 @@
           "env": "SHOPIFY_FLAG_PATH",
           "hidden": false,
           "name": "path",
-          "default": "C:/Projects/cli",
+          "default": "C:/Projects/cli/packages/cli",
           "hasDynamicHelp": false,
           "multiple": false,
           "type": "option"
