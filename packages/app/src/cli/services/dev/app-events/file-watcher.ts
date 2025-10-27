@@ -231,26 +231,50 @@ export class FileWatcher {
     const startTime = startHRTime()
     const normalizedPath = normalizePath(path)
     const isConfigAppPath = path === this.app.configuration.path
+    const isExtensionToml = path.endsWith('.extension.toml')
 
     outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
 
     if (isConfigAppPath) {
-      this.handleEventForExtension(event, path, this.app.directory, startTime)
+      this.handleEventForExtension(event, path, this.app.directory, startTime, false)
     } else {
       const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
+      const isUnknownExtension = affectedExtensions === undefined || affectedExtensions.size === 0
+
+      if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
+        // Ignore an event if it's not part of an existing extension
+        // Except if it is a toml file (either app config or extension config)
+        outputDebug(`🌀: File ${path} is not watched by any extension`, this.options.stdout)
+        return
+      }
+
       for (const extensionPath of affectedExtensions ?? []) {
-        this.handleEventForExtension(event, path, extensionPath, startTime)
+        this.handleEventForExtension(event, path, extensionPath, startTime, false)
+      }
+      if (isUnknownExtension) {
+        this.handleEventForExtension(event, path, this.app.directory, startTime, true)
       }
     }
     this.debouncedEmit()
   }
 
-  private handleEventForExtension(event: string, path: string, extensionPath: string, startTime: StartTime) {
+  private handleEventForExtension(
+    event: string,
+    path: string,
+    extensionPath: string,
+    startTime: StartTime,
+    isUnknownExtension: boolean,
+  ) {
     const isExtensionToml = path.endsWith('.extension.toml')
     const isConfigAppPath = path === this.app.configuration.path
 
     switch (event) {
       case 'change':
+        if (isUnknownExtension) {
+          // If the extension path is unknown, it means the extension was just created.
+          // We need to wait for the lock file to disappear before triggering the event.
+          break
+        }
         if (isExtensionToml || isConfigAppPath) {
           this.pushEvent({type: 'extensions_config_updated', path, extensionPath, startTime})
         } else {
@@ -275,6 +299,8 @@ export class FileWatcher {
             clearInterval(intervalId)
             this.extensionPaths.push(realPath)
             this.pushEvent({type: 'extension_folder_created', path: realPath, extensionPath, startTime})
+            // Force an emit because we are inside a timeout callback
+            this.debouncedEmit()
           }
           if (totalWaitedTime >= EXTENSION_CREATION_TIMEOUT_IN_MS) {
             clearInterval(intervalId)
@@ -294,7 +320,11 @@ export class FileWatcher {
           this.pushEvent({type: 'extension_folder_deleted', path: extensionPath, extensionPath, startTime})
         } else {
           setTimeout(() => {
+            // If the extensionPath is not longer in the list, the extension was deleted while the timeout was running.
+            if (!this.extensionPaths.includes(extensionPath)) return
             this.pushEvent({type: 'file_deleted', path, extensionPath, startTime})
+            // Force an emit because we are inside a timeout callback
+            this.debouncedEmit()
           }, FILE_DELETE_TIMEOUT_IN_MS)
         }
         break
