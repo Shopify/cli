@@ -213,7 +213,7 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
   if (error === 'invalid_target') {
     return new InvalidTargetError(invalidTargetErrorMessage, '', [
       'Ensure you have logged in to the store using the Shopify admin at least once.',
-      'Ensure you are the store owner, or have a staff account if you are attempting to log in to a development store.',
+      'Ensure you are the store owner, or have a staff account if you are attempting to log in to a dev store.',
       'Ensure you are using the permanent store domain, not a vanity domain.',
     ])
   }
