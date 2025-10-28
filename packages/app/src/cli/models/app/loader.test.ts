@@ -3303,6 +3303,22 @@ describe('WebhooksSchema', () => {
     expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
+  test('accepts webhook subscription with actions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/webhooks',
+          actions: ['create'],
+        },
+      ],
+    }
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const err = Array.isArray(errorObj) ? errorObj : [errorObj]
     const expectedFormatted = outputContent`\n${outputToken.errorText(
