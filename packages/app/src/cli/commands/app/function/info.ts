@@ -8,9 +8,19 @@ import {outputContent, outputResult, outputToken} from '@shopify/cli-kit/node/ou
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
-  static summary = 'Get information about the function.'
+  static summary = 'Print basic information about your function.'
 
-  static description = 'Returns information about the function.'
+  static descriptionWithMarkdown = `The information returned includes the following:
+
+  - The function handle
+  - The function name
+  - The function API version
+  - The function runner path
+  - The schema path
+  - The WASM path
+  - The targeting configuration`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
@@ -53,10 +63,13 @@ export default class FunctionInfo extends AppUnlinkedCommand {
       outputResult(
         JSON.stringify(
           {
+            handle: ourFunction.configuration.handle,
+            name: ourFunction.name,
+            apiVersion: ourFunction.configuration.api_version,
             functionRunnerPath: functionRunner.path,
-            targeting,
             schemaPath,
             wasmPath: ourFunction.outputPath,
+            targeting,
           },
           null,
           2,
@@ -65,20 +78,32 @@ export default class FunctionInfo extends AppUnlinkedCommand {
     } else {
       const sections: {title: string; body: {list: {items: string[]}}}[] = [
         {
-          title: 'FUNCTION RUNNER',
+          title: 'CONFIGURATION',
           body: {
             list: {
-              items: [outputContent`Path: ${outputToken.path(functionRunner.path)}`.value],
+              items: [
+                outputContent`Handle: ${ourFunction.configuration.handle ?? 'N/A'}`.value,
+                outputContent`Name: ${ourFunction.name ?? 'N/A'}`.value,
+                outputContent`API Version: ${ourFunction.configuration.api_version ?? 'N/A'}`.value,
+              ],
             },
           },
         },
         {
-          title: 'FUNCTION BUILD',
+          title: 'FUNCTION RUNNER',
+          body: {
+            list: {
+              items: [outputContent`Path: ${functionRunner.path}`.value],
+            },
+          },
+        },
+        {
+          title: 'BUILD',
           body: {
             list: {
               items: [
                 outputContent`Schema Path: ${outputToken.path(schemaPath ?? 'N/A')}`.value,
-                outputContent`WASM Path: ${outputToken.path(ourFunction.outputPath)}`.value,
+                outputContent`Wasm Path: ${outputToken.path(ourFunction.outputPath)}`.value,
               ],
             },
           },
@@ -108,7 +133,6 @@ export default class FunctionInfo extends AppUnlinkedCommand {
       }
 
       renderInfo({
-        headline: 'FUNCTION INFORMATION.',
         customSections: sections,
       })
     }

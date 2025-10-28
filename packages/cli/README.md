@@ -349,7 +349,7 @@ DESCRIPTION
 
 ## `shopify app function info`
 
-Get information about the function.
+Print basic information about your function.
 
 ```
 USAGE
@@ -366,9 +366,17 @@ FLAGS
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
-  Get information about the function.
+  Print basic information about your function.
 
-  Returns information about the function.
+  The information returned includes the following:
+
+  - The function handle
+  - The function name
+  - The function API version
+  - The function runner path
+  - The schema path
+  - The WASM path
+  - The targeting configuration
 ```
 
 ## `shopify app function replay`
