@@ -4,7 +4,8 @@ import {localAppContext} from '../../../services/app-context.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputContent, outputResult, outputToken} from '@shopify/cli-kit/node/output'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
   static summary = 'Get information about the function.'
@@ -30,7 +31,7 @@ export default class FunctionInfo extends AppUnlinkedCommand {
     const functionRunner = functionRunnerBinary()
     await downloadBinary(functionRunner)
 
-    const targeting: {[key: string]: {input_query?: string; export?: string}} = {}
+    const targeting: {[key: string]: {inputQueryPath?: string; export?: string}} = {}
     ourFunction?.configuration.targeting?.forEach((target) => {
       if (target.target) {
         targeting[target.target] = {
@@ -62,10 +63,54 @@ export default class FunctionInfo extends AppUnlinkedCommand {
         ),
       )
     } else {
-      outputResult(`functionRunnerPath: ${functionRunner.path}`)
-      outputResult(`targeting: ${JSON.stringify(targeting, null, 2)}`)
-      outputResult(`schemaPath: ${schemaPath}`)
-      outputResult(`wasmPath: ${ourFunction.outputPath}`)
+      const sections: {title: string; body: {list: {items: string[]}}}[] = [
+        {
+          title: 'FUNCTION RUNNER',
+          body: {
+            list: {
+              items: [outputContent`Path: ${outputToken.path(functionRunner.path)}`.value],
+            },
+          },
+        },
+        {
+          title: 'FUNCTION BUILD',
+          body: {
+            list: {
+              items: [
+                outputContent`Schema Path: ${outputToken.path(schemaPath ?? 'N/A')}`.value,
+                outputContent`WASM Path: ${outputToken.path(ourFunction.outputPath)}`.value,
+              ],
+            },
+          },
+        },
+      ]
+
+      if (Object.keys(targeting).length > 0) {
+        const targetingItems = Object.entries(targeting).map(([target, config]) => {
+          const parts = [outputContent`${outputToken.cyan(target)}`.value]
+          if (config.inputQueryPath) {
+            parts.push(outputContent`  Input Query Path: ${outputToken.path(config.inputQueryPath)}`.value)
+          }
+          if (config.export) {
+            parts.push(outputContent`  Export: ${config.export}`.value)
+          }
+          return parts.join('\n')
+        })
+
+        sections.push({
+          title: 'TARGETING',
+          body: {
+            list: {
+              items: targetingItems,
+            },
+          },
+        })
+      }
+
+      renderInfo({
+        headline: 'FUNCTION INFORMATION.',
+        customSections: sections,
+      })
     }
 
     return {app}
