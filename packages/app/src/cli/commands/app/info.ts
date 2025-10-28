@@ -12,7 +12,7 @@ export default class AppInfo extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `The information returned includes the following:
 
-  - The app and development store or Plus sandbox store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [\`dev --reset\`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
+  - The app and dev store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [\`dev --reset\`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
   - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.`

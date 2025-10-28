@@ -245,7 +245,7 @@ FLAGS
 DESCRIPTION
   Run the app.
 
-  Builds and previews your app on a development store, and watches for changes. "Read more about testing apps locally"
+  Builds and previews your app on a dev store, and watches for changes. "Read more about testing apps locally"
   (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
 ```
 
@@ -534,9 +534,9 @@ DESCRIPTION
 
   The information returned includes the following:
 
-  - The app and development store or Plus sandbox store that's used when you run the "dev"
-  (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using "`dev
-  --reset`" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
+  - The app and dev store that's used when you run the "dev" (https://shopify.dev/docs/api/shopify-cli/app/app-dev)
+  command. You can reset these configurations using "`dev --reset`"
+  (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
   - The "structure" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.
   - The "access scopes" (https://shopify.dev/docs/api/usage) your app has requested.
   - System information, including the package manager and version of Shopify CLI used in the project.

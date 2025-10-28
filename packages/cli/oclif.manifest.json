@@ -372,8 +372,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Builds and previews your app on a development store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
-      "descriptionWithMarkdown": "Builds and previews your app on a development store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
+      "description": "Builds and previews your app on a dev store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
+      "descriptionWithMarkdown": "Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "flags": {
         "checkout-cart-url": {
           "description": "Resource URL for checkout UI extension. Format: \"/cart/{productVariantID}:{productQuantity}\"",
@@ -1570,8 +1570,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "The information returned includes the following:\n\n  - The app and development store or Plus sandbox store that's used when you run the \"dev\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using \"`dev --reset`\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The \"structure\" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The \"access scopes\" (https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
-      "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The app and development store or Plus sandbox store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [`dev --reset`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
+      "description": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the \"dev\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using \"`dev --reset`\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The \"structure\" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The \"access scopes\" (https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
+      "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [`dev --reset`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
