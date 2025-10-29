@@ -893,8 +893,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The function runner path\n  - The schema path\n  - The WASM path\n  - The targeting configuration",
-      "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The function runner path\n  - The schema path\n  - The WASM path\n  - The targeting configuration",
+      "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
+      "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",

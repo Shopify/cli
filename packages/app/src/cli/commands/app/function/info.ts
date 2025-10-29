@@ -5,7 +5,7 @@ import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {outputContent, outputResult, outputToken} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
   static summary = 'Print basic information about your function.'
@@ -15,10 +15,10 @@ export default class FunctionInfo extends AppUnlinkedCommand {
   - The function handle
   - The function name
   - The function API version
-  - The function runner path
+  - The targeting configuration
   - The schema path
   - The WASM path
-  - The targeting configuration`
+  - The function runner path`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -66,71 +66,71 @@ export default class FunctionInfo extends AppUnlinkedCommand {
             handle: ourFunction.configuration.handle,
             name: ourFunction.name,
             apiVersion: ourFunction.configuration.api_version,
-            functionRunnerPath: functionRunner.path,
+            targeting,
             schemaPath,
             wasmPath: ourFunction.outputPath,
-            targeting,
+            functionRunnerPath: functionRunner.path,
           },
           null,
           2,
         ),
       )
     } else {
-      const sections: {title: string; body: {list: {items: string[]}}}[] = [
+      const configData: InlineToken[][] = [
+        ['Handle', ourFunction.configuration.handle ?? 'N/A'],
+        ['Name', ourFunction.name ?? 'N/A'],
+        ['API Version', ourFunction.configuration.api_version ?? 'N/A'],
+      ]
+
+      const sections: {title: string; body: {tabularData: InlineToken[][]; firstColumnSubdued?: boolean}}[] = [
         {
-          title: 'CONFIGURATION',
+          title: 'CONFIGURATION\n',
           body: {
-            list: {
-              items: [
-                outputContent`Handle: ${ourFunction.configuration.handle ?? 'N/A'}`.value,
-                outputContent`Name: ${ourFunction.name ?? 'N/A'}`.value,
-                outputContent`API Version: ${ourFunction.configuration.api_version ?? 'N/A'}`.value,
-              ],
-            },
-          },
-        },
-        {
-          title: 'FUNCTION RUNNER',
-          body: {
-            list: {
-              items: [outputContent`Path: ${functionRunner.path}`.value],
-            },
-          },
-        },
-        {
-          title: 'BUILD',
-          body: {
-            list: {
-              items: [
-                outputContent`Schema Path: ${outputToken.path(schemaPath ?? 'N/A')}`.value,
-                outputContent`Wasm Path: ${outputToken.path(ourFunction.outputPath)}`.value,
-              ],
-            },
+            tabularData: configData,
+            firstColumnSubdued: true,
           },
         },
       ]
 
       if (Object.keys(targeting).length > 0) {
-        const targetingItems = Object.entries(targeting).map(([target, config]) => {
-          const parts = [outputContent`${outputToken.cyan(target)}`.value]
+        const targetingData: InlineToken[][] = []
+        Object.entries(targeting).forEach(([target, config]) => {
+          targetingData.push([outputContent`${outputToken.cyan(target)}`.value, ''])
           if (config.inputQueryPath) {
-            parts.push(outputContent`  Input Query Path: ${outputToken.path(config.inputQueryPath)}`.value)
+            targetingData.push([{subdued: '  Input Query Path'}, {filePath: config.inputQueryPath}])
           }
           if (config.export) {
-            parts.push(outputContent`  Export: ${config.export}`.value)
+            targetingData.push([{subdued: '  Export'}, config.export])
           }
-          return parts.join('\n')
         })
 
         sections.push({
-          title: 'TARGETING',
+          title: '\nTARGETING\n',
           body: {
-            list: {
-              items: targetingItems,
-            },
+            tabularData: targetingData,
           },
         })
       }
+
+      sections.push(
+        {
+          title: '\nBUILD\n',
+          body: {
+            tabularData: [
+              ['Schema Path', {filePath: schemaPath ?? 'N/A'}],
+              ['Wasm Path', {filePath: ourFunction.outputPath}],
+            ],
+            firstColumnSubdued: true,
+          },
+        },
+        {
+          title: '\nFUNCTION RUNNER\n',
+          body: {
+            tabularData: [['Path', {filePath: functionRunner.path}]],
+            firstColumnSubdued: true,
+          },
+        },
+      )
 
       renderInfo({
         customSections: sections,

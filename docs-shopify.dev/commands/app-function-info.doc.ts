@@ -8,10 +8,10 @@ const data: ReferenceEntityTemplateSchema = {
   - The function handle
   - The function name
   - The function API version
-  - The function runner path
+  - The targeting configuration
   - The schema path
   - The WASM path
-  - The targeting configuration`,
+  - The function runner path`,
   overviewPreviewDescription: `Print basic information about your function.`,
   type: 'command',
   isVisualComponent: false,
