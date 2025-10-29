@@ -63,3 +63,4 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
 export const AppInitHook = init
 export const AppPublicMetadataHook = gatherPublicMetadata
+export {default as NotebookInit} from './commands/notebook/init.js'

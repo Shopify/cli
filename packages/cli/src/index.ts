@@ -18,6 +18,7 @@ import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
+import {NotebookInit as AppNotebookInit} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
@@ -93,6 +94,10 @@ appCommands.forEach((command) => {
   ;(AppCommands[command] as unknown as any).customPluginName = '@shopify/app'
 })
 
+// Ensure custom plugin name is set for the notebook command coming from @shopify/app
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+;(AppNotebookInit as any).customPluginName = '@shopify/app'
+
 const themeCommands = Object.keys(ThemeCommands) as (keyof typeof ThemeCommands)[]
 themeCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -131,6 +136,7 @@ export const COMMANDS: any = {
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,
   ...HydrogenCommands,
+  'notebook:init': AppNotebookInit,
   search: Search,
   upgrade: Upgrade,
   version: VersionCommand,

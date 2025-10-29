@@ -162,6 +162,9 @@
       "app:function": {
         "description": "Manage Shopify Functions."
       },
+      "notebook": {
+        "description": "Notebook tooling."
+      },
       "auth": {
         "description": "Auth operations."
       },
