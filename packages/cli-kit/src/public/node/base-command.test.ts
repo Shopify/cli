@@ -562,6 +562,7 @@ const deleteDefaultEnvironment = async (tmpDir: string): Promise<void> => {
 
 describe('removeDuplicatedPlugins', () => {
   let capturedPlugins: Map<string, any> | undefined
+  let outputMock: ReturnType<typeof mockAndCaptureOutput>
 
   class PluginTestCommand extends MockCommand {
     async init() {
@@ -583,6 +584,8 @@ describe('removeDuplicatedPlugins', () => {
 
   beforeEach(() => {
     capturedPlugins = undefined
+    outputMock = mockAndCaptureOutput()
+    outputMock.clear()
   })
 
   test('removes @shopify/app plugin when present', async () => {
@@ -606,6 +609,11 @@ describe('removeDuplicatedPlugins', () => {
       expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
       expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
       expect(capturedPlugins.size).toBe(2)
+
+      // Verify warning was shown
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/app/)
+      expect(outputMock.output()).not.toMatch(/shopify plugins remove @shopify\/plugin-cloudflare/)
     })
   })
 
@@ -630,6 +638,11 @@ describe('removeDuplicatedPlugins', () => {
       expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
       expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
       expect(capturedPlugins.size).toBe(2)
+
+      // Verify warning was shown
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/plugin-cloudflare/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/plugin-cloudflare/)
+      expect(outputMock.output()).not.toMatch(/shopify plugins remove @shopify\/app/)
     })
   })
 
@@ -657,6 +670,11 @@ describe('removeDuplicatedPlugins', () => {
       expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
       expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
       expect(capturedPlugins.size).toBe(2)
+
+      // Verify warning was shown with both plugins
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app.*@shopify\/plugin-cloudflare/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/app/)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/plugin-cloudflare/)
     })
   })
 
@@ -681,6 +699,9 @@ describe('removeDuplicatedPlugins', () => {
       expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
       expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
       expect(capturedPlugins.has('some-other-plugin')).toBe(true)
+
+      // Verify no warning was shown
+      expect(outputMock.output()).toBe('')
     })
   })
 
@@ -694,6 +715,9 @@ describe('removeDuplicatedPlugins', () => {
 
       // Then - verify map is still empty
       expect(capturedPlugins.size).toBe(0)
+
+      // Verify no warning was shown
+      expect(outputMock.output()).toBe('')
     })
   })
 
@@ -729,6 +753,10 @@ describe('removeDuplicatedPlugins', () => {
       expect(remainingPlugin.version).toBe('2.0.0')
       expect(remainingPlugin.type).toBe('user')
       expect(remainingPlugin.root).toBe('/path/to/theme')
+
+      // Verify warning was shown
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/app/)
     })
   })
 })

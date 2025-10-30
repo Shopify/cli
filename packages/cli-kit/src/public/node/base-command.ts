@@ -338,8 +338,20 @@ function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): bo
 }
 
 async function removeDuplicatedPlugins(config: Config): Promise<void> {
+  const plugins = Array.from(config.plugins.values())
   const bundlePlugins = ['@shopify/app', '@shopify/plugin-cloudflare']
-  const filteredPlugins = Array.from(config.plugins.values()).filter((plugin) => !bundlePlugins.includes(plugin.name))
+  const pluginsToRemove = plugins.filter((plugin) => bundlePlugins.includes(plugin.name))
+  if (pluginsToRemove.length > 0) {
+    const commandsToRun = pluginsToRemove.map((plugin) => `  - shopify plugins remove ${plugin.name}`).join('\n')
+    renderWarning({
+      headline: `Unsupported plugins detected: ${pluginsToRemove.map((plugin) => plugin.name).join(', ')}`,
+      body: [
+        'They are already included in the CLI and installing them as custom plugins can cause conflicts.',
+        `You can fix it by running:\n${commandsToRun}`,
+      ],
+    })
+  }
+  const filteredPlugins = plugins.filter((plugin) => !bundlePlugins.includes(plugin.name))
   config.plugins = new Map(filteredPlugins.map((plugin) => [plugin.name, plugin]))
 }
 
