@@ -68,7 +68,13 @@ type VerboseResponse<T> =
   | CanRetryErrorResponse
   | UnauthorizedErrorResponse
 
-function isARetryableNetworkError(error: unknown): boolean {
+/**
+ * Checks if an error is a transient network error (connection issues, timeouts, DNS failures, TLS errors, etc.)
+ * rather than an application logic error. These errors are typically:
+ * - Worth retrying (when retry logic is configured)
+ * - Should be reported as user-facing errors (AbortError) rather than bugs (BugError)
+ */
+export function isTransientNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
     const networkErrorMessages = [
       'socket hang up',
@@ -82,6 +88,14 @@ function isARetryableNetworkError(error: unknown): boolean {
       'eai_again',
       'epipe',
       'the operation was aborted',
+      'timeout',
+      'premature close',
+      'certificate',
+      'cert',
+      'tls',
+      'ssl',
+      'altnames',
+      'getaddrinfo',
     ]
     const errorMessage = error.message.toLowerCase()
     const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
@@ -105,7 +119,7 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
       return await requestOptions.request()
     } catch (err) {
       lastSeenError = err
-      if (!isARetryableNetworkError(err)) {
+      if (!isTransientNetworkError(err)) {
         throw err
       }
       outputDebug(`Retrying request to ${requestOptions.url} due to network error ${err}`)
