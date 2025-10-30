@@ -381,9 +381,9 @@ async function withGit<T>({
 }): Promise<T> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const git = git({baseDir: directory})
+  const repo = git({baseDir: directory})
   try {
-    return await callback(git)
+    return await callback(repo)
   } catch (err) {
     if (err instanceof Error) {
       const abortError = new AbortError(err.message)
