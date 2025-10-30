@@ -27,11 +27,13 @@ export async function initializeGitRepository(directory: string, initialBranch =
   outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const repo = git(directory)
-  await repo.init()
-  await repo.checkoutLocalBranch(initialBranch)
+  await withGit({
+    directory,
+    callback: async (repo) => {
+      await repo.init()
+      await repo.checkoutLocalBranch(initialBranch)
+    },
+  })
 }
 
 /**
@@ -44,11 +46,7 @@ export async function initializeGitRepository(directory: string, initialBranch =
  * @returns Files ignored by the lockfile.
  */
 export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const repo = git(directory)
-  const ignoredLockfile = await repo.checkIgnore(files)
-  return ignoredLockfile
+  return withGit({directory, callback: (repo) => repo.checkIgnore(files)})
 }
 
 export interface GitIgnoreTemplate {
@@ -199,11 +197,13 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
       await git(simpleGitOptions).clone(repository!, destination, options)
 
       if (latestTag) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        const localGitRepository = git(destination)
-        const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
-        await localGitRepository.checkout(latestTag)
+        await withGit({
+          directory: destination,
+          callback: async (localGitRepository) => {
+            const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
+            await localGitRepository.checkout(latestTag)
+          },
+        })
       }
     } catch (err) {
       if (err instanceof Error) {
@@ -240,10 +240,9 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promis
  * @returns The latest commit of the repository.
  */
 export async function getLatestGitCommit(directory?: string): Promise<DefaultLogFields & ListLogLine> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const logs = await git({baseDir: directory}).log({
-    maxCount: 1,
+  const logs = await withGit({
+    directory,
+    callback: (repo) => repo.log({maxCount: 1}),
   })
   if (!logs.latest) {
     throw new AbortError(
@@ -263,10 +262,7 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
  * @returns A promise that resolves when the files are added to the index.
  */
 export async function addAllToGitFromDirectory(directory?: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const simpleGit = git({baseDir: directory})
-  await simpleGit.raw('add', '--all')
+  await withGit({directory, callback: (repo) => repo.raw('add', '--all')})
 }
 
 export interface CreateGitCommitOptions {
@@ -282,13 +278,11 @@ export interface CreateGitCommitOptions {
  * @returns The hash of the created commit.
  */
 export async function createGitCommit(message: string, options?: CreateGitCommitOptions): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const simpleGit = git({baseDir: options?.directory})
-
   const commitOptions = options?.author ? {'--author': options.author} : undefined
-  const result = await simpleGit.commit(message, commitOptions)
-
+  const result = await withGit({
+    directory: options?.directory,
+    callback: (repo) => repo.commit(message, commitOptions),
+  })
   return result.commit
 }
 
@@ -299,9 +293,7 @@ export async function createGitCommit(message: string, options?: CreateGitCommit
  * @returns The HEAD symbolic reference of the repository.
  */
 export async function getHeadSymbolicRef(directory?: string): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const ref = await git({baseDir: directory}).raw('symbolic-ref', '-q', 'HEAD')
+  const ref = await withGit({directory, callback: (repo) => repo.raw('symbolic-ref', '-q', 'HEAD')})
   if (!ref) {
     throw new AbortError(
       "Git HEAD can't be detached to run command",
@@ -354,9 +346,7 @@ export async function ensureInsideGitDirectory(directory?: string): Promise<void
  * @returns True if the directory is inside a .git directory tree.
  */
 export async function insideGitDirectory(directory?: string): Promise<boolean> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  return git({baseDir: directory}).checkIsRepo()
+  return withGit({directory, callback: (repo) => repo.checkIsRepo()})
 }
 
 export class GitDirectoryNotCleanError extends AbortError {}
@@ -379,9 +369,29 @@ export async function ensureIsClean(directory?: string): Promise<void> {
  * @returns True is the .git directory is clean.
  */
 export async function isClean(directory?: string): Promise<boolean> {
+  return (await withGit({directory, callback: (git: SimpleGit) => git.status()})).isClean()
+}
+
+async function withGit<T>({
+  directory,
+  callback,
+}: {
+  directory?: string
+  callback: (git: SimpleGit) => Promise<T>
+}): Promise<T> {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  return (await git({baseDir: directory}).status()).isClean()
+  const git = git({baseDir: directory})
+  try {
+    return await callback(git)
+  } catch (err) {
+    if (err instanceof Error) {
+      const abortError = new AbortError(err.message)
+      abortError.stack = err.stack
+      throw abortError
+    }
+    throw err
+  }
 }
 
 /**
@@ -391,9 +401,7 @@ export async function isClean(directory?: string): Promise<boolean> {
  * @returns String with the latest tag or undefined if no tags are found.
  */
 export async function getLatestTag(directory?: string): Promise<string | undefined> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const tags = await git({baseDir: directory}).tags()
+  const tags = await withGit({directory, callback: (repo) => repo.tags()})
   return tags.latest
 }
 
@@ -408,18 +416,19 @@ export async function removeGitRemote(directory: string, remoteName = 'origin'):
   outputDebug(outputContent`Removing git remote ${remoteName} from ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const repo = git(directory)
+  await withGit({
+    directory,
+    callback: async (repo) => {
+      // Check if remote exists first
+      const remotes = await repo.getRemotes()
+      const remoteExists = remotes.some((remote: {name: string}) => remote.name === remoteName)
 
-  // Check if remote exists first
-  const remotes = await repo.getRemotes()
-  const remoteExists = remotes.some((remote: {name: string}) => remote.name === remoteName)
+      if (!remoteExists) {
+        outputDebug(outputContent`Remote ${remoteName} does not exist, no action needed`)
+        return
+      }
 
-  if (!remoteExists) {
-    outputDebug(outputContent`Remote ${remoteName} does not exist, no action needed`)
-    return
-  }
-
-  await repo.removeRemote(remoteName)
+      await repo.removeRemote(remoteName)
+    },
+  })
 }
