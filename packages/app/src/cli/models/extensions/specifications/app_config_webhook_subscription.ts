@@ -11,6 +11,7 @@ interface TransformedWebhookSubscription {
   api_version: string
   uri: string
   topic: string
+  actions: string[]
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
@@ -19,6 +20,7 @@ interface TransformedWebhookSubscription {
 
 export const SingleWebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
+  actions: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   api_version: zod.string(),
   uri: zod.preprocess(removeTrailingSlash as (arg: unknown) => unknown, WebhookSubscriptionUriValidation, {
     required_error: 'Missing value at',
