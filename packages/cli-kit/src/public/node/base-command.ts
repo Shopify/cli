@@ -12,7 +12,7 @@ import {showNotificationsIfNeeded} from './notifications-system.js'
 import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {Command, Errors} from '@oclif/core'
+import {Command, Config, Errors} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +56,7 @@ abstract class BaseCommand extends Command {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
+    await warnOnUnsupportedPlugins(this.config)
     this.showNpmFlagWarning()
     await showNotificationsIfNeeded()
     return super.init()
@@ -334,6 +335,19 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
 
 function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): boolean {
   return Boolean(flags) && Object.prototype.hasOwnProperty.call(flags, flagName)
+}
+
+export async function warnOnUnsupportedPlugins(config: Config): Promise<void> {
+  const bundlePlugins = ['@shopify/app', '@shopify/plugin-cloudflare']
+  const unsupportedPlugins = Array.from(config.plugins.values())
+    .filter((plugin) => bundlePlugins.includes(plugin.name))
+    .map((plugin) => plugin.name)
+  if (unsupportedPlugins.length > 0) {
+    const commandsToRun = unsupportedPlugins.map((plugin) => `  - shopify plugins remove ${plugin}`).join('\n')
+    throw new AbortError(`Unsupported plugins detected: ${unsupportedPlugins.join(', ')}`, [
+      `They are already included in the CLI and installing them as custom plugins can cause conflicts. You can fix it by running:\n${commandsToRun}`,
+    ])
+  }
 }
 
 export default BaseCommand
