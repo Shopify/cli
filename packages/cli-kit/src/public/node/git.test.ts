@@ -252,7 +252,7 @@ describe('initializeRepository()', () => {
 
     // Then
     expect(simpleGit).toHaveBeenCalledOnce()
-    expect(simpleGit).toHaveBeenCalledWith('/tmp/git-repo')
+    expect(simpleGit).toHaveBeenCalledWith({baseDir: '/tmp/git-repo'})
 
     expect(mockedInit).toHaveBeenCalledOnce()
     expect(mockedCheckout).toHaveBeenCalledOnce()
@@ -617,7 +617,7 @@ describe('removeGitRemote()', () => {
     await git.removeGitRemote(directory, remoteName)
 
     // Then
-    expect(simpleGit).toHaveBeenCalledWith(directory)
+    expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
     expect(mockedGetRemotes).toHaveBeenCalled()
     expect(mockedRemoveRemote).toHaveBeenCalledWith(remoteName)
   })
@@ -635,7 +635,7 @@ describe('removeGitRemote()', () => {
     await git.removeGitRemote(directory, remoteName)
 
     // Then
-    expect(simpleGit).toHaveBeenCalledWith(directory)
+    expect(simpleGit).toHaveBeenCalledWith({baseDir: directory})
     expect(mockedGetRemotes).toHaveBeenCalled()
     expect(mockedRemoveRemote).not.toHaveBeenCalled()
   })
