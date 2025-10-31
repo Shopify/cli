@@ -10,6 +10,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {groupBy} from '@shopify/cli-kit/common/collection'
 import {formatMessagesSync, Message} from 'esbuild'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import EventEmitter from 'events'
@@ -234,8 +235,20 @@ export class AppEventWatcher extends EventEmitter {
    * buildForBundle method.
    */
   private async buildExtensions(extensionEvents: ExtensionEvent[]) {
-    const promises = extensionEvents.map(async (extEvent) => {
-      const ext = extEvent.extension
+    // Group events by extension to handle multiple events for the same extension
+    const groupedByUid = groupBy(extensionEvents, (event) => event.extension.uid)
+    const groupedExtensionEvents: {extension: ExtensionInstance; events: ExtensionEvent[]}[] = []
+
+    for (const events of Object.values(groupedByUid)) {
+      if (events.length > 0 && events[0]) {
+        groupedExtensionEvents.push({
+          extension: events[0].extension,
+          events,
+        })
+      }
+    }
+
+    const promises = groupedExtensionEvents.map(async ({extension: ext, events}) => {
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
           if (this.esbuildManager.contexts?.[ext.uid]?.length) {
@@ -244,7 +257,11 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             await this.buildExtension(ext)
           }
-          extEvent.buildResult = {status: 'ok', uid: ext.uid}
+          // Update all events for this extension with success result
+          const buildResult = {status: 'ok' as const, uid: ext.uid}
+          events.forEach((event) => {
+            event.buildResult = buildResult
+          })
           // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
         } catch (error: any) {
           // If there is an `errors` array, it's an esbuild error, format it and log it
@@ -267,12 +284,16 @@ export class AppEventWatcher extends EventEmitter {
             this.options.stderr.write(error.message)
           }
 
-          extEvent.buildResult = {
-            status: 'error',
+          // Update all events for this extension with error result
+          const buildResult = {
+            status: 'error' as const,
             error: errorMessage,
             file: errorFile,
             uid: ext.uid,
           }
+          events.forEach((event) => {
+            event.buildResult = buildResult
+          })
         }
       })
     })
