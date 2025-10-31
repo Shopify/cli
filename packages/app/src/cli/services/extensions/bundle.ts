@@ -68,14 +68,7 @@ export async function bundleThemeExtension(
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
   const files = await themeExtensionFiles(extension)
 
-  await Promise.all(
-    files.map(function (filepath) {
-      const relativePathName = relativePath(extension.directory, filepath)
-      const outputFile = joinPath(extension.outputPath, relativePathName)
-      if (filepath === outputFile) return
-      return copyFile(filepath, outputFile)
-    }),
-  )
+  await copyFiles(files, extension.directory, extension.outputPath)
 }
 
 export async function copyFilesForExtension(
@@ -93,14 +86,8 @@ export async function copyFilesForExtension(
     ignore: ignored,
   })
 
-  await Promise.all(
-    files.map(function (filepath) {
-      const relativePathName = relativePath(extension.directory, filepath)
-      const outputFile = joinPath(extension.outputPath, relativePathName)
-      if (filepath === outputFile) return
-      return copyFile(filepath, outputFile)
-    }),
-  )
+  await copyFiles(files, extension.directory, extension.outputPath)
+
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
@@ -118,6 +105,41 @@ function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: B
     formattedErrors.forEach((error) => {
       options.stderr.write(error)
     })
+  }
+}
+
+async function copyFiles(files: string[], directory: string, outputPath: string): Promise<void> {
+  const results = await Promise.allSettled(
+    files.map(async function (filepath) {
+      const relativePathName = relativePath(directory, filepath)
+      const outputFile = joinPath(outputPath, relativePathName)
+      if (filepath === outputFile) return {status: 'skipped', filepath}
+
+      try {
+        await copyFile(filepath, outputFile)
+        return {status: 'success', filepath}
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        // Log warning but don't fail the entire process
+        // We intentionally catch all errors here to continue copying other files
+        outputDebug(`Failed to copy file ${filepath}: ${error}`)
+        return {status: 'failed', filepath, error}
+      }
+    }),
+  )
+
+  // Report any failures as warnings
+  const failures = results.filter((result) => {
+    return result.status === 'rejected' || (result.status === 'fulfilled' && result.value?.status === 'failed')
+  })
+
+  if (failures.length > 0) {
+    const failedFiles = failures.map((failure) => {
+      if (failure.status === 'rejected') return 'unknown file'
+      const value = (failure as PromiseFulfilledResult<{status: string; filepath: string}>).value
+      return value.filepath
+    })
+    outputDebug(`Warning: ${failures.length} file(s) could not be copied: ${failedFiles.join(', ')}`)
   }
 }
 
