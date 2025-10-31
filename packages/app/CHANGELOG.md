@@ -1,5 +1,21 @@
 # @shopify/app
 
+## 3.87.0
+
+### Minor Changes
+
+- a75046c: Added a `function info` command to display function information.
+- 703bf85: Removed support for "--api-key" and "SHOPIFY_API_KEY". Use "--client-id" or "SHOPIFY_FLAG_CLIENT_ID" instead
+
+### Patch Changes
+
+- Updated dependencies [a407016]
+- Updated dependencies [a80d5c9]
+- Updated dependencies [3ac7982]
+  - @shopify/cli-kit@3.87.0
+  - @shopify/theme@3.87.0
+  - @shopify/plugin-cloudflare@3.87.0
+
 ## 3.86.0
 
 ### Patch Changes
