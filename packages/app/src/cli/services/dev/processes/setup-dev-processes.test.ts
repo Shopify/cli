@@ -1,4 +1,4 @@
-import {DevConfig, setupDevProcesses, startProxyServer} from './setup-dev-processes.js'
+import {DevConfig, setupDevProcesses, proxyService} from './setup-dev-processes.js'
 import {subscribeAndStartPolling} from './app-logs-polling.js'
 import {sendWebhook} from './uninstall-webhook.js'
 import {WebProcess, launchWebProcess} from './web.js'
@@ -95,6 +95,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -281,13 +282,14 @@ describe('setup-dev-processes', () => {
     expect(proxyServerProcess).toMatchObject({
       type: 'proxy-server',
       prefix: 'proxy',
-      function: startProxyServer,
+      function: proxyService,
       options: {
         port: 444,
         localhostCert: {
           cert: 'cert',
           key: 'key',
         },
+        host: 'localhost',
         rules: {
           '/extensions': `http://localhost:${previewExtensionPort}`,
           '/ping': `http://localhost:${hmrPort}`,
@@ -296,6 +298,77 @@ describe('setup-dev-processes', () => {
         },
       },
     })
+  })
+
+  test('proxy server process includes host parameter when configured for Docker', async () => {
+    // Given  
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: false})
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      tunnel: {mode: 'auto'},
+      host: '0.0.0.0', // Docker host setting
+      directory: '',
+      update: false,
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      frontendPort: 3000,
+      backendPort: 3001,
+      currentUrls: {
+        applicationUrl: 'https://example.com/proxy',
+        redirectUrlWhitelist: ['https://example.com/proxy/auth/callback'],
+      },
+      reverseProxyCert: {
+        cert: 'cert',
+        key: 'key',
+        certPath: 'path',
+      },
+    }
+    
+    // Create simple app without theme extensions to avoid the theme API calls
+    const localApp = testAppWithConfig({
+      config: {},
+      app: testAppLinked({
+        allExtensions: [await testUIExtension({type: 'web_pixel_extension'})],
+        webs: [{
+          directory: 'web',
+          configuration: {
+            roles: [WebType.Backend, WebType.Frontend],
+            commands: {dev: 'npm exec remix dev'},
+            webhooks_path: '/webhooks',
+            hmr_server: {
+              http_paths: ['/ping'],
+            },
+          },
+        }],
+      }),
+    })
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
+    // When
+    const res = await setupDevProcesses({
+      localApp,
+      remoteAppUpdated,
+      remoteApp: testOrganizationApp(),
+      developerPlatformClient,
+      storeFqdn,
+      storeId,
+      commandOptions,
+      network,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+    })
+
+    // Then - Verify the proxy server process has the correct host setting
+    const proxyServerProcess = res.processes.find((process) => process.type === 'proxy-server')
+    expect(proxyServerProcess?.options.host).toBe('0.0.0.0')
   })
 
   test('process list includes dev-session when useDevSession is true', async () => {
@@ -311,6 +384,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -322,7 +396,7 @@ describe('setup-dev-processes', () => {
         redirectUrlWhitelist: ['https://example.com/redirect'],
       },
     }
-    const localApp = testAppWithConfig()
+    const localApp = testAppWithConfig({config: {}})
     vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
 
     const remoteApp: DevConfig['remoteApp'] = {
@@ -384,6 +458,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -480,6 +555,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -566,6 +642,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
+      host: 'localhost',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
