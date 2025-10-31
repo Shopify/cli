@@ -234,48 +234,74 @@ export class AppEventWatcher extends EventEmitter {
    * buildForBundle method.
    */
   private async buildExtensions(extensionEvents: ExtensionEvent[]) {
-    const promises = extensionEvents.map(async (extEvent) => {
-      const ext = extEvent.extension
-      return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
-        try {
-          if (this.esbuildManager.contexts?.[ext.uid]?.length) {
-            await this.esbuildManager.rebuildContext(ext)
-            this.options.stdout.write(`Build successful`)
-          } else {
-            await this.buildExtension(ext)
-          }
-          extEvent.buildResult = {status: 'ok', uid: ext.uid}
-          // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
-        } catch (error: any) {
-          // If there is an `errors` array, it's an esbuild error, format it and log it
-          // If not, just print the error message to stderr.
-          const errors: Message[] = error.errors ?? []
-          let errorMessage = error.message
-          let errorFile: string | undefined
-
-          if (errors.length) {
-            // Use the first error for the main message and file
-            const firstError = errors[0]
-            errorMessage = firstError?.text
-            errorFile = firstError?.location?.file
-
-            const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: !isUnitTest()})
-            formattedErrors.forEach((error) => {
-              this.options.stderr.write(error)
-            })
-          } else {
-            this.options.stderr.write(error.message)
-          }
-
-          extEvent.buildResult = {
-            status: 'error',
-            error: errorMessage,
-            file: errorFile,
-            uid: ext.uid,
-          }
+    // Group events by extension to handle multiple events for the same extension
+    const groupedExtensionEvents = extensionEvents.reduce<{extension: ExtensionInstance; events: ExtensionEvent[]}[]>(
+      (grouped: {extension: ExtensionInstance; events: ExtensionEvent[]}[], event: ExtensionEvent) => {
+        const existingGroup = grouped.find((group) => group.extension.uid === event.extension.uid)
+        if (existingGroup) {
+          existingGroup.events.push(event)
+        } else {
+          grouped.push({
+            extension: event.extension,
+            events: [event],
+          })
         }
+        return grouped
+      },
+      [],
+    )
+
+    const promises = groupedExtensionEvents
+      .filter(({events}) => events.length > 0)
+      .map(async ({extension: ext, events}) => {
+        return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
+          try {
+            if (this.esbuildManager.contexts?.[ext.uid]?.length) {
+              await this.esbuildManager.rebuildContext(ext)
+              this.options.stdout.write(`Build successful`)
+            } else {
+              await this.buildExtension(ext)
+            }
+            // Update all events for this extension with success result
+            const buildResult = {status: 'ok' as const, uid: ext.uid}
+            events.forEach((event) => {
+              event.buildResult = buildResult
+            })
+            // eslint-disable-next-line no-catch-all/no-catch-all, @typescript-eslint/no-explicit-any
+          } catch (error: any) {
+            // If there is an `errors` array, it's an esbuild error, format it and log it
+            // If not, just print the error message to stderr.
+            const errors: Message[] = error.errors ?? []
+            let errorMessage = error.message
+            let errorFile: string | undefined
+
+            if (errors.length) {
+              // Use the first error for the main message and file
+              const firstError = errors[0]
+              errorMessage = firstError?.text
+              errorFile = firstError?.location?.file
+
+              const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: !isUnitTest()})
+              formattedErrors.forEach((error) => {
+                this.options.stderr.write(error)
+              })
+            } else {
+              this.options.stderr.write(error.message)
+            }
+
+            // Update all events for this extension with error result
+            const buildResult = {
+              status: 'error' as const,
+              error: errorMessage,
+              file: errorFile,
+              uid: ext.uid,
+            }
+            events.forEach((event) => {
+              event.buildResult = buildResult
+            })
+          }
+        })
       })
-    })
     return Promise.all(promises)
   }
 
