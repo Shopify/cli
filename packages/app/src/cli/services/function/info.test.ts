@@ -1,4 +1,13 @@
-import {functionInfo} from './info.js'
+import {
+  functionInfo,
+  buildTargetingData,
+  formatAsJson,
+  buildConfigurationSection,
+  buildTargetingSection,
+  buildBuildSection,
+  buildFunctionRunnerSection,
+  buildTextFormatSections,
+} from './info.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, beforeEach} from 'vitest'
@@ -20,27 +29,9 @@ describe('functionInfo', () => {
     })
   })
 
-  describe('JSON format', () => {
-    test('returns JSON string with function information', async () => {
+  describe('functionInfo integration', () => {
+    test('returns JSON string when format is json', async () => {
       // Given
-      const functionWithTargeting = await testFunctionExtension({
-        dir: '/path/to/function',
-        config: {
-          name: 'My Function',
-          type: 'function',
-          handle: 'my-function',
-          api_version: '2024-01',
-          configuration_ui: true,
-          targeting: [
-            {
-              target: 'purchase.payment-customization.run',
-              input_query: 'query.graphql',
-              export: 'run',
-            },
-          ],
-        },
-      })
-
       const options = {
         format: 'json' as const,
         functionRunnerPath: '/path/to/runner',
@@ -48,30 +39,17 @@ describe('functionInfo', () => {
       }
 
       // When
-      const result = functionInfo(functionWithTargeting, options)
+      const result = functionInfo(ourFunction, options)
 
       // Then
       expect(typeof result).toBe('string')
       const parsed = JSON.parse(result as string)
-      expect(parsed).toEqual({
-        handle: 'my-function',
-        name: 'My Function',
-        apiVersion: '2024-01',
-        targeting: {
-          'purchase.payment-customization.run': {
-            inputQueryPath: '/path/to/function/query.graphql',
-            export: 'run',
-          },
-        },
-        schemaPath: '/path/to/schema.graphql',
-        wasmPath: functionWithTargeting.outputPath,
-        functionRunnerPath: '/path/to/runner',
-      })
+      expect(parsed).toHaveProperty('handle')
+      expect(parsed).toHaveProperty('name')
+      expect(parsed).toHaveProperty('apiVersion')
     })
-  })
 
-  describe('Text format', () => {
-    test('returns AlertCustomSection array with configuration section', async () => {
+    test('returns AlertCustomSection array when format is text', async () => {
       // Given
       const options = {
         format: 'text' as const,
@@ -85,133 +63,314 @@ describe('functionInfo', () => {
       // Then
       expect(Array.isArray(result)).toBe(true)
       expect(result.length).toBeGreaterThan(0)
+    })
+  })
 
-      const configSection = result.find((section) => section.title?.includes('CONFIGURATION'))
-      expect(configSection).toBeDefined()
-      expect(configSection?.body).toHaveProperty('tabularData')
+  describe('buildTargetingData', () => {
+    test('transforms targeting configuration with multiple targets', () => {
+      // Given
+      const config = {
+        handle: 'test',
+        targeting: [
+          {
+            target: 'purchase.payment-customization.run',
+            input_query: 'query1.graphql',
+            export: 'run',
+          },
+          {
+            target: 'purchase.checkout.delivery-customization.run',
+            input_query: 'query2.graphql',
+            export: 'customize',
+          },
+        ],
+      }
+
+      // When
+      const result = buildTargetingData(config, '/path/to/function')
+
+      // Then
+      expect(result).toEqual({
+        'purchase.payment-customization.run': {
+          inputQueryPath: '/path/to/function/query1.graphql',
+          export: 'run',
+        },
+        'purchase.checkout.delivery-customization.run': {
+          inputQueryPath: '/path/to/function/query2.graphql',
+          export: 'customize',
+        },
+      })
     })
 
-    test('includes targeting section when targets are configured', async () => {
+    test('handles targets without input_query', () => {
       // Given
-      const functionWithTargeting = await testFunctionExtension({
+      const config = {
+        handle: 'test',
+        targeting: [
+          {
+            target: 'purchase.payment-customization.run',
+            export: 'run',
+          },
+        ],
+      }
+
+      // When
+      const result = buildTargetingData(config, '/path/to/function')
+
+      // Then
+      expect(result).toEqual({
+        'purchase.payment-customization.run': {
+          export: 'run',
+        },
+      })
+    })
+
+    test('handles targets without export', () => {
+      // Given
+      const config = {
+        handle: 'test',
+        targeting: [
+          {
+            target: 'purchase.payment-customization.run',
+            input_query: 'query.graphql',
+          },
+        ],
+      }
+
+      // When
+      const result = buildTargetingData(config, '/path/to/function')
+
+      // Then
+      expect(result).toEqual({
+        'purchase.payment-customization.run': {
+          inputQueryPath: '/path/to/function/query.graphql',
+        },
+      })
+    })
+  })
+
+  describe('formatAsJson', () => {
+    test('returns correctly formatted JSON string', async () => {
+      // Given
+      const testFunc = await testFunctionExtension({
         dir: '/path/to/function',
         config: {
           name: 'My Function',
           type: 'function',
           handle: 'my-function',
           api_version: '2024-01',
-          configuration_ui: true,
-          targeting: [
-            {
-              target: 'purchase.payment-customization.run',
-              input_query: 'query.graphql',
-              export: 'run',
-            },
-          ],
+          configuration_ui: false,
         },
       })
-
-      const options = {
-        format: 'text' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
+      const config = {
+        handle: 'my-function',
+        name: 'My Function',
+        api_version: '2024-01',
+      }
+      const targeting = {
+        'purchase.payment-customization.run': {
+          inputQueryPath: '/path/to/function/query.graphql',
+          export: 'run',
+        },
       }
 
       // When
-      const result = functionInfo(functionWithTargeting, options) as AlertCustomSection[]
+      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner', '/path/to/schema.graphql')
 
       // Then
-      const targetingSection = result.find((section) => section.title?.includes('TARGETING'))
-      expect(targetingSection).toBeDefined()
-      expect(targetingSection?.body).toHaveProperty('tabularData')
+      const parsed = JSON.parse(result)
+      expect(parsed).toEqual({
+        handle: 'my-function',
+        name: 'My Function',
+        apiVersion: '2024-01',
+        targeting: {
+          'purchase.payment-customization.run': {
+            inputQueryPath: '/path/to/function/query.graphql',
+            export: 'run',
+          },
+        },
+        schemaPath: '/path/to/schema.graphql',
+        wasmPath: testFunc.outputPath,
+        functionRunnerPath: '/path/to/runner',
+      })
     })
 
-    test('excludes targeting section when no targets are configured', async () => {
+    test('handles missing optional fields', async () => {
       // Given
-      const options = {
-        format: 'text' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
+      const testFunc = await testFunctionExtension({
+        dir: '/path/to/function',
+        config: {
+          name: 'My Function',
+          type: 'function',
+          api_version: '2024-01',
+          configuration_ui: false,
+        },
+      })
+      const config = {}
+      const targeting = {}
+
+      // When
+      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner')
+
+      // Then
+      const parsed = JSON.parse(result)
+      expect(parsed.handle).toBeUndefined()
+      expect(parsed.schemaPath).toBeUndefined()
+      expect(parsed.targeting).toEqual({})
+    })
+  })
+
+  describe('buildConfigurationSection', () => {
+    test('builds configuration section with all fields', () => {
+      // Given
+      const config = {
+        handle: 'my-function',
+        name: 'My Function',
+        api_version: '2024-01',
       }
 
       // When
-      const result = functionInfo(ourFunction, options) as AlertCustomSection[]
+      const result = buildConfigurationSection(config, 'My Function')
 
       // Then
-      const targetingSection = result.find((section) => section.title?.includes('TARGETING'))
-      expect(targetingSection).toBeUndefined()
+      expect(result.title).toBe('CONFIGURATION\n')
+      expect(result.body).toHaveProperty('tabularData')
+      expect(result.body).toHaveProperty('firstColumnSubdued', true)
+      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
+        ['Handle', 'my-function'],
+        ['Name', 'My Function'],
+        ['API Version', '2024-01'],
+      ])
     })
 
-    test('includes build section with schema and wasm paths', async () => {
+    test('uses N/A for missing fields', () => {
       // Given
-      const options = {
-        format: 'text' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
+      const config = {}
+
+      // When
+      const result = buildConfigurationSection(config, undefined as unknown as string)
+
+      // Then
+      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
+        ['Handle', 'N/A'],
+        ['Name', 'N/A'],
+        ['API Version', 'N/A'],
+      ])
+    })
+  })
+
+  describe('buildTargetingSection', () => {
+    test('builds targeting section with multiple targets', () => {
+      // Given
+      const targeting = {
+        'purchase.payment-customization.run': {
+          inputQueryPath: '/path/to/function/query1.graphql',
+          export: 'run',
+        },
+        'purchase.checkout.delivery-customization.run': {
+          inputQueryPath: '/path/to/function/query2.graphql',
+          export: 'customize',
+        },
       }
 
       // When
-      const result = functionInfo(ourFunction, options) as AlertCustomSection[]
+      const result = buildTargetingSection(targeting)
 
       // Then
-      const buildSection = result.find((section) => section.title?.includes('BUILD'))
-      expect(buildSection).toBeDefined()
-      expect(buildSection?.body).toHaveProperty('tabularData')
+      expect(result).not.toBeNull()
+      expect(result?.title).toBe('\nTARGETING\n')
+      const tabularData = (result?.body as {tabularData: unknown[][]})?.tabularData
+      // 2 targets × 3 rows each
+      expect(tabularData?.length).toBe(6)
     })
+  })
 
-    test('includes function runner section', async () => {
+  describe('buildBuildSection', () => {
+    test('builds build section with schema and wasm paths', () => {
       // Given
-      const options = {
-        format: 'text' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
-      }
+      const wasmPath = '/path/to/function.wasm'
+      const schemaPath = '/path/to/schema.graphql'
 
       // When
-      const result = functionInfo(ourFunction, options) as AlertCustomSection[]
+      const result = buildBuildSection(wasmPath, schemaPath)
 
       // Then
-      const runnerSection = result.find((section) => section.title?.includes('FUNCTION RUNNER'))
-      expect(runnerSection).toBeDefined()
-      expect(runnerSection?.body).toHaveProperty('tabularData')
+      expect(result.title).toBe('\nBUILD\n')
+      expect(result.body).toHaveProperty('tabularData')
+      expect(result.body).toHaveProperty('firstColumnSubdued', true)
+      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
+        ['Schema Path', {filePath: schemaPath}],
+        ['Wasm Path', {filePath: wasmPath}],
+      ])
     })
 
-    test('targeting section includes target name, input query path, and export', async () => {
+    test('uses N/A for missing schema path', () => {
       // Given
-      const functionWithTargeting = await testFunctionExtension({
+      const wasmPath = '/path/to/function.wasm'
+
+      // When
+      const result = buildBuildSection(wasmPath)
+
+      // Then
+      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
+        ['Schema Path', {filePath: 'N/A'}],
+        ['Wasm Path', {filePath: wasmPath}],
+      ])
+    })
+  })
+
+  describe('buildFunctionRunnerSection', () => {
+    test('builds function runner section', () => {
+      // Given
+      const functionRunnerPath = '/path/to/runner'
+
+      // When
+      const result = buildFunctionRunnerSection(functionRunnerPath)
+
+      // Then
+      expect(result.title).toBe('\nFUNCTION RUNNER\n')
+      expect(result.body).toHaveProperty('tabularData')
+      expect(result.body).toHaveProperty('firstColumnSubdued', true)
+      expect((result.body as {tabularData: unknown[][]}).tabularData).toEqual([
+        ['Path', {filePath: functionRunnerPath}],
+      ])
+    })
+  })
+
+  describe('buildTextFormatSections', () => {
+    test('includes all sections when targeting is present', async () => {
+      // Given
+      const testFunc = await testFunctionExtension({
         dir: '/path/to/function',
         config: {
           name: 'My Function',
           type: 'function',
           handle: 'my-function',
           api_version: '2024-01',
-          configuration_ui: true,
-          targeting: [
-            {
-              target: 'purchase.payment-customization.run',
-              input_query: 'query.graphql',
-              export: 'run',
-            },
-          ],
+          configuration_ui: false,
         },
       })
-
-      const options = {
-        format: 'text' as const,
-        functionRunnerPath: '/path/to/runner',
-        schemaPath: '/path/to/schema.graphql',
+      const config = {
+        handle: 'my-function',
+        name: 'My Function',
+        api_version: '2024-01',
+      }
+      const targeting = {
+        'purchase.payment-customization.run': {
+          inputQueryPath: '/path/to/function/query.graphql',
+          export: 'run',
+        },
       }
 
       // When
-      const result = functionInfo(functionWithTargeting, options) as AlertCustomSection[]
+      const result = buildTextFormatSections(testFunc, config, targeting, '/path/to/runner', '/path/to/schema.graphql')
 
       // Then
-      const targetingSection = result.find((section) => section.title?.includes('TARGETING'))
-      const tabularData = (targetingSection?.body as {tabularData: unknown[][]}).tabularData
-
-      expect(tabularData.length).toBeGreaterThan(0)
-      // Should have rows for target name, input query path, and export
-      expect(tabularData.length).toBe(3)
+      // configuration, targeting, build, function runner
+      expect(result.length).toBe(4)
+      expect(result[0]?.title).toContain('CONFIGURATION')
+      expect(result[1]?.title).toContain('TARGETING')
+      expect(result[2]?.title).toContain('BUILD')
+      expect(result[3]?.title).toContain('FUNCTION RUNNER')
     })
   })
 })
