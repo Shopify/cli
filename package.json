@@ -74,7 +74,7 @@
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^3.3.1",
-    "react": "17.0.2",
+    "react": "19.1.0",
     "rimraf": "^3.0.2",
     "tmp": "^0.2.4",
     "ts-node": "^10.9.1",
