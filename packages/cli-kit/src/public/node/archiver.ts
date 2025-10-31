@@ -1,5 +1,5 @@
 import {relativePath, joinPath, dirname} from './path.js'
-import {glob, removeFile} from './fs.js'
+import {glob, removeFile, readFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
@@ -64,13 +64,22 @@ export async function zip(options: ZipOptions): Promise<void> {
       archive.append(Buffer.alloc(0), {name: dirName})
     }
 
-    for (const filePath of pathsToZip) {
-      const fileRelativePath = relativePath(inputDirectory, filePath)
-      if (filePath && fileRelativePath) archive.file(filePath, {name: fileRelativePath})
-    }
+    // Read all files immediately before adding to archive to prevent ENOENT errors
+    // Using archive.file() causes lazy loading which fails if files are deleted before finalize()
+    const addFilesPromises = pathsToZip.map(async (filePath) => {
+      await archiveFile(inputDirectory, filePath, archive)
+    })
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    archive.finalize()
+    // Wait for all files to be read and added before finalizing
+    Promise.all(addFilesPromises)
+      .then(() => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        archive.finalize()
+      })
+      .catch((error) => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+        reject(error)
+      })
   })
 }
 
@@ -82,6 +91,16 @@ function collectParentDirectories(fileRelativePath: string, accumulator: Set<str
     if (parent === currentDir) break
     currentDir = parent
   }
+}
+
+async function archiveFile(inputDirectory: string, filePath: string, archive: archiver.Archiver): Promise<void> {
+  const fileRelativePath = relativePath(inputDirectory, filePath)
+  if (!filePath || !fileRelativePath) return
+
+  // Read file content immediately to avoid race conditions
+  const fileContent = await readFile(filePath)
+  // Use append with Buffer instead of file() to avoid lazy file reading
+  archive.append(fileContent, {name: fileRelativePath})
 }
 
 export interface BrotliOptions {
@@ -147,15 +166,19 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
         dot: true,
         followSymbolicLinks: false,
       })
-        .then((pathsToZip) => {
-          for (const filePath of pathsToZip) {
-            const fileRelativePath = relativePath(options.inputDirectory, filePath)
-            archive.file(filePath, {name: fileRelativePath})
-          }
+        .then(async (pathsToZip) => {
+          // Read all files immediately to prevent ENOENT errors during race conditions
+          const addFilesPromises = pathsToZip.map(async (filePath) => {
+            await archiveFile(options.inputDirectory, filePath, archive)
+          })
+
+          await Promise.all(addFilesPromises)
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           archive.finalize()
         })
-        .catch((error) => reject(error instanceof Error ? error : new Error(String(error))))
+        .catch((error) => {
+          reject(error instanceof Error ? error : new Error(String(error)))
+        })
     })
 
     const tarContent = readFileSync(tempTarPath)

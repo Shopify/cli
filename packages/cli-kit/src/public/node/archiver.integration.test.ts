@@ -66,7 +66,6 @@ describe('brotliCompress', () => {
       const brotliPath = joinPath(tmpDir, 'output.br')
       const outputDirectoryName = 'output'
       const outputDirectoryPath = joinPath(tmpDir, outputDirectoryName)
-      const extractPath = joinPath(tmpDir, 'extract')
       const testContent = 'test content'
 
       // Create test file
