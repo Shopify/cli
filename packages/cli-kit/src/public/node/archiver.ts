@@ -1,5 +1,5 @@
 import {relativePath, joinPath, dirname} from './path.js'
-import {glob, removeFile} from './fs.js'
+import {glob, removeFile, readFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
@@ -64,13 +64,43 @@ export async function zip(options: ZipOptions): Promise<void> {
       archive.append(Buffer.alloc(0), {name: dirName})
     }
 
-    for (const filePath of pathsToZip) {
+    // Read all files immediately before adding to archive to prevent ENOENT errors
+    // Using archive.file() causes lazy loading which fails if files are deleted before finalize()
+    const addFilesPromises = pathsToZip.map(async (filePath) => {
       const fileRelativePath = relativePath(inputDirectory, filePath)
-      if (filePath && fileRelativePath) archive.file(filePath, {name: fileRelativePath})
-    }
+      if (!filePath || !fileRelativePath) return
 
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    archive.finalize()
+      try {
+        // Read file content immediately to avoid race conditions
+        const fileContent = await readFile(filePath)
+        // Use append with Buffer instead of file() to avoid lazy file reading
+        archive.append(fileContent, {name: fileRelativePath})
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+      } catch (error: any) {
+        // If file was deleted during bundling, skip it gracefully
+        const errorMessage = error instanceof Error ? error.message : String(error)
+        if (errorMessage.includes('ENOENT')) {
+          outputDebug(outputContent`File was deleted during bundling, skipping: ${outputToken.path(fileRelativePath)}`)
+        } else {
+          outputDebug(
+            outputContent`Failed to read file for archive, skipping: ${outputToken.path(
+              fileRelativePath,
+            )} - ${outputToken.raw(errorMessage)}`,
+          )
+        }
+      }
+    })
+
+    // Wait for all files to be read and added before finalizing
+    Promise.all(addFilesPromises)
+      .then(() => {
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
+        archive.finalize()
+      })
+      .catch((error) => {
+        // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+        reject(error)
+      })
   })
 }
 
@@ -147,11 +177,33 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
         dot: true,
         followSymbolicLinks: false,
       })
-        .then((pathsToZip) => {
-          for (const filePath of pathsToZip) {
+        .then(async (pathsToZip) => {
+          // Read all files immediately to prevent ENOENT errors during race conditions
+          const addFilesPromises = pathsToZip.map(async (filePath) => {
             const fileRelativePath = relativePath(options.inputDirectory, filePath)
-            archive.file(filePath, {name: fileRelativePath})
-          }
+            try {
+              // Read file content immediately to avoid race conditions
+              const fileContent = await readFile(filePath)
+              // Use append with Buffer instead of file() to avoid lazy file reading
+              archive.append(fileContent, {name: fileRelativePath})
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-catch-all/no-catch-all
+            } catch (error: any) {
+              const errorMessage = error instanceof Error ? error.message : String(error)
+              if (errorMessage.includes('ENOENT')) {
+                outputDebug(
+                  outputContent`File was deleted during bundling, skipping: ${outputToken.path(fileRelativePath)}`,
+                )
+              } else {
+                outputDebug(
+                  outputContent`Failed to read file for tar archive, skipping: ${outputToken.path(
+                    fileRelativePath,
+                  )} - ${outputToken.raw(errorMessage)}`,
+                )
+              }
+            }
+          })
+
+          await Promise.all(addFilesPromises)
           // eslint-disable-next-line @typescript-eslint/no-floating-promises
           archive.finalize()
         })

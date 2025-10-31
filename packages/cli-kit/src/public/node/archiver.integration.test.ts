@@ -2,7 +2,7 @@ import {zip, brotliCompress} from './archiver.js'
 import {fileExists, inTemporaryDirectory, mkdir, touchFile} from './fs.js'
 import {joinPath, dirname} from './path.js'
 import {exec} from './system.js'
-import {describe, expect, test} from 'vitest'
+import {describe, expect, test, vi} from 'vitest'
 import StreamZip from 'node-stream-zip'
 import brotli from 'brotli'
 import fs from 'fs'
@@ -57,6 +57,51 @@ describe('zip', () => {
       expect(expectedEntries.sort()).toEqual(archiveEntries.sort())
     })
   })
+
+  test('gracefully handles files deleted during archiving', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const zipPath = joinPath(tmpDir, 'output.zip')
+      const outputDirectoryName = 'output'
+      const outputDirectoryPath = joinPath(tmpDir, outputDirectoryName)
+      const structure = ['file1.js', 'file2.js', 'file3.js']
+
+      await createFiles(structure, outputDirectoryPath)
+
+      const file2Path = joinPath(outputDirectoryPath, 'file2.js')
+
+      // Spy on readFile to simulate a file being deleted during archiving
+      // We'll make readFile throw ENOENT for file2.js specifically
+      const fsModule = await import('./fs.js')
+      const originalReadFile = fsModule.readFile
+      const readFileSpy = vi.spyOn(fsModule, 'readFile')
+      readFileSpy.mockImplementation((async (path: string, options?: unknown) => {
+        if (path === file2Path) {
+          const error: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory, open '${path}'`)
+          error.code = 'ENOENT'
+          throw error
+        }
+        return originalReadFile(path, options as never)
+      }) as typeof originalReadFile)
+
+      // When - should not throw even though file2.js throws ENOENT
+      await expect(
+        zip({
+          inputDirectory: outputDirectoryPath,
+          outputZipPath: zipPath,
+        }),
+      ).resolves.not.toThrow()
+
+      // Then - archive should contain remaining files only
+      const archiveEntries = await readArchiveFiles(zipPath)
+      expect(archiveEntries).toContain('file1.js')
+      expect(archiveEntries).toContain('file3.js')
+      // file2.js should not be in archive since readFile failed
+      expect(archiveEntries).not.toContain('file2.js')
+
+      readFileSpy.mockRestore()
+    })
+  })
 })
 
 describe('brotliCompress', () => {
@@ -66,7 +111,6 @@ describe('brotliCompress', () => {
       const brotliPath = joinPath(tmpDir, 'output.br')
       const outputDirectoryName = 'output'
       const outputDirectoryPath = joinPath(tmpDir, outputDirectoryName)
-      const extractPath = joinPath(tmpDir, 'extract')
       const testContent = 'test content'
 
       // Create test file
@@ -139,6 +183,48 @@ describe('brotliCompress', () => {
 
       // Verify the root file does not exist
       expect(fs.existsSync(joinPath(extractPath, 'test.json'))).toBeFalsy()
+    })
+  })
+
+  test('gracefully handles files deleted during compression', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const brotliPath = joinPath(tmpDir, 'output.br')
+      const outputDirectoryName = 'output'
+      const outputDirectoryPath = joinPath(tmpDir, outputDirectoryName)
+      const structure = ['file1.js', 'file2.js', 'file3.js']
+
+      await createFiles(structure, outputDirectoryPath)
+
+      const file2Path = joinPath(outputDirectoryPath, 'file2.js')
+
+      // Spy on readFile to simulate a file being deleted during compression
+      // We'll make readFile throw ENOENT for file2.js specifically
+      const fsModule = await import('./fs.js')
+      const originalReadFile = fsModule.readFile
+      const readFileSpy = vi.spyOn(fsModule, 'readFile')
+      readFileSpy.mockImplementation((async (path: string, options?: unknown) => {
+        if (path === file2Path) {
+          const error: NodeJS.ErrnoException = new Error(`ENOENT: no such file or directory, open '${path}'`)
+          error.code = 'ENOENT'
+          throw error
+        }
+        return originalReadFile(path, options as never)
+      }) as typeof originalReadFile)
+
+      // When - should not throw even though file2.js throws ENOENT
+      await expect(
+        brotliCompress({
+          inputDirectory: outputDirectoryPath,
+          outputPath: brotliPath,
+        }),
+      ).resolves.not.toThrow()
+
+      // Then - compressed file should exist and be valid
+      const exists = await fileExists(brotliPath)
+      expect(exists).toBeTruthy()
+
+      readFileSpy.mockRestore()
     })
   })
 })
