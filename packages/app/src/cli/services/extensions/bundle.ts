@@ -68,14 +68,38 @@ export async function bundleThemeExtension(
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
   const files = await themeExtensionFiles(extension)
 
-  await Promise.all(
-    files.map(function (filepath) {
+  const results = await Promise.allSettled(
+    files.map(async function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
       const outputFile = joinPath(extension.outputPath, relativePathName)
-      if (filepath === outputFile) return
-      return copyFile(filepath, outputFile)
+      if (filepath === outputFile) return {status: 'skipped', filepath}
+
+      try {
+        await copyFile(filepath, outputFile)
+        return {status: 'success', filepath}
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        // Log warning but don't fail the entire process
+        // We intentionally catch all errors here to continue copying other files
+        outputDebug(`Failed to copy file ${filepath}: ${error}`)
+        return {status: 'failed', filepath, error}
+      }
     }),
   )
+
+  // Report any failures as warnings
+  const failures = results.filter((result) => {
+    return result.status === 'rejected' || (result.status === 'fulfilled' && result.value?.status === 'failed')
+  })
+
+  if (failures.length > 0) {
+    const failedFiles = failures.map((failure) => {
+      if (failure.status === 'rejected') return 'unknown file'
+      const value = (failure as PromiseFulfilledResult<{status: string; filepath: string}>).value
+      return value.filepath
+    })
+    outputDebug(`Warning: ${failures.length} file(s) could not be copied: ${failedFiles.join(', ')}`)
+  }
 }
 
 export async function copyFilesForExtension(
@@ -93,14 +117,39 @@ export async function copyFilesForExtension(
     ignore: ignored,
   })
 
-  await Promise.all(
-    files.map(function (filepath) {
+  const results = await Promise.allSettled(
+    files.map(async function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
       const outputFile = joinPath(extension.outputPath, relativePathName)
-      if (filepath === outputFile) return
-      return copyFile(filepath, outputFile)
+      if (filepath === outputFile) return {status: 'skipped', filepath}
+
+      try {
+        await copyFile(filepath, outputFile)
+        return {status: 'success', filepath}
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error) {
+        // Log warning but don't fail the entire process
+        // We intentionally catch all errors here to continue copying other files
+        outputDebug(`Failed to copy file ${filepath}: ${error}`)
+        return {status: 'failed', filepath, error}
+      }
     }),
   )
+
+  // Report any failures as warnings
+  const failures = results.filter((result) => {
+    return result.status === 'rejected' || (result.status === 'fulfilled' && result.value?.status === 'failed')
+  })
+
+  if (failures.length > 0) {
+    const failedFiles = failures.map((failure) => {
+      if (failure.status === 'rejected') return 'unknown file'
+      const value = (failure as PromiseFulfilledResult<{status: string; filepath: string}>).value
+      return value.filepath
+    })
+    outputDebug(`Warning: ${failures.length} file(s) could not be copied: ${failedFiles.join(', ')}`)
+  }
+
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
