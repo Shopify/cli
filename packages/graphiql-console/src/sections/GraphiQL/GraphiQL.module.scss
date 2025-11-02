@@ -34,10 +34,31 @@
   flex-grow: 1;
 }
 
+.ScopesNote {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
 .LinksSection {
   display: flex;
   align-items: center;
   gap: 8px;
+
+  a {
+    line-height: 0;
+
+    &:hover .Polaris-Text--root {
+      text-decoration: underline;
+    }
+
+    span.Polaris-Text--root {
+      max-width: max(12vw, 150px);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
 }
 
 .GraphiQLContainer {
@@ -47,5 +68,43 @@
   // Ensure GraphiQL component fills container
   > div {
     height: 100%;
+  }
+}
+
+// Icon shrinking utility
+.with-shrunk-icon .Polaris-Icon {
+  height: 1rem;
+  width: 1rem;
+  margin: 0.125rem;
+}
+
+// Responsive design
+@media only screen and (max-width: 1550px) {
+  .StatusSection,
+  .ControlsSection,
+  .LinksSection {
+    // Hide labels like "Status:", "API version:", "Store:", "App:"
+    :global(.top-bar-section-title) {
+      display: none;
+    }
+  }
+}
+
+@media only screen and (max-width: 1150px) {
+  .LinksSection a span.Polaris-Text--root {
+    max-width: max(12vw, 140px);
+  }
+}
+
+@media only screen and (max-width: 1080px) {
+  .StatusSection {
+    // Adjust layout for narrower screens
+    justify-self: left;
+  }
+}
+
+@media only screen and (max-width: 650px) {
+  .LinksSection a span.Polaris-Text--root {
+    max-width: 17vw;
   }
 }

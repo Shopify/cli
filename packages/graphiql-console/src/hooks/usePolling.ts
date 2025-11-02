@@ -24,17 +24,22 @@ export function usePolling(callback: () => void | Promise<void>, options: UsePol
   useEffect(() => {
     if (!enabled) return
 
+    const executeCallback = () => {
+      try {
+        Promise.resolve(callbackRef.current()).catch(() => {
+          // Intentionally ignore errors in polling callbacks
+        })
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        // Intentionally ignore synchronous errors in polling callbacks
+      }
+    }
+
     // Call immediately on mount
-    Promise.resolve(callbackRef.current()).catch(() => {
-      // Intentionally ignore errors in polling callbacks
-    })
+    executeCallback()
 
     // Set up interval
-    const intervalId = setInterval(() => {
-      Promise.resolve(callbackRef.current()).catch(() => {
-        // Intentionally ignore errors in polling callbacks
-      })
-    }, interval)
+    const intervalId = setInterval(executeCallback, interval)
 
     return () => clearInterval(intervalId)
   }, [interval, enabled])

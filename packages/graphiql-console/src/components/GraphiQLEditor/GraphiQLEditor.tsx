@@ -3,6 +3,7 @@ import {GraphiQL} from 'graphiql'
 import {createGraphiQLFetcher} from '@graphiql/toolkit'
 import 'graphiql/style.css'
 import type {GraphiQLConfig} from '@/types/config'
+import {WELCOME_MESSAGE, DEFAULT_SHOP_QUERY} from '@/constants/defaultContent.ts'
 
 interface GraphiQLEditorProps {
   config: GraphiQLConfig
@@ -15,11 +16,13 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
     return {
       ...localStorage,
       getItem(key) {
-        if (key === 'tabs') return null // Always use defaultTabs
+        // Always use defaultTabs
+        if (key === 'tabs') return null
         return localStorage.getItem(key)
       },
       setItem(key, value) {
-        if (key === 'tabs') return // Don't persist tabs
+        // Don't persist tabs
+        if (key === 'tabs') return
         localStorage.setItem(key, value)
       },
       removeItem(key) {
@@ -55,7 +58,7 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
   const defaultTabs = useMemo(() => {
     const tabs = []
 
-    // Add initial query from config first (if provided)
+    // 1. Add initial query from config FIRST (if provided)
     if (config.query) {
       tabs.push({
         query: config.query,
@@ -63,7 +66,17 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
       })
     }
 
-    // Add default queries from config
+    // 2. Add DEFAULT_SHOP_QUERY SECOND (if not already in config)
+    const hasShopQuery =
+      config.query?.includes('query shopInfo') ?? config.defaultQueries?.some((q) => q.query.includes('query shopInfo'))
+    if (!hasShopQuery) {
+      tabs.push({
+        query: DEFAULT_SHOP_QUERY,
+        variables: '{}',
+      })
+    }
+
+    // 3. Add default queries from config
     if (config.defaultQueries) {
       config.defaultQueries.forEach(({query, variables, preface}) => {
         tabs.push({
@@ -73,15 +86,9 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
       })
     }
 
-    // Welcome tab (last)
+    // 4. WELCOME_MESSAGE tab LAST
     tabs.push({
-      query: `# Welcome to GraphiQL!
-#
-# Keyboard shortcuts:
-#   Execute: Cmd/Ctrl + Enter
-#   Prettify: Shift + Cmd/Ctrl + P
-#   Settings: Cmd/Ctrl + ,
-`,
+      query: WELCOME_MESSAGE,
     })
 
     return tabs

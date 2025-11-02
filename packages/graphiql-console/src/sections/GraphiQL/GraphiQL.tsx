@@ -1,5 +1,6 @@
 import * as styles from './GraphiQL.module.scss'
 import React, {useState, useMemo} from 'react'
+import {Text} from '@shopify/polaris'
 import type {GraphiQLConfig} from '@/types/config.ts'
 import {useServerStatus} from '@/hooks/index.ts'
 import {StatusBadge} from '@/components/StatusBadge/index.ts'
@@ -7,22 +8,27 @@ import {ErrorBanner} from '@/components/ErrorBanner/index.ts'
 import {LinkPills} from '@/components/LinkPills/index.ts'
 import {ApiVersionSelector} from '@/components/ApiVersionSelector/index.ts'
 import {GraphiQLEditor} from '@/components/GraphiQLEditor/index.ts'
+import {validateConfig} from '@/utils/configValidation.ts'
 
 // Helper to get config from window or fallback to env/defaults
+// Security: Validates window.__GRAPHIQL_CONFIG__ to prevent XSS attacks
 function getConfig(): GraphiQLConfig {
-  if (typeof window !== 'undefined' && window.__GRAPHIQL_CONFIG__) {
-    return window.__GRAPHIQL_CONFIG__
-  }
-
-  // Fallback for development
-  return {
-    baseUrl: import.meta.env.VITE_GRAPHIQL_BASE_URL || 'http://localhost:3457',
+  // Fallback config for development
+  const fallbackConfig: GraphiQLConfig = {
+    baseUrl: import.meta.env.VITE_GRAPHIQL_BASE_URL ?? 'http://localhost:3457',
     apiVersion: '2024-10',
     apiVersions: ['2024-01', '2024-04', '2024-07', '2024-10', 'unstable'],
     appName: 'Development App',
     appUrl: 'http://localhost:3000',
     storeFqdn: 'test-store.myshopify.com',
   }
+
+  if (typeof window !== 'undefined' && window.__GRAPHIQL_CONFIG__) {
+    // SECURITY: Validate and sanitize config before use
+    return validateConfig(window.__GRAPHIQL_CONFIG__, fallbackConfig)
+  }
+
+  return fallbackConfig
 }
 
 export function GraphiQLSection() {
@@ -57,6 +63,12 @@ export function GraphiQLSection() {
           <div style={{minWidth: '150px'}}>
             <ApiVersionSelector versions={config.apiVersions} value={selectedVersion} onChange={handleVersionChange} />
           </div>
+        </div>
+
+        <div className={styles.ScopesNote}>
+          <Text as="span" tone="subdued">
+            GraphiQL runs on the same access scopes you've defined in the TOML file for your app.
+          </Text>
         </div>
 
         <div className={styles.LinksSection}>
