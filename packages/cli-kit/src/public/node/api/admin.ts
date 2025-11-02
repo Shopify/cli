@@ -14,7 +14,7 @@ import {
   restRequestUrl,
   isThemeAccessSession,
 } from '../../../private/node/api/rest.js'
-import {isTransientNetworkError} from '../../../private/node/api.js'
+import {isNetworkError} from '../../../private/node/api.js'
 import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
 
@@ -185,9 +185,10 @@ async function fetchApiVersions(session: AdminSession, preferredBehaviour?: Requ
       )
     }
 
-    // Check for network-level errors (connection issues, timeouts, DNS failures, TLS errors, etc.)
-    // These are transient errors that may have been retried already by lower-level retry logic
-    if (isTransientNetworkError(error)) {
+    // Check for network-level errors (connection issues, timeouts, DNS failures, TLS/certificate errors, etc.)
+    // All network errors should be treated as user-facing errors, not CLI bugs
+    // Note: Some of these may have been retried already by lower-level retry logic
+    if (isNetworkError(error)) {
       throw new AbortError(
         `Network error connecting to your store ${session.storeFqdn}: ${
           error instanceof Error ? error.message : String(error)
