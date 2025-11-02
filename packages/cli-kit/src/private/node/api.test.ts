@@ -352,25 +352,27 @@ describe('retryAwareRequest', () => {
       'SSL certificate problem: unable to get local issuer certificate',
     ]
 
-    for (const certError of certificateErrors) {
-      const mockRequestFn = vi.fn().mockImplementation(() => {
-        throw new Error(certError)
-      })
+    await Promise.all(
+      certificateErrors.map(async (certError) => {
+        const mockRequestFn = vi.fn().mockImplementation(() => {
+          throw new Error(certError)
+        })
 
-      const result = retryAwareRequest(
-        {
-          request: mockRequestFn,
-          url: 'https://example.com/graphql.json',
-          useNetworkLevelRetry: true,
-          maxRetryTimeMs: 2000,
-        },
-        undefined,
-        {defaultDelayMs: 10, scheduleDelay: (fn) => fn()},
-      )
+        const result = retryAwareRequest(
+          {
+            request: mockRequestFn,
+            url: 'https://example.com/graphql.json',
+            useNetworkLevelRetry: true,
+            maxRetryTimeMs: 2000,
+          },
+          undefined,
+          {defaultDelayMs: 10, scheduleDelay: (fn) => fn()},
+        )
 
-      await expect(result).rejects.toThrowError(certError)
-      expect(mockRequestFn).toHaveBeenCalledTimes(1)
-    }
+        await expect(result).rejects.toThrowError(certError)
+        expect(mockRequestFn).toHaveBeenCalledTimes(1)
+      }),
+    )
   })
 })
 
@@ -447,13 +449,7 @@ describe('isTransientNetworkError', () => {
 
 describe('isNetworkError', () => {
   test('identifies all transient network errors', () => {
-    const transientErrors = [
-      'ECONNRESET',
-      'ETIMEDOUT',
-      'ENOTFOUND',
-      'socket hang up',
-      'premature close',
-    ]
+    const transientErrors = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'socket hang up', 'premature close']
 
     for (const errorMsg of transientErrors) {
       expect(isNetworkError(new Error(errorMsg))).toBe(true)
