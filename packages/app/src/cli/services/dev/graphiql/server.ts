@@ -1,4 +1,3 @@
-import {defaultQuery} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import express from 'express'
 import bodyParser from 'body-parser'
@@ -16,6 +15,20 @@ import {Writable} from 'stream'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
+
+// Default query for GraphiQL - matches DEFAULT_SHOP_QUERY in graphiql-console package
+const DEFAULT_SHOP_QUERY = `query shopInfo {
+  shop {
+    name
+    url
+    myshopifyDomain
+    plan {
+      displayName
+      partnerDevelopment
+      shopifyPlus
+    }
+  }
+}`
 
 class TokenRefreshError extends AbortError {
   constructor() {
@@ -181,7 +194,7 @@ export function setupGraphiQLServer({
       storeFqdn,
       baseUrl,
       key: key ?? undefined,
-      query: query ?? defaultQuery,
+      query: query ?? DEFAULT_SHOP_QUERY,
     }
 
     // Inject config script before </head>
