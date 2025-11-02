@@ -44,7 +44,7 @@ export const defaultQuery = `query shopInfo {
     }
   }
 }
-`.replace(/\n/g, '\\n')
+`
 
 interface GraphiQLTemplateOptions {
   apiVersion: string
