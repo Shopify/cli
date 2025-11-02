@@ -154,7 +154,7 @@ export function setupGraphiQLServer({
     const apiVersion = sortedVersions[0]!
 
     function decodeQueryString(input: string | undefined) {
-      return input ? decodeURIComponent(input).replace(/\n/g, '\\n') : undefined
+      return input ? decodeURIComponent(input) : undefined
     }
 
     const query = decodeQueryString(req.query.query as string)
