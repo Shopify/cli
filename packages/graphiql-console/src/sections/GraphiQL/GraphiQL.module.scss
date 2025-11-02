@@ -1,0 +1,51 @@
+.Container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.ErrorBanner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.Header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  border-bottom: 1px solid var(--p-color-border, #e1e3e5);
+  background: var(--p-color-bg, #ffffff);
+  gap: 16px;
+}
+
+.StatusSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ControlsSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-grow: 1;
+}
+
+.LinksSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.GraphiQLContainer {
+  flex-grow: 1;
+  overflow: hidden;
+
+  // Ensure GraphiQL component fills container
+  > div {
+    height: 100%;
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "graphiql-console",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/graphiql-console/src",
+  "projectType": "library",
+  "tags": ["scope:feature", "scope:graphiql"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/ ../app/assets/graphiql",
+        "cwd": "packages/graphiql-console"
+      }
+    },
+    "build": {
+      "inputs": ["production", "^production", "{projectRoot}/index.html"],
+      "outputs": ["{workspaceRoot}/packages/app/assets/graphiql"],
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm vite build",
+        "cwd": "packages/graphiql-console"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src tests",
+        "cwd": "packages/graphiql-console"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint src tests --fix",
+        "cwd": "packages/graphiql-console"
+      }
+    },
+    "dev": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm vite dev",
+        "cwd": "packages/graphiql-console"
+      }
+    }
+  }
+}
