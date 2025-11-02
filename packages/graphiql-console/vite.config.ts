@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [
     react(),
     monacoEditorPlugin({
-      languageWorkers: ['editorWorkerService'],
+      languageWorkers: ['editorWorkerService', 'json', 'typescript'],
       customWorkers: [
         {
           label: 'graphql',
