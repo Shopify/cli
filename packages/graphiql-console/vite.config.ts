@@ -8,18 +8,15 @@ export default defineConfig({
     react(),
     monacoEditorPlugin({
       languageWorkers: ['editorWorkerService', 'json', 'typescript'],
-      customWorkers: [
-        {
-          label: 'graphql',
-          entry: 'monaco-graphql/esm/graphql.worker',
-        },
-      ],
     }),
   ],
   build: {
     outDir: '../app/assets/graphiql',
     assetsDir: 'extensions/graphiql/assets',
     emptyOutDir: true,
+  },
+  worker: {
+    format: 'es',
   },
   resolve: {
     alias: {

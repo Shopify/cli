@@ -1,7 +1,7 @@
 import React, {useMemo} from 'react'
 import {GraphiQL} from 'graphiql'
 import {createGraphiQLFetcher} from '@graphiql/toolkit'
-import 'graphiql/graphiql.css'
+import 'graphiql/style.css'
 import type {GraphiQLConfig} from '@/types/config'
 
 interface GraphiQLEditorProps {
@@ -10,6 +10,33 @@ interface GraphiQLEditorProps {
 }
 
 export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
+  // Create ephemeral storage to prevent localStorage tab caching
+  const ephemeralStorage: typeof localStorage = useMemo(() => {
+    return {
+      ...localStorage,
+      getItem(key) {
+        if (key === 'tabs') return null // Always use defaultTabs
+        return localStorage.getItem(key)
+      },
+      setItem(key, value) {
+        if (key === 'tabs') return // Don't persist tabs
+        localStorage.setItem(key, value)
+      },
+      removeItem(key) {
+        localStorage.removeItem(key)
+      },
+      clear() {
+        localStorage.clear()
+      },
+      key(index) {
+        return localStorage.key(index)
+      },
+      get length() {
+        return localStorage.length
+      },
+    }
+  }, [])
+
   // Create fetcher with current API version
   const fetcher = useMemo(() => {
     const url = `${config.baseUrl}/graphiql/graphql.json?api_version=${apiVersion}`
@@ -28,16 +55,13 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
   const defaultTabs = useMemo(() => {
     const tabs = []
 
-    // Welcome tab
-    tabs.push({
-      query: `# Welcome to GraphiQL!
-#
-# Keyboard shortcuts:
-#   Execute: Cmd/Ctrl + Enter
-#   Prettify: Shift + Cmd/Ctrl + P
-#   Settings: Cmd/Ctrl + ,
-`,
-    })
+    // Add initial query from config first (if provided)
+    if (config.query) {
+      tabs.push({
+        query: config.query,
+        variables: config.variables ?? '{}',
+      })
+    }
 
     // Add default queries from config
     if (config.defaultQueries) {
@@ -49,13 +73,16 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
       })
     }
 
-    // Add initial query from config if provided
-    if (config.query) {
-      tabs.push({
-        query: config.query,
-        variables: config.variables ?? '{}',
-      })
-    }
+    // Welcome tab (last)
+    tabs.push({
+      query: `# Welcome to GraphiQL!
+#
+# Keyboard shortcuts:
+#   Execute: Cmd/Ctrl + Enter
+#   Prettify: Shift + Cmd/Ctrl + P
+#   Settings: Cmd/Ctrl + ,
+`,
+    })
 
     return tabs
   }, [config.defaultQueries, config.query, config.variables])
@@ -67,6 +94,7 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
       isHeadersEditorEnabled={false}
       defaultTabs={defaultTabs}
       forcedTheme="light"
+      storage={ephemeralStorage}
     />
   )
 }

@@ -4,7 +4,8 @@ import React from 'react'
 
 import {AppProvider} from '@shopify/polaris'
 import '@shopify/polaris/build/esm/styles.css'
-import 'graphiql/graphiql.css'
+import 'graphiql/style.css'
+import 'graphiql/setup-workers/vite'
 
 function App() {
   return (
