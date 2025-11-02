@@ -1,18 +1,13 @@
-// CRITICAL: Configure workers BEFORE any editor creation
-import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker'
-import GraphQLWorker from 'monaco-graphql/esm/graphql.worker?worker'
+// CRITICAL: Configure Monaco BEFORE any editor creation
+// Monaco expects an AMD-style loader configuration
 
-// Configure Monaco environment
-const globalWithME = globalThis as {
-  MonacoEnvironment?: {getWorker: (_: unknown, label: string) => Worker}
-}
+const globalWithME = globalThis as any
 
+// Set up Monaco's environment with proper module resolution
 globalWithME.MonacoEnvironment = {
-  getWorker(_: unknown, label: string) {
-    if (label === 'graphql') {
-      return new GraphQLWorker()
-    }
-    return new EditorWorker()
+  getWorkerUrl: function (_moduleId: string, label: string) {
+    // Return empty - GraphiQL will handle workers internally
+    return ''
   },
 }
 
