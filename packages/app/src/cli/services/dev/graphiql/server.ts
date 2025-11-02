@@ -181,7 +181,7 @@ export function setupGraphiQLServer({
       storeFqdn,
       baseUrl,
       key: key ?? undefined,
-      defaultQuery: query ?? defaultQuery,
+      query: query ?? defaultQuery,
     }
 
     // Inject config script before </head>

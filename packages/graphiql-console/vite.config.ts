@@ -27,9 +27,6 @@ export default defineConfig({
       tests: path.resolve(__dirname, './tests'),
     },
   },
-  worker: {
-    format: 'es',
-  },
   test: {
     globals: true,
     environment: 'jsdom',
