@@ -42,7 +42,6 @@ import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
   getPackageManager,
-  getPackageName,
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
@@ -343,7 +342,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const packageJSONPath = joinPath(directory, 'package.json')
 
     // These don't need to be processed again if the app is being reloaded
-    const name = this.previousApp?.name ?? (await loadAppName(directory))
+    // name is required by BrandingSchema, so it must be present in the configuration
+    const configName = (configuration as CurrentAppConfiguration).name
+    const configHandle: string | undefined = (configuration as CurrentAppConfiguration).handle
+    const name: string = this.previousApp?.name ?? configHandle ?? configName ?? ''
     const nodeDependencies = this.previousApp?.nodeDependencies ?? (await getDependencies(packageJSONPath))
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
     const usesWorkspaces = this.previousApp?.usesWorkspaces ?? (await appUsesWorkspaces(directory))
@@ -1106,11 +1108,6 @@ export async function loadHiddenConfig(
   } catch {
     return {}
   }
-}
-
-export async function loadAppName(appDirectory: string): Promise<string> {
-  const packageJSONPath = joinPath(appDirectory, 'package.json')
-  return (await getPackageName(packageJSONPath)) ?? basename(appDirectory)
 }
 
 async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {

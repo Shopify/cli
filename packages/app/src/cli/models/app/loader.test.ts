@@ -64,6 +64,7 @@ describe('load', () => {
   }
 
   const appConfiguration = `
+name = "my_app"
 scopes = "read_products"
 `
   const linkedAppConfiguration = `
@@ -264,7 +265,54 @@ wrong = "property"
     const app = await loadApp({directory: tmpDir, specifications: [], userProvidedConfigName: undefined})
 
     // Then
-    expect(app.name).toBe('my_app')
+    expect(app.name).toBe('for-testing')
+  })
+
+  test('uses handle from configuration as app name when present', async () => {
+    // Given
+    const appConfiguration = `
+name = "display-name"
+handle = "app-handle"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+`
+    await writeConfig(appConfiguration)
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.name).toBe('app-handle')
+  })
+
+  test('uses name from configuration when handle is not present', async () => {
+    // Given
+    const appConfiguration = `
+name = "config-name"
+client_id = "1234567890"
+application_url = "https://example.com/lala"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ "https://example.com/api/auth" ]
+`
+    await writeConfig(appConfiguration)
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.name).toBe('config-name')
   })
 
   test('defaults to npm as the package manager when the configuration is valid', async () => {
