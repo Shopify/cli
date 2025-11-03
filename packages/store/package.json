@@ -1,0 +1,32 @@
+{
+  "name": "@shopify/store",
+  "version": "3.86.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/cli/index.js",
+      "types": "./dist/cli/index.d.ts"
+    }
+  },
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "type-check": "nx type-check"
+  },
+  "dependencies": {
+    "@oclif/core": "4.5.3",
+    "@shopify/cli-kit": "3.86.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  }
+}

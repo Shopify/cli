@@ -296,6 +296,9 @@ importers:
       '@shopify/plugin-did-you-mean':
         specifier: 3.86.0
         version: link:../plugin-did-you-mean
+      '@shopify/store':
+        specifier: 3.86.0
+        version: link:../store
       '@shopify/theme':
         specifier: 3.86.0
         version: link:../theme
@@ -681,6 +684,19 @@ importers:
       n-gram:
         specifier: 2.0.2
         version: 2.0.2
+    devDependencies:
+      '@vitest/coverage-istanbul':
+        specifier: ^3.1.4
+        version: 3.2.1(vitest@3.2.1(@types/node@24.7.0)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.8.7(@types/node@24.7.0)(typescript@5.8.3))(sass@1.89.1)(yaml@2.8.1))
+
+  packages/store:
+    dependencies:
+      '@oclif/core':
+        specifier: 4.5.3
+        version: 4.5.3
+      '@shopify/cli-kit':
+        specifier: 3.86.0
+        version: link:../cli-kit
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4

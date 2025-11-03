@@ -18,6 +18,7 @@ import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
+import {commands as StoreCommands} from '@shopify/store'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
 import {commands as PluginPluginsCommands} from '@oclif/plugin-plugins'
 import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
@@ -99,6 +100,12 @@ themeCommands.forEach((command) => {
   ;(ThemeCommands[command] as any).customPluginName = '@shopify/theme'
 })
 
+const storeCommands = Object.keys(StoreCommands) as (keyof typeof StoreCommands)[]
+storeCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(StoreCommands[command] as any).customPluginName = '@shopify/store'
+})
+
 const hydrogenCommands = Object.keys(HydrogenCommands) as (keyof typeof HydrogenCommands)[]
 hydrogenCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,6 +134,7 @@ pluginPluginsCommands.forEach((command) => {
 export const COMMANDS: any = {
   ...AppCommands,
   ...ThemeCommands,
+  ...StoreCommands,
   ...PluginPluginsCommands,
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,
