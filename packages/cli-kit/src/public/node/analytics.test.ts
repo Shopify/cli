@@ -185,6 +185,36 @@ describe('event tracking', () => {
     })
   })
 
+  test('sends SHOPIFY_ environment variables in sensitive payload', async () => {
+    const originalEnv = {...process.env}
+    process.env.SHOPIFY_TEST_VAR = 'test_value'
+    process.env.SHOPIFY_ANOTHER_VAR = 'another_value'
+    process.env.NOT_SHOPIFY_VAR = 'should_not_appear'
+
+    await inProjectWithFile('package.json', async (args) => {
+      const commandContent = {command: 'dev', topic: 'app'}
+      await startAnalytics({commandContent, args, currentTime: currentDate.getTime() - 100})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      const sensitivePayload = publishEventMock.mock.calls[0]![2]
+      expect(publishEventMock).toHaveBeenCalledOnce()
+      expect(sensitivePayload).toHaveProperty('env_shopify_variables')
+      expect(sensitivePayload.env_shopify_variables).toBeDefined()
+
+      const shopifyVars = JSON.parse(sensitivePayload.env_shopify_variables as string)
+      expect(shopifyVars).toHaveProperty('SHOPIFY_TEST_VAR', 'test_value')
+      expect(shopifyVars).toHaveProperty('SHOPIFY_ANOTHER_VAR', 'another_value')
+      expect(shopifyVars).not.toHaveProperty('NOT_SHOPIFY_VAR')
+    })
+  })
+
   test('does nothing when analytics are disabled', async () => {
     await inProjectWithFile('package.json', async (args) => {
       // Given
