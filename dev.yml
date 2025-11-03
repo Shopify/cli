@@ -4,7 +4,6 @@ up:
   - node:
       version: 24.1.0
       package_manager: pnpm@10.11.1
-      packages: []
   - packages:
     - jq
   - custom:
