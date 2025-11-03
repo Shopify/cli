@@ -2,7 +2,6 @@ import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
 import {getAppConfigurationState} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
-import {showApiKeyDeprecationWarning} from '../../prompts/deprecation-warnings.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
@@ -16,7 +15,7 @@ export default class Deploy extends AppLinkedCommand {
 
   static descriptionWithMarkdown = `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.
 
-  This command creates an app version, which is a snapshot of your app configuration and all extensions, including the app extensions that you manage in the Partner Dashboard. This version is then released to users.
+  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.
 
   This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
   `
@@ -26,12 +25,6 @@ export default class Deploy extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    'api-key': Flags.string({
-      hidden: true,
-      description: 'The API key of your app.',
-      env: 'SHOPIFY_FLAG_APP_API_KEY',
-      exclusive: ['config'],
-    }),
     force: Flags.boolean({
       hidden: false,
       description: 'Deploy without asking for confirmation.',
@@ -81,12 +74,7 @@ export default class Deploy extends AppLinkedCommand {
     validateVersion(flags.version)
     validateMessage(flags.message)
 
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    } else if (process.env.SHOPIFY_API_KEY) {
-      flags['api-key'] = process.env.SHOPIFY_API_KEY
-    }
-    const apiKey = flags['client-id'] || flags['api-key']
+    const clientId = flags['client-id']
 
     await addPublicMetadata(() => ({
       cmd_app_reset_used: flags.reset,
@@ -94,14 +82,14 @@ export default class Deploy extends AppLinkedCommand {
 
     const requiredNonTTYFlags = ['force']
     const configurationState = await getAppConfigurationState(flags.path, flags.config)
-    if (configurationState.state === 'template-only' && !apiKey) {
+    if (configurationState.state === 'template-only' && !clientId) {
       requiredNonTTYFlags.push('client-id')
     }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
-      clientId: apiKey,
+      clientId,
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })

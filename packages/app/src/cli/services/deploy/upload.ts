@@ -373,6 +373,6 @@ function partnersErrorsSections(errors: AppDeploySchema['appDeploy']['userErrors
       title: section.title,
       body: `\n${section.errorCount} error${
         section.errorCount > 1 ? 's' : ''
-      } found in your extension. Fix these issues in the Partner Dashboard and try deploying again.`,
+      } found in your extensions. Fix these issues and try deploying again.`,
     })) as ErrorCustomSection[]
 }
