@@ -91,7 +91,7 @@ const uiExtensionSpec = createExtensionSpecification({
     return validateUIExtensionPointConfig(directory, config.extension_points, path)
   },
   deployConfig: async (config, directory) => {
-    const transformedExtensionPoints = config.extension_points.map(addDistPathToAssets)
+    const transformedExtensionPoints = config.extension_points?.map(addDistPathToAssets) ?? []
 
     return {
       api_version: config.api_version,
@@ -105,7 +105,10 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   getBundleExtensionStdinContent: (config) => {
     const shouldIncludeShopifyExtend = isRemoteDomExtension(config)
-    const main = config.extension_points
+
+    const extensionPoints = config.extension_points || []
+
+    const main = extensionPoints
       .map(({target, module}, index) => {
         if (shouldIncludeShopifyExtend) {
           return `import Target_${index} from '${module}';shopify.extend('${target}', (...args) => Target_${index}(...args));`
@@ -115,7 +118,7 @@ const uiExtensionSpec = createExtensionSpecification({
       .join('\n')
 
     const assets: {[key: string]: Asset} = {}
-    config.extension_points.forEach((extensionPoint) => {
+    extensionPoints.forEach((extensionPoint) => {
       // Start of Selection
       Object.entries(extensionPoint.build_manifest.assets).forEach(([identifier, asset]) => {
         if (identifier === AssetIdentifier.Main) {
@@ -142,7 +145,7 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
-      config.extension_points.find((extensionPoint) => {
+      config.extension_points?.find((extensionPoint) => {
         return extensionPoint.target === requestedTarget
       }) !== undefined
     )
