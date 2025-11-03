@@ -68,9 +68,20 @@ type VerboseResponse<T> =
   | CanRetryErrorResponse
   | UnauthorizedErrorResponse
 
-function isARetryableNetworkError(error: unknown): boolean {
+/**
+ * Checks if an error is a transient network error that is likely to recover with retries.
+ *
+ * Use this function for retry logic. Use isNetworkError for error classification.
+ *
+ * Examples of transient errors (worth retrying):
+ * - Connection timeouts, resets, and aborts
+ * - DNS failures (enotfound, getaddrinfo, eai_again) - can be temporary
+ * - Socket disconnects and hang ups
+ * - Premature connection closes
+ */
+export function isTransientNetworkError(error: unknown): boolean {
   if (error instanceof Error) {
-    const networkErrorMessages = [
+    const transientErrorMessages = [
       'socket hang up',
       'econnreset',
       'econnaborted',
@@ -82,12 +93,42 @@ function isARetryableNetworkError(error: unknown): boolean {
       'eai_again',
       'epipe',
       'the operation was aborted',
+      'timeout',
+      'premature close',
+      'getaddrinfo',
     ]
     const errorMessage = error.message.toLowerCase()
-    const anyMatches = networkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
+    const anyMatches = transientErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
     const missingReason = /^request to .* failed, reason:\s*$/.test(errorMessage)
     return anyMatches || missingReason
   }
+  return false
+}
+
+/**
+ * Checks if an error is any kind of network-related error (connection issues, timeouts, DNS failures,
+ * TLS/certificate errors, etc.) rather than an application logic error.
+ *
+ * These errors should be reported as user-facing errors (AbortError) rather than bugs (BugError),
+ * regardless of whether they are transient or permanent.
+ *
+ * Examples include:
+ * - Transient: connection timeouts, socket hang ups, temporary DNS failures
+ * - Permanent: certificate validation failures, misconfigured SSL
+ */
+export function isNetworkError(error: unknown): boolean {
+  // First check if it's a transient network error
+  if (isTransientNetworkError(error)) {
+    return true
+  }
+
+  // Then check for permanent network errors (SSL/TLS/certificate issues)
+  if (error instanceof Error) {
+    const permanentNetworkErrorMessages = ['certificate', 'cert', 'tls', 'ssl', 'altnames']
+    const errorMessage = error.message.toLowerCase()
+    return permanentNetworkErrorMessages.some((issueMessage) => errorMessage.includes(issueMessage))
+  }
+
   return false
 }
 
@@ -105,7 +146,7 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
       return await requestOptions.request()
     } catch (err) {
       lastSeenError = err
-      if (!isARetryableNetworkError(err)) {
+      if (!isTransientNetworkError(err)) {
         throw err
       }
       outputDebug(`Retrying request to ${requestOptions.url} due to network error ${err}`)
