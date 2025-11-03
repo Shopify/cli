@@ -42,5 +42,13 @@ export default class Execute extends Command {
 
   async run(): Promise<void> {
     const {flags} = await this.parse(Execute)
+
+    const query = flags.query
+
+    if (!query) {
+      this.error('either --query or --query-file is required')
+    }
+
+    this.log(`query: ${query}`)
   }
 }
