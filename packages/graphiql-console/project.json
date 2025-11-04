@@ -13,7 +13,13 @@
       }
     },
     "build": {
-      "inputs": ["production", "^production", "{projectRoot}/index.html"],
+      "inputs": [
+        "{projectRoot}/src/**/*",
+        "{projectRoot}/index.html",
+        "{projectRoot}/package.json",
+        "{projectRoot}/vite.config.ts",
+        "{projectRoot}/tsconfig.json"
+      ],
       "outputs": ["{workspaceRoot}/packages/app/assets/graphiql"],
       "executor": "nx:run-commands",
       "options": {
