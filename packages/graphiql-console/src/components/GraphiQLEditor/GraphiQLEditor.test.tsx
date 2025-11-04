@@ -121,13 +121,13 @@ describe('<GraphiQLEditor />', () => {
     const graphiqlCall = mockGraphiQL.mock.calls[0][0]
     const defaultTabs = graphiqlCall.defaultTabs
 
-    // Should have DEFAULT_SHOP_QUERY + WELCOME_MESSAGE
+    // Should have WELCOME_MESSAGE + DEFAULT_SHOP_QUERY
     expect(defaultTabs).toHaveLength(2)
-    expect(defaultTabs[0].query).toContain('query shopInfo')
-    expect(defaultTabs[1].query).toContain('Welcome to GraphiQL')
+    expect(defaultTabs[0].query).toContain('Welcome to GraphiQL')
+    expect(defaultTabs[1].query).toContain('query shopInfo')
   })
 
-  test('includes initial query from config as first tab', () => {
+  test('includes initial query from config as third tab', () => {
     const configWithQuery = {
       ...baseConfig,
       query: 'query test { shop { name } }',
@@ -138,12 +138,12 @@ describe('<GraphiQLEditor />', () => {
     const graphiqlCall = mockGraphiQL.mock.calls[0][0]
     const defaultTabs = graphiqlCall.defaultTabs
 
-    // First tab should be the config query
-    expect(defaultTabs[0].query).toBe('query test { shop { name } }')
-    expect(defaultTabs[0].variables).toBe('{"var": "value"}')
+    // First tab is WELCOME_MESSAGE, second is DEFAULT_SHOP_QUERY, third is config query
+    expect(defaultTabs[2].query).toBe('query test { shop { name } }')
+    expect(defaultTabs[2].variables).toBe('{"var": "value"}')
   })
 
-  test('skips DEFAULT_SHOP_QUERY if already in config.query', () => {
+  test('always includes DEFAULT_SHOP_QUERY even if config has similar query', () => {
     const configWithShopQuery = {
       ...baseConfig,
       query: 'query shopInfo { shop { id name } }',
@@ -153,10 +153,11 @@ describe('<GraphiQLEditor />', () => {
     const graphiqlCall = mockGraphiQL.mock.calls[0][0]
     const defaultTabs = graphiqlCall.defaultTabs
 
-    // Should have: config query + WELCOME_MESSAGE (no duplicate shop query)
-    expect(defaultTabs).toHaveLength(2)
-    expect(defaultTabs[0].query).toContain('query shopInfo')
-    expect(defaultTabs[1].query).toContain('Welcome to GraphiQL')
+    // Should have: WELCOME_MESSAGE + DEFAULT_SHOP_QUERY + config query (no deduplication)
+    expect(defaultTabs).toHaveLength(3)
+    expect(defaultTabs[0].query).toContain('Welcome to GraphiQL')
+    expect(defaultTabs[1].query).toContain('query shopInfo')
+    expect(defaultTabs[2].query).toContain('query shopInfo')
   })
 
   test('includes defaultQueries from config', () => {
@@ -172,11 +173,11 @@ describe('<GraphiQLEditor />', () => {
     const graphiqlCall = mockGraphiQL.mock.calls[0][0]
     const defaultTabs = graphiqlCall.defaultTabs
 
-    // Should have: DEFAULT_SHOP_QUERY + 2 defaultQueries + WELCOME_MESSAGE
+    // Should have: WELCOME_MESSAGE + DEFAULT_SHOP_QUERY + 2 defaultQueries
     expect(defaultTabs).toHaveLength(4)
-    expect(defaultTabs[1].query).toContain('query products')
-    expect(defaultTabs[2].query).toContain('query orders')
-    expect(defaultTabs[2].variables).toBe('{"first": 10}')
+    expect(defaultTabs[2].query).toContain('query products')
+    expect(defaultTabs[3].query).toContain('query orders')
+    expect(defaultTabs[3].variables).toBe('{"first": 10}')
   })
 
   test('adds preface to defaultQueries when provided', () => {
@@ -194,10 +195,10 @@ describe('<GraphiQLEditor />', () => {
     const graphiqlCall = mockGraphiQL.mock.calls[0][0]
     const defaultTabs = graphiqlCall.defaultTabs
 
-    expect(defaultTabs[1].query).toBe('# This is a test query\nquery test { shop { name } }')
+    expect(defaultTabs[2].query).toBe('# This is a test query\nquery test { shop { name } }')
   })
 
-  test('WELCOME_MESSAGE is always the last tab', () => {
+  test('WELCOME_MESSAGE is always the first tab', () => {
     const configWithMultipleQueries = {
       ...baseConfig,
       query: 'query initial { shop { id } }',
@@ -211,9 +212,8 @@ describe('<GraphiQLEditor />', () => {
     const graphiqlCall = mockGraphiQL.mock.calls[0][0]
     const defaultTabs = graphiqlCall.defaultTabs
 
-    // Last tab should always be WELCOME_MESSAGE
-    const lastTab = defaultTabs[defaultTabs.length - 1]
-    expect(lastTab.query).toContain('Welcome to GraphiQL')
+    // First tab should always be WELCOME_MESSAGE
+    expect(defaultTabs[0].query).toContain('Welcome to GraphiQL')
   })
 
   test('passes correct props to GraphiQL', () => {

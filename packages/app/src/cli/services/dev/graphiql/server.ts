@@ -16,20 +16,6 @@ import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
 
-// Default query for GraphiQL - matches DEFAULT_SHOP_QUERY in graphiql-console package
-const DEFAULT_SHOP_QUERY = `query shopInfo {
-  shop {
-    name
-    url
-    myshopifyDomain
-    plan {
-      displayName
-      partnerDevelopment
-      shopifyPlus
-    }
-  }
-}`
-
 class TokenRefreshError extends AbortError {
   constructor() {
     super('Failed to refresh credentials. Check that your app is installed, and try again.')
@@ -194,7 +180,7 @@ export function setupGraphiQLServer({
       storeFqdn,
       baseUrl,
       key: key ?? undefined,
-      query: query ?? DEFAULT_SHOP_QUERY,
+      query: query ?? undefined,
     }
 
     // Inject config script before </head>

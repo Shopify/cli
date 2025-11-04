@@ -58,7 +58,18 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
   const defaultTabs = useMemo(() => {
     const tabs = []
 
-    // 1. Add initial query from config FIRST (if provided)
+    // 1. Add WELCOME_MESSAGE tab FIRST (in focus)
+    tabs.push({
+      query: WELCOME_MESSAGE,
+    })
+
+    // 2. Add DEFAULT_SHOP_QUERY tab SECOND (always)
+    tabs.push({
+      query: DEFAULT_SHOP_QUERY,
+      variables: '{}',
+    })
+
+    // 3. Add initial query from config (if provided)
     if (config.query) {
       tabs.push({
         query: config.query,
@@ -66,17 +77,7 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
       })
     }
 
-    // 2. Add DEFAULT_SHOP_QUERY SECOND (if not already in config)
-    const hasShopQuery =
-      config.query?.includes('query shopInfo') ?? config.defaultQueries?.some((q) => q.query.includes('query shopInfo'))
-    if (!hasShopQuery) {
-      tabs.push({
-        query: DEFAULT_SHOP_QUERY,
-        variables: '{}',
-      })
-    }
-
-    // 3. Add default queries from config
+    // 4. Add default queries from config
     if (config.defaultQueries) {
       config.defaultQueries.forEach(({query, variables, preface}) => {
         tabs.push({
@@ -85,11 +86,6 @@ export function GraphiQLEditor({config, apiVersion}: GraphiQLEditorProps) {
         })
       })
     }
-
-    // 4. WELCOME_MESSAGE tab LAST
-    tabs.push({
-      query: WELCOME_MESSAGE,
-    })
 
     return tabs
   }, [config.defaultQueries, config.query, config.variables])
