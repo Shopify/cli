@@ -3,7 +3,8 @@
   "include": ["./**/*.ts", "./**/*.js"],
   "exclude": ["./dist"],
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "types": ["node", "vitest/importMeta"]
   },
   "references": [
     {"path": "../cli-kit"}
