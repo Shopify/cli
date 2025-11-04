@@ -187,7 +187,13 @@ export function setupGraphiQLServer({
     }
 
     // Inject config script before </head>
-    const configScript = `<script>window.__GRAPHIQL_CONFIG__ = ${JSON.stringify(config)};</script>`
+    // Escape < > & in JSON to prevent XSS when embedding in HTML script tags
+    // Use Unicode escapes so JavaScript correctly decodes them (HTML entities would break the query)
+    const safeJson = JSON.stringify(config)
+      .replace(/</g, '\\u003c')
+      .replace(/>/g, '\\u003e')
+      .replace(/&/g, '\\u0026')
+    const configScript = `<script>window.__GRAPHIQL_CONFIG__ = ${safeJson};</script>`
     indexHtml = indexHtml.replace('</head>', `${configScript}\n  </head>`)
 
     res.setHeader('Content-Type', 'text/html')
