@@ -55,7 +55,7 @@
     ]
   },
   "dependencies": {
-    "esbuild": "0.25.11"
+    "esbuild": "0.25.12"
   },
   "devDependencies": {
     "@shopify/cli-kit": "3.86.0",
