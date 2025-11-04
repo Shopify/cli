@@ -559,3 +559,204 @@ const deleteDefaultEnvironment = async (tmpDir: string): Promise<void> => {
   delete clone.environments.default
   await writeFile(joinPath(tmpDir, 'shopify.environments.toml'), encodeTOML({environments: clone} as any))
 }
+
+describe('removeDuplicatedPlugins', () => {
+  let capturedPlugins: Map<string, any> | undefined
+  let outputMock: ReturnType<typeof mockAndCaptureOutput>
+
+  class PluginTestCommand extends MockCommand {
+    async init() {
+      // Set up test plugins before calling super.init()
+      const initialPlugins = capturedPlugins
+      if (initialPlugins) {
+        this.config.plugins = new Map(initialPlugins)
+      }
+
+      const result = await super.init()
+
+      // Capture the plugins after init (which calls removeDuplicatedPlugins)
+      // eslint-disable-next-line require-atomic-updates
+      capturedPlugins = new Map(this.config.plugins)
+
+      return result
+    }
+  }
+
+  beforeEach(() => {
+    capturedPlugins = undefined
+    outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+  })
+
+  test('removes @shopify/app plugin when present', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - set up plugins to be injected
+      const mockPlugin1 = {name: '@shopify/app', version: '1.0.0'} as any
+      const mockPlugin2 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
+      const mockPlugin3 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+
+      capturedPlugins = new Map([
+        ['@shopify/app', mockPlugin1],
+        ['@shopify/plugin-ngrok', mockPlugin2],
+        ['@shopify/plugin-did-you-mean', mockPlugin3],
+      ])
+
+      // When
+      await PluginTestCommand.run(['--path', tmpDir])
+
+      // Then - verify @shopify/app was removed but others remain
+      expect(capturedPlugins.has('@shopify/app')).toBe(false)
+      expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
+      expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
+      expect(capturedPlugins.size).toBe(2)
+
+      // Verify warning was shown
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/app/)
+      expect(outputMock.output()).not.toMatch(/shopify plugins remove @shopify\/plugin-cloudflare/)
+    })
+  })
+
+  test('removes @shopify/plugin-cloudflare plugin when present', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - set up plugins to be injected
+      const mockPlugin1 = {name: '@shopify/plugin-cloudflare', version: '1.0.0'} as any
+      const mockPlugin2 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
+      const mockPlugin3 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+
+      capturedPlugins = new Map([
+        ['@shopify/plugin-cloudflare', mockPlugin1],
+        ['@shopify/plugin-ngrok', mockPlugin2],
+        ['@shopify/plugin-did-you-mean', mockPlugin3],
+      ])
+
+      // When
+      await PluginTestCommand.run(['--path', tmpDir])
+
+      // Then - verify @shopify/plugin-cloudflare was removed but others remain
+      expect(capturedPlugins.has('@shopify/plugin-cloudflare')).toBe(false)
+      expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
+      expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
+      expect(capturedPlugins.size).toBe(2)
+
+      // Verify warning was shown
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/plugin-cloudflare/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/plugin-cloudflare/)
+      expect(outputMock.output()).not.toMatch(/shopify plugins remove @shopify\/app/)
+    })
+  })
+
+  test('removes both @shopify/app and @shopify/plugin-cloudflare plugins when present', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - set up plugins to be injected
+      const mockPlugin1 = {name: '@shopify/app', version: '1.0.0'} as any
+      const mockPlugin2 = {name: '@shopify/plugin-cloudflare', version: '1.0.0'} as any
+      const mockPlugin3 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
+      const mockPlugin4 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+
+      capturedPlugins = new Map([
+        ['@shopify/app', mockPlugin1],
+        ['@shopify/plugin-cloudflare', mockPlugin2],
+        ['@shopify/plugin-ngrok', mockPlugin3],
+        ['@shopify/plugin-did-you-mean', mockPlugin4],
+      ])
+
+      // When
+      await PluginTestCommand.run(['--path', tmpDir])
+
+      // Then - verify both bundled plugins were removed but others remain
+      expect(capturedPlugins.has('@shopify/app')).toBe(false)
+      expect(capturedPlugins.has('@shopify/plugin-cloudflare')).toBe(false)
+      expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
+      expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
+      expect(capturedPlugins.size).toBe(2)
+
+      // Verify warning was shown with both plugins
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app.*@shopify\/plugin-cloudflare/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/app/)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/plugin-cloudflare/)
+    })
+  })
+
+  test('does not remove any plugins when bundled plugins are not present', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - set up plugins (none are bundled plugins)
+      const mockPlugin1 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
+      const mockPlugin2 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+      const mockPlugin3 = {name: 'some-other-plugin', version: '1.0.0'} as any
+
+      capturedPlugins = new Map([
+        ['@shopify/plugin-ngrok', mockPlugin1],
+        ['@shopify/plugin-did-you-mean', mockPlugin2],
+        ['some-other-plugin', mockPlugin3],
+      ])
+
+      // When
+      await PluginTestCommand.run(['--path', tmpDir])
+
+      // Then - verify no plugins were removed
+      expect(capturedPlugins.size).toBe(3)
+      expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
+      expect(capturedPlugins.has('@shopify/plugin-did-you-mean')).toBe(true)
+      expect(capturedPlugins.has('some-other-plugin')).toBe(true)
+
+      // Verify no warning was shown
+      expect(outputMock.output()).toBe('')
+    })
+  })
+
+  test('handles empty plugin map', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - empty plugins map
+      capturedPlugins = new Map()
+
+      // When
+      await PluginTestCommand.run(['--path', tmpDir])
+
+      // Then - verify map is still empty
+      expect(capturedPlugins.size).toBe(0)
+
+      // Verify no warning was shown
+      expect(outputMock.output()).toBe('')
+    })
+  })
+
+  test('preserves plugin metadata when removing bundled plugins', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - set up plugins with more complete metadata
+      const mockPluginApp = {
+        name: '@shopify/app',
+        version: '1.0.0',
+        type: 'core',
+        root: '/path/to/app',
+      } as any
+      const mockPluginTheme = {
+        name: '@shopify/plugin-ngrok',
+        version: '2.0.0',
+        type: 'user',
+        root: '/path/to/theme',
+      } as any
+
+      capturedPlugins = new Map([
+        ['@shopify/app', mockPluginApp],
+        ['@shopify/plugin-ngrok', mockPluginTheme],
+      ])
+
+      // When
+      await PluginTestCommand.run(['--path', tmpDir])
+
+      // Then - verify @shopify/app was removed but theme plugin remains with all its metadata
+      expect(capturedPlugins.has('@shopify/app')).toBe(false)
+      expect(capturedPlugins.has('@shopify/plugin-ngrok')).toBe(true)
+      const remainingPlugin = capturedPlugins.get('@shopify/plugin-ngrok')
+      expect(remainingPlugin).toEqual(mockPluginTheme)
+      expect(remainingPlugin.version).toBe('2.0.0')
+      expect(remainingPlugin.type).toBe('user')
+      expect(remainingPlugin.root).toBe('/path/to/theme')
+
+      // Verify warning was shown
+      expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app/s)
+      expect(outputMock.output()).toMatch(/shopify plugins remove @shopify\/app/)
+    })
+  })
+})
