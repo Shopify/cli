@@ -58,11 +58,15 @@ export function GraphiQLSection() {
           </div>
 
           <div className={styles.ControlsSection}>
-            <label htmlFor="api-version-select" style={{marginRight: '8px'}}>
+            <label htmlFor="api-version-select" className="top-bar-section-title" style={{marginRight: '8px'}}>
               API version:
             </label>
             <div style={{minWidth: '150px'}}>
-              <ApiVersionSelector versions={config.apiVersions} value={selectedVersion} onChange={handleVersionChange} />
+              <ApiVersionSelector
+                versions={config.apiVersions}
+                value={selectedVersion}
+                onChange={handleVersionChange}
+              />
             </div>
           </div>
 

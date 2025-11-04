@@ -13,7 +13,7 @@
 
 .Header {
   display: grid;
-  grid-template-columns: 7fr 5fr;
+  grid-template-columns: 1fr;  // Single column on narrow screens
   align-items: center;
   padding: 16px;
   border-bottom: 1px solid var(--p-color-border, #e1e3e5);
@@ -29,7 +29,14 @@
 }
 
 .RightSection {
-  justify-self: end;
+  justify-self: start;  // Left-align by default (single column on narrow screens)
+}
+
+// Right-align only on wide screens with two-column layout
+@media only screen and (min-width: 1081px) {
+  .RightSection {
+    justify-self: end;
+  }
 }
 
 .StatusSection {
@@ -106,10 +113,10 @@
   }
 }
 
-@media only screen and (max-width: 1080px) {
-  .RightSection {
-    // Adjust layout for narrower screens
-    justify-self: start;
+// Switch to two-column layout at wider screens
+@media only screen and (min-width: 1081px) {
+  .Header {
+    grid-template-columns: 7fr 5fr;
   }
 }
 

@@ -34,7 +34,7 @@ describe('<ApiVersionSelector />', () => {
     const onChange = vi.fn()
     renderWithProvider(<ApiVersionSelector versions={defaultVersions} value="2024-10" onChange={onChange} />)
 
-    const select = screen.getByLabelText('API version') as HTMLSelectElement
+    const select = screen.getByLabelText('API version')
 
     expect(select.options).toHaveLength(5)
     expect(select.options[0].value).toBe('2024-01')
@@ -48,7 +48,7 @@ describe('<ApiVersionSelector />', () => {
     const onChange = vi.fn()
     renderWithProvider(<ApiVersionSelector versions={defaultVersions} value="2024-07" onChange={onChange} />)
 
-    const select = screen.getByLabelText('API version') as HTMLSelectElement
+    const select = screen.getByLabelText('API version')
     expect(select.value).toBe('2024-07')
   })
 
@@ -68,7 +68,7 @@ describe('<ApiVersionSelector />', () => {
     const onChange = vi.fn()
     renderWithProvider(<ApiVersionSelector versions={[]} value="" onChange={onChange} />)
 
-    const select = screen.getByLabelText('API version') as HTMLSelectElement
+    const select = screen.getByLabelText('API version')
     expect(select.options).toHaveLength(0)
   })
 
@@ -76,7 +76,7 @@ describe('<ApiVersionSelector />', () => {
     const onChange = vi.fn()
     renderWithProvider(<ApiVersionSelector versions={['2024-10']} value="2024-10" onChange={onChange} />)
 
-    const select = screen.getByLabelText('API version') as HTMLSelectElement
+    const select = screen.getByLabelText('API version')
     expect(select.options).toHaveLength(1)
     expect(select.options[0].value).toBe('2024-10')
   })
@@ -86,7 +86,7 @@ describe('<ApiVersionSelector />', () => {
     const onChange = vi.fn()
     renderWithProvider(<ApiVersionSelector versions={customVersions} value="v2" onChange={onChange} />)
 
-    const select = screen.getByLabelText('API version') as HTMLSelectElement
+    const select = screen.getByLabelText('API version')
     expect(select.options[0].value).toBe('v1')
     expect(select.options[1].value).toBe('v2')
     expect(select.options[2].value).toBe('v3-beta')
