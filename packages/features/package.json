@@ -27,9 +27,9 @@
     }
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^9.4.0",
-    "@cucumber/messages": "22.0.0",
-    "@cucumber/pretty-formatter": "1.0.0",
+    "@cucumber/cucumber": "^12.2.0",
+    "@cucumber/messages": "30.1.0",
+    "@cucumber/pretty-formatter": "2.4.1",
     "@types/fs-extra": "^9.0.13",
     "@types/rimraf": "^3.0.2",
     "fs-extra": "^9.1.0",
