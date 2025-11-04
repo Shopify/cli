@@ -72,6 +72,16 @@ export default class Execute extends Command {
           this.error(`invalid json in --variables: ${error}`)
         }
       }
+    } else if (flags['variable-file']) {
+      const fileContent = await readFile(flags['variable-file'])
+      const firstLine = fileContent.split('\n')[0]?.trim()
+      if (firstLine) {
+        try {
+          variables = JSON.parse(firstLine)
+        } catch (error) {
+          this.error(`invalid json in --variable-file: ${error}`)
+        }
+      }
     }
 
     const adminSession = await ensureAuthenticatedAdmin(store)
