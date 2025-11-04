@@ -4,6 +4,7 @@
   "packages/cli-kit",
   "packages/plugin-cloudflare",
   "packages/plugin-did-you-mean",
+  "packages/store",
   "packages/theme",
   "packages/ui-extensions-dev-console",
   "packages/ui-extensions-server-kit",
