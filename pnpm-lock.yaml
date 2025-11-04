@@ -697,6 +697,9 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.86.0
         version: link:../cli-kit
+      graphql:
+        specifier: ^16.10.0
+        version: 16.10.0
     devDependencies:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4

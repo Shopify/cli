@@ -3,6 +3,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
+import {parseGraphQLOperation} from '../../services/graphql-parser.js'
 
 export default class Execute extends Command {
   static summary = 'execute a graphql query or mutation on a store'
@@ -85,6 +86,12 @@ export default class Execute extends Command {
     }
 
     const adminSession = await ensureAuthenticatedAdmin(store)
+
+    if (flags['bulk-operation']) {
+      const operationType = parseGraphQLOperation(query)
+      this.log(`executing bulk ${operationType}...`)
+      this.error('bulk operations not yet implemented')
+    }
 
     const result = await adminRequest(query, adminSession, variables)
 
