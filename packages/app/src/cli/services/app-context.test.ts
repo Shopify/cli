@@ -49,7 +49,9 @@ describe('linkedAppContext', () => {
   test('returns linked app context when app is already linked', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
       await writeAppConfig(tmp, content)
 
       // When
@@ -65,6 +67,7 @@ describe('linkedAppContext', () => {
         app: expect.objectContaining({
           configuration: {
             client_id: 'test-api-key',
+            name: 'test-app',
             path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
           },
         }),
@@ -98,7 +101,10 @@ describe('linkedAppContext', () => {
           configurationPath: `${tmp}/shopify.app.stg.toml`,
           configSource: 'cached',
           configurationFileName: 'shopify.app.stg.toml',
-          basicConfiguration: {client_id: 'test-api-key', path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml'))},
+          basicConfiguration: {
+            client_id: 'test-api-key',
+            path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
+          },
         },
         configuration: {
           client_id: 'test-api-key',
@@ -133,7 +139,9 @@ describe('linkedAppContext', () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       vi.mocked(appFromIdentifiers).mockResolvedValue({...mockRemoteApp, apiKey: 'test-api-key-new'})
-      const content = `client_id="test-api-key-new"`
+      const content = `
+name = "test-app"
+client_id="test-api-key-new"`
       await writeAppConfig(tmp, content)
       localStorage.setCachedAppInfo({
         appId: 'test-api-key-old',
@@ -166,7 +174,9 @@ describe('linkedAppContext', () => {
   test('uses provided clientId when available and updates the app configuration', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
       await writeAppConfig(tmp, content)
       const newClientId = 'new-api-key'
 
@@ -191,7 +201,9 @@ describe('linkedAppContext', () => {
   test('resets app when there is a valid toml but reset option is true', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
       await writeAppConfig(tmp, content)
 
       vi.mocked(link).mockResolvedValue({
@@ -202,7 +214,10 @@ describe('linkedAppContext', () => {
           configurationPath: `${tmp}/shopify.app.toml`,
           configSource: 'cached',
           configurationFileName: 'shopify.app.toml',
-          basicConfiguration: {client_id: 'test-api-key', path: normalizePath(joinPath(tmp, 'shopify.app.toml'))},
+          basicConfiguration: {
+            client_id: 'test-api-key',
+            path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+          },
         },
         configuration: {
           client_id: 'test-api-key',
@@ -229,7 +244,9 @@ describe('linkedAppContext', () => {
   test('logs metadata', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
       await writeAppConfig(tmp, content)
 
       // When
@@ -255,7 +272,9 @@ describe('linkedAppContext', () => {
   test('uses unsafeReportMode when provided', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
       await writeAppConfig(tmp, content)
       const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
 
@@ -278,7 +297,9 @@ describe('linkedAppContext', () => {
   test('does not use unsafeReportMode when not provided', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
-      const content = `client_id="test-api-key"`
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
       await writeAppConfig(tmp, content)
       const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
 
