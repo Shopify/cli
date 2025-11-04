@@ -107,17 +107,25 @@ export default class Execute extends Command {
       if (operationType === 'query') {
         const result = await runBulkQuery(query, adminSession, (status, objectCount, rate, spinner) => {
           const rateStr = rate > 0 ? ` • ${Math.round(rate)} obj/sec` : ''
-          process.stdout.write(`\r\x1b[K${status.toLowerCase()}: ${objectCount} objects${rateStr} ${spinner}`)
+          process.stderr.write(`\r\x1b[K${status.toLowerCase()}: ${objectCount} objects${rateStr} ${spinner}`)
         })
 
-        const outputFilePath = 'bulk-operation-results.jsonl'
-        await writeFile(outputFilePath, result.content)
-
         this.log('\n')
-        outputSuccess(`wrote ${result.totalObjects} objects to ${outputFilePath}`)
-        outputInfo(
-          `completed in ${result.totalTimeSeconds.toFixed(1)}s (${Math.round(result.averageRate)} obj/sec average)`,
-        )
+
+        if (flags['output-file']) {
+          await writeFile(flags['output-file'], result.content)
+          outputSuccess(`wrote ${result.totalObjects} objects to ${flags['output-file']}`)
+          outputInfo(
+            `completed in ${result.totalTimeSeconds.toFixed(1)}s (${Math.round(result.averageRate)} obj/sec average)`,
+          )
+        } else {
+          process.stderr.write(
+            `completed in ${result.totalTimeSeconds.toFixed(1)}s (${Math.round(
+              result.averageRate,
+            )} obj/sec average)\n\n`,
+          )
+          this.log(result.content)
+        }
       } else {
         this.error('bulk mutations not yet implemented')
       }
