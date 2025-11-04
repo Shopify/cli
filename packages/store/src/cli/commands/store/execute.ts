@@ -1,6 +1,7 @@
 import {Command, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {readFile} from '@shopify/cli-kit/node/fs'
+import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 
 export default class Execute extends Command {
   static summary = 'execute a graphql query or mutation on a store'
@@ -54,6 +55,14 @@ export default class Execute extends Command {
       this.error('either --query or --query-file is required')
     }
 
+    const store = flags.store
+    if (!store) {
+      this.error('--store is required')
+    }
+
+    const adminSession = await ensureAuthenticatedAdmin(store)
+
+    this.log(`store: ${adminSession.storeFqdn}`)
     this.log(`query: ${query}`)
   }
 }
