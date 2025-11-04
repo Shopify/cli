@@ -102,7 +102,10 @@ export function setupGraphiQLServer({
   // Serve static assets for the React app (JS, CSS, workers)
   const graphiqlIndexPath = require.resolve('@shopify/app/assets/graphiql/index.html')
   const graphiqlAssetsDir = graphiqlIndexPath.replace('/index.html', '')
-  app.use('/extensions/graphiql/assets', express.static(joinPath(graphiqlAssetsDir, 'extensions', 'graphiql', 'assets')))
+  app.use(
+    '/extensions/graphiql/assets',
+    express.static(joinPath(graphiqlAssetsDir, 'extensions', 'graphiql', 'assets')),
+  )
   app.use('/monacoeditorwork', express.static(joinPath(graphiqlAssetsDir, 'monacoeditorwork')))
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
