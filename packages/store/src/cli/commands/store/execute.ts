@@ -2,6 +2,7 @@ import {Command, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 
 export default class Execute extends Command {
   static summary = 'execute a graphql query or mutation on a store'
@@ -60,9 +61,23 @@ export default class Execute extends Command {
       this.error('--store is required')
     }
 
+    let variables: Record<string, unknown> | undefined
+
+    if (flags.variables && flags.variables.length > 0) {
+      const variableString = flags.variables[0]
+      if (variableString) {
+        try {
+          variables = JSON.parse(variableString)
+        } catch (error) {
+          this.error(`invalid json in --variables: ${error}`)
+        }
+      }
+    }
+
     const adminSession = await ensureAuthenticatedAdmin(store)
 
-    this.log(`store: ${adminSession.storeFqdn}`)
-    this.log(`query: ${query}`)
+    const result = await adminRequest(query, adminSession, variables)
+
+    this.log(JSON.stringify(result, null, 2))
   }
 }
