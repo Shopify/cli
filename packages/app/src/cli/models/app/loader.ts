@@ -737,11 +737,13 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   private abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
-    if (this.mode === 'strict') {
-      throw new AbortError(errorMessage)
-    } else {
-      this.errors.addError(configurationPath, errorMessage)
-      return fallback
+    switch (this.mode) {
+      case 'strict':
+      case 'local':
+        throw new AbortError(errorMessage)
+      case 'report':
+        this.errors.addError(configurationPath, errorMessage)
+        return fallback
     }
   }
 

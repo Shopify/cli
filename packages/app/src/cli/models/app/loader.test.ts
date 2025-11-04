@@ -479,6 +479,66 @@ wrong = "property"
     expect(app.errors).toBeUndefined()
   })
 
+  test('throws error for duplicated handles when mode is local', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "checkout_post_purchase"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "handle-1"
+      name = "my_extension_1_flow"
+      description = "custom description"
+      runtime_url = "https://example.com"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // When/Then
+    await expect(loadTestingApp({mode: 'local'})).rejects.toThrow(/Duplicated handle/)
+  })
+
+  test('does not throw error for duplicated handles when mode is report', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2022-07"
+
+      [[extensions]]
+      type = "checkout_post_purchase"
+      name = "my_extension_1"
+      handle = "handle-1"
+      description = "custom description"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "handle-1"
+      name = "my_extension_1_flow"
+      description = "custom description"
+      runtime_url = "https://example.com"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my_extension_1',
+    })
+    await writeFile(joinPath(blockPath('my_extension_1'), 'index.js'), '')
+
+    // When/Then
+    await expect(loadTestingApp({mode: 'report'})).resolves.not.toThrow()
+  })
+
   test('throws if 2 or more extensions have the same handle', async () => {
     // Given
     await writeConfig(appConfiguration)
