@@ -12,13 +12,24 @@
 }
 
 .Header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 7fr 5fr;
   align-items: center;
-  justify-content: space-between;
   padding: 16px;
   border-bottom: 1px solid var(--p-color-border, #e1e3e5);
-  background: var(--p-color-bg, #ffffff);
+  background: #ffffff;
   gap: 16px;
+}
+
+.LeftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.RightSection {
+  justify-self: end;
 }
 
 .StatusSection {
@@ -31,7 +42,6 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-grow: 1;
 }
 
 .ScopesNote {
@@ -97,9 +107,9 @@
 }
 
 @media only screen and (max-width: 1080px) {
-  .StatusSection {
+  .RightSection {
     // Adjust layout for narrower screens
-    justify-self: left;
+    justify-self: start;
   }
 }
 

@@ -52,27 +52,31 @@ export function GraphiQLSection() {
       )}
 
       <div className={styles.Header}>
-        <div className={styles.StatusSection}>
-          <StatusBadge status={status} />
-        </div>
+        <div className={styles.LeftSection}>
+          <div className={styles.StatusSection}>
+            <StatusBadge status={status} />
+          </div>
 
-        <div className={styles.ControlsSection}>
-          <label htmlFor="api-version-select" style={{marginRight: '8px'}}>
-            API version:
-          </label>
-          <div style={{minWidth: '150px'}}>
-            <ApiVersionSelector versions={config.apiVersions} value={selectedVersion} onChange={handleVersionChange} />
+          <div className={styles.ControlsSection}>
+            <label htmlFor="api-version-select" style={{marginRight: '8px'}}>
+              API version:
+            </label>
+            <div style={{minWidth: '150px'}}>
+              <ApiVersionSelector versions={config.apiVersions} value={selectedVersion} onChange={handleVersionChange} />
+            </div>
+          </div>
+
+          <div className={styles.LinksSection}>
+            <LinkPills status={status} />
           </div>
         </div>
 
-        <div className={styles.ScopesNote}>
-          <Text as="span" tone="subdued">
-            GraphiQL runs on the same access scopes you've defined in the TOML file for your app.
-          </Text>
-        </div>
-
-        <div className={styles.LinksSection}>
-          <LinkPills status={status} />
+        <div className={styles.RightSection}>
+          <div className={styles.ScopesNote}>
+            <Text as="span" tone="subdued">
+              GraphiQL runs on the same access scopes you've defined in the TOML file for your app.
+            </Text>
+          </div>
         </div>
       </div>
 

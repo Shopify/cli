@@ -1,3 +1,4 @@
+import * as styles from './StatusBadge.module.scss'
 import React from 'react'
 import {Badge} from '@shopify/polaris'
 import {AlertCircleIcon, DisabledIcon} from '@shopify/polaris-icons'
@@ -17,17 +18,21 @@ export function StatusBadge({status}: StatusBadgeProps) {
   // Priority: disconnected > unauthorized > running
   if (!serverIsLive) {
     return (
-      <Badge tone="critical" icon={DisabledIcon}>
-        Disconnected
-      </Badge>
+      <div className={styles.Badge}>
+        <Badge tone="critical" icon={DisabledIcon}>
+          Disconnected
+        </Badge>
+      </div>
     )
   }
 
   if (!appIsInstalled) {
     return (
-      <Badge tone="attention" icon={AlertCircleIcon}>
-        App uninstalled
-      </Badge>
+      <div className={styles.Badge}>
+        <Badge tone="attention" icon={AlertCircleIcon}>
+          App uninstalled
+        </Badge>
+      </div>
     )
   }
 
