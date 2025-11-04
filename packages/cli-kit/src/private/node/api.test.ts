@@ -1,4 +1,4 @@
-import {retryAwareRequest} from './api.js'
+import {retryAwareRequest, isNetworkError, isTransientNetworkError} from './api.js'
 import {ClientError} from 'graphql-request'
 import {describe, test, vi, expect, beforeEach, afterEach} from 'vitest'
 
@@ -341,5 +341,154 @@ describe('retryAwareRequest', () => {
 
     await expect(result).rejects.toThrowError(nonBlankUnknownReason)
     expect(mockRequestFn).toHaveBeenCalledTimes(1)
+  })
+
+  test('does not retry certificate/TLS/SSL errors (permanent network errors)', async () => {
+    vi.useRealTimers()
+    const certificateErrors = [
+      'certificate has expired',
+      "Hostname/IP does not match certificate's altnames",
+      'TLS handshake failed',
+      'SSL certificate problem: unable to get local issuer certificate',
+    ]
+
+    await Promise.all(
+      certificateErrors.map(async (certError) => {
+        const mockRequestFn = vi.fn().mockImplementation(() => {
+          throw new Error(certError)
+        })
+
+        const result = retryAwareRequest(
+          {
+            request: mockRequestFn,
+            url: 'https://example.com/graphql.json',
+            useNetworkLevelRetry: true,
+            maxRetryTimeMs: 2000,
+          },
+          undefined,
+          {defaultDelayMs: 10, scheduleDelay: (fn) => fn()},
+        )
+
+        await expect(result).rejects.toThrowError(certError)
+        expect(mockRequestFn).toHaveBeenCalledTimes(1)
+      }),
+    )
+  })
+})
+
+describe('isTransientNetworkError', () => {
+  test('identifies transient network errors that should be retried', () => {
+    const transientErrors = [
+      'socket hang up',
+      'ECONNRESET',
+      'ECONNABORTED',
+      'ENOTFOUND',
+      'ENETUNREACH',
+      'network socket disconnected',
+      'ETIMEDOUT',
+      'ECONNREFUSED',
+      'EAI_AGAIN',
+      'EPIPE',
+      'the operation was aborted',
+      'timeout occurred',
+      'premature close',
+      'getaddrinfo ENOTFOUND',
+    ]
+
+    for (const errorMsg of transientErrors) {
+      expect(isTransientNetworkError(new Error(errorMsg))).toBe(true)
+    }
+  })
+
+  test('identifies blank reason network errors', () => {
+    const blankReasonErrors = [
+      'request to https://example.com failed, reason:',
+      'request to https://example.com failed, reason:   ',
+      'request to https://example.com failed, reason:\n\t',
+    ]
+
+    for (const errorMsg of blankReasonErrors) {
+      expect(isTransientNetworkError(new Error(errorMsg))).toBe(true)
+    }
+  })
+
+  test('does not identify certificate errors as transient (should not be retried)', () => {
+    const permanentErrors = [
+      'certificate has expired',
+      'cert verification failed',
+      'TLS handshake failed',
+      'SSL certificate problem',
+      "Hostname/IP does not match certificate's altnames",
+    ]
+
+    for (const errorMsg of permanentErrors) {
+      expect(isTransientNetworkError(new Error(errorMsg))).toBe(false)
+    }
+  })
+
+  test('does not identify non-network errors as transient', () => {
+    const nonNetworkErrors = [
+      'Invalid JSON',
+      'Syntax error',
+      'undefined is not a function',
+      'request failed with status 500',
+    ]
+
+    for (const errorMsg of nonNetworkErrors) {
+      expect(isTransientNetworkError(new Error(errorMsg))).toBe(false)
+    }
+  })
+
+  test('returns false for non-Error objects', () => {
+    expect(isTransientNetworkError('string error')).toBe(false)
+    expect(isTransientNetworkError(null)).toBe(false)
+    expect(isTransientNetworkError(undefined)).toBe(false)
+    expect(isTransientNetworkError({message: 'ENOTFOUND'})).toBe(false)
+  })
+})
+
+describe('isNetworkError', () => {
+  test('identifies all transient network errors', () => {
+    const transientErrors = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'socket hang up', 'premature close']
+
+    for (const errorMsg of transientErrors) {
+      expect(isNetworkError(new Error(errorMsg))).toBe(true)
+    }
+  })
+
+  test('identifies permanent network errors (certificate/TLS/SSL)', () => {
+    const permanentErrors = [
+      'certificate has expired',
+      'cert verification failed',
+      'TLS handshake failed',
+      'SSL certificate problem',
+      "Hostname/IP does not match certificate's altnames",
+      'unable to verify the first certificate',
+      'self signed certificate in certificate chain',
+    ]
+
+    for (const errorMsg of permanentErrors) {
+      expect(isNetworkError(new Error(errorMsg))).toBe(true)
+    }
+  })
+
+  test('does not identify non-network errors', () => {
+    const nonNetworkErrors = [
+      'Invalid JSON',
+      'Syntax error',
+      'undefined is not a function',
+      'request failed with status 500',
+    ]
+
+    for (const errorMsg of nonNetworkErrors) {
+      expect(isNetworkError(new Error(errorMsg))).toBe(false)
+    }
+  })
+
+  test('returns false for non-Error objects', () => {
+    expect(isNetworkError('string error')).toBe(false)
+    expect(isNetworkError(null)).toBe(false)
+    expect(isNetworkError(undefined)).toBe(false)
+    expect(isNetworkError({message: 'certificate error'})).toBe(false)
   })
 })

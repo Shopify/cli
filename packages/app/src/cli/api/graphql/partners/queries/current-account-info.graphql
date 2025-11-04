@@ -1,0 +1,11 @@
+query currentAccountInfo {
+  currentAccountInfo {
+    __typename
+    ... on ServiceAccount {
+      orgName
+    }
+    ... on UserAccount {
+      email
+    }
+  }
+}

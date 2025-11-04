@@ -1,5 +1,67 @@
 # @shopify/app
 
+## 3.86.0
+
+### Patch Changes
+
+- 7c417ca: Remove redundant Admin print action extension uniqueness validator
+- d59a924: Bump theme-tools packages
+- 8cce83b: Update Functions binaries to version supporting normalize method on JS strings
+- 835dd39: Add support for Windows on ARM cpus for Functions binaries
+- 0d80b3b: Fix automatic token refresh in some situations to avoid 401 errors
+- ccbd42a: Add support to `app dev` for dev stores with custom domains
+- Updated dependencies [a657b4b]
+- Updated dependencies [d59a924]
+- Updated dependencies [e81c29c]
+- Updated dependencies [7fad402]
+  - @shopify/theme@3.86.0
+  - @shopify/cli-kit@3.86.0
+  - @shopify/plugin-cloudflare@3.86.0
+
+## 3.85.0
+
+### Minor Changes
+
+- 94b8857: Support Functions Wasm API v2
+- 6497461: Add `auth login` command with multi-session support
+- 799820f: Update Javy, Javy plugin, and function-runner
+
+### Patch Changes
+
+- 9ccd361: Do not require authentication for shopify app config use
+- 9fc6f93: Fix concurrency issue with downloading Functions binaries
+- a60f23e: Show IDs next to organization names when there are duplicates
+- 7f2f69a: Added optional `error` property to ExtensionPayload which include the `message` and `file`
+- c16eada: shopify app init now recommends the React Router template by default
+- f148928: Modify app access config update message for legacy install flow
+- 95c82ef: Bump theme-tool packages
+- Updated dependencies [c2b6097]
+- Updated dependencies [7f54a36]
+- Updated dependencies [b855ec1]
+- Updated dependencies [87bedd2]
+- Updated dependencies [84a7b10]
+- Updated dependencies [a883d5b]
+- Updated dependencies [9574ca8]
+- Updated dependencies [74fc99c]
+- Updated dependencies [4d377e8]
+- Updated dependencies [9966ba6]
+- Updated dependencies [c12289e]
+- Updated dependencies [abff4d4]
+- Updated dependencies [be916a1]
+- Updated dependencies [acf3248]
+- Updated dependencies [8702cdc]
+- Updated dependencies [1416fe1]
+- Updated dependencies [1ee6a38]
+- Updated dependencies [809d355]
+- Updated dependencies [f1f5581]
+- Updated dependencies [95c82ef]
+- Updated dependencies [6497461]
+- Updated dependencies [f8df96b]
+- Updated dependencies [c5e181c]
+  - @shopify/theme@3.85.0
+  - @shopify/cli-kit@3.85.0
+  - @shopify/plugin-cloudflare@3.85.0
+
 ## 3.84.0
 
 ### Minor Changes

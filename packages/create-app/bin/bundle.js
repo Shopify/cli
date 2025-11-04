@@ -28,6 +28,10 @@ esBuild({
   outdir: './dist',
   platform: 'node',
   format: 'esm',
+  define: {
+    // Injected during build to detect fork vs original repo
+    'process.env.SHOPIFY_CLI_BUILD_REPO': JSON.stringify(process.env.SHOPIFY_CLI_BUILD_REPO || 'unknown'),
+  },
   sourcemap: true,
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,

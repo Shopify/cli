@@ -87,10 +87,11 @@ Or, run the \`help\` command to get this information right in your terminal.
       },
     },
     {
-      type: "Generic",
-      anchorLink: "network-proxy",
-      title: "Network proxy configuration",
-      sectionContent: "When working behind a network proxy, you can configure Shopify CLI (version 3.78+) to route connections through it:\n\n1. Set the proxy for HTTP traffic:\n\n   ```bash\n   export SHOPIFY_HTTP_PROXY=http://proxy.com:8080\n   ```\n\n2. Optionally, set a different proxy for HTTPS traffic:\n\n   ```bash\n   export SHOPIFY_HTTPS_PROXY=https://secure-proxy.com:8443\n   ```\n\n   If not specified, the HTTP proxy will be used for all traffic.\n\n3. For authenticated proxies, include credentials in the URL:\n\n   ```bash\n   export SHOPIFY_HTTP_PROXY=http://username:password@proxy.com:8080\n   ```"
+      type: 'Generic',
+      anchorLink: 'network-proxy',
+      title: 'Network proxy configuration',
+      sectionContent:
+        'When working behind a network proxy, you can configure Shopify CLI (version 3.78+) to route connections through it:\n\n1. Set the proxy for HTTP traffic:\n\n   ```bash\n   export SHOPIFY_HTTP_PROXY=http://proxy.com:8080\n   ```\n\n2. Optionally, set a different proxy for HTTPS traffic:\n\n   ```bash\n   export SHOPIFY_HTTPS_PROXY=https://secure-proxy.com:8443\n   ```\n\n   If not specified, the HTTP proxy will be used for all traffic.\n\n3. For authenticated proxies, include credentials in the URL:\n\n   ```bash\n   export SHOPIFY_HTTP_PROXY=http://username:password@proxy.com:8080\n   ```',
     },
     {
       type: 'Generic',
@@ -109,8 +110,8 @@ Or, run the \`help\` command to get this information right in your terminal.
       anchorLink: 'help',
       title: 'Where to get help',
       sectionContent: `
-- [Shopify Community Forums](https://community.shopify.dev/c/shopify-cli-libraries/14) - Visit our forums to connect with the community and learn more about Shopify CLI development.
-- [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.
+- [Shopify CLI and Libraries](https://community.shopify.dev/c/shopify-cli-libraries/14) - Report any issues with the CLI.
+- [Dev Platform](https://community.shopify.dev/c/dev-platform/32) - Ask any questions and learn more about the Dev Platform powering the CLI.
 `,
     },
     {

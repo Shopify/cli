@@ -95,7 +95,7 @@
         "type": "Generic",
         "anchorLink": "help",
         "title": "Where to get help",
-        "sectionContent": "\n- [Shopify Community Forums](https://community.shopify.dev/c/shopify-cli-libraries/14) - Visit our forums to connect with the community and learn more about Shopify CLI development.\n- [Open a GitHub issue](https://github.com/shopify/cli/issues) - To report bugs or request new features, open an issue in the Shopify CLI repository.\n"
+        "sectionContent": "\n- [Shopify CLI and Libraries](https://community.shopify.dev/c/shopify-cli-libraries/14) - Report any issues with the CLI.\n- [Dev Platform](https://community.shopify.dev/c/dev-platform/32) - Ask any questions and learn more about the Dev Platform powering the CLI.\n"
       },
       {
         "type": "Resource",

@@ -13,7 +13,7 @@ export type ActiveAppReleaseQuery = {
     id: string
     key: string
     organizationId: string
-    activeRoot: {clientCredentials: {secrets: {key: string}[]}}
+    activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
     activeRelease: {
       id: string
       version: {
@@ -35,7 +35,7 @@ export type AppVersionInfoFragment = {
   id: string
   key: string
   organizationId: string
-  activeRoot: {clientCredentials: {secrets: {key: string}[]}}
+  activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
   activeRelease: {
     id: string
     version: {
@@ -130,6 +130,7 @@ export const AppVersionInfoFragmentDoc = {
                     ],
                   },
                 },
+                {kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}},
               ],
             },
           },
@@ -293,6 +294,7 @@ export const ActiveAppRelease = {
                     ],
                   },
                 },
+                {kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}},
               ],
             },
           },

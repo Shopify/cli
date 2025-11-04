@@ -13,7 +13,7 @@ interface ConfigOptions {
   poolStrategy: 'threads' | 'forks'
 }
 
-export default function config(packagePath: string, {poolStrategy}: ConfigOptions = {poolStrategy: 'threads'}) {
+export default function config(packagePath: string, {poolStrategy}: ConfigOptions = {poolStrategy: 'forks'}) {
   // always treat environment as one that doesn't support hyperlinks -- otherwise assertions are hard to keep consistent
   process.env.FORCE_HYPERLINK = '0'
   process.env.FORCE_COLOR = '1'

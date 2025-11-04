@@ -8,6 +8,7 @@ import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import {isTTY, keypress} from '../../../public/node/ui.js'
+import {Response} from 'node-fetch'
 
 export interface DeviceAuthorizationResponse {
   deviceCode: string
@@ -40,14 +41,26 @@ export async function requestDeviceAuthorization(scopes: string[]): Promise<Devi
     body: convertRequestToParams(queryParams),
   })
 
+  // First read the response body as text so we have it for debugging
+  let responseText: string
+  try {
+    responseText = await response.text()
+  } catch (error) {
+    throw new BugError(
+      `Failed to read response from authorization service (HTTP ${response.status}). Network or streaming error occurred.`,
+      'Check your network connection and try again.',
+    )
+  }
+
+  // Now try to parse the text as JSON
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let jsonResult: any
   try {
-    jsonResult = await response.json()
-  } catch (error) {
-    throw new BugError(
-      'Received unexpected response from the authorization service. If this issue persists, please contact support at https://help.shopify.com',
-    )
+    jsonResult = JSON.parse(responseText)
+  } catch {
+    // JSON.parse failed, handle the parsing error
+    const errorMessage = buildAuthorizationParseErrorMessage(response, responseText)
+    throw new BugError(errorMessage)
   }
 
   outputDebug(outputContent`Received device authorization code: ${outputToken.json(jsonResult)}`)
@@ -126,14 +139,12 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
         }
         case 'slow_down':
           currentIntervalInSeconds += 5
-          {
-            startPolling()
-            return
-          }
+          startPolling()
+          return
         case 'access_denied':
         case 'expired_token':
         case 'unknown_failure': {
-          reject(result)
+          reject(new Error(`Device authorization failed: ${error}`))
         }
       }
     }
@@ -152,4 +163,35 @@ function convertRequestToParams(queryParams: {client_id: string; scope: string})
     .map(([key, value]) => value && `${key}=${value}`)
     .filter((hasValue) => Boolean(hasValue))
     .join('&')
+}
+
+/**
+ * Build a detailed error message for JSON parsing failures from the authorization service.
+ * Provides context-specific error messages based on response status and content.
+ *
+ * @param response - The HTTP response object
+ * @param responseText - The raw response body text
+ * @returns Detailed error message about the failure
+ */
+function buildAuthorizationParseErrorMessage(response: Response, responseText: string): string {
+  // Build helpful error message based on response status and content
+  let errorMessage = `Received invalid response from authorization service (HTTP ${response.status}).`
+
+  // Add status-based context
+  if (response.status >= 500) {
+    errorMessage += ' The service may be experiencing issues.'
+  } else if (response.status >= 400) {
+    errorMessage += ' The request may be malformed or unauthorized.'
+  }
+
+  // Add content-based context (check these regardless of status)
+  if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+    errorMessage += ' Received HTML instead of JSON - the service endpoint may have changed.'
+  } else if (responseText.trim() === '') {
+    errorMessage += ' Received empty response body.'
+  } else {
+    errorMessage += ' Response could not be parsed as valid JSON.'
+  }
+
+  return `${errorMessage} If this issue persists, please contact support at https://help.shopify.com`
 }

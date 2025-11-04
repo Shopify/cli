@@ -15,7 +15,7 @@ export async function fetchProductVariant(store: string) {
   const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, adminSession)
   const products = result.products.edges
   if (products.length === 0) {
-    const normalizedUrl = `https://${await normalizeStoreFqdn(store)}/admin/products/new`
+    const normalizedUrl = `https://${normalizeStoreFqdn(store)}/admin/products/new`
     const addProductLink = outputContent`${outputToken.link(
       'Add a product',
       normalizedUrl,

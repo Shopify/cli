@@ -1,12 +1,14 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../../utilities/theme-command.js'
-import {ensureThemeStore} from '../../utilities/theme-store.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {ensureReplEnv, initializeRepl} from '../../services/console.js'
 import {validateThemePassword} from '../../services/flags-validation.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {InferredFlags} from '@oclif/core/interfaces'
+
+type ConsoleFlags = InferredFlags<typeof Console.flags>
 
 export default class Console extends ThemeCommand {
   static summary = 'Shopify Liquid REPL (read-eval-print loop) tool'
@@ -33,15 +35,12 @@ export default class Console extends ThemeCommand {
     }),
   }
 
-  async run() {
-    const {flags} = await this.parse(Console)
+  static multiEnvironmentsFlags: RequiredFlags = null
 
-    validateThemePassword(flags.password)
-
-    const store = ensureThemeStore(flags)
+  async command(flags: ConsoleFlags, adminSession: AdminSession) {
     const {url, password: themeAccessPassword} = flags
 
-    const adminSession = await ensureAuthenticatedThemes(store, themeAccessPassword)
+    validateThemePassword(themeAccessPassword)
 
     const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
 

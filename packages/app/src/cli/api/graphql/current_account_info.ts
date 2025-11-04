@@ -1,35 +1,9 @@
-import {AccountInfo} from '../../services/context/partner-account-info.js'
+import {CurrentAccountInfoQuery} from './partners/generated/current-account-info.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
+import {AccountInfo} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {gql} from 'graphql-request'
 
-export const CurrentAccountInfoQuery = gql`
-  query currentAccountInfo {
-    currentAccountInfo {
-      __typename
-      ... on ServiceAccount {
-        orgName
-      }
-      ... on UserAccount {
-        email
-      }
-    }
-  }
-`
-
-type AccountInfoSchema =
-  | {
-      __typename: 'UserAccount'
-      email: string
-    }
-  | {
-      __typename: 'ServiceAccount'
-      orgName: string
-    }
-
-export interface CurrentAccountInfoSchema {
-  currentAccountInfo: AccountInfoSchema
-}
+export type CurrentAccountInfoSchema = CurrentAccountInfoQuery
 
 export async function getCurrentAccountInfo(developerPlatformClient: DeveloperPlatformClient) {
   const {currentAccountInfo} = await developerPlatformClient.currentAccountInfo()
@@ -41,7 +15,7 @@ export async function getCurrentAccountInfo(developerPlatformClient: DeveloperPl
   return mapAccountInfo(currentAccountInfo)
 }
 
-function mapAccountInfo(accountInfo: AccountInfoSchema): AccountInfo {
+function mapAccountInfo(accountInfo: CurrentAccountInfoQuery['currentAccountInfo']): AccountInfo {
   if (accountInfo.__typename === 'UserAccount') {
     return {
       type: 'UserAccount',

@@ -26,6 +26,7 @@ export const CustomOnsitePaymentsAppExtensionSchema = BasePaymentsAppExtensionSc
     supports_oversell_protection: zod.boolean().optional(),
     modal_payment_method_fields: zod.array(zod.object({})).optional(),
     ui_extension_handle: zod.string().optional(),
+    start_verification_session_url: zod.string().url().optional(),
     checkout_payment_method_fields: zod
       .array(
         zod.object({
@@ -58,6 +59,7 @@ export interface CustomOnsitePaymentsAppExtensionDeployConfigType extends BasePa
   supports_3ds: boolean
 
   // CustomOnsite-specific fields
+  start_verification_session_url?: string
   update_payment_session_url?: string
   multiple_capture?: boolean
   supports_oversell_protection?: boolean
@@ -85,6 +87,7 @@ export function customOnsiteDeployConfigToCLIConfig(
     void_session_url: config.start_void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
     update_payment_session_url: config.update_payment_session_url,
+    start_verification_session_url: config.start_verification_session_url,
     merchant_label: config.merchant_label,
     supports_oversell_protection: config.supports_oversell_protection,
     supports_3ds: config.supports_3ds,
@@ -114,6 +117,7 @@ export async function customOnsitePaymentsAppExtensionDeployConfig(
     start_void_session_url: config.void_session_url,
     confirmation_callback_url: config.confirmation_callback_url,
     update_payment_session_url: config.update_payment_session_url,
+    start_verification_session_url: config.start_verification_session_url,
     merchant_label: config.merchant_label,
     supports_oversell_protection: config.supports_oversell_protection,
     supports_3ds: config.supports_3ds,

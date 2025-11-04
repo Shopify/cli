@@ -7,7 +7,8 @@ import {
   trampolineBinary,
   PREFERRED_JAVY_VERSION,
   PREFERRED_FUNCTION_RUNNER_VERSION,
-  TRAMPOLINE_VERSION,
+  V1_TRAMPOLINE_VERSION,
+  V2_TRAMPOLINE_VERSION,
 } from './binaries.js'
 import {fetch, Response} from '@shopify/cli-kit/node/http'
 import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
@@ -17,6 +18,8 @@ import {gzipSync} from 'zlib'
 const javy = javyBinary()
 const javyPlugin = javyPluginBinary()
 const functionRunner = functionRunnerBinary()
+
+const oldJavy = javyBinary('6.0.0')
 
 vi.mock('@shopify/cli-kit/node/http', async () => {
   const actualImports = await vi.importActual('@shopify/cli-kit/node/http')
@@ -29,7 +32,7 @@ vi.mock('@shopify/cli-kit/node/http', async () => {
 describe('javy', () => {
   test('properties are set correctly', () => {
     expect(javy.name).toBe('javy')
-    expect(javy.version).match(/^v\d\.\d\.\d$/)
+    expect(javy.version).match(/^\d\.\d\.\d$/)
     if (process.platform === 'win32') {
       expect(javy.path).toContain(`javy-${PREFERRED_JAVY_VERSION}.exe`)
     } else {
@@ -116,13 +119,23 @@ describe('javy', () => {
       expect(() => javy.downloadUrl('darwin', arch)).toThrowError('Unsupported architecture ppc')
     })
 
-    test('Unsupported combination throws an error', () => {
+    test('Supported combination on preferred Javy succeeds', () => {
+      // When
+      const url = javy.downloadUrl('win32', 'arm')
+
+      // Then
+      expect(url).toMatch(
+        /https:\/\/github.com\/bytecodealliance\/javy\/releases\/download\/v\d\.\d\.\d\/javy-arm-windows-v\d\.\d\.\d\.gz/,
+      )
+    })
+
+    test('Unsupported combination on old Javy throws an error', () => {
       // When
       const arch = 'arm'
       const platform = 'win32'
 
       // Then
-      expect(() => javy.downloadUrl(platform, arch)).toThrowError(
+      expect(() => oldJavy.downloadUrl(platform, arch)).toThrowError(
         'Unsupported platform/architecture combination win32/arm',
       )
     })
@@ -165,9 +178,9 @@ describe('javy', () => {
 
 describe('javy-plugin', () => {
   test('properties are set correctly', () => {
-    expect(javyPlugin.name).toBe('shopify_functions_javy_v2')
-    expect(javyPlugin.version).match(/^v\d+$/)
-    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v2.wasm$/)
+    expect(javyPlugin.name).toBe('shopify_functions_javy_v3')
+    expect(javyPlugin.version).match(/^\d+$/)
+    expect(javyPlugin.path).toMatch(/(\/|\\)shopify_functions_javy_v3.wasm$/)
   })
 
   test('downloadUrl returns the correct URL', () => {
@@ -198,7 +211,7 @@ describe('javy-plugin', () => {
 describe('functionRunner', () => {
   test('properties are set correctly', () => {
     expect(functionRunner.name).toBe('function-runner')
-    expect(functionRunner.version).match(/^v\d\.\d\.\d$/)
+    expect(functionRunner.version).match(/^\d\.\d\.\d$/)
     if (process.platform === 'win32') {
       expect(functionRunner.path).toContain(`function-runner-${PREFERRED_FUNCTION_RUNNER_VERSION}.exe`)
     } else {
@@ -284,17 +297,6 @@ describe('functionRunner', () => {
       // Then
       expect(() => functionRunner.downloadUrl('darwin', arch)).toThrowError('Unsupported architecture ppc')
     })
-
-    test('Unsupported combination throws an error', () => {
-      // When
-      const arch = 'arm'
-      const platform = 'win32'
-
-      // Then
-      expect(() => functionRunner.downloadUrl(platform, arch)).toThrowError(
-        'Unsupported platform/architecture combination win32/arm',
-      )
-    })
   })
 
   test('downloads function-runner', async () => {
@@ -345,40 +347,51 @@ describe('wasm-opt', () => {
 })
 
 describe('trampoline', () => {
-  const trampoline = trampolineBinary()
+  const v1Trampoline = trampolineBinary(V1_TRAMPOLINE_VERSION)
+  const v2Trampoline = trampolineBinary(V2_TRAMPOLINE_VERSION)
 
-  test('properties are set correctly', () => {
-    expect(trampoline.name).toBe('shopify-function-trampoline')
-    expect(trampoline.version).match(/v\d.\d.\d$/)
+  test('v1 properties are set correctly', () => {
+    expect(v1Trampoline.name).toBe('shopify-function-trampoline')
+    expect(v1Trampoline.version).match(/1.\d.\d$/)
     if (process.platform === 'win32') {
-      expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}.exe`)
+      expect(v1Trampoline.path).toContain(`shopify-function-trampoline-${V1_TRAMPOLINE_VERSION}.exe`)
     } else {
-      expect(trampoline.path).toContain(`shopify-function-trampoline-${TRAMPOLINE_VERSION}`)
+      expect(v1Trampoline.path).toContain(`shopify-function-trampoline-${V1_TRAMPOLINE_VERSION}`)
+    }
+  })
+
+  test('v2 properties are set correctly', () => {
+    expect(v2Trampoline.name).toBe('shopify-function-trampoline')
+    expect(v2Trampoline.version).match(/2.\d.\d$/)
+    if (process.platform === 'win32') {
+      expect(v2Trampoline.path).toContain(`shopify-function-trampoline-${V2_TRAMPOLINE_VERSION}.exe`)
+    } else {
+      expect(v2Trampoline.path).toContain(`shopify-function-trampoline-${V2_TRAMPOLINE_VERSION}`)
     }
   })
 
   test('downloadUrl returns the correct URL', () => {
     // When
-    const url = trampoline.downloadUrl('darwin', 'x64')
+    const url = v2Trampoline.downloadUrl('darwin', 'x64')
 
     // Then
     const expectedUrlRegex = new RegExp(
-      `https://github.com/Shopify/shopify-function-wasm-api/releases/download/shopify_function_trampoline/${trampoline.version}/shopify-function-trampoline-x86_64-macos-${trampoline.version}.gz`,
+      `https://github.com/Shopify/shopify-function-wasm-api/releases/download/shopify_function_trampoline/v${v2Trampoline.version}/shopify-function-trampoline-x86_64-macos-v${v2Trampoline.version}.gz`,
     )
     expect(url).toMatch(expectedUrlRegex)
   })
 
   test('downloads trampoline', async () => {
     // Given
-    await removeFile(trampoline.path)
-    await expect(fileExists(trampoline.path)).resolves.toBeFalsy()
+    await removeFile(v2Trampoline.path)
+    await expect(fileExists(v2Trampoline.path)).resolves.toBeFalsy()
     vi.mocked(fetch).mockResolvedValue(new Response(gzipSync('trampoline')))
 
     // When
-    await downloadBinary(trampoline)
+    await downloadBinary(v2Trampoline)
 
     // Then
     expect(fetch).toHaveBeenCalledOnce()
-    await expect(fileExists(trampoline.path)).resolves.toBeTruthy()
+    await expect(fileExists(v2Trampoline.path)).resolves.toBeTruthy()
   })
 })

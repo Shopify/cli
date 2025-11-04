@@ -12,7 +12,7 @@ import {showNotificationsIfNeeded} from './notifications-system.js'
 import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
-import {Command, Errors} from '@oclif/core'
+import {Command, Config, Errors} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -56,6 +56,7 @@ abstract class BaseCommand extends Command {
       // This function runs just prior to `run`
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
+    await removeDuplicatedPlugins(this.config)
     this.showNpmFlagWarning()
     await showNotificationsIfNeeded()
     return super.init()
@@ -334,6 +335,24 @@ function argsFromEnvironment<TFlags extends FlagOutput, TGlobalFlags extends Fla
 
 function commandSupportsFlag(flags: FlagInput | undefined, flagName: string): boolean {
   return Boolean(flags) && Object.prototype.hasOwnProperty.call(flags, flagName)
+}
+
+async function removeDuplicatedPlugins(config: Config): Promise<void> {
+  const plugins = Array.from(config.plugins.values())
+  const bundlePlugins = ['@shopify/app', '@shopify/plugin-cloudflare']
+  const pluginsToRemove = plugins.filter((plugin) => bundlePlugins.includes(plugin.name))
+  if (pluginsToRemove.length > 0) {
+    const commandsToRun = pluginsToRemove.map((plugin) => `  - shopify plugins remove ${plugin.name}`).join('\n')
+    renderWarning({
+      headline: `Unsupported plugins detected: ${pluginsToRemove.map((plugin) => plugin.name).join(', ')}`,
+      body: [
+        'They are already included in the CLI and installing them as custom plugins can cause conflicts.',
+        `You can fix it by running:\n${commandsToRun}`,
+      ],
+    })
+  }
+  const filteredPlugins = plugins.filter((plugin) => !bundlePlugins.includes(plugin.name))
+  config.plugins = new Map(filteredPlugins.map((plugin) => [plugin.name, plugin]))
 }
 
 export default BaseCommand

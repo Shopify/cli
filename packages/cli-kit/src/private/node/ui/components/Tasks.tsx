@@ -1,16 +1,10 @@
-import {TextAnimation} from './TextAnimation.js'
-import useLayout from '../hooks/use-layout.js'
+import {LoadingBar} from './LoadingBar.js'
 import useAsyncAndUnmount from '../hooks/use-async-and-unmount.js'
 import {isUnitTest} from '../../../../public/node/context/local.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
-import {shouldDisplayColors} from '../../../../public/node/output.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
-import {handleCtrlC} from '../../ui.js'
-import {Box, Text, useStdin, useInput} from 'ink'
+import {useExitOnCtrlC} from '../hooks/use-exit-on-ctrl-c.js'
 import React, {useRef, useState} from 'react'
-
-const loadingBarChar = '▀'
-const hillString = '▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁'
 
 export interface Task<TContext = unknown> {
   title: string
@@ -28,6 +22,7 @@ interface TasksProps<TContext> {
   onComplete?: (ctx: TContext) => void
   abortSignal?: AbortSignal
   noColor?: boolean
+  noProgressBar?: boolean
 }
 
 enum TasksState {
@@ -69,17 +64,12 @@ function Tasks<TContext>({
   onComplete = noop,
   abortSignal,
   noColor,
+  noProgressBar = false,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
-  const {twoThirds} = useLayout()
-  let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
-  if (noColor ?? !shouldDisplayColors()) {
-    loadingBar = hillString.repeat(Math.ceil(twoThirds / hillString.length))
-  }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)
-  const {isRawModeSupported} = useStdin()
 
   const runTasks = async () => {
     for (const task of tasks) {
@@ -109,16 +99,7 @@ function Tasks<TContext>({
     },
   })
 
-  useInput(
-    (input, key) => {
-      handleCtrlC(input, key)
-
-      if (key.return) {
-        return null
-      }
-    },
-    {isActive: Boolean(isRawModeSupported)},
-  )
+  useExitOnCtrlC()
 
   const {isAborted} = useAbortSignal(abortSignal)
 
@@ -127,10 +108,7 @@ function Tasks<TContext>({
   }
 
   return state === TasksState.Loading && !isAborted ? (
-    <Box flexDirection="column">
-      <TextAnimation text={loadingBar} maxWidth={twoThirds} />
-      <Text>{currentTask.title} ...</Text>
-    </Box>
+    <LoadingBar title={currentTask.title} noColor={noColor} noProgressBar={noProgressBar} />
   ) : null
 }
 

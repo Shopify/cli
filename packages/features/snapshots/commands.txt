@@ -11,6 +11,7 @@
 │  │  └─ show
 │  ├─ function
 │  │  ├─ build
+│  │  ├─ info
 │  │  ├─ replay
 │  │  ├─ run
 │  │  ├─ schema
@@ -28,6 +29,7 @@
 │  └─ webhook
 │     └─ trigger
 ├─ auth
+│  ├─ login
 │  └─ logout
 ├─ commands
 ├─ config

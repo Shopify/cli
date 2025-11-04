@@ -1,7 +1,6 @@
 import {chooseFunction, functionFlags} from '../../../services/function/common.js'
 import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
-import {showApiKeyDeprecationWarning} from '../../../prompts/deprecation-warnings.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
@@ -19,12 +18,6 @@ export default class FunctionReplay extends AppLinkedCommand {
     ...appFlags,
     ...functionFlags,
     ...jsonFlag,
-    'api-key': Flags.string({
-      hidden: true,
-      description: "Application's API key",
-      env: 'SHOPIFY_FLAG_API_KEY',
-      exclusive: ['config'],
-    }),
     log: Flags.string({
       char: 'l',
       description:
@@ -43,13 +36,10 @@ export default class FunctionReplay extends AppLinkedCommand {
 
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(FunctionReplay)
-    if (flags['api-key']) {
-      await showApiKeyDeprecationWarning()
-    }
 
     const {app} = await linkedAppContext({
       directory: flags.path,
-      clientId: flags['client-id'] ?? flags['api-key'],
+      clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
     })

@@ -1,6 +1,0 @@
-query ShopDetails {
-  shop {
-    id
-    name
-  }
-}

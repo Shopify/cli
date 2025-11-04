@@ -71,26 +71,6 @@ const schemas = [
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
   },
-  // Store package schemas
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
-    localPath: './packages/store/src/cli/api/graphql/admin/admin_schema.graphql',
-    usesLfs: true,
-  },
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
-    localPath: './packages/store/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
-  },
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
-    localPath: './packages/store/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
-  },
 ]
 
 
@@ -170,7 +150,9 @@ async function fetchFiles() {
  */
 async function fetchFilesFromLocal() {
   for (const schema of schemas) {
-    const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${schema.repo}`).toString().split('/areas')[0].trim()
+    // "dev cd world" is deprecated in favor of "dev cd //"
+    const localDir = schema.repo === 'world' ? '//' : schema.repo
+    const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${localDir}`).toString().split('/areas')[0].trim()
     const sourcePath = path.join(localRepoDirectory, schema.pathToFile)
     console.log('Copying', sourcePath, 'to', schema.localPath)
     fs.copyFileSync(sourcePath, schema.localPath)

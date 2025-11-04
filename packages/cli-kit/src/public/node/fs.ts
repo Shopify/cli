@@ -17,6 +17,7 @@ import {temporaryDirectory, temporaryDirectoryTask} from 'tempy'
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp} from 'find-up'
 import {minimatch} from 'minimatch'
+import fastGlobLib from 'fast-glob'
 import {
   mkdirSync as fsMkdirSync,
   readFileSync as fsReadFileSync,
@@ -28,8 +29,10 @@ import {
   constants as fsConstants,
   existsSync as fsFileExistsSync,
   unlinkSync as fsUnlinkSync,
+  accessSync,
   ReadStream,
   WriteStream,
+  statSync,
 } from 'fs'
 import {
   mkdir as fsMkdir,
@@ -309,6 +312,17 @@ export async function isDirectory(path: string): Promise<boolean> {
 }
 
 /**
+ * Check whether a path is a directory.
+ *
+ * @param path - Path to check.
+ * @returns True if the path is a directory, false otherwise.
+ */
+export function isDirectorySync(path: string): boolean {
+  outputDebug(outputContent`Checking if ${outputToken.path(path)} is a directory...`)
+  return fsStatSync(path).isDirectory()
+}
+
+/**
  * Get the size of a file.
  *
  * @param path - Path to the file.
@@ -440,6 +454,32 @@ export async function fileHasExecutablePermissions(path: string): Promise<boolea
   }
 }
 
+export function fileHasWritePermissions(path: string): boolean {
+  try {
+    accessSync(path, fsConstants.W_OK)
+    return true
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+export function unixFileIsOwnedByCurrentUser(path: string): boolean | undefined {
+  // process.getuid() is only available on Unix-like systems
+  if (process.platform === 'win32' || typeof process.getuid !== 'function') return undefined
+  if (!fileExistsSync(path)) return false
+
+  try {
+    const stats = statSync(path)
+    const currentUid = process.getuid()
+
+    return stats.uid === currentUid
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
 /**
  * Returns true if a file or directory exists.
  *
@@ -504,6 +544,21 @@ export async function glob(pattern: Pattern | Pattern[], options?: GlobOptions):
     overridenOptions = {...options, dot: true}
   }
   return fastGlob(pattern, overridenOptions)
+}
+
+/**
+ * Synchronously traverse the file system and return pathnames that match the given pattern.
+ *
+ * @param pattern - A glob pattern or an array of glob patterns.
+ * @param options - Options for the glob.
+ * @returns An array of pathnames that match the given pattern.
+ */
+export function globSync(pattern: Pattern | Pattern[], options?: GlobOptions): string[] {
+  let overridenOptions = options
+  if (options?.dot == null) {
+    overridenOptions = {...options, dot: true}
+  }
+  return fastGlobLib.sync(pattern, overridenOptions)
 }
 
 /**

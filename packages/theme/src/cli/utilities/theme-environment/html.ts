@@ -23,6 +23,8 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
+    ctx.lastRequestedPath = event.path
+
     const shouldRenderUploadErrorPage =
       ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0
 
@@ -208,7 +210,7 @@ class ThemeIdMismatchError extends Error {
         `URL: ${response.url}`,
         'This is likely related to an issue in upstream Shopify APIs.',
         'Please try again in a few minutes and report this issue:',
-        'https://github.com/Shopify/cli/issues/new?template=bug-report.yml',
+        'https://community.shopify.dev/c/shopify-cli-libraries/14',
       ].join('\n'),
     )
     this.response = response

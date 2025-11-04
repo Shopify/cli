@@ -7,12 +7,15 @@ import {
   updateUploadErrors,
 } from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {renderTasksToStdErr} from './theme-ui.js'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('./theme-ui.js')
 
 beforeEach(() => {
   vi.mocked(deleteThemeAssets).mockImplementation(() => Promise.resolve([]))
@@ -437,6 +440,17 @@ describe('theme-uploader', () => {
   })
 
   test('should create batches for files when bulk upload request size limit is reached', async () => {
+    const originalByteLength = Buffer.byteLength
+    const byteLengthSpy = vi.spyOn(Buffer, 'byteLength')
+
+    // Mock the byte length to return the max batch bytesize
+    byteLengthSpy.mockImplementation((value: any, encoding?: BufferEncoding) => {
+      if (typeof value === 'string' && value === 'some_settings_data') {
+        return MAX_BATCH_BYTESIZE
+      }
+      return originalByteLength(value, encoding)
+    })
+
     // Given
     const remoteChecksums: Checksum[] = []
     const themeFileSystem = fakeThemeFileSystem(
@@ -448,7 +462,6 @@ describe('theme-uploader', () => {
             key: 'config/settings_data.json',
             checksum: '2',
             value: 'some_settings_data',
-            stats: {size: MAX_BATCH_BYTESIZE, mtime: 0},
           },
         ],
         ['config/settings_schema.json', {key: 'config/settings_schema.json', checksum: '3', value: 'settings_schema'}],
@@ -467,6 +480,8 @@ describe('theme-uploader', () => {
 
     // Then
     expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(3)
+
+    byteLengthSpy.mockRestore()
   })
 
   test('should retry failed uploads', async () => {
@@ -614,6 +629,41 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
+  })
+})
+
+describe('task progress rendering', () => {
+  const theme = {id: 1, name: 'Amazing Theme', createdAtRuntime: false, processing: false, role: ''}
+  const adminSession = {token: '', storeFqdn: 'test-store.myshopify.com'}
+
+  test('should use renderTasksToStdErr', async () => {
+    // Given
+    const remote: Checksum[] = []
+    const local = fakeThemeFileSystem('tmp', new Map())
+    const uploadOptions = {nodelete: false, multiEnvironment: false}
+
+    // When
+    const {renderThemeSyncProgress} = uploadTheme(theme, adminSession, remote, local, uploadOptions)
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(vi.mocked(renderTasksToStdErr)).toHaveBeenCalled()
+  })
+
+  describe('when multiEnvironment is true', () => {
+    test('should not display progress bar', async () => {
+      // Given
+      const remote: Checksum[] = []
+      const local = fakeThemeFileSystem('tmp', new Map())
+      const uploadOptions = {nodelete: false, multiEnvironment: true}
+
+      // When
+      const {renderThemeSyncProgress} = uploadTheme(theme, adminSession, remote, local, uploadOptions)
+      await renderThemeSyncProgress()
+
+      // Then
+      expect(vi.mocked(renderTasksToStdErr)).toHaveBeenCalledWith(expect.any(Array), undefined, true)
+    })
   })
 })
 

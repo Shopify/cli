@@ -23,21 +23,21 @@ import {Writable} from 'stream'
 export const pollAppLogs = async ({
   stdout,
   appLogsFetchInput: {jwtToken, cursor},
-  apiKey,
   developerPlatformClient,
   resubscribeCallback,
   storeName,
   organizationId,
   abortSignal,
+  logsDir,
 }: {
   stdout: Writable
   appLogsFetchInput: AppLogsOptions
-  apiKey: string
   developerPlatformClient: DeveloperPlatformClient
   resubscribeCallback: () => Promise<string>
   storeName: string
   organizationId: string
   abortSignal?: AbortSignal
+  logsDir: string
 }) => {
   if (abortSignal?.aborted) {
     return
@@ -69,9 +69,9 @@ export const pollAppLogs = async ({
           const logFile = await writeAppLogsToFile({
             appLog: log,
             appLogPayload: payload,
-            apiKey,
             stdout,
             storeName,
+            logsDir,
           })
           stdout.write(
             outputContent`${outputToken.gray('└ ')}${outputToken.link(
@@ -117,12 +117,12 @@ export const pollAppLogs = async ({
           jwtToken: nextJwtToken,
           cursor: responseCursor || cursor,
         },
-        apiKey,
         developerPlatformClient,
         resubscribeCallback,
         storeName,
         organizationId,
         abortSignal,
+        logsDir,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })
@@ -140,12 +140,12 @@ export const pollAppLogs = async ({
           jwtToken,
           cursor: undefined,
         },
-        apiKey,
         developerPlatformClient,
         resubscribeCallback,
         storeName,
         organizationId,
         abortSignal,
+        logsDir,
       }).catch((error) => {
         outputDebug(`Unexpected error during polling: ${error}}\n`)
       })

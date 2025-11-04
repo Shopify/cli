@@ -83,7 +83,7 @@ export interface AppEvent {
   appWasReloaded?: boolean
 }
 
-type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; uid: string}
+type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; file?: string; uid: string}
 
 /**
  * App event watcher will emit events when changes are detected in the file system.
@@ -153,6 +153,8 @@ export class AppEventWatcher extends EventEmitter {
           this.app = appEvent.app
           if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
           await this.esbuildManager.updateContexts(appEvent)
+
+          await this.rescanImports(appEvent)
 
           // Find affected created/updated extensions and build them
           const buildableEvents = appEvent.extensionEvents.filter((extEvent) => extEvent.type !== EventType.Deleted)
@@ -248,7 +250,15 @@ export class AppEventWatcher extends EventEmitter {
           // If there is an `errors` array, it's an esbuild error, format it and log it
           // If not, just print the error message to stderr.
           const errors: Message[] = error.errors ?? []
+          let errorMessage = error.message
+          let errorFile: string | undefined
+
           if (errors.length) {
+            // Use the first error for the main message and file
+            const firstError = errors[0]
+            errorMessage = firstError?.text
+            errorFile = firstError?.location?.file
+
             const formattedErrors = formatMessagesSync(errors, {kind: 'error', color: !isUnitTest()})
             formattedErrors.forEach((error) => {
               this.options.stderr.write(error)
@@ -256,7 +266,13 @@ export class AppEventWatcher extends EventEmitter {
           } else {
             this.options.stderr.write(error.message)
           }
-          extEvent.buildResult = {status: 'error', error: error.message, uid: ext.uid}
+
+          extEvent.buildResult = {
+            status: 'error',
+            error: errorMessage,
+            file: errorFile,
+            uid: ext.uid,
+          }
         }
       })
     })
@@ -277,5 +293,26 @@ export class AppEventWatcher extends EventEmitter {
       appURL: this.appURL,
     }
     await extension.buildForBundle(buildOptions, this.buildOutputPath)
+  }
+
+  /**
+   * Handles import rescanning for affected extensions
+   * Returns true if the imports changed
+   */
+  private async rescanImports(appEvent: AppEvent): Promise<void> {
+    // Don't rescan for config files
+    const isConfigFile = appEvent.path.endsWith('.toml')
+    if (isConfigFile) return
+
+    const affectedExtensions = appEvent.extensionEvents
+      .filter((extEvent) => extEvent.type !== EventType.Deleted)
+      .map((extEvent) => extEvent.extension)
+
+    // Rescan imports for all affected extensions
+    if (affectedExtensions.length > 0) {
+      const rescanResults = await Promise.all(affectedExtensions.map(async (ext) => ext.rescanImports()))
+      const watcherRefreshNeeded = rescanResults.some((changed) => changed)
+      if (watcherRefreshNeeded) await this.fileWatcher?.start()
+    }
   }
 }

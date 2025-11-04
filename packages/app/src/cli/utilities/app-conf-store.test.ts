@@ -4,7 +4,7 @@ import {
   setCachedAccountInfo,
   clearCachedAccountInfo,
 } from './app-conf-store.js'
-import {AccountInfo} from '../services/context/partner-account-info.js'
+import {AccountInfo} from '@shopify/cli-kit/node/session'
 import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'

@@ -1,9 +1,11 @@
 export interface WebhookSubscription {
   uri: string
   topics?: string[]
+  actions?: string[]
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
+  payload_query?: string
 }
 
 interface PrivacyComplianceConfig {

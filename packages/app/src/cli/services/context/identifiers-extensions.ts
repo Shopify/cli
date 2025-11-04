@@ -61,7 +61,8 @@ export async function ensureExtensionsIds(
 
   // Migration is only supported in partners client
   const clientName = options.developerPlatformClient.clientName
-  const migrationClient = clientName === ClientName.Partners ? options.developerPlatformClient : new PartnersClient()
+  const migrationClient =
+    clientName === ClientName.Partners ? options.developerPlatformClient : PartnersClient.getInstance()
 
   let didMigrateDashboardExtensions = false
 

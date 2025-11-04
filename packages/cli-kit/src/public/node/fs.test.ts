@@ -3,6 +3,8 @@ import {
   copyFile,
   mkdir,
   fileHasExecutablePermissions,
+  fileHasWritePermissions,
+  unixFileIsOwnedByCurrentUser,
   writeFile,
   readFile,
   inTemporaryDirectory,
@@ -385,6 +387,104 @@ describe('copyDirectoryContents', () => {
 
       // When
       await expect(copyDirectoryContents(srcDir, destDir)).rejects.toThrow(`Source directory ${srcDir} does not exist`)
+    })
+  })
+})
+
+describe('fileHasWritePermissions', () => {
+  test('returns true when file has write permissions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'writable-file.txt')
+      await writeFile(filePath, 'test content')
+
+      // When
+      const result = await fileHasWritePermissions(filePath)
+
+      // Then
+      expect(result).toBe(true)
+    })
+  })
+
+  test('returns false when file does not have write permissions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'readonly-file.txt')
+      await writeFile(filePath, 'test content')
+      // Read-only
+      await chmod(filePath, 0o444)
+
+      // When
+      const result = await fileHasWritePermissions(filePath)
+
+      // Then
+      expect(result).toBe(false)
+    })
+  })
+
+  test('returns false when file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'nonexistent-file.txt')
+
+      // When
+      const result = await fileHasWritePermissions(filePath)
+
+      // Then
+      expect(result).toBe(false)
+    })
+  })
+
+  test('returns true when directory has write permissions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // When
+      const result = await fileHasWritePermissions(tmpDir)
+
+      // Then
+      expect(result).toBe(true)
+    })
+  })
+})
+
+describe('unixFileIsOwnedByCurrentUser', () => {
+  test.skipIf(process.platform === 'win32')('returns true when file is owned by current user', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'my-file.txt')
+      await writeFile(filePath, 'test content')
+
+      // When
+      const result = await unixFileIsOwnedByCurrentUser(filePath)
+
+      // Then
+      expect(result).toBe(true)
+    })
+  })
+
+  test.skipIf(process.platform === 'win32')('returns false when file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'nonexistent-file.txt')
+
+      // When
+      const result = await unixFileIsOwnedByCurrentUser(filePath)
+
+      // Then
+      expect(result).toBe(false)
+    })
+  })
+
+  test.runIf(process.platform === 'win32')('returns undefined on Windows', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const filePath = joinPath(tmpDir, 'my-file.txt')
+      await writeFile(filePath, 'test content')
+
+      // When
+      const result = await unixFileIsOwnedByCurrentUser(filePath)
+
+      // Then
+      expect(result).toBe(undefined)
     })
   })
 })

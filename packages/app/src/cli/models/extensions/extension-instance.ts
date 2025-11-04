@@ -14,13 +14,12 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {
   ExtensionBuildOptions,
-  buildFlowTemplateExtension,
   buildFunctionExtension,
   buildThemeExtension,
   buildUIExtension,
   bundleFunctionExtension,
 } from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -29,10 +28,12 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {uniq} from '@shopify/cli-kit/common/array'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
@@ -69,6 +70,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   handle: string
   specification: ExtensionSpecification
   uid: string
+  private cachedImportPaths?: string[]
 
   get graphQLType() {
     return (this.specification.graphQLType ?? this.specification.identifier).toUpperCase()
@@ -135,7 +137,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    return this.isFunctionExtension ? 'index.wasm' : `${this.handle}.js`
+    const mode = this.specification.buildConfig.mode
+    if (mode === 'copy_files' || mode === 'theme') {
+      return ''
+    } else if (mode === 'function') {
+      return 'index.wasm'
+    } else {
+      return `${this.handle}.js`
+    }
   }
 
   constructor(options: {
@@ -163,7 +172,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     if (this.isFunctionExtension) {
       const config = this.configuration as unknown as FunctionConfigType
-      this.outputPath = joinPath(this.directory, config.build.path ?? joinPath('dist', 'index.wasm'))
+      const defaultPath = joinPath('dist', 'index.wasm')
+      this.outputPath = joinPath(this.directory, config.build?.path ?? defaultPath)
     }
   }
 
@@ -274,13 +284,31 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   // Functions specific properties
   get buildCommand() {
     const config = this.configuration as unknown as FunctionConfigType
-    return config.build.command
+    return config.build?.command
   }
 
-  // Paths to be watched in a dev session
-  // Return undefiend if there aren't custom configured paths. (everything is watched)
+  /**
+   * Default entry paths to be watched in a dev session.
+   * It returns the entry source file path if defined,
+   * or the list of files generated from the bundle content (UI extensions).
+   * @returns Array of strings with the paths to be watched
+   */
+  devSessionDefaultWatchPaths(): string[] {
+    // For UI extensions, use the generated bundle content
+    if (this.specification.identifier === 'ui_extension') {
+      const {main, assets} = this.getBundleExtensionStdinContent()
+      const mainPaths = extractJSImports(main, this.directory)
+      const assetPaths = assets?.flatMap((asset) => extractJSImports(asset.content, this.directory)) ?? []
+      return mainPaths.concat(...assetPaths)
+    }
+
+    return [this.entrySourceFilePath]
+  }
+
+  // Custom paths to be watched in a dev session
+  // Return undefiend if there aren't custom configured paths (everything is watched)
   // If there are, include some default paths.
-  get devSessionWatchPaths() {
+  get devSessionCustomWatchPaths() {
     const config = this.configuration as unknown as FunctionConfigType
     if (!config.build || !config.build.watch) return undefined
 
@@ -291,31 +319,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     watchPaths.push(joinPath(this.directory, '**.toml'))
 
     return watchPaths
-  }
-
-  get watchBuildPaths() {
-    if (this.isFunctionExtension) {
-      const config = this.configuration as unknown as FunctionConfigType
-      const configuredPaths = config.build.watch ? [config.build.watch].flat() : []
-
-      if (!this.isJavaScript && configuredPaths.length === 0) {
-        return null
-      }
-
-      const watchPaths: string[] = configuredPaths ?? []
-      if (this.isJavaScript && configuredPaths.length === 0) {
-        watchPaths.push(joinPath('src', '**', '*.{js,ts}'))
-      }
-      watchPaths.push(joinPath('**', '!(.)*.graphql'))
-
-      return watchPaths.map((path) => joinPath(this.directory, path))
-    } else if (this.isESBuildExtension) {
-      return [joinPath(this.directory, 'src', '**', '*.{ts,tsx,js,jsx}')]
-    } else if (this.isThemeExtension) {
-      return [joinPath(this.directory, '*', '*')]
-    } else {
-      return []
-    }
   }
 
   async watchConfigurationPaths() {
@@ -344,17 +347,23 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     switch (mode) {
       case 'theme':
-        return buildThemeExtension(this, options)
+        await buildThemeExtension(this, options)
+        return bundleThemeExtension(this, options)
       case 'function':
         return buildFunctionExtension(this, options)
       case 'ui':
         return buildUIExtension(this, options)
-      case 'flow':
-        return buildFlowTemplateExtension(this, options)
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
         break
+      case 'copy_files':
+        return copyFilesForExtension(
+          this,
+          options,
+          this.specification.buildConfig.filePatterns,
+          this.specification.buildConfig.ignoredFilePatterns,
+        )
       case 'none':
         break
     }
@@ -364,9 +373,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
 
     await this.build(options)
-    if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    }
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
@@ -395,7 +401,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
     const id = this.getOutputFolderId(outputId)
-    const outputFile = this.isThemeExtension ? '' : joinPath('dist', this.outputFileName)
+    const outputFile = this.outputFileName === '' ? '' : joinPath('dist', this.outputFileName)
     return joinPath(directory, id, outputFile)
   }
 
@@ -455,6 +461,72 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
     await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
+  }
+
+  /**
+   * Returns all files that need to be watched for this extension
+   * This includes files in the extension directory (respecting watch paths and gitignore)
+   * as well as any imported files from outside the extension directory
+   */
+  watchedFiles(): string[] {
+    const watchedFiles: string[] = []
+
+    // Add extension directory files based on devSessionCustomWatchPaths or all files
+    const patterns = this.devSessionCustomWatchPaths ?? ['**/*']
+    const files = patterns.flatMap((pattern) =>
+      globSync(pattern, {
+        cwd: this.directory,
+        absolute: true,
+        followSymbolicLinks: false,
+        ignore: ['**/node_modules/**', '**/.git/**', '**/dist/**', '**/*.swp', '**/generated/**'],
+      }),
+    )
+    watchedFiles.push(...files.flat())
+
+    // Add imported files from outside the extension directory unless custom watch paths are defined
+    if (!this.devSessionCustomWatchPaths) {
+      const importedFiles = this.scanImports()
+      watchedFiles.push(...importedFiles)
+    }
+
+    return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
+  }
+
+  /**
+   * Rescans imports for this extension and updates the cached import paths
+   * Returns true if the imports changed
+   */
+  async rescanImports(): Promise<boolean> {
+    const oldImportPaths = this.cachedImportPaths
+    this.cachedImportPaths = undefined
+    this.scanImports()
+    return oldImportPaths !== this.cachedImportPaths
+  }
+
+  /**
+   * Scans for imports in this extension's entry files
+   * Returns absolute paths of imported files that are outside the extension directory
+   */
+  private scanImports(): string[] {
+    // Return cached paths if available
+    if (this.cachedImportPaths !== undefined) {
+      return this.cachedImportPaths
+    }
+
+    try {
+      const imports = this.devSessionDefaultWatchPaths().flatMap((entryFile) => {
+        return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
+      })
+      // Cache and return unique paths
+      this.cachedImportPaths = uniq(imports) ?? []
+      outputDebug(`Found ${this.cachedImportPaths.length} external imports (recursively) for extension ${this.handle}`)
+      return this.cachedImportPaths
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      outputDebug(`Failed to scan imports for extension ${this.handle}: ${error}`)
+      this.cachedImportPaths = []
+      return this.cachedImportPaths
+    }
   }
 
   private buildHandle() {

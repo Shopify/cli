@@ -13,11 +13,14 @@ export const WebhookSubscriptionSchema = zod.object({
       invalid_type_error: 'Value must be string[]',
     })
     .optional(),
+  actions: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   uri: zod.preprocess((arg) => removeTrailingSlash(arg as string), WebhookSubscriptionUriValidation, {
     required_error: 'Missing value at',
   }),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  payload_query: zod.string({invalid_type_error: 'Value must be a string'}).trim().min(1).optional(),
+
   compliance_topics: zod
     .array(
       zod.enum([ComplianceTopic.CustomersRedact, ComplianceTopic.CustomersDataRequest, ComplianceTopic.ShopRedact]),

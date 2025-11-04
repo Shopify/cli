@@ -9,11 +9,11 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import * as appLogsUtils from '../../app-logs/utils.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {createLogsDir} from '@shopify/cli-kit/node/logs'
+import {mkdir} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/logs')
+vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../../app-logs/dev/poll-app-logs.js')
 
@@ -102,7 +102,7 @@ describe('app-logs-polling', () => {
 
       developerPlatformClient = testDeveloperPlatformClient({subscribeToAppLogs})
 
-      vi.mocked(createLogsDir).mockResolvedValue()
+      vi.mocked(mkdir).mockResolvedValue()
       vi.mocked(pollAppLogs).mockResolvedValue()
       vi.spyOn(appLogsUtils, 'subscribeToAppLogs').mockResolvedValue(JWT_TOKEN)
     })
@@ -144,12 +144,12 @@ describe('app-logs-polling', () => {
         'organizationId',
         stdout,
       )
-      expect(createLogsDir).toHaveBeenCalledWith(API_KEY)
+      expect(mkdir).toHaveBeenCalledWith(localApp.getLogsDir())
       expect(pollAppLogs).toHaveBeenCalledOnce()
       expect(vi.mocked(pollAppLogs).mock.calls[0]?.[0]).toMatchObject({
         stdout,
         appLogsFetchInput: {jwtToken: JWT_TOKEN},
-        apiKey: API_KEY,
+        logsDir: localApp.getLogsDir(),
       })
 
       const eventCallback = appWatcher.onEvent.mock.calls[0][0]

@@ -11,19 +11,23 @@ interface TransformedWebhookSubscription {
   api_version: string
   uri: string
   topic: string
+  actions: string[]
   compliance_topics?: string[]
   include_fields?: string[]
   filter?: string
+  payload_query?: string
 }
 
 export const SingleWebhookSubscriptionSchema = zod.object({
   topic: zod.string(),
+  actions: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   api_version: zod.string(),
   uri: zod.preprocess(removeTrailingSlash as (arg: unknown) => unknown, WebhookSubscriptionUriValidation, {
     required_error: 'Missing value at',
   }),
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
+  payload_query: zod.string({invalid_type_error: 'Value must be a string'}).trim().min(1).optional(),
 })
 
 /* this transforms webhooks remotely to be accepted by the TOML

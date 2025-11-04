@@ -39,8 +39,11 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {captureOutput} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../services/local-storage.js')
+// Mock captureOutput to prevent executing `npm prefix` inside getPackageManager
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
 vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
@@ -267,6 +270,7 @@ wrong = "property"
   test('defaults to npm as the package manager when the configuration is valid', async () => {
     // Given
     await writeConfig(appConfiguration)
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
@@ -280,6 +284,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
     const yarnLockPath = joinPath(tmpDir, yarnLockfile)
     await writeFile(yarnLockPath, '')
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
@@ -293,6 +298,7 @@ wrong = "property"
     await writeConfig(appConfiguration)
     const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
     await writeFile(pnpmLockPath, '')
+    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
 
     // When
     const app = await loadTestingApp()
@@ -503,51 +509,6 @@ wrong = "property"
     await expect(loadTestingApp()).rejects.toThrow(/Duplicated handle/)
   })
 
-  test('throws an error if the app has more than one print action with the same target', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    const blockConfiguration = `
-      api_version = "2022-07"
-
-      [[extensions]]
-      type = "ui_extension"
-      name = "my_extension_1"
-      handle = "handle-1"
-      description = "custom description"
-
-      [[extensions.targeting]]
-      module = "./src/ActionExtension.js"
-      target = "admin.product-details.print-action.render"
-
-      [[extensions]]
-      type = "ui_extension"
-      handle = "handle-2"
-      name = "my_extension_2"
-      description = "custom description"
-
-      [[extensions.targeting]]
-      module = "./src/ActionExtension.js"
-      target = "admin.product-details.print-action.render"
-      `
-    await writeBlockConfig({
-      blockConfiguration,
-      name: 'my_extension_1',
-    })
-
-    // Create a temporary ActionExtension.js file
-    const extensionDirectory = joinPath(tmpDir, 'extensions', 'my_extension_1', 'src')
-    await mkdir(extensionDirectory)
-
-    const tempFilePath = joinPath(extensionDirectory, 'ActionExtension.js')
-    await writeFile(tempFilePath, '/* ActionExtension.js content */')
-
-    // When
-    await expect(loadTestingApp()).rejects.toThrow(
-      `A single target can't support two print action extensions from the same app. Point your extensions at different targets, or remove an extension.\n\nThe following extensions both target admin.product-details.print-action.render:\n  · handle-1\n  · handle-2`,
-    )
-  })
-
   test('throws an error if the extension configuration is unified and doesnt include a handle', async () => {
     // Given
     await writeConfig(appConfiguration, {
@@ -617,7 +578,18 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'backend'})
 
     // Then
-    await expect(loadTestingApp()).rejects.toThrow()
+    try {
+      await loadTestingApp()
+      expect.fail('Expected loadTestingApp to throw an error')
+    } catch (error) {
+      if (!(error instanceof AbortError)) {
+        throw error
+      }
+      expect(error.message).toContain('You can only have one "web" configuration file with the [33mbackend[39m role')
+      expect(error.message).toContain('Conflicting configurations found at:')
+      expect(error.message).toContain(joinPath(webDirectory, configurationFileNames.web))
+      expect(error.message).toContain(joinPath(anotherWebDirectory, configurationFileNames.web))
+    }
   })
 
   test('throws an error if there are multiple frontends', async () => {
@@ -629,7 +601,18 @@ wrong = "property"
     await writeWebConfiguration({webDirectory: anotherWebDirectory, role: 'frontend'})
 
     // Then
-    await expect(loadTestingApp()).rejects.toThrow()
+    try {
+      await loadTestingApp()
+      expect.fail('Expected loadTestingApp to throw an error')
+    } catch (error) {
+      if (!(error instanceof AbortError)) {
+        throw error
+      }
+      expect(error.message).toContain('You can only have one "web" configuration file with the [33mfrontend[39m role')
+      expect(error.message).toContain('Conflicting configurations found at:')
+      expect(error.message).toContain(joinPath(webDirectory, configurationFileNames.web))
+      expect(error.message).toContain(joinPath(anotherWebDirectory, configurationFileNames.web))
+    }
   })
 
   test('loads the app with custom located web blocks', async () => {
@@ -3302,6 +3285,38 @@ describe('WebhooksSchema', () => {
 
     const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+  })
+
+  test('accepts webhook subscription with payload_query', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/webhooks',
+          payload_query: 'query { product { id title } }',
+        },
+      ],
+    }
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+  })
+
+  test('accepts webhook subscription with actions', async () => {
+    const webhookConfig: WebhooksConfig = {
+      api_version: '2024-01',
+      subscriptions: [
+        {
+          topics: ['products/create'],
+          uri: 'https://example.com/webhooks',
+          actions: ['create'],
+        },
+      ],
+    }
+    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
+    expect(abortOrReport).not.toHaveBeenCalled()
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {

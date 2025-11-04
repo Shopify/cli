@@ -2,7 +2,6 @@ import {themeFlags} from '../../flags.js'
 import {
   formatOffensesJson,
   formatSummary,
-  handleExit,
   initConfig,
   outputActiveChecks,
   outputActiveConfig,
@@ -10,9 +9,10 @@ import {
   renderOffensesText,
   sortOffenses,
   isExtendedWriteStream,
+  handleExit,
   type FailLevel,
 } from '../../services/check.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
@@ -21,7 +21,10 @@ import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
 import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
 import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {InferredFlags} from '@oclif/core/interfaces'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 
+type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {
   static summary = 'Validate the theme.'
 
@@ -86,11 +89,12 @@ export default class Check extends ThemeCommand {
     environment: themeFlags.environment,
   }
 
-  async run(): Promise<void> {
-    const {flags} = await this.parse(Check)
+  static multiEnvironmentsFlags: RequiredFlags = ['path']
 
+  async command(flags: CheckFlags, _session: AdminSession, multiEnvironment: boolean): Promise<void> {
     // Its not clear to typescript that path will always be defined
     const path = flags.path
+    const environment = flags.environment?.[0]
     // To support backwards compatibility for legacy configs
     const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -121,30 +125,32 @@ export default class Check extends ThemeCommand {
     }
 
     if (flags.print) {
-      await outputActiveConfig(path, config)
+      await outputActiveConfig(path, config, environment)
 
       // --print should not trigger full theme check operation
       return
     }
 
     if (flags.list) {
-      await outputActiveChecks(path, config)
+      await outputActiveChecks(path, config, environment)
 
       // --list should not trigger full theme check operation
       return
     }
 
-    const {offenses, theme} = await runThemeCheck(path, flags.output, config)
+    const {offenses, theme} = await runThemeCheck(path, flags.output, config, environment)
 
     if (flags['auto-correct']) {
       await performAutoFixes(theme, offenses)
     }
 
-    return handleExit(offenses, flags['fail-level'] as FailLevel)
+    if (!multiEnvironment) {
+      return handleExit(offenses, flags['fail-level'] as FailLevel)
+    }
   }
 }
 
-export async function runThemeCheck(path: string, outputFormat: string, config?: string) {
+export async function runThemeCheck(path: string, outputFormat: string, config?: string, environment?: string) {
   const {offenses, theme} = await themeCheckRun(path, config, (message) => {
     if (process.env.SHOPIFY_TMP_FLAG_DEBUG) {
       outputDebug(message)
@@ -154,13 +160,13 @@ export async function runThemeCheck(path: string, outputFormat: string, config?:
   const offensesByFile = sortOffenses(offenses)
 
   if (outputFormat === 'text') {
-    renderOffensesText(offensesByFile, path)
+    renderOffensesText(offensesByFile, path, environment)
 
     // Use renderSuccess when theres no offenses
     const render = offenses.length ? renderInfo : renderSuccess
 
     render({
-      headline: 'Theme Check Summary.',
+      headline: environment ? `[${environment}] Theme Check Summary.` : 'Theme Check Summary.',
       body: formatSummary(offenses, offensesByFile, theme),
     })
   }
@@ -181,7 +187,7 @@ export async function runThemeCheck(path: string, outputFormat: string, config?:
       stdout._handle.setBlocking(true)
     }
 
-    outputResult(JSON.stringify(formatOffensesJson(offensesByFile)))
+    outputResult(JSON.stringify(formatOffensesJson(offensesByFile, environment)))
   }
 
   return {offenses, theme}

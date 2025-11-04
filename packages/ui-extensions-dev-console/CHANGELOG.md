@@ -1,5 +1,14 @@
 # @shopify/ui-extensions-dev-console-app
 
+## 3.86.0
+
+## 3.85.0
+
+### Patch Changes
+
+- Updated dependencies [7f2f69a]
+  - @shopify/ui-extensions-server-kit@5.3.1
+
 ## 3.84.0
 
 ## 3.83.0

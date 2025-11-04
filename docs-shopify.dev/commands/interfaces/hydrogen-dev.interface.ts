@@ -13,6 +13,12 @@ export interface hydrogendev {
   '--codegen-config-path <value>'?: string
 
   /**
+   * Use tunneling for local development and push the tunneling domain to admin. Required to use Customer Account API's OAuth flow
+   * @environment SHOPIFY_HYDROGEN_FLAG_CUSTOMER_ACCOUNT_PUSH
+   */
+  '--customer-account-push'?: ''
+
+  /**
    * Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.
    * @environment SHOPIFY_HYDROGEN_FLAG_DEBUG
    */

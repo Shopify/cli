@@ -13,7 +13,7 @@ export type ActiveAppReleaseFromApiKeyQuery = {
     id: string
     key: string
     organizationId: string
-    activeRoot: {clientCredentials: {secrets: {key: string}[]}}
+    activeRoot: {grantedShopifyApprovalScopes: string[]; clientCredentials: {secrets: {key: string}[]}}
     activeRelease: {
       id: string
       version: {
@@ -131,6 +131,7 @@ export const ActiveAppReleaseFromApiKey = {
                     ],
                   },
                 },
+                {kind: 'Field', name: {kind: 'Name', value: 'grantedShopifyApprovalScopes'}},
               ],
             },
           },

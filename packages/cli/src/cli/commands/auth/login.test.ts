@@ -1,0 +1,44 @@
+import Login from './login.js'
+import {describe, expect, vi, test} from 'vitest'
+import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+
+vi.mock('@shopify/cli-kit/node/session-prompt')
+
+describe('Login command', () => {
+  test('runs login without alias flag', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
+
+    // When
+    await Login.run([])
+
+    // Then
+    expect(promptSessionSelect).toHaveBeenCalledWith(undefined)
+    expect(outputMock.output()).toMatch('Current account: test-account.')
+  })
+
+  test('runs login with alias flag', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(promptSessionSelect).mockResolvedValue('test-account')
+
+    // When
+    await Login.run(['--alias', 'my-work-account'])
+
+    // Then
+    expect(promptSessionSelect).toHaveBeenCalledWith('my-work-account')
+    expect(outputMock.output()).toMatch('Current account: test-account.')
+  })
+
+  test('displays flags correctly in help', () => {
+    // When
+    const flags = Login.flags
+
+    // Then
+    expect(flags.alias).toBeDefined()
+    expect(flags.alias.description).toBe('Alias of the session you want to login to.')
+    expect(flags.alias.env).toBe('SHOPIFY_FLAG_AUTH_ALIAS')
+  })
+})

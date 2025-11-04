@@ -293,6 +293,7 @@ export interface AppInterface<
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
+  nonConfigExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   errors?: AppErrors
   hiddenConfig: AppHiddenConfig
@@ -318,6 +319,7 @@ export interface AppInterface<
   updateHiddenConfig: (values: Partial<AppHiddenConfig>) => Promise<void>
   setDevApplicationURLs: (devApplicationURLs: ApplicationURLs) => void
   generateExtensionTypes(): Promise<void>
+  getLogsDir(): string
 }
 
 type AppConstructor<
@@ -395,8 +397,12 @@ export class App<
   }
 
   get allExtensions() {
-    if (this.includeConfigOnDeploy === false) return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
+    if (this.includeConfigOnDeploy === false) return this.nonConfigExtensions
     return this.realExtensions
+  }
+
+  get nonConfigExtensions() {
+    return this.realExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
   get draftableExtensions() {
@@ -443,6 +449,10 @@ export class App<
 
   get hiddenConfig() {
     return this._hiddenConfig
+  }
+
+  getLogsDir() {
+    return joinPath(this.directory, '.shopify', 'logs')
   }
 
   async updateHiddenConfig(values: Partial<AppHiddenConfig>) {
@@ -586,7 +596,7 @@ export class App<
         'App-specific webhook subscriptions are not supported when use_legacy_install_flow is enabled.',
         `To use app-specific webhooks, you need to:
 1. Remove 'use_legacy_install_flow = true' from your configuration
-2. Run 'shopify app deploy' to sync your scopes with the Partner Dashboard
+2. Run 'shopify app deploy' to sync your scopes with the Developer Dashboard
 
 Alternatively, continue using shop-specific webhooks with the legacy install flow.
 

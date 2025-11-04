@@ -1,6 +1,6 @@
 import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
-import {bundleExtension, bundleFlowTemplateExtension} from '../extensions/bundle.js'
+import {bundleExtension} from '../extensions/bundle.js'
 import {buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
@@ -63,19 +63,6 @@ export async function buildThemeExtension(extension: ExtensionInstance, options:
   options.stdout.write(`Running theme check on your Theme app extension...`)
   const offenses = await runThemeCheck(extension.directory)
   if (offenses) options.stdout.write(offenses)
-}
-
-/**
- * It builds the flow template extensions.
- * @param options - Build options.
- */
-export async function buildFlowTemplateExtension(
-  extension: ExtensionInstance,
-  options: ExtensionBuildOptions,
-): Promise<void> {
-  options.stdout.write(`Building Flow Template extension ${extension.localIdentifier}...`)
-  await bundleFlowTemplateExtension(extension)
-  options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
 /**
@@ -164,7 +151,7 @@ export async function buildFunctionExtension(
   try {
     const bundlePath = extension.outputPath
     const relativeBuildPath =
-      (extension as ExtensionInstance<FunctionConfigType>).configuration.build.path ?? joinPath('dist', 'index.wasm')
+      (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ?? joinPath('dist', 'index.wasm')
 
     extension.outputPath = joinPath(extension.directory, relativeBuildPath)
 
@@ -174,7 +161,7 @@ export async function buildFunctionExtension(
       await buildOtherFunction(extension, options)
     }
 
-    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build.wasm_opt
+    const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.wasm_opt
     if (fileExistsSync(extension.outputPath) && wasmOpt) {
       await runWasmOpt(extension.outputPath)
     }

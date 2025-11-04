@@ -82,6 +82,11 @@ export async function recordMetrics(
   recordCommandTiming(recorder, labels, timing)
 }
 
+const COMMAND_DURATION_BOUNDARIES_MS = [
+  0, 100, 200, 300, 500, 750, 1000, 1500, 2000, 3000, 5000, 7500, 10_000, 15_000, 20_000, 30_000, 50_000, 70_000,
+  85_000, 100_000,
+]
+
 /**
  * Get the default options for the OTEL service. These are the same across environments.
  */
@@ -101,14 +106,14 @@ function defaultOtelOptions(): Omit<DefaultOtelServiceOptions, 'env' | 'otelEndp
         description:
           'Total time spent in execution of CLI commands. Does not include time spent waiting for network, prompts, etc.',
         valueType: ValueType.INT,
-        boundaries: [0, 100, 250, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000],
+        boundaries: COMMAND_DURATION_BOUNDARIES_MS,
       },
       [Name.Elapsed]: {
         type: MetricInstrumentType.Histogram,
         description:
           'Total time elapsed from start to finish of CLI commands. Includes time spent waiting for network, prompts, etc.',
         valueType: ValueType.INT,
-        boundaries: [0, 100, 250, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000],
+        boundaries: COMMAND_DURATION_BOUNDARIES_MS,
       },
     },
   }

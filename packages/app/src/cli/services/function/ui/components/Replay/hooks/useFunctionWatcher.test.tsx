@@ -85,8 +85,13 @@ describe('useFunctionWatcher', () => {
         appWatcher: new AppEventWatcher(APP),
       }),
     )
-    // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
+
+    // Wait for the async initialReplay() to complete
+    // The hook uses a promise chain that needs multiple ticks to resolve
+    await vi.advanceTimersByTimeAsync(10)
+
+    // Also flush any pending microtasks
+    await vi.runOnlyPendingTimersAsync()
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()
@@ -112,14 +117,16 @@ describe('useFunctionWatcher', () => {
       }),
     )
 
-    // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
+    // Wait for the async initialReplay() to complete
+    await vi.advanceTimersByTimeAsync(10)
+    await vi.runOnlyPendingTimersAsync()
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
 
     appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(10)
+    await vi.runOnlyPendingTimersAsync()
 
     expect(hook.lastResult?.recentFunctionRuns[0]).toEqual({...SECOND_EXEC_RESPONSE, type: 'functionRun'})
     expect(hook.lastResult?.recentFunctionRuns[1]).toEqual({...EXEC_RESPONSE, type: 'functionRun'})
@@ -150,11 +157,13 @@ describe('useFunctionWatcher', () => {
       }),
     )
 
-    // needed to await the render
-    await vi.advanceTimersByTimeAsync(0)
+    // Wait for the async initialReplay() to complete
+    await vi.advanceTimersByTimeAsync(10)
+    await vi.runOnlyPendingTimersAsync()
 
     appWatcher.emit('all', event)
-    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(10)
+    await vi.runOnlyPendingTimersAsync()
 
     // Then
     expect(runFunction).toHaveBeenCalledOnce()

@@ -1,5 +1,11 @@
 # @shopify/ui-extensions-server-kit
 
+## 5.3.1
+
+### Patch Changes
+
+- 7f2f69a: Added optional `error` property to ExtensionPayload which include the `message` and `file`
+
 ## 5.3.0
 
 ### Minor Changes

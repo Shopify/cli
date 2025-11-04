@@ -126,7 +126,7 @@ export async function selectStorePrompt({
 
 export async function confirmConversionToTransferDisabledStorePrompt(): Promise<boolean> {
   return renderConfirmationPrompt({
-    message: `Make this store transfer-disabled? For security, once you use a development store to preview an app locally, the store can never be transferred to a merchant to use as a production store.`,
+    message: `Make this store transfer-disabled? For security, once you use a dev store to preview an app locally, the store can never be transferred to a merchant to use as a production store.`,
     confirmationMessage: 'Yes, make this store transfer-disabled permanently',
     cancellationMessage: 'No, select another store',
     defaultValue: false,

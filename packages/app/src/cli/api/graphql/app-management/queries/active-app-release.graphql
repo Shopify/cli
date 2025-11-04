@@ -14,14 +14,15 @@ fragment AppVersionInfo on App {
         key
       }
     }
+    grantedShopifyApprovalScopes
   }
   activeRelease {
     id
     version {
       name
-        appModules {
-          ...ReleasedAppModule
-        }
+      appModules {
+        ...ReleasedAppModule
+      }
     }
   }
 }
