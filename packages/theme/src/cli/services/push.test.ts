@@ -49,6 +49,7 @@ describe('push', () => {
       workPromise: Promise.resolve(),
       uploadResults: new Map(),
       renderThemeSyncProgress: () => Promise.resolve(),
+      syncRewrittenFilesPromise: Promise.resolve(),
     })
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
     vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
@@ -93,6 +94,7 @@ describe('push', () => {
       workPromise: Promise.resolve(),
       uploadResults,
       renderThemeSyncProgress: () => Promise.resolve(),
+      syncRewrittenFilesPromise: Promise.resolve(),
     })
 
     // When
