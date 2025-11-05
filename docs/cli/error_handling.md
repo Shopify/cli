@@ -2,13 +2,21 @@
 
 * These follow from the [General Principles](https://vault.shopify.io/teams/734/pages/Error-Handling-Principles~zEv1.md) document.
 
+## Minimize the likelihood of errors happening
+
+**Errors can and will happen**, and handling them gracefully is essential to provide a first-class developer experience.
+
+When designing code, you can leverage tools to **minimize the likelihood of errors happening**. For example, you can leverage Typescript to prevent invalid states from entering the system. It requires additional time to figure out how to model the state, but the investment pays off significantly. If an external state enters the system, for example, a project in the file system, **validate it and return early** if the shape is invalid. It is similar to what web servers do with incoming HTTP requests. We also recommend modeling business logic as a combination of pure functions that are predictable. Functions with the freedom to mutate input state might get mutations introduced in the future that breaks the contract with callers of the function.
+
+Moreover, you should think about scenarios other than the happy path and build for them. There are infinite of those, especially considering that the CLI runs in environments we don't control, so it's essential that you focus on the most obvious ones and don't get too obsessed with trying to anticipate every possible error. **Excellent error management is an iterative process** using unhandled errors as input to inform the improvements.
+
 ## Global type and handler for fatal errors
 
 You’ll see in the section below that the CLI currently makes an exception to some of the general principles presented in this doc. This may not be true forever since there are some upcoming projects that will change the tradeoffs.
 
 ### Leverage the `FatalError` hierarchy to short circuit the program and present a custom UX to the user
 
-The CLI defines `FatalError` and several subtypes of `FatalError`. Within the CLI codebase, you can raise any of these errors at any time to **fully halt the program and present a specific UX to the user**.
+The CLI defines `FatalError` and several subtypes of `FatalError`. Within the CLI codebase, you can raise any of these subtypes at any time to **fully halt the program and present a specific UX to the user**.
 
 **Principle**: choose the right error type if you need to abort the program and handle the situation in a specific way:
 
@@ -16,6 +24,8 @@ The CLI defines `FatalError` and several subtypes of `FatalError`. Within the CL
 * Use `BugError` for programmer errors and invariant violations
 * Use `AbortSilentError` for user-initiated cancellations
 * Use `ExternalError` when external commands fail
+
+Please, **don't** use the global `process.exit` and `process.abort` APIs. Also, don't `try {} catch {}` abort errors. If you need to communicate the failure of an operation to the caller (e.g., a 5xx HTTP response), use the result type from the following section.
 
 #### AbortError
 
@@ -27,6 +37,20 @@ Represents expected user/environment issues that require user action
 * Provides UI guidance to users
 * Reported as "expected\_error" to analytics (it’s a user problem, not a Shopify one)
 * Sent to Bugsnag as "handled"
+
+You can also pass some next steps to the error constructor to help the user recover from the error. The next steps are displayed after the error message.
+
+For example
+```ts
+throw new AbortError(
+  "The project doesn't exist",
+  undefined,
+  [
+    "Make sure the command is executed from a project's directory",
+    "Run the command again",
+  ]
+)
+```
 
 #### BugError
 
@@ -113,6 +137,36 @@ It’s very likely that much of the code running in the CLI will need to be made
 The `FatalError` pattern will not work well in an architecture where app development activities are happening in multiple operating environments. The pros listed above will cease to be strong pros, and the cons will rear their heads. When pursuing the SDK project, we’ll likely need to address this.
 
 However, until then, we get a lot of leverage in the CLI from `FatalError`, so it can continue to exist as a high leverage counter-example to some of our general principles.
+
+## Report a result from a function
+There are scenarios where a function needs to inform the caller about the success or failure of the operation. For that, `@shopify/cli-kit` provides a result utility:
+
+```ts
+import { FatalError } from "@shopify/cli-kit/node/error"
+import {err, ok, Result} from '@shopify/cli-kit/node/result'
+
+class ActionError extends FatalError {}
+
+function action({success}: {success: boolean}): Result<string, ActionError> {
+  if (success) {
+    return ok("ok")
+  } else {
+    return err(new ActionError("err"))
+  }
+}
+
+// OK result
+let result = action({success: true})
+result.isErr() // false
+result.valueOrBug() // ok
+result.mapError((error) => new FatalError("other error"))
+
+// Error result
+let result = action({success: false})
+result.isErr() // true
+result.valueOrBug() // throws!
+result.mapError((error) => new FatalError("other error"))
+```
 
 ## Environmental Issue Detection
 
