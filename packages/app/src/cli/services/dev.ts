@@ -29,7 +29,7 @@ import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-s
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {Web, isCurrentAppSchema, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
+import {Web, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
@@ -199,42 +199,40 @@ export async function warnIfScopesDifferBeforeDev({
   developerPlatformClient,
 }: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient'>) {
   if (developerPlatformClient.supportsDevSessions) return
-  if (isCurrentAppSchema(localApp.configuration)) {
-    const localAccess = localApp.configuration.access_scopes
-    const remoteAccess = remoteApp.configuration?.access_scopes
+  const localAccess = localApp.configuration.access_scopes
+  const remoteAccess = remoteApp.configuration?.access_scopes
 
-    const rationaliseScopes = (scopeString: string | undefined) => {
-      if (!scopeString) return scopeString
-      return scopeString
-        .split(',')
-        .map((scope) => scope.trim())
-        .sort()
-        .join(',')
-    }
-    const localScopes = rationaliseScopes(localAccess?.scopes)
-    const remoteScopes = rationaliseScopes(remoteAccess?.scopes)
+  const rationaliseScopes = (scopeString: string | undefined) => {
+    if (!scopeString) return scopeString
+    return scopeString
+      .split(',')
+      .map((scope) => scope.trim())
+      .sort()
+      .join(',')
+  }
+  const localScopes = rationaliseScopes(localAccess?.scopes)
+  const remoteScopes = rationaliseScopes(remoteAccess?.scopes)
 
-    if (!localAccess?.use_legacy_install_flow && localScopes !== remoteScopes) {
-      const nextSteps = [
-        [
-          'Run',
-          {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
-          'to push your scopes to the Partner Dashboard',
-        ],
-      ]
+  if (!localAccess?.use_legacy_install_flow && localScopes !== remoteScopes) {
+    const nextSteps = [
+      [
+        'Run',
+        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
+        'to push your scopes to the Partner Dashboard',
+      ],
+    ]
 
-      renderWarning({
-        headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
-        body: [
-          `Scopes in ${basename(localApp.configuration.path)}:`,
-          scopesMessage(getAppScopesArray(localApp.configuration)),
-          '\n',
-          'Scopes in Partner Dashboard:',
-          scopesMessage(remoteAccess?.scopes?.split(',') ?? []),
-        ],
-        nextSteps,
-      })
-    }
+    renderWarning({
+      headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
+      body: [
+        `Scopes in ${basename(localApp.configuration.path)}:`,
+        scopesMessage(getAppScopesArray(localApp.configuration)),
+        '\n',
+        'Scopes in Partner Dashboard:',
+        scopesMessage(remoteAccess?.scopes?.split(',') ?? []),
+      ],
+      nextSteps,
+    })
   }
 }
 

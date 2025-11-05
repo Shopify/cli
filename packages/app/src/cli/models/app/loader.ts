@@ -6,20 +6,14 @@ import {
   WebType,
   getAppScopesArray,
   AppConfigurationInterface,
-  LegacyAppSchema,
   AppConfiguration,
   CurrentAppConfiguration,
   getAppVersionedSchema,
-  isCurrentAppSchema,
   AppSchema,
-  LegacyAppConfiguration,
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
   AppLinkedInterface,
   AppHiddenConfig,
-  isLegacyAppSchema,
-  TemplateConfigSchema,
-  getTemplateScopesArray,
 } from './app.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -217,19 +211,18 @@ export async function checkFolderIsValidApp(directory: string) {
 }
 
 export async function loadConfigForAppCreation(directory: string, name: string): Promise<CreateAppOptions> {
-  const appDirectory = await getAppDirectory(directory)
-  const {configurationPath} = await getConfigurationPath(appDirectory, undefined)
-
-  // Use permissive schema to allow templates with extra configuration (metafields, metaobjects, etc.)
-  const config = await parseConfigurationFile(TemplateConfigSchema, configurationPath)
-  const webs = await loadWebsForAppCreation(appDirectory, config.web_directories)
+  const state = await getAppConfigurationState(directory)
+  const config = state.basicConfiguration
+  const webs = await loadWebsForAppCreation(state.appDirectory, config.web_directories)
   const isLaunchable = webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
+
+  const scopesArray = getAppScopesArray(config)
 
   return {
     isLaunchable,
-    scopesArray: getTemplateScopesArray(config),
+    scopesArray,
     name,
-    directory,
+    directory: state.appDirectory,
     // By default, and ONLY for `app init`, we consider the app as embedded if it is launchable.
     isEmbedded: isLaunchable,
   }
@@ -309,6 +302,14 @@ export type OpaqueAppLoadResult =
     }
 
 /**
+ * Extract scopes from raw config using access_scopes.scopes format.
+ */
+function extractScopesFromRawConfig(rawConfig: JsonMapType): string {
+  const accessScopes = rawConfig.access_scopes as {scopes?: string} | undefined
+  return accessScopes?.scopes ?? ''
+}
+
+/**
  * Load an app with relaxed validation, falling back to raw template loading if strict parsing fails.
  *
  * This is useful for flows like linking where templates may contain extra configuration keys
@@ -344,13 +345,12 @@ export async function loadOpaqueApp(options: {
       const appDirectory = await getAppDirectory(options.directory)
       const {configurationPath} = await getConfigurationPath(appDirectory, options.configName)
       const rawConfig = await loadConfigurationFileContent(configurationPath)
-      const parsed = TemplateConfigSchema.parse(rawConfig)
       const packageManager = await getPackageManager(appDirectory)
 
       return {
         state: 'loaded-template',
         rawConfig,
-        scopes: getTemplateScopesArray(parsed).join(','),
+        scopes: extractScopesFromRawConfig(rawConfig),
         appDirectory,
         packageManager,
       }
@@ -364,9 +364,6 @@ export async function loadOpaqueApp(options: {
 
 export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
   const state = await getAppConfigurationState(app.directory, basename(app.configuration.path))
-  if (state.state !== 'connected-app') {
-    throw new AbortError('Error loading the app, please check your app configuration.')
-  }
   const loadedConfiguration = await loadAppConfigurationFromState(state, app.specifications, app.remoteFlags ?? [])
 
   const loader = new AppLoader({
@@ -403,7 +400,7 @@ export async function loadAppUsingConfigurationState<TConfig extends AppConfigur
  */
 type LoadedAppConfigFromConfigState<TConfigState> = TConfigState extends AppConfigurationStateLinked
   ? CurrentAppConfiguration
-  : LegacyAppConfiguration
+  : never
 
 export function getDotEnvFileName(configurationPath: string) {
   const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
@@ -608,13 +605,9 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
-    const configExtensionPromises = isCurrentAppSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
-      : []
+    const configExtensionPromises = await this.createConfigExtensionInstances(appDirectory, appConfiguration)
 
-    const webhookPromises = isCurrentAppSchema(appConfiguration)
-      ? this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
-      : []
+    const webhookPromises = this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
 
@@ -730,7 +723,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return instances
   }
 
-  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
+  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
@@ -838,12 +831,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
   private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {
     const previousDevUrls = this.previousApp?.devApplicationURLs
-    if (!previousDevUrls || !isCurrentAppSchema(currentConfiguration)) return previousDevUrls
+    if (!previousDevUrls) return previousDevUrls
 
     return generateApplicationURLs(
       previousDevUrls.applicationUrl,
       webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-      currentConfiguration.app_proxy,
+      (currentConfiguration as CurrentAppConfiguration).app_proxy,
     )
   }
 }
@@ -905,16 +898,11 @@ interface AppConfigurationStateBasics {
 }
 
 export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
-  state: 'connected-app'
   basicConfiguration: BasicAppConfigurationWithoutModules
+  isTemplateForm: boolean
 }
 
-type AppConfigurationStateTemplate = AppConfigurationStateBasics & {
-  state: 'template-only'
-  startingOptions: Omit<LegacyAppConfiguration, 'client_id'>
-}
-
-type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
+type AppConfigurationState = AppConfigurationStateLinked
 
 /**
  * Get the app configuration state from the file system.
@@ -952,34 +940,21 @@ export async function getAppConfigurationState(
   const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, configName)
   const file = await loadConfigurationFileContent(configurationPath)
 
-  const configFileHasNotBeenLinked = isLegacyAppSchema(file as AppConfiguration)
+  const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
 
-  if (configFileHasNotBeenLinked) {
-    const parsedConfig = await parseConfigurationFile(LegacyAppSchema, configurationPath)
-    return {
-      appDirectory,
-      configurationPath,
-      state: 'template-only',
-      startingOptions: {
-        ...file,
-        ...parsedConfig,
-      },
-      configSource,
-      configurationFileName,
-    }
-  } else {
-    const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
-    return {
-      state: 'connected-app',
-      appDirectory,
-      configurationPath,
-      basicConfiguration: {
-        ...file,
-        ...parsedConfig,
-      },
-      configSource,
-      configurationFileName,
-    }
+  // Check if the config is in template form by verifying if client_id is empty
+  const isTemplateForm = parsedConfig.client_id === ''
+
+  return {
+    appDirectory,
+    configurationPath,
+    basicConfiguration: {
+      ...file,
+      ...parsedConfig,
+    },
+    configSource,
+    configurationFileName,
+    isTemplateForm,
   }
 }
 
@@ -996,32 +971,12 @@ async function loadAppConfigurationFromState<
   specifications: TModuleSpec[],
   remoteFlags: Flag[],
 ): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState<TConfig>, TModuleSpec>> {
-  let file: JsonMapType
-  let schemaForConfigurationFile: SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
-  {
-    let appSchema
-    switch (configState.state) {
-      case 'template-only': {
-        file = {
-          ...configState.startingOptions,
-        }
-        delete file.path
-        appSchema = LegacyAppSchema as unknown as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
-        break
-      }
-      case 'connected-app': {
-        file = {
-          ...configState.basicConfiguration,
-        }
-        delete file.path
-        const appVersionedSchema = getAppVersionedSchema(specifications)
-        appSchema = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
-        break
-      }
-    }
-
-    schemaForConfigurationFile = appSchema
-  }
+  const file: JsonMapType = {
+    ...configState.basicConfiguration,
+  } as JsonMapType
+  delete file.path
+  const appVersionedSchema = getAppVersionedSchema(specifications)
+  const schemaForConfigurationFile = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
 
   const configuration = (await parseConfigurationFile(
     schemaForConfigurationFile,
@@ -1040,30 +995,22 @@ async function loadAppConfigurationFromState<
   }
 
   // enhance metadata based on the config type
-  switch (configState.state) {
-    case 'template-only': {
-      // nothing to add
-      break
-    }
-    case 'connected-app': {
-      let gitTracked = false
-      try {
-        gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch {
-        // leave as false
-      }
+  let gitTracked = false
+  try {
+    gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // leave as false
+  }
 
-      configurationLoadResultMetadata = {
-        ...configurationLoadResultMetadata,
-        usesLinkedConfig: true,
-        name: configState.configurationFileName,
-        gitTracked,
-        source: configState.configSource,
-        usesCliManagedUrls: (configuration as LoadedAppConfigFromConfigState<AppConfigurationStateLinked>).build
-          ?.automatically_update_urls_on_dev,
-      }
-    }
+  configurationLoadResultMetadata = {
+    ...configurationLoadResultMetadata,
+    usesLinkedConfig: true,
+    name: configState.configurationFileName,
+    gitTracked,
+    source: configState.configSource,
+    usesCliManagedUrls: (configuration as LoadedAppConfigFromConfigState<AppConfigurationStateLinked>).build
+      ?.automatically_update_urls_on_dev,
   }
 
   return {
