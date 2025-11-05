@@ -700,10 +700,6 @@ importers:
       graphql:
         specifier: ^16.10.0
         version: 16.10.0
-    devDependencies:
-      '@vitest/coverage-istanbul':
-        specifier: ^3.1.4
-        version: 3.2.1(vitest@3.2.1(@types/node@24.7.0)(jiti@2.4.2)(jsdom@20.0.3)(msw@2.8.7(@types/node@24.7.0)(typescript@5.8.3))(sass@1.89.1)(yaml@2.8.1))
 
   packages/theme:
     dependencies:

@@ -72,33 +72,6 @@ export default class Execute extends Command {
       this.error('--store is required')
     }
 
-    let variables: {[key: string]: unknown} | undefined
-
-    if (flags.variables && flags.variables.length > 0) {
-      const variableString = flags.variables[0]
-      if (variableString) {
-        try {
-          variables = JSON.parse(variableString)
-          /* eslint-disable-next-line no-catch-all/no-catch-all */
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error)
-          this.error(`invalid json in --variables: ${message}`)
-        }
-      }
-    } else if (flags['variable-file']) {
-      const fileContent = await readFile(flags['variable-file'])
-      const firstLine = fileContent.split('\n')[0]?.trim()
-      if (firstLine) {
-        try {
-          variables = JSON.parse(firstLine)
-          /* eslint-disable-next-line no-catch-all/no-catch-all */
-        } catch (error) {
-          const message = error instanceof Error ? error.message : String(error)
-          this.error(`invalid json in --variable-file: ${message}`)
-        }
-      }
-    }
-
     const adminSession = await ensureAuthenticatedAdmin(store)
 
     if (flags['bulk-operation']) {
@@ -132,7 +105,7 @@ export default class Execute extends Command {
       return
     }
 
-    const result = await adminRequest(query, adminSession, variables)
+    const result = await adminRequest(query, adminSession)
 
     this.log(JSON.stringify(result, null, 2))
   }
