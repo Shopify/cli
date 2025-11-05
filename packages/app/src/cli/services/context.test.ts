@@ -78,7 +78,6 @@ const STORE1: OrganizationStore = {
 }
 
 const state: AppConfigurationStateLinked = {
-  state: 'connected-app',
   basicConfiguration: {
     ...DEFAULT_CONFIG,
     path: 'shopify.app.toml',
@@ -88,6 +87,7 @@ const state: AppConfigurationStateLinked = {
   configurationPath: 'shopify.app.toml',
   configSource: 'flag',
   configurationFileName: 'shopify.app.toml',
+  isTemplateForm: false,
 }
 
 const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployOptions => {
