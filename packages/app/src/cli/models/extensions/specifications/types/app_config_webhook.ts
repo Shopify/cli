@@ -6,6 +6,7 @@ export interface WebhookSubscription {
   include_fields?: string[]
   filter?: string
   payload_query?: string
+  name?: string
 }
 
 interface PrivacyComplianceConfig {
