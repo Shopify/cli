@@ -1,5 +1,5 @@
 import {InfoOptions, info} from './info.js'
-import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface, AppConfiguration} from '../models/app/app.js'
 import {OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
@@ -274,9 +274,12 @@ function mockApp({
     directory,
     configuration: {
       path: joinPath(directory, 'shopify.app.toml'),
-      scopes: 'my-scope',
+      client_id: 'test-client-id',
+      access_scopes: {
+        scopes: 'my-scope',
+      },
       extension_directories: ['extensions/*'],
-    },
+    } as AppConfiguration,
     nodeDependencies,
     ...(app ? app : {}),
   })

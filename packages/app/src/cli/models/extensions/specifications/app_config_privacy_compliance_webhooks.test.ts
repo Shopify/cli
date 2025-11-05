@@ -99,7 +99,7 @@ describe('privacy_compliance_webhooks', () => {
         },
       }
       const privacyComplianceSpec = spec
-      const appConfiguration = {application_url: 'https://example.com/', scopes: ''}
+      const appConfiguration = {client_id: 'test-client-id', application_url: 'https://example.com/', scopes: ''}
 
       // When
       const result = privacyComplianceSpec.transformLocalToRemote!(object, appConfiguration)

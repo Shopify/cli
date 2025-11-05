@@ -1,5 +1,5 @@
 import {selectOrCreateApp} from './select-app.js'
-import {AppInterface, WebType} from '../../models/app/app.js'
+import {AppInterface, AppConfiguration, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
@@ -9,7 +9,12 @@ vi.mock('../../prompts/dev')
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
-  configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
+  configuration: {
+    path: '/shopify.app.toml',
+    client_id: 'test-client-id',
+    access_scopes: {scopes: 'read_products'},
+    extension_directories: ['extensions/*'],
+  } as AppConfiguration,
   webs: [
     {
       directory: '',
