@@ -108,7 +108,9 @@ async function init(options: InitOptions) {
           packageJSON.name = hyphenizedName
           packageJSON.author = (await username()) ?? ''
           packageJSON.private = true
-          const workspacesFolders = ['extensions/*'].concat(detectAdditionalWorkspacesFolders(templateScaffoldDir))
+          const workspacesFolders = ['extensions/*', 'extensions/*/tests'].concat(
+            detectAdditionalWorkspacesFolders(templateScaffoldDir),
+          )
 
           switch (packageManager) {
             case 'npm':
