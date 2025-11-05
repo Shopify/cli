@@ -64,6 +64,8 @@ function buildDeveloperPlatformClient(extraFields: Partial<DeveloperPlatformClie
 
 beforeEach(async () => {
   vi.mocked(fetchAppRemoteConfiguration).mockResolvedValue(DEFAULT_REMOTE_CONFIGURATION)
+  // Default mock for selectConfigName - tests that need a specific value can override
+  vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
 })
 
 describe('link', () => {
@@ -88,10 +90,10 @@ describe('link', () => {
       expect(configuration).toEqual({
         client_id: '12345',
         name: 'app1',
-        extension_directories: [],
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -104,15 +106,16 @@ describe('link', () => {
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.default-value.toml$/),
+        build: undefined,
       })
 
       expect(state).toEqual({
-        state: 'connected-app',
         basicConfiguration: configuration,
         appDirectory: options.directory,
         configurationPath: expect.stringMatching(/\/shopify.app.default-value.toml$/),
         configSource: 'flag',
         configurationFileName: 'shopify.app.default-value.toml',
+        isTemplateForm: false,
       })
 
       expect(remoteApp).toEqual(mockRemoteApp({developerPlatformClient}))
@@ -145,13 +148,13 @@ describe('link', () => {
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -166,10 +169,10 @@ embedded = false
       expect(configuration).toEqual({
         client_id: '12345',
         name: 'app1',
-        extension_directories: [],
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -182,6 +185,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.staging.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -295,12 +299,12 @@ embedded = false
       })
       expect(content).toEqual(expectedContent)
       expect(state).toEqual({
-        state: 'connected-app',
         basicConfiguration: configuration,
         appDirectory: options.directory,
         configurationPath: expect.stringMatching(/\/shopify.app.toml$/),
         configSource: 'cached',
         configurationFileName: 'shopify.app.toml',
+        isTemplateForm: false,
       })
     })
   })
@@ -672,13 +676,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -708,11 +712,11 @@ embedded = false
       })
       expect(configuration).toEqual({
         client_id: '12345',
-        extension_directories: [],
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -725,6 +729,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -753,13 +758,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -777,8 +782,8 @@ embedded = false
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
-        extension_directories: [],
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -791,6 +796,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -806,7 +812,6 @@ embedded = false
         developerPlatformClient,
       }
       await mockLoadOpaqueAppWithApp(tmp)
-      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
       vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
         return (await developerPlatformClient.appFromIdentifiers(apiKey))!
       })
@@ -819,7 +824,6 @@ embedded = false
       expect(content).toContain('name = "app1"')
       expect(configuration).toEqual({
         client_id: 'api-key',
-        extension_directories: [],
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
@@ -836,6 +840,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
     })
   })
@@ -1032,7 +1037,6 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -1040,6 +1044,7 @@ embedded = true
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
+use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
@@ -1053,12 +1058,12 @@ embedded = false
 
       expect(configuration).toEqual({
         client_id: '12345',
-        extension_directories: [],
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
           scopes: 'read_products,write_orders',
+          use_legacy_install_flow: true,
         },
         auth: {
           redirect_urls: ['https://example.com/callback1'],
@@ -1070,6 +1075,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1276,13 +1282,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://my-app-url.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1304,8 +1310,8 @@ embedded = false
         name: 'app1',
         application_url: 'https://my-app-url.com',
         embedded: true,
-        extension_directories: [],
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         build: undefined,
@@ -1448,7 +1454,6 @@ embedded = true
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -1458,6 +1463,7 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1500,7 +1506,6 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -1511,6 +1516,7 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1552,13 +1558,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1598,7 +1604,6 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 handle = "handle"
 application_url = "https://example.com"
@@ -1606,6 +1611,7 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1867,7 +1873,7 @@ async function mockApp(
 ) {
   const versionSchema = await buildVersionedAppSchema()
   const localApp = testApp(app)
-  localApp.configuration.client_id = schemaType === 'legacy' ? 12345 : '12345'
+  localApp.configuration.client_id = '12345'
   localApp.configSchema = versionSchema.schema
   localApp.specifications = versionSchema.configSpecifications
   localApp.directory = directory
