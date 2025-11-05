@@ -12,8 +12,9 @@ import {
   loadHiddenConfig,
 } from './loader.js'
 import {parseHumanReadableError} from './error-parsing.js'
-import {App, AppLinkedInterface, LegacyAppSchema, WebConfigurationSchema} from './app.js'
+import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
+import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -63,10 +64,44 @@ describe('load', () => {
     return loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined, ...extras})
   }
 
-  const appConfiguration = `
+  // Helper to get only real extensions (not configuration extensions)
+  function getRealExtensions(app: AppInterface) {
+    return app.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
+  }
+
+  // Basic configuration without extensions - used for tests that expect no extensions
+  const basicAppConfiguration = `
 name = "my_app"
-scopes = "read_products"
+client_id = "test-client-id"
+application_url = "https://example.com"
+embedded = true
+
+[auth]
+redirect_urls = ["https://example.com/callback"]
+
+[webhooks]
+api_version = "2024-01"
 `
+
+  // Minimal configuration without webhook subscriptions - used for tests that check exact extension counts
+  const minimalAppConfiguration = `
+name = "my_app"
+client_id = "test-client-id"
+application_url = "https://example.com"
+embedded = true
+
+[auth]
+redirect_urls = ["https://example.com/callback"]
+
+[webhooks]
+api_version = "2024-01"
+`
+
+  // Configuration for tests that don't care about extension counts
+  const appConfigurationWithWebhooks = minimalAppConfiguration
+
+  // Configuration for tests that check exact extension counts (no webhook subscriptions)
+  const appConfiguration = minimalAppConfiguration
   const linkedAppConfiguration = `
 name = "for-testing"
 client_id = "1234567890"
@@ -521,9 +556,10 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp({mode: 'local'})
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
-    expect(app.allExtensions[0]!.configuration.type).toBe('theme')
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    expect(realExtensions[0]!.configuration.name).toBe('my_extension')
+    expect(realExtensions[0]!.configuration.type).toBe('theme')
     expect(app.errors).toBeUndefined()
   })
 
@@ -726,8 +762,17 @@ redirect_urls = [ "https://example.com/api/auth" ]
   test('loads the app with custom located web blocks', async () => {
     // Given
     const {webDirectory} = await writeConfig(`
-    scopes = ""
+    name = "test-app"
+    client_id = "test-client-id"
+    application_url = "https://example.com"
+    embedded = true
     web_directories = ["must_be_here"]
+
+    [auth]
+    redirect_urls = ["https://example.com/callback"]
+
+    [webhooks]
+    api_version = "2024-01"
     `)
     await moveFile(webDirectory, joinPath(tmpDir, 'must_be_here'))
 
@@ -741,8 +786,17 @@ redirect_urls = [ "https://example.com/api/auth" ]
   test('loads the app with custom located web blocks, only checks given directory', async () => {
     // Given
     const {webDirectory} = await writeConfig(`
-    scopes = ""
+    name = "test-app"
+    client_id = "test-client-id"
+    application_url = "https://example.com"
+    embedded = true
     web_directories = ["must_be_here"]
+
+    [auth]
+    redirect_urls = ["https://example.com/callback"]
+
+    [webhooks]
+    api_version = "2024-01"
     `)
     await moveFile(webDirectory, joinPath(tmpDir, 'cannot_be_here'))
 
@@ -808,8 +862,17 @@ redirect_urls = [ "https://example.com/api/auth" ]
   test('loads the app when it has a extension with a valid configuration using a supported extension type and in a non-conventional directory configured in the app configuration file', async () => {
     // Given
     await writeConfig(`
-    scopes = ""
+    name = "test-app"
+    client_id = "test-client-id"
+    application_url = "https://example.com"
+    embedded = true
     extension_directories = ["custom_extension"]
+
+    [auth]
+    redirect_urls = ["https://example.com/callback"]
+
+    [webhooks]
+    api_version = "2024-01"
     `)
     const customExtensionDirectory = joinPath(tmpDir, 'custom_extension')
     await mkdir(customExtensionDirectory)
@@ -884,8 +947,11 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(2)
+    const extensions = realExtensions.sort((extA: ExtensionInstance, extB: ExtensionInstance) =>
+      extA.name < extB.name ? -1 : 1,
+    )
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_EXTENSION_1_ID')
     expect(extensions[1]!.configuration.name).toBe('my_extension_2')
@@ -930,8 +996,11 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const extensions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(2)
+    const extensions = realExtensions.sort((extA: ExtensionInstance, extB: ExtensionInstance) =>
+      extA.name < extB.name ? -1 : 1,
+    )
     expect(extensions[0]!.configuration.name).toBe('my_extension_1')
     expect(extensions[0]!.configuration.type).toBe('checkout_post_purchase')
     expect(extensions[0]!.configuration.api_version).toBe('2022-07')
@@ -1108,8 +1177,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1176,8 +1246,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1254,8 +1325,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1338,8 +1410,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1414,8 +1487,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1528,8 +1602,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1641,8 +1716,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1696,8 +1772,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1743,8 +1820,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1807,8 +1885,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1883,8 +1962,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -1979,8 +2059,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -2046,8 +2127,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(1)
-    const extension = app.allExtensions[0]
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(1)
+    const extension = realExtensions[0]
     expect(extension).not.toBeUndefined()
     if (extension) {
       expect(extension.configuration).toMatchObject({
@@ -2216,8 +2298,11 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(2)
-    const functions = app.allExtensions.sort((extA, extB) => (extA.name < extB.name ? -1 : 1))
+    const realExtensions = getRealExtensions(app)
+    expect(realExtensions).toHaveLength(2)
+    const functions = realExtensions.sort((extA: ExtensionInstance, extB: ExtensionInstance) =>
+      extA.name < extB.name ? -1 : 1,
+    )
     expect(functions[0]!.configuration.name).toBe('my-function-1')
     expect(functions[1]!.configuration.name).toBe('my-function-2')
     expect(functions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_1_ID')
@@ -2282,7 +2367,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
       env_package_manager_workspaces: false,
-      ...configAsCodeLegacyMetadata(),
+      cmd_app_all_configs_any: true,
+      cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': 'test-client-id'}),
+      cmd_app_linked_config_used: true,
     })
   })
 
@@ -2300,7 +2387,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
     expect(metadata.getAllPublicMetadata()).toMatchObject({
       project_type: 'node',
       env_package_manager_workspaces: true,
-      ...configAsCodeLegacyMetadata(),
+      cmd_app_all_configs_any: true,
+      cmd_app_all_configs_clients: JSON.stringify({'shopify.app.toml': 'test-client-id'}),
+      cmd_app_linked_config_used: true,
     })
   })
 
@@ -2905,7 +2994,7 @@ describe('parseConfigurationObject', () => {
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
 
-  test('throws an error if fields are missing in a legacy schema TOML file', async () => {
+  test('throws an error if fields are missing in an app schema TOML file', async () => {
     const configurationObject = {
       scopes: [],
     }
@@ -2914,16 +3003,16 @@ describe('parseConfigurationObject', () => {
       {
         code: 'invalid_type',
         expected: 'string',
-        received: 'array',
-        path: ['scopes'],
-        message: 'Expected string, received array',
+        received: 'undefined',
+        path: ['client_id'],
+        message: 'Required',
       },
     ]
     const expectedFormatted = outputContent`\n${outputToken.errorText(
       'Validation errors',
     )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
     const abortOrReport = vi.fn()
-    await parseConfigurationObject(LegacyAppSchema, 'tmp', configurationObject, abortOrReport)
+    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
 
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
@@ -3489,29 +3578,9 @@ describe('WebhooksSchema', () => {
 describe('getAppConfigurationState', () => {
   test.each([
     [
-      `scopes = "  write_xyz,     write_abc    "`,
-      {
-        state: 'template-only',
-        configSource: 'cached',
-        configurationFileName: 'shopify.app.toml',
-        appDirectory: expect.any(String),
-        configurationPath: expect.stringMatching(/shopify.app.toml$/),
-        startingOptions: {
-          path: expect.stringMatching(/shopify.app.toml$/),
-          scopes: 'write_abc,write_xyz',
-        },
-      },
-    ],
-    [
       `client_id="abcdef"`,
       {
         state: 'connected-app',
-      },
-    ],
-    [
-      ``,
-      {
-        state: 'template-only',
       },
     ],
     [
@@ -3541,7 +3610,7 @@ describe('getAppConfigurationState', () => {
   test('raises validation error when AppSchema is missing client_id', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // We know this is a TOML file that follows the AppSchema because
-      // it can contain extra fields (something_extra). In LegacyAppSchema, all fields are optional.
+      // it can contain extra fields (something_extra).
       // This content is also missing a client_id field which should throw a validation error.
       const content = `something_extra = "some_value"`
       const appConfigPath = joinPath(tmpDir, 'shopify.app.toml')
@@ -3559,8 +3628,19 @@ describe('loadConfigForAppCreation', () => {
     // Given
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        scopes = "write_products,read_orders"
         name = "my-app"
+        client_id = "test-client-id"
+        application_url = "https://example.com"
+        embedded = true
+
+        [access_scopes]
+        scopes = "write_products,read_orders"
+
+        [auth]
+        redirect_urls = ["https://example.com/callback"]
+
+        [webhooks]
+        api_version = "2024-01"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
@@ -3571,7 +3651,7 @@ describe('loadConfigForAppCreation', () => {
       // Then
       expect(result).toEqual({
         isLaunchable: false,
-        scopesArray: ['read_orders', 'write_products'],
+        scopesArray: ['write_products', 'read_orders'],
         name: 'my-app',
         directory: tmpDir,
         isEmbedded: false,
@@ -3583,8 +3663,19 @@ describe('loadConfigForAppCreation', () => {
     // Given
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        scopes = "write_products"
+        client_id = "test-client-id"
         name = "my-app"
+        application_url = "https://example.com"
+        embedded = true
+
+        [access_scopes]
+        scopes = "write_products"
+
+        [auth]
+        redirect_urls = ["https://example.com/callback"]
+
+        [webhooks]
+        api_version = "2024-01"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
@@ -3617,8 +3708,19 @@ dev = "echo 'Hello, world!'"
     // Given
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        scopes = "write_products"
+        client_id = "test-client-id"
         name = "my-app"
+        application_url = "https://example.com"
+        embedded = true
+
+        [access_scopes]
+        scopes = "write_products"
+
+        [auth]
+        redirect_urls = ["https://example.com/callback"]
+
+        [webhooks]
+        api_version = "2024-01"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
@@ -3681,6 +3783,7 @@ dev = "echo 'Hello, world!'"
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
         name = "my-app"
+        client_id = "test-client-id"
         scopes = ""
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
@@ -3702,22 +3805,6 @@ dev = "echo 'Hello, world!'"
 })
 
 describe('loadHiddenConfig', () => {
-  test('returns empty object if no client_id in configuration', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        path: joinPath(tmpDir, 'shopify.app.toml'),
-        scopes: 'write_products',
-      }
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
-    })
-  })
-
   test('returns empty object if hidden config file does not exist', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
