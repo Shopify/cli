@@ -1,5 +1,19 @@
 # @shopify/cli-kit
 
+## 3.87.0
+
+### Minor Changes
+
+- 64d1fc7: Use the handle to set the app version name, and the TOML name as a fallback
+- c30af25: Only use custom cli-hydrogen package in CLI development environments
+- 32f489c: Add ability to notify user when Liquid files are rewritten remotely
+
+### Patch Changes
+
+- a407016: Fix: Validate directory before `git clone` attempts
+- 60eb2a2: Treat all network errors as user-facing AbortError instead of BugError in fetchApiVersions
+- 14c1504: Ignore duplicated plugins to avoid "multiple tunnel plugins" errors
+
 ## 3.86.0
 
 ### Patch Changes
