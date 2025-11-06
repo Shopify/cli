@@ -19,13 +19,13 @@ The list below contains valuable resources for people interested in contributing
 * [Testing strategy](./cli/testing-strategy.md)
 * [Cross-OS compatibility](./cli/cross-os-compatibility.md)
 * [Troubleshooting](./cli/troubleshooting.md)
+* [Error handling principles](cli/error_handling.md)
 * [FAQ](./cli/faq.md)
 
 ## CLI Kit
 
 The [`@shopify/cli-kit`](https://www.npmjs.com/package/@shopify/cli-kit) NPM package provides utilities to abstract away interactions with the Shopify platform (e.g., authentication, API requests) and ensures experiences are consistent across the board. If you are creating a new plugin or contributing to an existing one, we recommend checking out the following resources:
 
-- [Errors](cli-kit/errors.md)
 - [Creating a new command or flag](cli-kit/command-guidelines.md)
 - [Content and UI guidelines](cli-kit/ui-kit/guidelines.md)
 - [Using UI Kit](cli-kit/ui-kit/readme.md)

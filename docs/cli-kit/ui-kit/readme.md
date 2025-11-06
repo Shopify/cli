@@ -141,7 +141,7 @@ All banners (including errors) are rendered with a width of 2/3 of the full widt
 
 #### Errors
 
-If you're using the `cli-kit`'s `runCLI` function to wrap your CLI, you can throw `AbortError` and let the runner display the exception properly. More on what `AbortError` accepts [here](../errors.md#aborting-the-execution-using-errors).
+If you're using the `cli-kit`'s `runCLI` function to wrap your CLI, you can throw `AbortError` and let the runner display the exception properly. More on what `AbortError` accepts [here](../../cli/error_handling.md#aborterror).
 
 If you're using your own custom errors or you're not using `runCLI` then you can use the `renderFatalError` function.
 Make sure that your error extends the `cli-kit` class `FatalError` (`AbortError` already does) and pass it to `renderFatalError`
