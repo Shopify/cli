@@ -22,15 +22,7 @@ export default class Execute extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(Execute)
 
-    let query = flags.query
-
-    if (!query && flags['query-file']) {
-      query = await readFile(flags['query-file'])
-    }
-
-    if (!query) {
-      this.error('either --query or --query-file is required')
-    }
+    const query = await this.getQuery(flags)
 
     const store = flags.store
     if (!store) {
@@ -73,5 +65,19 @@ export default class Execute extends Command {
     const result = await adminRequest(query, adminSession)
 
     this.log(JSON.stringify(result, null, 2))
+  }
+
+  private async getQuery(flags: {query?: string; 'query-file'?: string}): Promise<string> {
+    let query = flags.query
+
+    if (!query && flags['query-file']) {
+      query = await readFile(flags['query-file'])
+    }
+
+    if (!query) {
+      this.error('either --query or --query-file is required')
+    }
+
+    return query
   }
 }
