@@ -20,7 +20,7 @@ export const WebhookSubscriptionSchema = zod.object({
   include_fields: zod.array(zod.string({invalid_type_error: 'Value must be a string'})).optional(),
   filter: zod.string({invalid_type_error: 'Value must be a string'}).optional(),
   payload_query: zod.string({invalid_type_error: 'Value must be a string'}).trim().min(1).optional(),
-  name: zod.string({invalid_type_error: 'Value must be a string'}).min(1).max(50).optional(),
+  name: zod.string({invalid_type_error: 'Value must be a string'}).trim().min(1).max(50).optional(),
 
   compliance_topics: zod
     .array(
