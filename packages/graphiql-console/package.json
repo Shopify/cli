@@ -12,8 +12,11 @@
     "vitest": "vitest"
   },
   "dependencies": {
+    "@graphiql/toolkit": "^0.11.3",
     "@shopify/polaris": "^12.27.0",
     "@shopify/polaris-icons": "^9.0.0",
+    "graphiql": "^3.0.0",
+    "graphql": "^16.10.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
