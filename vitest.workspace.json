@@ -2,6 +2,7 @@
   "packages/app",
   "packages/cli",
   "packages/cli-kit",
+  "packages/graphiql-console",
   "packages/plugin-cloudflare",
   "packages/plugin-did-you-mean",
   "packages/theme",
