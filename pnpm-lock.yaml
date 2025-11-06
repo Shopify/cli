@@ -662,6 +662,9 @@ importers:
       '@shopify/polaris':
         specifier: ^12.27.0
         version: 12.27.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@shopify/polaris-icons':
+        specifier: ^9.0.0
+        version: 9.3.1(react@18.3.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -3552,6 +3555,12 @@ packages:
     peerDependenciesMeta:
       react:
         optional: true
+
+  '@shopify/polaris-icons@9.3.1':
+    resolution: {integrity: sha512-16BIFAT93LJ8X4YRXz5cR9ZPHeErMg3DYS0gyTPNPkd0E5IBPoTxPINjn2b4Mr9Sc1x4RfI4AqPcV8ut0D1J5w==}
+    engines: {node: '>=20.10.0'}
+    peerDependencies:
+      react: '*'
 
   '@shopify/polaris-tokens@8.10.0':
     resolution: {integrity: sha512-y4PDtRbFKGHwA6Lu7a3L4N9SDP6gZv4tw6u0viumtcXcbF0T2j1xPmyuJZNc9c7vmhNSARCg27NGQFpPgxuaEg==}
@@ -13499,6 +13508,10 @@ snapshots:
 
   '@shopify/polaris-icons@8.11.1(react@18.3.1)':
     optionalDependencies:
+      react: 18.3.1
+
+  '@shopify/polaris-icons@9.3.1(react@18.3.1)':
+    dependencies:
       react: 18.3.1
 
   '@shopify/polaris-tokens@8.10.0':
