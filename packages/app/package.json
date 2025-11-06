@@ -54,7 +54,6 @@
     "@shopify/function-runner": "4.1.1",
     "@shopify/plugin-cloudflare": "3.87.0",
     "@shopify/polaris": "12.27.0",
-    "@shopify/polaris-icons": "8.11.1",
     "@shopify/theme": "3.87.0",
     "@shopify/theme-check-node": "3.23.0",
     "@shopify/toml-patch": "0.3.0",
