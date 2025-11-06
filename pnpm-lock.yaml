@@ -174,9 +174,6 @@ importers:
       '@shopify/polaris':
         specifier: 12.27.0
         version: 12.27.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@shopify/polaris-icons':
-        specifier: 8.11.1
-        version: 8.11.1(react@18.3.1)
       '@shopify/theme':
         specifier: 3.87.0
         version: link:../theme

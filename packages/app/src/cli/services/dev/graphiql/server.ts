@@ -1,4 +1,3 @@
-import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import express from 'express'
 import bodyParser from 'body-parser'
@@ -9,6 +8,8 @@ import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {readFile, findPathUp} from '@shopify/cli-kit/node/fs'
+import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {Server} from 'http'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
@@ -98,15 +99,14 @@ export function setupGraphiQLServer({
     res.send('pong')
   })
 
-  const faviconPath = require.resolve('@shopify/app/assets/graphiql/favicon.ico')
-  app.get('/graphiql/favicon.ico', (_req, res) => {
-    res.sendFile(faviconPath)
-  })
-
-  const stylePath = require.resolve('@shopify/app/assets/graphiql/style.css')
-  app.get('/graphiql/simple.css', (_req, res) => {
-    res.sendFile(stylePath)
-  })
+  // Serve static assets for the React app (JS, CSS, workers)
+  const graphiqlIndexPath = require.resolve('@shopify/app/assets/graphiql/index.html')
+  const graphiqlAssetsDir = graphiqlIndexPath.replace('/index.html', '')
+  app.use(
+    '/extensions/graphiql/assets',
+    express.static(joinPath(graphiqlAssetsDir, 'extensions', 'graphiql', 'assets')),
+  )
+  app.use('/monacoeditorwork', express.static(joinPath(graphiqlAssetsDir, 'monacoeditorwork')))
 
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     return performActionWithRetryAfterRecovery(
@@ -117,7 +117,14 @@ export function setupGraphiQLServer({
 
   app.get('/graphiql/status', (_req, res) => {
     fetchApiVersionsWithTokenRefresh()
-      .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl}))
+      .then(() => {
+        res.send({
+          status: 'OK',
+          storeFqdn,
+          appName,
+          appUrl,
+        })
+      })
       .catch(() => res.send({status: 'UNAUTHENTICATED'}))
   })
 
@@ -127,7 +134,7 @@ export function setupGraphiQLServer({
     if (failIfUnmatchedKey(req.query.key as string, res)) return
 
     const usesHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
-    const url = `http${usesHttps ? 's' : ''}://${req.get('host')}`
+    const baseUrl = `http${usesHttps ? 's' : ''}://${req.get('host')}`
 
     let apiVersions: string[]
     try {
@@ -137,41 +144,57 @@ export function setupGraphiQLServer({
         return res.send(
           await renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
-            url,
+            url: baseUrl,
           }),
         )
       }
       throw err
     }
 
+    const sortedVersions = apiVersions.sort().reverse()
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const apiVersion = apiVersions.sort().reverse()[0]!
+    const apiVersion = sortedVersions[0]!
 
     function decodeQueryString(input: string | undefined) {
-      return input ? decodeURIComponent(input).replace(/\n/g, '\\n') : undefined
+      return input ? decodeURIComponent(input) : undefined
     }
 
     const query = decodeQueryString(req.query.query as string)
-    const variables = decodeQueryString(req.query.variables as string)
 
-    res.send(
-      await renderLiquidTemplate(
-        graphiqlTemplate({
-          apiVersion,
-          apiVersions: [...apiVersions, 'unstable'],
-          appName,
-          appUrl,
-          key,
-          storeFqdn,
-        }),
-        {
-          url,
-          defaultQueries: [{query: defaultQuery}],
-          query,
-          variables,
-        },
-      ),
-    )
+    // Read the built React index.html
+    const graphiqlAssetsDir = await findPathUp(joinPath('assets', 'graphiql'), {
+      type: 'directory',
+      cwd: moduleDirectory(import.meta.url),
+    })
+
+    if (!graphiqlAssetsDir) {
+      return res.status(404).send('GraphiQL assets not found')
+    }
+
+    const indexHtmlPath = joinPath(graphiqlAssetsDir, 'index.html')
+    let indexHtml = await readFile(indexHtmlPath)
+
+    // Build config object to inject (never include apiSecret or tokens)
+    const config = {
+      apiVersion,
+      apiVersions: [...apiVersions, 'unstable'],
+      appName,
+      appUrl,
+      storeFqdn,
+      baseUrl,
+      key: key ?? undefined,
+      query: query ?? undefined,
+    }
+
+    // Inject config script before </head>
+    // Escape < > & in JSON to prevent XSS when embedding in HTML script tags
+    // Use Unicode escapes so JavaScript correctly decodes them (HTML entities would break the query)
+    const safeJson = JSON.stringify(config).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026')
+    const configScript = `<script>window.__GRAPHIQL_CONFIG__ = ${safeJson};</script>`
+    indexHtml = indexHtml.replace('</head>', `${configScript}\n  </head>`)
+
+    res.setHeader('Content-Type', 'text/html')
+    res.send(indexHtml)
   })
 
   app.use(bodyParser.json())
