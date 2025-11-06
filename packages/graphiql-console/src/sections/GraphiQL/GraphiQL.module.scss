@@ -1,0 +1,127 @@
+.Container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+
+.ErrorBanner {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.Header {
+  display: grid;
+  grid-template-columns: 1fr;  // Single column on narrow screens
+  align-items: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--p-color-border, #e1e3e5);
+  background: #ffffff;
+  gap: 16px;
+}
+
+.LeftSection {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.RightSection {
+  justify-self: start;  // Left-align by default (single column on narrow screens)
+}
+
+// Right-align only on wide screens with two-column layout
+@media only screen and (min-width: 1081px) {
+  .RightSection {
+    justify-self: end;
+  }
+}
+
+.StatusSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ControlsSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ScopesNote {
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+}
+
+.LinksSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  a {
+    line-height: 0;
+
+    &:hover .Polaris-Text--root {
+      text-decoration: underline;
+    }
+
+    span.Polaris-Text--root {
+      max-width: max(12vw, 150px);
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+  }
+}
+
+.GraphiQLContainer {
+  flex-grow: 1;
+  overflow: hidden;
+
+  // Ensure GraphiQL component fills container
+  > div {
+    height: 100%;
+  }
+}
+
+// Icon shrinking utility
+.with-shrunk-icon .Polaris-Icon {
+  height: 1rem;
+  width: 1rem;
+  margin: 0.125rem;
+}
+
+// Responsive design
+@media only screen and (max-width: 1550px) {
+  .StatusSection,
+  .ControlsSection,
+  .LinksSection {
+    // Hide labels like "Status:", "API version:", "Store:", "App:"
+    :global(.top-bar-section-title) {
+      display: none;
+    }
+  }
+}
+
+@media only screen and (max-width: 1150px) {
+  .LinksSection a span.Polaris-Text--root {
+    max-width: max(12vw, 140px);
+  }
+}
+
+// Switch to two-column layout at wider screens
+@media only screen and (min-width: 1081px) {
+  .Header {
+    grid-template-columns: 7fr 5fr;
+  }
+}
+
+@media only screen and (max-width: 650px) {
+  .LinksSection a span.Polaris-Text--root {
+    max-width: 17vw;
+  }
+}
