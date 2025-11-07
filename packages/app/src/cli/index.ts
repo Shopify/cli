@@ -8,6 +8,7 @@ import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
+import Execute from './commands/app/execute.js'
 import FunctionBuild from './commands/app/function/build.js'
 import FunctionReplay from './commands/app/function/replay.js'
 import FunctionRun from './commands/app/function/run.js'
@@ -48,6 +49,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:config:use': ConfigUse,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
+  'app:execute': Execute,
   'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
   'app:function:replay': FunctionReplay,
