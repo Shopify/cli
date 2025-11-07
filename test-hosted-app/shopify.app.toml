@@ -1,0 +1,15 @@
+# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "test-hosted-app"
+client_id = "test-client-id"
+application_url = "http://localhost:3000"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[build]
+automatically_update_urls_on_dev = true
+
+[webhooks]
+api_version = "2024-10"

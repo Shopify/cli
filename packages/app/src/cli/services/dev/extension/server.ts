@@ -6,6 +6,7 @@ import {
   getExtensionPayloadMiddleware,
   getExtensionPointMiddleware,
   getExtensionsPayloadMiddleware,
+  getHostedHtmlMiddleware,
   getLogMiddleware,
   noCacheMiddleware,
   redirectToDevConsoleMiddleware,
@@ -30,6 +31,9 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpApp.use(noCacheMiddleware)
   httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)
+  // Hosted HTML middleware should be checked before general extension payload
+  httpRouter.use('/extensions/:extensionId', getHostedHtmlMiddleware(options))
+  httpRouter.use('/extensions/:extensionId/', getHostedHtmlMiddleware(options))
   httpRouter.use('/extensions/:extensionId', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/', getExtensionPayloadMiddleware(options))
   httpRouter.use('/extensions/:extensionId/:extensionPointTarget', getExtensionPointMiddleware(options))

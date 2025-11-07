@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hosted HTML App Test</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to Hosted HTML App</h1>
+    <p>This is a test of the new hosted HTML extension type for Shopify CLI.</p>
+
+    <div class="features">
+      <h2>Features Demonstrated:</h2>
+      <ul>
+        <li>Pure HTML/CSS/JS (no React required)</li>
+        <li>Sandboxed via iframe with srcdoc</li>
+        <li>Hash-based routing support</li>
+        <li>Direct file serving from CLI dev server</li>
+      </ul>
+    </div>
+
+    <div class="navigation">
+      <h2>Navigation Test:</h2>
+      <button onclick="navigateTo('/page1')">Page 1</button>
+      <button onclick="navigateTo('/page2')">Page 2</button>
+      <button onclick="navigateTo('/')">Home</button>
+    </div>
+
+    <div id="content">
+      <p>Current route: <span id="current-route">/</span></p>
+    </div>
+
+    <div class="api-test">
+      <h2>API Test:</h2>
+      <button onclick="testAPI()">Test Shopify API</button>
+      <pre id="api-result"></pre>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

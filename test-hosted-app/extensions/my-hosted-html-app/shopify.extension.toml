@@ -1,0 +1,12 @@
+name = "my-hosted-html-app"
+type = "hosted_html"
+handle = "my-hosted-html-app"
+
+# Entry point HTML file
+entrypoint = "index.html"
+
+api_version = "2024-10"
+
+# Optional: Specify app home extension targets
+# [[targeting]]
+# target = "admin.app.home"

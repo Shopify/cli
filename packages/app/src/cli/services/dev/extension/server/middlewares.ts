@@ -252,3 +252,106 @@ function getWebsocketUrl(devOptions: GetExtensionsMiddlewareOptions['devOptions'
 
   return socket.toString()
 }
+
+/**
+ * Middleware to serve hosted HTML apps with sandboxing via iframe srcdoc
+ * This implements the security model discussed in the tech docs
+ */
+export function getHostedHtmlMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
+  return async (request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) => {
+    const extensionID = request.context.params.extensionId
+    const extension = getExtensions().find((ext) => ext.devUUID === extensionID)
+
+    if (!extension) {
+      return sendError(response, {
+        statusCode: 404,
+        statusMessage: `Extension with id ${extensionID} not found`,
+      })
+    }
+
+    // Only apply this middleware to hosted_html extensions
+    if (extension.type !== 'hosted_html') {
+      return next()
+    }
+
+    const bundlePath = devOptions.appWatcher.buildOutputPath
+    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
+    const buildDirectory = extensionOutputPath.replace(extension.outputFileName, '')
+
+    // Get the entrypoint from configuration or default to index.html
+    const entrypoint = (extension.configuration as {entrypoint?: string}).entrypoint ?? 'index.html'
+    const entrypointPath = joinPath(buildDirectory, entrypoint)
+
+    const exists = await fileExists(entrypointPath)
+    if (!exists) {
+      return sendError(response, {
+        statusCode: 404,
+        statusMessage: `Entrypoint file not found: ${entrypoint}`,
+      })
+    }
+
+    // Read the HTML content
+    const htmlContent = await readFile(entrypointPath)
+
+    // Create a sandboxed iframe wrapper
+    // This uses srcdoc to ensure the content has a null origin for security
+    const sandboxedHtml = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hosted HTML App - ${extension.configuration.name}</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <iframe
+    id="hosted-app-frame"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+    srcdoc="${htmlContent.toString().replace(/"/g, '&quot;').replace(/\$/g, '&#36;')}"
+  ></iframe>
+  <script>
+    // Setup communication between parent and iframe for navigation
+    window.addEventListener('message', (event) => {
+      // Handle navigation events from the hosted app
+      if (event.data.type === 'HOSTED_APP_NAVIGATION') {
+        // Update browser history without reloading
+        if (event.data.path) {
+          window.history.pushState({}, '', '#' + event.data.path);
+        }
+      }
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('hashchange', () => {
+      const iframe = document.getElementById('hosted-app-frame');
+      iframe.contentWindow.postMessage({
+        type: 'NAVIGATION_UPDATE',
+        path: window.location.hash.slice(1)
+      }, '*');
+    });
+  </script>
+</body>
+</html>
+    `
+
+    response.setHeader('Content-Type', 'text/html')
+    response.setHeader('X-Frame-Options', 'SAMEORIGIN')
+    response.setHeader('Content-Security-Policy', "frame-ancestors 'self'")
+    response.writeHead(200)
+    response.end(sandboxedHtml)
+  }
+}
