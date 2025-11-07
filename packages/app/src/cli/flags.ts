@@ -1,5 +1,6 @@
 import {Flags} from '@oclif/core'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 /**
  * An object that contains the flags that
@@ -31,5 +32,20 @@ export const appFlags = {
     env: 'SHOPIFY_FLAG_RESET',
     default: false,
     exclusive: ['config'],
+  }),
+}
+
+export const bulkOperationFlags = {
+  query: Flags.string({
+    char: 'q',
+    description: 'The GraphQL query, as a string.',
+    env: 'SHOPIFY_FLAG_QUERY',
+    required: true,
+  }),
+  store: Flags.string({
+    char: 's',
+    description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
+    env: 'SHOPIFY_FLAG_STORE',
+    parse: async (input) => normalizeStoreFqdn(input),
   }),
 }

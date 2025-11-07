@@ -814,7 +814,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Execute app operations.",
+      "description": "Execute bulk operations against the Shopify Admin API.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -855,6 +855,16 @@
           "noCacheDefault": true,
           "type": "option"
         },
+        "query": {
+          "char": "q",
+          "description": "The GraphQL query, as a string.",
+          "env": "SHOPIFY_FLAG_QUERY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "query",
+          "required": true,
+          "type": "option"
+        },
         "reset": {
           "allowNo": false,
           "description": "Reset all your settings.",
@@ -865,6 +875,15 @@
           "hidden": false,
           "name": "reset",
           "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "type": "option"
         },
         "verbose": {
           "allowNo": false,
@@ -884,7 +903,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Execute app operations."
+      "summary": "Execute bulk operations."
     },
     "app:function:build": {
       "aliases": [
