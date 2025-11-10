@@ -8,11 +8,10 @@ import {
 } from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {renderTasksToStdErr} from './theme-ui.js'
-import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -245,120 +244,6 @@ describe('theme-uploader', () => {
       ],
       adminSession,
     )
-  })
-
-  test('should notify when Liquid files are rewritten remotely when handleRewrittenFiles="warn"', async () => {
-    // Given
-    const remoteChecksums = [{key: 'assets/matching.liquid', checksum: '1', value: 'content'}]
-    const themeFileSystem = fakeThemeFileSystem(
-      'tmp',
-      new Map([
-        ['assets/matching.liquid', {checksum: '1', key: '', value: 'content'}],
-        ['snippets/new-file.liquid', {checksum: '2', key: '', value: 'content'}],
-      ]),
-    )
-
-    // When
-    const {renderThemeSyncProgress, syncRewrittenFilesPromise} = uploadTheme(
-      remoteTheme,
-      adminSession,
-      remoteChecksums,
-      themeFileSystem,
-      {
-        ...uploadOptions,
-        handleRewrittenFiles: 'warn',
-      },
-    )
-    await renderThemeSyncProgress()
-    await syncRewrittenFilesPromise
-
-    // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
-    expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
-      remoteTheme.id,
-      [
-        {
-          key: 'snippets/new-file.liquid',
-          value: 'content',
-        },
-      ],
-      adminSession,
-    )
-    expect(renderInfo).toHaveBeenCalledWith(
-      expect.objectContaining({
-        body: expect.arrayContaining([
-          expect.objectContaining({
-            list: {
-              items: ['snippets/new-file.liquid'],
-            },
-          }),
-        ]),
-      }),
-    )
-  })
-
-  test('should fetch and persist Liquid files when they are rewritten remotely when handleRewrittenFiles="fix"', async () => {
-    const rewrittenLiquidFileAsset = {
-      key: 'snippets/new-file.liquid',
-      checksum: 'rewritten-checksum',
-      value: 'rewritten content',
-    } as const
-
-    vi.mocked(fetchThemeAssets).mockImplementation((_id, filenames, _session) => {
-      if (filenames.includes(rewrittenLiquidFileAsset.key)) {
-        return Promise.resolve([rewrittenLiquidFileAsset])
-      }
-      return Promise.resolve([])
-    })
-
-    // Given
-    const remoteChecksums = [{key: 'assets/matching.liquid', checksum: '1', value: 'content'}]
-    const themeFileSystem = fakeThemeFileSystem(
-      'tmp',
-      new Map([
-        ['assets/matching.liquid', {checksum: '1', key: '', value: 'content'}],
-        ['snippets/new-file.liquid', {checksum: '2', key: '', value: 'content'}],
-      ]),
-    )
-
-    // When
-    const {renderThemeSyncProgress, syncRewrittenFilesPromise} = uploadTheme(
-      remoteTheme,
-      adminSession,
-      remoteChecksums,
-      themeFileSystem,
-      {
-        ...uploadOptions,
-        handleRewrittenFiles: 'fix',
-      },
-    )
-    await renderThemeSyncProgress()
-    await syncRewrittenFilesPromise
-
-    // Then
-    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
-    expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
-      remoteTheme.id,
-      [
-        {
-          key: rewrittenLiquidFileAsset.key,
-          value: 'content',
-        },
-      ],
-      adminSession,
-    )
-    expect(renderInfo).toHaveBeenCalledWith(
-      expect.objectContaining({
-        body: expect.arrayContaining([
-          expect.objectContaining({
-            list: {
-              items: [rewrittenLiquidFileAsset.key],
-            },
-          }),
-        ]),
-      }),
-    )
-    expect(themeFileSystem.files.get(rewrittenLiquidFileAsset.key)).toEqual(rewrittenLiquidFileAsset)
   })
 
   test('should delete files in correct order', async () => {
