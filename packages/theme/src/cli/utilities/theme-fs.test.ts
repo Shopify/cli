@@ -39,12 +39,6 @@ beforeEach(async () => {
   vi.mocked(applyIgnoreFilters).mockImplementation(realModule.applyIgnoreFilters)
 })
 
-interface FileContent {
-  value?: string
-  attachment?: string
-  checksum: string
-}
-
 describe('theme-fs', () => {
   const locationOfThisFile = dirname(fileURLToPath(import.meta.url))
 
@@ -706,7 +700,6 @@ describe('theme-fs', () => {
     const adminSession = {token: 'token'} as AdminSession
     let unsyncedFileKeys: Set<string>
     let uploadErrors: Map<string, string[]>
-    const write = vi.fn()
 
     beforeEach(() => {
       unsyncedFileKeys = new Set([fileKey])
@@ -717,10 +710,10 @@ describe('theme-fs', () => {
     test('returns false if file is not in unsyncedFileKeys', async () => {
       // Given
       unsyncedFileKeys = new Set()
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession, write)
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When
-      const result = await handler({value: 'content', checksum: '123'})
+      const result = await handler({value: 'content'})
 
       // Then
       expect(result).toBe(false)
@@ -728,68 +721,34 @@ describe('theme-fs', () => {
       expect(triggerBrowserFullReload).not.toHaveBeenCalled()
     })
 
-    test.each<[string, FileContent]>([
-      ['text', {value: 'content', checksum: '123'}],
-      ['image', {attachment: 'content', checksum: '123'}],
-    ])('uploads %s file and returns true on successful sync', async (_fileType, fileContent) => {
-      // Given
-      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
-        {
-          key: fileKey,
-          success: true,
-          operation: Operation.Upload,
-        },
-      ])
-      vi.mocked(fetchThemeAssets).mockResolvedValue([])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession, write)
+    Object.entries({
+      text: {value: 'content'},
+      image: {attachment: 'content'},
+    }).forEach(([fileType, fileContent]) => {
+      test(`uploads ${fileType} file and returns true on successful sync`, async () => {
+        // Given
+        vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+          {
+            key: fileKey,
+            success: true,
+            operation: Operation.Upload,
+          },
+        ])
+        const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
-      // When
-      const result = await handler(fileContent)
+        // When
+        const result = await handler(fileContent)
 
-      // Then
-      expect(result).toBe(true)
-      expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
-        Number(themeId),
-        [{key: fileKey, ...fileContent}],
-        adminSession,
-      )
-      expect(unsyncedFileKeys.has(fileKey)).toBe(false)
-      expect(triggerBrowserFullReload).not.toHaveBeenCalled()
-    })
-
-    test('updates the file locally if an unsyncedFile is pushed up but rewritten remotely', async () => {
-      const liquidFileKey = 'snippets/new-file.liquid'
-      const originalFileContent = {
-        key: liquidFileKey,
-        checksum: 'checksum',
-        value: 'content',
-      }
-      const rewrittenFileContent = {
-        key: liquidFileKey,
-        checksum: 'rewritten-checksum',
-        value: 'rewritten content',
-      }
-      unsyncedFileKeys = new Set([liquidFileKey])
-      // Given
-      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
-        {
-          key: liquidFileKey,
-          success: true,
-          operation: Operation.Upload,
-          asset: rewrittenFileContent,
-        },
-      ])
-      vi.mocked(fetchThemeAssets).mockResolvedValue([rewrittenFileContent])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, liquidFileKey, themeId, adminSession, write)
-
-      // When
-      const result = await handler({value: originalFileContent.value, checksum: originalFileContent.checksum})
-
-      // Then
-      expect(result).toBe(true)
-      expect(bulkUploadThemeAssets).toHaveBeenCalledWith(Number(themeId), [originalFileContent], adminSession)
-      expect(unsyncedFileKeys.has(liquidFileKey)).toBe(false)
-      expect(write).toHaveBeenCalledWith(rewrittenFileContent)
+        // Then
+        expect(result).toBe(true)
+        expect(bulkUploadThemeAssets).toHaveBeenCalledWith(
+          Number(themeId),
+          [{key: fileKey, ...fileContent}],
+          adminSession,
+        )
+        expect(unsyncedFileKeys.has(fileKey)).toBe(false)
+        expect(triggerBrowserFullReload).not.toHaveBeenCalled()
+      })
     })
 
     test('throws error and sets uploadErrors on failed sync', async () => {
@@ -803,10 +762,10 @@ describe('theme-fs', () => {
           errors: {asset: errors},
         },
       ])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession, write)
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When/Then
-      await expect(handler({value: 'content', checksum: '123'})).rejects.toThrow('{{ broken liquid file')
+      await expect(handler({value: 'content'})).rejects.toThrow('{{ broken liquid file')
       expect(uploadErrors.get(fileKey)).toEqual(errors)
       expect(unsyncedFileKeys.has(fileKey)).toBe(true)
       expect(triggerBrowserFullReload).toHaveBeenCalledWith(themeId, fileKey)
@@ -822,11 +781,10 @@ describe('theme-fs', () => {
           operation: Operation.Upload,
         },
       ])
-      vi.mocked(fetchThemeAssets).mockResolvedValue([])
-      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession, write)
+      const handler = handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)
 
       // When
-      await handler({value: 'content', checksum: '123'})
+      await handler({value: 'content'})
 
       // Then
       expect(uploadErrors.has(fileKey)).toBe(false)

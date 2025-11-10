@@ -553,19 +553,11 @@ describe('bulkUploadThemeAssets', async () => {
         key: 'snippets/product-variant-picker.liquid',
         success: true,
         operation: Operation.Upload,
-        asset: {
-          checksum: '',
-          key: 'snippets/product-variant-picker.liquid',
-        },
       },
       {
         key: 'templates/404.json',
         success: true,
         operation: Operation.Upload,
-        asset: {
-          checksum: '',
-          key: 'templates/404.json',
-        },
       },
     ])
   })
