@@ -18,6 +18,7 @@ let checkPort: ReturnType<typeof getCheckPortHelper>
 
 export function assertConnectable(options: ConnectionArguments): void {
   checkPort ||= getCheckPortHelper()
+  debugger
 
   const {port, addr, timeout = DEFAULT_CONNECT_TIMEOUT} = options
   try {
@@ -31,11 +32,6 @@ export function assertConnectable(options: ConnectionArguments): void {
   } catch (err) {
     throw new Error(`DevServer check for '${options.projectName}' on ${port} / ${addr} failed (${err})`)
   }
-}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function TEST_testResetCheckPort(): void {
-  checkPort = getCheckPortHelper()
 }
 
 function getCheckPortHelper(): (addr: string, port: number, timeout: number) => boolean {
