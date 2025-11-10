@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.87.1
+
+### Patch Changes
+
+- 919f7e8: [Bug fix] Remove ability to sync Liquid files by checksum
+
 ## 3.87.0
 
 ### Minor Changes
