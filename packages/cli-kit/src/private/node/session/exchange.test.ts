@@ -8,7 +8,8 @@ import {
   refreshAccessToken,
   requestAppToken,
 } from './exchange.js'
-import {applicationId, clientId} from './identity.js'
+import {applicationId} from './identity.js'
+import {clientId} from '../../../public/node/api/identity-client.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'

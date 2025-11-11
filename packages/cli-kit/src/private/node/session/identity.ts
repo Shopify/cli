@@ -2,17 +2,6 @@ import {API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
 
-export function clientId(): string {
-  const environment = serviceEnvironment()
-  if (environment === Environment.Local) {
-    return 'e5380e02-312a-7408-5718-e07017e9cf52'
-  } else if (environment === Environment.Production) {
-    return 'fbdb2649-e327-4907-8f67-908d24cfd7e3'
-  } else {
-    return 'e5380e02-312a-7408-5718-e07017e9cf52'
-  }
-}
-
 export function applicationId(api: API): string {
   switch (api) {
     case 'admin': {

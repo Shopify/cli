@@ -1,9 +1,8 @@
 import {
   DeviceAuthorizationResponse,
   pollForDeviceAuthorization,
-  requestDeviceAuthorization,
 } from './device-authorization.js'
-import {clientId} from './identity.js'
+import {clientId, ProdIC} from '../../../public/node/api/identity-client.js'
 import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
@@ -20,6 +19,7 @@ vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/ui.js')
 vi.mock('./exchange.js')
 vi.mock('../../../public/node/system.js')
+vi.mock('../../../public/node/api/identity-client.js')
 
 beforeEach(() => {
   vi.mocked(isTTY).mockReturnValue(true)
@@ -53,7 +53,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(clientId).mockReturnValue('clientId')
 
     // When
-    const got = await requestDeviceAuthorization(['scope1', 'scope2'])
+    const got = await ProdIC.requestDeviceAuthorization(['scope1', 'scope2'])
 
     // Then
     expect(shopifyFetch).toBeCalledWith('https://fqdn.com/oauth/device_authorization', {
@@ -74,7 +74,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
-    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
+    await expect(ProdIC.requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 200). Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -89,7 +89,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
-    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
+    await expect(ProdIC.requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 200). Received empty response body. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -105,7 +105,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
-    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
+    await expect(ProdIC.requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 404). The request may be malformed or unauthorized. Received HTML instead of JSON - the service endpoint may have changed. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -120,7 +120,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
-    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
+    await expect(ProdIC.requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 500). The service may be experiencing issues. Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -137,7 +137,7 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
-    await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
+    await expect(ProdIC.requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
       'Failed to read response from authorization service (HTTP 200). Network or streaming error occurred.',
     )
   })
