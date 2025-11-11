@@ -185,11 +185,13 @@ async function functionExtensionInit({
       task: async () => {
         // Update the @shopify/shopify_function version in the template's package.json
         const extensionPackageJsonPath = joinPath(directory, 'package.json')
-        const packageJson = await readAndParsePackageJson(extensionPackageJsonPath)
+        if (await fileExists(extensionPackageJsonPath)) {
+          const packageJson = await readAndParsePackageJson(extensionPackageJsonPath)
 
-        if (packageJson.dependencies?.['@shopify/shopify_function']) {
-          packageJson.dependencies['@shopify/shopify_function'] = '0.0.0-snapshot-20251111164106'
-          await writeFile(extensionPackageJsonPath, JSON.stringify(packageJson, null, 2))
+          if (packageJson.dependencies?.['@shopify/shopify_function']) {
+            packageJson.dependencies['@shopify/shopify_function'] = '0.0.0-snapshot-20251111164106'
+            await writeFile(extensionPackageJsonPath, JSON.stringify(packageJson, null, 2))
+          }
         }
 
         // We need to run install once to setup the workspace correctly
