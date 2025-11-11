@@ -1,11 +1,15 @@
 import {executeBulkOperation} from './execute-bulk-operation.js'
 import {runBulkOperationQuery} from './run-query.js'
+import {runBulkOperationMutation} from './run-mutation.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
-import {describe, test, expect, vi} from 'vitest'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('./run-query.js')
+vi.mock('./run-mutation.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/session')
 
 describe('executeBulkOperation', () => {
   const mockApp = {
@@ -13,7 +17,7 @@ describe('executeBulkOperation', () => {
   } as AppLinkedInterface
 
   const storeFqdn = 'test-store.myshopify.com'
-  const query = 'query { products { edges { node { id } } } }'
+  const mockAdminSession = {token: 'test-token', storeFqdn}
 
   const successfulBulkOperation = {
     id: 'gid://shopify/BulkOperation/123',
@@ -25,7 +29,12 @@ describe('executeBulkOperation', () => {
     url: null,
   }
 
-  test('executeBulkOperation successfully runs', async () => {
+  beforeEach(() => {
+    vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
+  })
+
+  test('runs query operation when GraphQL document starts with query', async () => {
+    const query = 'query { products { edges { node { id } } } }'
     const mockResponse = {
       bulkOperation: successfulBulkOperation,
       userErrors: [],
@@ -39,21 +48,91 @@ describe('executeBulkOperation', () => {
     })
 
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query,
+      variables: undefined,
+    })
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('runs query operation when GraphQL document starts with curly brace', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse as any)
+
+    await executeBulkOperation({
+      app: mockApp,
       storeFqdn,
       query,
     })
 
-    expect(renderInfo).toHaveBeenCalledWith({
-      headline: 'Starting bulk operation.',
-      body: `App: ${mockApp.name}\nStore: ${storeFqdn}`,
+    expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query,
+      variables: undefined,
+    })
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('runs mutation operation when GraphQL document starts with mutation', async () => {
+    const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse as any)
+
+    await executeBulkOperation({
+      app: mockApp,
+      storeFqdn,
+      query: mutation,
     })
 
-    expect(renderInfo).toHaveBeenCalledWith({
-      customSections: expect.arrayContaining([
-        expect.objectContaining({
-          title: 'Bulk Operation Created',
-        }),
-      ]),
+    expect(runBulkOperationMutation).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query: mutation,
+      variables: undefined,
+    })
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+  })
+
+  test('passes variables to mutation when provided with `--variables` flag', async () => {
+    const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+    const variables = ['{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}']
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse as any)
+
+    await executeBulkOperation({
+      app: mockApp,
+      storeFqdn,
+      query: mutation,
+      variables,
+    })
+
+    expect(runBulkOperationMutation).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query: mutation,
+      variables,
+    })
+  })
+
+  test('renders success message when bulk operation is created', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse as any)
+    await executeBulkOperation({
+      app: mockApp,
+      storeFqdn,
+      query,
     })
 
     expect(renderSuccess).toHaveBeenCalledWith({
@@ -62,7 +141,8 @@ describe('executeBulkOperation', () => {
     })
   })
 
-  test('executeBulkOperation renders warning when user errors are present', async () => {
+  test('renders warning when user errors are present', async () => {
+    const query = '{ products { edges { node { id } } } }'
     const mockResponse = {
       bulkOperation: null,
       userErrors: [

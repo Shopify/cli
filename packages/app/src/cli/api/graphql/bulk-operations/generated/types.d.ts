@@ -120,6 +120,32 @@ export type Scalars = {
   UtcOffset: {input: any; output: any}
 }
 
+/** Possible error codes that can be returned by `BulkMutationUserError`. */
+export type BulkMutationErrorCode =
+  /**
+   * There was a problem reading the JSONL file. This error might be intermittent,
+   * so you can try performing the same query again.
+   */
+  | 'INTERNAL_FILE_SERVER_ERROR'
+  /** The operation did not run because the mutation is invalid. Check your mutation syntax and try again. */
+  | 'INVALID_MUTATION'
+  /** The JSONL file submitted via the `stagedUploadsCreate` mutation is invalid. Update the file and try again. */
+  | 'INVALID_STAGED_UPLOAD_FILE'
+  /** Bulk operations limit reached. Please try again later. */
+  | 'LIMIT_REACHED'
+  /**
+   * The JSONL file could not be found. Try [uploading the file](https://shopify.dev/api/usage/bulk-operations/imports#generate-the-uploaded-url-and-parameters)
+   * again, and check that you've entered the URL correctly for the
+   * `stagedUploadPath` mutation argument.
+   */
+  | 'NO_SUCH_FILE'
+  /**
+   * The operation did not run because another bulk mutation is already running.
+   * [Wait for the operation to finish](https://shopify.dev/api/usage/bulk-operations/imports#wait-for-the-operation-to-finish)
+   * before retrying this operation.
+   */
+  | 'OPERATION_IN_PROGRESS'
+
 /** Error codes for failed bulk operations. */
 export type BulkOperationErrorCode =
   /**
@@ -177,3 +203,123 @@ export type BulkOperationUserErrorCode =
   | 'LIMIT_REACHED'
   /** A bulk operation is already in progress. */
   | 'OPERATION_IN_PROGRESS'
+
+/**
+ * The possible HTTP methods that can be used when sending a request to upload a file using information from a
+ * [StagedMediaUploadTarget](https://shopify.dev/api/admin-graphql/latest/objects/StagedMediaUploadTarget).
+ */
+export type StagedUploadHttpMethodType =
+  /** The POST HTTP method. */
+  | 'POST'
+  /** The PUT HTTP method. */
+  | 'PUT'
+
+/** The input fields for generating staged upload targets. */
+export type StagedUploadInput = {
+  /**
+   * The size of the file to upload, in bytes. This is required when the request's resource property is set to
+   * [VIDEO](https://shopify.dev/api/admin-graphql/latest/enums/StagedUploadTargetGenerateUploadResource#value-video)
+   * or [MODEL_3D](https://shopify.dev/api/admin-graphql/latest/enums/StagedUploadTargetGenerateUploadResource#value-model3d).
+   */
+  fileSize?: InputMaybe<Scalars['UnsignedInt64']['input']>
+  /** The file's name and extension. */
+  filename: Scalars['String']['input']
+  /**
+   * The HTTP method to be used when sending a request to upload the file using the returned staged
+   * upload target.
+   */
+  httpMethod?: InputMaybe<StagedUploadHttpMethodType>
+  /** The file's MIME type. */
+  mimeType: Scalars['String']['input']
+  /** The file's intended Shopify resource type. */
+  resource: StagedUploadTargetGenerateUploadResource
+}
+
+/** The resource type to receive. */
+export type StagedUploadTargetGenerateUploadResource =
+  /**
+   * Represents bulk mutation variables.
+   *
+   * For example, bulk mutation variables can be used for bulk operations using the
+   * [bulkOperationRunMutation mutation](https://shopify.dev/api/admin-graphql/latest/mutations/bulkOperationRunMutation).
+   */
+  | 'BULK_MUTATION_VARIABLES'
+  /**
+   * An image associated with a collection.
+   *
+   * For example, after uploading an image, you can use the
+   * [collectionUpdate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/collectionUpdate)
+   * to add the image to a collection.
+   */
+  | 'COLLECTION_IMAGE'
+  /**
+   * Represents a file associated with a dispute.
+   *
+   * For example, after uploading the file, you can add the file to a dispute using the
+   * [disputeEvidenceUpdate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/disputeEvidenceUpdate).
+   */
+  | 'DISPUTE_FILE_UPLOAD'
+  /**
+   * Represents any file other than HTML.
+   *
+   * For example, after uploading the file, you can add the file to the
+   * [Files page](https://shopify.com/admin/settings/files) in Shopify admin using the
+   * [fileCreate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/fileCreate).
+   */
+  | 'FILE'
+  /**
+   * An image.
+   *
+   * For example, after uploading an image, you can add the image to a product using the
+   * [productCreateMedia mutation](https://shopify.dev/api/admin-graphql/latest/mutations/productCreateMedia)
+   * or to the [Files page](https://shopify.com/admin/settings/files) in Shopify admin using the
+   * [fileCreate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/fileCreate).
+   */
+  | 'IMAGE'
+  /**
+   * A Shopify hosted 3d model.
+   *
+   * For example, after uploading the 3d model, you can add the 3d model to a product using the
+   * [productCreateMedia mutation](https://shopify.dev/api/admin-graphql/latest/mutations/productCreateMedia).
+   */
+  | 'MODEL_3D'
+  /**
+   * An image that's associated with a product.
+   *
+   * For example, after uploading the image, you can add the image to a product using the
+   * [productCreateMedia mutation](https://shopify.dev/api/admin-graphql/latest/mutations/productCreateMedia).
+   */
+  | 'PRODUCT_IMAGE'
+  /**
+   * Represents a label associated with a return.
+   *
+   * For example, once uploaded, this resource can be used to [create a
+   * ReverseDelivery](https://shopify.dev/api/admin-graphql/unstable/mutations/reverseDeliveryCreateWithShipping).
+   */
+  | 'RETURN_LABEL'
+  /**
+   * An image.
+   *
+   * For example, after uploading the image, you can add the image to the
+   * [Files page](https://shopify.com/admin/settings/files) in Shopify admin using the
+   * [fileCreate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/fileCreate).
+   */
+  | 'SHOP_IMAGE'
+  /**
+   * Represents a redirect CSV file.
+   *
+   * Example usage: This resource can be used for creating a
+   * [UrlRedirectImport](https://shopify.dev/api/admin-graphql/2022-04/objects/UrlRedirectImport)
+   * object for use in the
+   * [urlRedirectImportCreate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/urlRedirectImportCreate).
+   */
+  | 'URL_REDIRECT_IMPORT'
+  /**
+   * A Shopify-hosted video.
+   *
+   * For example, after uploading the video, you can add the video to a product using the
+   * [productCreateMedia mutation](https://shopify.dev/api/admin-graphql/latest/mutations/productCreateMedia)
+   * or to the [Files page](https://shopify.com/admin/settings/files) in Shopify admin using the
+   * [fileCreate mutation](https://shopify.dev/api/admin-graphql/latest/mutations/fileCreate).
+   */
+  | 'VIDEO'
