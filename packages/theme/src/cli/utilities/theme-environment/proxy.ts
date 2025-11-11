@@ -228,6 +228,15 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
     response.headers.delete(header)
   }
 
+  // Remove CORS headers from the proxied response. Our CORS middleware
+  // will set the correct headers based on the allowed origins.
+  response.headers.delete('access-control-allow-origin')
+  response.headers.delete('access-control-allow-credentials')
+  response.headers.delete('access-control-allow-methods')
+  response.headers.delete('access-control-allow-headers')
+  response.headers.delete('access-control-expose-headers')
+  response.headers.delete('access-control-max-age')
+
   // Link header preloads resources from global CDN, proxy it:
   const linkHeader = response.headers.get('Link')
   if (linkHeader) response.headers.set('Link', injectCdnProxy(linkHeader, ctx))

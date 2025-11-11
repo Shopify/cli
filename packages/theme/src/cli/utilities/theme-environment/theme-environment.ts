@@ -98,16 +98,24 @@ interface DevelopmentServerInstance {
 
 function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
   const app = createApp()
+  const allowedOrigins = [`http://${ctx.options.host}:${ctx.options.port}`, `https://${ctx.session.storeFqdn}`]
 
   app.use(
     defineLazyEventHandler(async () => {
       await initialWork
       return defineEventHandler((event) => {
-        handleCors(event, {
-          origin: '*',
-          methods: '*',
-          preflight: {statusCode: 204},
-        })
+        const origin = event.node.req.headers.origin
+
+        // We only set CORS headers if an Origin header is present in the request.
+        // This prevents wildcard CORS on direct navigation.
+        if (origin) {
+          handleCors(event, {
+            origin: (requestOrigin) => allowedOrigins.includes(requestOrigin),
+            credentials: true,
+            methods: ['GET', 'POST', 'HEAD', 'OPTIONS'],
+            preflight: {statusCode: 204},
+          })
+        }
       })
     }),
   )
