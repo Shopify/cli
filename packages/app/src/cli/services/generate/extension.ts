@@ -16,7 +16,7 @@ import {
 import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
 import {slugify} from '@shopify/cli-kit/common/string'
 import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -183,6 +183,25 @@ async function functionExtensionInit({
     taskList.push({
       title: 'Installing additional dependencies',
       task: async () => {
+        // Update the @shopify/shopify_function version in the template's package.json
+        const extensionPackageJsonPath = joinPath(directory, 'package.json')
+        const packageJson = await readAndParsePackageJson(extensionPackageJsonPath)
+
+        if (packageJson.dependencies?.['@shopify/shopify_function']) {
+          // Path to local package relative to user's home directory
+          const homeDir = process.env.HOME || process.env.USERPROFILE
+          const localPackagePath = joinPath(
+            homeDir!,
+            'src',
+            'github.com',
+            'Shopify',
+            'shopify-function-javascript',
+            'shopify-shopify_function-2.0.1-rc.0.tgz',
+          )
+          packageJson.dependencies['@shopify/shopify_function'] = `file:${localPackagePath}`
+          await writeFile(extensionPackageJsonPath, JSON.stringify(packageJson, null, 2))
+        }
+
         // We need to run install once to setup the workspace correctly
         if (app.usesWorkspaces) {
           await installNodeModules({packageManager: app.packageManager, directory: app.directory})
