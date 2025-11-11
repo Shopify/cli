@@ -30,6 +30,15 @@ export interface DeviceAuthorizationResponse {
  * @returns An object with the device authorization response.
  */
 export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
+  return {
+    deviceCode: 'device_code',
+    userCode: 'user_code',
+    verificationUri: 'verification_uri',
+    expiresIn: 360000,
+    verificationUriComplete: 'verification_uri_complete',
+    interval: 5,
+  }
+
   const fqdn = await identityFqdn()
   const identityClientId = clientId()
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}

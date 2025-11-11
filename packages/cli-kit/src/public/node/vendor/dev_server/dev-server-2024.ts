@@ -39,6 +39,7 @@ function url(projectName: string, options: HostOptions = {}): string {
 }
 
 function assertRunning2024(projectName: string): void {
+  console.log('HERE', projectName)
   assertConnectable({
     projectName,
     addr: getBackendIp(projectName),

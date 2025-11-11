@@ -116,7 +116,6 @@ import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-manag
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
-import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
 import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
@@ -278,15 +277,24 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
       // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
-      const userInfoResult = await businessPlatformRequestDoc({
-        query: UserInfo,
-        cacheOptions: {
-          cacheTTL: {hours: 6},
-          cacheExtraKey: userId,
+      // const userInfoResult = await businessPlatformRequestDoc({
+      //   query: UserInfo,
+      //   cacheOptions: {
+      //     cacheTTL: {hours: 6},
+      //     cacheExtraKey: userId,
+      //   },
+      //   token: businessPlatformToken,
+      //   unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
+      // })
+
+      const userInfoResult = {
+        currentUserAccount: {
+          email: 'test@test.com',
+          organizations: {
+            nodes: [{name: 'Test Organization'}],
+          },
         },
-        token: businessPlatformToken,
-        unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
-      })
+      }
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {
         const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
