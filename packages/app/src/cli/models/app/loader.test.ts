@@ -2723,6 +2723,36 @@ redirect_urls = [ "https://example.com/api/auth" ]
       'Unsupported section(s) in app configuration: and_another, something_else',
     )
   })
+
+  test('does not throw unsupported config property error when mode is local', async () => {
+    const linkedAppConfigurationWithExtraConfig = `
+    name = "for-testing"
+    client_id = "1234567890"
+    application_url = "https://example.com/lala"
+    embedded = true
+
+    [build]
+    include_config_on_deploy = true
+
+    [webhooks]
+    api_version = "2023-07"
+
+    [auth]
+    redirect_urls = [ "https://example.com/api/auth" ]
+
+    [something_else]
+    not_valid = true
+
+    [and_another]
+    bad = true
+    `
+    await writeConfig(linkedAppConfigurationWithExtraConfig)
+
+    const app = await loadTestingApp({mode: 'local'})
+
+    expect(app).toBeDefined()
+    expect(app.name).toBe('for-testing')
+  })
 })
 
 describe('getAppConfigurationFileName', () => {
