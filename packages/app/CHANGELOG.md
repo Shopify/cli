@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.87.2
+
+### Patch Changes
+
+- b594e9f: Fix app loading errors for some commands
+  - @shopify/cli-kit@3.87.2
+  - @shopify/theme@3.87.2
+  - @shopify/plugin-cloudflare@3.87.2
+
 ## 3.87.1
 
 ### Patch Changes
