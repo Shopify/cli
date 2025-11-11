@@ -188,17 +188,7 @@ async function functionExtensionInit({
         const packageJson = await readAndParsePackageJson(extensionPackageJsonPath)
 
         if (packageJson.dependencies?.['@shopify/shopify_function']) {
-          // Path to local package relative to user's home directory
-          const homeDir = process.env.HOME || process.env.USERPROFILE
-          const localPackagePath = joinPath(
-            homeDir!,
-            'src',
-            'github.com',
-            'Shopify',
-            'shopify-function-javascript',
-            'shopify-shopify_function-2.0.1-rc.0.tgz',
-          )
-          packageJson.dependencies['@shopify/shopify_function'] = `file:${localPackagePath}`
+          packageJson.dependencies['@shopify/shopify_function'] = '0.0.0-snapshot-20251111164106'
           await writeFile(extensionPackageJsonPath, JSON.stringify(packageJson, null, 2))
         }
 
