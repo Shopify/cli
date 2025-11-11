@@ -158,7 +158,15 @@ describe('setupDevServer', () => {
       [],
       context.localThemeFileSystem,
       {noDelete: true, ...filters},
+      expect.anything(),
     )
+    // This is the best way I could think of verifying the rejectBackgroundJob
+    // Verify the rejectBackgroundJob callback is a function accepting one argument
+    const callArgs = vi.mocked(reconcileAndPollThemeEditorChanges).mock.calls[0]
+    const rejectCallback = callArgs?.[5]
+    expect(rejectCallback).toBeTypeOf('function')
+    // Reject callbacks take 1 argument: the rejection reason
+    expect(rejectCallback).toHaveLength(1)
   })
 
   test('should skip deletion of remote files if noDelete flag is passed', async () => {

@@ -5,16 +5,41 @@ import {getProxyHandler} from './proxy.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
-import {createAbortCatchError} from '../errors.js'
+import {renderThrownError} from '../errors.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {createServer} from 'node:http'
 import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
 
+// Polyfill for Promise.withResolvers
+// Can remove once our minimum supported Node version is 22
+interface PromiseWithResolvers<T> {
+  promise: Promise<T>
+  resolve: (value: T | PromiseLike<T>) => void
+  reject: (reason?: unknown) => void
+}
+
+function promiseWithResolvers<T>(): PromiseWithResolvers<T> {
+  if (typeof Promise.withResolvers === 'function') {
+    return Promise.withResolvers<T>()
+  }
+
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+  const promise = new Promise<T>((_resolve, _reject) => {
+    resolve = _resolve
+    reject = _reject
+  })
+
+  return {promise, resolve, reject}
+}
+
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
+  const {promise: backgroundJobPromise, reject: rejectBackgroundJob} = promiseWithResolvers<never>()
+
   const watcherPromise = setupInMemoryTemplateWatcher(theme, ctx)
-  const envSetup = ensureThemeEnvironmentSetup(theme, ctx)
+  const envSetup = ensureThemeEnvironmentSetup(theme, ctx, rejectBackgroundJob)
   const workPromise = Promise.all([watcherPromise, envSetup.workPromise]).then(() =>
     ctx.localThemeFileSystem.startWatcher(theme.id.toString(), ctx.session),
   )
@@ -25,16 +50,25 @@ export function setupDevServer(theme: Theme, ctx: DevServerContext) {
     serverStart: server.start,
     dispatchEvent: server.dispatch,
     renderDevSetupProgress: envSetup.renderProgress,
+    backgroundJobPromise,
   }
 }
 
-function ensureThemeEnvironmentSetup(theme: Theme, ctx: DevServerContext) {
-  const abort = createAbortCatchError('Failed to perform the initial theme synchronization.')
+function ensureThemeEnvironmentSetup(
+  theme: Theme,
+  ctx: DevServerContext,
+  rejectBackgroundJob: (reason?: unknown) => void,
+) {
+  const abort = (error: Error): never => {
+    renderThrownError('Failed to perform the initial theme synchronization.', error)
+    rejectBackgroundJob(error)
+    throw error
+  }
 
   const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session).catch(abort)
 
   const reconcilePromise = remoteChecksumsPromise
-    .then((remoteChecksums) => handleThemeEditorSync(theme, ctx, remoteChecksums))
+    .then((remoteChecksums) => handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob))
     .catch(abort)
 
   const uploadPromise = reconcilePromise
@@ -74,16 +108,24 @@ function handleThemeEditorSync(
   theme: Theme,
   ctx: DevServerContext,
   remoteChecksums: Checksum[],
+  rejectBackgroundJob: (reason?: unknown) => void,
 ): Promise<{
   updatedRemoteChecksumsPromise: Promise<Checksum[]>
   workPromise: Promise<void>
 }> {
   if (ctx.options.themeEditorSync) {
-    return reconcileAndPollThemeEditorChanges(theme, ctx.session, remoteChecksums, ctx.localThemeFileSystem, {
-      noDelete: ctx.options.noDelete,
-      ignore: ctx.options.ignore,
-      only: ctx.options.only,
-    })
+    return reconcileAndPollThemeEditorChanges(
+      theme,
+      ctx.session,
+      remoteChecksums,
+      ctx.localThemeFileSystem,
+      {
+        noDelete: ctx.options.noDelete,
+        ignore: ctx.options.ignore,
+        only: ctx.options.only,
+      },
+      rejectBackgroundJob,
+    )
   } else {
     return Promise.resolve({
       updatedRemoteChecksumsPromise: Promise.resolve(remoteChecksums),

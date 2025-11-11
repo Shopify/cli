@@ -119,23 +119,7 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  if (options['theme-editor-sync']) {
-    session.storefrontPassword = await storefrontPasswordPromise
-  }
-
-  const {serverStart, renderDevSetupProgress} = setupDevServer(options.theme, ctx)
-
-  if (!options['theme-editor-sync']) {
-    session.storefrontPassword = await storefrontPasswordPromise
-  }
-
-  await renderDevSetupProgress()
-  await serverStart()
-
-  renderLinks(urls)
-  if (options.open) {
-    openURLSafely(urls.local, 'development server')
-  }
+  const {serverStart, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(options.theme, ctx)
 
   readline.emitKeypressEvents(process.stdin)
   if (process.stdin.isTTY) {
@@ -167,6 +151,18 @@ export async function dev(options: DevOptions) {
         break
     }
   })
+
+  await Promise.all([
+    backgroundJobPromise,
+    renderDevSetupProgress()
+      .then(serverStart)
+      .then(() => {
+        renderLinks(urls)
+        if (options.open) {
+          openURLSafely(urls.local, 'development server')
+        }
+      }),
+  ])
 }
 
 export function openURLSafely(url: string, label: string) {
