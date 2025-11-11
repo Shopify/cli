@@ -41,13 +41,15 @@ export default class Execute extends AppLinkedCommand {
       body: `App: ${appContextResult.app.name}\nStore: ${store.shopDomain}`,
     })
 
-    const {result, errors} = await runBulkOperationQuery({
+    const bulkOperationResponse = await runBulkOperationQuery({
       storeFqdn: store.shopDomain,
       query: flags.query,
     })
 
-    if (errors?.length) {
-      const errorMessages = errors.map((error) => `${error.field?.join('.') ?? 'unknown'}: ${error.message}`).join('\n')
+    if (bulkOperationResponse?.userErrors?.length) {
+      const errorMessages = bulkOperationResponse.userErrors
+        .map((error) => `${error.field?.join('.') ?? 'unknown'}: ${error.message}`)
+        .join('\n')
       renderWarning({
         headline: 'Bulk operation errors.',
         body: errorMessages,
@@ -55,6 +57,7 @@ export default class Execute extends AppLinkedCommand {
       return {app: appContextResult.app}
     }
 
+    const result = bulkOperationResponse?.bulkOperation
     if (result) {
       const infoSections = [
         {
@@ -65,7 +68,7 @@ export default class Execute extends AppLinkedCommand {
                 items: [
                   outputContent`ID: ${outputToken.cyan(result.id)}`.value,
                   outputContent`Status: ${outputToken.yellow(result.status)}`.value,
-                  outputContent`Created: ${outputToken.gray(result.createdAt)}`.value,
+                  outputContent`Created: ${outputToken.gray(String(result.createdAt))}`.value,
                 ],
               },
             },

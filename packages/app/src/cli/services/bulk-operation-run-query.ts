@@ -1,10 +1,8 @@
 import {
   BulkOperationRunQuery,
-  BulkOperation,
-  BulkOperationError,
-  BulkOperationRunQuerySchema,
-} from '../api/graphql/admin-bulk-operations.js'
-import {adminRequest} from '@shopify/cli-kit/node/api/admin'
+  BulkOperationRunQueryMutation,
+} from '../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
+import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 
 interface BulkOperationRunQueryOptions {
@@ -18,23 +16,14 @@ interface BulkOperationRunQueryOptions {
  */
 export async function runBulkOperationQuery(
   options: BulkOperationRunQueryOptions,
-): Promise<{result?: BulkOperation; errors?: BulkOperationError[]}> {
+): Promise<BulkOperationRunQueryMutation['bulkOperationRunQuery']> {
   const {storeFqdn, query} = options
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
-  const response = await adminRequest<BulkOperationRunQuerySchema>(BulkOperationRunQuery, adminSession, {query})
+  const response = await adminRequestDoc<BulkOperationRunQueryMutation, {query: string}>({
+    query: BulkOperationRunQuery,
+    session: adminSession,
+    variables: {query},
+  })
 
-  if (response.bulkOperationRunQuery.userErrors.length > 0) {
-    return {
-      errors: response.bulkOperationRunQuery.userErrors,
-    }
-  }
-
-  const bulkOperation = response.bulkOperationRunQuery.bulkOperation
-  if (bulkOperation) {
-    return {result: bulkOperation}
-  }
-
-  return {
-    errors: [{field: null, message: 'No bulk operation was created'}],
-  }
+  return response.bulkOperationRunQuery
 }

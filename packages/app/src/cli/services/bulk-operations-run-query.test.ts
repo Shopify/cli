@@ -1,5 +1,5 @@
 import {runBulkOperationQuery} from './bulk-operation-run-query.js'
-import {adminRequest} from '@shopify/cli-kit/node/api/admin'
+import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
@@ -29,14 +29,14 @@ describe('runBulkOperationQuery', () => {
   })
 
   test('returns a bulk operation when request succeeds', async () => {
-    vi.mocked(adminRequest).mockResolvedValue(mockSuccessResponse)
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
 
     const bulkOperationResult = await runBulkOperationQuery({
       storeFqdn: 'test-store.myshopify.com',
       query: 'query { products { edges { node { id } } } }',
     })
 
-    expect(bulkOperationResult.result).toEqual(successfulBulkOperation)
-    expect(bulkOperationResult.errors).toBeUndefined()
+    expect(bulkOperationResult?.bulkOperation).toEqual(successfulBulkOperation)
+    expect(bulkOperationResult?.userErrors).toEqual([])
   })
 })
