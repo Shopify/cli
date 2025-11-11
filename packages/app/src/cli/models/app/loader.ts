@@ -682,7 +682,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         return !configKeysThatAreNeverModules.includes(key)
       })
 
-    if (unusedKeys.length > 0) {
+    if (unusedKeys.length > 0 && this.mode !== 'local') {
       this.abortOrReport(
         outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
         undefined,
