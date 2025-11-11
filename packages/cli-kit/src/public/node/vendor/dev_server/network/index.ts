@@ -18,7 +18,7 @@ let checkPort: ReturnType<typeof getCheckPortHelper>
 
 export function assertConnectable(options: ConnectionArguments): void {
   checkPort ||= getCheckPortHelper()
-  debugger
+  // debugger
 
   const {port, addr, timeout = DEFAULT_CONNECT_TIMEOUT} = options
   try {
