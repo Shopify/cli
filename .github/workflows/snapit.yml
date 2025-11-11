@@ -39,8 +39,8 @@ jobs:
 
             > Use `which shopify` to find out which one you are running and uninstall it."
           build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
-          package_manager: 'npm'
-          shopify_registry: 'https://registry.npmjs.org'
+          comment_package_manager: 'npm'
+          comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
