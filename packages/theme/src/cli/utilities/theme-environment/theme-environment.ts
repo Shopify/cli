@@ -62,28 +62,29 @@ function ensureThemeEnvironmentSetup(
   const abort = (error: Error): never => {
     renderThrownError('Failed to perform the initial theme synchronization.', error)
     rejectBackgroundJob(error)
-    throw error
+    // Return a permanently pending promise to stop execution without throwing
+    return new Promise<never>(() => {}) as never
   }
 
-  const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session).catch(abort)
+  const remoteChecksumsPromise = fetchChecksums(theme.id, ctx.session)
 
-  const reconcilePromise = remoteChecksumsPromise
-    .then((remoteChecksums) => handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob))
-    .catch(abort)
+  const reconcilePromise = remoteChecksumsPromise.then((remoteChecksums) =>
+    handleThemeEditorSync(theme, ctx, remoteChecksums, rejectBackgroundJob),
+  )
 
-  const uploadPromise = reconcilePromise
-    .then(async ({updatedRemoteChecksumsPromise}) => {
-      const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
-      return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
-        nodelete: ctx.options.noDelete,
-        deferPartialWork: true,
-        backgroundWorkCatch: abort,
-      })
+  const uploadPromise = reconcilePromise.then(async ({updatedRemoteChecksumsPromise}) => {
+    const updatedRemoteChecksums = await updatedRemoteChecksumsPromise
+    return uploadTheme(theme, ctx.session, updatedRemoteChecksums, ctx.localThemeFileSystem, {
+      nodelete: ctx.options.noDelete,
+      deferPartialWork: true,
+      backgroundWorkCatch: abort,
     })
-    .catch(abort)
+  })
+
+  const workPromise = uploadPromise.then((result) => result.workPromise).catch(abort)
 
   return {
-    workPromise: uploadPromise.then((result) => result.workPromise).catch(abort),
+    workPromise,
     renderProgress: async () => {
       if (ctx.options.themeEditorSync) {
         const {workPromise} = await reconcilePromise
