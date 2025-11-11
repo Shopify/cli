@@ -1,51 +1,8 @@
-name: shopify-cli
+name: PR
 
 on:
-  workflow_dispatch:
-    inputs:
-      branch-name:
-        type: string
-        description: 'Branch'
-        required: true
-        default: 'main'
-      node-version:
-        description: 'Node version'
-        required: true
-        default: '24.1.0'
-        type: choice
-        options:
-          - 20.14.0
-          - 22.2.0
-          - 24.1.0
-      os:
-        description: 'Operating system'
-        required: true
-        default: 'ubuntu-latest'
-        type: choice
-        options:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
-      debug-enabled:
-        type: boolean
-        description: 'Enable tmate debugging'
-        required: true
-        default: true
-  push:
-    branches:
-      - main
-      - stable/3.*
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'RELEASE_NOTES/**'
   pull_request:
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'RELEASE_NOTES/**'
   merge_group:
-
 
 concurrency:
   group: shopify-cli-${{ github.head_ref || github.run_id }}
@@ -60,74 +17,47 @@ env:
   SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
   GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
   GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
+  DEFAULT_NODE_VERSION: '24.1.0'
 
 jobs:
-  main:
-    name: '[Main] Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+  type-check:
+    name: 'Type check'
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
-        node: [ '20.14.0', '22.2.0', '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
-        name: Checkout [${{ github.ref_name }}]
         with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ matrix.node }}
-      - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache  --target=build --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Type check
+        run: pnpm nx run-many --all --skip-nx-cache --target=type-check --output-style=stream
+
+  lint:
+    name: 'Lint'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Lint
-        run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
-      - name: Type-check
-        run: pnpm nx run-many --all --skip-nx-cache  --target=type-check --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
-      - name: Bundle
-        run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
-      - name: Unit tests
-        run: pnpm vitest run
-        env:
-          VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
-      - name: Acceptance tests
-        if: ${{ matrix.node == '24.1.0' }}
-        env:
-          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
-        run: pnpm nx run features:test
-      - name: Send Slack notification on failure
-        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
-        if: ${{ failure() && !cancelled() }}
-        with:
-          payload: |
-            {
-              "build_url": "https://github.com/Shopify/cli/actions/runs/${{ github.run_id }}"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      - name: Run and save test coverage
-        uses: ./.github/actions/run-and-save-test-coverage
-        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
-        with:
-          branch-name: ${{ github.ref_name }}
+        run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream
 
-  pr-platform-agnostic:
-    name: '[PR] Run ${{ matrix.target }} with Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
+  bundle:
+    name: 'Bundle'
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '24.1.0' ]
-        target: [ 'build', 'type-check' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -137,71 +67,16 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ matrix.node }}
-      - name: ${{ matrix.target }}
-        run: pnpm nx run-many --all --skip-nx-cache --target=${{ matrix.target }} --output-style=stream
-
-  pr-platform-agnostic-lint:
-    name: '[PR] Run lint with Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '24.1.0' ]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ matrix.node }}
-      - name: Lint
-        run: pnpm nx run-many --all --skip-nx-cache --target=lint --output-style=stream --format=json -o eslint-report.json
-        continue-on-error: true
-      - name: Annotate Code Linting Results
-        uses: ataylorme/eslint-annotate-action@21a1ba0738d8b732639999029c4ff40b6e121bb4 # pin@v3
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          report-json: "packages/*/eslint-report.json"
-
-  pr-platform-agnostic-bundle:
-    name: '[PR] Run bundle with Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '24.1.0' ]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: 'Build'
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: 'Bundle'
         run: pnpm nx run-many --all --skip-nx-cache --target=bundle --output-style=stream
 
-  pr-platform-agnostic-knip:
-    name: '[PR] Run knip with Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' }}
+  knip:
+    name: 'Knip (unused code check)'
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -211,22 +86,15 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ matrix.node }}
-      - name: Post the knip results
-        if: github.event.pull_request.user.login != 'dependabot[bot]'
-        uses: codex-/knip-reporter@f717532b6707d95de06b9bb2eb8ece46393f018f # pin@v2
-        with:
-          verbose: true
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Run knip
+        run: pnpm knip
 
-  pr-platform-agnostic-graphql-schema:
-    name: '[PR] Check graphql-codegen has been run'
-    runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.login != 'dependabot[bot]' }}
+  graphql-schema:
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+    name: 'Check graphql-codegen has been run'
+    runs-on: macos-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'macos-latest' ] # Codegen uses a find command that needs to work on CI and macOS; using the same env keeps this simple
-        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -236,7 +104,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Get schemas for codegen
         run: pnpm graphql-codegen:get-graphql-schemas
       - name: Run graphql-codegen
@@ -247,9 +115,8 @@ jobs:
         run: 'test -z "$(git status --porcelain)" || { echo -e "Run pnpm graphql-codegen when queries are changed, committing any fixes and generated files" ; exit 1; }'
 
   oclif-checks:
-    name: '[PR] Check OCLIF manifests & readme & docs'
+    name: 'Check OCLIF manifests & readme & docs'
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
@@ -260,7 +127,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 24.1.0
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
         run: pnpm build --output-style=stream
       - name: Refresh manifests
@@ -280,10 +147,9 @@ jobs:
       - name: Check if there are changes
         run: 'test -z "$(git status --porcelain "docs-shopify.dev/generated/*.json" )" || { echo -e "Run (pnpm build-dev-docs) before pushing new commands or flags." ; exit 1; }'
 
-  pr-platform-dependent:
-    name: '[PR] Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
+  unit-tests:
+    name: 'Unit tests with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -305,10 +171,9 @@ jobs:
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
 
-  pr-acceptance-tests:
-    name: '[PR] Accept. Test with Node ${{ matrix.node }} in ${{ matrix.os }}'
+  acceptance-tests:
+    name: 'Acceptance tests with Node ${{ matrix.node }} in ${{ matrix.os }}'
     runs-on: ${{ matrix.os }}
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'merge_group' }}
     timeout-minutes: 30
     strategy:
       matrix:
@@ -329,15 +194,11 @@ jobs:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
         run: pnpm test:features --output-style=stream
 
-  pr-test-coverage:
-    name: '[PR] Run Test Coverage with Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    if: ${{ (github.event_name == 'pull_request' || github.event_name == 'merge_group') && github.event.pull_request.user.login != 'dependabot[bot]' }}
+  test-coverage:
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+    name: 'Test Coverage'
+    runs-on: ubuntu-latest
     timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest' ]
-        node: [ '24.1.0' ]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -347,7 +208,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Run and save test coverage
@@ -359,28 +220,29 @@ jobs:
         with:
           base-branch-name: '${{ github.base_ref }}'
 
-  manually-triggered:
-    name: '[Manual] Test with Node ${{ inputs.node-version }} in ${{ inputs.os }}'
-    runs-on: ${{ inputs.os }}
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    timeout-minutes: 60
+  type-diff:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    name: 'Type-diff'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
+        name: Checkout [main]
         with:
-          ref: ${{ inputs.branch-name }}
           fetch-depth: 1
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ inputs.node-version }}
-      - name: Unit tests
-        run: pnpm test:unit --output-style=stream
-      - name: Acceptance tests
-        env:
-          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
-        run: pnpm test:features --output-style=stream
-      - name: Setup tmate session
-        if: ${{ failure() && inputs.debug-enabled }}
-        uses: mxschmitt/action-tmate@e5c7151931ca95bad1c6f4190c730ecf8c7dde48 # pin@v3
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features --output-style=stream
+      - name: Type-diff
+        working-directory: workspace
+        id: type-diff
+        run: pnpm nx run type-diff
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+        if: steps.type-diff.outputs.report != ''
         with:
-          limit-access-to-actor: true
+          header: Type-diff
+          message: ${{ steps.type-diff.outputs.report }}
+          recreate: true

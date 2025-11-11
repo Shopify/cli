@@ -1,0 +1,82 @@
+name: Main tests
+
+on:
+  push:
+    branches:
+      - main
+      - stable/3.*
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'RELEASE_NOTES/**'
+
+concurrency:
+  group: shopify-cli-main-${{ github.run_id }}
+  cancel-in-progress: true
+
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '10.11.1'
+  BUNDLE_WITHOUT: 'test:development'
+  SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
+  GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+  GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
+  DEFAULT_NODE_VERSION: '24.1.0'
+
+jobs:
+  main:
+    name: '[Main] Node ${{ matrix.node }} in ${{ matrix.os }}'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
+        node: [ '20.14.0', '22.2.0', '24.1.0' ]
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout [${{ github.ref_name }}]
+        with:
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache  --target=build --output-style=stream
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
+      - name: Lint
+        run: pnpm nx run-many --all --skip-nx-cache  --target=lint --output-style=stream
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
+      - name: Type-check
+        run: pnpm nx run-many --all --skip-nx-cache  --target=type-check --output-style=stream
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
+      - name: Bundle
+        run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
+      - name: Unit tests
+        run: pnpm vitest run
+        env:
+          VITEST_MIN_THREADS: "1"
+          VITEST_MAX_THREADS: "4"
+      - name: Acceptance tests
+        if: ${{ matrix.node == '24.1.0' }}
+        env:
+          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+        run: pnpm nx run features:test
+      - name: Send Slack notification on failure
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
+        if: ${{ failure() && !cancelled() }}
+        with:
+          payload: |
+            {
+              "build_url": "https://github.com/Shopify/cli/actions/runs/${{ github.run_id }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Run and save test coverage
+        uses: ./.github/actions/run-and-save-test-coverage
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
+        with:
+          branch-name: ${{ github.ref_name }}
