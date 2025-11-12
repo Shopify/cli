@@ -175,7 +175,7 @@ async function businessPlatformOrganizationsRequestDoc<TResult, TVariables exten
 const LOCAL_OVERRIDES = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   fetchEmail(..._dummy: any[]) {
-    return 'mock@shopify.com'
+    return 'dev@shopify.com'
   },
 }
 

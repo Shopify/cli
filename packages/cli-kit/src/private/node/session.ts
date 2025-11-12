@@ -283,6 +283,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
     scopes.push('employee')
   }
 
+  const client = getIdentityClient()
   let identityToken: IdentityToken
   const identityTokenInformation = getIdentityTokenInformation()
   if (identityTokenInformation) {
@@ -290,7 +291,6 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   } else {
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
-    const client = getIdentityClient()
     const deviceAuth = await client.requestDeviceAuthorization(scopes)
 
     // Poll for the identity token
@@ -300,7 +300,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
 
   // Exchange identity token for application tokens
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
-  const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
+  const result = await client.exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   // Get the alias for the session (email or userId)
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken

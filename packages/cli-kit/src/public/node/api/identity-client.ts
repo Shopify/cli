@@ -11,6 +11,8 @@ import {
   requestAppToken,
 } from '../../../private/node/session/exchange.js'
 import {ApplicationToken} from '../../../private/node/session/schema.js'
+import {allDefaultScopes} from '../../../private/node/session/scopes.js'
+import {applicationId} from '../../../private/node/session/identity.js'
 import {identityFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -243,14 +245,25 @@ export class LocalIdentityClient implements IdentityClientInterface {
       deviceCode: 'ABC',
       userCode: 'ABC',
       verificationUri: 'ABC',
-      expiresIn: 10_000,
+      expiresIn: 100_000,
       verificationUriComplete: 'ABC',
       interval: 1000,
     }
   }
 
   pollForDeviceAuthorization(_deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken> {
-    throw new Error('Method not implemented.')
+    return new Promise((resolve) =>
+      resolve({
+        accessToken:
+          'MOCK_ACCESS_TOKEN_PLACEHOLDER',
+        alias: '',
+        expiresAt: getFutureDate(),
+        refreshToken:
+          'MOCK_REFRESH_TOKEN_PLACEHOLDER',
+        scopes: allDefaultScopes(),
+        userId: '08978734-325e-44ce-bc65-34823a8d5180',
+      }),
+    )
   }
 
   async exchangeAccessForApplicationTokens(
@@ -258,12 +271,19 @@ export class LocalIdentityClient implements IdentityClientInterface {
     _scopes: ExchangeScopes,
     _store?: string,
   ): ExchangeAccessTokenResponse {
+    const fullScopeExchangeMockResult = {
+      accessToken:
+        'atkn_CpUCCKv108gGEMut1MgGYoYCCAESEJ_CKyOGg00Jl0q4jUVIl2IaNWh0dHBzOi8vYXBpLnNob3BpZnkuY29tL2F1dGgvb3JnYW5pemF0aW9uLmFwcHMubWFuYWdlIAwoIDokMDg5Nzg3MzQtMzI1ZS00NGNlLWJjNjUtMzQ4MjNhOGQ1MTgwQgdBY2NvdW50ShAcrqYpOnFMYJbvMxKxqLvWUlB7InN1YiI6ImU1MzgwZTAyLTMxMmEtNzQwOC01NzE4LWUwNzAxN2U5Y2Y1MiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuc2hvcC5kZXYifWIQZB-PM5BPSNC2Xn8OsL1zWGoQL8D3JzdaSaa8SUwlxxQuuxJAdBzL7VX5mXwP-8A5UZPUX-vvOa-CxX4fGZp50piE2bJDNSlGZa0SsKQRTHZqyu2plR4cUsglTLy1CxEYaIKbBQ',
+      expiresAt: getFutureDate(),
+      scopes: allDefaultScopes(),
+    }
+
     return {
-      ...{},
-      ...{},
-      ...{},
-      ...{},
-      ...{},
+      [applicationId('app-management')]: fullScopeExchangeMockResult,
+      [applicationId('business-platform')]: fullScopeExchangeMockResult,
+      [applicationId('admin')]: fullScopeExchangeMockResult,
+      [applicationId('partners')]: fullScopeExchangeMockResult,
+      [applicationId('storefront-renderer')]: fullScopeExchangeMockResult,
     }
   }
 }
@@ -304,6 +324,12 @@ function buildAuthorizationParseErrorMessage(response: Response, responseText: s
   }
 
   return `${errorMessage} If this issue persists, please contact support at https://help.shopify.com`
+}
+
+function getFutureDate() {
+  const futureDate = new Date()
+  futureDate.setDate(futureDate.getDate() + 100)
+  return futureDate
 }
 
 const ProdIC = new ProdIdentityClient()

@@ -274,6 +274,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
 
+      debugger
       const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 

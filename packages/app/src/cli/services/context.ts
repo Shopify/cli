@@ -71,7 +71,6 @@ interface AppFromIdOptions {
 
 export const appFromIdentifiers = async (options: AppFromIdOptions): Promise<OrganizationApp> => {
   const allClients = allDeveloperPlatformClients()
-
   let app: OrganizationApp | undefined
   for (const client of allClients) {
     try {
