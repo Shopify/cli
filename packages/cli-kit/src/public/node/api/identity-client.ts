@@ -241,12 +241,47 @@ export class LocalIdentityClient implements IdentityClientInterface {
     }
   }
 
+  // use skip_test_mode_warning in one of these token exchanges
   pollForDeviceAuthorization(_deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken> {
-    throw new Error('Method not implemented.')
+    return new Promise((resolve) =>
+      resolve({
+        accessToken: 'MOCK_ACCESS_TOKEN_2_PLACEHOLDER',
+        refreshToken: 'MOCK_REFRESH_TOKEN_2_PLACEHOLDER',
+        expiresAt: new Date('November 11, 2099'),
+        scopes: [
+          // use helper in scopes.ts for this?
+          'openid',
+          'https://api.shopify.com/auth/partners.app.cli.access',
+          'https://api.shopify.com/auth/shop.admin.themes',
+          'https://api.shopify.com/auth/partners.collaborator-relationships.readonly',
+          'https://api.shopify.com/auth/shop.admin.graphql',
+          'https://api.shopify.com/auth/destinations.readonly',
+          'https://api.shopify.com/auth/organization.store-management',
+          'https://api.shopify.com/auth/organization.on-demand-user-access',
+          'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
+          'https://api.shopify.com/auth/organization.apps.manage',
+        ],
+        userId: '08978734-325e-44ce-bc65-34823a8d5180',
+      }),
+    )
   }
 
   async tokenRequest(_params: TokenRequestConfig): TokenRequestConfigResponse {
     throw new Error('Method not implemented.')
+
+    return new Promise((resolve) =>
+      resolve(
+        ok({
+          access_token:
+            'atkn_Cp4CCMjqzsgGEOiiz8gGYo8CCAESEAvI8AcbUEq5g2Zuk75vWjMaPmh0dHBzOi8vYXBpLnNob3BpZnkuY29tL2F1dGgvc2hvcC5zdG9yZWZyb250LXJlbmRlcmVyLmRldnRvb2xzIDIoIDokMDg5Nzg3MzQtMzI1ZS00NGNlLWJjNjUtMzQ4MjNhOGQ1MTgwQgdBY2NvdW50ShC0HvgPwyJAaLrv9UsFUxQbUlB7InN1YiI6ImU1MzgwZTAyLTMxMmEtNzQwOC01NzE4LWUwNzAxN2U5Y2Y1MiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuc2hvcC5kZXYifWIQ1OQu5VaTQUOTO4zG2NABO2oQbEi7u5iKQHqUTDtoYQcGCRJAof8oE4mOQVeMIybOMlurQqSqAmJXllCh3kuPQyfScccuxbwzjdzvXYGh4Ojutf9w2h7W55rPH4uZguprKoQOCA',
+          refresh_token: 'xyz',
+          expires_in: 7200,
+          issued_token_type: 'urn:ietf:params:oauth:token-type:access_token',
+          scope: 'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
+          token_type: 'bearer',
+        }),
+      ),
+    )
   }
 }
 
@@ -288,13 +323,14 @@ function buildAuthorizationParseErrorMessage(response: Response, responseText: s
   return `${errorMessage} If this issue persists, please contact support at https://help.shopify.com`
 }
 
+// this can all be cleaned up better
 const ProdIC = new ProdIdentityClient()
 const LocalIC = new LocalIdentityClient()
 
 export function getIdentityClient(): IdentityClientInterface {
   // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const FORCE_PROD = true
+  const FORCE_NO_MOCKS = true
   const env = serviceEnvironment()
-  const client = env === 'local' && !FORCE_PROD ? LocalIC : ProdIC
+  const client = env === 'local' && !FORCE_NO_MOCKS ? LocalIC : ProdIC
   return client
 }

@@ -21,27 +21,9 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
-import {businessPlatformRequest, fetchEmail} from '../../public/node/api/business-platform.js'
+import {fetchEmail} from '../../public/node/api/business-platform.js'
 
 import {getIdentityClient} from '../../public/node/api/identity-client.js'
-
-/**
- * Fetches the user's email from the Business Platform API
- * @param businessPlatformToken - The business platform token
- * @returns The user's email address or undefined if not found
- */
-async function fetchEmail(businessPlatformToken: string | undefined): Promise<string | undefined> {
-  if (!businessPlatformToken) return undefined
-
-  try {
-    const userEmailResult = await businessPlatformRequest<UserEmailQuery>(UserEmailQueryString, businessPlatformToken)
-    return userEmailResult.currentUserAccount?.email
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    outputDebug(outputContent`Failed to fetch user email: ${(error as Error).message ?? String(error)}`)
-    return undefined
-  }
-}
 
 /**
  * A scope supported by the Shopify Admin API.
