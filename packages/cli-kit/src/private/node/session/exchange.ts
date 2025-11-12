@@ -1,12 +1,14 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {applicationId} from './identity.js'
 import {tokenExchangeScopes} from './scopes.js'
-import {getIdentityClient, clientId as getIdentityClientId} from '../../../public/node/api/identity-client.js'
+import {clientId as getIdentityClientId} from '../../../public/node/api/identity-client.js'
 import {API} from '../api.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
+import {identityFqdn} from '../../../public/node/context/fqdn.js'
+import {shopifyFetch} from '../../../public/node/http.js'
 import * as jose from 'jose'
 
 export class InvalidGrantError extends ExtendableError {}
@@ -62,8 +64,7 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
     refresh_token: currentToken.refreshToken,
     client_id: clientId,
   }
-  const client = getIdentityClient()
-  const tokenResult = await client.tokenRequest(params)
+  const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   return buildIdentityToken(value, currentToken.userId, currentToken.alias)
 }
@@ -149,8 +150,7 @@ export async function exchangeDeviceCodeForAccessToken(
     client_id: clientId,
   }
 
-  const client = getIdentityClient()
-  const tokenResult = await client.tokenRequest(params)
+  const tokenResult = await tokenRequest(params)
   if (tokenResult.isErr()) {
     return err(tokenResult.error.error as IdentityDeviceError)
   }
@@ -182,8 +182,7 @@ export async function requestAppToken(
   if (api === 'admin' && store) {
     identifier = `${store}-${appId}`
   }
-  const client = getIdentityClient()
-  const tokenResult = await client.tokenRequest(params)
+  const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   const appToken = buildApplicationToken(value)
   return {[identifier]: appToken}
@@ -221,6 +220,22 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
   return new AbortError(error)
+}
+
+async function tokenRequest(params: {
+  [key: string]: string
+}): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
+  const fqdn = await identityFqdn()
+  const url = new URL(`https://${fqdn}/oauth/token`)
+  url.search = new URLSearchParams(Object.entries(params)).toString()
+
+  const res = await shopifyFetch(url.href, {method: 'POST'})
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload: any = await res.json()
+
+  if (res.ok) return ok(payload)
+
+  return err({error: payload.error, store: params.store})
 }
 
 function buildIdentityToken(
