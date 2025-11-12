@@ -55,7 +55,7 @@
     "node-stream-zip": "^1.15.0"
   },
   "engines": {
-    "node": ">=20.10.0"
+    "node": ">=20.17.0"
   },
   "os": [
     "darwin",
