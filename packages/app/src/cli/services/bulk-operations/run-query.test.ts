@@ -1,4 +1,4 @@
-import {runBulkOperationQuery} from './bulk-operation-run-query.js'
+import {runBulkOperationQuery} from './run-query.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {describe, test, expect, vi, beforeEach} from 'vitest'

@@ -161,3 +161,19 @@ export type BulkOperationStatus =
   | 'FAILED'
   /** The bulk operation is runnning. */
   | 'RUNNING'
+
+/** The valid values for the bulk operation's type. */
+export type BulkOperationType =
+  /** The bulk operation is a mutation. */
+  | 'MUTATION'
+  /** The bulk operation is a query. */
+  | 'QUERY'
+
+/** Possible error codes that can be returned by `BulkOperationUserError`. */
+export type BulkOperationUserErrorCode =
+  /** The input value is invalid. */
+  | 'INVALID'
+  /** Bulk operations limit reached. Please try again later. */
+  | 'LIMIT_REACHED'
+  /** A bulk operation is already in progress. */
+  | 'OPERATION_IN_PROGRESS'
