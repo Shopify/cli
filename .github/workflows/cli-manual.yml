@@ -1,0 +1,71 @@
+name: Manual tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch-name:
+        type: string
+        description: 'Branch'
+        required: true
+        default: 'main'
+      node-version:
+        description: 'Node version'
+        required: true
+        default: '24.1.0'
+        type: choice
+        options:
+          - 20.14.0
+          - 22.2.0
+          - 24.1.0
+      os:
+        description: 'Operating system'
+        required: true
+        default: 'ubuntu-latest'
+        type: choice
+        options:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+      debug-enabled:
+        type: boolean
+        description: 'Enable tmate debugging'
+        required: true
+        default: true
+
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '10.11.1'
+  BUNDLE_WITHOUT: 'test:development'
+  SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
+  GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+  GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
+  DEFAULT_NODE_VERSION: '24.1.0'
+  DEFAULT_OS: 'ubuntu-latest'
+
+jobs:
+  manually-triggered:
+    name: '[Manual] Test with Node ${{ inputs.node-version }} in ${{ inputs.os }}'
+    runs-on: ${{ inputs.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch-name }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: Unit tests
+        run: pnpm test:unit --output-style=stream
+      - name: Acceptance tests
+        env:
+          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+        run: pnpm test:features --output-style=stream
+      - name: Setup tmate session
+        if: ${{ failure() && inputs.debug-enabled }}
+        uses: mxschmitt/action-tmate@e5c7151931ca95bad1c6f4190c730ecf8c7dde48 # pin@v3
+        with:
+          limit-access-to-actor: true
