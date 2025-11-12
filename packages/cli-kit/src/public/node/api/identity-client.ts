@@ -3,9 +3,14 @@
 /* eslint-disable @nx/enforce-module-boundaries */
 /* eslint-disable jsdoc/require-description */
 
+import {USE_LOCAL_MOCKS} from './utilities.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
-import {err, ok, Result} from '../result.js'
-import {exchangeDeviceCodeForAccessToken} from '../../../private/node/session/exchange.js'
+import {
+  exchangeDeviceCodeForAccessToken,
+  ExchangeScopes,
+  requestAppToken,
+} from '../../../private/node/session/exchange.js'
+import {ApplicationToken} from '../../../private/node/session/schema.js'
 import {identityFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -20,14 +25,6 @@ const DateSchema = zod.preprocess((arg: any) => {
   if (typeof arg === 'string' || arg instanceof Date) return new Date(arg)
   return null
 }, zod.date())
-
-interface TokenRequestResult {
-  access_token: string
-  expires_in: number
-  refresh_token: string
-  scope: string
-  id_token?: string
-}
 
 /**
  * The schema represents an Identity token.
@@ -51,14 +48,15 @@ export interface DeviceAuthorizationResponse {
   interval?: number
 }
 
-interface TokenRequestConfig {
-  [key: string]: string
-}
-type TokenRequestConfigResponse = Promise<Result<TokenRequestResult, {error: string; store?: string}>>
+type ExchangeAccessTokenResponse = Promise<{[x: string]: ApplicationToken}>
 interface IdentityClientInterface {
   requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse>
   pollForDeviceAuthorization(deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken>
-  tokenRequest(params: TokenRequestConfig): TokenRequestConfigResponse
+  exchangeAccessForApplicationTokens(
+    identityToken: IdentityToken,
+    scopes: ExchangeScopes,
+    store?: string,
+  ): ExchangeAccessTokenResponse
 }
 
 //
@@ -214,18 +212,28 @@ export class ProdIdentityClient implements IdentityClientInterface {
     })
   }
 
-  async tokenRequest(params: TokenRequestConfig): TokenRequestConfigResponse {
-    const fqdn = await identityFqdn()
-    const url = new URL(`https://${fqdn}/oauth/token`)
-    url.search = new URLSearchParams(Object.entries(params)).toString()
+  async exchangeAccessForApplicationTokens(
+    identityToken: IdentityToken,
+    scopes: ExchangeScopes,
+    store?: string,
+  ): ExchangeAccessTokenResponse {
+    const token = identityToken.accessToken
 
-    const res = await shopifyFetch(url.href, {method: 'POST'})
+    const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
+      requestAppToken('partners', token, scopes.partners),
+      requestAppToken('storefront-renderer', token, scopes.storefront),
+      requestAppToken('business-platform', token, scopes.businessPlatform),
+      store ? requestAppToken('admin', token, scopes.admin, store) : {},
+      requestAppToken('app-management', token, scopes.appManagement),
+    ])
 
-    const payload: any = await res.json()
-
-    if (res.ok) return ok(payload)
-
-    return err({error: payload.error, store: params.store})
+    return {
+      ...partners,
+      ...storefront,
+      ...businessPlatform,
+      ...admin,
+      ...appManagement,
+    }
   }
 }
 
@@ -241,47 +249,22 @@ export class LocalIdentityClient implements IdentityClientInterface {
     }
   }
 
-  // use skip_test_mode_warning in one of these token exchanges
   pollForDeviceAuthorization(_deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken> {
-    return new Promise((resolve) =>
-      resolve({
-        accessToken: 'MOCK_ACCESS_TOKEN_2_PLACEHOLDER',
-        refreshToken: 'MOCK_REFRESH_TOKEN_2_PLACEHOLDER',
-        expiresAt: new Date('November 11, 2099'),
-        scopes: [
-          // use helper in scopes.ts for this?
-          'openid',
-          'https://api.shopify.com/auth/partners.app.cli.access',
-          'https://api.shopify.com/auth/shop.admin.themes',
-          'https://api.shopify.com/auth/partners.collaborator-relationships.readonly',
-          'https://api.shopify.com/auth/shop.admin.graphql',
-          'https://api.shopify.com/auth/destinations.readonly',
-          'https://api.shopify.com/auth/organization.store-management',
-          'https://api.shopify.com/auth/organization.on-demand-user-access',
-          'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
-          'https://api.shopify.com/auth/organization.apps.manage',
-        ],
-        userId: '08978734-325e-44ce-bc65-34823a8d5180',
-      }),
-    )
+    throw new Error('Method not implemented.')
   }
 
-  async tokenRequest(_params: TokenRequestConfig): TokenRequestConfigResponse {
-    throw new Error('Method not implemented.')
-
-    return new Promise((resolve) =>
-      resolve(
-        ok({
-          access_token:
-            'atkn_Cp4CCMjqzsgGEOiiz8gGYo8CCAESEAvI8AcbUEq5g2Zuk75vWjMaPmh0dHBzOi8vYXBpLnNob3BpZnkuY29tL2F1dGgvc2hvcC5zdG9yZWZyb250LXJlbmRlcmVyLmRldnRvb2xzIDIoIDokMDg5Nzg3MzQtMzI1ZS00NGNlLWJjNjUtMzQ4MjNhOGQ1MTgwQgdBY2NvdW50ShC0HvgPwyJAaLrv9UsFUxQbUlB7InN1YiI6ImU1MzgwZTAyLTMxMmEtNzQwOC01NzE4LWUwNzAxN2U5Y2Y1MiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuc2hvcC5kZXYifWIQ1OQu5VaTQUOTO4zG2NABO2oQbEi7u5iKQHqUTDtoYQcGCRJAof8oE4mOQVeMIybOMlurQqSqAmJXllCh3kuPQyfScccuxbwzjdzvXYGh4Ojutf9w2h7W55rPH4uZguprKoQOCA',
-          refresh_token: 'xyz',
-          expires_in: 7200,
-          issued_token_type: 'urn:ietf:params:oauth:token-type:access_token',
-          scope: 'https://api.shopify.com/auth/shop.storefront-renderer.devtools',
-          token_type: 'bearer',
-        }),
-      ),
-    )
+  async exchangeAccessForApplicationTokens(
+    _identityToken: IdentityToken,
+    _scopes: ExchangeScopes,
+    _store?: string,
+  ): ExchangeAccessTokenResponse {
+    return {
+      ...{},
+      ...{},
+      ...{},
+      ...{},
+      ...{},
+    }
   }
 }
 
@@ -323,14 +306,10 @@ function buildAuthorizationParseErrorMessage(response: Response, responseText: s
   return `${errorMessage} If this issue persists, please contact support at https://help.shopify.com`
 }
 
-// this can all be cleaned up better
 const ProdIC = new ProdIdentityClient()
 const LocalIC = new LocalIdentityClient()
 
 export function getIdentityClient(): IdentityClientInterface {
-  // eslint-disable-next-line @shopify/prefer-module-scope-constants
-  const FORCE_NO_MOCKS = true
-  const env = serviceEnvironment()
-  const client = env === 'local' && !FORCE_NO_MOCKS ? LocalIC : ProdIC
+  const client = USE_LOCAL_MOCKS ? LocalIC : ProdIC
   return client
 }
