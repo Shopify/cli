@@ -26,7 +26,7 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@registry-and-package-manager
+        uses: Shopify/snapit@main
         with:
           comment_is_global: 'true'
           comment_packages: '@shopify/cli'
@@ -38,8 +38,6 @@ jobs:
             > If the versions don't match, you might have multiple global instances installed.
 
             > Use `which shopify` to find out which one you are running and uninstall it."
-          comment_package_manager: 'npm'
-          comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
           build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
