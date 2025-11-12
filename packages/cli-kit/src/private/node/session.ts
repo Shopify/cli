@@ -13,7 +13,6 @@ import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
-import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
@@ -22,7 +21,7 @@ import {getIdentityTokenInformation, getPartnersToken} from '../../public/node/e
 import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
-import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
+import {businessPlatformRequest, fetchEmail} from '../../public/node/api/business-platform.js'
 
 import {getIdentityClient} from '../../public/node/api/identity-client.js'
 

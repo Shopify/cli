@@ -1,8 +1,36 @@
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler, graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {handleDeprecations} from './partners.js'
+import {USE_LOCAL_MOCKS} from './utilities.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
+import {outputContent, outputDebug} from '../output.js'
+import {
+  UserEmailQuery,
+  UserEmailQueryString,
+} from '../../../private/node/api/graphql/business-platform-destinations/user-email.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
+
+/**
+ * Fetches the user's email from the Business Platform API.
+ *
+ * @param businessPlatformToken - The business platform token.
+ * @returns The user's email address or undefined if not found.
+ */
+async function fetchEmail(businessPlatformToken: string | undefined): Promise<string | undefined> {
+  if (USE_LOCAL_MOCKS) {
+    return LOCAL_OVERRIDES.fetchEmail()
+  }
+  if (!businessPlatformToken) return undefined
+
+  try {
+    const userEmailResult = await businessPlatformRequest<UserEmailQuery>(UserEmailQueryString, businessPlatformToken)
+    return userEmailResult.currentUserAccount?.email
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(outputContent`Failed to fetch user email: ${(error as Error).message ?? String(error)}`)
+    return undefined
+  }
+}
 
 /**
  * Sets up the request to the Business Platform Destinations API.
@@ -64,7 +92,7 @@ export interface BusinessPlatformRequestOptions<TResult, TVariables extends Vari
  * @param options - The options for the request.
  * @returns The response of the query of generic type <TResult>.
  */
-export async function businessPlatformRequestDoc<TResult, TVariables extends Variables>(
+async function businessPlatformRequestDoc<TResult, TVariables extends Variables>(
   options: BusinessPlatformRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   return graphqlRequestDoc<TResult, TVariables>({
@@ -108,7 +136,7 @@ export interface BusinessPlatformOrganizationsRequestNonTypedOptions {
  * @param options - The options for the request.
  * @returns The response of the query of generic type <T>.
  */
-export async function businessPlatformOrganizationsRequest<T>(
+async function businessPlatformOrganizationsRequest<T>(
   options: BusinessPlatformOrganizationsRequestNonTypedOptions,
 ): Promise<T> {
   return graphqlRequest<T>({
@@ -130,7 +158,7 @@ export interface BusinessPlatformOrganizationsRequestOptions<TResult, TVariables
  * @param options - The options for the request.
  * @returns The response of the query of generic type <T>.
  */
-export async function businessPlatformOrganizationsRequestDoc<TResult, TVariables extends Variables>(
+async function businessPlatformOrganizationsRequestDoc<TResult, TVariables extends Variables>(
   options: BusinessPlatformOrganizationsRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
   return graphqlRequestDoc<TResult, TVariables>({
@@ -139,4 +167,21 @@ export async function businessPlatformOrganizationsRequestDoc<TResult, TVariable
     variables: options.variables,
     unauthorizedHandler: options.unauthorizedHandler,
   })
+}
+
+// probably do something similar to identity-client for business-platform (client?)
+// but this is quicker than class based clients
+
+const LOCAL_OVERRIDES = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fetchEmail(..._dummy: any[]) {
+    return 'mock@shopify.com'
+  },
+}
+
+export {
+  fetchEmail,
+  businessPlatformRequestDoc,
+  businessPlatformOrganizationsRequest,
+  businessPlatformOrganizationsRequestDoc,
 }
