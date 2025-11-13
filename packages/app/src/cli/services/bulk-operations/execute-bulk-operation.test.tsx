@@ -1,11 +1,16 @@
 import {executeBulkOperation} from './execute-bulk-operation.js'
 import {runBulkOperationQuery} from './run-query.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderWarning, render} from '@shopify/cli-kit/node/ui'
+import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {describe, test, expect, vi} from 'vitest'
 
 vi.mock('./run-query.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./BulkOperationProgress.js', () => ({
+  BulkOperationProgress: vi.fn(),
+}))
 
 describe('executeBulkOperation', () => {
   const mockApp = {
@@ -51,14 +56,9 @@ describe('executeBulkOperation', () => {
     expect(renderInfo).toHaveBeenCalledWith({
       customSections: expect.arrayContaining([
         expect.objectContaining({
-          title: 'Bulk Operation Created',
+          title: 'Bulk operation started!',
         }),
       ]),
-    })
-
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Bulk operation started successfully!',
-      body: 'Congrats!',
     })
   })
 
@@ -82,7 +82,34 @@ describe('executeBulkOperation', () => {
       headline: 'Bulk operation errors.',
       body: 'query: Invalid query syntax\nunknown: Another error',
     })
+  })
 
-    expect(renderSuccess).not.toHaveBeenCalled()
+  test('executeBulkOperation watches operation when watch flag is true', async () => {
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse as any)
+    vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue({
+      token: 'test-token',
+      storeFqdn,
+    } as any)
+
+    await executeBulkOperation({
+      app: mockApp,
+      storeFqdn,
+      query,
+      watch: true,
+    })
+
+    expect(ensureAuthenticatedAdmin).toHaveBeenCalledWith(storeFqdn)
+    expect(render).toHaveBeenCalledWith(
+      expect.objectContaining({
+        props: expect.objectContaining({
+          id: successfulBulkOperation.id,
+        }),
+      }),
+      {exitOnCtrlC: false},
+    )
   })
 })
