@@ -116,7 +116,6 @@ import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-manag
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
 import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
-import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
 import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
 import {PublicApiVersions} from '../../api/graphql/webhooks/generated/public-api-versions.js'
@@ -274,20 +273,28 @@ export class AppManagementClient implements DeveloperPlatformClient {
         throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
       }
 
-      debugger
       const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
       // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
-      const userInfoResult = await businessPlatformRequestDoc({
-        query: UserInfo,
-        cacheOptions: {
-          cacheTTL: {hours: 6},
-          cacheExtraKey: userId,
+      // const userInfoResult = await businessPlatformRequestDoc({
+      //   query: UserInfo,
+      //   cacheOptions: {
+      //     cacheTTL: {hours: 6},
+      //     cacheExtraKey: userId,
+      //   },
+      //   token: businessPlatformToken,
+      //   unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
+      // })
+      const userInfoResult = {
+        currentUserAccount: {
+          uuid: '08978734-325e-44ce-bc65-34823a8d5180',
+          email: 'dev@shopify.com',
+          organizations: {
+            nodes: [{name: 'My Test Org FROM CLI MOCK'}],
+          },
         },
-        token: businessPlatformToken,
-        unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
-      })
+      }
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {
         const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({

@@ -105,7 +105,8 @@ async function businessPlatformRequestDoc<TResult, TVariables extends Variables>
 }
 
 /**
- * Sets up the request to the Business Platform Organizations API.
+ * Sets up the request to the Business
+ *  Platform Organizations API.
  *
  * @param token - Business Platform token.
  * @param organizationId - Organization ID as a numeric (non-GID) value.

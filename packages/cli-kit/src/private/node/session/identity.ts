@@ -45,6 +45,7 @@ export function applicationId(api: API): string {
       }
     }
     case 'app-management': {
+      // this is the `aud`
       const environment = serviceEnvironment()
       if (environment === Environment.Production) {
         return '7ee65a63608843c577db8b23c4d7316ea0a01bd2f7594f8a9c06ea668c1b775c'

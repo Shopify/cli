@@ -51,15 +51,6 @@ export interface DeviceAuthorizationResponse {
 }
 
 type ExchangeAccessTokenResponse = Promise<{[x: string]: ApplicationToken}>
-interface IdentityClientInterface {
-  requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse>
-  pollForDeviceAuthorization(deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken>
-  exchangeAccessForApplicationTokens(
-    identityToken: IdentityToken,
-    scopes: ExchangeScopes,
-    store?: string,
-  ): ExchangeAccessTokenResponse
-}
 
 //
 /**
@@ -76,7 +67,26 @@ export function clientId(): string {
   }
 }
 
-export class ProdIdentityClient implements IdentityClientInterface {
+abstract class IdentityClient {
+  authTokenPrefix: string
+
+  constructor() {
+    // atkn_
+    // atkn_mock_token_
+    // mtkn_
+    this.authTokenPrefix = 'mtkn_'
+  }
+
+  abstract requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse>
+  abstract pollForDeviceAuthorization(deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken>
+  abstract exchangeAccessForApplicationTokens(
+    identityToken: IdentityToken,
+    scopes: ExchangeScopes,
+    store?: string,
+  ): ExchangeAccessTokenResponse
+}
+
+export class ProdIdentityClient extends IdentityClient {
   /**
    * Initiate a device authorization flow.
    * This will return a DeviceAuthorizationResponse containing the URL where user
@@ -220,6 +230,9 @@ export class ProdIdentityClient implements IdentityClientInterface {
     store?: string,
   ): ExchangeAccessTokenResponse {
     const token = identityToken.accessToken
+    // 'MOCK_COMMENTED_TOKEN_PLACEHOLDER'
+    // scopes ex. 'https://api.shopify.com/auth/organization.apps.manage'
+    // debugger
 
     const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
       requestAppToken('partners', token, scopes.partners),
@@ -239,7 +252,7 @@ export class ProdIdentityClient implements IdentityClientInterface {
   }
 }
 
-export class LocalIdentityClient implements IdentityClientInterface {
+export class LocalIdentityClient extends IdentityClient {
   async requestDeviceAuthorization(_scopes: string[]): Promise<DeviceAuthorizationResponse> {
     return {
       deviceCode: 'ABC',
@@ -254,12 +267,10 @@ export class LocalIdentityClient implements IdentityClientInterface {
   pollForDeviceAuthorization(_deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken> {
     return new Promise((resolve) =>
       resolve({
-        accessToken:
-          'MOCK_ACCESS_TOKEN_PLACEHOLDER',
+        accessToken: `${this.authTokenPrefix}CjQIqvXTyAYQyq3UyAZSJggBEhAvwPcnN1pJprxJTCXHFC67GhBkH48zkE9I0LZefw6wvXNYEkCYFhPHBUYi5LzPy8fROCNwP8pBJ-Qfeceur4ies466WSxZv0VE8jbYrzMyKF-dhnv9WDrdj6sDIuACUjdJ9fQP`,
         alias: '',
         expiresAt: getFutureDate(),
-        refreshToken:
-          'MOCK_REFRESH_TOKEN_PLACEHOLDER',
+        refreshToken: `${this.authTokenPrefix}CiEIqvXTyAYQqo_yyQaiARIKEGQfjzOQT0jQtl5_DrC9c1gSQInG2qNxycjj8UZ4uuaI-8R246Emx3clBE5AXBLrd_5WhcRny65gF6-GM-NsUud8AMvh2BYVyuG7QK7_n79B4AQ`,
         scopes: allDefaultScopes(),
         userId: '08978734-325e-44ce-bc65-34823a8d5180',
       }),
@@ -271,11 +282,58 @@ export class LocalIdentityClient implements IdentityClientInterface {
     _scopes: ExchangeScopes,
     _store?: string,
   ): ExchangeAccessTokenResponse {
+    const actualToken =
+      'mtkn_eyJ2YWxpZCI6dHJ1ZSwic2NvcGUiOiJodHRwczpcL1wvYXBpLnNob3BpZnkuY29tXC9hdXRoXC9vcmdhbml6YXRpb24uYXBwcy5tYW5hZ2UiLCJjbGllbnRfaWQiOiJlNTM4MGUwMi0zMTJhLTc0MDgtNTcxOC1lMDcwMTdlOWNmNTIiLCJ0b2tlbl90eXBlIjoiYmVhcmVyIiwiZXhwIjoxNzYzMDc1NTM2LCJpYXQiOjE3NjMwNjgzMzYsInN1YiI6IjA4OTc4NzM0LTMyNWUtNDRjZS1iYzY1LTM0ODIzYThkNTE4MCIsImF1ZCI6ImU5MjQ4MmNlYmI5YmZiOWZiNWEwMTk5Y2M3NzBmZGUzZGU2YzhkMTZiNzk4ZWU3M2UzNmM5ZDgxNWUwNzBlNTIiLCJpc3MiOiJodHRwczpcL1wvaWRlbnRpdHkuc2hvcC5kZXYiLCJzaWQiOiJkZjYzYzY1Yy0zNzMxLTQ4YWYtYTI4ZC03MmFiMTZhNjUyM2EiLCJhY3QiOnsic3ViIjoiZTUzODBlMDItMzEyYS03NDA4LTU3MTgtZTA3MDE3ZTljZjUyIiwiaXNzIjoiaHR0cHM6XC9cL2lkZW50aXR5LnNob3AuZGV2In0sImF1dGhfdGltZSI6MTc2MzA2ODMzMSwiYW1yIjpbInB3ZCIsImRldmljZS1hdXRoIl0sImRldmljZV91dWlkIjoiOGJhNjQ0YzgtN2QyZi00MjYwLTkzMTEtODZkZjA5MTk1ZWU4IiwiYXRsIjoxLjB9'
     const fullScopeExchangeMockResult = {
-      accessToken:
-        'atkn_CpUCCKv108gGEMut1MgGYoYCCAESEJ_CKyOGg00Jl0q4jUVIl2IaNWh0dHBzOi8vYXBpLnNob3BpZnkuY29tL2F1dGgvb3JnYW5pemF0aW9uLmFwcHMubWFuYWdlIAwoIDokMDg5Nzg3MzQtMzI1ZS00NGNlLWJjNjUtMzQ4MjNhOGQ1MTgwQgdBY2NvdW50ShAcrqYpOnFMYJbvMxKxqLvWUlB7InN1YiI6ImU1MzgwZTAyLTMxMmEtNzQwOC01NzE4LWUwNzAxN2U5Y2Y1MiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuc2hvcC5kZXYifWIQZB-PM5BPSNC2Xn8OsL1zWGoQL8D3JzdaSaa8SUwlxxQuuxJAdBzL7VX5mXwP-8A5UZPUX-vvOa-CxX4fGZp50piE2bJDNSlGZa0SsKQRTHZqyu2plR4cUsglTLy1CxEYaIKbBQ',
+      accessToken: actualToken,
+      // accessToken: `${this.authTokenPrefix}CpUCCKv108gGEMut1MgGYoYCCAESEJ_CKyOGg00Jl0q4jUVIl2IaNWh0dHBzOi8vYXBpLnNob3BpZnkuY29tL2F1dGgvb3JnYW5pemF0aW9uLmFwcHMubWFuYWdlIAwoIDokMDg5Nzg3MzQtMzI1ZS00NGNlLWJjNjUtMzQ4MjNhOGQ1MTgwQgdBY2NvdW50ShAcrqYpOnFMYJbvMxKxqLvWUlB7InN1YiI6ImU1MzgwZTAyLTMxMmEtNzQwOC01NzE4LWUwNzAxN2U5Y2Y1MiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuc2hvcC5kZXYifWIQZB-PM5BPSNC2Xn8OsL1zWGoQL8D3JzdaSaa8SUwlxxQuuxJAdBzL7VX5mXwP-8A5UZPUX-vvOa-CxX4fGZp50piE2bJDNSlGZa0SsKQRTHZqyu2plR4cUsglTLy1CxEYaIKbBQ`,
       expiresAt: getFutureDate(),
       scopes: allDefaultScopes(),
+    }
+
+    // Generate fresh timestamps
+    const now = Math.floor(Date.now() / 1000)
+    const exp = now + 7200 // 2 hours from now
+
+    const generateAppToken = (appId: string, scopeArray: string[]) => {
+      const tokenInfo = {
+        act: {
+          iss: 'https://identity.shop.dev',
+          sub: clientId(),
+        },
+        aud: appId,
+        client_id: clientId(),
+        exp,
+        iat: now,
+        iss: 'https://identity.shop.dev',
+        scope: scopeArray.join(' '),
+        token_type: 'bearer',
+        sub: '', // what is identityToken?? identityToken.userId,
+        sid: '', // identityToken.userId, // Or use a session ID
+      }
+
+      const encoded = Buffer.from(JSON.stringify(tokenInfo))
+        .toString('base64')
+        .replace(/[=]/g, '')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+
+      return {
+        accessToken: `mtkn_${encoded}`,
+        expiresAt: new Date(exp * 1000),
+        scopes: scopeArray,
+      }
+    }
+
+    return {
+      [applicationId('app-management')]: generateAppToken(applicationId('app-management'), allDefaultScopes()),
+      [applicationId('business-platform')]: generateAppToken(applicationId('business-platform'), allDefaultScopes()),
+      [applicationId('admin')]: generateAppToken(applicationId('admin'), allDefaultScopes()),
+      [applicationId('partners')]: generateAppToken(applicationId('partners'), allDefaultScopes()),
+      [applicationId('storefront-renderer')]: generateAppToken(
+        applicationId('storefront-renderer'),
+        allDefaultScopes(),
+      ),
     }
 
     return {
@@ -335,7 +393,7 @@ function getFutureDate() {
 const ProdIC = new ProdIdentityClient()
 const LocalIC = new LocalIdentityClient()
 
-export function getIdentityClient(): IdentityClientInterface {
+export function getIdentityClient(): IdentityClient {
   const client = USE_LOCAL_MOCKS ? LocalIC : ProdIC
   return client
 }

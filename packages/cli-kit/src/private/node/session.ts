@@ -5,9 +5,9 @@ import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
   ExchangeScopes,
-  refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
+  refreshAccessToken,
 } from './session/exchange.js'
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
@@ -209,12 +209,13 @@ ${outputToken.json(applications)}
 
   let newSession = {}
 
+  debugger
+
   if (validationResult === 'needs_full_auth') {
     await throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
     newSession = await executeCompleteFlow(applications)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
-    outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       newSession = await refreshTokens(currentSession!, applications)

@@ -1,10 +1,7 @@
-import {
-  DeviceAuthorizationResponse,
-  pollForDeviceAuthorization,
-} from './device-authorization.js'
-import {clientId, ProdIC} from '../../../public/node/api/identity-client.js'
+import {DeviceAuthorizationResponse, pollForDeviceAuthorization} from './device-authorization.js'
 import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
+import {clientId, ProdIC} from '../../../public/node/api/identity-client.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
