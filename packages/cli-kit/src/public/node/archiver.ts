@@ -1,8 +1,9 @@
 import {relativePath, joinPath, dirname} from './path.js'
-import {glob, removeFile, readFile} from './fs.js'
+import {glob, removeFile} from './fs.js'
 import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import archiver from 'archiver'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
+import {readFile} from 'fs/promises'
 import {tmpdir} from 'os'
 import {randomUUID} from 'crypto'
 
