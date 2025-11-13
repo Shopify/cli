@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.87.3
+
+### Patch Changes
+
+- 718c173: Fix zip and brotliCompress functions to handle binary files
+
 ## 3.87.2
 
 ## 3.87.1
