@@ -62,7 +62,9 @@ function ensureThemeEnvironmentSetup(
   const abort = (error: Error): never => {
     renderThrownError('Failed to perform the initial theme synchronization.', error)
     rejectBackgroundJob(error)
-    // Return a permanently pending promise to stop execution without throwing
+    // Return a never-resolving promise to stop this promise chain without throwing.
+    // Throwing would trigger catch handlers and continue execution. This stops the
+    // chain while the error is handled through the separate backgroundJobPromise channel.
     return new Promise<never>(() => {}) as never
   }
 
