@@ -2,15 +2,8 @@ interface DeprecationsStore {
   nextDeprecationDate: Date | undefined
 }
 
-interface GlobalWithDeprecationsStore {
-  deprecationsStore: DeprecationsStore
-}
-
-const globalWithDeprecationsStore: GlobalWithDeprecationsStore = {
-  ...globalThis,
-  deprecationsStore: {
-    nextDeprecationDate: undefined,
-  },
+const deprecationsStore: DeprecationsStore = {
+  nextDeprecationDate: undefined,
 }
 
 /**
@@ -19,7 +12,7 @@ const globalWithDeprecationsStore: GlobalWithDeprecationsStore = {
  * @returns The next deprecation date.
  */
 export function getNextDeprecationDate(): Date | undefined {
-  return globalWithDeprecationsStore.deprecationsStore.nextDeprecationDate
+  return deprecationsStore.nextDeprecationDate
 }
 
 /**
@@ -35,7 +28,7 @@ export function setNextDeprecationDate(dates: Date[]): Date | undefined {
 
   const nextDeprecationDate = getNextDeprecationDate()
   if (!nextDeprecationDate || earliestFutureDateTime < nextDeprecationDate.getTime()) {
-    globalWithDeprecationsStore.deprecationsStore.nextDeprecationDate = new Date(earliestFutureDateTime)
+    deprecationsStore.nextDeprecationDate = new Date(earliestFutureDateTime)
   }
 }
 
