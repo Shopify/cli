@@ -1,13 +1,14 @@
 import {renderSelectPrompt, renderTasks} from '@shopify/cli-kit/node/ui'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {rmdir, fileExists, inTemporaryDirectory, copyDirectoryContents} from '@shopify/cli-kit/node/fs'
+import {rmdir, fileExists, inTemporaryDirectory, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
 const AI_INSTRUCTIONS_REPO_URL = 'https://github.com/Shopify/theme-liquid-docs.git'
 
 const SUPPORTED_AI_INSTRUCTIONS = {
+  all: 'All',
   github: 'VS Code (GitHub Copilot)',
   cursor: 'Cursor',
   claude: 'Claude',
@@ -57,7 +58,7 @@ async function removeDirectory(path: string) {
 
 export async function promptAIInstruction() {
   const aiChoice = (await renderSelectPrompt({
-    message: 'Include LLM instructions in the theme?',
+    message: 'Which LLM instruction file would you like to include in your theme?',
     choices: [
       ...Object.entries(SUPPORTED_AI_INSTRUCTIONS).map(([key, value]) => ({
         label: value,
@@ -81,16 +82,16 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
             destination: tempDir,
             shallow: true,
           })
-          const aiSrcDir = joinPath(tempDir, 'ai', aiInstruction)
 
-          let aiDestDir = themeRoot
-
-          if (aiInstruction !== 'claude') {
-            aiDestDir = joinPath(themeRoot, `.${aiInstruction}`)
-          }
+          const instructions =
+            aiInstruction === 'all'
+              ? (Object.keys(SUPPORTED_AI_INSTRUCTIONS).filter((key) => key !== 'all') as AIInstruction[])
+              : [aiInstruction]
 
           try {
-            await copyDirectoryContents(aiSrcDir, aiDestDir)
+            await Promise.all(
+              instructions.map((instruction) => createAIInstructionFiles(tempDir, themeRoot, instruction)),
+            )
           } catch (error) {
             throw new AbortError('Failed to create AI instructions')
           }
@@ -98,4 +99,24 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
       },
     },
   ])
+}
+
+export async function createAIInstructionFiles(tempDir: string, themeRoot: string, instruction: AIInstruction) {
+  const sourcePath = joinPath(tempDir, 'ai', 'github', 'copilot-instructions.md')
+  const sourceContent = await readFile(sourcePath)
+
+  const agentsPath = joinPath(themeRoot, 'AGENTS.md')
+  const agentsContent = `# AGENTS.md\n\n${sourceContent}`
+  await writeFile(agentsPath, agentsContent)
+
+  const symlinkMap: {[key in Exclude<AIInstruction, 'all'>]: string} = {
+    github: 'copilot-instructions.md',
+    cursor: '.cursorrules',
+    claude: 'CLAUDE.md',
+  }
+
+  const symlinkName = symlinkMap[instruction as Exclude<AIInstruction, 'all'>]
+  const symlinkPath = joinPath(themeRoot, symlinkName)
+
+  await symlink(agentsPath, symlinkPath)
 }
