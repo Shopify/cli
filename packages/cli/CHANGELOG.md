@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.87.4
+
+### Patch Changes
+
+- ce1854c: Fix CLI loading on Node 25
+
 ## 3.87.3
 
 ## 3.87.2
