@@ -4,15 +4,18 @@
 /* eslint-disable jsdoc/require-description */
 
 import {USE_LOCAL_MOCKS} from './utilities.js'
-import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {
+  buildIdentityToken,
   exchangeDeviceCodeForAccessToken,
   ExchangeScopes,
   requestAppToken,
+  tokenRequest,
+  tokenRequestErrorHandler,
 } from '../../../private/node/session/exchange.js'
 import {ApplicationToken} from '../../../private/node/session/schema.js'
 import {allDefaultScopes} from '../../../private/node/session/scopes.js'
 import {applicationId} from '../../../private/node/session/identity.js'
+import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
 import {identityFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -84,6 +87,8 @@ abstract class IdentityClient {
     scopes: ExchangeScopes,
     store?: string,
   ): ExchangeAccessTokenResponse
+
+  abstract refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken>
 }
 
 export class ProdIdentityClient extends IdentityClient {
@@ -250,53 +255,93 @@ export class ProdIdentityClient extends IdentityClient {
       ...appManagement,
     }
   }
+
+  /**
+   * Given an expired access token, refresh it to get a new one.
+   *
+   * @param currentToken - CurrentToken.
+   * @returns - Identity token.
+   */
+  async refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
+    const identityClientId = clientId()
+    const params = {
+      grant_type: 'refresh_token',
+      access_token: currentToken.accessToken,
+      refresh_token: currentToken.refreshToken,
+      client_id: identityClientId,
+    }
+    const tokenResult = await tokenRequest(params)
+    const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
+    return buildIdentityToken(value, currentToken.userId, currentToken.alias)
+  }
 }
 
 export class LocalIdentityClient extends IdentityClient {
+  private readonly mockUserId = '08978734-325e-44ce-bc65-34823a8d5180'
+  private readonly mockSessionId = 'df63c65c-3731-48af-a28d-72ab16a6523a'
+  private readonly mockDeviceUuid = '8ba644c8-7d2f-4260-9311-86df09195ee8'
+
   async requestDeviceAuthorization(_scopes: string[]): Promise<DeviceAuthorizationResponse> {
     return {
-      deviceCode: 'ABC',
-      userCode: 'ABC',
-      verificationUri: 'ABC',
-      expiresIn: 100_000,
-      verificationUriComplete: 'ABC',
-      interval: 1000,
+      deviceCode: 'mock-device-code',
+      userCode: 'ABCD-EFGH',
+      verificationUri: 'https://identity.shop.dev/device',
+      expiresIn: 600,
+      verificationUriComplete: 'https://identity.shop.dev/device?code=ABCD-EFGH',
+      interval: 5,
     }
   }
 
   pollForDeviceAuthorization(_deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken> {
-    return new Promise((resolve) =>
-      resolve({
-        accessToken: `${this.authTokenPrefix}CjQIqvXTyAYQyq3UyAZSJggBEhAvwPcnN1pJprxJTCXHFC67GhBkH48zkE9I0LZefw6wvXNYEkCYFhPHBUYi5LzPy8fROCNwP8pBJ-Qfeceur4ies466WSxZv0VE8jbYrzMyKF-dhnv9WDrdj6sDIuACUjdJ9fQP`,
-        alias: '',
-        expiresAt: getFutureDate(),
-        refreshToken: `${this.authTokenPrefix}CiEIqvXTyAYQqo_yyQaiARIKEGQfjzOQT0jQtl5_DrC9c1gSQInG2qNxycjj8UZ4uuaI-8R246Emx3clBE5AXBLrd_5WhcRny65gF6-GM-NsUud8AMvh2BYVyuG7QK7_n79B4AQ`,
-        scopes: allDefaultScopes(),
-        userId: '08978734-325e-44ce-bc65-34823a8d5180',
-      }),
-    )
+    const now = getCurrentUnixTimestamp()
+    const exp = now + 7200 // 2 hours from now
+    const scopes = allDefaultScopes()
+
+    const identityTokenPayload = {
+      client_id: clientId(),
+      token_type: 'SLAT',
+      exp,
+      iat: now,
+      sub: this.mockUserId,
+      iss: 'https://identity.shop.dev',
+      sid: this.mockSessionId,
+      auth_time: now,
+      amr: ['pwd', 'device-auth'],
+      device_uuid: this.mockDeviceUuid,
+      scope: scopes.join(' '),
+      atl: 1.0,
+    }
+
+    const refreshTokenPayload = {
+      ...identityTokenPayload,
+      token_use: 'refresh',
+    }
+
+    return Promise.resolve({
+      accessToken: `${this.authTokenPrefix}${encodeTokenPayload(identityTokenPayload)}`,
+      alias: '',
+      // 1 day expiration for shorter testing cycles
+      expiresAt: getFutureDate(1),
+      refreshToken: `${this.authTokenPrefix}${encodeTokenPayload(refreshTokenPayload)}`,
+      scopes,
+      userId: this.mockUserId,
+    })
   }
 
   async exchangeAccessForApplicationTokens(
-    _identityToken: IdentityToken,
+    identityToken: IdentityToken,
     _scopes: ExchangeScopes,
     _store?: string,
   ): ExchangeAccessTokenResponse {
-    const actualToken =
-      'mtkn_eyJ2YWxpZCI6dHJ1ZSwic2NvcGUiOiJodHRwczpcL1wvYXBpLnNob3BpZnkuY29tXC9hdXRoXC9vcmdhbml6YXRpb24uYXBwcy5tYW5hZ2UiLCJjbGllbnRfaWQiOiJlNTM4MGUwMi0zMTJhLTc0MDgtNTcxOC1lMDcwMTdlOWNmNTIiLCJ0b2tlbl90eXBlIjoiYmVhcmVyIiwiZXhwIjoxNzYzMDc1NTM2LCJpYXQiOjE3NjMwNjgzMzYsInN1YiI6IjA4OTc4NzM0LTMyNWUtNDRjZS1iYzY1LTM0ODIzYThkNTE4MCIsImF1ZCI6ImU5MjQ4MmNlYmI5YmZiOWZiNWEwMTk5Y2M3NzBmZGUzZGU2YzhkMTZiNzk4ZWU3M2UzNmM5ZDgxNWUwNzBlNTIiLCJpc3MiOiJodHRwczpcL1wvaWRlbnRpdHkuc2hvcC5kZXYiLCJzaWQiOiJkZjYzYzY1Yy0zNzMxLTQ4YWYtYTI4ZC03MmFiMTZhNjUyM2EiLCJhY3QiOnsic3ViIjoiZTUzODBlMDItMzEyYS03NDA4LTU3MTgtZTA3MDE3ZTljZjUyIiwiaXNzIjoiaHR0cHM6XC9cL2lkZW50aXR5LnNob3AuZGV2In0sImF1dGhfdGltZSI6MTc2MzA2ODMzMSwiYW1yIjpbInB3ZCIsImRldmljZS1hdXRoIl0sImRldmljZV91dWlkIjoiOGJhNjQ0YzgtN2QyZi00MjYwLTkzMTEtODZkZjA5MTk1ZWU4IiwiYXRsIjoxLjB9'
-    const fullScopeExchangeMockResult = {
-      accessToken: actualToken,
-      // accessToken: `${this.authTokenPrefix}CpUCCKv108gGEMut1MgGYoYCCAESEJ_CKyOGg00Jl0q4jUVIl2IaNWh0dHBzOi8vYXBpLnNob3BpZnkuY29tL2F1dGgvb3JnYW5pemF0aW9uLmFwcHMubWFuYWdlIAwoIDokMDg5Nzg3MzQtMzI1ZS00NGNlLWJjNjUtMzQ4MjNhOGQ1MTgwQgdBY2NvdW50ShAcrqYpOnFMYJbvMxKxqLvWUlB7InN1YiI6ImU1MzgwZTAyLTMxMmEtNzQwOC01NzE4LWUwNzAxN2U5Y2Y1MiIsImlzcyI6Imh0dHBzOi8vaWRlbnRpdHkuc2hvcC5kZXYifWIQZB-PM5BPSNC2Xn8OsL1zWGoQL8D3JzdaSaa8SUwlxxQuuxJAdBzL7VX5mXwP-8A5UZPUX-vvOa-CxX4fGZp50piE2bJDNSlGZa0SsKQRTHZqyu2plR4cUsglTLy1CxEYaIKbBQ`,
-      expiresAt: getFutureDate(),
-      scopes: allDefaultScopes(),
-    }
+    const now = getCurrentUnixTimestamp()
+    // 2 hours from now
+    const exp = now + 7200
 
-    // Generate fresh timestamps
-    const now = Math.floor(Date.now() / 1000)
-    const exp = now + 7200 // 2 hours from now
+    outputDebug(`[LocalIdentityClient] Generating application tokens at ${new Date(now * 1000).toISOString()}`)
+    outputDebug(`[LocalIdentityClient] Token expiration: ${new Date(exp * 1000).toISOString()}`)
 
-    const generateAppToken = (appId: string, scopeArray: string[]) => {
-      const tokenInfo = {
+    const generateAppToken = (appId: string, scopeArray: string[]): ApplicationToken => {
+      const tokenPayload = {
         act: {
           iss: 'https://identity.shop.dev',
           sub: clientId(),
@@ -307,19 +352,17 @@ export class LocalIdentityClient extends IdentityClient {
         iat: now,
         iss: 'https://identity.shop.dev',
         scope: scopeArray.join(' '),
-        token_type: 'bearer',
-        sub: '', // what is identityToken?? identityToken.userId,
-        sid: '', // identityToken.userId, // Or use a session ID
+        token_type: 'SLAT', // not sure it should be this type
+        sub: identityToken.userId,
+        sid: this.mockSessionId,
+        auth_time: now,
+        amr: ['pwd', 'device-auth'],
+        device_uuid: this.mockDeviceUuid,
+        atl: 1.0,
       }
 
-      const encoded = Buffer.from(JSON.stringify(tokenInfo))
-        .toString('base64')
-        .replace(/[=]/g, '')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-
       return {
-        accessToken: `mtkn_${encoded}`,
+        accessToken: `${this.authTokenPrefix}${encodeTokenPayload(tokenPayload)}`,
         expiresAt: new Date(exp * 1000),
         scopes: scopeArray,
       }
@@ -335,14 +378,44 @@ export class LocalIdentityClient extends IdentityClient {
         allDefaultScopes(),
       ),
     }
+  }
 
-    return {
-      [applicationId('app-management')]: fullScopeExchangeMockResult,
-      [applicationId('business-platform')]: fullScopeExchangeMockResult,
-      [applicationId('admin')]: fullScopeExchangeMockResult,
-      [applicationId('partners')]: fullScopeExchangeMockResult,
-      [applicationId('storefront-renderer')]: fullScopeExchangeMockResult,
+  async refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
+    const now = getCurrentUnixTimestamp()
+    // 2 hours from now
+    const exp = now + 7200
+
+    outputDebug(`[LocalIdentityClient] Refreshing identity token at ${new Date(now * 1000).toISOString()}`)
+    outputDebug(`[LocalIdentityClient] Previous token userId: ${currentToken.userId}`)
+
+    const identityTokenPayload = {
+      client_id: clientId(),
+      token_type: 'SLAT',
+      exp,
+      iat: now,
+      sub: currentToken.userId,
+      iss: 'https://identity.shop.dev',
+      sid: this.mockSessionId,
+      auth_time: now,
+      amr: ['pwd', 'device-auth'],
+      device_uuid: this.mockDeviceUuid,
+      scope: currentToken.scopes.join(' '),
+      atl: 1.0,
     }
+
+    const refreshTokenPayload = {
+      ...identityTokenPayload,
+      token_use: 'refresh',
+    }
+
+    return Promise.resolve({
+      accessToken: `${this.authTokenPrefix}${encodeTokenPayload(identityTokenPayload)}`,
+      alias: currentToken.alias,
+      expiresAt: getFutureDate(1),
+      refreshToken: `${this.authTokenPrefix}${encodeTokenPayload(refreshTokenPayload)}`,
+      scopes: currentToken.scopes,
+      userId: currentToken.userId,
+    })
   }
 }
 
@@ -384,10 +457,22 @@ function buildAuthorizationParseErrorMessage(response: Response, responseText: s
   return `${errorMessage} If this issue persists, please contact support at https://help.shopify.com`
 }
 
-function getFutureDate() {
+function getFutureDate(daysInFuture = 100): Date {
   const futureDate = new Date()
-  futureDate.setDate(futureDate.getDate() + 100)
+  futureDate.setDate(futureDate.getDate() + daysInFuture)
   return futureDate
+}
+
+function getCurrentUnixTimestamp(): number {
+  return Math.floor(Date.now() / 1000)
+}
+
+function encodeTokenPayload(payload: object): string {
+  return Buffer.from(JSON.stringify(payload))
+    .toString('base64')
+    .replace(/[=]/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
 }
 
 const ProdIC = new ProdIdentityClient()

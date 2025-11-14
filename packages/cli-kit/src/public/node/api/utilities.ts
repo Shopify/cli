@@ -25,6 +25,6 @@ export const addCursorAndFiltersToAppLogsUrl = (
   return url.toString()
 }
 
-const FORCE_USE_RUNNING_EXTERNAL_SERVICES = true
+const FORCE_USE_RUNNING_EXTERNAL_SERVICES = false
 const env = serviceEnvironment()
 export const USE_LOCAL_MOCKS = !FORCE_USE_RUNNING_EXTERNAL_SERVICES && env === 'local'

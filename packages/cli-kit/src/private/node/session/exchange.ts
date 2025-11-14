@@ -196,7 +196,7 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
+export function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
   const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
     store ? `: ${store}` : '.'
   }`
@@ -222,7 +222,7 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
   return new AbortError(error)
 }
 
-async function tokenRequest(params: {
+export async function tokenRequest(params: {
   [key: string]: string
 }): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
   const fqdn = await identityFqdn()
@@ -238,7 +238,7 @@ async function tokenRequest(params: {
   return err({error: payload.error, store: params.store})
 }
 
-function buildIdentityToken(
+export function buildIdentityToken(
   result: TokenRequestResult,
   existingUserId?: string,
   existingAlias?: string,

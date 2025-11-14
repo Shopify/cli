@@ -1,14 +1,7 @@
 import {applicationId} from './session/identity.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCustomPartnerToken,
-  ExchangeScopes,
-  InvalidGrantError,
-  InvalidRequestError,
-  refreshAccessToken,
-} from './session/exchange.js'
+import {exchangeCustomPartnerToken, ExchangeScopes, InvalidGrantError, InvalidRequestError} from './session/exchange.js'
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {isThemeAccessSession} from './api/rest.js'
@@ -209,7 +202,7 @@ ${outputToken.json(applications)}
 
   let newSession = {}
 
-  debugger
+  // debugger
 
   if (validationResult === 'needs_full_auth') {
     await throwOnNoPrompt(noPrompt)
@@ -326,11 +319,12 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
  * @param session - The session to refresh.
  */
 async function refreshTokens(session: Session, applications: OAuthApplications): Promise<Session> {
+  const client = getIdentityClient()
   // Refresh Identity Token
-  const identityToken = await refreshAccessToken(session.identity)
+  const identityToken = await client.refreshAccessToken(session.identity)
   // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
-  const applicationTokens = await exchangeAccessForApplicationTokens(
+  const applicationTokens = await client.exchangeAccessForApplicationTokens(
     identityToken,
     exchangeScopes,
     applications.adminApi?.storeFqdn,
