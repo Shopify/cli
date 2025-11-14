@@ -43,6 +43,28 @@ export async function dev(options: DevOptions) {
     return
   }
 
+  if (options.password?.startsWith('shpat_')) {
+    renderWarning({
+      headline: 'Admin API token missing features:',
+      body: [
+        `Directly using an Admin API token will result in some missing features.`,
+        `We recommend generating a password from the Theme Access app.`,
+        `Alternatively, you can authenticate normally by not passing the --password flag.`,
+        `\n`,
+        {
+          list: {
+            title: 'Known limitations:',
+            items: ['Hot module reloading', 'Password protected storefronts'],
+          },
+        },
+      ],
+      link: {
+        label: 'Theme Access app',
+        url: 'https://shopify.dev/docs/storefronts/themes/tools/theme-access',
+      },
+    })
+  }
+
   const storefrontPasswordPromise = await isStorefrontPasswordProtected(options.adminSession).then((needsPassword) =>
     needsPassword ? ensureValidPassword(options.storePassword, options.adminSession.storeFqdn) : undefined,
   )

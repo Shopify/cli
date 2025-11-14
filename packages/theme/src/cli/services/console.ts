@@ -5,6 +5,7 @@ import {replLoop} from '../utilities/repl/repl.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)
@@ -34,6 +35,20 @@ export async function initializeRepl(
   storefrontPassword?: string,
 ) {
   outputInfo('Welcome to Shopify Liquid console\n(press Ctrl + C to exit)')
+
+  if (themeAccessPassword?.startsWith('shpat_')) {
+    throw new AbortError(
+      'Unable to use Admin API tokens with the console command',
+      `To use this command with the --password flag you must:
+
+1. Install the Theme Access app on your shop
+2. Generate a new password
+
+Alternatively, you can authenticate normally by not passing the --password flag.
+
+Learn more: https://shopify.dev/docs/storefronts/themes/tools/theme-access`,
+    )
+  }
 
   const session = await initializeDevServerSession(themeId, adminSession, themeAccessPassword, storefrontPassword)
 
