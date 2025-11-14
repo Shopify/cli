@@ -1,5 +1,6 @@
 import {runBulkOperationQuery} from './run-query.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {describe, test, expect, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
@@ -32,5 +33,20 @@ describe('runBulkOperationQuery', () => {
 
     expect(bulkOperationResult?.bulkOperation).toEqual(successfulBulkOperation)
     expect(bulkOperationResult?.userErrors).toEqual([])
+  })
+
+  test('throws AbortError when variables are provided with a query', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const variables = '[{"input":{"id":"gid://shopify/Product/123"}}]'
+
+    await expect(
+      runBulkOperationQuery({
+        adminSession: mockSession,
+        query,
+        variables,
+      }),
+    ).rejects.toThrow(AbortError)
+
+    expect(adminRequestDoc).not.toHaveBeenCalled()
   })
 })
