@@ -20,8 +20,10 @@ import {
   glob,
   detectEOL,
   copyDirectoryContents,
+  symlink,
+  fileRealPath,
 } from './fs.js'
-import {joinPath} from './path.js'
+import {joinPath, normalizePath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
@@ -485,6 +487,62 @@ describe('unixFileIsOwnedByCurrentUser', () => {
 
       // Then
       expect(result).toBe(undefined)
+    })
+  })
+})
+
+describe('symlink', () => {
+  test('creates a symbolic link to a file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const targetFile = joinPath(tmpDir, 'target.txt')
+      const linkPath = joinPath(tmpDir, 'link.txt')
+      const content = 'test content'
+      await writeFile(targetFile, content)
+
+      // When
+      await symlink(targetFile, linkPath)
+
+      // Then
+      await expect(fileExists(linkPath)).resolves.toBe(true)
+      await expect(readFile(linkPath)).resolves.toEqual(content)
+      const realPath = await fileRealPath(linkPath)
+      expect(normalizePath(realPath)).toBe(normalizePath(targetFile))
+    })
+  })
+
+  test('creates a symbolic link to a directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const targetDir = joinPath(tmpDir, 'target-dir')
+      const linkPath = joinPath(tmpDir, 'link-dir')
+      const testFile = joinPath(targetDir, 'test.txt')
+      const content = 'directory content'
+      await mkdir(targetDir)
+      await writeFile(testFile, content)
+
+      // When
+      await symlink(targetDir, linkPath)
+
+      // Then
+      await expect(fileExists(linkPath)).resolves.toBe(true)
+      await expect(readFile(joinPath(linkPath, 'test.txt'))).resolves.toEqual(content)
+    })
+  })
+
+  test('symbolic link points to the correct target', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const targetFile = joinPath(tmpDir, 'original.txt')
+      const linkPath = joinPath(tmpDir, 'symlink.txt')
+      await writeFile(targetFile, 'original content')
+
+      // When
+      await symlink(targetFile, linkPath)
+      await writeFile(targetFile, 'modified content')
+
+      // Then
+      await expect(readFile(linkPath)).resolves.toEqual('modified content')
     })
   })
 })

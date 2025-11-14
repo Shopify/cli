@@ -1,7 +1,7 @@
-import {cloneRepoAndCheckoutLatestTag, cloneRepo, createAIInstructions} from './init.js'
+import {cloneRepoAndCheckoutLatestTag, cloneRepo, createAIInstructions, createAIInstructionFiles} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
-import {rmdir, fileExists, copyDirectoryContents} from '@shopify/cli-kit/node/fs'
+import {rmdir, fileExists, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/git')
@@ -11,7 +11,9 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
     ...actual,
     fileExists: vi.fn(),
     rmdir: vi.fn(),
-    copyDirectoryContents: vi.fn(),
+    readFile: vi.fn(),
+    writeFile: vi.fn(),
+    symlink: vi.fn(),
     inTemporaryDirectory: vi.fn(async (callback) => {
       // eslint-disable-next-line node/no-callback-literal
       return callback('/tmp')
@@ -151,26 +153,97 @@ describe('createAIInstructions()', () => {
 
   beforeEach(() => {
     vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
+    vi.mocked(readFile).mockResolvedValue('Sample AI instructions content' as any)
+    vi.mocked(writeFile).mockResolvedValue()
+    vi.mocked(symlink).mockResolvedValue()
   })
 
-  test('creates AI instructions if it exists', async () => {
+  test('creates AI instructions for a single instruction type', async () => {
     // Given
     vi.mocked(downloadGitRepository).mockResolvedValue()
-    vi.mocked(copyDirectoryContents).mockResolvedValue()
 
     // When
     await createAIInstructions(destination, 'cursor')
 
     // Then
     expect(downloadGitRepository).toHaveBeenCalled()
-    expect(copyDirectoryContents).toHaveBeenCalledWith('/tmp/ai/cursor', '/path/to/theme/.cursor')
+    expect(readFile).toHaveBeenCalledWith('/tmp/ai/github/copilot-instructions.md')
+    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', expect.stringContaining('# AGENTS.md'))
+    expect(symlink).not.toHaveBeenCalled()
   })
 
-  test('throws an error when the AI instructions directory does not exist', async () => {
+  test('creates AI instructions for all instruction types when "all" is selected', async () => {
     // Given
     vi.mocked(downloadGitRepository).mockResolvedValue()
-    vi.mocked(copyDirectoryContents).mockRejectedValue(new Error('Directory does not exist'))
+
+    // When
+    await createAIInstructions(destination, 'all')
+
+    // Then
+    expect(downloadGitRepository).toHaveBeenCalled()
+    expect(readFile).toHaveBeenCalledTimes(1)
+    expect(writeFile).toHaveBeenCalledTimes(1)
+    expect(symlink).toHaveBeenCalledTimes(2)
+    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/copilot-instructions.md')
+    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/CLAUDE.md')
+  })
+
+  test('throws an error when file operations fail', async () => {
+    // Given
+    vi.mocked(downloadGitRepository).mockResolvedValue()
+    vi.mocked(readFile).mockRejectedValue(new Error('File not found'))
 
     await expect(createAIInstructions(destination, 'cursor')).rejects.toThrow('Failed to create AI instructions')
+  })
+})
+
+describe('createAIInstructionFiles()', () => {
+  const themeRoot = '/path/to/theme'
+  const agentsPath = '/path/to/theme/AGENTS.md'
+
+  beforeEach(() => {
+    vi.mocked(joinPath).mockImplementation((...paths) => paths.join('/'))
+    vi.mocked(readFile).mockResolvedValue('AI instruction content' as any)
+    vi.mocked(writeFile).mockResolvedValue()
+    vi.mocked(symlink).mockResolvedValue()
+  })
+
+  test('creates symlink for github instruction', async () => {
+    // Givin/When
+    await createAIInstructionFiles(themeRoot, agentsPath, 'github')
+
+    // Then
+    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/copilot-instructions.md')
+  })
+
+  test('does not create symlink for cursor instruction (uses AGENTS.md natively)', async () => {
+    // When
+    await createAIInstructionFiles(themeRoot, agentsPath, 'cursor')
+
+    // Then
+    expect(symlink).not.toHaveBeenCalled()
+  })
+
+  test('creates symlink for claude instruction', async () => {
+    // When
+    await createAIInstructionFiles(themeRoot, agentsPath, 'claude')
+
+    // Then
+    expect(symlink).toHaveBeenCalledWith('/path/to/theme/AGENTS.md', '/path/to/theme/CLAUDE.md')
+  })
+
+  test('falls back to copying file when symlink fails with EPERM', async () => {
+    // Given
+    vi.mocked(symlink).mockRejectedValue(new Error('EPERM: operation not permitted'))
+    vi.mocked(readFile).mockResolvedValue('AGENTS.md content' as any)
+
+    // When
+    const result = await createAIInstructionFiles(themeRoot, agentsPath, 'github')
+
+    // Then
+    expect(symlink).toHaveBeenCalled()
+    expect(readFile).toHaveBeenCalledWith(agentsPath)
+    expect(writeFile).toHaveBeenCalledWith('/path/to/theme/copilot-instructions.md', 'AGENTS.md content')
+    expect(result.copiedFile).toBe('copilot-instructions.md')
   })
 })
