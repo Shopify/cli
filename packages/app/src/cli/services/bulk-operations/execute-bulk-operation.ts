@@ -4,6 +4,7 @@ import {AppLinkedInterface} from '../../models/app/app.js'
 import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {parse} from 'graphql'
 
 interface ExecuteBulkOperationInput {
@@ -23,7 +24,14 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
 
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
 
-  const bulkOperationResponse = isMutation(query)
+  const operationIsMutation = isMutation(query)
+  if (!operationIsMutation && variables) {
+    throw new AbortError(
+      outputContent`The ${outputToken.yellow('--variables')} flag can only be used with mutations, not queries.`,
+    )
+  }
+
+  const bulkOperationResponse = operationIsMutation
     ? await runBulkOperationMutation({adminSession, query, variables})
     : await runBulkOperationQuery({adminSession, query})
 
