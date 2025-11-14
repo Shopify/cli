@@ -18,7 +18,7 @@ import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} 
 import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
-import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {pollForDeviceAuthorization} from './session/device-authorization.js'
 import {getCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
@@ -27,6 +27,7 @@ import {businessPlatformRequest} from '../../public/node/api/business-platform.j
 import {getPartnersToken} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {terminalSupportsPrompting} from '../../public/node/system.js'
+import {ProdIC} from '../../public/node/api/identity-client.js'
 import {vi, describe, expect, test, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -119,6 +120,7 @@ vi.mock('../../public/node/environment.js')
 vi.mock('./session/device-authorization')
 vi.mock('./conf-store')
 vi.mock('../../public/node/system.js')
+vi.mock('../../public/node/api/identity-client.js')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
@@ -134,7 +136,7 @@ beforeEach(() => {
   setLastSeenUserIdAfterAuth(undefined as any)
   setLastSeenAuthMethod('none')
 
-  vi.mocked(requestDeviceAuthorization).mockResolvedValue({
+  vi.mocked(ProdIC.requestDeviceAuthorization).mockResolvedValue({
     deviceCode: 'device_code',
     userCode: 'user_code',
     verificationUri: 'verification_uri',

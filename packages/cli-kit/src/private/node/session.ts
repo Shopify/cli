@@ -11,7 +11,6 @@ import {
 } from './session/exchange.js'
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
-import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
@@ -24,6 +23,8 @@ import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
+
+import {getIdentityClient} from '../../public/node/api/identity-client.js'
 
 /**
  * Fetches the user's email from the Business Platform API
@@ -308,11 +309,12 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   } else {
     // Request a device code to authorize without a browser redirect.
     outputDebug(outputContent`Requesting device authorization code...`)
-    const deviceAuth = await requestDeviceAuthorization(scopes)
+    const client = getIdentityClient()
+    const deviceAuth = await client.requestDeviceAuthorization(scopes)
 
     // Poll for the identity token
     outputDebug(outputContent`Starting polling for the identity token...`)
-    identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
+    identityToken = await client.pollForDeviceAuthorization(deviceAuth)
   }
 
   // Exchange identity token for application tokens
