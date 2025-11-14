@@ -81,6 +81,7 @@ export default {
     appDev: projectFactory('app-dev', 'app_dev_schema.graphql'),
     appManagement: projectFactory('app-management', 'app_management_schema.graphql'),
     admin: projectFactory('admin', 'admin_schema.graphql', 'cli-kit'),
+    bulkOperations: projectFactory('bulk-operations', 'admin_schema.graphql'),
     webhooks: projectFactory('webhooks', 'webhooks_schema.graphql'),
     functions: projectFactory('functions', 'functions_cli_schema.graphql', 'app'),
   },

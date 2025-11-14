@@ -71,6 +71,13 @@ const schemas = [
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
     localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
   },
+  {
+    owner: 'shop',
+    repo: 'world',
+    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
+    localPath: './packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql',
+    usesLfs: true,
+  },
 ]
 
 

@@ -1,0 +1,28 @@
+mutation BulkOperationRunQuery($query: String!) {
+  bulkOperationRunQuery(
+    query: $query
+    # Set to false to optimize for speed over grouped results
+    groupObjects: false
+  ) {
+    bulkOperation {
+      completedAt
+      createdAt
+      errorCode
+      fileSize
+      id
+      objectCount
+      partialDataUrl
+      query
+      rootObjectCount
+      status
+      type
+      url
+    }
+    userErrors {
+      code
+      field
+      message
+    }
+  }
+}
+
