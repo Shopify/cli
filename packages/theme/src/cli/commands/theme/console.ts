@@ -1,7 +1,6 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {ensureReplEnv, initializeRepl} from '../../services/console.js'
-import {validateThemePassword} from '../../services/flags-validation.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'
@@ -39,8 +38,6 @@ export default class Console extends ThemeCommand {
 
   async command(flags: ConsoleFlags, adminSession: AdminSession) {
     const {url, password: themeAccessPassword} = flags
-
-    validateThemePassword(themeAccessPassword)
 
     const {themeId, storePassword} = await ensureReplEnv(adminSession, flags['store-password'])
 
