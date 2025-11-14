@@ -31,7 +31,7 @@ export const themeFlags = {
     noCacheDefault: true,
   }),
   password: Flags.string({
-    description: 'Password generated from the Theme Access app.',
+    description: 'Password generated from the Theme Access app or an Admin API token.',
     env: 'SHOPIFY_CLI_THEME_TOKEN',
   }),
   store: Flags.string({

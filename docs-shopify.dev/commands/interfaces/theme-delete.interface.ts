@@ -25,7 +25,7 @@ export interface themedelete {
   '--no-color'?: ''
 
   /**
-   * Password generated from the Theme Access app.
+   * Password generated from the Theme Access app or an Admin API token.
    * @environment SHOPIFY_CLI_THEME_TOKEN
    */
   '--password <value>'?: string
