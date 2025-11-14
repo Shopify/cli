@@ -28,6 +28,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
     const files = new Map<string, ThemeAsset>([])
     const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
     const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const mockRejectBackgroundJob = vi.fn()
 
     vi.mocked(fetchChecksums).mockResolvedValue([{checksum: '2', key: 'templates/asset.json'}])
 
@@ -42,6 +43,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
         ignore: [],
         only: [],
       },
+      mockRejectBackgroundJob,
     )
     await workPromise
     await updatedRemoteChecksumsPromise
@@ -57,6 +59,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
         ignore: [],
         only: [],
       },
+      mockRejectBackgroundJob,
     )
   })
 
@@ -65,6 +68,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
     const files = new Map<string, ThemeAsset>([])
     const defaultThemeFileSystem = fakeThemeFileSystem('tmp', files)
     const initialRemoteChecksums = [{checksum: '1', key: 'templates/asset.json'}]
+    const mockRejectBackgroundJob = vi.fn()
     const options = {
       noDelete: false,
       ignore: [],
@@ -83,6 +87,7 @@ describe('reconcileAndPollThemeEditorChanges', async () => {
       initialRemoteChecksums,
       defaultThemeFileSystem,
       options,
+      mockRejectBackgroundJob,
     )
 
     // Then
