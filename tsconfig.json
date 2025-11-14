@@ -10,6 +10,7 @@
       {"path": "./packages/ui-extensions-server-kit"},
       {"path": "./packages/ui-extensions-test-utils"},
       {"path": "./packages/plugin-cloudflare"},
-      {"path": "./packages/plugin-did-you-mean"}
+      {"path": "./packages/plugin-did-you-mean"},
+      {"path": "./packages/graphiql-console"}
     ]
 }
