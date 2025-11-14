@@ -48,9 +48,3 @@ export function getIpFromHosts(hostname: string) {
 
   throw new Error(`No IP found for hostname: ${hostname}`)
 }
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function TEST_ClearCache() {
-  hostToIpCache = {}
-  lastModifiedTime = 0
-}

@@ -12,6 +12,7 @@ import {
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
+import {shouldUseMockAuth, fetchMockUser, buildMockSession} from './session/mock-auth.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
@@ -197,6 +198,7 @@ export async function ensureAuthenticated(
   {forceRefresh = false, noPrompt = false, forceNewSession = false}: EnsureAuthenticatedAdditionalOptions = {},
 ): Promise<OAuthSession> {
   const fqdn = await identityFqdn()
+  // debugger
 
   const previousStoreFqdn = applications.adminApi?.storeFqdn
   if (previousStoreFqdn) {
@@ -299,6 +301,15 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   if (firstPartyDev()) {
     outputDebug(outputContent`Authenticating as Shopify Employee...`)
     scopes.push('employee')
+  }
+
+  // debugger
+  if (shouldUseMockAuth()) {
+    outputDebug(outputContent`Using mock authentication...`)
+    const mockUser = await fetchMockUser(scopes)
+    const session = buildMockSession(mockUser, scopes)
+    outputCompleted(`Logged in with mock user: ${mockUser.userinfo.email}`)
+    return session
   }
 
   let identityToken: IdentityToken
