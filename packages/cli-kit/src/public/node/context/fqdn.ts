@@ -1,6 +1,6 @@
 import {AbortError, BugError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
-import {DevServer, DevServerCore} from '../vendor/dev_server/index.js'
+import {DevServerCore} from '../vendor/dev_server/index.js'
 import {blockPartnersAccess} from '../environment.js'
 
 export const NotProvidedStoreFQDNError = new AbortError(
@@ -20,7 +20,8 @@ export async function partnersFqdn(): Promise<string> {
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {
     case 'local':
-      return new DevServer('partners').host()
+      // return new DevServer('partners').host()
+      return 'fakepartners.shopify.com'
     default:
       return productionFqdn
   }
@@ -99,7 +100,8 @@ export async function businessPlatformFqdn(): Promise<string> {
   const productionFqdn = 'destinations.shopifysvc.com'
   switch (environment) {
     case 'local':
-      return new DevServer('business-platform').host()
+      return 'fakebp.shopify.com'
+    // return new DevServer('business-platform').host()
     default:
       return productionFqdn
   }
@@ -115,7 +117,8 @@ export async function identityFqdn(): Promise<string> {
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
-      return new DevServer('identity').host()
+      return 'fake.shopify.com'
+    // return new DevServer('identity').host()
     default:
       return productionFqdn
   }
