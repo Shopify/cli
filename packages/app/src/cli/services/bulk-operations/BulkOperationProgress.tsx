@@ -86,17 +86,42 @@ export function BulkOperationProgress({id, adminSession, onComplete}: BulkOperat
 
   const spinner = SPINNER_FRAMES[spinnerFrame] ?? '⠋'
 
+  const renderOperationDetails = (operation: BulkOperation) => {
+    switch (operation.status) {
+      case 'RUNNING':
+        return <>
+            <Text>{spinner} Bulk operation in progress...</Text>
+            <Text> • Objects: {String(operation.objectCount)}</Text>
+          </>
+      case 'CREATED':
+        return <Text>{spinner} Starting...</Text>
+      case 'COMPLETED':
+        const url = operation.url ?? ''
+        const shortUrl = url.length > 50 ? `${url.slice(0, 15)}[...]${url.slice(-15)}` : url
+
+        return <>
+          <Text>Bulk operation succeeded.</Text>
+          <Text> • Objects: {String(operation.objectCount)}</Text>
+          <Text> • Download results: {shortUrl}</Text>
+        </>
+      case 'FAILED':
+        return <>
+          <Text>Bulk operation failed.</Text>
+          <Text> • Objects: {String(operation.objectCount)}</Text>
+          <Text> • Error code: {operation.errorCode}</Text>
+        </>
+      case 'CANCELING':
+        return <Text>Bulk operation canceling...</Text>
+      case 'CANCELED':
+        return <Text>Bulk operation canceled.</Text>
+      case 'EXPIRED':
+        return <Text>Bulk operation expired.</Text>
+    }
+  }
+
   return (
     <Box borderStyle="round" borderColor="cyan" flexDirection="column" paddingX={1}>
-      {operation ? (
-        <>
-          <Text>{spinner} Bulk operation in progress...</Text>
-          <Text> • Status: {operation.status}</Text>
-          <Text> • Objects: {String(operation.objectCount)}</Text>
-        </>
-      ) : (
-        <Text>{spinner} Loading bulk operation...</Text>
-      )}
+      {operation ? renderOperationDetails(operation) : <Text>Bulk operation loading...</Text>}
     </Box>
   )
 }
