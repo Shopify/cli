@@ -79,9 +79,11 @@ describe('use', () => {
 
       const {schema: configSchema} = await buildVersionedAppSchema()
       const appWithoutClientID = testApp()
+      // Create a configuration without client_id to test the error case
+      const {client_id: clientId, ...configWithoutClientId} = appWithoutClientID.configuration
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
-        configuration: appWithoutClientID.configuration,
+        configuration: configWithoutClientId as any,
         configSchema,
         specifications: [],
         remoteFlags: [],

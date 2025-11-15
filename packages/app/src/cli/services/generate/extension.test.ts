@@ -116,7 +116,8 @@ describe('initialize a extension', async () => {
       expect(vi.mocked(addNPMDependenciesIfNeeded)).toHaveBeenCalledTimes(2)
 
       const loadedApp = await loadApp({directory: tmpDir, specifications, userProvidedConfigName: undefined})
-      expect(loadedApp.allExtensions.length).toEqual(2)
+      const realExtensions = loadedApp.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
+      expect(realExtensions.length).toEqual(2)
     })
   })
 
@@ -580,7 +581,18 @@ async function withTemporaryApp(
     const webConfigurationPath = joinPath(tmpDir, blocks.web.directoryName, blocks.web.configurationName)
     const appConfiguration = `
       name = "my_app"
+      client_id = "test-client-id"
+      application_url = "https://example.com"
+      embedded = true
+
+      [access_scopes]
       scopes = "read_products"
+
+      [auth]
+      redirect_urls = ["https://example.com/callback"]
+
+      [webhooks]
+      api_version = "2024-01"
       `
     const webConfiguration = `
     type = "backend"

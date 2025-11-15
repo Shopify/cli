@@ -11,7 +11,7 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface, AppConfiguration} from '../../../models/app/app.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -275,7 +275,12 @@ describe('app-event-watcher', () => {
           // When
           const app = testAppLinked({
             allExtensions: initialExtensions,
-            configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+            configuration: {
+              client_id: 'test-client-id',
+              access_scopes: {scopes: ''},
+              extension_directories: [],
+              path: 'shopify.app.custom.toml',
+            } as AppConfiguration,
           })
 
           const mockManager = new MockESBuildContextManager()
@@ -358,7 +363,12 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configuration: {
+            client_id: 'test-client-id',
+            access_scopes: {scopes: ''},
+            extension_directories: [],
+            path: 'shopify.app.custom.toml',
+          } as AppConfiguration,
         })
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 
@@ -401,7 +411,12 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [flowExtension],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configuration: {
+            client_id: 'test-client-id',
+            access_scopes: {scopes: ''},
+            extension_directories: [],
+            path: 'shopify.app.custom.toml',
+          } as AppConfiguration,
         })
 
         // When
@@ -435,7 +450,12 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configuration: {
+            client_id: 'test-client-id',
+            access_scopes: {scopes: ''},
+            extension_directories: [],
+            path: 'shopify.app.custom.toml',
+          } as AppConfiguration,
         })
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 

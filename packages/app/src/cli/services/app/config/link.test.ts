@@ -87,10 +87,10 @@ describe('link', () => {
       expect(configuration).toEqual({
         client_id: '12345',
         name: 'app1',
-        extension_directories: [],
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -103,6 +103,7 @@ describe('link', () => {
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.default-value.toml$/),
+        build: undefined,
       })
 
       expect(state).toEqual({
@@ -144,13 +145,13 @@ describe('link', () => {
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -165,10 +166,10 @@ embedded = false
       expect(configuration).toEqual({
         client_id: '12345',
         name: 'app1',
-        extension_directories: [],
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -181,6 +182,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.staging.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -195,6 +197,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       const apiClientConfiguration = {
         title: 'new-title',
         applicationUrl: 'https://api-client-config.com',
@@ -313,6 +316,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       const apiClientConfiguration = {
         title: 'new-title',
         applicationUrl: 'https://api-client-config.com',
@@ -661,6 +665,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -671,13 +676,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -707,11 +712,11 @@ embedded = false
       })
       expect(configuration).toEqual({
         client_id: '12345',
-        extension_directories: [],
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -724,6 +729,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -742,6 +748,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -752,13 +759,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -776,8 +783,8 @@ embedded = false
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
-        extension_directories: [],
         access_scopes: {
+          scopes: 'read_products',
           use_legacy_install_flow: true,
         },
         auth: {
@@ -790,6 +797,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -805,7 +813,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
-      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
         return (await developerPlatformClient.appFromIdentifiers(apiKey))!
       })
@@ -818,7 +826,6 @@ embedded = false
       expect(content).toContain('name = "app1"')
       expect(configuration).toEqual({
         client_id: 'api-key',
-        extension_directories: [],
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
@@ -835,6 +842,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
     })
   })
@@ -956,6 +964,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -1016,6 +1025,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1031,7 +1041,6 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -1039,6 +1048,7 @@ embedded = true
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products,write_orders"
+use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [ "https://example.com/callback1" ]
@@ -1052,12 +1062,12 @@ embedded = false
 
       expect(configuration).toEqual({
         client_id: '12345',
-        extension_directories: [],
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
         access_scopes: {
           scopes: 'read_products,write_orders',
+          use_legacy_install_flow: true,
         },
         auth: {
           redirect_urls: ['https://example.com/callback1'],
@@ -1069,6 +1079,7 @@ embedded = false
           embedded: false,
         },
         path: expect.stringMatching(/\/shopify.app.toml$/),
+        build: undefined,
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1107,6 +1118,7 @@ embedded = false
       }
 
       vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1246,6 +1258,8 @@ embedded = false
         developerPlatformClient,
       }
 
+      vi.mocked(loadApp).mockRejectedValue('App not found')
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1431,6 +1445,7 @@ embedded = true
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...mockRemoteApp(),
         newApp: true,
@@ -1445,7 +1460,6 @@ embedded = true
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -1455,6 +1469,7 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1483,6 +1498,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...mockRemoteApp(),
         newApp: true,
@@ -1497,7 +1513,6 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
@@ -1508,6 +1523,7 @@ include_config_on_deploy = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1532,6 +1548,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1549,13 +1566,13 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 application_url = "https://example.com"
 embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1580,6 +1597,7 @@ embedded = false
         developerPlatformClient,
       }
       vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1595,7 +1613,6 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
-extension_directories = [ ]
 name = "app1"
 handle = "handle"
 application_url = "https://example.com"
@@ -1603,6 +1620,7 @@ embedded = true
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
 use_legacy_install_flow = true
 
 [auth]
@@ -1864,7 +1882,7 @@ async function mockApp(
 ) {
   const versionSchema = await buildVersionedAppSchema()
   const localApp = testApp(app)
-  localApp.configuration.client_id = schemaType === 'legacy' ? 12345 : '12345'
+  localApp.configuration.client_id = '12345'
   localApp.configSchema = versionSchema.schema
   localApp.specifications = versionSchema.configSpecifications
   localApp.directory = directory
