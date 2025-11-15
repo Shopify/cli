@@ -19,6 +19,7 @@ export async function runBulkOperationQuery(
     query: BulkOperationRunQuery,
     session: adminSession,
     variables: {query},
+    version: '2026-01',
   })
 
   return response.bulkOperationRunQuery

@@ -38,6 +38,7 @@ export default class Execute extends AppLinkedCommand {
       app: appContextResult.app,
       storeFqdn: store.shopDomain,
       query: flags.query,
+      watch: flags.watch,
     })
 
     return {app: appContextResult.app}
