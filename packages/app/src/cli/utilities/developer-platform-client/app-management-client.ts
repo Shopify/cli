@@ -551,23 +551,48 @@ export class AppManagementClient implements DeveloperPlatformClient {
   // partners-client and app-management-client. Since we need transferDisabled and convertableToPartnerTest values
   // from the Partners OrganizationStore schema, we will return this type for now
   async devStoresForOrg(orgId: string, searchTerm?: string): Promise<Paginateable<{stores: OrganizationStore[]}>> {
-    const storesResult = await this.businessPlatformOrganizationsRequest({
-      query: ListAppDevStores,
-      organizationId: String(numberFromGid(orgId)),
-      variables: {searchTerm},
-    })
-    const organization = storesResult.organization
+    // MOCKED RESPONSE: Hardcoded shop with ID 1001
+    const mockShopArray: ShopNode[] = [
+      {
+        id: '1001',
+        externalId: 'gid://shopify/Shop/1001',
+        name: 'bananaaa',
+        storeType: 'app_development' as any,
+        primaryDomain: 'bananaaa-2.my.shop.dev',
+        shortName: 'bananaaa',
+        url: 'https://bananaaa-2.my.shop.dev',
+      }
+    ]
+    // const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
+    // const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
 
-    if (!organization) {
-      throw new AbortError(`No organization found`)
-    }
+    const provisionable = true // Assuming the user has permission to provision
 
-    const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
     return {
-      stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
-      hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
+      // stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
+      // hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
+      stores: mapBusinessPlatformStoresToOrganizationStores(mockShopArray, provisionable),
+      hasMorePages: false,
     }
+
+    // ORIGINAL CODE (commented out for reference):
+    // const storesResult = await this.businessPlatformOrganizationsRequest({
+    //   query: ListAppDevStores,
+    //   organizationId: String(numberFromGid(orgId)),
+    //   variables: {searchTerm},
+    // })
+    // const organization = storesResult.organization
+    //
+    // if (!organization) {
+    //   throw new AbortError(`No organization found`)
+    // }
+    //
+    // const shopArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
+    // const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
+    // return {
+    //   stores: mapBusinessPlatformStoresToOrganizationStores(shopArray, provisionable),
+    //   hasMorePages: storesResult.organization?.accessibleShops?.pageInfo.hasNextPage ?? false,
+    // }
   }
 
   async appExtensionRegistrations(
