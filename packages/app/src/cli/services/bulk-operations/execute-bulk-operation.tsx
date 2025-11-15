@@ -1,7 +1,7 @@
 import {runBulkOperationQuery} from './run-query.js'
 import {BulkOperationProgress} from './BulkOperationProgress.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {renderInfo, renderWarning, render} from '@shopify/cli-kit/node/ui'
+import {renderInfo, renderWarning, render, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import React from 'react'
@@ -48,30 +48,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
         <BulkOperationProgress
           id={result.id}
           adminSession={adminSession}
-          onComplete={(operation) => {
-            const url = operation?.url ?? ''
-            const shortUrl = url.length > 50 ? `${url.slice(0, 15)}[...]${url.slice(-15)}` : url
-
-            renderInfo({
-              customSections: [
-                {
-                  title: 'Bulk operation complete!',
-                  body: [
-                    {
-                      list: {
-                        items: [
-                          outputContent`ID: ${outputToken.cyan(operation?.id ?? '')}`.value,
-                          outputContent`Status: ${outputToken.yellow(operation?.status ?? '')}`.value,
-                          outputContent`Object count: ${outputToken.gray(String(operation?.objectCount ?? ''))}`.value,
-                        ],
-                      },
-                    },
-                    outputContent`\nDownload results: ${outputToken.link(shortUrl, url)}`.value,
-                  ],
-                },
-              ],
-            })
-          }}
+          onComplete={() => { renderSuccess({ headline: 'Done!', body: [outputContent`Bulk operation completed.`.value] }) }}
         />,
         {exitOnCtrlC: false},
       )
