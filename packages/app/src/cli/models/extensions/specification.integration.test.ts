@@ -31,7 +31,10 @@ describe('allLocalSpecs', () => {
 describe('createContractBasedModuleSpecification', () => {
   test('creates a specification with the given identifier', () => {
     // When
-    const got = createContractBasedModuleSpecification('test', ['localization'])
+    const got = createContractBasedModuleSpecification({
+      identifier: 'test',
+      appModuleFeatures: () => ['localization'],
+    })
 
     // Then
     expect(got).toMatchObject(
