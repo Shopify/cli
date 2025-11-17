@@ -136,6 +136,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -167,6 +168,7 @@ import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {Variables} from 'graphql-request'
 import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
+import {isRunning2024} from '@shopify/cli-kit/node/vendor/dev_server/dev-server-2024'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 
@@ -277,23 +279,27 @@ export class AppManagementClient implements DeveloperPlatformClient {
       const {appManagementToken, businessPlatformToken, userId} = tokenResult
 
       // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
-      // const userInfoResult = await businessPlatformRequestDoc({
-      //   query: UserInfo,
-      //   cacheOptions: {
-      //     cacheTTL: {hours: 6},
-      //     cacheExtraKey: userId,
-      //   },
-      //   token: businessPlatformToken,
-      //   unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
-      // })
-      const userInfoResult = {
-        currentUserAccount: {
-          uuid: '08978734-325e-44ce-bc65-34823a8d5180',
-          email: 'dev@shopify.com',
-          organizations: {
-            nodes: [{name: 'My Test Org FROM CLI MOCK'}],
+      let userInfoResult
+      if (isRunning2024('business-platform')) {
+        userInfoResult = await businessPlatformRequestDoc({
+          query: UserInfo,
+          cacheOptions: {
+            cacheTTL: {hours: 6},
+            cacheExtraKey: userId,
           },
-        },
+          token: businessPlatformToken,
+          unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
+        })
+      } else {
+        userInfoResult = {
+          currentUserAccount: {
+            uuid: '08978734-325e-44ce-bc65-34823a8d5180',
+            email: 'dev@shopify.com',
+            organizations: {
+              nodes: [{name: 'Test Business One'}],
+            },
+          },
+        }
       }
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {

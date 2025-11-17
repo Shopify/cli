@@ -1,12 +1,12 @@
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler, graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {handleDeprecations} from './partners.js'
-import {USE_LOCAL_MOCKS} from './utilities.js'
 import {businessPlatformFqdn} from '../context/fqdn.js'
 import {outputContent, outputDebug} from '../output.js'
 import {
   UserEmailQuery,
   UserEmailQueryString,
 } from '../../../private/node/api/graphql/business-platform-destinations/user-email.js'
+import {isRunning2024} from '../vendor/dev_server/dev-server-2024.js'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
 
@@ -17,7 +17,7 @@ import {Variables} from 'graphql-request'
  * @returns The user's email address or undefined if not found.
  */
 async function fetchEmail(businessPlatformToken: string | undefined): Promise<string | undefined> {
-  if (USE_LOCAL_MOCKS) {
+  if (!isRunning2024('identity')) {
     return LOCAL_OVERRIDES.fetchEmail()
   }
   if (!businessPlatformToken) return undefined
@@ -106,7 +106,7 @@ async function businessPlatformRequestDoc<TResult, TVariables extends Variables>
 
 /**
  * Sets up the request to the Business
- *  Platform Organizations API.
+ * Platform Organizations API.
  *
  * @param token - Business Platform token.
  * @param organizationId - Organization ID as a numeric (non-GID) value.

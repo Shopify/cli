@@ -33,11 +33,6 @@ export function assertConnectable(options: ConnectionArguments): void {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export function TEST_testResetCheckPort(): void {
-  checkPort = getCheckPortHelper()
-}
-
 function getCheckPortHelper(): (addr: string, port: number, timeout: number) => boolean {
   return fallbackCheckPort
 }

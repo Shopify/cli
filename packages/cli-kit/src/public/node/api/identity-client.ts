@@ -3,7 +3,6 @@
 /* eslint-disable @nx/enforce-module-boundaries */
 /* eslint-disable jsdoc/require-description */
 
-import {USE_LOCAL_MOCKS} from './utilities.js'
 import {
   buildIdentityToken,
   exchangeDeviceCodeForAccessToken,
@@ -16,6 +15,7 @@ import {ApplicationToken} from '../../../private/node/session/schema.js'
 import {allDefaultScopes} from '../../../private/node/session/scopes.js'
 import {applicationId} from '../../../private/node/session/identity.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
+import {isRunning2024} from '../vendor/dev_server/dev-server-2024.js'
 import {identityFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {shopifyFetch} from '@shopify/cli-kit/node/http'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -62,11 +62,11 @@ type ExchangeAccessTokenResponse = Promise<{[x: string]: ApplicationToken}>
 export function clientId(): string {
   const environment = serviceEnvironment()
   if (environment === Environment.Local) {
-    return 'e5380e02-312a-7408-5718-e07017e9cf52'
+    return isRunning2024('identity') ? 'e5380e02-312a-7408-5718-e07017e9cf52' : 'shopify-cli-development'
   } else if (environment === Environment.Production) {
     return 'fbdb2649-e327-4907-8f67-908d24cfd7e3'
   } else {
-    return 'e5380e02-312a-7408-5718-e07017e9cf52'
+    return isRunning2024('identity') ? 'e5380e02-312a-7408-5718-e07017e9cf52' : 'shopify-cli-development'
   }
 }
 
@@ -479,6 +479,6 @@ const ProdIC = new ProdIdentityClient()
 const LocalIC = new LocalIdentityClient()
 
 export function getIdentityClient(): IdentityClient {
-  const client = USE_LOCAL_MOCKS ? LocalIC : ProdIC
+  const client = isRunning2024('identity') ? ProdIC : LocalIC
   return client
 }
