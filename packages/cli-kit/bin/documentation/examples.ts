@@ -593,10 +593,11 @@ export const examples: {[key in string]: Example} = {
 
       await renderSingleTask({
         title: 'Loading app',
-        taskPromise: async () => {
+        task: async () => {
           await sleep(1)
         },
-      }, {renderOptions: {stdout: stdout as any, debug: true}})
+        renderOptions: {stdout: stdout as any, debug: true}
+      })
 
       // Find the last frame that includes mention of "Loading"
       const loadingFrame = stdout.frames.findLast(frame => frame.includes('Loading'))
