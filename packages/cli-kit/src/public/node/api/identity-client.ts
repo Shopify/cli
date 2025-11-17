@@ -74,9 +74,6 @@ abstract class IdentityClient {
   authTokenPrefix: string
 
   constructor() {
-    // atkn_
-    // atkn_mock_token_
-    // mtkn_
     this.authTokenPrefix = 'mtkn_'
   }
 
@@ -235,9 +232,6 @@ export class ProdIdentityClient extends IdentityClient {
     store?: string,
   ): ExchangeAccessTokenResponse {
     const token = identityToken.accessToken
-    // 'MOCK_COMMENTED_TOKEN_PLACEHOLDER'
-    // scopes ex. 'https://api.shopify.com/auth/organization.apps.manage'
-    // debugger
 
     const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
       requestAppToken('partners', token, scopes.partners),
@@ -294,7 +288,7 @@ export class LocalIdentityClient extends IdentityClient {
 
   pollForDeviceAuthorization(_deviceAuth: DeviceAuthorizationResponse): Promise<IdentityToken> {
     const now = getCurrentUnixTimestamp()
-    const exp = now + 7200 // 2 hours from now
+    const exp = now + 7200
     const scopes = allDefaultScopes()
 
     const identityTokenPayload = {
@@ -320,7 +314,6 @@ export class LocalIdentityClient extends IdentityClient {
     return Promise.resolve({
       accessToken: `${this.authTokenPrefix}${encodeTokenPayload(identityTokenPayload)}`,
       alias: '',
-      // 1 day expiration for shorter testing cycles
       expiresAt: getFutureDate(1),
       refreshToken: `${this.authTokenPrefix}${encodeTokenPayload(refreshTokenPayload)}`,
       scopes,
@@ -334,7 +327,6 @@ export class LocalIdentityClient extends IdentityClient {
     _store?: string,
   ): ExchangeAccessTokenResponse {
     const now = getCurrentUnixTimestamp()
-    // 2 hours from now
     const exp = now + 7200
 
     outputDebug(`[LocalIdentityClient] Generating application tokens at ${new Date(now * 1000).toISOString()}`)
@@ -352,7 +344,7 @@ export class LocalIdentityClient extends IdentityClient {
         iat: now,
         iss: 'https://identity.shop.dev',
         scope: scopeArray.join(' '),
-        token_type: 'SLAT', // not sure it should be this type
+        token_type: 'SLAT',
         sub: identityToken.userId,
         sid: this.mockSessionId,
         auth_time: now,
