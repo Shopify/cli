@@ -495,9 +495,10 @@ export interface RenderSingleTaskOptions<T> {
 
 /**
  * Awaits a single task and displays a loading bar while it's in progress. The task's result is returned.
- * @param title - The initial title to display with the loading bar
- * @param task - The async task to execute. Receives an updateStatus callback to change the displayed title.
- * @param renderOptions - Optional render configuration
+ * @param options - Configuration object
+ * @param options.title - The initial title to display with the loading bar
+ * @param options.task - The async task to execute. Receives an updateStatus callback to change the displayed title.
+ * @param options.renderOptions - Optional render configuration
  * @returns The result of the task
  * @example
  * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
