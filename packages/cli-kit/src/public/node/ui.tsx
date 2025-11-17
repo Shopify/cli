@@ -487,32 +487,30 @@ export async function renderTasks<TContext>(
   })
 }
 
+export interface RenderSingleTaskOptions<T> {
+  title: string
+  task: (updateStatus: (status: string) => void) => Promise<T>
+  renderOptions?: RenderOptions
+}
+
 /**
- * Awaits a single promise and displays a loading bar while it's in progress. The promise's result is returned.
- * @param options - Configuration object
- * @param options.title - The title to display with the loading bar
- * @param options.taskPromise - The promise to track
+ * Awaits a single task and displays a loading bar while it's in progress. The task's result is returned.
+ * @param title - The initial title to display with the loading bar
+ * @param task - The async task to execute. Receives an updateStatus callback to change the displayed title.
  * @param renderOptions - Optional render configuration
- * @returns The result of the promise
+ * @returns The result of the task
  * @example
  * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Loading app ...
  */
-// eslint-disable-next-line max-params
-export async function renderSingleTask<T>(
-  {title, taskPromise}: {title: string; taskPromise: Promise<T> | (() => Promise<T>)},
-  {renderOptions}: RenderTasksOptions = {},
-) {
-  const promise = typeof taskPromise === 'function' ? taskPromise() : taskPromise
-  const [_renderResult, taskResult] = await Promise.all([
-    render(<SingleTask title={title} taskPromise={promise} />, {
+export async function renderSingleTask<T>({title, task, renderOptions}: RenderSingleTaskOptions<T>): Promise<T> {
+  // eslint-disable-next-line max-params
+  return new Promise<T>((resolve, reject) => {
+    render(<SingleTask title={title} task={task} onComplete={resolve} />, {
       ...renderOptions,
       exitOnCtrlC: false,
-    }),
-    promise,
-  ])
-
-  return taskResult
+    }).catch(reject)
+  })
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {
