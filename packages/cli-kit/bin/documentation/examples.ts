@@ -16,7 +16,7 @@ import {
   renderTextPrompt,
   renderWarning,
 } from '../../src/public/node/ui.js'
-import {unstyled} from '../../src/public/node/output.js'
+import {outputContent, unstyled} from '../../src/public/node/output.js'
 import {AbortError, BugError} from '../../src/public/node/error.js'
 import {AbortSignal} from '../../src/public/node/abort.js'
 import {Stdout} from '../../src/private/node/ui.js'
@@ -592,7 +592,7 @@ export const examples: {[key in string]: Example} = {
       const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
       await renderSingleTask({
-        title: 'Loading app',
+        title: outputContent`Loading app`,
         task: async () => {
           await sleep(1)
         },
