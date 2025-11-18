@@ -1,5 +1,6 @@
-import {renderConcurrent, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderConcurrent, renderSingleTask, renderTasks} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
 export async function asyncTasks() {
@@ -58,4 +59,20 @@ export async function asyncTasks() {
   ]
 
   await renderTasks(tasks)
+
+  // renderSingleTask
+  await renderSingleTask({
+    title: new TokenizedString('Importing data'),
+    task: async (updateStatus: (status: TokenizedString) => void) => {
+      for (let i = 1; i <= 10; i++) {
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 500))
+        const status = outputContent`Importing data ${outputToken.italic(
+          outputContent`(${outputToken.green(i.toString())} complete)`,
+        )}`
+        updateStatus(status)
+      }
+      return 'completed'
+    },
+  })
 }

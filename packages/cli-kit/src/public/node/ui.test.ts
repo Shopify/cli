@@ -11,6 +11,7 @@ import {
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
+import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
 import {Writable} from 'stream'
@@ -425,11 +426,11 @@ describe('renderSingleTask', async () => {
   test('returns promise result when task resolves successfully', async () => {
     // Given
     const expectedResult = {id: 123, name: 'test-result'}
-    const taskPromise = Promise.resolve(expectedResult)
-    const title = 'Processing data'
+    const task = () => Promise.resolve(expectedResult)
+    const title = new TokenizedString('Processing data')
 
     // When
-    const result = await renderSingleTask({title, taskPromise})
+    const result = await renderSingleTask({title, task})
 
     // Then
     expect(result).toEqual(expectedResult)
@@ -438,11 +439,11 @@ describe('renderSingleTask', async () => {
   test('returns function result when function resolves successfully', async () => {
     // Given
     const expectedResult = {id: 123, name: 'test-result'}
-    const taskPromise = () => Promise.resolve(expectedResult)
-    const title = 'Processing data'
+    const task = () => Promise.resolve(expectedResult)
+    const title = new TokenizedString('Processing data')
 
     // When
-    const result = await renderSingleTask({title, taskPromise})
+    const result = await renderSingleTask({title, task})
 
     // Then
     expect(result).toEqual(expectedResult)
@@ -450,11 +451,11 @@ describe('renderSingleTask', async () => {
 
   test('returns undefined when task resolves with undefined', async () => {
     // Given
-    const taskPromise = Promise.resolve(undefined)
-    const title = 'Void task'
+    const task = () => Promise.resolve(undefined)
+    const title = new TokenizedString('Void task')
 
     // When
-    const result = await renderSingleTask({title, taskPromise})
+    const result = await renderSingleTask({title, task})
 
     // Then
     expect(result).toBeUndefined()
@@ -463,36 +464,37 @@ describe('renderSingleTask', async () => {
   test('throws error when task promise rejects', async () => {
     // Given
     const expectedError = new Error('Task failed with error')
-    const taskPromise = Promise.reject(expectedError)
-    const title = 'Failing task'
+    const task = () => Promise.reject(expectedError)
+    const title = new TokenizedString('Failing task')
 
     // When & Then
-    await expect(renderSingleTask({title, taskPromise})).rejects.toThrow('Task failed with error')
+    await expect(renderSingleTask({title, task})).rejects.toThrow('Task failed with error')
   })
 
   test('handles slow promise rejection', async () => {
     // Given
     const expectedError = new Error('Delayed failure')
-    const taskPromise = new Promise((resolve, reject) => {
-      setTimeout(() => reject(expectedError), 100)
-    })
-    const title = 'Slow failing task'
+    const task = () =>
+      new Promise((resolve, reject) => {
+        setTimeout(() => reject(expectedError), 100)
+      })
+    const title = new TokenizedString('Slow failing task')
 
     // When & Then
-    await expect(renderSingleTask({title, taskPromise})).rejects.toThrow('Delayed failure')
+    await expect(renderSingleTask({title, task})).rejects.toThrow('Delayed failure')
   })
 
   test('handles concurrent single tasks', async () => {
     // Given
-    const task1Promise = new Promise((resolve) => setTimeout(() => resolve('result1'), 50))
-    const task2Promise = new Promise((resolve) => setTimeout(() => resolve('result2'), 100))
-    const task3Promise = new Promise((resolve) => setTimeout(() => resolve('result3'), 25))
+    const task1 = () => new Promise((resolve) => setTimeout(() => resolve('result1'), 50))
+    const task2 = () => new Promise((resolve) => setTimeout(() => resolve('result2'), 100))
+    const task3 = () => new Promise((resolve) => setTimeout(() => resolve('result3'), 25))
 
     // When
     const [result1, result2, result3] = await Promise.all([
-      renderSingleTask({title: 'Task 1', taskPromise: task1Promise}),
-      renderSingleTask({title: 'Task 2', taskPromise: task2Promise}),
-      renderSingleTask({title: 'Task 3', taskPromise: task3Promise}),
+      renderSingleTask({title: new TokenizedString('Task 1'), task: task1}),
+      renderSingleTask({title: new TokenizedString('Task 2'), task: task2}),
+      renderSingleTask({title: new TokenizedString('Task 3'), task: task3}),
     ])
 
     // Then
