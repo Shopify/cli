@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any  */
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
@@ -40,6 +42,8 @@ export type Scalars = {
   ISO8601Date: {input: any; output: any}
   /** An ISO 8601-encoded datetime */
   ISO8601DateTime: {input: any; output: any}
+  /** Represents untyped JSON */
+  JSON: {input: JsonMapType | string; output: JsonMapType}
   /** The ID for a LegalEntity. */
   LegalEntityID: {input: any; output: any}
   /** The ID for a OrganizationDomain. */
