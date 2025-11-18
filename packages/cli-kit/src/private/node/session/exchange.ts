@@ -187,7 +187,7 @@ export async function requestAppToken(
   return {[identifier]: appToken}
 }
 
-interface TokenRequestResult {
+export interface TokenRequestResult {
   access_token: string
   expires_in: number
   refresh_token: string
@@ -195,7 +195,7 @@ interface TokenRequestResult {
   id_token?: string
 }
 
-function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
+export function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
   const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
     store ? `: ${store}` : '.'
   }`
@@ -237,7 +237,7 @@ async function tokenRequest(params: {
   return err({error: payload.error, store: params.store})
 }
 
-function buildIdentityToken(
+export function buildIdentityToken(
   result: TokenRequestResult,
   existingUserId?: string,
   existingAlias?: string,

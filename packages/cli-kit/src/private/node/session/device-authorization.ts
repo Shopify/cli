@@ -158,7 +158,7 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
   })
 }
 
-function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {
+export function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {
   return Object.entries(queryParams)
     .map(([key, value]) => value && `${key}=${value}`)
     .filter((hasValue) => Boolean(hasValue))
@@ -173,7 +173,7 @@ function convertRequestToParams(queryParams: {client_id: string; scope: string})
  * @param responseText - The raw response body text
  * @returns Detailed error message about the failure
  */
-function buildAuthorizationParseErrorMessage(response: Response, responseText: string): string {
+export function buildAuthorizationParseErrorMessage(response: Response, responseText: string): string {
   // Build helpful error message based on response status and content
   let errorMessage = `Received invalid response from authorization service (HTTP ${response.status}).`
 
