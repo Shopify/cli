@@ -1,11 +1,12 @@
 import {LoadingBar} from './LoadingBar.js'
 import {useExitOnCtrlC} from '../hooks/use-exit-on-ctrl-c.js'
+import {TokenizedString} from '../../../../public/node/output.js'
 import React, {useEffect, useState} from 'react'
 import {useApp} from 'ink'
 
 interface SingleTaskProps<T> {
-  title: string
-  task: (updateStatus: (status: string) => void) => Promise<T>
+  title: TokenizedString
+  task: (updateStatus: (status: TokenizedString) => void) => Promise<T>
   onComplete?: (result: T) => void
   noColor?: boolean
 }
@@ -34,7 +35,7 @@ const SingleTask = <T,>({task, title, onComplete, noColor}: SingleTaskProps<T>) 
     return null
   }
 
-  return <LoadingBar title={status} noColor={noColor} />
+  return <LoadingBar title={status.value} noColor={noColor} />
 }
 
 export {SingleTask}

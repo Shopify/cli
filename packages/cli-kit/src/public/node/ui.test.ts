@@ -11,6 +11,7 @@ import {
 import {AbortSignal} from './abort.js'
 import {BugError, FatalError, AbortError, FatalErrorType} from './error.js'
 import {mockAndCaptureOutput} from './testing/output.js'
+import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
 import {Writable} from 'stream'
@@ -426,7 +427,7 @@ describe('renderSingleTask', async () => {
     // Given
     const expectedResult = {id: 123, name: 'test-result'}
     const task = () => Promise.resolve(expectedResult)
-    const title = 'Processing data'
+    const title = new TokenizedString('Processing data')
 
     // When
     const result = await renderSingleTask({title, task})
@@ -439,7 +440,7 @@ describe('renderSingleTask', async () => {
     // Given
     const expectedResult = {id: 123, name: 'test-result'}
     const task = () => Promise.resolve(expectedResult)
-    const title = 'Processing data'
+    const title = new TokenizedString('Processing data')
 
     // When
     const result = await renderSingleTask({title, task})
@@ -451,7 +452,7 @@ describe('renderSingleTask', async () => {
   test('returns undefined when task resolves with undefined', async () => {
     // Given
     const task = () => Promise.resolve(undefined)
-    const title = 'Void task'
+    const title = new TokenizedString('Void task')
 
     // When
     const result = await renderSingleTask({title, task})
@@ -464,7 +465,7 @@ describe('renderSingleTask', async () => {
     // Given
     const expectedError = new Error('Task failed with error')
     const task = () => Promise.reject(expectedError)
-    const title = 'Failing task'
+    const title = new TokenizedString('Failing task')
 
     // When & Then
     await expect(renderSingleTask({title, task})).rejects.toThrow('Task failed with error')
@@ -477,7 +478,7 @@ describe('renderSingleTask', async () => {
       new Promise((resolve, reject) => {
         setTimeout(() => reject(expectedError), 100)
       })
-    const title = 'Slow failing task'
+    const title = new TokenizedString('Slow failing task')
 
     // When & Then
     await expect(renderSingleTask({title, task})).rejects.toThrow('Delayed failure')
@@ -491,9 +492,9 @@ describe('renderSingleTask', async () => {
 
     // When
     const [result1, result2, result3] = await Promise.all([
-      renderSingleTask({title: 'Task 1', task: task1}),
-      renderSingleTask({title: 'Task 2', task: task2}),
-      renderSingleTask({title: 'Task 3', task: task3}),
+      renderSingleTask({title: new TokenizedString('Task 1'), task: task1}),
+      renderSingleTask({title: new TokenizedString('Task 2'), task: task2}),
+      renderSingleTask({title: new TokenizedString('Task 3'), task: task3}),
     ])
 
     // Then

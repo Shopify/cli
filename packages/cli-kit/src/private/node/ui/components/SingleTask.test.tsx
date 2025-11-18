@@ -1,12 +1,13 @@
 import {SingleTask} from './SingleTask.js'
 import {render} from '../../testing/ui.js'
+import {TokenizedString} from '../../../../public/node/output.js'
 import React from 'react'
 import {describe, expect, test} from 'vitest'
 
 describe('SingleTask', () => {
   test('unmounts when promise resolves successfully', async () => {
     // Given
-    const title = 'Uploading files'
+    const title = new TokenizedString('Uploading files')
     let resolvePromise: (value: string) => void
     const task = () =>
       new Promise<string>((resolve) => {
@@ -31,7 +32,7 @@ describe('SingleTask', () => {
 
   test('unmounts when promise rejects', async () => {
     // Given
-    const title = 'Failed task'
+    const title = new TokenizedString('Failed task')
     let rejectPromise: (error: Error) => void
     const task = () =>
       new Promise<string>((resolve, reject) => {
@@ -53,7 +54,7 @@ describe('SingleTask', () => {
 
   test('handles promise that resolves immediately', async () => {
     // Given
-    const title = 'Instant task'
+    const title = new TokenizedString('Instant task')
     const task = () => Promise.resolve('immediate success')
 
     // When
@@ -66,7 +67,7 @@ describe('SingleTask', () => {
 
   test('handles promise that rejects immediately', async () => {
     // Given
-    const title = 'Instant failure'
+    const title = new TokenizedString('Instant failure')
     const task = () => Promise.reject(new Error('Immediate error'))
 
     // When
@@ -81,7 +82,11 @@ describe('SingleTask', () => {
     let stringResult: string | undefined
     const stringTask = () => Promise.resolve('task completed')
     const stringRender = render(
-      <SingleTask title="String task" task={stringTask} onComplete={(result) => (stringResult = result)} />,
+      <SingleTask
+        title={new TokenizedString('String task')}
+        task={stringTask}
+        onComplete={(result) => (stringResult = result)}
+      />,
     )
     await stringRender.waitUntilExit()
     expect(stringRender.lastFrame()).toBeDefined()
@@ -91,7 +96,11 @@ describe('SingleTask', () => {
     let objectResult: {id: number; name: string} | undefined
     const objectTask = () => Promise.resolve({id: 1, name: 'test'})
     const objectRender = render(
-      <SingleTask title="Object task" task={objectTask} onComplete={(result) => (objectResult = result)} />,
+      <SingleTask
+        title={new TokenizedString('Object task')}
+        task={objectTask}
+        onComplete={(result) => (objectResult = result)}
+      />,
     )
     await objectRender.waitUntilExit()
     expect(objectRender.lastFrame()).toBeDefined()
@@ -100,7 +109,11 @@ describe('SingleTask', () => {
     let numberResult: number | undefined
     const numberTask = () => Promise.resolve(42)
     const numberRender = render(
-      <SingleTask title="Number task" task={numberTask} onComplete={(result) => (numberResult = result)} />,
+      <SingleTask
+        title={new TokenizedString('Number task')}
+        task={numberTask}
+        onComplete={(result) => (numberResult = result)}
+      />,
     )
     await numberRender.waitUntilExit()
     expect(numberRender.lastFrame()).toBeDefined()
@@ -110,7 +123,11 @@ describe('SingleTask', () => {
     let booleanResult: boolean | undefined
     const booleanTask = () => Promise.resolve(true)
     const booleanRender = render(
-      <SingleTask title="Boolean task" task={booleanTask} onComplete={(result) => (booleanResult = result)} />,
+      <SingleTask
+        title={new TokenizedString('Boolean task')}
+        task={booleanTask}
+        onComplete={(result) => (booleanResult = result)}
+      />,
     )
     await booleanRender.waitUntilExit()
     expect(booleanRender.lastFrame()).toBeDefined()
@@ -119,7 +136,7 @@ describe('SingleTask', () => {
 
   test('handles promise with delayed resolution', async () => {
     // Given
-    const title = 'Delayed task'
+    const title = new TokenizedString('Delayed task')
     const task = () =>
       new Promise<string>((resolve) => {
         setTimeout(() => resolve('completed'), 100)
@@ -137,7 +154,7 @@ describe('SingleTask', () => {
 
   test('handles promise with delayed rejection', async () => {
     // Given
-    const title = 'Delayed failure'
+    const title = new TokenizedString('Delayed failure')
     const task = () =>
       new Promise<string>((resolve, reject) => {
         setTimeout(() => reject(new Error('delayed error')), 100)
@@ -163,7 +180,7 @@ describe('SingleTask', () => {
     const task = () => Promise.reject(customError)
 
     // When
-    const renderInstance = render(<SingleTask title="Custom error task" task={task} />)
+    const renderInstance = render(<SingleTask title={new TokenizedString('Custom error task')} task={task} />)
 
     // Then - should preserve the exact error
     await expect(renderInstance.waitUntilExit()).rejects.toThrow('Custom error message')
@@ -175,8 +192,8 @@ describe('SingleTask', () => {
     const slowPromise = () => new Promise((resolve) => setTimeout(() => resolve('slow'), 150))
 
     // When
-    const fastRender = render(<SingleTask title="Fast task" task={fastPromise} />)
-    const slowRender = render(<SingleTask title="Slow task" task={slowPromise} />)
+    const fastRender = render(<SingleTask title={new TokenizedString('Fast task')} task={fastPromise} />)
+    const slowRender = render(<SingleTask title={new TokenizedString('Slow task')} task={slowPromise} />)
 
     // Then - Both should complete successfully
     await fastRender.waitUntilExit()
@@ -188,7 +205,7 @@ describe('SingleTask', () => {
 
   test('passes noColor prop to LoadingBar component', async () => {
     // Given
-    const title = 'No color task'
+    const title = new TokenizedString('No color task')
     const task = () => Promise.resolve()
 
     // When - Test that noColor prop doesn't break the component
@@ -201,7 +218,7 @@ describe('SingleTask', () => {
 
   test('updates status message during task execution', async () => {
     // Given
-    const initialTitle = 'Starting task'
+    const initialTitle = new TokenizedString('Starting task')
     let step1Resolve: () => void
     let step2Resolve: () => void
     let step3Resolve: () => void
@@ -216,14 +233,14 @@ describe('SingleTask', () => {
       step3Resolve = resolve
     })
 
-    const task = async (updateStatus: (status: string) => void) => {
-      updateStatus('Running (1 complete)...')
+    const task = async (updateStatus: (status: TokenizedString) => void) => {
+      updateStatus(new TokenizedString('Running (1 complete)...'))
       await step1Promise
 
-      updateStatus('Running (2 complete)...')
+      updateStatus(new TokenizedString('Running (2 complete)...'))
       await step2Promise
 
-      updateStatus('Running (3 complete)...')
+      updateStatus(new TokenizedString('Running (3 complete)...'))
       await step3Promise
 
       return 'completed'

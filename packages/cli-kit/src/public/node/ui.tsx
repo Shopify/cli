@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable tsdoc/syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
-import {outputContent, outputDebug, outputToken} from './output.js'
+import {outputContent, outputDebug, outputToken, TokenizedString} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {AbortController} from './abort.js'
 import {runWithTimer} from './metadata.js'
@@ -488,8 +488,8 @@ export async function renderTasks<TContext>(
 }
 
 export interface RenderSingleTaskOptions<T> {
-  title: string
-  task: (updateStatus: (status: string) => void) => Promise<T>
+  title: TokenizedString
+  task: (updateStatus: (status: TokenizedString) => void) => Promise<T>
   renderOptions?: RenderOptions
 }
 
