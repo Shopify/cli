@@ -24,14 +24,9 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
 
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
 
-  const operationIsMutation = isMutation(query)
-  if (!operationIsMutation && variables) {
-    throw new AbortError(
-      outputContent`The ${outputToken.yellow('--variables')} flag can only be used with mutations, not queries.`,
-    )
-  }
+  validateGraphQLDocument(query, variables)
 
-  const bulkOperationResponse = operationIsMutation
+  const bulkOperationResponse = isMutation(query)
     ? await runBulkOperationMutation({adminSession, query, variables})
     : await runBulkOperationQuery({adminSession, query})
 
@@ -77,9 +72,25 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   }
 }
 
+function validateGraphQLDocument(graphqlOperation: string, variables?: string[]): void {
+  const document = parse(graphqlOperation)
+  const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
+
+  if (operationDefinitions.length !== 1) {
+    throw new AbortError(
+      'GraphQL document must contain exactly one operation definition. Multiple operations are not supported.',
+    )
+  }
+
+  if (!isMutation(graphqlOperation) && variables) {
+    throw new AbortError(
+      outputContent`The ${outputToken.yellow('--variables')} flag can only be used with mutations, not queries.`,
+    )
+  }
+}
+
 function isMutation(graphqlOperation: string): boolean {
   const document = parse(graphqlOperation)
-  const firstOperation = document.definitions.find((def) => def.kind === 'OperationDefinition')
-
-  return firstOperation?.kind === 'OperationDefinition' && firstOperation.operation === 'mutation'
+  const operation = document.definitions.find((def) => def.kind === 'OperationDefinition')
+  return operation?.kind === 'OperationDefinition' && operation.operation === 'mutation'
 }
