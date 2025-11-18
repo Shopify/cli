@@ -238,7 +238,7 @@ ${outputToken.json(applications)}
     setCurrentSessionId(newSessionId)
   }
 
-  const tokens = await tokensFor(applications, completeSession)
+  const tokens = tokensFor(applications, completeSession)
 
   // Overwrite partners token if using a custom CLI Token
   const envToken = getPartnersToken()
@@ -343,7 +343,7 @@ async function refreshTokens(session: Session, applications: OAuthApplications):
  * @param session - The current session.
  * @param fqdn - The identity FQDN.
  */
-async function tokensFor(applications: OAuthApplications, session: Session): Promise<OAuthSession> {
+function tokensFor(applications: OAuthApplications, session: Session): OAuthSession {
   const tokens: OAuthSession = {
     userId: session.identity.userId,
   }
