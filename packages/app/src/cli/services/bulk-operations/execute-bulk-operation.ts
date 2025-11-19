@@ -3,16 +3,16 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {AppLinkedInterface} from '../../models/app/app.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {parse} from 'graphql'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
-  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   storeFqdn: string
   query: string
   variables?: string[]
@@ -39,13 +39,17 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {app, storeFqdn, query, variables, variableFile, outputFile, watch = false} = input
+  const {remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false} = input
 
   renderInfo({
     headline: 'Starting bulk operation.',
-    body: `App: ${app.name}\nStore: ${storeFqdn}`,
+    body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
   })
-  const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+
+  const appSecret = remoteApp.apiSecretKeys[0]?.secret
+  if (!appSecret) throw new BugError('No API secret keys found for app')
+
+  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
