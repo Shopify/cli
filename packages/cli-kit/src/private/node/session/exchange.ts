@@ -1,5 +1,5 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
-import {applicationId, clientId as getIdentityClientId} from './identity.js'
+import {applicationId} from './identity.js'
 import {tokenExchangeScopes} from './scopes.js'
 import {API} from '../api.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
@@ -8,6 +8,7 @@ import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
+import {getIdentityClient} from '../clients/identity/instance.js'
 import * as jose from 'jose'
 
 export class InvalidGrantError extends ExtendableError {}
@@ -56,14 +57,14 @@ export async function exchangeAccessForApplicationTokens(
  * Given an expired access token, refresh it to get a new one.
  */
 export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
-  const clientId = getIdentityClientId()
+  const clientId = getIdentityClient().clientId()
   const params = {
     grant_type: 'refresh_token',
     access_token: currentToken.accessToken,
     refresh_token: currentToken.refreshToken,
     client_id: clientId,
   }
-  const tokenResult = await tokenRequest(params)
+  const tokenResult = await getIdentityClient().tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   return buildIdentityToken(value, currentToken.userId, currentToken.alias)
 }
@@ -141,7 +142,7 @@ type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_
 export async function exchangeDeviceCodeForAccessToken(
   deviceCode: string,
 ): Promise<Result<IdentityToken, IdentityDeviceError>> {
-  const clientId = await getIdentityClientId()
+  const clientId = getIdentityClient().clientId()
 
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
@@ -149,7 +150,7 @@ export async function exchangeDeviceCodeForAccessToken(
     client_id: clientId,
   }
 
-  const tokenResult = await tokenRequest(params)
+  const tokenResult = await getIdentityClient().tokenRequest(params)
   if (tokenResult.isErr()) {
     return err(tokenResult.error.error as IdentityDeviceError)
   }
@@ -164,7 +165,7 @@ export async function requestAppToken(
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
   const appId = applicationId(api)
-  const clientId = await getIdentityClientId()
+  const clientId = getIdentityClient().clientId()
 
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
@@ -181,7 +182,7 @@ export async function requestAppToken(
   if (api === 'admin' && store) {
     identifier = `${store}-${appId}`
   }
-  const tokenResult = await tokenRequest(params)
+  const tokenResult = await getIdentityClient().tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   const appToken = buildApplicationToken(value)
   return {[identifier]: appToken}
@@ -221,7 +222,7 @@ export function tokenRequestErrorHandler({error, store}: {error: string; store?:
   return new AbortError(error)
 }
 
-async function tokenRequest(params: {
+async function _tokenRequest(params: {
   [key: string]: string
 }): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
   const fqdn = await identityFqdn()

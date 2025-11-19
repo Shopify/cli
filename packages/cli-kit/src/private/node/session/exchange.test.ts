@@ -8,7 +8,7 @@ import {
   refreshAccessToken,
   requestAppToken,
 } from './exchange.js'
-import {applicationId, clientId} from './identity.js'
+import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
@@ -43,7 +43,6 @@ vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
 
 beforeEach(() => {
-  vi.mocked(clientId).mockReturnValue('clientId')
   vi.setSystemTime(currentDate)
   vi.mocked(applicationId).mockImplementation((api) => api)
   vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
@@ -301,7 +300,7 @@ describe.each(tokenExchangeMethods)(
       expect(params.get('grant_type')).toBe(grantType)
       expect(params.get('requested_token_type')).toBe(accessTokenType)
       expect(params.get('subject_token_type')).toBe(accessTokenType)
-      expect(params.get('client_id')).toBe('clientId')
+      expect(params.get('client_id')).toBe('fbdb2649-e327-4907-8f67-908d24cfd7e3')
       expect(params.get('audience')).toBe(expectedApi)
       expect(params.get('scope')).toBe(expectedScopes.join(' '))
       expect(params.get('subject_token')).toBe(cliToken)

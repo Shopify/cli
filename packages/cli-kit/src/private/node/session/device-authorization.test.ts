@@ -3,7 +3,6 @@ import {
   pollForDeviceAuthorization,
   requestDeviceAuthorization,
 } from './device-authorization.js'
-import {clientId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
@@ -50,7 +49,6 @@ describe('requestDeviceAuthorization', () => {
     const response = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When
     const got = await requestDeviceAuthorization(['scope1', 'scope2'])
@@ -59,7 +57,7 @@ describe('requestDeviceAuthorization', () => {
     expect(shopifyFetch).toBeCalledWith('https://fqdn.com/oauth/device_authorization', {
       method: 'POST',
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
-      body: 'client_id=clientId&scope=scope1 scope2',
+      body: 'client_id=fbdb2649-e327-4907-8f67-908d24cfd7e3&scope=scope1 scope2',
     })
     expect(got).toEqual(dataExpected)
   })
@@ -71,7 +69,6 @@ describe('requestDeviceAuthorization', () => {
     Object.defineProperty(response, 'statusText', {value: 'OK'})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
@@ -86,7 +83,6 @@ describe('requestDeviceAuthorization', () => {
     Object.defineProperty(response, 'statusText', {value: 'OK'})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
@@ -102,7 +98,6 @@ describe('requestDeviceAuthorization', () => {
     Object.defineProperty(response, 'statusText', {value: 'Not Found'})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
@@ -117,7 +112,6 @@ describe('requestDeviceAuthorization', () => {
     Object.defineProperty(response, 'statusText', {value: 'Internal Server Error'})
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(
@@ -134,7 +128,6 @@ describe('requestDeviceAuthorization', () => {
     response.text = vi.fn().mockRejectedValue(new Error('Network error'))
     vi.mocked(shopifyFetch).mockResolvedValue(response)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(clientId).mockReturnValue('clientId')
 
     // When/Then
     await expect(requestDeviceAuthorization(['scope1', 'scope2'])).rejects.toThrowError(

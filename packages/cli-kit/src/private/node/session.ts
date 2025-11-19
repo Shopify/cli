@@ -5,16 +5,15 @@ import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
   ExchangeScopes,
-  refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
 } from './session/exchange.js'
 import {IdentityToken, Session, Sessions} from './session/schema.js'
 import * as sessionStore from './session/store.js'
-import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {isThemeAccessSession} from './api/rest.js'
 import {getCurrentSessionId, setCurrentSessionId} from './conf-store.js'
 import {UserEmailQueryString, UserEmailQuery} from './api/graphql/business-platform-destinations/user-email.js'
+import {getIdentityClient} from './clients/identity/instance.js'
 import {outputContent, outputToken, outputDebug, outputCompleted} from '../../public/node/output.js'
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
@@ -306,13 +305,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
-    // Request a device code to authorize without a browser redirect.
-    outputDebug(outputContent`Requesting device authorization code...`)
-    const deviceAuth = await requestDeviceAuthorization(scopes)
-
-    // Poll for the identity token
-    outputDebug(outputContent`Starting polling for the identity token...`)
-    identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
+    identityToken = await getIdentityClient().requestAccessToken(scopes)
   }
 
   // Exchange identity token for application tokens
@@ -343,7 +336,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
  */
 async function refreshTokens(session: Session, applications: OAuthApplications): Promise<Session> {
   // Refresh Identity Token
-  const identityToken = await refreshAccessToken(session.identity)
+  const identityToken = await getIdentityClient().refreshAccessToken(session.identity)
   // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
   const applicationTokens = await exchangeAccessForApplicationTokens(
