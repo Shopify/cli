@@ -7,6 +7,7 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
+import {fetchOrganizations} from '../../services/dev/fetch.js'
 import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -64,6 +65,12 @@ export default class Init extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
+    'organization-id': Flags.string({
+      hidden: false,
+      description:
+        'The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+    }),
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
@@ -93,7 +100,21 @@ export default class Init extends AppLinkedCommand {
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
-      const org = await selectOrg()
+      let org: Organization
+      if (flags['organization-id']) {
+        // If an organization-id is provided, fetch all organizations and find the matching one
+        const orgs = await fetchOrganizations()
+        const matchingOrg = orgs.find((organization) => organization.id === flags['organization-id'])
+        if (!matchingOrg) {
+          throw new AbortError(
+            `Organization with ID ${flags['organization-id']} not found`,
+            'Please verify the organization ID and try again. You can find your organization ID in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+          )
+        }
+        org = matchingOrg
+      } else {
+        org = await selectOrg()
+      }
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
       selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
