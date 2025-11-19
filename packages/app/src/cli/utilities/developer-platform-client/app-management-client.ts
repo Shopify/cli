@@ -79,13 +79,19 @@ import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
 import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
-import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {
-  DevSessionUpdate,
+  DevSessionCreateDocument as DevSessionCreate,
+  DevSessionCreateMutation,
+} from '../../api/graphql/app-dev/generated/dev-session-create.js'
+import {
+  DevSessionUpdateDocument as DevSessionUpdate,
   DevSessionUpdateMutation,
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
-import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
+import {
+  DevSessionDeleteDocument as DevSessionDelete,
+  DevSessionDeleteMutation,
+} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
 import {
   FetchDevStoreByDomain,
   FetchDevStoreByDomainQueryVariables,
@@ -1013,12 +1019,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDeepLink({id, organizationId})
   }
 
-  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
+  async devSessionCreate({
+    appId,
+    assetsUrl,
+    shopFqdn,
+    websocketUrl,
+  }: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return this.appDevRequest({
       query: DevSessionCreate,
       shopFqdn,
-      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? ''},
+      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? '', websocketUrl},
       requestOptions: {requestMode: 'slow-request'},
     })
   }
@@ -1029,6 +1040,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     shopFqdn,
     manifest,
     inheritedModuleUids,
+    websocketUrl,
   }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     const variables: DevSessionUpdateMutationVariables = {
@@ -1036,6 +1048,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetsUrl,
       manifest: JSON.stringify(manifest),
       inheritedModuleUids,
+      websocketUrl,
     }
     return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
   }
