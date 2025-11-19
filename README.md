@@ -1,7 +1,7 @@
 <img src="https://github.com/Shopify/cli/blob/main/assets/logo.png?raw=true" width="150"/>
 
 # Shopify CLI
-<a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
+<a href="http://x.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="X Followers"></a>
 <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 <a href="https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml/badge.svg)</a>
 
