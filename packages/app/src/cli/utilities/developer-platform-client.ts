@@ -158,6 +158,7 @@ interface DevSessionSharedOptions {
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   manifest: AppManifest
+  clientState?: JsonMapType
 }
 
 export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
