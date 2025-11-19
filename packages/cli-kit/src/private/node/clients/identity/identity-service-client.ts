@@ -49,6 +49,9 @@ export class IdentityServiceClient extends IdentityClient {
     return err({error: payload.error, store: params.store})
   }
 
+  /**
+   * Given an expired access token, refresh it to get a new one.
+   */
   async refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
     const clientId = this.clientId()
     const params = {

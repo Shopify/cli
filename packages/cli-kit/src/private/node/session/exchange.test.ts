@@ -8,12 +8,13 @@ import {
   refreshAccessToken,
   requestAppToken,
 } from './exchange.js'
-import {applicationId} from './identity.js'
 import {IdentityToken} from './schema.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {getLastSeenUserIdAfterAuth, getLastSeenAuthMethod} from '../session.js'
 import {AbortError} from '../../../public/node/error.js'
+import {getIdentityClient} from '../clients/identity/instance.js'
+import {IdentityServiceClient} from '../clients/identity/identity-service-client.js'
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 
@@ -25,7 +26,6 @@ const data: any = {
   refresh_token: 'refresh_token',
   scope: 'scope scope2',
   expires_in: 3600,
-  // id_token:{sub: '1234-5678'}
   id_token: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0LTU2NzgifQ.L8IiNHncR4xe42f1fLQZFD5D_HBo7oMlfop2FS-NUCU',
 }
 
@@ -38,14 +38,18 @@ const identityToken: IdentityToken = {
   alias: '1234-5678',
 }
 
+// use real client since we stub out network requests in this "integration" test
+const mockIdentityClient = new IdentityServiceClient()
+
 vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/context/fqdn.js')
-vi.mock('./identity')
+vi.mock('../clients/identity/instance.js')
 
 beforeEach(() => {
   vi.setSystemTime(currentDate)
-  vi.mocked(applicationId).mockImplementation((api) => api)
   vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
+  vi.mocked(getIdentityClient).mockImplementation(() => mockIdentityClient)
+  vi.spyOn(mockIdentityClient, 'applicationId').mockImplementation((api) => api)
 })
 
 afterAll(() => {

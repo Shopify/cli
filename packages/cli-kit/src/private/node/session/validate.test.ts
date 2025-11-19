@@ -1,7 +1,8 @@
 import {validateSession} from './validate.js'
-import {applicationId} from './identity.js'
 import {IdentityToken, validateCachedIdentityTokenStructure} from './schema.js'
 import {OAuthApplications} from '../session.js'
+import {getIdentityClient} from '../clients/identity/instance.js'
+import {IdentityMockClient} from '../clients/identity/identity-mock-client.js'
 import {expect, describe, test, vi, afterAll, beforeEach} from 'vitest'
 
 const pastDate = new Date(2022, 1, 1, 9)
@@ -70,14 +71,18 @@ const defaultApps: OAuthApplications = {
   storefrontRendererApi: {scopes: []},
 }
 
+const mockIdentityClient = new IdentityMockClient()
+
 vi.mock('./identity-token-validation')
 vi.mock('./identity')
 vi.mock('./schema')
+vi.mock('../clients/identity/instance.js')
 
 beforeEach(() => {
-  vi.mocked(applicationId).mockImplementation((id: any) => id)
   vi.mocked(validateCachedIdentityTokenStructure).mockReturnValue(true)
   vi.setSystemTime(currentDate)
+  vi.mocked(getIdentityClient).mockImplementation(() => mockIdentityClient)
+  vi.spyOn(mockIdentityClient, 'applicationId').mockImplementation((api) => api)
 })
 
 afterAll(() => {
