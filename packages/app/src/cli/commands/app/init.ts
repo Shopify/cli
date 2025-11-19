@@ -117,7 +117,14 @@ export default class Init extends AppLinkedCommand {
       }
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-      selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
+      selectAppResult = await selectAppOrNewAppName(
+        flags.name !== undefined,
+        name,
+        apps,
+        hasMorePages,
+        organization,
+        developerPlatformClient,
+      )
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 
@@ -173,18 +180,19 @@ export type SelectAppOrNewAppNameResult =
  * But doesn't create the app yet, the app creation is deferred and is responsibility of the caller.
  */
 async function selectAppOrNewAppName(
+  nameProvidedAsFlag: boolean,
   localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<SelectAppOrNewAppNameResult> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.length === 0 || nameProvidedAsFlag
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(localAppName)
+    const name = nameProvidedAsFlag ? localAppName : await appNamePrompt(localAppName)
     return {result: 'new', name, org}
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)
