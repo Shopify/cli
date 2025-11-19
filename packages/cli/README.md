@@ -593,7 +593,7 @@ FLAGS
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
       --organization-id=<value>   The organization ID. Your organization ID can be found in your Dev Dashboard URL:
-                                  https://dev.shopify.com/dashboard/<organization-id>.
+                                  https://dev.shopify.com/dashboard/<organization-id>
       --template=<value>          The app template. Accepts one of the following:
                                   - <reactRouter|remix|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
