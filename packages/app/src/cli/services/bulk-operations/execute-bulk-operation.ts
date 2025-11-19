@@ -1,15 +1,15 @@
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
-import {AppLinkedInterface} from '../../models/app/app.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {parse} from 'graphql'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
-  app: AppLinkedInterface
+  remoteApp: OrganizationApp
   storeFqdn: string
   query: string
   variables?: string[]
@@ -34,13 +34,16 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {app, storeFqdn, query, variables, variableFile} = input
+  const {remoteApp, storeFqdn, query, variables, variableFile} = input
 
   renderInfo({
     headline: 'Starting bulk operation.',
-    body: `App: ${app.name}\nStore: ${storeFqdn}`,
+    body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
   })
-  const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const apiSecret = remoteApp.apiSecretKeys.find((elm) => elm.secret)!.secret
+  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, apiSecret)
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 

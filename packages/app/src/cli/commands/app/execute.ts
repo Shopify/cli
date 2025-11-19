@@ -35,7 +35,7 @@ export default class Execute extends AppLinkedCommand {
     })
 
     await executeBulkOperation({
-      app: appContextResult.app,
+      remoteApp: appContextResult.remoteApp,
       storeFqdn: store.shopDomain,
       query: flags.query,
       variables: flags.variables,
