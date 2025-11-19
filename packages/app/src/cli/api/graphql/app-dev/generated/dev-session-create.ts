@@ -7,6 +7,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 export type DevSessionCreateMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
   assetsUrl: Types.Scalars['String']['input']
+  websocketUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
 }>
 
 export type DevSessionCreateMutation = {
@@ -15,7 +16,7 @@ export type DevSessionCreateMutation = {
   } | null
 }
 
-export const DevSessionCreate = {
+export const DevSessionCreateDocument = {
   kind: 'Document',
   definitions: [
     {
@@ -32,6 +33,11 @@ export const DevSessionCreate = {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'websocketUrl'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
         },
       ],
       selectionSet: {
@@ -50,6 +56,11 @@ export const DevSessionCreate = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'assetsUrl'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'websocketUrl'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'websocketUrl'}},
               },
             ],
             selectionSet: {

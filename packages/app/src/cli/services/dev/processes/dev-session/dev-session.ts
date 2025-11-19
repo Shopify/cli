@@ -5,6 +5,7 @@ import {AppEvent, AppEventWatcher, ExtensionEvent} from '../../app-events/app-ev
 import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
 import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
 import {AppManifest} from '../../../../models/app/app.js'
+import {getWebSocketUrl} from '../../extension.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
@@ -276,16 +277,24 @@ export class DevSession {
       const {manifest, inheritedModuleUids, assets} = await this.createManifest(appEvent)
       const signedURL = await this.uploadAssetsIfNeeded(assets, !this.statusManager.status.isReady)
 
-      const payload = {
-        shopFqdn: this.options.storeFqdn,
-        appId: this.options.appId,
-        assetsUrl: signedURL,
-        manifest,
-        inheritedModuleUids,
-      }
+      const websocketUrl = getWebSocketUrl(this.options.url)
       if (this.statusManager.status.isReady) {
+        const payload: DevSessionUpdateOptions = {
+          shopFqdn: this.options.storeFqdn,
+          appId: this.options.appId,
+          assetsUrl: signedURL,
+          manifest,
+          inheritedModuleUids,
+          websocketUrl,
+        }
         return this.devSessionUpdateWithRetry(payload)
       } else {
+        const payload: DevSessionCreateOptions = {
+          shopFqdn: this.options.storeFqdn,
+          appId: this.options.appId,
+          assetsUrl: signedURL,
+          websocketUrl,
+        }
         return this.devSessionCreateWithRetry(payload)
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

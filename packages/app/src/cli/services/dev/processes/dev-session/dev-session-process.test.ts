@@ -90,9 +90,12 @@ describe('pushUpdatesForDevSession', () => {
     abortController = new AbortController()
     devSessionStatusManager = new DevSessionStatusManager()
     options = {
+      app: {} as AppLinkedInterface,
+      apiKey: 'test-api-key',
       developerPlatformClient,
       appWatcher,
       storeFqdn: 'test.myshopify.com',
+      url: 'https://test.dev',
       appId: 'app123',
       organizationId: 'org123',
       appPreviewURL: 'https://test.preview.url',
@@ -404,6 +407,7 @@ describe('pushUpdatesForDevSession', () => {
       appId: 'app123',
       // Assets URL is empty because the affected extension has no assets
       assetsUrl: undefined,
+      websocketUrl: 'wss://test.dev/extensions',
       manifest: {
         name: 'App',
         handle: '',
@@ -449,6 +453,7 @@ describe('pushUpdatesForDevSession', () => {
       shopFqdn: 'test.myshopify.com',
       appId: 'app123',
       assetsUrl: 'https://gcs.url',
+      websocketUrl: 'wss://test.dev/extensions',
       manifest: expect.any(Object),
       inheritedModuleUids: [],
     })
@@ -469,8 +474,7 @@ describe('pushUpdatesForDevSession', () => {
       shopFqdn: 'test.myshopify.com',
       appId: 'app123',
       assetsUrl: 'https://gcs.url',
-      manifest: expect.any(Object),
-      inheritedModuleUids: [],
+      websocketUrl: 'wss://test.dev/extensions',
     })
   })
 
