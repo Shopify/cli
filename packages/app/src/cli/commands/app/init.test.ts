@@ -18,10 +18,8 @@ vi.mock('../../services/context.js')
 vi.mock('../../prompts/dev.js')
 vi.mock('../../services/dev/fetch.js')
 vi.mock('../../services/init/validate.js')
-vi.mock('@shopify/cli-kit/node/is-global')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
-vi.mock('@shopify/cli-kit/node/metadata')
 
 describe('Init command', () => {
   test('runs init command with default flags', async () => {
