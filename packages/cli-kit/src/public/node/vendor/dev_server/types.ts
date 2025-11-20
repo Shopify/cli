@@ -10,4 +10,5 @@ export interface DevServer {
 
 export interface HostOptions {
   nonstandardHostPrefix?: string
+  useMockIfNotRunning?: boolean
 }
