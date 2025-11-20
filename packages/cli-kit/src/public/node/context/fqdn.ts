@@ -115,7 +115,7 @@ export async function identityFqdn(): Promise<string> {
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
-      return new DevServer('identity').host()
+      return new DevServer('identity').host({useMockIfNotRunning: true})
     default:
       return productionFqdn
   }

@@ -16,9 +16,12 @@ export function createServer(projectName: string) {
   }
 }
 
-function host(projectName: string, options: HostOptions = {}): string {
+function host(projectName: string, options: HostOptions = {useMockIfNotRunning: false}): string {
   assertCompatibleEnvironment()
-  ;(assertRunningOverride || assertRunning2024)(projectName)
+
+  if (!options.useMockIfNotRunning) {
+    assertRunning2024(projectName)
+  }
 
   const prefix = (options.nonstandardHostPrefix || projectName).replace(/_/g, '-')
 
@@ -79,11 +82,4 @@ function resolveBackendHost(name: string): string {
   } catch {
     return host
   }
-}
-
-// Allow overrides for more concise test setup. Meh.
-let assertRunningOverride: typeof assertRunning2024 | undefined
-
-export function setAssertRunning(override: typeof assertRunningOverride) {
-  assertRunningOverride = override
 }
