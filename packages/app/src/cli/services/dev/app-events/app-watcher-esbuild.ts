@@ -79,6 +79,11 @@ export class ESBuildContextManager {
     const context = this.contexts[extension.uid]
     if (!context) return
     await Promise.all(context.map((ctxt) => ctxt.rebuild()))
+    const devBundleOutputPath = extension.getOutputPathForDirectory(this.outputPath)
+
+    // Copy static assets after build completes
+    // Pass in an explicit output path because the extension.outputPath is not the same as the dev bundle output path.
+    await extension.copyStaticAssets(devBundleOutputPath)
 
     // The default output path for a extension is now inside `.shopify/bundle/<ext_id>/dist`,
     // all extensions output need to be under the same directory so that it can all be zipped together.
@@ -86,7 +91,7 @@ export class ESBuildContextManager {
     // But historically the output was inside each extension's directory.
     // To avoid breaking flows that depend on this, we copy the output to the old location.
     // This also makes it easier to access sourcemaps or other built artifacts.
-    const outputPath = dirname(extension.getOutputPathForDirectory(this.outputPath))
+    const outputPath = dirname(devBundleOutputPath)
     const copyPath = dirname(extension.outputPath)
     await copyFile(outputPath, copyPath)
   }
