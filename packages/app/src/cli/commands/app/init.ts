@@ -108,7 +108,8 @@ export default class Init extends AppLinkedCommand {
         if (!matchingOrg) {
           throw new AbortError(
             `Organization with ID ${flags['organization-id']} not found`,
-            'Please verify the organization ID and try again. You can find your organization ID in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+            "Run `shopify auth login` to confirm you've selected the right account, and verify your organization ID. " +
+              'You can find your organization ID in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
           )
         }
         org = matchingOrg
