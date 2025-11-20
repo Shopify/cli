@@ -2,8 +2,9 @@ import {executeBulkOperation} from './execute-bulk-operation.js'
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
+import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
@@ -11,12 +12,27 @@ import {describe, test, expect, vi, beforeEach} from 'vitest'
 vi.mock('./run-query.js')
 vi.mock('./run-mutation.js')
 vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/session', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/session')
+  return {
+    ...actual,
+    ensureAuthenticatedAdminAsApp: vi.fn(),
+  }
+})
 
 describe('executeBulkOperation', () => {
   const mockApp = {
     name: 'Test App',
+    configuration: {
+      client_id: 'test-app-client-id',
+    },
   } as AppLinkedInterface
+
+  const mockRemoteApp = {
+    apiKey: 'test-app-client-id',
+    apiSecretKeys: [{secret: 'test-api-secret'}],
+    title: 'Test App',
+  } as OrganizationApp
 
   const storeFqdn = 'test-store.myshopify.com'
   const mockAdminSession = {token: 'test-token', storeFqdn}
@@ -32,7 +48,7 @@ describe('executeBulkOperation', () => {
   }
 
   beforeEach(() => {
-    vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
+    vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
   })
 
   test('runs query operation when GraphQL document starts with query', async () => {
@@ -45,6 +61,7 @@ describe('executeBulkOperation', () => {
 
     await executeBulkOperation({
       app: mockApp,
+      remoteApp: mockRemoteApp,
       storeFqdn,
       query,
     })
@@ -66,6 +83,7 @@ describe('executeBulkOperation', () => {
 
     await executeBulkOperation({
       app: mockApp,
+      remoteApp: mockRemoteApp,
       storeFqdn,
       query,
     })
@@ -87,6 +105,7 @@ describe('executeBulkOperation', () => {
 
     await executeBulkOperation({
       app: mockApp,
+      remoteApp: mockRemoteApp,
       storeFqdn,
       query: mutation,
     })
@@ -110,6 +129,7 @@ describe('executeBulkOperation', () => {
 
     await executeBulkOperation({
       app: mockApp,
+      remoteApp: mockRemoteApp,
       storeFqdn,
       query: mutation,
       variables,
@@ -131,6 +151,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse as any)
     await executeBulkOperation({
       app: mockApp,
+      remoteApp: mockRemoteApp,
       storeFqdn,
       query,
     })
@@ -154,6 +175,7 @@ describe('executeBulkOperation', () => {
 
     await executeBulkOperation({
       app: mockApp,
+      remoteApp: mockRemoteApp,
       storeFqdn,
       query,
     })
@@ -172,6 +194,7 @@ describe('executeBulkOperation', () => {
     await expect(
       executeBulkOperation({
         app: mockApp,
+        remoteApp: mockRemoteApp,
         storeFqdn,
         query: malformedQuery,
       }),
@@ -188,6 +211,7 @@ describe('executeBulkOperation', () => {
     await expect(
       executeBulkOperation({
         app: mockApp,
+        remoteApp: mockRemoteApp,
         storeFqdn,
         query: multipleOperations,
       }),
@@ -208,6 +232,7 @@ describe('executeBulkOperation', () => {
     await expect(
       executeBulkOperation({
         app: mockApp,
+        remoteApp: mockRemoteApp,
         storeFqdn,
         query: noOperations,
       }),
@@ -236,6 +261,7 @@ describe('executeBulkOperation', () => {
 
       await executeBulkOperation({
         app: mockApp,
+        remoteApp: mockRemoteApp,
         storeFqdn,
         query: mutation,
         variableFile: variableFilePath,
@@ -258,6 +284,7 @@ describe('executeBulkOperation', () => {
       await expect(
         executeBulkOperation({
           app: mockApp,
+          remoteApp: mockRemoteApp,
           storeFqdn,
           query: mutation,
           variableFile: nonExistentPath,
@@ -276,6 +303,7 @@ describe('executeBulkOperation', () => {
     await expect(
       executeBulkOperation({
         app: mockApp,
+        remoteApp: mockRemoteApp,
         storeFqdn,
         query,
         variables,
@@ -296,6 +324,7 @@ describe('executeBulkOperation', () => {
       await expect(
         executeBulkOperation({
           app: mockApp,
+          remoteApp: mockRemoteApp,
           storeFqdn,
           query,
           variableFile: variableFilePath,

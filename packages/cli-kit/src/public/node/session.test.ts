@@ -1,5 +1,6 @@
 import {
   ensureAuthenticatedAdmin,
+  ensureAuthenticatedAdminAsApp,
   ensureAuthenticatedAppManagementAndBusinessPlatform,
   ensureAuthenticatedBusinessPlatform,
   ensureAuthenticatedPartners,
@@ -8,6 +9,7 @@ import {
 } from './session.js'
 
 import {getPartnersToken} from './environment.js'
+import {shopifyFetch} from './http.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {
@@ -29,6 +31,7 @@ vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
 vi.mock('./environment.js')
+vi.mock('./http.js')
 
 describe('ensureAuthenticatedStorefront', () => {
   test('returns only storefront token if success', async () => {
@@ -213,6 +216,39 @@ describe('ensureAuthenticatedBusinessPlatform', () => {
 
     // Then
     await expect(got).rejects.toThrow(`No business-platform token`)
+  })
+})
+
+describe('ensureAuthenticatedAdminAsApp', () => {
+  test('returns admin token authenticated as app using client credentials', async () => {
+    // Given
+    const apiKey = 'test-api-key'
+    const apiSecret = 'test-api-secret'
+    const store = 'mystore.myshopify.com'
+    const mockToken = 'shpat_admin-as-app-token'
+
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      json: async () => ({access_token: mockToken}),
+    } as any)
+
+    // When
+    const got = await ensureAuthenticatedAdminAsApp(store, apiKey, apiSecret)
+
+    // Then
+    expect(got).toEqual({token: mockToken, storeFqdn: store})
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expect.stringContaining(`https://${store}/admin/oauth/access_token`),
+      expect.objectContaining({
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }),
+    )
+    const call = vi.mocked(shopifyFetch).mock.calls[0]![0]
+    expect(call).toContain('client_id=test-api-key')
+    expect(call).toContain('client_secret=test-api-secret')
+    expect(call).toContain('grant_type=client_credentials')
   })
 })
 
