@@ -96,11 +96,17 @@ export function selectDeveloperPlatformClient({
   organization,
 }: SelectDeveloperPlatformClientOptions = {}): DeveloperPlatformClient {
   if (organization) return selectDeveloperPlatformClientByOrg(organization)
-  return PartnersClient.getInstance()
+  return defaultDeveloperPlatformClient()
 }
 
 function selectDeveloperPlatformClientByOrg(organization: Organization): DeveloperPlatformClient {
   if (organization.source === OrganizationSource.BusinessPlatform) return AppManagementClient.getInstance()
+  return PartnersClient.getInstance()
+}
+
+function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
+  if (blockPartnersAccess()) return AppManagementClient.getInstance()
+
   return PartnersClient.getInstance()
 }
 
