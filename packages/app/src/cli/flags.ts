@@ -38,13 +38,20 @@ export const appFlags = {
 export const bulkOperationFlags = {
   query: Flags.string({
     char: 'q',
-    description: 'The GraphQL query, as a string.',
+    description: 'The GraphQL query or mutation to run as a bulk operation.',
     env: 'SHOPIFY_FLAG_QUERY',
     required: true,
   }),
+  variables: Flags.string({
+    char: 'v',
+    description:
+      'The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.',
+    env: 'SHOPIFY_FLAG_VARIABLES',
+    multiple: true,
+  }),
   store: Flags.string({
     char: 's',
-    description: 'Store URL. Must be an existing development or Shopify Plus sandbox store.',
+    description: 'The store domain. Must be an existing dev store.',
     env: 'SHOPIFY_FLAG_STORE',
     parse: async (input) => normalizeStoreFqdn(input),
   }),

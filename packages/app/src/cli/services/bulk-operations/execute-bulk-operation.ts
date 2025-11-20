@@ -1,26 +1,31 @@
 import {runBulkOperationQuery} from './run-query.js'
+import {runBulkOperationMutation} from './run-mutation.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {parse} from 'graphql'
 
 interface ExecuteBulkOperationInput {
   app: AppLinkedInterface
   storeFqdn: string
   query: string
+  variables?: string[]
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {app, storeFqdn, query} = input
+  const {app, storeFqdn, query, variables} = input
 
   renderInfo({
     headline: 'Starting bulk operation.',
     body: `App: ${app.name}\nStore: ${storeFqdn}`,
   })
 
-  const bulkOperationResponse = await runBulkOperationQuery({
-    storeFqdn,
-    query,
-  })
+  const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
+
+  const bulkOperationResponse = isMutation(query)
+    ? await runBulkOperationMutation({adminSession, query, variables})
+    : await runBulkOperationQuery({adminSession, query})
 
   if (bulkOperationResponse?.userErrors?.length) {
     const errorMessages = bulkOperationResponse.userErrors
@@ -62,4 +67,11 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
       body: 'Congrats!',
     })
   }
+}
+
+function isMutation(graphqlOperation: string): boolean {
+  const document = parse(graphqlOperation)
+  const firstOperation = document.definitions.find((def) => def.kind === 'OperationDefinition')
+
+  return firstOperation?.kind === 'OperationDefinition' && firstOperation.operation === 'mutation'
 }
