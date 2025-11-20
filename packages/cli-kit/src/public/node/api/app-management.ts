@@ -3,6 +3,7 @@ import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
+import {getEnvironmentVariables} from '../environment.js'
 import {RequestModeInput} from '../http.js'
 import Bottleneck from 'bottleneck'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -20,16 +21,32 @@ async function setupRequest(token: string) {
   const api = 'App Management'
   const fqdn = await appManagementFqdn()
   const url = `https://${fqdn}/app_management/unstable/graphql.json`
+
+  const addedHeaders: {[key: string]: string} = {}
+
+  // Add canary header if CANARY environment variable is set to '1'
+  if (getEnvironmentVariables()['CANARY'] === '1') {
+    addedHeaders['Shopify-Force-Canary'] = 'unstable'
+  }
+
   return {
     token,
     api,
     url,
+    addedHeaders,
     responseOptions: {onResponse: handleDeprecations},
   }
 }
 
 export const appManagementHeaders = (token: string): {[key: string]: string} => {
-  return buildHeaders(token)
+  const headers = buildHeaders(token)
+
+  // Add canary header if CANARY environment variable is set to '1'
+  if (getEnvironmentVariables()['CANARY'] === '1') {
+    headers['Shopify-Force-Canary'] = 'unstable'
+  }
+
+  return headers
 }
 
 export const appManagementAppLogsUrl = async (
