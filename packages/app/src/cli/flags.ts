@@ -48,6 +48,14 @@ export const bulkOperationFlags = {
       'The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.',
     env: 'SHOPIFY_FLAG_VARIABLES',
     multiple: true,
+    exclusive: ['variable-file'],
+  }),
+  'variable-file': Flags.string({
+    description:
+      "Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.",
+    env: 'SHOPIFY_FLAG_VARIABLE_FILE',
+    parse: async (input) => resolvePath(input),
+    exclusive: ['variables'],
   }),
   store: Flags.string({
     char: 's',

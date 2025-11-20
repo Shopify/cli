@@ -4,6 +4,8 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('./run-query.js')
@@ -50,7 +52,6 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
-      variables: undefined,
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -72,7 +73,6 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
-      variables: undefined,
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -94,7 +94,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationMutation).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query: mutation,
-      variables: undefined,
+      variablesJsonl: undefined,
     })
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
   })
@@ -118,7 +118,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationMutation).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query: mutation,
-      variables,
+      variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
     })
   })
 
@@ -215,5 +215,95 @@ describe('executeBulkOperation', () => {
 
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('reads variables from file when variableFile is provided', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const variableFilePath = joinPath(tmpDir, 'variables.jsonl')
+      const variables = [
+        '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
+        '{"input":{"id":"gid://shopify/Product/456","tags":["test2"]}}',
+      ]
+      await writeFile(variableFilePath, variables.join('\n'))
+
+      const mutation =
+        'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+      const mockResponse = {
+        bulkOperation: successfulBulkOperation,
+        userErrors: [],
+      }
+      vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse as any)
+
+      await executeBulkOperation({
+        app: mockApp,
+        storeFqdn,
+        query: mutation,
+        variableFile: variableFilePath,
+      })
+
+      expect(runBulkOperationMutation).toHaveBeenCalledWith({
+        adminSession: mockAdminSession,
+        query: mutation,
+        variablesJsonl: variables.join('\n'),
+      })
+    })
+  })
+
+  test('throws error when variableFile does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const nonExistentPath = joinPath(tmpDir, 'nonexistent.jsonl')
+      const mutation =
+        'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+
+      await expect(
+        executeBulkOperation({
+          app: mockApp,
+          storeFqdn,
+          query: mutation,
+          variableFile: nonExistentPath,
+        }),
+      ).rejects.toThrow('Variable file not found')
+
+      expect(runBulkOperationQuery).not.toHaveBeenCalled()
+      expect(runBulkOperationMutation).not.toHaveBeenCalled()
+    })
+  })
+
+  test('throws error when variables are provided with a query (not mutation)', async () => {
+    const query = 'query { products { edges { node { id } } } }'
+    const variables = ['{"input":{"id":"gid://shopify/Product/123"}}']
+
+    await expect(
+      executeBulkOperation({
+        app: mockApp,
+        storeFqdn,
+        query,
+        variables,
+      }),
+    ).rejects.toThrow('can only be used with mutations, not queries')
+
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('throws error when variableFile is provided with a query (not mutation)', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const variableFilePath = joinPath(tmpDir, 'variables.jsonl')
+      await writeFile(variableFilePath, '{"input":{}}')
+
+      const query = 'query { products { edges { node { id } } } }'
+
+      await expect(
+        executeBulkOperation({
+          app: mockApp,
+          storeFqdn,
+          query,
+          variableFile: variableFilePath,
+        }),
+      ).rejects.toThrow('can only be used with mutations, not queries')
+
+      expect(runBulkOperationQuery).not.toHaveBeenCalled()
+      expect(runBulkOperationMutation).not.toHaveBeenCalled()
+    })
   })
 })

@@ -885,10 +885,24 @@
           "name": "store",
           "type": "option"
         },
+        "variable-file": {
+          "description": "Path to a file containing GraphQL variables in JSONL format (one JSON object per line). Can't be used with --variables.",
+          "env": "SHOPIFY_FLAG_VARIABLE_FILE",
+          "exclusive": [
+            "variables"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "variable-file",
+          "type": "option"
+        },
         "variables": {
           "char": "v",
           "description": "The values for any GraphQL variables in your mutation, in JSON format. Can be specified multiple times.",
           "env": "SHOPIFY_FLAG_VARIABLES",
+          "exclusive": [
+            "variable-file"
+          ],
           "hasDynamicHelp": false,
           "multiple": true,
           "name": "variables",

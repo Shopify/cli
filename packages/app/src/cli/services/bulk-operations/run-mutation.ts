@@ -10,17 +10,17 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 interface BulkOperationRunMutationOptions {
   adminSession: AdminSession
   query: string
-  variables?: string[]
+  variablesJsonl?: string
 }
 
 export async function runBulkOperationMutation(
   options: BulkOperationRunMutationOptions,
 ): Promise<BulkOperationRunMutationMutation['bulkOperationRunMutation']> {
-  const {adminSession, query: mutation, variables} = options
+  const {adminSession, query: mutation, variablesJsonl} = options
 
   const stagedUploadPath = await stageFile({
     adminSession,
-    jsonVariables: variables,
+    variablesJsonl,
   })
 
   const response = await adminRequestDoc<BulkOperationRunMutationMutation, BulkOperationRunMutationMutationVariables>({

@@ -6,28 +6,48 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {parse} from 'graphql'
+import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
   app: AppLinkedInterface
   storeFqdn: string
   query: string
   variables?: string[]
+  variableFile?: string
+}
+
+async function parseVariablesToJsonl(variables?: string[], variableFile?: string): Promise<string | undefined> {
+  if (variables) {
+    return variables.join('\n')
+  } else if (variableFile) {
+    if (!(await fileExists(variableFile))) {
+      throw new AbortError(
+        outputContent`Variable file not found at ${outputToken.path(
+          variableFile,
+        )}. Please check the path and try again.`,
+      )
+    }
+    return readFile(variableFile, {encoding: 'utf8'})
+  } else {
+    return undefined
+  }
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {app, storeFqdn, query, variables} = input
+  const {app, storeFqdn, query, variables, variableFile} = input
 
   renderInfo({
     headline: 'Starting bulk operation.',
     body: `App: ${app.name}\nStore: ${storeFqdn}`,
   })
-
   const adminSession = await ensureAuthenticatedAdmin(storeFqdn)
 
-  validateGraphQLDocument(query, variables)
+  const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
+
+  validateGraphQLDocument(query, variablesJsonl)
 
   const bulkOperationResponse = isMutation(query)
-    ? await runBulkOperationMutation({adminSession, query, variables})
+    ? await runBulkOperationMutation({adminSession, query, variablesJsonl})
     : await runBulkOperationQuery({adminSession, query})
 
   if (bulkOperationResponse?.userErrors?.length) {
@@ -72,7 +92,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   }
 }
 
-function validateGraphQLDocument(graphqlOperation: string, variables?: string[]): void {
+function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: string): void {
   const document = parse(graphqlOperation)
   const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
 
@@ -82,9 +102,11 @@ function validateGraphQLDocument(graphqlOperation: string, variables?: string[])
     )
   }
 
-  if (!isMutation(graphqlOperation) && variables) {
+  if (!isMutation(graphqlOperation) && variablesJsonl) {
     throw new AbortError(
-      outputContent`The ${outputToken.yellow('--variables')} flag can only be used with mutations, not queries.`,
+      outputContent`The ${outputToken.yellow('--variables')} and ${outputToken.yellow(
+        '--variable-file',
+      )} flags can only be used with mutations, not queries.`,
     )
   }
 }
