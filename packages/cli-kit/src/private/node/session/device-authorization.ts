@@ -1,4 +1,3 @@
-import {clientId} from './identity.js'
 import {exchangeDeviceCodeForAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
@@ -8,6 +7,7 @@ import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import {isTTY, keypress} from '../../../public/node/ui.js'
+import {getIdentityClient} from '../clients/identity/instance.js'
 import {Response} from 'node-fetch'
 
 export interface DeviceAuthorizationResponse {
@@ -31,7 +31,7 @@ export interface DeviceAuthorizationResponse {
  */
 export async function requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
   const fqdn = await identityFqdn()
-  const identityClientId = clientId()
+  const identityClientId = getIdentityClient().clientId()
   const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
   const url = `https://${fqdn}/oauth/device_authorization`
 

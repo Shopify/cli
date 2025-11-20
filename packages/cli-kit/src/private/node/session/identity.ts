@@ -2,7 +2,7 @@ import {API} from '../api.js'
 import {BugError} from '../../../public/node/error.js'
 import {Environment, serviceEnvironment} from '../context/service.js'
 
-export function clientId(): string {
+function _clientId(): string {
   const environment = serviceEnvironment()
   if (environment === Environment.Local) {
     return 'e5380e02-312a-7408-5718-e07017e9cf52'

@@ -20,6 +20,8 @@ import {validateSession} from './session/validate.js'
 import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {getCurrentSessionId} from './conf-store.js'
+import {getIdentityClient} from './clients/identity/instance.js'
+import {IdentityMockClient} from './clients/identity/identity-mock-client.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
@@ -31,7 +33,7 @@ import {vi, describe, expect, test, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
 
-const userId = '1234-5678'
+const mockUserId = '08978734-325e-44ce-bc65-34823a8d5180'
 
 const defaultApplications: OAuthApplications = {
   adminApi: {storeFqdn: 'mystore', scopes: []},
@@ -44,15 +46,15 @@ const validIdentityToken: IdentityToken = {
   refreshToken: 'refresh_token',
   expiresAt: futureDate,
   scopes: ['scope', 'scope2'],
-  userId,
-  alias: userId,
+  userId: mockUserId,
+  alias: mockUserId,
 }
 
 const validTokens: OAuthSession = {
   admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
   storefront: 'storefront_token',
   partners: 'partners_token',
-  userId,
+  userId: mockUserId,
 }
 
 const appTokens: {[x: string]: ApplicationToken} = {
@@ -89,7 +91,7 @@ const fqdn = 'fqdn.com'
 
 const validSessions: Sessions = {
   [fqdn]: {
-    [userId]: {
+    [mockUserId]: {
       identity: validIdentityToken,
       applications: appTokens,
     },
@@ -98,12 +100,14 @@ const validSessions: Sessions = {
 
 const invalidSessions: Sessions = {
   [fqdn]: {
-    [userId]: {
+    [mockUserId]: {
       identity: validIdentityToken,
       applications: {},
     },
   },
 }
+
+const mockIdentityClient = new IdentityMockClient()
 
 vi.mock('../../public/node/context/local.js')
 vi.mock('./session/identity')
@@ -119,6 +123,7 @@ vi.mock('../../public/node/environment.js')
 vi.mock('./session/device-authorization')
 vi.mock('./conf-store')
 vi.mock('../../public/node/system.js')
+vi.mock('./clients/identity/instance.js')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
@@ -149,6 +154,10 @@ beforeEach(() => {
       email: 'user@example.com',
     },
   })
+
+  vi.mocked(getIdentityClient).mockImplementation(() => mockIdentityClient)
+  vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockResolvedValue(validIdentityToken)
+  vi.spyOn(mockIdentityClient, 'requestAccessToken').mockResolvedValue(validIdentityToken)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -169,10 +178,10 @@ describe('ensureAuthenticated when previous session is invalid', () => {
 
     // Verify the session was stored with email as alias
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('user@example.com')
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe('user@example.com')
 
     // The userID is cached in memory and the secureStore is not accessed again
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -205,7 +214,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const expectedSessions = {
       ...invalidSessions,
       [fqdn]: {
-        [userId]: {
+        [mockUserId]: {
           identity: {
             ...validIdentityToken,
             alias: 'user@example.com',
@@ -223,7 +232,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(refreshAccessToken).not.toBeCalled()
     expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -244,7 +253,7 @@ The CLI is currently unable to prompt for reauthentication.`,
 
     // Verify the session was stored with userId as alias (fallback)
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe(mockUserId)
 
     expect(got).toEqual(validTokens)
   })
@@ -268,7 +277,7 @@ The CLI is currently unable to prompt for reauthentication.`,
 
     // Verify the session was stored with userId as alias (fallback)
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe(mockUserId)
   })
 
   test('executes complete auth flow if requesting additional scopes', async () => {
@@ -287,10 +296,10 @@ The CLI is currently unable to prompt for reauthentication.`,
 
     // Verify the session was stored with email as alias
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('user@example.com')
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe('user@example.com')
 
     expect(got).toEqual(validTokens)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -309,7 +318,7 @@ describe('when existing session is valid', () => {
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -328,7 +337,7 @@ describe('when existing session is valid', () => {
     expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('partners_token')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -342,11 +351,11 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications, process.env, {forceRefresh: true})
 
     // Then
-    expect(refreshAccessToken).toBeCalled()
+    expect(mockIdentityClient.refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(storeSessions).toBeCalledWith(validSessions)
     expect(got).toEqual(validTokens)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -362,11 +371,11 @@ describe('when existing session is expired', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(refreshAccessToken).toBeCalled()
+    expect(mockIdentityClient.refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(storeSessions).toBeCalledWith(validSessions)
     expect(got).toEqual(validTokens)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -377,23 +386,23 @@ describe('when existing session is expired', () => {
 
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+    vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockRejectedValueOnce(tokenResponseError)
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(refreshAccessToken).toBeCalled()
+    expect(mockIdentityClient.refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
     // Verify the session was stored with email as alias
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('user@example.com')
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe('user@example.com')
 
     expect(got).toEqual(validTokens)
-    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
+    await expect(getLastSeenUserIdAfterAuth()).resolves.toBe(mockUserId)
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
@@ -630,7 +639,7 @@ describe('ensureAuthenticated email fetch functionality', () => {
 
     // Then
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('work@example.com')
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe('work@example.com')
     expect(got).toEqual(validTokens)
   })
 
@@ -667,10 +676,11 @@ describe('ensureAuthenticated email fetch functionality', () => {
     const tokenResponseError = new InvalidGrantError()
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+    vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockRejectedValueOnce(tokenResponseError)
+    vi.spyOn(mockIdentityClient, 'requestAccessToken').mockResolvedValueOnce(validIdentityToken)
     vi.mocked(businessPlatformRequest).mockResolvedValueOnce({
       currentUserAccount: {
-        email: 'fallback@example.com',
+        email: 'dev@shopify.com',
       },
     })
 
@@ -679,7 +689,7 @@ describe('ensureAuthenticated email fetch functionality', () => {
 
     // Then
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('fallback@example.com')
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe('dev@shopify.com')
     expect(got).toEqual(validTokens)
   })
 
@@ -698,7 +708,7 @@ describe('ensureAuthenticated email fetch functionality', () => {
 
     // Then
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![mockUserId]!.identity.alias).toBe(mockUserId)
     expect(got).toEqual(validTokens)
   })
 })
