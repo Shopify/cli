@@ -14,6 +14,7 @@ export async function runBulkOperationQuery(
   options: BulkOperationRunQueryOptions,
 ): Promise<BulkOperationRunQueryMutation['bulkOperationRunQuery']> {
   const {adminSession, query} = options
+
   const response = await adminRequestDoc<BulkOperationRunQueryMutation, {query: string}>({
     query: BulkOperationRunQuery,
     session: adminSession,
