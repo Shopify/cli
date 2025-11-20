@@ -17,8 +17,6 @@ import {allDefaultScopes} from './session/scopes.js'
 import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} from './session/store.js'
 import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
-import {applicationId} from './session/identity.js'
-import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {getCurrentSessionId} from './conf-store.js'
 import {getIdentityClient} from './clients/identity/instance.js'
 import {IdentityMockClient} from './clients/identity/identity-mock-client.js'
@@ -129,7 +127,6 @@ beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
-  vi.mocked(applicationId).mockImplementation((app) => app)
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue({
     accessToken: partnersToken.accessToken,
     userId: validIdentityToken.userId,
@@ -139,15 +136,6 @@ beforeEach(() => {
   setLastSeenUserIdAfterAuth(undefined as any)
   setLastSeenAuthMethod('none')
 
-  vi.mocked(requestDeviceAuthorization).mockResolvedValue({
-    deviceCode: 'device_code',
-    userCode: 'user_code',
-    verificationUri: 'verification_uri',
-    expiresIn: 3600,
-    verificationUriComplete: 'verification_uri_complete',
-    interval: 5,
-  })
-  vi.mocked(pollForDeviceAuthorization).mockResolvedValue(validIdentityToken)
   vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
   vi.mocked(businessPlatformRequest).mockResolvedValue({
     currentUserAccount: {
@@ -156,6 +144,7 @@ beforeEach(() => {
   })
 
   vi.mocked(getIdentityClient).mockImplementation(() => mockIdentityClient)
+  vi.spyOn(mockIdentityClient, 'applicationId').mockImplementation((app) => app)
   vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockResolvedValue(validIdentityToken)
   vi.spyOn(mockIdentityClient, 'requestAccessToken').mockResolvedValue(validIdentityToken)
 })

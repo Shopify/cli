@@ -3,7 +3,6 @@ import {ApplicationToken, IdentityToken} from '../../session/schema.js'
 import {ExchangeScopes, TokenRequestResult} from '../../session/exchange.js'
 import {ok, Result} from '../../../../public/node/result.js'
 import {allDefaultScopes} from '../../session/scopes.js'
-import {applicationId} from '../../session/identity.js'
 
 export class IdentityMockClient extends IdentityClient {
   private readonly mockUserId = '08978734-325e-44ce-bc65-34823a8d5180'
@@ -28,11 +27,11 @@ export class IdentityMockClient extends IdentityClient {
     _store?: string,
   ): Promise<{[x: string]: ApplicationToken}> {
     return {
-      [applicationId('app-management')]: this.generateTokens(applicationId('app-management')),
-      [applicationId('business-platform')]: this.generateTokens(applicationId('business-platform')),
-      [applicationId('admin')]: this.generateTokens(applicationId('admin')),
-      [applicationId('partners')]: this.generateTokens(applicationId('partners')),
-      [applicationId('storefront-renderer')]: this.generateTokens(applicationId('storefront-renderer')),
+      [this.applicationId('app-management')]: this.generateTokens(this.applicationId('app-management')),
+      [this.applicationId('business-platform')]: this.generateTokens(this.applicationId('business-platform')),
+      [this.applicationId('admin')]: this.generateTokens(this.applicationId('admin')),
+      [this.applicationId('partners')]: this.generateTokens(this.applicationId('partners')),
+      [this.applicationId('storefront-renderer')]: this.generateTokens(this.applicationId('storefront-renderer')),
     }
   }
 

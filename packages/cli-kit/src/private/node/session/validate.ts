@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken, Session, validateCachedIdentityTokenStructure} from './schema.js'
 import {sessionConstants} from '../constants.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'
 import {outputDebug} from '../../../public/node/output.js'
+import {getIdentityClient} from '../clients/identity/instance.js'
 
 type ValidationResult = 'needs_refresh' | 'needs_full_auth' | 'ok'
 
@@ -33,27 +33,28 @@ export async function validateSession(
   const scopesAreValid = validateScopes(scopes, session.identity)
   if (!scopesAreValid) return 'needs_full_auth'
   let tokensAreExpired = isTokenExpired(session.identity)
+  const identityClient = getIdentityClient()
 
   if (applications.partnersApi) {
-    const appId = applicationId('partners')
+    const appId = identityClient.applicationId('partners')
     const token = session.applications[appId]!
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
   if (applications.appManagementApi) {
-    const appId = applicationId('app-management')
+    const appId = identityClient.applicationId('app-management')
     const token = session.applications[appId]!
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
   if (applications.storefrontRendererApi) {
-    const appId = applicationId('storefront-renderer')
+    const appId = identityClient.applicationId('storefront-renderer')
     const token = session.applications[appId]!
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
   if (applications.adminApi) {
-    const appId = applicationId('admin')
+    const appId = identityClient.applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
     const token = session.applications[realAppId]!
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)

@@ -1,4 +1,3 @@
-import {applicationId} from './session/identity.js'
 import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {
@@ -299,13 +298,14 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
     outputDebug(outputContent`Authenticating as Shopify Employee...`)
     scopes.push('employee')
   }
+  const identityClient = getIdentityClient()
 
   let identityToken: IdentityToken
   const identityTokenInformation = getIdentityTokenInformation()
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
-    identityToken = await getIdentityClient().requestAccessToken(scopes)
+    identityToken = await identityClient.requestAccessToken(scopes)
   }
 
   // Exchange identity token for application tokens
@@ -313,7 +313,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
   // Get the alias for the session (email or userId)
-  const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
+  const businessPlatformToken = result[identityClient.applicationId('business-platform')]?.accessToken
   const alias = (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
 
   const session: Session = {
@@ -362,9 +362,10 @@ async function tokensFor(applications: OAuthApplications, session: Session): Pro
   const tokens: OAuthSession = {
     userId: session.identity.userId,
   }
+  const identityClient = getIdentityClient()
 
   if (applications.adminApi) {
-    const appId = applicationId('admin')
+    const appId = identityClient.applicationId('admin')
     const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
     const token = session.applications[realAppId]?.accessToken
     if (token) {
@@ -373,22 +374,22 @@ async function tokensFor(applications: OAuthApplications, session: Session): Pro
   }
 
   if (applications.partnersApi) {
-    const appId = applicationId('partners')
+    const appId = identityClient.applicationId('partners')
     tokens.partners = session.applications[appId]?.accessToken
   }
 
   if (applications.storefrontRendererApi) {
-    const appId = applicationId('storefront-renderer')
+    const appId = identityClient.applicationId('storefront-renderer')
     tokens.storefront = session.applications[appId]?.accessToken
   }
 
   if (applications.businessPlatformApi) {
-    const appId = applicationId('business-platform')
+    const appId = identityClient.applicationId('business-platform')
     tokens.businessPlatform = session.applications[appId]?.accessToken
   }
 
   if (applications.appManagementApi) {
-    const appId = applicationId('app-management')
+    const appId = identityClient.applicationId('app-management')
     tokens.appManagement = session.applications[appId]?.accessToken
   }
 

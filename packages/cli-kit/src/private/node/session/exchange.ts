@@ -1,9 +1,6 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
-import {applicationId} from './identity.js'
 import {tokenExchangeScopes} from './scopes.js'
 import {API} from '../api.js'
-import {identityFqdn} from '../../../public/node/context/fqdn.js'
-import {shopifyFetch} from '../../../public/node/http.js'
 import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
@@ -53,9 +50,6 @@ export async function exchangeAccessForApplicationTokens(
   }
 }
 
-/**
- * Given an expired access token, refresh it to get a new one.
- */
 export async function refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
   const clientId = getIdentityClient().clientId()
   const params = {
@@ -81,7 +75,7 @@ async function exchangeCliTokenForAccessToken(
   token: string,
   scopes: string[],
 ): Promise<{accessToken: string; userId: string}> {
-  const appId = applicationId(apiName)
+  const appId = getIdentityClient().applicationId(apiName)
   try {
     const newToken = await requestAppToken(apiName, token, scopes)
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -164,14 +158,14 @@ export async function requestAppToken(
   scopes: string[] = [],
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
-  const appId = applicationId(api)
-  const clientId = getIdentityClient().clientId()
+  const identityClient = getIdentityClient()
+  const appId = identityClient.applicationId(api)
 
   const params = {
     grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
     requested_token_type: 'urn:ietf:params:oauth:token-type:access_token',
     subject_token_type: 'urn:ietf:params:oauth:token-type:access_token',
-    client_id: clientId,
+    client_id: identityClient.clientId(),
     audience: appId,
     scope: scopes.join(' '),
     subject_token: token,
@@ -220,22 +214,6 @@ export function tokenRequestErrorHandler({error, store}: {error: string; store?:
   }
   // eslint-disable-next-line @shopify/cli/no-error-factory-functions
   return new AbortError(error)
-}
-
-async function _tokenRequest(params: {
-  [key: string]: string
-}): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
-  const fqdn = await identityFqdn()
-  const url = new URL(`https://${fqdn}/oauth/token`)
-  url.search = new URLSearchParams(Object.entries(params)).toString()
-
-  const res = await shopifyFetch(url.href, {method: 'POST'})
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload: any = await res.json()
-
-  if (res.ok) return ok(payload)
-
-  return err({error: payload.error, store: params.store})
 }
 
 export function buildIdentityToken(
