@@ -1,6 +1,6 @@
 import {Task, Tasks} from './Tasks.js'
 import {getLastFrameAfterUnmount, render} from '../../testing/ui.js'
-import {unstyled} from '../../../../public/node/output.js'
+import {unstyled, TokenizedString} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {Stdout} from '../../ui.js'
 import React from 'react'
@@ -391,6 +391,31 @@ describe('Tasks', () => {
     // Then
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
+  })
+
+  test('supports TokenizedString as title', async () => {
+    // Given
+    const firstTaskFunction = vi.fn(async () => {})
+    const secondTaskFunction = vi.fn(async () => {})
+
+    const firstTask: Task = {
+      title: new TokenizedString('tokenized task 1'),
+      task: firstTaskFunction,
+    }
+
+    const secondTask: Task = {
+      title: 'string task 2',
+      task: secondTaskFunction,
+    }
+
+    // When
+    const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
+    await renderInstance.waitUntilExit()
+
+    // Then
+    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
+    expect(firstTaskFunction).toHaveBeenCalled()
+    expect(secondTaskFunction).toHaveBeenCalled()
   })
 })
 
