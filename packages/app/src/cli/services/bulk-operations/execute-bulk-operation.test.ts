@@ -99,7 +99,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
   })
 
-  test('passes variables to mutation when provided with `--variables` flag', async () => {
+  test('passes variables parameter to runBulkOperationMutation when variables are provided', async () => {
     const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
     const variables = ['{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}']
     const mockResponse = {
@@ -122,7 +122,7 @@ describe('executeBulkOperation', () => {
     })
   })
 
-  test('renders success message when bulk operation is created', async () => {
+  test('renders success message when bulk operation returns without user errors', async () => {
     const query = '{ products { edges { node { id } } } }'
     const mockResponse = {
       bulkOperation: successfulBulkOperation,
@@ -141,7 +141,7 @@ describe('executeBulkOperation', () => {
     })
   })
 
-  test('renders warning when user errors are present', async () => {
+  test('renders warning with formatted field errors when bulk operation returns user errors', async () => {
     const query = '{ products { edges { node { id } } } }'
     const mockResponse = {
       bulkOperation: null,
@@ -164,5 +164,56 @@ describe('executeBulkOperation', () => {
     })
 
     expect(renderSuccess).not.toHaveBeenCalled()
+  })
+
+  test('throws GraphQL syntax error when given malformed GraphQL document', async () => {
+    const malformedQuery = '{ products { edges { node { id } }'
+
+    await expect(
+      executeBulkOperation({
+        app: mockApp,
+        storeFqdn,
+        query: malformedQuery,
+      }),
+    ).rejects.toThrow('Syntax Error')
+
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('throws error when GraphQL document contains multiple operation definitions', async () => {
+    const multipleOperations =
+      'mutation { productUpdate(input: {}) { product { id } } } mutation { productDelete(input: {}) { deletedProductId } }'
+
+    await expect(
+      executeBulkOperation({
+        app: mockApp,
+        storeFqdn,
+        query: multipleOperations,
+      }),
+    ).rejects.toThrow('Multiple operations are not supported')
+
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
+  })
+
+  test('throws error when GraphQL document contains no operation definitions', async () => {
+    const noOperations = `
+      fragment ProductFields on Product {
+        id
+        title
+      }
+    `
+
+    await expect(
+      executeBulkOperation({
+        app: mockApp,
+        storeFqdn,
+        query: noOperations,
+      }),
+    ).rejects.toThrow('must contain exactly one operation definition')
+
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
 })
