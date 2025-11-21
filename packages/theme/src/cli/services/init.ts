@@ -136,10 +136,10 @@ export async function createAIInstructionFiles(
     return {}
   }
 
-  const symlinkMap: {[key in Exclude<AIInstruction, 'all' | 'cursor'>]: string} = {
+  const symlinkMap = {
     github: 'copilot-instructions.md',
     claude: 'CLAUDE.md',
-  }
+  } as const
 
   const symlinkName = symlinkMap[instruction as Exclude<AIInstruction, 'all' | 'cursor'>]
   const symlinkPath = joinPath(themeRoot, symlinkName)
