@@ -3,7 +3,6 @@ import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
-import {validateThemePassword} from '../../services/flags-validation.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {Task} from '@shopify/cli-kit/node/ui'
@@ -46,8 +45,6 @@ export default class Profile extends ThemeCommand {
 
   async command(flags: ProfileFlags, adminSession: AdminSession) {
     const {password: themeAccessPassword} = flags
-
-    validateThemePassword(themeAccessPassword)
 
     let filter
     if (flags.theme) {

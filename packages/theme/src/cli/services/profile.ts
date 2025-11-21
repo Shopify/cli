@@ -8,6 +8,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export async function profile(
   adminSession: AdminSession,
@@ -20,6 +21,20 @@ export async function profile(
   const storePassword = (await isStorefrontPasswordProtected(adminSession))
     ? await ensureValidPassword(storefrontPassword, adminSession.storeFqdn)
     : undefined
+
+  if (themeAccessPassword?.startsWith('shpat_')) {
+    throw new AbortError(
+      'Unable to use Admin API tokens with the profile command',
+      `To use this command with the --password flag you must:
+
+1. Install the Theme Access app on your shop
+2. Generate a new password
+
+Alternatively, you can authenticate normally by not passing the --password flag.
+
+Learn more: https://shopify.dev/docs/storefronts/themes/tools/theme-access`,
+    )
+  }
 
   const session = await fetchDevServerSession(themeId, adminSession, themeAccessPassword, storePassword)
   const response = await render(session, {
