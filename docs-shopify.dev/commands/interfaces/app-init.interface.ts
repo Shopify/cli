@@ -25,6 +25,12 @@ export interface appinit {
   '--no-color'?: ''
 
   /**
+   * The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>
+   * @environment SHOPIFY_FLAG_ORGANIZATION_ID
+   */
+  '--organization-id <value>'?: string
+
+  /**
    * 
    * @environment SHOPIFY_FLAG_PACKAGE_MANAGER
    */
