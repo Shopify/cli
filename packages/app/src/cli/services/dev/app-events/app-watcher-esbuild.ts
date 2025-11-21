@@ -80,6 +80,9 @@ export class ESBuildContextManager {
     if (!context) return
     await Promise.all(context.map((ctxt) => ctxt.rebuild()))
 
+    // Copy static assets after build completes
+    await extension.copyStaticAssets()
+
     // The default output path for a extension is now inside `.shopify/bundle/<ext_id>/dist`,
     // all extensions output need to be under the same directory so that it can all be zipped together.
 

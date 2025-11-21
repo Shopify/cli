@@ -374,6 +374,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
     await this.build(options)
 
+    // Copy static assets after build completes
+    await this.copyStaticAssets()
+
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
@@ -490,6 +493,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
+  }
+
+  /**
+   * Copy static assets from the extension directory to the output path
+   * Used by both dev and deploy builds
+   */
+  async copyStaticAssets() {
+    if (this.specification.copyStaticAssets) {
+      return this.specification.copyStaticAssets(this.configuration, this.directory, this.outputPath)
+    }
   }
 
   /**
