@@ -1,6 +1,7 @@
-import {BugError} from './error.js'
+import {AbortError, BugError} from './error.js'
 import {getPartnersToken} from './environment.js'
 import {nonRandomUUID} from './crypto.js'
+import {shopifyFetch} from './http.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {
   exchangeCustomPartnerToken,
@@ -280,4 +281,54 @@ ${outputToken.json(scopes)}
  */
 export function logout(): Promise<void> {
   return sessionStore.remove()
+}
+
+/**
+ * Ensure that we have a valid Admin session for the given store, with access on behalf of the app.
+ *
+ * See `ensureAuthenticatedAdmin` for access on behalf of a user.
+ *
+ * @param storeFqdn - Store fqdn to request auth for.
+ * @param clientId - Client ID of the app.
+ * @param clientSecret - Client secret of the app.
+ * @returns The access token for the Admin API.
+ */
+export async function ensureAuthenticatedAdminAsApp(
+  storeFqdn: string,
+  clientId: string,
+  clientSecret: string,
+): Promise<AdminSession> {
+  const bodyData = {
+    client_id: clientId,
+    client_secret: clientSecret,
+    grant_type: 'client_credentials',
+  }
+  const tokenResponse = await shopifyFetch(
+    `https://${storeFqdn}/admin/oauth/access_token`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(bodyData),
+    },
+    'slow-request',
+  )
+
+  if (tokenResponse.status === 400) {
+    const body = await tokenResponse.text()
+    if (body.includes('app_not_installed')) {
+      throw new AbortError(
+        outputContent`App is not installed on ${outputToken.green(
+          storeFqdn,
+        )}. Try running ${outputToken.genericShellCommand(`shopify app dev`)} to connect your app to the shop.`,
+      )
+    }
+    throw new AbortError(
+      `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
+    )
+  }
+
+  const tokenJson = (await tokenResponse.json()) as {access_token: string}
+  return {token: tokenJson.access_token, storeFqdn}
 }
