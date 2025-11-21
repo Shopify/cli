@@ -7,6 +7,7 @@ const ChannelSpecificationSchema = BaseSchemaWithHandle.extend({
   type: zod.literal('channel_config'),
   name: zod.string().optional(),
   description: zod.string().optional(),
+  channel_config: zod.record(zod.any()).optional(),
 })
 
 const SUBDIRECTORY_NAME = 'specifications'
@@ -25,6 +26,7 @@ const channelSpecificationSpec = createExtensionSpecification({
       handle: config.handle,
       name: config.name,
       description: config.description,
+      channel_config: config.channel_config,
     }
   },
 })
