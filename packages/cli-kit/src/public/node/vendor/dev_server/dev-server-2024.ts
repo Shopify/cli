@@ -46,6 +46,15 @@ function assertRunning2024(projectName: string): void {
   })
 }
 
+export function isRunning2024(projectName: string) {
+  try {
+    assertRunning2024(projectName)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
 function getBackendIp(projectName: string): string {
   try {
     const backendIp = resolveBackendHost(projectName)
