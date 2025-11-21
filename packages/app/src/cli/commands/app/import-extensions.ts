@@ -6,7 +6,8 @@ import {getMigrationChoices, selectMigrationChoice} from '../../prompts/import-e
 import {getExtensions} from '../../services/fetch-extensions.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 export default class ImportExtensions extends AppLinkedCommand {
   static description = 'Import dashboard-managed extensions into your app.'
@@ -24,21 +25,31 @@ export default class ImportExtensions extends AppLinkedCommand {
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(ImportExtensions)
-    const appContext = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
+    const {appContext, extensions, migrationChoices} = await renderSingleTask({
+      title: outputContent`Loading app`,
+      task: async () => {
+        const appContext = await linkedAppContext({
+          directory: flags.path,
+          clientId: flags['client-id'],
+          forceRelink: flags.reset,
+          userProvidedConfigName: flags.config,
+        })
 
-    const extensions = await getExtensions({
-      developerPlatformClient: appContext.developerPlatformClient,
-      apiKey: appContext.remoteApp.apiKey,
-      organizationId: appContext.remoteApp.organizationId,
-      extensionTypes: allExtensionTypes,
-    })
+        const extensions = await getExtensions({
+          developerPlatformClient: appContext.developerPlatformClient,
+          apiKey: appContext.remoteApp.apiKey,
+          organizationId: appContext.remoteApp.organizationId,
+          extensionTypes: allExtensionTypes,
+        })
 
-    const migrationChoices = getMigrationChoices(extensions)
+        const migrationChoices = getMigrationChoices(extensions)
+        return {
+          appContext,
+          extensions,
+          migrationChoices,
+        }
+      },
+    })
 
     if (migrationChoices.length === 0) {
       renderSuccess({headline: ['No extensions to migrate.']})
@@ -47,8 +58,7 @@ export default class ImportExtensions extends AppLinkedCommand {
       await importExtensions({
         ...appContext,
         extensions,
-        extensionTypes: migrationChoice.extensionTypes,
-        buildTomlObject: migrationChoice.buildTomlObject,
+        migrationChoice,
       })
     }
 
