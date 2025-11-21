@@ -1,34 +1,40 @@
-import {AppLinkedInterface, CurrentAppConfiguration} from '../models/app/app.js'
+import {importDeclarativeDefinitions} from './generate/shop-import/declarative-definitions.js'
+import {AppLinkedInterface} from '../models/app/app.js'
 import {updateAppIdentifiers, IdentifiersExtensions} from '../models/app/identifiers.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../models/extensions/schemas.js'
-import {OrganizationApp} from '../models/organization.js'
-import {allMigrationChoices, getMigrationChoices} from '../prompts/import-extensions.js'
+import {Organization, OrganizationApp} from '../models/organization.js'
+import {
+  allMigrationChoices,
+  getMigrationChoices,
+  MigrationChoice,
+  ShopImportMigrationChoice,
+} from '../prompts/import-extensions.js'
 import {configurationFileNames, blocks} from '../constants.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
 import {removeFile, writeFile, fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {slugify, hyphenate} from '@shopify/cli-kit/common/string'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortError, AbortSilentError, BugError} from '@shopify/cli-kit/node/error'
 
-export const allExtensionTypes = allMigrationChoices.flatMap((choice) => choice.extensionTypes)
+export const allExtensionTypes = allMigrationChoices.flatMap((choice) =>
+  choice.mode === 'extension' ? choice.extensionTypes : [],
+)
 
 interface ImportAllOptions {
   app: AppLinkedInterface
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   extensions: ExtensionRegistration[]
+  organization: Organization
+  specifications: RemoteAwareExtensionSpecification[]
 }
 
 interface ImportOptions extends ImportAllOptions {
-  extensionTypes: string[]
-  buildTomlObject: (
-    ext: ExtensionRegistration,
-    allExtensions: ExtensionRegistration[],
-    appConfig: CurrentAppConfiguration,
-  ) => string
+  migrationChoice: MigrationChoice
   all?: boolean
 }
 
@@ -76,8 +82,23 @@ async function handleExtensionDirectory({
   return {directory: extensionDirectory, action: DirectoryAction.Write}
 }
 
+async function importConfigurationFromShop(options: ImportOptions & {migrationChoice: ShopImportMigrationChoice}) {
+  switch (options.migrationChoice.value) {
+    case 'declarative definitions':
+      return importDeclarativeDefinitions(options)
+    default:
+      throw new BugError(`Unsupported shop import source: ${options.migrationChoice.value}`)
+  }
+}
+
 export async function importExtensions(options: ImportOptions) {
-  const {app, remoteApp, developerPlatformClient, extensionTypes, extensions, buildTomlObject, all} = options
+  const {app, remoteApp, developerPlatformClient, migrationChoice, extensions, all} = options
+
+  if (migrationChoice.mode === 'shop-import') {
+    return importConfigurationFromShop({...options, migrationChoice})
+  }
+
+  const {extensionTypes, buildTomlObject} = migrationChoice
 
   let extensionsToMigrate = extensions.filter((ext) => extensionTypes.includes(ext.type.toLowerCase()))
   extensionsToMigrate = filterOutImportedExtensions(app, extensionsToMigrate)
@@ -144,14 +165,15 @@ export function filterOutImportedExtensions(app: AppLinkedInterface, extensions:
 export async function importAllExtensions(options: ImportAllOptions) {
   const migrationChoices = getMigrationChoices(options.extensions)
   await Promise.all(
-    migrationChoices.map(async (choice) => {
-      return importExtensions({
-        ...options,
-        extensionTypes: choice.extensionTypes,
-        buildTomlObject: choice.buildTomlObject,
-        all: true,
-      })
-    }),
+    migrationChoices
+      .filter((choice) => choice.mode === 'extension')
+      .map(async (choice) => {
+        return importExtensions({
+          ...options,
+          migrationChoice: choice,
+          all: true,
+        })
+      }),
   )
 }
 

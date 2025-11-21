@@ -8,9 +8,14 @@ import {CurrentAppConfiguration} from '../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
-export interface MigrationChoice {
+interface MigrationChoiceCommon {
   label: string
   value: string
+  neverSelectAutomatically?: boolean
+}
+
+type ExtensionMigrationChoice = MigrationChoiceCommon & {
+  mode: 'extension'
   extensionTypes: string[]
   buildTomlObject: (
     ext: ExtensionRegistration,
@@ -19,8 +24,19 @@ export interface MigrationChoice {
   ) => string
 }
 
+type SupportedShopImportSources = 'declarative definitions'
+
+export type ShopImportMigrationChoice = MigrationChoiceCommon & {
+  mode: 'shop-import'
+  // Only declarative definitions are supported for shop import at present.
+  value: SupportedShopImportSources
+}
+
+export type MigrationChoice = ExtensionMigrationChoice | ShopImportMigrationChoice
+
 export const allMigrationChoices: MigrationChoice[] = [
   {
+    mode: 'extension',
     label: 'Payments Extensions',
     value: 'payments',
     extensionTypes: [
@@ -34,39 +50,51 @@ export const allMigrationChoices: MigrationChoice[] = [
     buildTomlObject: buildPaymentsTomlObject,
   },
   {
+    mode: 'extension',
     label: 'Flow Extensions',
     value: 'flow',
     extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'flow_trigger_discovery_webhook'],
     buildTomlObject: buildFlowTomlObject,
   },
   {
+    mode: 'extension',
     label: 'Marketing Activity Extensions',
     value: 'marketing activity',
     extensionTypes: ['marketing_activity_extension'],
     buildTomlObject: buildMarketingActivityTomlObject,
   },
   {
+    mode: 'extension',
     label: 'Subscription Link Extensions',
     value: 'subscription link',
     extensionTypes: ['subscription_link', 'subscription_link_extension'],
     buildTomlObject: buildSubscriptionLinkTomlObject,
   },
   {
+    mode: 'extension',
     label: 'Admin Link extensions',
     value: 'link extension',
     extensionTypes: ['app_link', 'bulk_action'],
     buildTomlObject: buildAdminLinkTomlObject,
   },
+  {
+    mode: 'shop-import',
+    label: 'Metafields and Metaobject definitions',
+    value: 'declarative definitions',
+    neverSelectAutomatically: true,
+  },
 ]
 
 export function getMigrationChoices(extensions: ExtensionRegistration[]): MigrationChoice[] {
-  return allMigrationChoices.filter((choice) =>
-    choice.extensionTypes.some((type) => extensions.some((ext) => ext.type.toLowerCase() === type.toLowerCase())),
+  return allMigrationChoices.filter(
+    (choice) =>
+      choice.mode === 'shop-import' ||
+      choice.extensionTypes.some((type) => extensions.some((ext) => ext.type.toLowerCase() === type.toLowerCase())),
   )
 }
 
 export async function selectMigrationChoice(migrationChoices: MigrationChoice[]): Promise<MigrationChoice> {
-  if (migrationChoices.length === 1 && migrationChoices[0]) {
+  if (migrationChoices.length === 1 && migrationChoices[0] && !migrationChoices[0].neverSelectAutomatically) {
     return migrationChoices[0]
   }
 

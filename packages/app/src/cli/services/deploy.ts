@@ -11,6 +11,7 @@ import {Organization, OrganizationApp} from '../models/organization.js'
 import {reloadApp} from '../models/app/loader.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
+import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
@@ -52,6 +53,9 @@ export interface DeployOptions {
 
   /** If true, skip building any elements of the app that require building */
   skipBuild: boolean
+
+  /** The specifications of the extensions */
+  specifications: RemoteAwareExtensionSpecification[]
 }
 
 interface TasksContext {
@@ -64,6 +68,8 @@ interface ImportExtensionsIfNeededOptions {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   force: boolean
+  organization: Organization
+  specifications: RemoteAwareExtensionSpecification[]
 }
 
 async function handleSupportedDashboardExtensions(
@@ -71,7 +77,7 @@ async function handleSupportedDashboardExtensions(
     extensions: ExtensionRegistration[]
   },
 ): Promise<AppLinkedInterface> {
-  const {app, remoteApp, developerPlatformClient, force, extensions} = options
+  const {app, remoteApp, developerPlatformClient, force, extensions, organization, specifications} = options
 
   if (force || !isTTY()) {
     return app
@@ -96,6 +102,8 @@ async function handleSupportedDashboardExtensions(
       remoteApp,
       developerPlatformClient,
       extensions,
+      organization,
+      specifications,
     })
     return reloadApp(app)
   }
@@ -108,7 +116,7 @@ async function handleUnsupportedDashboardExtensions(
     extensions: ExtensionRegistration[]
   },
 ): Promise<AppLinkedInterface> {
-  const {app, remoteApp, developerPlatformClient, force, extensions} = options
+  const {app, remoteApp, developerPlatformClient, force, extensions, organization, specifications} = options
 
   const message = [
     `App can't be deployed until Partner Dashboard managed extensions are added to your version or removed from your app:\n`,
@@ -133,6 +141,8 @@ async function handleUnsupportedDashboardExtensions(
       remoteApp,
       developerPlatformClient,
       extensions,
+      organization,
+      specifications,
     })
     return reloadApp(app)
   } else {
@@ -171,13 +181,15 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
 }
 
 export async function deploy(options: DeployOptions) {
-  const {remoteApp, developerPlatformClient, noRelease, force} = options
+  const {remoteApp, developerPlatformClient, noRelease, force, organization, specifications} = options
 
   const app = await importExtensionsIfNeeded({
     app: options.app,
     remoteApp,
     developerPlatformClient,
     force,
+    organization,
+    specifications,
   })
 
   const {identifiers, didMigrateExtensionsToDevDash} = await ensureDeployContext({

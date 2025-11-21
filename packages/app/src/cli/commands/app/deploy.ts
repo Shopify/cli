@@ -87,7 +87,7 @@ export default class Deploy extends AppLinkedCommand {
     }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
-    const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
+    const {app, remoteApp, developerPlatformClient, organization, specifications} = await linkedAppContext({
       directory: flags.path,
       clientId,
       forceRelink: flags.reset,
@@ -106,6 +106,7 @@ export default class Deploy extends AppLinkedCommand {
       version: flags.version,
       commitReference: flags['source-control-url'],
       skipBuild: flags['no-build'],
+      specifications,
     })
 
     return {app: result.app}

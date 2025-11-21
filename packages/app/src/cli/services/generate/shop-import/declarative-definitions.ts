@@ -200,7 +200,7 @@ export function processDeclarativeDefinitionNodes(
   }
 }
 
-async function _importDeclarativeDefinitions(options: ImportDeclarativeDefinitionsOptions) {
+export async function importDeclarativeDefinitions(options: ImportDeclarativeDefinitionsOptions) {
   const adminSession = await renderSingleTask({
     title: outputContent`Connecting to shop`,
     task: async () => {
