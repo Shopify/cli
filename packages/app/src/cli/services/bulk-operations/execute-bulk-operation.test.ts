@@ -32,13 +32,9 @@ describe('executeBulkOperation', () => {
     status: 'CREATED',
     errorCode: null,
     createdAt: '2024-01-01T00:00:00Z',
-    objectCount: '0',
-    fileSize: '0',
-    url: null,
-    query: '{ products { edges { node { id } } } }',
-    rootObjectCount: '0',
-    type: 'QUERY',
     completedAt: null,
+    objectCount: '0',
+    url: null,
     partialDataUrl: null,
   }
 
