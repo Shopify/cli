@@ -1,5 +1,6 @@
 import {
   ensureAuthenticatedAdmin,
+  ensureAuthenticatedAdminAsApp,
   ensureAuthenticatedAppManagementAndBusinessPlatform,
   ensureAuthenticatedBusinessPlatform,
   ensureAuthenticatedPartners,
@@ -8,6 +9,7 @@ import {
 } from './session.js'
 
 import {getPartnersToken} from './environment.js'
+import {shopifyFetch} from './http.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {
@@ -29,6 +31,7 @@ vi.mock('../../private/node/session.js')
 vi.mock('../../private/node/session/exchange.js')
 vi.mock('../../private/node/session/store.js')
 vi.mock('./environment.js')
+vi.mock('./http.js')
 
 describe('ensureAuthenticatedStorefront', () => {
   test('returns only storefront token if success', async () => {
@@ -269,5 +272,50 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
       businessPlatformToken: 'business-platform-token',
     })
     expect(ensureAuthenticated).not.toHaveBeenCalled()
+  })
+})
+
+describe('ensureAuthenticatedAdminAsApp', () => {
+  test('returns admin token if success', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 200,
+      json: async () => ({access_token: 'app_access_token'}),
+    } as any)
+
+    // When
+    const got = await ensureAuthenticatedAdminAsApp('mystore.myshopify.com', 'client123', 'secret456')
+
+    // Then
+    expect(got).toEqual({token: 'app_access_token', storeFqdn: 'mystore.myshopify.com'})
+  })
+
+  test('throws error if app is not installed', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 400,
+      text: async () => 'error: app_not_installed',
+    } as any)
+
+    // When
+    const got = ensureAuthenticatedAdminAsApp('mystore.myshopify.com', 'client123', 'secret456')
+
+    // Then
+    await expect(got).rejects.toThrow(/App is not installed/)
+  })
+
+  test('throws error on other 400 errors', async () => {
+    // Given
+    vi.mocked(shopifyFetch).mockResolvedValueOnce({
+      status: 400,
+      statusText: 'Bad Request',
+      text: async () => 'invalid credentials',
+    } as any)
+
+    // When
+    const got = ensureAuthenticatedAdminAsApp('mystore.myshopify.com', 'client123', 'secret456')
+
+    // Then
+    await expect(got).rejects.toThrow('Failed to get access token for app client123 on store mystore.myshopify.com')
   })
 })
