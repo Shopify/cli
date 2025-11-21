@@ -1,11 +1,4 @@
-import {IdentityClient} from './identity-client.js'
-import {IdentityToken} from '../../session/schema.js'
-import {
-  buildIdentityToken,
-  exchangeDeviceCodeForAccessToken,
-  tokenRequestErrorHandler,
-  TokenRequestResult,
-} from '../../session/exchange.js'
+import {IdentityClient, type TokenRequestResult, type DeviceAuthorizationResponse} from './identity-client.js'
 import {outputContent, outputDebug, outputInfo, outputToken} from '../../../../public/node/output.js'
 import {AbortError, BugError} from '../../../../public/node/error.js'
 import {identityFqdn} from '../../../../public/node/context/fqdn.js'
@@ -13,26 +6,11 @@ import {shopifyFetch} from '../../../../public/node/http.js'
 import {isCI, openURL} from '../../../../public/node/system.js'
 import {isCloudEnvironment} from '../../../../public/node/context/local.js'
 import {isTTY, keypress} from '../../../../public/node/ui.js'
-import {
-  buildAuthorizationParseErrorMessage,
-  convertRequestToParams,
-  type DeviceAuthorizationResponse,
-} from '../../session/device-authorization.js'
+import {buildAuthorizationParseErrorMessage, convertRequestToParams} from '../../session/device-authorization.js'
 import {err, ok, Result} from '../../../../public/node/result.js'
 import {Environment, serviceEnvironment} from '../../context/service.js'
 
 export class IdentityServiceClient extends IdentityClient {
-  async requestAccessToken(scopes: string[]): Promise<IdentityToken> {
-    // Request a device code to authorize without a browser redirect.
-    outputDebug(outputContent`Requesting device authorization code...`)
-    const deviceAuth = await this.requestDeviceAuthorization(scopes)
-
-    // Poll for the identity token
-    outputDebug(outputContent`Starting polling for the identity token...`)
-    const identityToken = await this.pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
-    return identityToken
-  }
-
   async tokenRequest(params: {
     [key: string]: string
   }): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
@@ -49,22 +27,6 @@ export class IdentityServiceClient extends IdentityClient {
     return err({error: payload.error, store: params.store})
   }
 
-  /**
-   * Given an expired access token, refresh it to get a new one.
-   */
-  async refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken> {
-    const clientId = this.clientId()
-    const params = {
-      grant_type: 'refresh_token',
-      access_token: currentToken.accessToken,
-      refresh_token: currentToken.refreshToken,
-      client_id: clientId,
-    }
-    const tokenResult = await this.tokenRequest(params)
-    const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
-    return buildIdentityToken(value, currentToken.userId, currentToken.alias)
-  }
-
   clientId(): string {
     const environment = serviceEnvironment()
     if (environment === Environment.Local) {
@@ -77,12 +39,6 @@ export class IdentityServiceClient extends IdentityClient {
   }
 
   /**
-   * ========================
-   * Private Instance Methods
-   * ========================
-   */
-
-  /**
    * Initiate a device authorization flow.
    * This will return a DeviceAuthorizationResponse containing the URL where user
    * should go to authorize the device without the need of a callback to the CLI.
@@ -92,7 +48,7 @@ export class IdentityServiceClient extends IdentityClient {
    * @param scopes - The scopes to request
    * @returns An object with the device authorization response.
    */
-  private async requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
+  async requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse> {
     const fqdn = await identityFqdn()
     const identityClientId = this.clientId()
     const queryParams = {client_id: identityClientId, scope: scopes.join(' ')}
@@ -168,56 +124,5 @@ export class IdentityServiceClient extends IdentityClient {
       verificationUriComplete: jsonResult.verification_uri_complete,
       interval: jsonResult.interval,
     }
-  }
-
-  /**
-   * Poll the Oauth token endpoint with the device code obtained from a DeviceAuthorizationResponse.
-   * The endpoint will return `authorization_pending` until the user completes the auth flow in the browser.
-   * Once the user completes the auth flow, the endpoint will return the identity token.
-   *
-   * Timeout for the polling is defined by the server and is around 600 seconds.
-   *
-   * @param code - The device code obtained after starting a device identity flow
-   * @param interval - The interval to poll the token endpoint
-   * @returns The identity token
-   */
-  private async pollForDeviceAuthorization(code: string, interval = 5): Promise<IdentityToken> {
-    let currentIntervalInSeconds = interval
-
-    return new Promise<IdentityToken>((resolve, reject) => {
-      const onPoll = async () => {
-        const result = await exchangeDeviceCodeForAccessToken(code)
-        if (!result.isErr()) {
-          resolve(result.value)
-          return
-        }
-
-        const error = result.error ?? 'unknown_failure'
-
-        outputDebug(outputContent`Polling for device authorization... status: ${error}`)
-        switch (error) {
-          case 'authorization_pending': {
-            startPolling()
-            return
-          }
-          case 'slow_down':
-            currentIntervalInSeconds += 5
-            startPolling()
-            return
-          case 'access_denied':
-          case 'expired_token':
-          case 'unknown_failure': {
-            reject(new Error(`Device authorization failed: ${error}`))
-          }
-        }
-      }
-
-      const startPolling = () => {
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        setTimeout(onPoll, currentIntervalInSeconds * 1000)
-      }
-
-      startPolling()
-    })
   }
 }

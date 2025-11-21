@@ -3,6 +3,8 @@ import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
+  requestAccessToken,
+  refreshAccessToken,
   ExchangeScopes,
   InvalidGrantError,
   InvalidRequestError,
@@ -288,7 +290,6 @@ The CLI is currently unable to prompt for reauthentication.`,
  * Execute the full authentication flow.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param alias - Optional alias to use for the session.
  */
 async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
   const scopes = getFlattenScopes(applications)
@@ -305,7 +306,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   if (identityTokenInformation) {
     identityToken = buildIdentityTokenFromEnv(scopes, identityTokenInformation)
   } else {
-    identityToken = await identityClient.requestAccessToken(scopes)
+    identityToken = await requestAccessToken(scopes)
   }
 
   // Exchange identity token for application tokens
@@ -336,7 +337,7 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
  */
 async function refreshTokens(session: Session, applications: OAuthApplications): Promise<Session> {
   // Refresh Identity Token
-  const identityToken = await getIdentityClient().refreshAccessToken(session.identity)
+  const identityToken = await refreshAccessToken(session.identity)
   // Exchange new identity token for application tokens
   const exchangeScopes = getExchangeScopes(applications)
   const applicationTokens = await exchangeAccessForApplicationTokens(

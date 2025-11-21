@@ -1,16 +1,15 @@
 import {ApplicationToken, IdentityToken} from './schema.js'
 import {tokenExchangeScopes} from './scopes.js'
+import {buildIdentityToken, buildApplicationToken, tokenRequestErrorHandler} from './token-utils.js'
 import {API} from '../api.js'
 import {err, ok, Result} from '../../../public/node/result.js'
-import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
+import {AbortError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
 import {getIdentityClient} from '../clients/identity/instance.js'
-import * as jose from 'jose'
+import {outputContent, outputDebug} from '../../../public/node/output.js'
 
-export class InvalidGrantError extends ExtendableError {}
-export class InvalidRequestError extends ExtendableError {}
-class InvalidTargetError extends AbortError {}
+export {InvalidGrantError, InvalidRequestError} from './token-utils.js'
 
 export interface ExchangeScopes {
   admin: string[]
@@ -18,6 +17,71 @@ export interface ExchangeScopes {
   storefront: string[]
   businessPlatform: string[]
   appManagement: string[]
+}
+
+/**
+ * Request an identity token using the device authorization flow.
+ * This initiates the full flow: request device code, show to user, and poll for completion.
+ * @param scopes - The scopes to request
+ * @returns An identity token
+ */
+export async function requestAccessToken(scopes: string[]): Promise<IdentityToken> {
+  const identityClient = getIdentityClient()
+  outputDebug(outputContent`Requesting device authorization code...`)
+  const deviceAuth = await identityClient.requestDeviceAuthorization(scopes)
+
+  outputDebug(outputContent`Starting polling for the identity token...`)
+  const identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
+  return identityToken
+}
+
+/**
+ * Poll the Oauth token endpoint with the device code obtained from a DeviceAuthorizationResponse.
+ * The endpoint will return `authorization_pending` until the user completes the auth flow in the browser.
+ * Once the user completes the auth flow, the endpoint will return the identity token.
+ *
+ * @param code - The device code obtained after starting a device identity flow
+ * @param interval - The interval to poll the token endpoint
+ * @returns The identity token
+ */
+async function pollForDeviceAuthorization(code: string, interval = 5): Promise<IdentityToken> {
+  let currentIntervalInSeconds = interval
+
+  return new Promise<IdentityToken>((resolve, reject) => {
+    const onPoll = async () => {
+      const result = await exchangeDeviceCodeForAccessToken(code)
+      if (!result.isErr()) {
+        resolve(result.value)
+        return
+      }
+
+      const error = result.error ?? 'unknown_failure'
+
+      outputDebug(outputContent`Polling for device authorization... status: ${error}`)
+      switch (error) {
+        case 'authorization_pending': {
+          startPolling()
+          return
+        }
+        case 'slow_down':
+          currentIntervalInSeconds += 5
+          startPolling()
+          return
+        case 'access_denied':
+        case 'expired_token':
+        case 'unknown_failure': {
+          reject(new Error(`Device authorization failed: ${error}`))
+        }
+      }
+    }
+
+    const startPolling = () => {
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      setTimeout(onPoll, currentIntervalInSeconds * 1000)
+    }
+
+    startPolling()
+  })
 }
 
 /**
@@ -133,7 +197,7 @@ type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_
  * @param scopes - The scopes to request
  * @returns An instance with the identity access tokens.
  */
-export async function exchangeDeviceCodeForAccessToken(
+async function exchangeDeviceCodeForAccessToken(
   deviceCode: string,
 ): Promise<Result<IdentityToken, IdentityDeviceError>> {
   const clientId = getIdentityClient().clientId()
@@ -180,68 +244,4 @@ export async function requestAppToken(
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   const appToken = buildApplicationToken(value)
   return {[identifier]: appToken}
-}
-
-export interface TokenRequestResult {
-  access_token: string
-  expires_in: number
-  refresh_token: string
-  scope: string
-  id_token?: string
-}
-
-export function tokenRequestErrorHandler({error, store}: {error: string; store?: string}) {
-  const invalidTargetErrorMessage = `You are not authorized to use the CLI to develop in the provided store${
-    store ? `: ${store}` : '.'
-  }`
-
-  if (error === 'invalid_grant') {
-    // There's an scenario when Identity returns "invalid_grant" when trying to refresh the token
-    // using a valid refresh token. When that happens, we take the user through the authentication flow.
-    return new InvalidGrantError()
-  }
-  if (error === 'invalid_request') {
-    // There's an scenario when Identity returns "invalid_request" when exchanging an identity token.
-    // This means the token is invalid. We clear the session and throw an error to let the caller know.
-    return new InvalidRequestError()
-  }
-  if (error === 'invalid_target') {
-    return new InvalidTargetError(invalidTargetErrorMessage, '', [
-      'Ensure you have logged in to the store using the Shopify admin at least once.',
-      'Ensure you are the store owner, or have a staff account if you are attempting to log in to a dev store.',
-      'Ensure you are using the permanent store domain, not a vanity domain.',
-    ])
-  }
-  // eslint-disable-next-line @shopify/cli/no-error-factory-functions
-  return new AbortError(error)
-}
-
-export function buildIdentityToken(
-  result: TokenRequestResult,
-  existingUserId?: string,
-  existingAlias?: string,
-): IdentityToken {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
-
-  if (!userId) {
-    throw new BugError('Error setting userId for session. No id_token or pre-existing user ID provided.')
-  }
-
-  return {
-    accessToken: result.access_token,
-    refreshToken: result.refresh_token,
-    expiresAt: new Date(Date.now() + result.expires_in * 1000),
-    scopes: result.scope.split(' '),
-    userId,
-    alias: existingAlias,
-  }
-}
-
-function buildApplicationToken(result: TokenRequestResult): ApplicationToken {
-  return {
-    accessToken: result.access_token,
-    expiresAt: new Date(Date.now() + result.expires_in * 1000),
-    scopes: result.scope.split(' '),
-  }
 }

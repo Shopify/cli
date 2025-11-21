@@ -1,10 +1,9 @@
-import {DeviceAuthorizationResponse} from './device-authorization.js'
+import {requestAccessToken} from './exchange.js'
 import {IdentityToken} from './schema.js'
-import {exchangeDeviceCodeForAccessToken} from './exchange.js'
+import {DeviceAuthorizationResponse} from '../clients/identity/identity-client.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY, keypress} from '../../../public/node/ui.js'
-import {err, ok} from '../../../public/node/result.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import {getIdentityClient} from '../clients/identity/instance.js'
 import {IdentityServiceClient} from '../clients/identity/identity-service-client.js'
@@ -20,7 +19,6 @@ vi.mock('../../../public/node/context/fqdn.js')
 vi.mock('./identity')
 vi.mock('../../../public/node/http.js')
 vi.mock('../../../public/node/ui.js')
-vi.mock('./exchange.js')
 vi.mock('../../../public/node/system.js')
 vi.mock('../clients/identity/instance.js')
 vi.mock('../../../public/node/output.js')
@@ -63,18 +61,20 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 
     // Mock the token exchange to complete the flow
-    const identityToken: IdentityToken = {
-      accessToken: 'access_token',
-      refreshToken: 'refresh_token',
-      expiresAt: new Date(2022, 1, 1, 11),
-      scopes: ['scope1', 'scope2'],
-      userId: '1234-5678',
-      alias: '1234-5678',
-    }
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValue(ok(identityToken))
+    const tokenResponse = new Response(
+      JSON.stringify({
+        access_token: 'access_token',
+        refresh_token: 'refresh_token',
+        expires_in: 3600,
+        scope: 'scope1 scope2',
+        id_token: 'eyJhbGciOiJub25lIn0.eyJzdWIiOiIxMjM0LTU2NzgiLCJhdWQiOiJpZGVudGl0eSJ9.',
+      }),
+    )
+    vi.mocked(shopifyFetch).mockResolvedValue(tokenResponse)
 
     // When
-    const got = await mockIdentityClient.requestAccessToken(['scope1', 'scope2'])
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+    const got = await requestAccessToken(['scope1', 'scope2'])
 
     // Then
     expect(shopifyFetch).toHaveBeenCalledWith('https://fqdn.com/oauth/device_authorization', {
@@ -82,7 +82,8 @@ describe('requestDeviceAuthorization', () => {
       headers: {'Content-type': 'application/x-www-form-urlencoded'},
       body: 'client_id=fbdb2649-e327-4907-8f67-908d24cfd7e3&scope=scope1 scope2',
     })
-    expect(got).toEqual(identityToken)
+    expect(got.accessToken).toEqual('access_token')
+    expect(got.userId).toEqual('1234-5678')
   })
 
   test('when the response is not valid JSON, throw an error with context', async () => {
@@ -94,7 +95,8 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 
     // When/Then
-    await expect(mockIdentityClient.requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+    await expect(requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 200). Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -108,7 +110,8 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 
     // When/Then
-    await expect(mockIdentityClient.requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+    await expect(requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 200). Received empty response body. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -123,7 +126,8 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 
     // When/Then
-    await expect(mockIdentityClient.requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+    await expect(requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 404). The request may be malformed or unauthorized. Received HTML instead of JSON - the service endpoint may have changed. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -137,7 +141,8 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 
     // When/Then
-    await expect(mockIdentityClient.requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+    await expect(requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
       'Received invalid response from authorization service (HTTP 500). The service may be experiencing issues. Response could not be parsed as valid JSON. If this issue persists, please contact support at https://help.shopify.com',
     )
   })
@@ -153,7 +158,8 @@ describe('requestDeviceAuthorization', () => {
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
 
     // When/Then
-    await expect(mockIdentityClient.requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+    await expect(requestAccessToken(['scope1', 'scope2'])).rejects.toThrowError(
       'Failed to read response from authorization service (HTTP 200). Network or streaming error occurred.',
     )
   })
@@ -184,17 +190,38 @@ describe('pollForDeviceAuthorization', () => {
     const deviceAuthResponse = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValueOnce(deviceAuthResponse)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(ok(identityToken))
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
+
+    // Mock pending responses, then success - set ok: false for error responses
+    const pendingResponse1 = new Response(JSON.stringify({error: 'authorization_pending'}))
+    Object.defineProperty(pendingResponse1, 'ok', {value: false})
+    const pendingResponse2 = new Response(JSON.stringify({error: 'authorization_pending'}))
+    Object.defineProperty(pendingResponse2, 'ok', {value: false})
+    const pendingResponse3 = new Response(JSON.stringify({error: 'authorization_pending'}))
+    Object.defineProperty(pendingResponse3, 'ok', {value: false})
+
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(pendingResponse1)
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(pendingResponse2)
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(pendingResponse3)
+
+    const successResponse = new Response(
+      JSON.stringify({
+        access_token: identityToken.accessToken,
+        refresh_token: identityToken.refreshToken,
+        expires_in: 3600,
+        scope: 'scope scope2',
+        id_token: 'eyJhbGciOiJub25lIn0.eyJzdWIiOiIxMjM0LTU2NzgiLCJhdWQiOiJpZGVudGl0eSJ9.',
+      }),
+    )
+    Object.defineProperty(successResponse, 'ok', {value: true})
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(successResponse)
 
     // When
-    const got = await mockIdentityClient.requestAccessToken(['scope1', 'scope2'])
+    const got = await requestAccessToken(['scope1', 'scope2'])
 
-    // Then
-    expect(exchangeDeviceCodeForAccessToken).toBeCalledTimes(4)
-    expect(got).toEqual(identityToken)
+    // Then - 1 device auth request + 4 polling requests
+    expect(shopifyFetch).toBeCalledTimes(5)
+    expect(got.accessToken).toEqual(identityToken.accessToken)
   })
 
   test('when polling, if an error is received, stop polling and throw error', async () => {
@@ -202,15 +229,24 @@ describe('pollForDeviceAuthorization', () => {
     const deviceAuthResponse = new Response(JSON.stringify(data))
     vi.mocked(shopifyFetch).mockResolvedValueOnce(deviceAuthResponse)
     vi.mocked(identityFqdn).mockResolvedValue('fqdn.com')
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('authorization_pending'))
-    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('access_denied'))
+    vi.mocked(getIdentityClient).mockReturnValue(mockIdentityClient)
 
-    // When
-    const got = mockIdentityClient.requestAccessToken(['scope1', 'scope2'])
+    // Mock pending responses, then error - set ok: false for all error responses
+    const pendingResponse1 = new Response(JSON.stringify({error: 'authorization_pending'}))
+    Object.defineProperty(pendingResponse1, 'ok', {value: false})
+    const pendingResponse2 = new Response(JSON.stringify({error: 'authorization_pending'}))
+    Object.defineProperty(pendingResponse2, 'ok', {value: false})
 
-    // Then
-    await expect(got).rejects.toThrow()
-    expect(exchangeDeviceCodeForAccessToken).toBeCalledTimes(3)
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(pendingResponse1)
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(pendingResponse2)
+
+    const errorResponse = new Response(JSON.stringify({error: 'access_denied'}))
+    Object.defineProperty(errorResponse, 'ok', {value: false})
+    vi.mocked(shopifyFetch).mockResolvedValueOnce(errorResponse)
+
+    // When/Then
+    await expect(requestAccessToken(['scope1', 'scope2'])).rejects.toThrow()
+    // 1 device auth request + 3 polling requests
+    expect(shopifyFetch).toBeCalledTimes(4)
   })
 })
