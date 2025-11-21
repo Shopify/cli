@@ -1,0 +1,51 @@
+fragment MetaobjectForImport on MetaobjectDefinition {
+  type
+  name
+  description
+  access {
+    admin
+    storefront
+  }
+  displayNameKey
+  capabilities {
+    publishable {
+      enabled
+    }
+    translatable {
+      enabled
+    }
+    renderable {
+      enabled
+      data {
+        metaTitleKey
+        metaDescriptionKey
+      }
+    }
+  }
+  fieldDefinitions {
+    key
+    name
+    type {
+      category
+      name
+    }
+    description
+    required
+    validations {
+      name
+      value
+    }
+  }
+}
+
+query metaobjectDefinitions($after: String) {
+  metaobjectDefinitions(first: 10, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      ...MetaobjectForImport
+    }
+  }
+}
