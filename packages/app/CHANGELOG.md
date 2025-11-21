@@ -1,5 +1,16 @@
 # @shopify/app
 
+## 3.87.1
+
+### Patch Changes
+
+- Updated dependencies [226b49e]
+- Updated dependencies [9b97dfa]
+- Updated dependencies [9450302]
+  - @shopify/theme@3.87.1
+  - @shopify/cli-kit@3.87.1
+  - @shopify/plugin-cloudflare@3.87.1
+
 ## 3.87.0
 
 ### Minor Changes
