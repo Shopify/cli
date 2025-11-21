@@ -11,6 +11,7 @@ import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
   refreshAccessToken,
+  requestAccessToken,
   InvalidGrantError,
 } from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
@@ -127,6 +128,7 @@ beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
   vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
+  vi.mocked(requestAccessToken).mockResolvedValue(validIdentityToken)
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue({
     accessToken: partnersToken.accessToken,
     userId: validIdentityToken.userId,
@@ -145,8 +147,6 @@ beforeEach(() => {
 
   vi.mocked(getIdentityClient).mockImplementation(() => mockIdentityClient)
   vi.spyOn(mockIdentityClient, 'applicationId').mockImplementation((app) => app)
-  vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockResolvedValue(validIdentityToken)
-  vi.spyOn(mockIdentityClient, 'requestAccessToken').mockResolvedValue(validIdentityToken)
 })
 
 describe('ensureAuthenticated when previous session is invalid', () => {
@@ -340,7 +340,7 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications, process.env, {forceRefresh: true})
 
     // Then
-    expect(mockIdentityClient.refreshAccessToken).toBeCalled()
+    expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(storeSessions).toBeCalledWith(validSessions)
     expect(got).toEqual(validTokens)
@@ -360,7 +360,7 @@ describe('when existing session is expired', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(mockIdentityClient.refreshAccessToken).toBeCalled()
+    expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(storeSessions).toBeCalledWith(validSessions)
     expect(got).toEqual(validTokens)
@@ -375,13 +375,13 @@ describe('when existing session is expired', () => {
 
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockRejectedValueOnce(tokenResponseError)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(mockIdentityClient.refreshAccessToken).toBeCalled()
+    expect(refreshAccessToken).toBeCalled()
     expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -665,8 +665,8 @@ describe('ensureAuthenticated email fetch functionality', () => {
     const tokenResponseError = new InvalidGrantError()
     vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    vi.spyOn(mockIdentityClient, 'refreshAccessToken').mockRejectedValueOnce(tokenResponseError)
-    vi.spyOn(mockIdentityClient, 'requestAccessToken').mockResolvedValueOnce(validIdentityToken)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+    vi.mocked(requestAccessToken).mockResolvedValueOnce(validIdentityToken)
     vi.mocked(businessPlatformRequest).mockResolvedValueOnce({
       currentUserAccount: {
         email: 'dev@shopify.com',

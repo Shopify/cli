@@ -1,6 +1,4 @@
-import {IdentityClient} from './identity-client.js'
-import {ApplicationToken, IdentityToken} from '../../session/schema.js'
-import {ExchangeScopes, TokenRequestResult} from '../../session/exchange.js'
+import {IdentityClient, type TokenRequestResult, type DeviceAuthorizationResponse} from './identity-client.js'
 import {ok, Result} from '../../../../public/node/result.js'
 import {allDefaultScopes} from '../../session/scopes.js'
 
@@ -8,55 +6,34 @@ export class IdentityMockClient extends IdentityClient {
   private readonly mockUserId = '08978734-325e-44ce-bc65-34823a8d5180'
   private readonly authTokenPrefix = 'mtkn_'
 
-  async requestAccessToken(_scopes: string[]): Promise<IdentityToken> {
-    const tokens = this.generateTokens('identity')
-
+  async requestDeviceAuthorization(_scopes: string[]): Promise<DeviceAuthorizationResponse> {
     return Promise.resolve({
-      accessToken: tokens.accessToken,
-      alias: '',
-      expiresAt: this.getFutureDate(1),
-      refreshToken: tokens.refreshToken,
-      scopes: allDefaultScopes(),
-      userId: this.mockUserId,
+      deviceCode: 'mock_device_code',
+      userCode: 'MOCK-CODE',
+      verificationUri: 'https://identity.shop.dev/device',
+      expiresIn: 600,
+      verificationUriComplete: 'https://identity.shop.dev/device?code=MOCK-CODE',
+      interval: 5,
     })
-  }
-
-  async exchangeAccessForApplicationTokens(
-    _identityToken: IdentityToken,
-    _scopes: ExchangeScopes,
-    _store?: string,
-  ): Promise<{[x: string]: ApplicationToken}> {
-    return {
-      [this.applicationId('app-management')]: this.generateTokens(this.applicationId('app-management')),
-      [this.applicationId('business-platform')]: this.generateTokens(this.applicationId('business-platform')),
-      [this.applicationId('admin')]: this.generateTokens(this.applicationId('admin')),
-      [this.applicationId('partners')]: this.generateTokens(this.applicationId('partners')),
-      [this.applicationId('storefront-renderer')]: this.generateTokens(this.applicationId('storefront-renderer')),
-    }
   }
 
   async tokenRequest(params: {
     [key: string]: string
   }): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
     const tokens = this.generateTokens(params?.audience ?? '')
+    const idTokenPayload = {
+      sub: this.mockUserId,
+      aud: params?.audience ?? 'identity',
+      iss: 'https://identity.shop.dev',
+      exp: this.getCurrentUnixTimestamp() + 7200,
+      iat: this.getCurrentUnixTimestamp(),
+    }
     return ok({
       access_token: tokens.accessToken,
       expires_in: this.getFutureDate(1).getTime(),
       refresh_token: tokens.refreshToken,
       scope: allDefaultScopes().join(' '),
-    })
-  }
-
-  async refreshAccessToken(_currentToken: IdentityToken): Promise<IdentityToken> {
-    const tokens = this.generateTokens('identity')
-
-    return Promise.resolve({
-      accessToken: tokens.accessToken,
-      alias: 'dev@shopify.com',
-      expiresAt: this.getFutureDate(1),
-      refreshToken: tokens.refreshToken,
-      scopes: allDefaultScopes(),
-      userId: this.mockUserId,
+      id_token: this.generateMockJWT(idTokenPayload),
     })
   }
 
@@ -117,5 +94,12 @@ export class IdentityMockClient extends IdentityClient {
       .replace(/[=]/g, '')
       .replace(/\+/g, '-')
       .replace(/\//g, '_')
+  }
+
+  private generateMockJWT(payload: object): string {
+    const header = {alg: 'none', typ: 'JWT'}
+    const encodedHeader = this.encodeTokenPayload(header)
+    const encodedPayload = this.encodeTokenPayload(payload)
+    return `${encodedHeader}.${encodedPayload}.`
   }
 }

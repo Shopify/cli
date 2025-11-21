@@ -1,14 +1,5 @@
 import {Response} from 'node-fetch'
 
-export interface DeviceAuthorizationResponse {
-  deviceCode: string
-  userCode: string
-  verificationUri: string
-  expiresIn: number
-  verificationUriComplete?: string
-  interval?: number
-}
-
 export function convertRequestToParams(queryParams: {client_id: string; scope: string}): string {
   return Object.entries(queryParams)
     .map(([key, value]) => value && `${key}=${value}`)

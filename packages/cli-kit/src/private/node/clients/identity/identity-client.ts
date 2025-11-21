@@ -1,18 +1,31 @@
-import {IdentityToken} from '../../session/schema.js'
-import {TokenRequestResult} from '../../session/exchange.js'
 import {API} from '../../api.js'
 import {Environment, serviceEnvironment} from '../../context/service.js'
 import {BugError} from '../../../../public/node/error.js'
 import {Result} from '../../../../public/node/result.js'
 
-export abstract class IdentityClient {
-  abstract requestAccessToken(scopes: string[]): Promise<IdentityToken>
+export interface TokenRequestResult {
+  access_token: string
+  expires_in: number
+  refresh_token: string
+  scope: string
+  id_token?: string
+}
 
+export interface DeviceAuthorizationResponse {
+  deviceCode: string
+  userCode: string
+  verificationUri: string
+  expiresIn: number
+  verificationUriComplete?: string
+  interval?: number
+}
+
+export abstract class IdentityClient {
   abstract tokenRequest(params: {
     [key: string]: string
   }): Promise<Result<TokenRequestResult, {error: string; store?: string}>>
 
-  abstract refreshAccessToken(currentToken: IdentityToken): Promise<IdentityToken>
+  abstract requestDeviceAuthorization(scopes: string[]): Promise<DeviceAuthorizationResponse>
 
   abstract clientId(): string
 
