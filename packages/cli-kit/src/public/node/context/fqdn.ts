@@ -14,7 +14,7 @@ export const NotProvidedStoreFQDNError = new AbortError(
  */
 export async function partnersFqdn(): Promise<string> {
   if (blockPartnersAccess()) {
-    throw new BugError('Partners API is blocked by the SHOPIFY_CLI_NEVER_USE_PARTNERS_API environment variable.')
+    throw new BugError('Partners API is is no longer available.')
   }
   const environment = serviceEnvironment()
   const productionFqdn = 'partners.shopify.com'

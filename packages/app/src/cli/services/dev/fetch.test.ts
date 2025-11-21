@@ -43,8 +43,9 @@ afterEach(() => {
 })
 
 describe('fetchOrganizations', async () => {
-  test('returns fetched organizations from Partners and App Management', async () => {
+  test('returns fetched organizations from Partners and App Management for 1P development', async () => {
     // Given
+    vi.stubEnv('SHOPIFY_CLI_1P_DEV', 'true')
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),
     }) as PartnersClient
@@ -63,15 +64,27 @@ describe('fetchOrganizations', async () => {
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })
 
+  test('returns fetched organizations from App Management for 3P development', async () => {
+    // Given
+    const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
+      organizations: () => Promise.resolve([ORG2]),
+    }) as AppManagementClient
+    vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
+
+    // When
+    const got = await fetchOrganizations()
+
+    // Then
+    expect(got).toEqual([ORG2])
+    expect(PartnersClient.getInstance).not.toHaveBeenCalled()
+    expect(appManagementClient.organizations).toHaveBeenCalled()
+  })
+
   test('throws if there are no organizations', async () => {
     // Given
-    const partnersClient: PartnersClient = testDeveloperPlatformClient({
-      organizations: () => Promise.resolve([]),
-    }) as PartnersClient
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
     }) as AppManagementClient
-    vi.mocked(PartnersClient.getInstance).mockReturnValue(partnersClient)
     vi.mocked(AppManagementClient.getInstance).mockReturnValue(appManagementClient)
 
     // When
@@ -79,7 +92,6 @@ describe('fetchOrganizations', async () => {
 
     // Then
     await expect(got).rejects.toThrow('No Organization found')
-    expect(partnersClient.organizations).toHaveBeenCalled()
     expect(appManagementClient.organizations).toHaveBeenCalled()
   })
 })

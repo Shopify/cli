@@ -2,20 +2,19 @@ import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {FunctionRunLog} from '../types.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
-import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import * as components from '@shopify/cli-kit/node/ui/components'
 import * as output from '@shopify/cli-kit/node/output'
 import camelcaseKeys from 'camelcase-keys'
+import {appManagementFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 const JWT_TOKEN = 'jwtToken'
-const API_KEY = 'apiKey'
 const TEST_LOGS_DIR = '/test/logs/dir'
 
 vi.mock('./write-app-logs.js')
 vi.mock('@shopify/cli-kit/node/http')
 
-const FQDN = await partnersFqdn()
+const FQDN = await appManagementFqdn()
 const LOGS = '1\\n2\\n3\\n4\\n'
 const FUNCTION_ERROR = 'function_error'
 const FUNCTION_RUN = 'function_run'
