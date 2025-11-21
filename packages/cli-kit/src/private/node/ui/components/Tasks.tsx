@@ -4,10 +4,11 @@ import {isUnitTest} from '../../../../public/node/context/local.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import {useExitOnCtrlC} from '../hooks/use-exit-on-ctrl-c.js'
+import {TokenizedString} from '../../../../public/node/output.js'
 import React, {useRef, useState} from 'react'
 
 export interface Task<TContext = unknown> {
-  title: string
+  title: string | TokenizedString
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   task: (ctx: TContext, task: Task<TContext>) => Promise<void | Task<TContext>[]>
   retry?: number
@@ -107,8 +108,10 @@ function Tasks<TContext>({
     return null
   }
 
+  const title = typeof currentTask.title === 'string' ? currentTask.title : currentTask.title.value
+
   return state === TasksState.Loading && !isAborted ? (
-    <LoadingBar title={currentTask.title} noColor={noColor} noProgressBar={noProgressBar} />
+    <LoadingBar title={title} noColor={noColor} noProgressBar={noProgressBar} />
   ) : null
 }
 
