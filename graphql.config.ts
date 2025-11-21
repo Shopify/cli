@@ -84,5 +84,6 @@ export default {
     bulkOperations: projectFactory('bulk-operations', 'admin_schema.graphql'),
     webhooks: projectFactory('webhooks', 'webhooks_schema.graphql'),
     functions: projectFactory('functions', 'functions_cli_schema.graphql', 'app'),
+    adminAsApp: projectFactory('admin', 'admin_schema.graphql'),
   },
 }
