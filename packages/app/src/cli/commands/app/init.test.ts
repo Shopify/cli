@@ -16,7 +16,6 @@ vi.mock('../../services/init/init.js')
 vi.mock('../../utilities/developer-platform-client.js')
 vi.mock('../../services/context.js')
 vi.mock('../../prompts/dev.js')
-vi.mock('../../services/dev/fetch.js')
 vi.mock('../../services/init/validate.js')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
@@ -76,9 +75,8 @@ describe('Init command', () => {
     vi.mocked(inferPackageManager).mockReturnValue('npm')
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
-    // Mock fetchOrganizations to return the organization
-    const {fetchOrganizations} = await import('../../services/dev/fetch.js')
-    vi.mocked(fetchOrganizations).mockResolvedValue([mockOrganization])
+    // Mock orgFromId to return the organization
+    vi.mocked(mockDeveloperPlatformClient.orgFromId).mockResolvedValue(mockOrganization)
 
     // Mock the orgAndApps method on the developer platform client
     vi.mocked(mockDeveloperPlatformClient.orgAndApps).mockResolvedValue({
@@ -129,9 +127,8 @@ describe('Init command', () => {
       vi.mocked(inferPackageManager).mockReturnValue('npm')
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
-      // Mock fetchOrganizations to return only the valid organization
-      const {fetchOrganizations} = await import('../../services/dev/fetch.js')
-      vi.mocked(fetchOrganizations).mockResolvedValue([validOrg])
+      // Mock orgFromId to return undefined for invalid organization
+      vi.mocked(mockDeveloperPlatformClient.orgFromId).mockResolvedValue(undefined)
 
       vi.mocked(initPrompt).mockResolvedValue({
         template: 'https://github.com/Shopify/shopify-app-template-remix',
