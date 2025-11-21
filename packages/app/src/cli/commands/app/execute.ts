@@ -40,6 +40,7 @@ export default class Execute extends AppLinkedCommand {
       query: flags.query,
       variables: flags.variables,
       variableFile: flags['variable-file'],
+      watch: flags.watch,
     })
 
     return {app: appContextResult.app}

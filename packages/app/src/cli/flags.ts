@@ -63,4 +63,9 @@ export const bulkOperationFlags = {
     env: 'SHOPIFY_FLAG_STORE',
     parse: async (input) => normalizeStoreFqdn(input),
   }),
+  watch: Flags.boolean({
+    description: 'Wait for bulk operation results before exiting.',
+    env: 'SHOPIFY_FLAG_WATCH',
+    default: false,
+  }),
 }

@@ -915,6 +915,13 @@
           "hidden": false,
           "name": "verbose",
           "type": "boolean"
+        },
+        "watch": {
+          "allowNo": false,
+          "description": "Wait for bulk operation results before exiting.",
+          "env": "SHOPIFY_FLAG_WATCH",
+          "name": "watch",
+          "type": "boolean"
         }
       },
       "hasDynamicHelp": false,

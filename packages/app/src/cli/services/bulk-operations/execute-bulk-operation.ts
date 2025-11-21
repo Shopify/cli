@@ -1,7 +1,9 @@
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
+import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
+import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
-import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -14,6 +16,7 @@ interface ExecuteBulkOperationInput {
   query: string
   variables?: string[]
   variableFile?: string
+  watch?: boolean
 }
 
 async function parseVariablesToJsonl(variables?: string[], variableFile?: string): Promise<string | undefined> {
@@ -34,7 +37,7 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {app, storeFqdn, query, variables, variableFile} = input
+  const {app, storeFqdn, query, variables, variableFile, watch = false} = input
 
   renderInfo({
     headline: 'Starting bulk operation.',
@@ -64,31 +67,45 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     return
   }
 
-  const result = bulkOperationResponse?.bulkOperation
-  if (result) {
-    const infoSections = [
-      {
-        title: 'Bulk Operation Created',
-        body: [
-          {
-            list: {
-              items: [
-                outputContent`ID: ${outputToken.cyan(result.id)}`.value,
-                outputContent`Status: ${outputToken.yellow(result.status)}`.value,
-                outputContent`Created: ${outputToken.gray(String(result.createdAt))}`.value,
-              ],
-            },
-          },
-        ],
-      },
-    ]
+  const createdOperation = bulkOperationResponse?.bulkOperation
+  if (createdOperation) {
+    if (watch) {
+      const finishedOperation = await watchBulkOperation(adminSession, createdOperation.id)
+      renderBulkOperationResult(finishedOperation)
+    } else {
+      renderBulkOperationResult(createdOperation)
+    }
+  }
+}
 
-    renderInfo({customSections: infoSections})
+function renderBulkOperationResult(operation: BulkOperation): void {
+  const headline = formatBulkOperationStatus(operation).value
+  const items = [
+    outputContent`ID: ${outputToken.cyan(operation.id)}`.value,
+    outputContent`Status: ${outputToken.yellow(operation.status)}`.value,
+    outputContent`Created at: ${outputToken.gray(String(operation.createdAt))}`.value,
+    ...(operation.completedAt
+      ? [outputContent`Completed at: ${outputToken.gray(String(operation.completedAt))}`.value]
+      : []),
+  ]
 
-    renderSuccess({
-      headline: 'Bulk operation started successfully!',
-      body: 'Congrats!',
-    })
+  const customSections = [{body: [{list: {items}}]}]
+
+  switch (operation.status) {
+    case 'CREATED':
+      renderSuccess({headline: 'Bulk operation started.', customSections})
+      break
+    case 'COMPLETED':
+      if (operation.url) {
+        const downloadMessage = outputContent`Download results ${outputToken.link('here.', operation.url)}`.value
+        renderSuccess({headline, body: [downloadMessage], customSections})
+      } else {
+        renderSuccess({headline, customSections})
+      }
+      break
+    default:
+      renderError({headline, customSections})
+      break
   }
 }
 
