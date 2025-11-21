@@ -13,14 +13,10 @@ export type BulkOperationRunQueryMutation = {
       completedAt?: unknown | null
       createdAt: unknown
       errorCode?: Types.BulkOperationErrorCode | null
-      fileSize?: unknown | null
       id: string
       objectCount: unknown
       partialDataUrl?: string | null
-      query: string
-      rootObjectCount: unknown
       status: Types.BulkOperationStatus
-      type: Types.BulkOperationType
       url?: string | null
     } | null
     userErrors: {code?: Types.BulkOperationUserErrorCode | null; field?: string[] | null; message: string}[]
@@ -71,14 +67,10 @@ export const BulkOperationRunQuery = {
                       {kind: 'Field', name: {kind: 'Name', value: 'completedAt'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'errorCode'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'fileSize'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'objectCount'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'partialDataUrl'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'query'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'rootObjectCount'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'status'}},
-                      {kind: 'Field', name: {kind: 'Name', value: 'type'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                       {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
                     ],
