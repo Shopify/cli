@@ -1,12 +1,9 @@
 import {
   AppSchema,
   CurrentAppConfiguration,
-  LegacyAppConfiguration,
   getAppScopes,
   getAppScopesArray,
   getUIExtensionRendererVersion,
-  isCurrentAppSchema,
-  isLegacyAppSchema,
   validateExtensionsHandlesInCollection,
   validateFunctionExtensionsWithUiHandle,
 } from './app.js'
@@ -61,43 +58,8 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   },
 }
 
-const CORRECT_LEGACY_APP_SCHEMA: LegacyAppConfiguration = {
-  path: '',
-  extension_directories: [],
-  web_directories: [],
-  scopes: 'write_products',
-}
-
 describe('app schema validation', () => {
-  describe('legacy schema validator', () => {
-    test('checks whether legacy app schema is valid -- pass', () => {
-      expect(isLegacyAppSchema(CORRECT_LEGACY_APP_SCHEMA)).toBe(true)
-    })
-    test('checks whether legacy app schema is valid -- fail', () => {
-      const config = {
-        ...CORRECT_LEGACY_APP_SCHEMA,
-        some_other_key: 'i am not valid, i will fail',
-      }
-      expect(isLegacyAppSchema(config)).toBe(false)
-    })
-  })
-
   describe('current schema validator', () => {
-    test('checks whether current app schema is valid -- pass', () => {
-      expect(isCurrentAppSchema(CORRECT_CURRENT_APP_SCHEMA)).toBe(true)
-    })
-    test('checks whether current app schema is valid -- fail', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
-      }
-
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      delete config.client_id
-
-      expect(isCurrentAppSchema(config)).toBe(false)
-    })
-
     test('extension_directories should be transformed to double asterisks', () => {
       const config = {
         ...CORRECT_CURRENT_APP_SCHEMA,
@@ -210,24 +172,14 @@ describe('getUIExtensionRendererVersion', () => {
 })
 
 describe('getAppScopes', () => {
-  test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes,read_products'}
-    expect(getAppScopes(config)).toEqual('read_themes,read_products')
-  })
-
-  test('returns the access_scopes.scopes key when schema is current', () => {
+  test('returns the access_scopes.scopes key', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes,read_themes'}}
     expect(getAppScopes(config)).toEqual('read_themes,read_themes')
   })
 })
 
 describe('getAppScopesArray', () => {
-  test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes, read_order ,write_products'}
-    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
-  })
-
-  test('returns the access_scopes.scopes key when schema is current', () => {
+  test('returns the access_scopes.scopes key', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
   })
@@ -323,18 +275,6 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
       },
     }
     const app = testApp({configuration})
-
-    // When/Then
-    await expect(app.preDeployValidation()).resolves.not.toThrow()
-  })
-
-  test('does not throw an error for legacy schema apps', async () => {
-    // Given
-    const configuration: LegacyAppConfiguration = {
-      ...CORRECT_LEGACY_APP_SCHEMA,
-      scopes: 'read_orders',
-    }
-    const app = testApp(configuration, 'legacy')
 
     // When/Then
     await expect(app.preDeployValidation()).resolves.not.toThrow()

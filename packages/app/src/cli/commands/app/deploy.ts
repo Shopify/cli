@@ -1,6 +1,5 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {getAppConfigurationState} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
@@ -81,10 +80,6 @@ export default class Deploy extends AppLinkedCommand {
     }))
 
     const requiredNonTTYFlags = ['force']
-    const configurationState = await getAppConfigurationState(flags.path, flags.config)
-    if (configurationState.state === 'template-only' && !clientId) {
-      requiredNonTTYFlags.push('client-id')
-    }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
