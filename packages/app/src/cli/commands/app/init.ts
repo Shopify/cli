@@ -7,7 +7,6 @@ import {validateFlavorValue, validateTemplateValue} from '../../services/init/va
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
-import {fetchOrganizations} from '../../services/dev/fetch.js'
 import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -102,9 +101,8 @@ export default class Init extends AppLinkedCommand {
     } else {
       let org: Organization
       if (flags['organization-id']) {
-        // If an organization-id is provided, fetch all organizations and find the matching one
-        const orgs = await fetchOrganizations()
-        const matchingOrg = orgs.find((organization) => organization.id === flags['organization-id'])
+        // If an organization-id is provided, fetch the organization directly
+        const matchingOrg = await developerPlatformClient.orgFromId(flags['organization-id'])
         if (!matchingOrg) {
           throw new AbortError(
             `Organization with ID ${flags['organization-id']} not found`,
