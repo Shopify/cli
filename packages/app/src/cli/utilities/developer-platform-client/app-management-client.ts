@@ -1013,12 +1013,17 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return appDeepLink({id, organizationId})
   }
 
-  async devSessionCreate({appId, assetsUrl, shopFqdn}: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
+  async devSessionCreate({
+    appId,
+    assetsUrl,
+    shopFqdn,
+    clientState,
+  }: DevSessionCreateOptions): Promise<DevSessionCreateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     return this.appDevRequest({
       query: DevSessionCreate,
       shopFqdn,
-      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? ''},
+      variables: {appId: appIdNumber, assetsUrl: assetsUrl ?? '', clientState},
       requestOptions: {requestMode: 'slow-request'},
     })
   }

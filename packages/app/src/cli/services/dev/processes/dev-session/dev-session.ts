@@ -282,6 +282,7 @@ export class DevSession {
         assetsUrl: signedURL,
         manifest,
         inheritedModuleUids,
+        clientState: {my_key: 'my_value'},
       }
       if (this.statusManager.status.isReady) {
         return this.devSessionUpdateWithRetry(payload)
