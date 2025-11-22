@@ -8,14 +8,10 @@ mutation BulkOperationRunQuery($query: String!) {
       completedAt
       createdAt
       errorCode
-      fileSize
       id
       objectCount
       partialDataUrl
-      query
-      rootObjectCount
       status
-      type
       url
     }
     userErrors {
