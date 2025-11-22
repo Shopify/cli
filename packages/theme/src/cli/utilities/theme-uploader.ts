@@ -9,6 +9,7 @@ import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cl
 import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {badsslEnabled} from '@shopify/cli-kit/node/context/local'
 import {Writable} from 'stream'
 
 interface UploadOptions {
@@ -35,6 +36,7 @@ export const MAX_BATCH_FILE_COUNT = 20
 // 1MB
 export const MAX_BATCH_BYTESIZE = 1024 * 1024
 export const MAX_UPLOAD_RETRY_COUNT = 2
+export const MIN_BATCH_FILE_COUNT = 1
 
 export function uploadTheme(
   theme: Theme,
@@ -264,11 +266,14 @@ function buildUploadJob(
 
   const progress = {current: 0, total: filesToUpload.length}
 
+  // Track dynamic batch size for badssl mode
+  const batchSizeTracker = {current: MAX_BATCH_FILE_COUNT}
+
   const uploadFileBatches = (fileType: ChecksumWithSize[]) => {
     if (fileType.length === 0) return Promise.resolve()
     return Promise.all(
-      createBatches(fileType).map((batch) =>
-        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
+      createBatches(fileType, batchSizeTracker.current).map((batch) =>
+        uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults, batchSizeTracker).then(() => {
           progress.current += batch.length
           batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
         }),
@@ -346,13 +351,13 @@ function orderFilesToBeUploaded(files: ChecksumWithSize[]): {
   }
 }
 
-function createBatches<T extends {size: number}>(files: T[]): T[][] {
+function createBatches<T extends {size: number}>(files: T[], maxBatchFileCount = MAX_BATCH_FILE_COUNT): T[][] {
   const batches: T[][] = []
   let currentBatch: T[] = []
   let currentBatchSize = 0
 
   for (const file of files) {
-    const hasEnoughItems = currentBatch.length >= MAX_BATCH_FILE_COUNT
+    const hasEnoughItems = currentBatch.length >= maxBatchFileCount
     const hasEnoughByteSize = currentBatchSize >= MAX_BATCH_BYTESIZE
 
     if (hasEnoughItems || hasEnoughByteSize) {
@@ -396,6 +401,7 @@ async function uploadBatch(
   session: AdminSession,
   themeId: number,
   uploadResults: Map<string, Result>,
+  batchSizeTracker: {current: number},
 ) {
   const uploadParams = batch.map((file) => {
     const value = localThemeFileSystem.files.get(file.key)?.value
@@ -407,7 +413,7 @@ async function uploadBatch(
     }
   })
   outputDebug(`Uploading the following files:\n${batch.map((file) => `-${file.key}`).join('\n')}`)
-  const results = await handleBulkUpload(uploadParams, themeId, session)
+  const results = await handleBulkUpload(uploadParams, themeId, session, 0, batchSizeTracker)
   // store the results in uploadResults, overwriting any existing results
   results.forEach((result) => {
     uploadResults.set(result.key, result)
@@ -425,11 +431,19 @@ export function updateUploadErrors(result: Result, localThemeFileSystem: ThemeFi
   }
 }
 
+function isBadRecordMacError(error: unknown): boolean {
+  if (error instanceof Error) {
+    return error.message.toLowerCase().includes('bad record mac')
+  }
+  return false
+}
+
 async function handleBulkUpload(
   uploadParams: AssetParams[],
   themeId: number,
   session: AdminSession,
   count = 0,
+  batchSizeTracker?: {current: number},
 ): Promise<Result[]> {
   if (uploadParams.length === 0) {
     return []
@@ -441,7 +455,33 @@ async function handleBulkUpload(
     )
   }
 
-  const results = await bulkUploadThemeAssets(themeId, uploadParams, session)
+  let results: Result[]
+  try {
+    results = await bulkUploadThemeAssets(themeId, uploadParams, session)
+  } catch (error) {
+    // Handle bad record mac errors in badssl mode by reducing batch size
+    if (badsslEnabled() && batchSizeTracker && isBadRecordMacError(error)) {
+      const newBatchSize = Math.max(Math.floor(batchSizeTracker.current / 2), MIN_BATCH_FILE_COUNT)
+
+      if (newBatchSize < batchSizeTracker.current) {
+        outputDebug(`[badssl mode] Reducing batch size from ${batchSizeTracker.current} to ${newBatchSize}`)
+        recordEvent(`theme-service:upload-badssl-retry:batch-size-reduced:${newBatchSize}`)
+        batchSizeTracker.current = newBatchSize
+
+        // Re-batch and retry with smaller size
+        const retryResults: Result[] = []
+        for (let i = 0; i < uploadParams.length; i += newBatchSize) {
+          const smallBatch = uploadParams.slice(i, i + newBatchSize)
+          // eslint-disable-next-line no-await-in-loop
+          const batchResults = await handleBulkUpload(smallBatch, themeId, session, count + 1, batchSizeTracker)
+          retryResults.push(...batchResults)
+        }
+        return retryResults
+      }
+    }
+    throw error
+  }
+
   outputDebug(
     `File Upload Results:\n${results
       .map((result) => `-${result.key}: ${result.success ? 'success' : 'failure'}`)
@@ -453,7 +493,14 @@ async function handleBulkUpload(
     outputDebug(
       `The following files failed to upload:\n${failedUploadResults.map((param) => `-${param.key}`).join('\n')}`,
     )
-    const failedResults = await handleFailedUploads(failedUploadResults, uploadParams, themeId, session, count)
+    const failedResults = await handleFailedUploads(
+      failedUploadResults,
+      uploadParams,
+      themeId,
+      session,
+      count,
+      batchSizeTracker,
+    )
     return results.concat(failedResults)
   }
   return results
@@ -465,6 +512,7 @@ async function handleFailedUploads(
   themeId: number,
   session: AdminSession,
   count: number,
+  batchSizeTracker?: {current: number},
 ): Promise<Result[]> {
   const failedUploadsSet = new Set(failedUploadResults.map((result) => result.key))
   const failedUploadParams = uploadParams.filter((param) => failedUploadsSet.has(param.key))
@@ -481,7 +529,7 @@ async function handleFailedUploads(
   }
 
   recordEvent(`theme-service:upload-failed-retry:${failedUploadParams.length}`)
-  return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
+  return handleBulkUpload(failedUploadParams, themeId, session, count + 1, batchSizeTracker)
 }
 
 function reportFailedUploads(uploadResults: Map<string, Result>, environment?: string) {
