@@ -2,12 +2,14 @@ import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
+import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {renderSuccess, renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {parse} from 'graphql'
+import {writeFile} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
   app: AppLinkedInterface
@@ -15,10 +17,11 @@ interface ExecuteBulkOperationInput {
   query: string
   variables?: string[]
   watch?: boolean
+  outputFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {app, storeFqdn, query, variables, watch = false} = input
+  const {app, storeFqdn, query, variables, watch = false, outputFile} = input
 
   renderInfo({
     headline: 'Starting bulk operation.',
@@ -56,14 +59,14 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   if (createdOperation) {
     if (watch) {
       const finishedOperation = await watchBulkOperation(adminSession, createdOperation.id)
-      renderBulkOperationResult(finishedOperation)
+      await renderBulkOperationResult(finishedOperation, outputFile)
     } else {
-      renderBulkOperationResult(createdOperation)
+      await renderBulkOperationResult(createdOperation, outputFile)
     }
   }
 }
 
-function renderBulkOperationResult(operation: BulkOperation): void {
+async function renderBulkOperationResult(operation: BulkOperation, outputFile?: string): Promise<void> {
   const headline = formatBulkOperationStatus(operation).value
   const items = [
     outputContent`ID: ${outputToken.cyan(operation.id)}`.value,
@@ -82,8 +85,15 @@ function renderBulkOperationResult(operation: BulkOperation): void {
       break
     case 'COMPLETED':
       if (operation.url) {
-        const downloadMessage = outputContent`Download results ${outputToken.link('here.', operation.url)}`.value
-        renderSuccess({headline, body: [downloadMessage], customSections})
+        const results = await downloadBulkOperationResults(operation.url)
+
+        if (outputFile) {
+          await writeFile(outputFile, results)
+          renderSuccess({headline, body: [`Results written to ${outputFile}`], customSections})
+        } else {
+          process.stdout.write(results)
+          renderSuccess({headline, customSections})
+        }
       } else {
         renderSuccess({headline, customSections})
       }
