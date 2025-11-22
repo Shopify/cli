@@ -1,0 +1,11 @@
+query GetBulkOperationById($id: ID!) {
+  bulkOperation(id: $id) {
+    completedAt
+    createdAt
+    errorCode
+    id
+    objectCount
+    status
+    url
+  }
+}
