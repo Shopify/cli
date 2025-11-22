@@ -92,6 +92,28 @@ describe('ThemeManager', () => {
       expect(result).toEqual(mockTheme)
       expect(manager.getStoredThemeId()).toBe('123')
     })
+
+    test('always creates a new theme when name is provided', async () => {
+      // Given
+      manager.setThemeId('123')
+      const customTheme = {...mockTheme, name: 'Custom name'}
+      vi.mocked(themeCreate).mockResolvedValue(customTheme)
+
+      // When
+      const result = await manager.findOrCreate('Custom name')
+
+      // Then
+      expect(fetchTheme).not.toHaveBeenCalled()
+      expect(themeCreate).toHaveBeenCalledWith(
+        {
+          name: 'Custom name',
+          role: DEVELOPMENT_THEME_ROLE,
+        },
+        session,
+      )
+      expect(result).toEqual(customTheme)
+      expect(manager.getStoredThemeId()).toBe('123')
+    })
   })
 
   describe('fetch', () => {
