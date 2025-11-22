@@ -1,6 +1,11 @@
 import {retryAwareRequest, isNetworkError, isTransientNetworkError} from './api.js'
+import {recordRetry} from '../../public/node/analytics.js'
 import {ClientError} from 'graphql-request'
 import {describe, test, vi, expect, beforeEach, afterEach} from 'vitest'
+
+vi.mock('../../public/node/analytics.js', () => ({
+  recordRetry: vi.fn(),
+}))
 
 describe('retryAwareRequest', () => {
   beforeEach(() => {
@@ -373,6 +378,229 @@ describe('retryAwareRequest', () => {
         expect(mockRequestFn).toHaveBeenCalledTimes(1)
       }),
     )
+  })
+
+  test('records retry events when recordRetries is enabled', async () => {
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [
+        {
+          extensions: {
+            code: '429',
+          },
+        } as any,
+      ],
+      headers: new Headers({'retry-after': '100'}),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {hello: 'world!'},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => {
+        return Promise.resolve(successResponse)
+      })
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/api',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+        recordThemeCommandRetries: true,
+      },
+      undefined,
+      {
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {hello: 'world!'},
+    })
+
+    expect(recordRetry).toHaveBeenCalledTimes(1)
+    expect(recordRetry).toHaveBeenCalledWith('https://themes.example.com/api', 'http-retry-1:can-retry:')
+  })
+
+  test('does not record retry events when recordRetries is disabled', async () => {
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [
+        {
+          extensions: {
+            code: '429',
+          },
+        } as any,
+      ],
+      headers: new Headers(),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {hello: 'world!'},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => {
+        return Promise.resolve(successResponse)
+      })
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://app.example.com/api',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+        recordThemeCommandRetries: false,
+      },
+      undefined,
+      {
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {hello: 'world!'},
+    })
+
+    expect(recordRetry).not.toHaveBeenCalled()
+  })
+
+  test('records multiple retry events with correct attempt numbers', async () => {
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [
+        {
+          extensions: {
+            code: '429',
+          },
+        } as any,
+      ],
+      headers: new Headers(),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {success: true},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => {
+        return Promise.resolve(successResponse)
+      })
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/upload',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+        recordThemeCommandRetries: true,
+      },
+      undefined,
+      {
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {success: true},
+    })
+
+    expect(recordRetry).toHaveBeenCalledTimes(2)
+    expect(recordRetry).toHaveBeenNthCalledWith(1, 'https://themes.example.com/upload', 'http-retry-1:can-retry:')
+    expect(recordRetry).toHaveBeenNthCalledWith(2, 'https://themes.example.com/upload', 'http-retry-2:can-retry:')
+  })
+
+  test('records retry events for too many requests status', async () => {
+    const rateLimitedResponse = {
+      status: 200,
+      errors: [
+        {
+          extensions: {
+            code: '429',
+          },
+        } as any,
+      ],
+      headers: new Headers(),
+    }
+
+    const successResponse = {
+      status: 200,
+      data: {authenticated: true},
+      headers: new Headers(),
+    }
+
+    const mockRequestFn = vi
+      .fn()
+      .mockImplementationOnce(() => {
+        throw new ClientError(rateLimitedResponse, {query: ''})
+      })
+      .mockImplementation(() => {
+        return Promise.resolve(successResponse)
+      })
+
+    const mockScheduleDelayFn = vi.fn((fn) => fn())
+
+    const result = retryAwareRequest(
+      {
+        request: mockRequestFn,
+        url: 'https://themes.example.com/auth',
+        useNetworkLevelRetry: true,
+        maxRetryTimeMs: 10000,
+        recordThemeCommandRetries: true,
+      },
+      undefined,
+      {
+        scheduleDelay: mockScheduleDelayFn,
+      },
+    )
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toEqual({
+      headers: expect.anything(),
+      status: 200,
+      data: {authenticated: true},
+    })
+
+    expect(recordRetry).toHaveBeenCalledTimes(1)
+    expect(recordRetry).toHaveBeenCalledWith('https://themes.example.com/auth', 'http-retry-1:can-retry:')
   })
 })
 

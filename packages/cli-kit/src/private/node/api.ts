@@ -2,6 +2,7 @@ import {sanitizedHeadersOutput} from './api/headers.js'
 import {sanitizeURL} from './api/urls.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
+import {recordRetry} from '../../public/node/analytics.js'
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 import {performance} from 'perf_hooks'
@@ -17,9 +18,11 @@ export type NetworkRetryBehaviour =
   | {
       useNetworkLevelRetry: true
       maxRetryTimeMs: number
+      recordThemeCommandRetries?: boolean
     }
   | {
       useNetworkLevelRetry: false
+      recordThemeCommandRetries?: boolean
     }
 
 type RequestOptions<T> = {
@@ -149,6 +152,12 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
       if (!isTransientNetworkError(err)) {
         throw err
       }
+
+      // Record theme command retries
+      if (requestOptions.recordThemeCommandRetries) {
+        recordRetry(requestOptions.url, `network-retry:${(err as Error).message}`)
+      }
+
       outputDebug(`Retrying request to ${requestOptions.url} due to network error ${err}`)
     }
   }
@@ -370,6 +379,11 @@ ${result.sanitizedHeaders}
       }
     }
     retriesUsed += 1
+
+    // Record theme command retries
+    if (requestOptions.recordThemeCommandRetries) {
+      recordRetry(requestOptions.url, `http-retry-${retriesUsed}:${result.status}:`)
+    }
 
     // prefer to wait based on a header if given; the caller's preference if not; and a default if neither.
     const retryDelayMs = result.delayMs ?? retryOptions.defaultDelayMs ?? DEFAULT_RETRY_DELAY_MS

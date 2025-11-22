@@ -37,6 +37,7 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   useNetworkLevelRetry: true,
   useAbortSignal: false,
   maxRetryTimeMs: 90 * 1000,
+  recordThemeCommandRetries: true,
 }
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
