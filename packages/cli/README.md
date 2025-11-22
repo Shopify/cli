@@ -2330,6 +2330,7 @@ FLAGS
   -u, --unpublished             Create a new unpublished theme and push to it.
   -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed). Wrap the value in double
                                 quotes if you're using wildcards.
+      --name=<value>            The name for the theme. Will always create a new theme.
       --no-color                Disable color output.
       --password=<value>        Password generated from the Theme Access app.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.

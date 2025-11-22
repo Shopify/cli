@@ -97,6 +97,11 @@ export default class Push extends ThemeCommand {
       description: 'Require theme check to pass without errors before pushing. Warnings are allowed.',
       env: 'SHOPIFY_FLAG_STRICT_PUSH',
     }),
+    name: Flags.string({
+      description: 'The name for the theme. Will always create a new theme.',
+      env: 'SHOPIFY_FLAG_NAME',
+      exclusive: ['theme'],
+    }),
     environment: themeFlags.environment,
   }
 
