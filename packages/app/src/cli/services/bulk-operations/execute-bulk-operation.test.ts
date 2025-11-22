@@ -2,6 +2,7 @@ import {executeBulkOperation} from './execute-bulk-operation.js'
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation} from './watch-bulk-operation.js'
+import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
@@ -9,13 +10,16 @@ import {renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/u
 import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {describe, test, expect, vi, beforeEach} from 'vitest'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./run-query.js')
 vi.mock('./run-mutation.js')
 vi.mock('./watch-bulk-operation.js')
+vi.mock('./download-bulk-operation-results.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/node/fs')
 
 describe('executeBulkOperation', () => {
   const mockApp = {
@@ -44,6 +48,10 @@ describe('executeBulkOperation', () => {
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
+  })
+
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
   })
 
   test('runs query operation when GraphQL document starts with query', async () => {
@@ -334,6 +342,7 @@ describe('executeBulkOperation', () => {
 
     vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
     vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue('{"id":"gid://shopify/Product/123"}')
 
     await executeBulkOperation({
       app: mockApp,
@@ -346,9 +355,71 @@ describe('executeBulkOperation', () => {
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         headline: expect.stringContaining('Bulk operation succeeded:'),
-        body: expect.arrayContaining([expect.stringContaining('https://example.com/download')]),
       }),
     )
+  })
+
+  test('writes results to file when --output-file flag is provided', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const outputFile = '/tmp/results.jsonl'
+    const resultsContent = '{"id":"gid://shopify/Product/123"}\n{"id":"gid://shopify/Product/456"}'
+
+    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    const completedOperation = {
+      ...createdBulkOperation,
+      status: 'COMPLETED' as const,
+      url: 'https://example.com/download',
+      objectCount: '2',
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
+    vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsContent)
+
+    await executeBulkOperation({
+      app: mockApp,
+      storeFqdn,
+      query,
+      watch: true,
+      outputFile,
+    })
+
+    expect(writeFile).toHaveBeenCalledWith(outputFile, resultsContent)
+  })
+
+  test('writes results to stdout when --output-file flag is not provided', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const resultsContent = '{"id":"gid://shopify/Product/123"}\n{"id":"gid://shopify/Product/456"}'
+
+    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    const completedOperation = {
+      ...createdBulkOperation,
+      status: 'COMPLETED' as const,
+      url: 'https://example.com/download',
+      objectCount: '2',
+    }
+
+    const mockOutput = mockAndCaptureOutput()
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
+    vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsContent)
+
+    await executeBulkOperation({
+      app: mockApp,
+      storeFqdn,
+      query,
+      watch: true,
+    })
+
+    expect(mockOutput.info()).toContain(resultsContent)
+    expect(writeFile).not.toHaveBeenCalled()
   })
 
   test.each(['FAILED', 'CANCELED', 'EXPIRED'] as const)(
