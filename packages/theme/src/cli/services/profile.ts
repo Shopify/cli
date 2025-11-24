@@ -8,6 +8,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
+import {filePathToFileUrl} from '@shopify/cli-kit/node/themes/utils'
 
 export async function profile(
   adminSession: AdminSession,
@@ -49,8 +50,9 @@ export async function profile(
 
 async function openProfile(profileJson: string) {
   // Adapted from https://github.com/jlfwong/speedscope/blob/146477a8508a6d2da697cb0ea0a426ba81b3e8dc/bin/cli.js#L63
-  let urlToOpen = await resolveAssetPath('speedscope', 'index.html')
-  outputDebug(`[Theme Profile] Resolved URL to open: ${urlToOpen}`)
+  const speedscopeIndexPath = await resolveAssetPath('speedscope', 'index.html')
+  const speedscopeIndexUrl = filePathToFileUrl(speedscopeIndexPath)
+  outputDebug(`[Theme Profile] Resolved URL to open: ${speedscopeIndexUrl}`)
 
   const filename = 'liquid-profile'
   const sourceBase64 = Buffer.from(profileJson).toString('base64')
@@ -61,18 +63,18 @@ async function openProfile(profileJson: string) {
   outputDebug(`[Theme Profile] writing JS file to: ${jsPath}`)
   await writeFile(jsPath, jsSource)
   outputDebug(`[Theme Profile] JS file created successfully: ${jsPath}`)
-  urlToOpen += `#localProfilePath=${jsPath}`
+  const redirectUrl = `${speedscopeIndexUrl}#localProfilePath=${jsPath}`
 
   // For some silly reason, the OS X open command ignores any query parameters or hash parameters
   // passed as part of the URL. To get around this weird issue, we'll create a local HTML file
   // that just redirects.
   const htmlPath = joinPath(tempDirectory(), `${filePrefix}.html`)
   outputDebug(`[Theme Profile] writing HTML file to: ${htmlPath}`)
-  await writeFile(htmlPath, `<script>window.location=${JSON.stringify(urlToOpen)}</script>`)
+  await writeFile(htmlPath, `<script>window.location=${JSON.stringify(redirectUrl)}</script>`)
   outputDebug(`[Theme Profile] HTML file created successfully: ${htmlPath}`)
 
-  urlToOpen = `file://${htmlPath}`
-  outputDebug(`[Theme Profile] Opening URL: ${urlToOpen}`)
-  const opened = await openURL(urlToOpen)
+  const htmlUrl = filePathToFileUrl(htmlPath)
+  outputDebug(`[Theme Profile] Opening URL: ${htmlUrl}`)
+  const opened = await openURL(htmlUrl)
   outputDebug(`[Theme Profile] URL opened successfully: ${opened}`)
 }
