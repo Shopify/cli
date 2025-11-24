@@ -30,6 +30,7 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
+import ImportDefinitions from './commands/app/data/import-definitions.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -60,6 +61,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:generate:extension': AppGenerateExtension,
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
+  'app:data:import-definitions': ImportDefinitions,
   'webhook:trigger': WebhookTriggerDeprecated,
   'demo:watcher': DemoWatcher,
 }

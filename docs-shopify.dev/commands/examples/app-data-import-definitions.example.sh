@@ -1,0 +1,1 @@
+shopify app data import-definitions [flags]

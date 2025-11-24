@@ -3,6 +3,7 @@
 * [`shopify app build`](#shopify-app-build)
 * [`shopify app config link`](#shopify-app-config-link)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
+* [`shopify app data import-definitions`](#shopify-app-data-import-definitions)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
 * [`shopify app dev clean`](#shopify-app-dev-clean)
@@ -165,6 +166,31 @@ DESCRIPTION
 
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
+```
+
+## `shopify app data import-definitions`
+
+Import metafield and metaobject definitions.
+
+```
+USAGE
+  $ shopify app data import-definitions [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [-s
+    <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Import metafield and metaobject definitions.
+
+  Import metafield and metaobject definitions from your development store. "Read more about declarative custom data
+  definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
 ```
 
 ## `shopify app deploy`
