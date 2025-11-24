@@ -5,15 +5,36 @@ import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {readStdin} from '@shopify/cli-kit/node/system'
 import {parse} from 'graphql'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
   remoteApp: OrganizationApp
   storeFqdn: string
-  query: string
+  query?: string
   variables?: string[]
   variableFile?: string
+}
+
+/**
+ * Resolves the query from the provided flag or stdin.
+ * Follows the same pattern as parseVariablesToJsonl for consistency.
+ */
+async function resolveQuery(query?: string): Promise<string> {
+  if (query) {
+    return query
+  }
+
+  const stdinContent = await readStdin()
+  if (stdinContent) {
+    return stdinContent
+  }
+
+  throw new AbortError(
+    'No query provided. Use the --query flag or pipe input via stdin.',
+    'Example: echo "query { ... }" | shopify app execute',
+  )
 }
 
 async function parseVariablesToJsonl(variables?: string[], variableFile?: string): Promise<string | undefined> {
@@ -34,7 +55,9 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, variableFile} = input
+  const {remoteApp, storeFqdn, variables, variableFile} = input
+
+  const query = await resolveQuery(input.query)
 
   renderInfo({
     headline: 'Starting bulk operation.',

@@ -4,6 +4,7 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
+import {readStdin} from '@shopify/cli-kit/node/system'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
@@ -11,6 +12,7 @@ import {describe, test, expect, vi, beforeEach} from 'vitest'
 vi.mock('./run-query.js')
 vi.mock('./run-mutation.js')
 vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/session', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/session')
   return {
@@ -313,5 +315,65 @@ describe('executeBulkOperation', () => {
       expect(runBulkOperationQuery).not.toHaveBeenCalled()
       expect(runBulkOperationMutation).not.toHaveBeenCalled()
     })
+  })
+
+  test('reads query from stdin when query flag is not provided', async () => {
+    const stdinQuery = '{ products { edges { node { id } } } }'
+    vi.mocked(readStdin).mockResolvedValue(stdinQuery)
+
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse as any)
+
+    await executeBulkOperation({
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+    })
+
+    expect(readStdin).toHaveBeenCalled()
+    expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query: stdinQuery,
+    })
+  })
+
+  test('prefers query flag over stdin when both are available', async () => {
+    const flagQuery = 'query { orders { edges { node { id } } } }'
+    const stdinQuery = '{ products { edges { node { id } } } }'
+    vi.mocked(readStdin).mockResolvedValue(stdinQuery)
+
+    const mockResponse = {
+      bulkOperation: successfulBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse as any)
+
+    await executeBulkOperation({
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query: flagQuery,
+    })
+
+    expect(readStdin).not.toHaveBeenCalled()
+    expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query: flagQuery,
+    })
+  })
+
+  test('throws error when no query is provided and stdin is empty', async () => {
+    vi.mocked(readStdin).mockResolvedValue(undefined)
+
+    await expect(
+      executeBulkOperation({
+        remoteApp: mockRemoteApp,
+        storeFqdn,
+      }),
+    ).rejects.toThrow('No query provided')
+
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
 })
