@@ -38,9 +38,9 @@ export const appFlags = {
 export const bulkOperationFlags = {
   query: Flags.string({
     char: 'q',
-    description: 'The GraphQL query or mutation to run as a bulk operation.',
+    description: 'The GraphQL query or mutation to run as a bulk operation. If omitted, reads from standard input.',
     env: 'SHOPIFY_FLAG_QUERY',
-    required: true,
+    required: false,
   }),
   variables: Flags.string({
     char: 'v',

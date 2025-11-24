@@ -4,6 +4,8 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {executeBulkOperation} from '../../services/bulk-operations/execute-bulk-operation.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {readStdin} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class Execute extends AppLinkedCommand {
   static summary = 'Execute bulk operations.'
@@ -21,6 +23,14 @@ export default class Execute extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Execute)
 
+    const query = flags.query ?? (await readStdin())
+    if (!query) {
+      throw new AbortError(
+        'No query provided. Use the --query flag or pipe input via stdin.',
+        'Example: echo "query { ... }" | shopify app execute',
+      )
+    }
+
     const appContextResult = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
@@ -37,7 +47,7 @@ export default class Execute extends AppLinkedCommand {
     await executeBulkOperation({
       remoteApp: appContextResult.remoteApp,
       storeFqdn: store.shopDomain,
-      query: flags.query,
+      query,
       variables: flags.variables,
       variableFile: flags['variable-file'],
       watch: flags.watch,
