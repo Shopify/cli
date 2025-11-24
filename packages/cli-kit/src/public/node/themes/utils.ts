@@ -1,6 +1,7 @@
 import {Theme} from './types.js'
 import {renderTextPrompt} from '../ui.js'
 import {getRandomName} from '../../common/string.js'
+import {platform} from 'os'
 
 const GID_REGEXP = /gid:\/\/shopify\/\w*\/(\d+)/
 
@@ -32,4 +33,14 @@ export function parseGid(gid: string): number {
     return parseInt(matches[1], 10)
   }
   throw new Error(`Invalid GID: ${gid}`)
+}
+
+export function filePathToFileUrl(filePath: string): string {
+  let normalized = filePath.replace(/\\/g, '/')
+
+  if (platform() === 'win32') {
+    normalized = `/${normalized}`
+  }
+
+  return encodeURI(`file://${normalized}`)
 }

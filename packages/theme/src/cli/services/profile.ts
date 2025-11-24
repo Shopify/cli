@@ -8,6 +8,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
+import {filePathToFileUrl} from '@shopify/cli-kit/node/themes/utils'
 
 export async function profile(
   adminSession: AdminSession,
@@ -71,7 +72,7 @@ async function openProfile(profileJson: string) {
   await writeFile(htmlPath, `<script>window.location=${JSON.stringify(urlToOpen)}</script>`)
   outputDebug(`[Theme Profile] HTML file created successfully: ${htmlPath}`)
 
-  urlToOpen = `file://${htmlPath}`
+  urlToOpen = filePathToFileUrl(htmlPath)
   outputDebug(`[Theme Profile] Opening URL: ${urlToOpen}`)
   const opened = await openURL(urlToOpen)
   outputDebug(`[Theme Profile] URL opened successfully: ${opened}`)
