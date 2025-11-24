@@ -7,11 +7,7 @@ import {
   MetaObject,
   ValidationRule,
 } from './dcdd.js'
-import {AppLinkedInterface} from '../../../models/app/app.js'
-import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
-import {Organization, OrganizationApp} from '../../../models/organization.js'
-import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {storeContext} from '../../store-context.js'
+import {OrganizationApp, OrganizationStore} from '../../../models/organization.js'
 import {
   MetafieldDefinitions,
   MetafieldForImportFragment,
@@ -40,11 +36,8 @@ import {isEmpty} from '@shopify/cli-kit/common/object'
 import {sleep} from '@shopify/cli-kit/node/system'
 
 interface ImportDeclarativeDefinitionsOptions {
-  app: AppLinkedInterface
   remoteApp: OrganizationApp
-  developerPlatformClient: DeveloperPlatformClient
-  organization: Organization
-  specifications: RemoteAwareExtensionSpecification[]
+  store: OrganizationStore
 }
 
 interface ProcessNodesResult {
@@ -200,13 +193,8 @@ export function processDeclarativeDefinitionNodes(
   }
 }
 
-async function _importDeclarativeDefinitions(options: ImportDeclarativeDefinitionsOptions) {
-  const adminSession = await renderSingleTask({
-    title: outputContent`Connecting to shop`,
-    task: async () => {
-      return createAdminApiSessionForShop(options)
-    },
-  })
+export async function importDeclarativeDefinitions(options: ImportDeclarativeDefinitionsOptions) {
+  const adminSession = await createAdminApiSessionForShop(options)
   const shopName = adminSession.storeFqdn
 
   const dcddOwnerToGraphQLMapping: {
@@ -365,18 +353,7 @@ type ConvertedMetafield =
     }
 
 async function createAdminApiSessionForShop(options: ImportDeclarativeDefinitionsOptions) {
-  const {app, remoteApp, developerPlatformClient, organization, specifications} = options
-
-  const store = await storeContext({
-    appContextResult: {
-      app,
-      remoteApp,
-      developerPlatformClient,
-      organization,
-      specifications,
-    },
-    forceReselectStore: false,
-  })
+  const {remoteApp, store} = options
 
   const appSecrets = remoteApp.apiSecretKeys.map((secret) => secret.secret)
   const appSecret = appSecrets[0]
