@@ -29,7 +29,7 @@ export class NoOrgError extends AbortError {
         `Your current active session is associated with ${identifierMessage(
           formattedIdentifier,
         )} account. To start a new session with a different account, run`,
-        {command: 'shopify auth logout'},
+        {command: 'shopify auth login'},
       ],
       [
         'Have you',
