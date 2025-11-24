@@ -141,6 +141,18 @@ async function selectOrCreateRemoteAppToLinkTo(options: LinkOptions): Promise<{
     }
   }
 
+  // NEW: if a specific config file was requested and it already knows its client_id,
+  // try to resolve the remote app from that config and skip interactive selection.
+  const remoteAppFromConfig = await tryGetRemoteAppFromExistingConfig(options)
+  if (remoteAppFromConfig) {
+    return {
+      remoteApp: remoteAppFromConfig,
+      appDirectory,
+      developerPlatformClient: remoteAppFromConfig.developerPlatformClient,
+    }
+  }
+
+  // Existing behavior: prompt to fetch or create an app
   const remoteApp = await fetchOrCreateOrganizationApp({...creationOptions, directory: appDirectory})
 
   const developerPlatformClient = remoteApp.developerPlatformClient
@@ -188,6 +200,34 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
     return {creationOptions: appCreationDefaults}
   }
 }
+
+async function tryGetRemoteAppFromExistingConfig(
+  options: LinkOptions,
+): Promise<OrganizationApp | undefined> {
+  if (!options.configName) return undefined
+
+  try {
+    const app = await loadApp({
+      specifications: await loadLocalExtensionsSpecifications(),
+      directory: options.directory,
+      mode: 'report',
+      userProvidedConfigName: options.configName,
+      remoteFlags: undefined,
+    })
+
+    const configuration = app.configuration
+
+    if (!isCurrentAppSchema(configuration) || !configuration.client_id) {
+      return undefined
+    }
+
+    const remoteApp = await appFromIdentifiers({apiKey: configuration.client_id})
+    return remoteApp ?? undefined
+  } catch {
+    return undefined
+  }
+}
+
 
 type LocalAppOptions =
   | {
