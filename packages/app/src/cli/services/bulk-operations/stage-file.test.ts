@@ -44,55 +44,53 @@ describe('stageFile', () => {
     } as any)
   })
 
-  test('returns staged upload key when file is successfully staged with empty variables', async () => {
+  test('returns staged upload key when file is successfully staged with no variables', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
 
     const result = await stageFile({
       adminSession: mockSession,
-      jsonVariables: [],
+      variablesJsonl: undefined,
     })
 
     expect(result).toBe('test-key')
   })
 
-  test('converts JSON strings array to JSONL format when uploading file', async () => {
+  test('converts JSONL string to buffer when uploading file', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
     const mockAppend = vi.fn()
     vi.mocked(formData).mockReturnValue({append: mockAppend} as any)
 
-    const jsonVariables = ['{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}']
+    const variablesJsonl = '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}'
 
     await stageFile({
       adminSession: mockSession,
-      jsonVariables,
+      variablesJsonl,
     })
 
-    // Find the form.append('file', buffer, options) call among all append calls
     const fileAppendCall = mockAppend.mock.calls.find((call) => {
       const fieldName = call[0]
       return fieldName === 'file'
     })
-    // Extract the buffer (second argument) that was uploaded
     const uploadedBuffer = fileAppendCall?.[1]
     const uploadedContent = uploadedBuffer?.toString('utf-8')
 
     expect(uploadedContent).toBe('{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}\n')
   })
 
-  test('handles multiple JSON variable strings correctly', async () => {
+  test('handles JSONL with multiple lines correctly', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
     const mockAppend = vi.fn()
     vi.mocked(formData).mockReturnValue({append: mockAppend} as any)
 
-    const jsonVariables = [
+    const variablesJsonl = [
       '{"input":{"id":"gid://shopify/Product/1","title":"New Shirt"}}',
       '{"input":{"id":"gid://shopify/Product/2","title":"Cool Pants"}}',
       '{"input":{"id":"gid://shopify/Product/3","title":"Nice Hat"}}',
-    ]
+    ].join('\n')
 
     await stageFile({
       adminSession: mockSession,
-      jsonVariables,
+      variablesJsonl,
     })
 
     const fileAppendCall = mockAppend.mock.calls.find((call) => {

@@ -10,13 +10,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface StageFileOptions {
   adminSession: AdminSession
-  jsonVariables?: string[]
+  variablesJsonl?: string
 }
 
 export async function stageFile(options: StageFileOptions): Promise<string> {
-  const {adminSession, jsonVariables = []} = options
+  const {adminSession, variablesJsonl} = options
 
-  const buffer = convertJsonToJsonlBuffer(jsonVariables)
+  const buffer = Buffer.from(variablesJsonl ? `${variablesJsonl}\n` : '', 'utf-8')
   const filename = 'bulk-variables.jsonl'
   const size = buffer.length
 
@@ -26,11 +26,6 @@ export async function stageFile(options: StageFileOptions): Promise<string> {
   await uploadFileToStagedUrl(buffer, target.url, target.parameters, filename)
 
   return target.stagedUploadKey
-}
-
-function convertJsonToJsonlBuffer(jsonVariables: string[]): Buffer {
-  const jsonlContent = `${jsonVariables.join('\n')}\n`
-  return Buffer.from(jsonlContent, 'utf-8')
 }
 
 async function requestStagedUpload(

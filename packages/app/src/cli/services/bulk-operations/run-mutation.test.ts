@@ -34,7 +34,7 @@ describe('runBulkOperationMutation', () => {
     const bulkOperationResult = await runBulkOperationMutation({
       adminSession: mockSession,
       query: 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }',
-      variables: ['{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}'],
+      variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
     })
 
     expect(bulkOperationResult?.bulkOperation).toEqual(successfulBulkOperation)
