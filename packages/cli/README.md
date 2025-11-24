@@ -1787,7 +1787,7 @@ FLAGS
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
@@ -1820,7 +1820,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>...        Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -1899,7 +1899,7 @@ FLAGS
       Automatically launch the theme preview in your default web browser.
 
   --password=<value>
-      Password generated from the Theme Access app.
+      Password generated from the Theme Access app or an Admin API token.
 
   --path=<value>
       The path where you want to run the command. Defaults to the current working directory.
@@ -1969,7 +1969,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --verbose                 Increase the verbosity of the output.
 
 DESCRIPTION
@@ -2027,7 +2027,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -2104,7 +2104,7 @@ FLAGS
       --id=<value>              Only list theme with the given ID.
       --name=<value>            Only list themes that contain the given name.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --role=<option>           Only list themes with the given role.
                                 <options: live|unpublished|development>
@@ -2128,7 +2128,7 @@ FLAGS
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -2158,7 +2158,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -2221,7 +2221,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --store-password=<value>  The password for storefronts with password protection.
       --url=<value>             [default: /] The url to be used as context
@@ -2252,7 +2252,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -2293,7 +2293,7 @@ FLAGS
   -x, --ignore=<value>...       Skip downloading the specified files (Multiple flags allowed). Wrap the value in double
                                 quotes if you're using wildcards.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -2331,7 +2331,7 @@ FLAGS
   -x, --ignore=<value>...       Skip uploading the specified files (Multiple flags allowed). Wrap the value in double
                                 quotes if you're using wildcards.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --strict                  Require theme check to pass without errors before pushing. Warnings are allowed.
       --verbose                 Increase the verbosity of the output.
@@ -2391,7 +2391,7 @@ FLAGS
                                 (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           Theme ID or name of the remote theme.
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 
@@ -2418,7 +2418,7 @@ FLAGS
   -s, --store=<value>           Store URL. It can be the store prefix (example) or the full myshopify.com URL
                                 (example.myshopify.com, https://example.myshopify.com).
       --no-color                Disable color output.
-      --password=<value>        Password generated from the Theme Access app.
+      --password=<value>        Password generated from the Theme Access app or an Admin API token.
       --path=<value>            The path where you want to run the command. Defaults to the current working directory.
       --verbose                 Increase the verbosity of the output.
 

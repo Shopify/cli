@@ -5,7 +5,6 @@ import {DevelopmentThemeManager} from '../../utilities/development-theme-manager
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {metafieldsPull} from '../../services/metafields-pull.js'
 import {ensureLiveThemeConfirmed} from '../../utilities/theme-ui.js'
-import {validateThemePassword} from '../../services/flags-validation.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -137,7 +136,6 @@ You can run this command only in a directory that matches the [default Shopify t
   async command(devFlags: DevFlags, adminSession: AdminSession) {
     const {ignore = [], only = []} = devFlags
 
-    validateThemePassword(devFlags.password)
     recordEvent('theme-command:dev:single-env:authenticated')
 
     let theme: Theme

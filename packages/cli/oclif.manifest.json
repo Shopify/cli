@@ -5097,7 +5097,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5206,7 +5206,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5395,7 +5395,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5533,7 +5533,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5624,7 +5624,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5836,7 +5836,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -5932,7 +5932,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6028,7 +6028,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6163,7 +6163,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6273,7 +6273,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6409,7 +6409,7 @@
           "type": "option"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6567,7 +6567,7 @@
           "type": "option"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6710,7 +6710,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -6893,7 +6893,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -7014,7 +7014,7 @@
           "type": "boolean"
         },
         "password": {
-          "description": "Password generated from the Theme Access app.",
+          "description": "Password generated from the Theme Access app or an Admin API token.",
           "env": "SHOPIFY_CLI_THEME_TOKEN",
           "hasDynamicHelp": false,
           "multiple": false,
