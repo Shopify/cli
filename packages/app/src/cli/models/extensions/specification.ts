@@ -255,17 +255,17 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 }
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
-  identifier: string,
-  appModuleFeatures?: ExtensionFeature[],
+  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig'>,
 ) {
   return createExtensionSpecification({
-    identifier,
+    identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
-    appModuleFeatures: () => appModuleFeatures ?? [],
+    appModuleFeatures: spec.appModuleFeatures,
+    buildConfig: spec.buildConfig,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
-      if (appModuleFeatures?.includes('localization')) {
-        const localization = await loadLocalesConfig(directory, identifier)
+      if (spec.appModuleFeatures().includes('localization')) {
+        const localization = await loadLocalesConfig(directory, spec.identifier)
         parsedConfig = {...parsedConfig, localization}
       }
       return parsedConfig
