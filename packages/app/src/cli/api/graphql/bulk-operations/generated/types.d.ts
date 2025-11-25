@@ -197,6 +197,13 @@ export type BulkOperationUserErrorCode =
   /** A bulk operation is already in progress. */
   | 'OPERATION_IN_PROGRESS'
 
+/** The set of valid sort keys for the BulkOperations query. */
+export type BulkOperationsSortKeys =
+  /** Sort by the `completed_at` value. */
+  | 'COMPLETED_AT'
+  /** Sort by the `created_at` value. */
+  | 'CREATED_AT'
+
 /**
  * The possible HTTP methods that can be used when sending a request to upload a file using information from a
  * [StagedMediaUploadTarget](https://shopify.dev/api/admin-graphql/latest/objects/StagedMediaUploadTarget).

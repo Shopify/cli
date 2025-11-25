@@ -92,7 +92,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Check the status of a bulk operation by ID.",
+      "description": "Check the status of a specific bulk operation by ID, or list all recent bulk operations.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -117,12 +117,11 @@
           "type": "option"
         },
         "id": {
-          "description": "The bulk operation ID.",
+          "description": "The bulk operation ID. If not provided, lists all recent bulk operations.",
           "env": "SHOPIFY_FLAG_ID",
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "id",
-          "required": true,
           "type": "option"
         },
         "no-color": {
@@ -180,7 +179,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Check the status of a bulk operation."
+      "summary": "Check the status of bulk operations."
     },
     "app:config:link": {
       "aliases": [
