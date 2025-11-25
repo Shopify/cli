@@ -4,7 +4,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {readStdin} from '@shopify/cli-kit/node/system'
 import {parse} from 'graphql'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
@@ -91,31 +91,38 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   }
 
   const result = bulkOperationResponse?.bulkOperation
-  if (result) {
-    const infoSections = [
-      {
-        title: 'Bulk Operation Created',
-        body: [
-          {
-            list: {
-              items: [
-                outputContent`ID: ${outputToken.cyan(result.id)}`.value,
-                outputContent`Status: ${outputToken.yellow(result.status)}`.value,
-                outputContent`Created: ${outputToken.gray(String(result.createdAt))}`.value,
-              ],
-            },
-          },
-        ],
-      },
-    ]
 
-    renderInfo({customSections: infoSections})
-
-    renderSuccess({
-      headline: 'Bulk operation started successfully!',
-      body: 'Congrats!',
+  if (!result) {
+    renderWarning({
+      headline: 'Bulk operation not created succesfully.',
+      body: 'This is an unexpected error. Please try again later.',
     })
+    throw new BugError('Bulk operation response returned null with no error message.')
   }
+
+  const infoSections = [
+    {
+      title: 'Bulk Operation Created',
+      body: [
+        {
+          list: {
+            items: [
+              outputContent`ID: ${outputToken.cyan(result.id)}`.value,
+              outputContent`Status: ${outputToken.yellow(result.status)}`.value,
+              outputContent`Created: ${outputToken.gray(String(result.createdAt))}`.value,
+            ],
+          },
+        },
+      ],
+    },
+  ]
+
+  renderInfo({customSections: infoSections})
+
+  renderSuccess({
+    headline: 'Bulk operation started successfully!',
+    body: 'Congrats!',
+  })
 }
 
 function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: string): void {
