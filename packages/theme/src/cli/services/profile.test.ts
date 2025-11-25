@@ -127,15 +127,8 @@ describe('profile', () => {
     // Then
     await expect(result).rejects.toThrow(
       new AbortError(
-        'Unable to use Admin API tokens with the profile command',
-        `To use this command with the --password flag you must:
-
-1. Install the Theme Access app on your shop
-2. Generate a new password
-
-Alternatively, you can authenticate normally by not passing the --password flag.
-
-Learn more: https://shopify.dev/docs/storefronts/themes/tools/theme-access`,
+        'Unable to use Admin API or Theme Access tokens with the profile command',
+        'You can authenticate normally by not passing the --password flag.',
       ),
     )
   })
