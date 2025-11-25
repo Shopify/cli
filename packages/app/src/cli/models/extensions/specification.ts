@@ -261,7 +261,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
-    buildConfig: spec.buildConfig,
+    buildConfig: spec.buildConfig ?? {mode: 'none'},
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
