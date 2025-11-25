@@ -1,4 +1,5 @@
 import Build from './commands/app/build.js'
+import BulkStatus from './commands/app/bulk/status.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
@@ -36,6 +37,7 @@ import FunctionInfo from './commands/app/function/info.js'
  */
 export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlinkedCommand} = {
   'app:build': Build,
+  'app:bulk:status': BulkStatus,
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,

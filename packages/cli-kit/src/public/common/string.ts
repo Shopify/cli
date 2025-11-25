@@ -418,3 +418,28 @@ export function normalizeDelimitedString(delimitedString?: string, delimiter = '
 
   return uniqueSortedItems.join(delimiter)
 }
+
+/**
+ * Given two dates, it returns a human-readable string representing the time elapsed between them.
+ *
+ * @param from - Start date.
+ * @param to - End date.
+ * @returns A string like "5 minutes ago" or "2 days ago".
+ */
+export function timeAgo(from: Date, to: Date): string {
+  const seconds = Math.floor((to.getTime() - from.getTime()) / 1000)
+  if (seconds < 60) return `${formatTimeUnit(seconds, 'second')} ago`
+
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${formatTimeUnit(minutes, 'minute')} ago`
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${formatTimeUnit(hours, 'hour')} ago`
+
+  const days = Math.floor(hours / 24)
+  return `${formatTimeUnit(days, 'day')} ago`
+}
+
+function formatTimeUnit(count: number, unit: string): string {
+  return `${count} ${unit}${count === 1 ? '' : 's'}`
+}
