@@ -82,17 +82,6 @@ describe('profile', () => {
     expect(htmlContent).toContain('speedscope')
   })
 
-  test('uses provided passwords for authentication', async () => {
-    // When
-    await profile(mockAdminSession, themeId, urlPath, true, 'themeAccessPassword', 'storePassword')
-
-    // Then
-    expect(ensureAuthenticatedStorefront).toHaveBeenCalledWith([], 'themeAccessPassword', {
-      forceRefresh: false,
-      noPrompt: true,
-    })
-  })
-
   test('throws error when fetch fails', async () => {
     // Given
     vi.mocked(render).mockRejectedValue(new Error('Network error'))
@@ -120,7 +109,7 @@ describe('profile', () => {
     await expect(result).rejects.toThrow('Bad response: 404: {"error":"Some error message"}')
   })
 
-  test('throws error when an Admin API token is used', async () => {
+  test('throws error when a password is used', async () => {
     // When
     const result = profile(mockAdminSession, themeId, urlPath, true, 'shpat_hello', undefined)
 
@@ -128,7 +117,7 @@ describe('profile', () => {
     await expect(result).rejects.toThrow(
       new AbortError(
         'Unable to use Admin API or Theme Access tokens with the profile command',
-        'You can authenticate normally by not passing the --password flag.',
+        'You must authenticate manually by not passing the --password flag.',
       ),
     )
   })

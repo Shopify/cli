@@ -22,12 +22,10 @@ export async function profile(
     ? await ensureValidPassword(storefrontPassword, adminSession.storeFqdn)
     : undefined
 
-  const isUnsupportedToken = ['shpat_', 'shptka_'].some((prefix) => themeAccessPassword?.startsWith(prefix))
-
-  if (isUnsupportedToken) {
+  if (themeAccessPassword) {
     throw new AbortError(
       'Unable to use Admin API or Theme Access tokens with the profile command',
-      'You can authenticate normally by not passing the --password flag.',
+      'You must authenticate manually by not passing the --password flag.',
     )
   }
 
