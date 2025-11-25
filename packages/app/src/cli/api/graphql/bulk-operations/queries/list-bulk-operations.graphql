@@ -1,0 +1,14 @@
+query ListBulkOperations($query: String) {
+  bulkOperations(first: 100, query: $query, sortKey: CREATED_AT, reverse: true) {
+    nodes {
+      id
+      status
+      errorCode
+      objectCount
+      createdAt
+      completedAt
+      url
+      partialDataUrl
+    }
+  }
+}
