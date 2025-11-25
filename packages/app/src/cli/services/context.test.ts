@@ -716,7 +716,7 @@ const renderTryMessage = (isOrg: boolean, identifier: string) => [
         'Check that your account has permission to develop apps for this organization or contact the owner of the organization to grant you permission',
         [
           'Run',
-          {command: 'shopify auth logout'},
+          {command: 'shopify auth login'},
           'to log into a different',
           isOrg ? 'organization' : 'account',
           'than',
