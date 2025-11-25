@@ -81,6 +81,12 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     } else {
       await renderBulkOperationResult(createdOperation, outputFile)
     }
+  } else {
+    renderWarning({
+      headline: 'Bulk operation not created succesfully.',
+      body: 'This is an unexpected error. Please try again later.',
+    })
+    throw new BugError('Bulk operation response returned null with no error message.')
   }
 }
 

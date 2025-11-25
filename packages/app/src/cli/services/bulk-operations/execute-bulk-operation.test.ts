@@ -459,4 +459,27 @@ describe('executeBulkOperation', () => {
       )
     },
   )
+  test('throws BugError and renders warning when bulk operation response returns null with no errors', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse = {
+      bulkOperation: null,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+
+    await expect(
+      executeBulkOperation({
+        remoteApp: mockRemoteApp,
+        storeFqdn,
+        query,
+      }),
+    ).rejects.toThrow('Bulk operation response returned null with no error message.')
+
+    expect(renderWarning).toHaveBeenCalledWith({
+      headline: 'Bulk operation not created succesfully.',
+      body: 'This is an unexpected error. Please try again later.',
+    })
+
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
 })
