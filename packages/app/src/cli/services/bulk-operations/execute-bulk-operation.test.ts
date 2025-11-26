@@ -345,7 +345,7 @@ describe('executeBulkOperation', () => {
     expect(watchBulkOperation).toHaveBeenCalledWith(mockAdminSession, createdBulkOperation.id)
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
-        headline: expect.stringContaining('Bulk operation succeeded.'),
+        headline: expect.stringContaining('Bulk operation succeeded:'),
         body: expect.arrayContaining([expect.stringContaining('https://example.com/download')]),
       }),
     )

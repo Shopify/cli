@@ -97,7 +97,7 @@ function renderBulkOperationResult(operation: BulkOperation): void {
       break
     case 'COMPLETED':
       if (operation.url) {
-        const downloadMessage = outputContent`Download results ${outputToken.link('here.', operation.url)}`.value
+        const downloadMessage = outputContent`Download results ${outputToken.link('here', operation.url)}.`.value
         renderSuccess({headline, body: [downloadMessage], customSections})
       } else {
         renderSuccess({headline, customSections})

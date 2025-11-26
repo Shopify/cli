@@ -12,9 +12,11 @@ export function formatBulkOperationStatus(
     case 'CREATED':
       return outputContent`Starting...`
     case 'COMPLETED':
-      return outputContent`Bulk operation succeeded. ${outputToken.gray(`(${String(operation.objectCount)} objects)`)}`
+      return outputContent`Bulk operation succeeded: ${outputToken.gray(`${String(operation.objectCount)} objects`)}`
     case 'FAILED':
-      return outputContent`Bulk operation failed. ${outputToken.gray(`(error: ${operation.errorCode ?? 'unknown'})`)}`
+      return outputContent`Bulk operation failed. ${outputToken.errorText(
+        `Error: ${operation.errorCode ?? 'unknown'}`,
+      )}`
     case 'CANCELING':
       return outputContent`Bulk operation canceling...`
     case 'CANCELED':

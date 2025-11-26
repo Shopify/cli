@@ -31,8 +31,8 @@ describe('formatBulkOperationStatus', () => {
 
   test('formats COMPLETED status', () => {
     const result = formatBulkOperationStatus(createMockOperation({status: 'COMPLETED', objectCount: 100}))
-    expect(result.value).toContain('Bulk operation succeeded.')
-    expect(result.value).toContain('(100 objects)')
+    expect(result.value).toContain('Bulk operation succeeded:')
+    expect(result.value).toContain('100 objects')
   })
 
   test('formats FAILED status with error code', () => {
@@ -40,13 +40,13 @@ describe('formatBulkOperationStatus', () => {
       createMockOperation({status: 'FAILED', objectCount: 10, errorCode: 'ACCESS_DENIED'}),
     )
     expect(result.value).toContain('Bulk operation failed.')
-    expect(result.value).toContain('(error: ACCESS_DENIED)')
+    expect(result.value).toContain('Error: ACCESS_DENIED')
   })
 
   test('formats FAILED status without error code', () => {
     const result = formatBulkOperationStatus(createMockOperation({status: 'FAILED', objectCount: 10, errorCode: null}))
     expect(result.value).toContain('Bulk operation failed.')
-    expect(result.value).toContain('(error: unknown)')
+    expect(result.value).toContain('Error: unknown')
   })
 
   test('formats CANCELING status', () => {
