@@ -11,7 +11,7 @@ export interface ConnectionArguments {
 }
 
 // eslint-disable-next-line prettier/prettier
-const DEFAULT_CONNECT_TIMEOUT = 100
+const DEFAULT_CONNECT_TIMEOUT = 1000
 // Skip initialization on module load to prevent Spin trying to load a macOS dylib
 // (port checks should never run on Spin anyway)
 let checkPort: ReturnType<typeof getCheckPortHelper>
