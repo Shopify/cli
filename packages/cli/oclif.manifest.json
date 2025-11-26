@@ -846,6 +846,14 @@
           "name": "no-color",
           "type": "boolean"
         },
+        "output-file": {
+          "description": "The file path where results should be written. If not specified, results will be written to STDOUT.",
+          "env": "SHOPIFY_FLAG_OUTPUT_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "output-file",
+          "type": "option"
+        },
         "path": {
           "description": "The path to your app directory.",
           "env": "SHOPIFY_FLAG_PATH",
