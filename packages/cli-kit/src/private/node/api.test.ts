@@ -416,7 +416,7 @@ describe('retryAwareRequest', () => {
         url: 'https://themes.example.com/api',
         useNetworkLevelRetry: true,
         maxRetryTimeMs: 10000,
-        recordThemeCommandRetries: true,
+        recordCommandRetries: true,
       },
       undefined,
       {
@@ -471,7 +471,7 @@ describe('retryAwareRequest', () => {
         url: 'https://app.example.com/api',
         useNetworkLevelRetry: true,
         maxRetryTimeMs: 10000,
-        recordThemeCommandRetries: false,
+        recordCommandRetries: false,
       },
       undefined,
       {
@@ -528,7 +528,7 @@ describe('retryAwareRequest', () => {
         url: 'https://themes.example.com/upload',
         useNetworkLevelRetry: true,
         maxRetryTimeMs: 10000,
-        recordThemeCommandRetries: true,
+        recordCommandRetries: true,
       },
       undefined,
       {
@@ -584,7 +584,7 @@ describe('retryAwareRequest', () => {
         url: 'https://themes.example.com/auth',
         useNetworkLevelRetry: true,
         maxRetryTimeMs: 10000,
-        recordThemeCommandRetries: true,
+        recordCommandRetries: true,
       },
       undefined,
       {

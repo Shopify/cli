@@ -18,11 +18,11 @@ export type NetworkRetryBehaviour =
   | {
       useNetworkLevelRetry: true
       maxRetryTimeMs: number
-      recordThemeCommandRetries?: boolean
+      recordCommandRetries?: boolean
     }
   | {
       useNetworkLevelRetry: false
-      recordThemeCommandRetries?: boolean
+      recordCommandRetries?: boolean
     }
 
 type RequestOptions<T> = {
@@ -153,8 +153,8 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
         throw err
       }
 
-      // Record theme command retries
-      if (requestOptions.recordThemeCommandRetries) {
+      // Record command retries
+      if (requestOptions.recordCommandRetries) {
         recordRetry(requestOptions.url, `network-retry:${(err as Error).message}`)
       }
 
@@ -380,8 +380,8 @@ ${result.sanitizedHeaders}
     }
     retriesUsed += 1
 
-    // Record theme command retries
-    if (requestOptions.recordThemeCommandRetries) {
+    // Record command retries
+    if (requestOptions.recordCommandRetries) {
       recordRetry(requestOptions.url, `http-retry-${retriesUsed}:${result.status}:`)
     }
 
