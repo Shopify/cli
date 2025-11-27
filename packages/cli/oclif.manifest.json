@@ -164,6 +164,85 @@
       "strict": true,
       "summary": "Fetch your app configuration from the Developer Dashboard."
     },
+    "app:config:pull": {
+  "aliases": [
+  ],
+  "args": {
+  },
+  "customPluginName": "@shopify/app",
+  "description": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use the --config flag to target a specific configuration file, or omit it to use the default one.",
+  "descriptionWithMarkdown": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
+  "flags": {
+    "client-id": {
+      "description": "The Client ID of your app.",
+      "env": "SHOPIFY_FLAG_CLIENT_ID",
+      "exclusive": [
+        "config"
+      ],
+      "hasDynamicHelp": false,
+      "hidden": false,
+      "multiple": false,
+      "name": "client-id",
+      "type": "option"
+    },
+    "config": {
+      "char": "c",
+      "description": "The name of the app configuration.",
+      "env": "SHOPIFY_FLAG_APP_CONFIG",
+      "hasDynamicHelp": false,
+      "hidden": false,
+      "multiple": false,
+      "name": "config",
+      "type": "option"
+    },
+    "no-color": {
+      "allowNo": false,
+      "description": "Disable color output.",
+      "env": "SHOPIFY_FLAG_NO_COLOR",
+      "hidden": false,
+      "name": "no-color",
+      "type": "boolean"
+    },
+    "path": {
+      "description": "The path to your app directory.",
+      "env": "SHOPIFY_FLAG_PATH",
+      "hasDynamicHelp": false,
+      "multiple": false,
+      "name": "path",
+      "noCacheDefault": true,
+      "type": "option"
+    },
+    "reset": {
+      "allowNo": false,
+      "description": "Reset all your settings.",
+      "env": "SHOPIFY_FLAG_RESET",
+      "exclusive": [
+        "config"
+      ],
+      "hidden": false,
+      "name": "reset",
+      "type": "boolean"
+    },
+    "verbose": {
+      "allowNo": false,
+      "description": "Increase the verbosity of the output.",
+      "env": "SHOPIFY_FLAG_VERBOSE",
+      "hidden": false,
+      "name": "verbose",
+      "type": "boolean"
+    }
+  },
+  "hasDynamicHelp": false,
+  "hiddenAliases": [
+  ],
+  "id": "app:config:pull",
+  "pluginAlias": "@shopify/cli",
+  "pluginName": "@shopify/cli",
+  "pluginType": "core",
+  "strict": true,
+  "summary": "Refresh an already-linked app configuration without prompts."
+},
+
     "app:config:use": {
       "aliases": [
       ],
