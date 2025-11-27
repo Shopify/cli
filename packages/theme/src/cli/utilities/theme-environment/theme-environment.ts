@@ -6,34 +6,12 @@ import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
+import {promiseWithResolvers} from '../../polyfills/promiseWithResolvers.js'
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {createServer} from 'node:http'
 import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
 import type {DevServerContext} from './types.js'
-
-// Polyfill for Promise.withResolvers
-// Can remove once our minimum supported Node version is 22
-interface PromiseWithResolvers<T> {
-  promise: Promise<T>
-  resolve: (value: T | PromiseLike<T>) => void
-  reject: (reason?: unknown) => void
-}
-
-function promiseWithResolvers<T>(): PromiseWithResolvers<T> {
-  if (typeof Promise.withResolvers === 'function') {
-    return Promise.withResolvers<T>()
-  }
-
-  let resolve!: (value: T | PromiseLike<T>) => void
-  let reject!: (reason?: unknown) => void
-  const promise = new Promise<T>((_resolve, _reject) => {
-    resolve = _resolve
-    reject = _reject
-  })
-
-  return {promise, resolve, reject}
-}
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {
   const {promise: backgroundJobPromise, reject: rejectBackgroundJob} = promiseWithResolvers<never>()
