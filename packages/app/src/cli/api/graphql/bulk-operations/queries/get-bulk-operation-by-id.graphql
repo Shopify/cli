@@ -5,6 +5,7 @@ query GetBulkOperationById($id: ID!) {
     errorCode
     id
     objectCount
+    partialDataUrl
     status
     url
   }

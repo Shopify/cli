@@ -6,6 +6,7 @@ import {
   linesToColumns,
   normalizeDelimitedString,
   pluralize,
+  timeAgo,
   tryParseInt,
 } from './string.js'
 import {describe, expect, test} from 'vitest'
@@ -198,5 +199,45 @@ describe('normalizeDelimitedString', () => {
 
     // Then
     expect(result).toEqual('read_products,write_products')
+  })
+})
+
+describe('timeAgo', () => {
+  const second = 1000
+  const minute = 60 * second
+  const hour = 60 * minute
+  const day = 24 * hour
+  const now = new Date(0)
+
+  test('formats seconds (singular)', () => {
+    expect(timeAgo(new Date(now.getTime() - second), now)).toBe('1 second ago')
+  })
+
+  test('formats seconds (plural)', () => {
+    expect(timeAgo(new Date(now.getTime() - 30 * second), now)).toBe('30 seconds ago')
+  })
+
+  test('formats minutes (singular)', () => {
+    expect(timeAgo(new Date(now.getTime() - minute), now)).toBe('1 minute ago')
+  })
+
+  test('formats minutes (plural)', () => {
+    expect(timeAgo(new Date(now.getTime() - 3 * minute), now)).toBe('3 minutes ago')
+  })
+
+  test('formats hours (singular)', () => {
+    expect(timeAgo(new Date(now.getTime() - hour), now)).toBe('1 hour ago')
+  })
+
+  test('formats hours (plural)', () => {
+    expect(timeAgo(new Date(now.getTime() - 5 * hour), now)).toBe('5 hours ago')
+  })
+
+  test('formats days (singular)', () => {
+    expect(timeAgo(new Date(now.getTime() - day), now)).toBe('1 day ago')
+  })
+
+  test('formats days (plural)', () => {
+    expect(timeAgo(new Date(now.getTime() - 7 * day), now)).toBe('7 days ago')
   })
 })
