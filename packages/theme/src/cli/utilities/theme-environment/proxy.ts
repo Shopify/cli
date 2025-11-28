@@ -244,8 +244,11 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   // Location header might contain the store domain, proxy it:
   const locationHeader = response.headers.get('Location')
   if (locationHeader) {
-    const url = new URL(locationHeader, 'https://shopify.dev')
-    if (!CHECKOUT_PATTERN.test(url.pathname)) {
+    const url = new URL(locationHeader, `https://${ctx.session.storeFqdn}`)
+    const isCheckout = CHECKOUT_PATTERN.test(url.pathname)
+    const isStoreHost = url.host === ctx.session.storeFqdn
+
+    if (isStoreHost && !isCheckout) {
       url.searchParams.delete('_fd')
       url.searchParams.delete('pb')
       response.headers.set('Location', url.href.replace(url.origin, ''))
