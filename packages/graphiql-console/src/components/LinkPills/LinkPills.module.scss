@@ -1,0 +1,12 @@
+.Container {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  // Shrink icons in link badges to match original GraphiQL styling
+  :global(.Polaris-Icon) {
+    height: 1rem;
+    width: 1rem;
+    margin: 0.125rem;
+  }
+}
