@@ -1,12 +1,12 @@
 import {appFlags} from '../../../flags.js'
-import {localAppContext} from '../../../services/app-context.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import pull from '../../../services/app/config/pull.js'
-import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
-export default class ConfigPull extends AppUnlinkedCommand {
+export default class ConfigPull extends AppLinkedCommand {
   static summary = 'Refresh an already-linked app configuration without prompts.'
 
   static descriptionWithMarkdown = `Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.
@@ -20,19 +20,21 @@ This command reuses the existing linked app and organization and skips all inter
     ...appFlags,
   }
 
-  public async run(): Promise<AppUnlinkedCommandOutput> {
+  public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(ConfigPull)
 
-    // Run the pull service (no prompts)
-    const {configuration, remoteApp} = await pull({
+    const {app, remoteApp} = await linkedAppContext({
       directory: flags.path,
-      configName: flags.config,
+      clientId: flags['client-id'],
+      forceRelink: flags.reset,
+      userProvidedConfigName: flags.config,
     })
 
-    // Get local app context so the return type matches other commands
-    const app = await localAppContext({
+    const {configuration} = await pull({
       directory: flags.path,
-      userProvidedConfigName: flags.config,
+      configName: flags.config,
+      configuration: app.configuration,
+      remoteApp,
     })
 
     renderSuccess({
