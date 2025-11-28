@@ -14,7 +14,7 @@ import {
   placeholderAppConfiguration,
 } from '../app/app.test-data.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
-import {ExtensionBuildOptions} from '../../services/build/extension.js'
+import {ExtensionBuildOptions, buildUIExtension} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi} from 'vitest'
@@ -27,6 +27,15 @@ import {Writable} from 'stream'
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
 vi.mock('@shopify/cli-kit/node/import-extractor')
+vi.mock('../../services/build/extension.js', async () => {
+  const actual = await vi.importActual('../../services/build/extension.js')
+  return {
+    ...actual,
+    buildUIExtension: vi.fn(),
+    buildThemeExtension: vi.fn(),
+    buildFunctionExtension: vi.fn(),
+  }
+})
 
 function functionConfiguration(): FunctionConfigType {
   return {
@@ -153,6 +162,33 @@ describe('build', async () => {
       // Then
       const outputFileContent = await readFile(outputFilePath)
       expect(outputFileContent).toEqual('(()=>{})();')
+    })
+  })
+
+  test('calls copyStaticAssets after buildUIExtension when building UI extensions', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const extensionInstance = await testUIExtension({
+        type: 'ui_extension',
+        directory: tmpDir,
+      })
+
+      const copyStaticAssetsSpy = vi.spyOn(extensionInstance, 'copyStaticAssets').mockResolvedValue()
+      vi.mocked(buildUIExtension).mockResolvedValue()
+
+      const options: ExtensionBuildOptions = {
+        stdout: new Writable({write: vi.fn()}),
+        stderr: new Writable({write: vi.fn()}),
+        app: testApp(),
+        environment: 'production',
+      }
+
+      // When
+      await extensionInstance.build(options)
+
+      // Then
+      expect(buildUIExtension).toHaveBeenCalledWith(extensionInstance, options)
+      expect(copyStaticAssetsSpy).toHaveBeenCalledOnce()
     })
   })
 
