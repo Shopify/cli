@@ -4,6 +4,8 @@
 
 This page contains resources for people interested in contributing to this repository or developing a [plugin](./plugins.md).
 
+I like to change things.
+
 ## CLI
 
 The Shopify CLI is a tool for merchants, partners, and developers to interact with the platform from their terminals. Its technical design allows adding features horizontally through [**plugins**](#plugins) that build on [**cli-kit**](#cli-kit). [@shopify/theme](https://www.npmjs.com/package/@shopify/theme), [@shopify/app](https://www.npmjs.com/package/@shopify/app), [@shopify/cli-hydrogen](https://www.npmjs.com/package/@shopify/cli-hydrogen) are examples of plugins to develop themes, apps, and hydrogen storefronts, respectively.
