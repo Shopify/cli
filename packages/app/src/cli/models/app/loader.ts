@@ -400,7 +400,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       return joinPath(appDirectory, webGlob, configurationFileNames.web)
     })
     webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
-    const webTomlPaths = await glob(webConfigGlobs)
+    const allWebTomlPaths = await glob(webConfigGlobs)
+
+    // Filter out paths that are ignored by .gitignore
+    const webTomlPaths = await filterIgnoredPaths(appDirectory, allWebTomlPaths)
 
     const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
     this.validateWebs(webs)
@@ -559,7 +562,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
-    const configPaths = await glob(extensionConfigPaths)
+    const allConfigPaths = await glob(extensionConfigPaths)
+
+    // Filter out paths that are ignored by .gitignore
+    const configPaths = await filterIgnoredPaths(appDirectory, allConfigPaths)
 
     return configPaths.map(async (configurationPath) => {
       const directory = dirname(configurationPath)
@@ -997,6 +1003,22 @@ async function checkIfGitTracked(appDirectory: string, configurationPath: string
   const relative = relativePath(appDirectory, configurationPath)
   const isTracked = !ignored.ignores(relative)
   return isTracked
+}
+
+/**
+ * Filters an array of paths to exclude those that match patterns in .gitignore
+ */
+async function filterIgnoredPaths(appDirectory: string, paths: string[]): Promise<string[]> {
+  const gitIgnorePath = joinPath(appDirectory, '.gitignore')
+  if (!fileExistsSync(gitIgnorePath)) return paths
+
+  const gitIgnoreContent = await readFile(gitIgnorePath)
+  const ignored = ignore.default().add(gitIgnoreContent)
+
+  return paths.filter((path) => {
+    const relative = relativePath(appDirectory, path)
+    return !ignored.ignores(relative)
+  })
 }
 
 async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
