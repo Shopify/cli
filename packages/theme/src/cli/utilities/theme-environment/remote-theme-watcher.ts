@@ -22,6 +22,7 @@ export async function reconcileAndPollThemeEditorChanges(
     ignore: string[]
     only: string[]
   },
+  rejectBackgroundJob: (reason?: unknown) => void,
 ): Promise<{
   updatedRemoteChecksumsPromise: Promise<Checksum[]>
   workPromise: Promise<void>
@@ -33,7 +34,14 @@ export async function reconcileAndPollThemeEditorChanges(
 
   const updatedRemoteChecksumsPromise = workPromise.then(async () => {
     const updatedRemoteChecksums = await fetchChecksums(targetTheme.id, session)
-    pollThemeEditorChanges(targetTheme, session, updatedRemoteChecksums, localThemeFileSystem, options)
+    pollThemeEditorChanges(
+      targetTheme,
+      session,
+      updatedRemoteChecksums,
+      localThemeFileSystem,
+      options,
+      rejectBackgroundJob,
+    )
     return updatedRemoteChecksums
   })
 
