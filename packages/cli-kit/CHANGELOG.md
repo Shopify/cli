@@ -1,5 +1,12 @@
 # @shopify/cli-kit
 
+## 3.87.1
+
+### Patch Changes
+
+- 9b97dfa: Fix zip and brotliCompress functions to handle binary files
+- 9450302: [Bug fix] Remove ability to sync Liquid files by checksum
+
 ## 3.87.0
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # @shopify/theme
 
+## 3.87.1
+
+### Patch Changes
+
+- 226b49e: Fix a possible CORS vulnerability where a website could read data from the localhost server
+- 9450302: [Bug fix] Remove ability to sync Liquid files by checksum
+- cf9a602: Return error when running `theme profile` using a Theme Access password
+- Updated dependencies [9b97dfa]
+- Updated dependencies [9450302]
+  - @shopify/cli-kit@3.87.1
+
 ## 3.87.0
 
 ### Minor Changes
