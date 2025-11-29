@@ -6,18 +6,14 @@ import {
   WebType,
   getAppScopesArray,
   AppConfigurationInterface,
-  LegacyAppSchema,
   AppConfiguration,
   CurrentAppConfiguration,
   getAppVersionedSchema,
-  isCurrentAppSchema,
   AppSchema,
-  LegacyAppConfiguration,
   BasicAppConfigurationWithoutModules,
   SchemaForConfig,
   AppLinkedInterface,
   AppHiddenConfig,
-  isLegacyAppSchema,
 } from './app.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -215,7 +211,7 @@ export async function checkFolderIsValidApp(directory: string) {
 
 export async function loadConfigForAppCreation(directory: string, name: string): Promise<CreateAppOptions> {
   const state = await getAppConfigurationState(directory)
-  const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
+  const config: AppConfiguration = state.basicConfiguration
   const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
 
   const loader = new AppLoader({loadedConfiguration})
@@ -298,7 +294,7 @@ export async function loadAppUsingConfigurationState<TConfig extends AppConfigur
  */
 type LoadedAppConfigFromConfigState<TConfigState> = TConfigState extends AppConfigurationStateLinked
   ? CurrentAppConfiguration
-  : LegacyAppConfiguration
+  : never
 
 export function getDotEnvFileName(configurationPath: string) {
   const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
@@ -521,13 +517,9 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     if (this.specifications.length === 0) return []
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
-    const configExtensionPromises = isCurrentAppSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
-      : []
+    const configExtensionPromises = await this.createConfigExtensionInstances(appDirectory, appConfiguration)
 
-    const webhookPromises = isCurrentAppSchema(appConfiguration)
-      ? this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
-      : []
+    const webhookPromises = this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
 
     const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
 
@@ -643,7 +635,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return instances
   }
 
-  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
+  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
@@ -751,12 +743,13 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
   private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {
     const previousDevUrls = this.previousApp?.devApplicationURLs
-    if (!previousDevUrls || !isCurrentAppSchema(currentConfiguration)) return previousDevUrls
+    if (!previousDevUrls) return previousDevUrls
 
     return generateApplicationURLs(
       previousDevUrls.applicationUrl,
       webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-      currentConfiguration.app_proxy,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (currentConfiguration as any).app_proxy,
     )
   }
 }
@@ -822,12 +815,7 @@ export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
   basicConfiguration: BasicAppConfigurationWithoutModules
 }
 
-type AppConfigurationStateTemplate = AppConfigurationStateBasics & {
-  state: 'template-only'
-  startingOptions: Omit<LegacyAppConfiguration, 'client_id'>
-}
-
-type AppConfigurationState = AppConfigurationStateLinked | AppConfigurationStateTemplate
+type AppConfigurationState = AppConfigurationStateLinked
 
 /**
  * Get the app configuration state from the file system.
@@ -865,34 +853,17 @@ export async function getAppConfigurationState(
   const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, configName)
   const file = await loadConfigurationFileContent(configurationPath)
 
-  const configFileHasNotBeenLinked = isLegacyAppSchema(file as AppConfiguration)
-
-  if (configFileHasNotBeenLinked) {
-    const parsedConfig = await parseConfigurationFile(LegacyAppSchema, configurationPath)
-    return {
-      appDirectory,
-      configurationPath,
-      state: 'template-only',
-      startingOptions: {
-        ...file,
-        ...parsedConfig,
-      },
-      configSource,
-      configurationFileName,
-    }
-  } else {
-    const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
-    return {
-      state: 'connected-app',
-      appDirectory,
-      configurationPath,
-      basicConfiguration: {
-        ...file,
-        ...parsedConfig,
-      },
-      configSource,
-      configurationFileName,
-    }
+  const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
+  return {
+    state: 'connected-app',
+    appDirectory,
+    configurationPath,
+    basicConfiguration: {
+      ...file,
+      ...parsedConfig,
+    },
+    configSource,
+    configurationFileName,
   }
 }
 
@@ -909,32 +880,12 @@ async function loadAppConfigurationFromState<
   specifications: TModuleSpec[],
   remoteFlags: Flag[],
 ): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState<TConfig>, TModuleSpec>> {
-  let file: JsonMapType
-  let schemaForConfigurationFile: SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
-  {
-    let appSchema
-    switch (configState.state) {
-      case 'template-only': {
-        file = {
-          ...configState.startingOptions,
-        }
-        delete file.path
-        appSchema = LegacyAppSchema as unknown as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
-        break
-      }
-      case 'connected-app': {
-        file = {
-          ...configState.basicConfiguration,
-        }
-        delete file.path
-        const appVersionedSchema = getAppVersionedSchema(specifications)
-        appSchema = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
-        break
-      }
-    }
-
-    schemaForConfigurationFile = appSchema
+  const file: JsonMapType = {
+    ...configState.basicConfiguration,
   }
+  delete file.path
+  const appVersionedSchema = getAppVersionedSchema(specifications)
+  const schemaForConfigurationFile = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
 
   const configuration = (await parseConfigurationFile(
     schemaForConfigurationFile,
@@ -953,30 +904,22 @@ async function loadAppConfigurationFromState<
   }
 
   // enhance metadata based on the config type
-  switch (configState.state) {
-    case 'template-only': {
-      // nothing to add
-      break
-    }
-    case 'connected-app': {
-      let gitTracked = false
-      try {
-        gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch {
-        // leave as false
-      }
+  let gitTracked = false
+  try {
+    gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // leave as false
+  }
 
-      configurationLoadResultMetadata = {
-        ...configurationLoadResultMetadata,
-        usesLinkedConfig: true,
-        name: configState.configurationFileName,
-        gitTracked,
-        source: configState.configSource,
-        usesCliManagedUrls: (configuration as LoadedAppConfigFromConfigState<AppConfigurationStateLinked>).build
-          ?.automatically_update_urls_on_dev,
-      }
-    }
+  configurationLoadResultMetadata = {
+    ...configurationLoadResultMetadata,
+    usesLinkedConfig: true,
+    name: configState.configurationFileName,
+    gitTracked,
+    source: configState.configSource,
+    usesCliManagedUrls: (configuration as LoadedAppConfigFromConfigState<AppConfigurationStateLinked>).build
+      ?.automatically_update_urls_on_dev,
   }
 
   return {

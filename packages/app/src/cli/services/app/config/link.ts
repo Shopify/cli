@@ -3,10 +3,8 @@ import {
   AppConfiguration,
   CurrentAppConfiguration,
   getAppVersionedSchema,
-  isCurrentAppSchema,
   CliBuildPreferences,
   getAppScopes,
-  LegacyAppConfiguration,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -23,7 +21,6 @@ import {
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
 import {Flag, DeveloperPlatformClient, CreateAppOptions} from '../../../utilities/developer-platform-client.js'
-import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
@@ -191,16 +188,6 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
 
 type LocalAppOptions =
   | {
-      state: 'legacy'
-      configFormat: 'legacy'
-      scopes: string
-      localAppIdMatchedRemote: false
-      existingBuildOptions: undefined
-      existingConfig: LegacyAppConfiguration
-      appDirectory: string
-      packageManager: PackageManager
-    }
-  | {
       state: 'reusable-current-app'
       configFormat: 'current'
       scopes: string
@@ -224,7 +211,7 @@ type LocalAppOptions =
         }
       | {
           state: 'unable-to-load-config'
-          configFormat: 'legacy'
+          configFormat: 'current'
           localAppIdMatchedRemote: false
         }
     ))
@@ -257,25 +244,14 @@ async function loadLocalAppOptions(
     })
     const configuration = app.configuration
 
-    if (!isCurrentAppSchema(configuration)) {
-      return {
-        state: 'legacy',
-        configFormat: 'legacy',
-        scopes: getAppScopes(configuration),
-        localAppIdMatchedRemote: false,
-        existingBuildOptions: undefined,
-        existingConfig: configuration as LegacyAppConfiguration,
-        appDirectory: app.directory,
-        packageManager: app.packageManager,
-      }
-    } else if (app.configuration.client_id === remoteAppApiKey || options.isNewApp) {
+    if (app.configuration.client_id === remoteAppApiKey || options.isNewApp) {
       return {
         state: 'reusable-current-app',
         configFormat: 'current',
         scopes: getAppScopes(configuration),
         localAppIdMatchedRemote: true,
         existingBuildOptions: configuration.build,
-        existingConfig: configuration,
+        existingConfig: configuration as CurrentAppConfiguration,
         appDirectory: app.directory,
         packageManager: app.packageManager,
       }
@@ -294,7 +270,7 @@ async function loadLocalAppOptions(
   } catch (error) {
     return {
       state: 'unable-to-load-config',
-      configFormat: 'legacy',
+      configFormat: 'current',
       scopes: '',
       localAppIdMatchedRemote: false,
       appDirectory: undefined,
@@ -317,7 +293,7 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localAppInfo: {
     appDirectory?: string
-    format: 'legacy' | 'current'
+    format: 'current'
   },
 ): Promise<AppConfigurationFileName> {
   // config name from the options takes precedence over everything else
@@ -328,10 +304,6 @@ async function loadConfigurationFileName(
   // otherwise, use the cached config name if it exists
   const cache = getCachedCommandInfo()
   if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
-
-  if (localAppInfo.format === 'legacy') {
-    return configurationFileNames.app
-  }
 
   const existingTomls = await getTomls(options.directory)
   const currentToml = existingTomls[remoteApp.apiKey]
