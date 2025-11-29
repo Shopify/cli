@@ -1,0 +1,41 @@
+{
+  "name": "@shopify/graphiql-console",
+  "version": "3.86.0",
+  "packageManager": "pnpm@10.11.1",
+  "private": true,
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "dev": "nx dev",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "vitest": "vitest"
+  },
+  "dependencies": {
+    "@shopify/polaris": "^12.27.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@shopify/react-testing": "^3.0.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "jsdom": "^20.0.3",
+    "sass": "^1.83.1",
+    "vite": "6.4.1",
+    "vite-plugin-monaco-editor": "^1.1.0"
+  },
+  "eslintConfig": {
+    "rules": {
+      "no-restricted-imports": [
+        "error",
+        {
+          "name": "monaco-editor",
+          "message": "Use 'monaco-graphql/esm/monaco-editor' instead to avoid bundling 83 languages"
+        }
+      ]
+    }
+  }
+}
