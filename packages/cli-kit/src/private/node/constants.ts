@@ -15,6 +15,7 @@ export const logsFolder = () => {
 export const environmentVariables = {
   alwaysLogAnalytics: 'SHOPIFY_CLI_ALWAYS_LOG_ANALYTICS',
   alwaysLogMetrics: 'SHOPIFY_CLI_ALWAYS_LOG_METRICS',
+  badssl: 'SHOPIFY_CLI_BADSSL',
   deviceAuth: 'SHOPIFY_CLI_DEVICE_AUTH',
   enableCliRedirect: 'SHOPIFY_CLI_ENABLE_CLI_REDIRECT',
   env: 'SHOPIFY_CLI_ENV',
