@@ -163,13 +163,14 @@ interface DevSessionSharedOptions {
 
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
-  manifest: AppManifest
+  websocketUrl?: string
 }
 
 export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   manifest: AppManifest
   inheritedModuleUids: string[]
+  websocketUrl?: string
 }
 
 export type DevSessionDeleteOptions = DevSessionSharedOptions

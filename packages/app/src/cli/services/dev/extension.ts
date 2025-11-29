@@ -183,7 +183,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   })
 }
 
-function getWebSocketUrl(url: ExtensionDevOptions['url']) {
+export function getWebSocketUrl(url: string) {
   const websocketURL = new URL('/extensions', url)
   websocketURL.protocol = 'wss:'
 
