@@ -115,7 +115,6 @@ import {AppVersions} from '../../api/graphql/app-management/generated/app-versio
 import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
-import {FindOrganizations} from '../../api/graphql/business-platform-destinations/generated/find-organizations.js'
 import {UserInfo} from '../../api/graphql/business-platform-destinations/generated/user-info.js'
 import {AvailableTopics} from '../../api/graphql/webhooks/generated/available-topics.js'
 import {CliTesting} from '../../api/graphql/webhooks/generated/cli-testing.js'
@@ -137,6 +136,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {FindOrganization} from '../../api/graphql/business-platform-organizations/generated/find_organization.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -383,14 +383,12 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async orgFromId(orgId: string): Promise<Organization | undefined> {
-    const base64Id = encodedGidFromOrganizationIdForBP(orgId)
-    const variables = {organizationId: base64Id}
-    const organizationResult = await this.businessPlatformRequest({
-      query: FindOrganizations,
-      variables,
+    const organizationResult = await this.businessPlatformOrganizationsRequest({
+      query: FindOrganization,
+      organizationId: orgId,
       cacheOptions: {cacheTTL: {hours: 6}},
     })
-    const org = organizationResult.currentUserAccount?.organization
+    const org = organizationResult.organization
     if (!org) {
       return
     }
