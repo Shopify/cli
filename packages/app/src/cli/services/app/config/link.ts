@@ -239,7 +239,7 @@ type LocalAppOptions =
  * @param specifications - Module specs to use for loading. These must have come from the platform.
  * @returns Either a loaded app, or some placeholder data
  */
-async function loadLocalAppOptions(
+export async function loadLocalAppOptions(
   options: LinkOptions,
   specifications: RemoteAwareExtensionSpecification[],
   remoteFlags: Flag[],
@@ -344,7 +344,7 @@ async function loadConfigurationFileName(
  * Build a new app configuration object based on the remote app's modules, and write it to the filesystem, merging
  * with the existing local file.
  */
-async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
+export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options: {
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
   specifications: RemoteAwareExtensionSpecification[]

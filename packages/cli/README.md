@@ -2,6 +2,7 @@
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
 * [`shopify app config link`](#shopify-app-config-link)
+* [`shopify app config pull`](#shopify-app-config-pull)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
@@ -140,6 +141,31 @@ DESCRIPTION
 
   For more information on the format of the created TOML configuration file, refer to the "App configuration"
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
+```
+
+## `shopify app config pull`
+
+Refresh an already-linked app configuration without prompts.
+
+```
+USAGE
+  $ shopify app config pull [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Refresh an already-linked app configuration without prompts.
+
+  Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.
+
+  This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
+  target a specific configuration file, or omit it to use the default one.
 ```
 
 ## `shopify app config use [config] [flags]`
