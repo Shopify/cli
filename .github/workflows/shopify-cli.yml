@@ -14,7 +14,6 @@ env:
   SHOPIFY_CONFIG: debug
   PNPM_VERSION: '10.11.1'
   BUNDLE_WITHOUT: 'test:development'
-  SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
   GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
   GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
   DEFAULT_NODE_VERSION: '24.1.0'
@@ -192,6 +191,7 @@ jobs:
       - name: Acceptance tests
         env:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
+          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
         run: pnpm test:features --output-style=stream
 
   test-coverage:
