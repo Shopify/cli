@@ -86,13 +86,21 @@ export function jsonOutputEnabled(environment = getEnvironmentVariables()): bool
 /**
  * If true, the CLI should not use the Partners API.
  *
- * @returns True when SHOPIFY_CLI_NEVER_USE_PARTNERS_API is set or SHOPIFY_CLI_1P_DEV is not set.
+ * @returns True when the CLI should not use the Partners API.
  */
 export function blockPartnersAccess(): boolean {
-  return (
-    isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi]) ||
-    !isTruthy(getEnvironmentVariables()[environmentVariables.firstPartyDev])
-  )
+  // Block if explicitly set to never use Partners API
+  if (isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])) {
+    return true
+  }
+
+  // If explicitly forcing to use Partners API, do not block
+  if (isTruthy(getEnvironmentVariables()[environmentVariables.usePartnersApi])) {
+    return false
+  }
+
+  // Block for 3P devs
+  return !isTruthy(getEnvironmentVariables()[environmentVariables.firstPartyDev])
 }
 
 /**
