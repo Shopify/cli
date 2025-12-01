@@ -9,6 +9,7 @@ import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
 import {execa, ExecaChildProcess} from 'execa'
 import which from 'which'
 import {delimiter} from 'pathe'
+import {fstatSync} from 'fs'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
@@ -199,4 +200,44 @@ export function isCI(): boolean {
 export async function isWsl(): Promise<boolean> {
   const wsl = await import('is-wsl')
   return wsl.default
+}
+
+/**
+ * Check if stdin has piped data available.
+ * This distinguishes between actual piped input (e.g., `echo "query" | cmd`)
+ * and non-TTY environments without input (e.g., CI).
+ *
+ * @returns True if stdin is receiving piped data or file redirect, false otherwise.
+ */
+export function isStdinPiped(): boolean {
+  try {
+    const stats = fstatSync(0)
+    return stats.isFIFO() || stats.isFile()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Reads all data from stdin and returns it as a string.
+ * This is useful for commands that accept input via piping.
+ *
+ * @example
+ * // Usage: echo "your query" | shopify app execute
+ * const query = await readStdin()
+ *
+ * @returns A promise that resolves with the stdin content, or undefined if stdin is a TTY.
+ */
+export async function readStdin(): Promise<string | undefined> {
+  if (!isStdinPiped()) {
+    return undefined
+  }
+
+  let data = ''
+  process.stdin.setEncoding('utf8')
+  for await (const chunk of process.stdin) {
+    data += String(chunk)
+  }
+  return data.trim()
 }
