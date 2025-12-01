@@ -13,9 +13,8 @@ runs:
       env:
         SAFE_BASE_REF_NAME: '${{ inputs.base-branch-name }}'
       run: |
-        SAFE_BASE_REF_NAME="${{ env.SAFE_BASE_REF_NAME }}"
-        SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME//[\/.]/}
-        echo SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME} >> $GITHUB_ENV
+        SAFE_BASE_REF_NAME="${SAFE_BASE_REF_NAME//[\/.]/}"
+        echo "SAFE_BASE_REF_NAME=${SAFE_BASE_REF_NAME}" >> $GITHUB_ENV
     - name: Download artifact
       continue-on-error: true
       id: download-artifact

@@ -25,9 +25,8 @@ runs:
       env:
         SAFE_REF_NAME: "${{ inputs.branch-name }}"
       run: |
-        SAFE_REF_NAME="${{ env.SAFE_REF_NAME }}"
-        SAFE_REF_NAME=${SAFE_REF_NAME//[\/.]/}
-        echo SAFE_REF_NAME=${SAFE_REF_NAME} >> $GITHUB_ENV
+        SAFE_REF_NAME="${SAFE_REF_NAME//[\/.]/}"
+        echo "SAFE_REF_NAME=${SAFE_REF_NAME}" >> $GITHUB_ENV
     - uses: actions/upload-artifact@v4
       with:
         name: ${{ env.SAFE_REF_NAME }}--coverage-report
