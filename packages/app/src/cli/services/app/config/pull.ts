@@ -4,7 +4,6 @@ import {LinkOptions, loadLocalAppOptions, overwriteLocalConfigFileWithRemoteAppC
 import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {AppConfigurationFileName, getAppConfigurationFileName} from '../../../models/app/loader.js'
-import {configurationFileNames} from '../../../constants.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
@@ -55,12 +54,8 @@ export default async function pull(options: PullOptions): Promise<PullOutput> {
 
   const localAppOptions = await loadLocalAppOptions(linkOptions, specifications, flags, remoteApp.apiKey)
 
-  // Decide which config file to overwrite:
-  // - if config has a path, reuse that file
-  // - otherwise, fallback to --config or default app config name
-  const configFileName: AppConfigurationFileName =
-    (configuration.path && (basename(configuration.path) as AppConfigurationFileName)) ||
-    getAppConfigurationFileName(configName ?? configurationFileNames.app)
+  // Decide which config file to overwrite: the configuration should always have a path here.
+  const configFileName: AppConfigurationFileName = basename(configuration.path) as AppConfigurationFileName
 
   const mergedConfiguration = await overwriteLocalConfigFileWithRemoteAppConfiguration({
     remoteApp,

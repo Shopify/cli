@@ -3,8 +3,8 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import pull from '../../../services/app/config/pull.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {basename} from '@shopify/cli-kit/node/path'
 
 export default class ConfigPull extends AppLinkedCommand {
   static summary = 'Refresh an already-linked app configuration without prompts.'
@@ -39,17 +39,7 @@ This command reuses the existing linked app and organization and skips all inter
 
     renderSuccess({
       headline: `Pulled latest configuration for "${configuration.name}"`,
-      body: `Updated ${configuration.path ?? flags.config ?? 'app configuration'} using the already-linked app "${
-        remoteApp.title
-      }".`,
-      nextSteps: [
-        [
-          'To deploy your updated configuration, run',
-          {
-            command: formatPackageManagerCommand(app.packageManager, 'shopify app deploy'),
-          },
-        ],
-      ],
+      body: `Updated ${basename(configuration.path)} with the remote data.`,
     })
 
     return {app}
