@@ -18,7 +18,7 @@ const mockOptions = {
 }
 
 describe('devClean', () => {
-  test('successfully stops app preview and renders success message', async () => {
+  test('successfully stops dev preview and renders success message', async () => {
     // Given
     mockOptions.appContextResult.developerPlatformClient = customDevPlatformClient()
 
@@ -27,9 +27,9 @@ describe('devClean', () => {
 
     // Then
     expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'App preview stopped.',
+      headline: 'Dev preview stopped.',
       body: [
-        `The app preview has been stopped on ${mockStore.shopDomain} and the app's active version has been restored.`,
+        `The dev preview has been stopped on ${mockStore.shopDomain} and the app's active version has been restored.`,
         'You can start it again with',
         {command: 'shopify app dev'},
       ],
@@ -38,11 +38,11 @@ describe('devClean', () => {
 
   test('throws AbortError when devSessionDelete returns user errors', async () => {
     // Given
-    const errorMessage = 'Failed to stop app preview'
+    const errorMessage = 'Failed to stop dev preview'
     mockOptions.appContextResult.developerPlatformClient = customDevPlatformClient(errorMessage)
 
     // When/Then
-    await expect(devClean(mockOptions)).rejects.toThrow(`Failed to stop the app preview: ${errorMessage}`)
+    await expect(devClean(mockOptions)).rejects.toThrow(`Failed to stop the dev preview: ${errorMessage}`)
   })
 
   test('throws AbortError when devSessions are not supported', async () => {
@@ -50,7 +50,7 @@ describe('devClean', () => {
     mockOptions.appContextResult.developerPlatformClient = customDevPlatformClient(undefined, false)
 
     // When/Then
-    await expect(devClean(mockOptions)).rejects.toThrow('App preview is not supported for this app.')
+    await expect(devClean(mockOptions)).rejects.toThrow('Dev preview is not supported for this app.')
   })
 })
 

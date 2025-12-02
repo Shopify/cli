@@ -14,7 +14,7 @@ export async function devClean(options: DevCleanOptions) {
 
   if (!client.supportsDevSessions) {
     throw new AbortError(
-      `App preview is not supported for this app. It's valid only for apps created on the Next-Gen Dev Platform.`,
+      `Dev preview is not supported for this app. It's valid only for apps created on the Next-Gen Dev Platform.`,
     )
   }
 
@@ -22,13 +22,13 @@ export async function devClean(options: DevCleanOptions) {
 
   if (result.devSessionDelete?.userErrors.length) {
     const errors = result.devSessionDelete.userErrors.map((error) => error.message).join('\n')
-    throw new AbortError(`Failed to stop the app preview: ${errors}`)
+    throw new AbortError(`Failed to stop the dev preview: ${errors}`)
   }
 
   renderSuccess({
-    headline: 'App preview stopped.',
+    headline: 'Dev preview stopped.',
     body: [
-      `The app preview has been stopped on ${options.store.shopDomain} and the app's active version has been restored.`,
+      `The dev preview has been stopped on ${options.store.shopDomain} and the app's active version has been restored.`,
       'You can start it again with',
       {command: 'shopify app dev'},
     ],
