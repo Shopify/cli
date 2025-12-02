@@ -3,7 +3,7 @@
 import {LinkOptions, loadLocalAppOptions, overwriteLocalConfigFileWithRemoteAppConfiguration} from './link.js'
 import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
-import {AppConfigurationFileName, getAppConfigurationFileName} from '../../../models/app/loader.js'
+import {AppConfigurationFileName} from '../../../models/app/loader.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
