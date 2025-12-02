@@ -88,13 +88,13 @@ describe('isStdinPiped', () => {
   })
 })
 
-describe('readStdin', () => {
+describe('readStdinString', () => {
   test('returns undefined when stdin is not piped', async () => {
     // Given
     vi.mocked(fs.fstatSync).mockReturnValue({isFIFO: () => false, isFile: () => false} as fs.Stats)
 
     // When
-    const got = await system.readStdin()
+    const got = await system.readStdinString()
 
     // Then
     expect(got).toBeUndefined()
@@ -107,7 +107,7 @@ describe('readStdin', () => {
     vi.spyOn(process, 'stdin', 'get').mockReturnValue(mockStdin as unknown as typeof process.stdin)
 
     // When
-    const got = await system.readStdin()
+    const got = await system.readStdinString()
 
     // Then
     expect(got).toBe('hello world')

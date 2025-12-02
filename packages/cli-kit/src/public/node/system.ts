@@ -229,7 +229,7 @@ export function isStdinPiped(): boolean {
  *
  * @returns A promise that resolves with the stdin content, or undefined if stdin is a TTY.
  */
-export async function readStdin(): Promise<string | undefined> {
+export async function readStdinString(): Promise<string | undefined> {
   if (!isStdinPiped()) {
     return undefined
   }
