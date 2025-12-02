@@ -490,6 +490,7 @@ export async function renderTasks<TContext>(
 export interface RenderSingleTaskOptions<T> {
   title: TokenizedString
   task: (updateStatus: (status: TokenizedString) => void) => Promise<T>
+  onAbort?: () => void
   renderOptions?: RenderOptions
 }
 
@@ -504,10 +505,15 @@ export interface RenderSingleTaskOptions<T> {
  * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Loading app ...
  */
-export async function renderSingleTask<T>({title, task, renderOptions}: RenderSingleTaskOptions<T>): Promise<T> {
+export async function renderSingleTask<T>({
+  title,
+  task,
+  onAbort,
+  renderOptions,
+}: RenderSingleTaskOptions<T>): Promise<T> {
   // eslint-disable-next-line max-params
   return new Promise<T>((resolve, reject) => {
-    render(<SingleTask title={title} task={task} onComplete={resolve} />, {
+    render(<SingleTask title={title} task={task} onComplete={resolve} onAbort={onAbort} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     }).catch(reject)

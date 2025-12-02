@@ -6,7 +6,7 @@ import {downloadBulkOperationResults} from './download-bulk-operation-results.js
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -355,12 +355,43 @@ describe('executeBulkOperation', () => {
       watch: true,
     })
 
-    expect(watchBulkOperation).toHaveBeenCalledWith(mockAdminSession, createdBulkOperation.id)
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         headline: expect.stringContaining('Bulk operation succeeded:'),
       }),
     )
+  })
+
+  test('renders help message in an info banner when watch is provided and user aborts', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    const runningOperation = {
+      ...createdBulkOperation,
+      status: 'RUNNING' as const,
+      objectCount: '100',
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
+    vi.mocked(watchBulkOperation).mockImplementation(async (_session, _id, signal, onAbort) => {
+      onAbort()
+      return runningOperation
+    })
+
+    await executeBulkOperation({
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      watch: true,
+    })
+
+    expect(renderInfo).toHaveBeenCalledWith({
+      headline: `Bulk operation ${createdBulkOperation.id} is still running in the background.`,
+      body: ['Monitor its progress with:', {command: expect.stringContaining('shopify app bulk status')}],
+    })
+    expect(downloadBulkOperationResults).not.toHaveBeenCalled()
   })
 
   test('writes results to file when --output-file flag is provided', async () => {
@@ -450,7 +481,6 @@ describe('executeBulkOperation', () => {
         watch: true,
       })
 
-      expect(watchBulkOperation).toHaveBeenCalledWith(mockAdminSession, createdBulkOperation.id)
       expect(renderError).toHaveBeenCalledWith(
         expect.objectContaining({
           headline: expect.any(String),

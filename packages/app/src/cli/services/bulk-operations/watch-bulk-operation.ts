@@ -8,6 +8,7 @@ import {sleep} from '@shopify/cli-kit/node/system'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 
 const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'CANCELED', 'EXPIRED']
 const POLL_INTERVAL_SECONDS = 5
@@ -15,11 +16,16 @@ const API_VERSION = '2026-01'
 
 export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
 
-export async function watchBulkOperation(adminSession: AdminSession, operationId: string): Promise<BulkOperation> {
+export async function watchBulkOperation(
+  adminSession: AdminSession,
+  operationId: string,
+  abortSignal: AbortSignal,
+  onAbort: () => void,
+): Promise<BulkOperation> {
   return renderSingleTask<BulkOperation>({
     title: outputContent`Polling bulk operation...`,
     task: async (updateStatus) => {
-      const poller = pollBulkOperation(adminSession, operationId)
+      const poller = pollBulkOperation(adminSession, operationId, abortSignal)
 
       while (true) {
         // eslint-disable-next-line no-await-in-loop
@@ -31,12 +37,14 @@ export async function watchBulkOperation(adminSession: AdminSession, operationId
         }
       }
     },
+    onAbort,
   })
 }
 
 async function* pollBulkOperation(
   adminSession: AdminSession,
   operationId: string,
+  abortSignal: AbortSignal,
 ): AsyncGenerator<BulkOperation, BulkOperation> {
   while (true) {
     // eslint-disable-next-line no-await-in-loop
@@ -48,14 +56,17 @@ async function* pollBulkOperation(
 
     const latestOperationState = response.bulkOperation
 
-    if (TERMINAL_STATUSES.includes(latestOperationState.status)) {
+    if (TERMINAL_STATUSES.includes(latestOperationState.status) || abortSignal.aborted) {
       return latestOperationState
     } else {
       yield latestOperationState
     }
 
     // eslint-disable-next-line no-await-in-loop
-    await sleep(POLL_INTERVAL_SECONDS)
+    await Promise.race([
+      sleep(POLL_INTERVAL_SECONDS),
+      new Promise((resolve) => abortSignal.addEventListener('abort', resolve)),
+    ])
   }
 }
 

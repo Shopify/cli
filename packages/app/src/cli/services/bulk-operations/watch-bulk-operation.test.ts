@@ -5,6 +5,7 @@ import {sleep} from '@shopify/cli-kit/node/system'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {outputContent} from '@shopify/cli-kit/node/output'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 vi.mock('./format-bulk-operation-status.js')
 vi.mock('@shopify/cli-kit/node/api/admin')
@@ -14,6 +15,7 @@ vi.mock('@shopify/cli-kit/node/ui')
 describe('watchBulkOperation', () => {
   const mockAdminSession = {token: 'test-token', storeFqdn: 'test.myshopify.com'}
   const operationId = 'gid://shopify/BulkOperation/123'
+  let abortController: AbortController
 
   const runningOperation = {
     id: operationId,
@@ -30,8 +32,13 @@ describe('watchBulkOperation', () => {
   }
 
   beforeEach(() => {
+    abortController = new AbortController()
     vi.mocked(sleep).mockResolvedValue()
     vi.mocked(formatBulkOperationStatus).mockReturnValue(outputContent`formatted status`)
+    vi.mocked(renderSingleTask).mockImplementation(async ({task, onAbort}) => {
+      if (onAbort) onAbort()
+      return task(() => {})
+    })
   })
 
   test('polls until operation completes and returns the final operation', async () => {
@@ -40,11 +47,7 @@ describe('watchBulkOperation', () => {
       .mockResolvedValueOnce({bulkOperation: runningOperation})
       .mockResolvedValueOnce({bulkOperation: completedOperation})
 
-    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
-      return task(() => {})
-    })
-
-    const result = await watchBulkOperation(mockAdminSession, operationId)
+    const result = await watchBulkOperation(mockAdminSession, operationId, abortController.signal, () => {})
 
     expect(result).toEqual(completedOperation)
     expect(adminRequestDoc).toHaveBeenCalledTimes(3)
@@ -65,11 +68,7 @@ describe('watchBulkOperation', () => {
         .mockResolvedValueOnce({bulkOperation: runningOperation})
         .mockResolvedValueOnce({bulkOperation: terminalOperation})
 
-      vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
-        return task(() => {})
-      })
-
-      const result = await watchBulkOperation(mockAdminSession, operationId)
+      const result = await watchBulkOperation(mockAdminSession, operationId, abortController.signal, () => {})
 
       expect(result).toEqual(terminalOperation)
       expect(adminRequestDoc).toHaveBeenCalledTimes(3)
@@ -97,7 +96,7 @@ describe('watchBulkOperation', () => {
       return task(mockUpdateStatus)
     })
 
-    await watchBulkOperation(mockAdminSession, operationId)
+    await watchBulkOperation(mockAdminSession, operationId, abortController.signal, () => {})
 
     expect(mockUpdateStatus).toHaveBeenNthCalledWith(1, outputContent`processed 10 objects`)
     expect(mockUpdateStatus).toHaveBeenNthCalledWith(2, outputContent`processed 20 objects`)
@@ -107,10 +106,34 @@ describe('watchBulkOperation', () => {
   test('throws when operation not found', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperation: null})
 
-    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
-      return task(() => {})
+    await expect(watchBulkOperation(mockAdminSession, operationId, abortController.signal, () => {})).rejects.toThrow(
+      'bulk operation not found',
+    )
+  })
+
+  describe('when signal is aborted during polling', () => {
+    beforeEach(() => {
+      let callCount = 0
+      vi.mocked(adminRequestDoc).mockImplementation(async () => {
+        callCount++
+        if (callCount === 2) {
+          abortController.abort()
+        }
+        return {bulkOperation: runningOperation}
+      })
     })
 
-    await expect(watchBulkOperation(mockAdminSession, operationId)).rejects.toThrow('bulk operation not found')
+    test('returns current state of the operation, even if it is not terminal', async () => {
+      const result = await watchBulkOperation(mockAdminSession, operationId, abortController.signal, () => {})
+
+      expect(result.status).toBe('RUNNING')
+      expect(result).toEqual(runningOperation)
+    })
+
+    test('calls the onAbort callback', async () => {
+      const onAbort = vi.fn()
+      await watchBulkOperation(mockAdminSession, operationId, abortController.signal, onAbort)
+      expect(onAbort).toHaveBeenCalled()
+    })
   })
 })
