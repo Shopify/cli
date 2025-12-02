@@ -85,10 +85,11 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
             shallow: true,
           })
 
-          const instructions =
+          const instructions = (
             aiInstruction === 'all'
               ? (Object.keys(SUPPORTED_AI_INSTRUCTIONS).filter((key) => key !== 'all') as AIInstruction[])
               : [aiInstruction]
+          ) as Exclude<AIInstruction, 'all'>[]
 
           try {
             const sourcePath = joinPath(tempDir, 'ai', 'github', 'copilot-instructions.md')
