@@ -125,7 +125,16 @@ export async function fetchStore(
 ): Promise<OrganizationStore> {
   const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
 
-  if (!store) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
+  if (!store) {
+    throw new AbortError(
+      `Your current account (${org.businessName}) doesn't have access to store ${storeFqdn}.`,
+      undefined,
+      [
+        ['Select a different store with', {command: '--store'}, 'or', {command: '--reset'}],
+        ['Use', {command: 'shopify auth login'}, 'to log in with a different account that has access to this store'],
+      ],
+    )
+  }
 
   return store
 }
