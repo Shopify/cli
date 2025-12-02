@@ -1,6 +1,7 @@
-import {getBulkOperationStatus} from './bulk-operation-status.js'
+import {getBulkOperationStatus, listBulkOperations} from './bulk-operation-status.js'
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {ListBulkOperationsQuery} from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
@@ -148,5 +149,128 @@ describe('getBulkOperationStatus', () => {
 
       expect(output.output()).toContain('Finished')
     })
+  })
+})
+
+describe('listBulkOperations', () => {
+  function mockBulkOperationsList(
+    operations: Partial<NonNullable<ListBulkOperationsQuery['bulkOperations']['nodes'][0]>>[],
+  ): ListBulkOperationsQuery {
+    return {
+      bulkOperations: {
+        nodes: operations.map((op) => ({
+          id: 'gid://shopify/BulkOperation/123',
+          status: 'RUNNING',
+          errorCode: null,
+          objectCount: 100,
+          createdAt: new Date().toISOString(),
+          completedAt: null,
+          url: null,
+          partialDataUrl: null,
+          ...op,
+        })),
+      },
+    }
+  }
+
+  test('renders table with bulk operations', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(
+      mockBulkOperationsList([
+        {
+          id: 'gid://shopify/BulkOperation/1',
+          status: 'COMPLETED',
+          objectCount: 123500,
+          createdAt: '2025-11-10T12:37:52Z',
+          completedAt: '2025-11-10T16:37:12Z',
+          url: 'https://example.com/results.jsonl',
+        },
+        {
+          id: 'gid://shopify/BulkOperation/2',
+          status: 'RUNNING',
+          objectCount: 100,
+          createdAt: '2025-11-11T15:37:52Z',
+        },
+      ]),
+    )
+
+    const output = mockAndCaptureOutput()
+    await listBulkOperations({storeFqdn, remoteApp})
+
+    const outputLinesWithoutTrailingWhitespace = output
+      .output()
+      .split('\n')
+      .map((line) => line.trimEnd())
+      .join('\n')
+
+    // terminal width in test environment is quite narrow, so values in the snapshot get wrapped
+    expect(outputLinesWithoutTrailingWhitespace).toMatchInlineSnapshot(`
+      "ID               STATUS COU DATE CREATED DATE        RESULTS
+                              T                FINISHED
+
+      ──────────────── ────── ─── ──────────── ─────────── ───────────────────────────
+      ────────────     ──     ──  ───────      ───────     ───────────────────
+      gid://shopify/Bu COMPLE 123 2025-11-10   2025-11-10  download ( https://example.
+      kOperation/1     ED     5K  12:37:52     16:37:12    com/results.jsonl )
+      gid://shopify/Bu RUNNIN 100 2025-11-11
+      kOperation/2                15:37:52"
+    `)
+  })
+
+  test('formats large counts as thousands or millions for readability', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(
+      mockBulkOperationsList([{objectCount: 1200000}, {objectCount: 5500}, {objectCount: 42}]),
+    )
+
+    const output = mockAndCaptureOutput()
+    await listBulkOperations({storeFqdn, remoteApp})
+
+    expect(output.output()).toContain('1.2M')
+    expect(output.output()).toContain('5.5K')
+    expect(output.output()).toContain('42')
+  })
+
+  test('shows download for failed operations with partial results', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(
+      mockBulkOperationsList([
+        {
+          status: 'FAILED',
+          errorCode: 'ACCESS_DENIED',
+          partialDataUrl: 'https://example.com/partial.jsonl',
+          completedAt: '2025-11-10T16:37:12Z',
+        },
+      ]),
+    )
+
+    const output = mockAndCaptureOutput()
+    await listBulkOperations({storeFqdn, remoteApp})
+
+    expect(output.output()).toContain('download')
+    expect(output.output()).toContain('partial.jsonl')
+  })
+
+  test('shows download for completed operations with results', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(
+      mockBulkOperationsList([
+        {
+          status: 'COMPLETED',
+          url: 'https://example.com/results.jsonl',
+        },
+      ]),
+    )
+
+    const output = mockAndCaptureOutput()
+    await listBulkOperations({storeFqdn, remoteApp})
+
+    expect(output.output()).toContain('download')
+    expect(output.output()).toContain('results.jsonl')
+  })
+
+  test('shows empty state when no bulk operations found', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
+
+    const output = mockAndCaptureOutput()
+    await listBulkOperations({storeFqdn, remoteApp})
+
+    expect(output.info()).toContain('no bulk operations found in the last 7 days')
   })
 })
