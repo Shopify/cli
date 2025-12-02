@@ -11,7 +11,7 @@ import {
   ListBulkOperationsQueryVariables,
 } from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
 import {renderInfo, renderSuccess, renderError, renderTable} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
@@ -87,22 +87,25 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
     results: downloadLink(operation.url ?? operation.partialDataUrl),
   }))
 
+  outputNewline()
+
   if (operations.length === 0) {
     renderInfo({body: 'no bulk operations found in the last 7 days'})
-    return
+  } else {
+    renderTable({
+      rows: operations,
+      columns: {
+        id: {header: 'ID', color: 'yellow'},
+        status: {header: 'STATUS'},
+        count: {header: 'COUNT'},
+        dateCreated: {header: 'DATE CREATED', color: 'cyan'},
+        dateFinished: {header: 'DATE FINISHED', color: 'cyan'},
+        results: {header: 'RESULTS'},
+      },
+    })
   }
 
-  renderTable({
-    rows: operations,
-    columns: {
-      id: {header: 'ID', color: 'yellow'},
-      status: {header: 'STATUS'},
-      count: {header: 'COUNT'},
-      dateCreated: {header: 'DATE CREATED', color: 'cyan'},
-      dateFinished: {header: 'DATE FINISHED', color: 'cyan'},
-      results: {header: 'RESULTS'},
-    },
-  })
+  outputNewline()
 }
 
 function renderBulkOperationStatus(operation: BulkOperation): void {
