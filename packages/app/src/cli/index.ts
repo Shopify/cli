@@ -2,6 +2,7 @@ import Build from './commands/app/build.js'
 import BulkStatus from './commands/app/bulk/status.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
+import ConfigPull from './commands/app/config/pull.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
@@ -49,6 +50,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:release': Release,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
+  'app:config:pull': ConfigPull,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
   'app:execute': Execute,
