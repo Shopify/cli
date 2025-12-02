@@ -87,7 +87,7 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
 
           const instructions = (
             aiInstruction === 'all'
-              ? (Object.keys(SUPPORTED_AI_INSTRUCTIONS).filter((key) => key !== 'all') as AIInstruction[])
+              ? Object.keys(SUPPORTED_AI_INSTRUCTIONS).filter((key) => key !== 'all')
               : [aiInstruction]
           ) as Exclude<AIInstruction, 'all'>[]
 
@@ -130,7 +130,7 @@ export async function createAIInstructions(themeRoot: string, aiInstruction: AII
 export async function createAIInstructionFiles(
   themeRoot: string,
   agentsPath: string,
-  instruction: AIInstruction,
+  instruction: Exclude<AIInstruction, 'all'>,
 ): Promise<{copiedFile?: string}> {
   if (instruction === 'cursor') {
     // Cursor natively supports AGENTS.md, so no symlink needed
@@ -140,9 +140,9 @@ export async function createAIInstructionFiles(
   const symlinkMap = {
     github: 'copilot-instructions.md',
     claude: 'CLAUDE.md',
-  } as const
+  }
 
-  const symlinkName = symlinkMap[instruction as Exclude<AIInstruction, 'all' | 'cursor'>]
+  const symlinkName = symlinkMap[instruction]
   const symlinkPath = joinPath(themeRoot, symlinkName)
 
   try {
