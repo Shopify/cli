@@ -10,7 +10,8 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 export default class BulkStatus extends AppLinkedCommand {
   static summary = 'Check the status of bulk operations.'
 
-  static description = 'Check the status of a specific bulk operation by ID, or list all recent bulk operations.'
+  static description =
+    'Check the status of a specific bulk operation by ID, or list all bulk operations in the last 7 days.'
 
   static hidden = true
 
@@ -18,7 +19,7 @@ export default class BulkStatus extends AppLinkedCommand {
     ...globalFlags,
     ...appFlags,
     id: Flags.string({
-      description: 'The bulk operation ID. If not provided, lists all recent bulk operations.',
+      description: 'The bulk operation ID. If not provided, lists all bulk operations in the last 7 days.',
       env: 'SHOPIFY_FLAG_ID',
     }),
     store: Flags.string({
