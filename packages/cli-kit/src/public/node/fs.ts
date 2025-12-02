@@ -48,6 +48,7 @@ import {
   rename as fsRename,
   unlink as fsUnlink,
   readdir as fsReaddir,
+  symlink as fsSymlink,
 } from 'fs/promises'
 import {pathToFileURL as pathToFile} from 'url'
 import * as os from 'os'
@@ -262,6 +263,31 @@ export async function removeFile(path: string): Promise<void> {
 export async function renameFile(from: string, to: string): Promise<void> {
   outputDebug(outputContent`Renaming file from ${outputToken.path(from)} to ${outputToken.path(to)}...`)
   await fsRename(from, to)
+}
+
+/**
+ * Creates a symbolic link.
+ *
+ * @param target - Path that the symlink points to.
+ * @param path - Path where the symlink will be created.
+ */
+export async function symlink(target: string, path: string): Promise<void> {
+  outputDebug(outputContent`Creating symbolic link from ${outputToken.path(path)} to ${outputToken.path(target)}...`)
+
+  // On Windows, we need to specify the type of symlink (file or dir)
+  let type: 'file' | 'dir' | 'junction' = 'file'
+
+  try {
+    const stats = await fsLstat(target)
+    if (stats.isDirectory()) {
+      type = 'junction'
+    }
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // If we can't stat the target, assume it's a file
+  }
+
+  await fsSymlink(target, path, type)
 }
 
 /**
