@@ -64,7 +64,7 @@ export async function storeContext({
   }
 
   // Ensure that the user is able to login to the store and install apps
-  await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
+  // await developerPlatformClient.ensureUserAccessToStore(organization.id, selectedStore)
 
   return selectedStore
 }
