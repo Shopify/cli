@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.88.0
+
+### Minor Changes
+
+- a1a72b7: Added `app config pull` command to fetch the latest configuration for an already-linked app and update the local TOML
+
+### Patch Changes
+
+- 61d1a5d: Enable types to be re-generated when extensions are rebuilt during dev
+- Updated dependencies [6f306ee]
+- Updated dependencies [226b49e]
+- Updated dependencies [9b97dfa]
+- Updated dependencies [9450302]
+- Updated dependencies [cf9a602]
+  - @shopify/cli-kit@3.88.0
+  - @shopify/theme@3.88.0
+  - @shopify/plugin-cloudflare@3.88.0
+
 ## 3.87.0
 
 ### Minor Changes
