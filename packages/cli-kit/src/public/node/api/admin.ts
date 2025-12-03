@@ -170,13 +170,17 @@ async function fetchApiVersions(session: AdminSession, preferredBehaviour?: Requ
     return response.publicApiVersions
   } catch (error) {
     if (error instanceof ClientError && error.response.status === 403) {
-      const storeName = session.storeFqdn.replace('.myshopify.com', '')
       throw new AbortError(
-        outputContent`Looks like you don't have access this dev store: (${outputToken.link(
-          storeName,
+        outputContent`Looks like you don't have access to this store: ${outputToken.link(
+          session.storeFqdn,
           `https://${session.storeFqdn}`,
-        )})`,
-        outputContent`If you're not the owner, create a dev store staff account for yourself`,
+        )}`,
+        undefined,
+        [
+          ['Select a different store with', {command: '--store'}],
+          ['Use', {command: 'shopify auth login'}, 'to log in with a different account that has access to this store'],
+          "If you're not the owner, create a dev store staff account for yourself",
+        ],
       )
     }
     if (error instanceof ClientError && (error.response.status === 401 || error.response.status === 404)) {

@@ -11,7 +11,6 @@ import {AppManagementClient} from '../../utilities/developer-platform-client/app
 import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 const ORG1: Organization = {
   id: '1',
@@ -121,7 +120,7 @@ describe('fetchStore', () => {
     const got = fetchStore(ORG1, 'domain1', developerPlatformClient)
 
     // Then
-    await expect(got).rejects.toThrow(new AbortError(`Could not find Store for domain domain1 in Organization org1.`))
+    await expect(got).rejects.toThrow(`Your current account (org1) doesn't have access to store domain1.`)
   })
 })
 

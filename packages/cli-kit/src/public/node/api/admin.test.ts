@@ -5,6 +5,7 @@ import {buildHeaders} from '../../../private/node/api/headers.js'
 import * as http from '../../../public/node/http.js'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
 import {test, vi, expect, describe} from 'vitest'
+import {ClientError} from 'graphql-request'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/api/headers.js')
@@ -89,6 +90,19 @@ describe('admin-graphql-api', () => {
       token: themeAccessToken,
       variables: {variables: 'variables'},
     })
+  })
+
+  test('throws helpful error when admin API returns 403', async () => {
+    // Given
+    const errorResponse = {
+      status: 403,
+      errors: [],
+      headers: new Headers(),
+    }
+    vi.mocked(graphqlRequestDoc).mockRejectedValue(new ClientError(errorResponse, {query: ''}))
+
+    // When/Then
+    await expect(admin.supportedApiVersions(Session)).rejects.toThrow(/don't have access to this store/)
   })
 })
 
