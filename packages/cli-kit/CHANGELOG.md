@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.88.0
+
+### Minor Changes
+
+- 6f306ee: Introduce `AGENTS.md` file support in `shopify theme init`
+
+### Patch Changes
+
+- 9b97dfa: Fix zip and brotliCompress functions to handle binary files
+- 9450302: [Bug fix] Remove ability to sync Liquid files by checksum
+
 ## 3.87.0
 
 ### Minor Changes
