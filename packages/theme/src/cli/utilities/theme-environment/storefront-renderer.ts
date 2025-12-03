@@ -1,5 +1,5 @@
 import {parseCookies, serializeCookies} from './cookies.js'
-import {defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
+import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
 import {DevServerSession, DevServerRenderContext} from './types.js'
 import {createFetchError} from '../errors.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -153,11 +153,4 @@ function themeAccessHeaders(session: DevServerSession) {
     'X-Shopify-Shop': session.storeFqdn,
     'X-Shopify-Access-Token': session.token,
   }
-}
-
-function cleanHeader(headers: {[key: string]: string}): {[key: string]: string} {
-  // Force the use of the 'Cookie' key if consumers also provide the 'cookie' key
-  delete headers.cookie
-  delete headers.authorization
-  return headers
 }
