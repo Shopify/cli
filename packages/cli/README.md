@@ -278,7 +278,7 @@ DESCRIPTION
 
 ## `shopify app dev clean`
 
-Cleans up the app preview from the selected store.
+Cleans up the dev preview from the selected store.
 
 ```
 USAGE
@@ -295,9 +295,9 @@ FLAGS
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
-  Cleans up the app preview from the selected store.
+  Cleans up the dev preview from the selected store.
 
-  Stop the app preview that was started with `shopify app dev`.
+  Stop the dev preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
 ```

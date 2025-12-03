@@ -198,7 +198,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows shutting down message when aborted before app preview is ready', async () => {
+  test('shows shutting down message when aborted before dev preview is ready', async () => {
     // Given
     const abortController = new AbortController()
     devSessionStatusManager.updateStatus({isReady: false})
@@ -222,7 +222,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows persistent dev info when aborting and app preview is ready', async () => {
+  test('shows persistent dev info when aborting and dev preview is ready', async () => {
     // Given
     const abortController = new AbortController()
 
@@ -251,7 +251,7 @@ describe('DevSessionUI', () => {
     expect(finalOutput).toContain('A preview of your development changes is still available')
     expect(finalOutput).toContain('mystore.myshopify.com')
     expect(finalOutput).toContain('shopify app dev clean')
-    expect(finalOutput).toContain('Learn more about app previews')
+    expect(finalOutput).toContain('Learn more about dev previews')
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -300,7 +300,7 @@ describe('DevSessionUI', () => {
     expect(output).toContain('A preview of your development changes is still available')
     expect(output).toContain('mystore.myshopify.com')
     expect(output).toContain('shopify app dev clean')
-    expect(output).toContain('Learn more about app previews')
+    expect(output).toContain('Learn more about dev previews')
 
     // Tab interface should be present
     expect(output).toContain('(d) Dev status')
@@ -331,7 +331,7 @@ describe('DevSessionUI', () => {
     expect(finalOutput).toContain('A preview of your development changes is still available')
     expect(finalOutput).toContain('mystore.myshopify.com')
     expect(finalOutput).toContain('shopify app dev clean')
-    expect(finalOutput).toContain('Learn more about app previews')
+    expect(finalOutput).toContain('Learn more about dev previews')
 
     // Error message should be shown
     expect(finalOutput).toContain('something went wrong')
