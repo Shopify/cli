@@ -16,7 +16,30 @@ const REGULAR_POLL_INTERVAL_SECONDS = 5
 const INITIAL_POLL_COUNT = 10
 const API_VERSION = '2026-01'
 
+export const QUICK_WATCH_TIMEOUT_MS = 3000
+export const QUICK_WATCH_POLL_INTERVAL_MS = 300
+
 export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
+
+export async function shortBulkOperationPoll(adminSession: AdminSession, operationId: string): Promise<BulkOperation> {
+  const startTime = Date.now()
+  const poller = pollBulkOperation({
+    adminSession,
+    operationId,
+    pollIntervalSeconds: QUICK_WATCH_POLL_INTERVAL_MS / 1000,
+  })
+
+  let latestOperationState: BulkOperation | undefined
+
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    const {value, done} = await poller.next()
+    latestOperationState = value
+    if (done) return latestOperationState
+  } while (Date.now() - startTime < QUICK_WATCH_TIMEOUT_MS)
+
+  return latestOperationState
+}
 
 export async function watchBulkOperation(
   adminSession: AdminSession,
@@ -27,7 +50,15 @@ export async function watchBulkOperation(
   return renderSingleTask<BulkOperation>({
     title: outputContent`Polling bulk operation...`,
     task: async (updateStatus) => {
-      const poller = pollBulkOperation(adminSession, operationId, abortSignal)
+      const poller = pollBulkOperation({
+        adminSession,
+        operationId,
+        pollIntervalSeconds: REGULAR_POLL_INTERVAL_SECONDS,
+        initialPollIntervalSeconds: INITIAL_POLL_INTERVAL_SECONDS,
+        initialPollCount: INITIAL_POLL_COUNT,
+        useAdaptivePolling: true,
+        abortSignal,
+      })
 
       while (true) {
         // eslint-disable-next-line no-await-in-loop
@@ -44,11 +75,28 @@ export async function watchBulkOperation(
   })
 }
 
-async function* pollBulkOperation(
-  adminSession: AdminSession,
-  operationId: string,
-  abortSignal: AbortSignal,
-): AsyncGenerator<BulkOperation, BulkOperation> {
+interface PollBulkOperationOptions {
+  adminSession: AdminSession
+  operationId: string
+  pollIntervalSeconds: number
+  /** When true, polls faster initially then slows to pollIntervalSeconds */
+  useAdaptivePolling?: boolean
+  /** Poll interval in seconds for initial fast polls (default: 1) */
+  initialPollIntervalSeconds?: number
+  /** Number of fast polls before switching to regular interval (default: 10) */
+  initialPollCount?: number
+  abortSignal?: AbortSignal
+}
+
+async function* pollBulkOperation({
+  adminSession,
+  operationId,
+  pollIntervalSeconds,
+  useAdaptivePolling = false,
+  initialPollIntervalSeconds = INITIAL_POLL_INTERVAL_SECONDS,
+  initialPollCount = INITIAL_POLL_COUNT,
+  abortSignal,
+}: PollBulkOperationOptions): AsyncGenerator<BulkOperation, BulkOperation> {
   let pollCount = 0
 
   while (true) {
@@ -61,19 +109,28 @@ async function* pollBulkOperation(
 
     const latestOperationState = response.bulkOperation
 
-    if (TERMINAL_STATUSES.includes(latestOperationState.status) || abortSignal.aborted) {
+    if (TERMINAL_STATUSES.includes(latestOperationState.status) || abortSignal?.aborted) {
       return latestOperationState
     } else {
       yield latestOperationState
     }
 
     pollCount++
+    let pollInterval = pollIntervalSeconds
+    if (useAdaptivePolling && pollCount <= initialPollCount) {
+      pollInterval = initialPollIntervalSeconds
+    }
 
-    // Use shorter interval for the first 10 polls, then switch to regular interval
-    const pollInterval = pollCount <= INITIAL_POLL_COUNT ? INITIAL_POLL_INTERVAL_SECONDS : REGULAR_POLL_INTERVAL_SECONDS
-
-    // eslint-disable-next-line no-await-in-loop
-    await Promise.race([sleep(pollInterval), new Promise((resolve) => abortSignal.addEventListener('abort', resolve))])
+    if (abortSignal) {
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.race([
+        sleep(pollInterval),
+        new Promise((resolve) => abortSignal.addEventListener('abort', resolve)),
+      ])
+    } else {
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(pollInterval)
+    }
   }
 }
 
