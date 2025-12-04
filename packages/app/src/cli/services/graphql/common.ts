@@ -21,10 +21,19 @@ export async function createAdminSessionAsApp(remoteApp: OrganizationApp, storeF
  * Validates that a GraphQL document contains exactly one operation definition.
  *
  * @param graphqlOperation - The GraphQL query or mutation string to validate.
- * @throws AbortError if the document doesn't contain exactly one operation.
+ * @throws AbortError if the document doesn't contain exactly one operation or has syntax errors.
  */
 export function validateSingleOperation(graphqlOperation: string): void {
-  const document = parse(graphqlOperation)
+  let document
+  try {
+    document = parse(graphqlOperation)
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new AbortError(`Invalid GraphQL syntax: ${error.message}`)
+    }
+    throw error
+  }
+
   const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
 
   if (operationDefinitions.length !== 1) {
