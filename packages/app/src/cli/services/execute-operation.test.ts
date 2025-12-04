@@ -27,7 +27,7 @@ describe('executeOperation', () => {
   beforeEach(() => {
     vi.mocked(createAdminSessionAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
-      return task()
+      return task(() => {})
     })
   })
 
