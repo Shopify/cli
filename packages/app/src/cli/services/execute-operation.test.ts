@@ -1,7 +1,7 @@
 import {executeOperation} from './execute-operation.js'
 import {createAdminSessionAsApp} from './graphql/common.js'
 import {OrganizationApp} from '../models/organization.js'
-import {renderSuccess, renderError} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -25,6 +25,9 @@ describe('executeOperation', () => {
 
   beforeEach(() => {
     vi.mocked(createAdminSessionAsApp).mockResolvedValue(mockAdminSession)
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
+      return task()
+    })
   })
 
   afterEach(() => {
