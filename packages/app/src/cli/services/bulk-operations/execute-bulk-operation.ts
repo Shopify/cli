@@ -3,10 +3,10 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
+import {createAdminSessionAsApp, validateSingleOperation} from '../graphql/common.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {parse} from 'graphql'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
@@ -46,10 +46,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
   })
 
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
-  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
+  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
@@ -129,14 +126,7 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
 }
 
 function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: string): void {
-  const document = parse(graphqlOperation)
-  const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
-
-  if (operationDefinitions.length !== 1) {
-    throw new AbortError(
-      'GraphQL document must contain exactly one operation definition. Multiple operations are not supported.',
-    )
-  }
+  validateSingleOperation(graphqlOperation)
 
   if (!isMutation(graphqlOperation) && variablesJsonl) {
     throw new AbortError(

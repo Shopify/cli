@@ -1,8 +1,8 @@
+import {createAdminSessionAsApp, validateSingleOperation} from './graphql/common.js'
 import {OrganizationApp} from '../models/organization.js'
 import {renderSuccess, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {parse} from 'graphql'
 import {writeFile} from '@shopify/cli-kit/node/fs'
@@ -37,14 +37,11 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
     body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
   })
 
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
-  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
+  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
   const parsedVariables = await parseVariables(variables)
 
-  validateGraphQLDocument(query)
+  validateSingleOperation(query)
 
   try {
     const result = await adminRequestDoc({
@@ -77,16 +74,5 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
       })
     }
     throw error
-  }
-}
-
-function validateGraphQLDocument(graphqlOperation: string): void {
-  const document = parse(graphqlOperation)
-  const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
-
-  if (operationDefinitions.length !== 1) {
-    throw new AbortError(
-      'GraphQL document must contain exactly one operation definition. Multiple operations are not supported.',
-    )
   }
 }

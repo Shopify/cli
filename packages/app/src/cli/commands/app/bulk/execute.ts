@@ -1,11 +1,8 @@
 import {appFlags, bulkOperationFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../../services/app-context.js'
-import {storeContext} from '../../../services/store-context.js'
 import {executeBulkOperation} from '../../../services/bulk-operations/execute-bulk-operation.js'
+import {prepareExecuteContext} from '../../../utilities/execute-command-helpers.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {readStdinString} from '@shopify/cli-kit/node/system'
-import {AbortError} from '@shopify/cli-kit/node/error'
 
 export default class BulkExecute extends AppLinkedCommand {
   static summary = 'Execute bulk operations.'
@@ -23,26 +20,7 @@ export default class BulkExecute extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(BulkExecute)
 
-    const query = flags.query ?? (await readStdinString())
-    if (!query) {
-      throw new AbortError(
-        'No query provided. Use the --query flag or pipe input via stdin.',
-        'Example: echo "query { ... }" | shopify app bulk execute',
-      )
-    }
-
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-    })
+    const {query, appContextResult, store} = await prepareExecuteContext(flags, 'bulk execute')
 
     await executeBulkOperation({
       remoteApp: appContextResult.remoteApp,
