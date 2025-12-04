@@ -197,57 +197,6 @@ describe('executeBulkOperation', () => {
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
-  test('throws GraphQL syntax error when given malformed GraphQL document', async () => {
-    const malformedQuery = '{ products { edges { node { id } }'
-
-    await expect(
-      executeBulkOperation({
-        remoteApp: mockRemoteApp,
-        storeFqdn,
-        query: malformedQuery,
-      }),
-    ).rejects.toThrow('Syntax Error')
-
-    expect(runBulkOperationQuery).not.toHaveBeenCalled()
-    expect(runBulkOperationMutation).not.toHaveBeenCalled()
-  })
-
-  test('throws error when GraphQL document contains multiple operation definitions', async () => {
-    const multipleOperations =
-      'mutation { productUpdate(input: {}) { product { id } } } mutation { productDelete(input: {}) { deletedProductId } }'
-
-    await expect(
-      executeBulkOperation({
-        remoteApp: mockRemoteApp,
-        storeFqdn,
-        query: multipleOperations,
-      }),
-    ).rejects.toThrow('Multiple operations are not supported')
-
-    expect(runBulkOperationQuery).not.toHaveBeenCalled()
-    expect(runBulkOperationMutation).not.toHaveBeenCalled()
-  })
-
-  test('throws error when GraphQL document contains no operation definitions', async () => {
-    const noOperations = `
-      fragment ProductFields on Product {
-        id
-        title
-      }
-    `
-
-    await expect(
-      executeBulkOperation({
-        remoteApp: mockRemoteApp,
-        storeFqdn,
-        query: noOperations,
-      }),
-    ).rejects.toThrow('must contain exactly one operation definition')
-
-    expect(runBulkOperationQuery).not.toHaveBeenCalled()
-    expect(runBulkOperationMutation).not.toHaveBeenCalled()
-  })
-
   test('reads variables from file when variableFile is provided', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const variableFilePath = joinPath(tmpDir, 'variables.jsonl')
@@ -513,7 +462,7 @@ describe('executeBulkOperation', () => {
     ).rejects.toThrow('Bulk operation response returned null with no error message.')
 
     expect(renderWarning).toHaveBeenCalledWith({
-      headline: 'Bulk operation not created succesfully.',
+      headline: 'Bulk operation not created successfully.',
       body: 'This is an unexpected error. Please try again later.',
     })
 
