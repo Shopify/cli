@@ -14,7 +14,32 @@ const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'CANCELED', 'EXPIRED']
 const POLL_INTERVAL_SECONDS = 5
 const API_VERSION = '2026-01'
 
+export const QUICK_WATCH_TIMEOUT_MS = 3000
+export const QUICK_WATCH_POLL_INTERVAL_MS = 300
+
 export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
+
+export async function quickWatchBulkOperation(adminSession: AdminSession, operationId: string): Promise<BulkOperation> {
+  const startTime = Date.now()
+
+  while (Date.now() - startTime < QUICK_WATCH_TIMEOUT_MS) {
+    // eslint-disable-next-line no-await-in-loop
+    const {bulkOperation} = await fetchBulkOperation(adminSession, operationId)
+
+    if (bulkOperation && TERMINAL_STATUSES.includes(bulkOperation.status)) {
+      return bulkOperation
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(QUICK_WATCH_POLL_INTERVAL_MS / 1000)
+  }
+
+  const {bulkOperation} = await fetchBulkOperation(adminSession, operationId)
+  if (!bulkOperation) {
+    throw new Error('bulk operation not found')
+  }
+  return bulkOperation
+}
 
 export async function watchBulkOperation(
   adminSession: AdminSession,
