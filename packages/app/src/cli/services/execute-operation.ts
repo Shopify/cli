@@ -57,6 +57,7 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
           responseOptions: {handleErrors: false},
         })
       },
+      renderOptions: {stdout: process.stderr},
     })
 
     const resultString = JSON.stringify(result, null, 2)
