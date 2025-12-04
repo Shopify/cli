@@ -47,7 +47,7 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
 
   try {
     const result = await renderSingleTask({
-      title: outputContent`Executing GraphQL operation...`,
+      title: outputContent`Executing GraphQL operation`,
       task: async () => {
         return adminRequestDoc({
           query: parse(query),
