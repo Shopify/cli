@@ -3,10 +3,10 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
+import {createAdminSessionAsApp, validateSingleOperation} from '../graphql/common.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -44,10 +44,7 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
   const {remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false, version} = input
 
-  const appSecret = remoteApp.apiSecretKeys[0]?.secret
-  if (!appSecret) throw new BugError('No API secret keys found for app')
-
-  const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
+  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
   if (version) await validateApiVersion(adminSession, version)
 
@@ -109,7 +106,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     }
   } else {
     renderWarning({
-      headline: 'Bulk operation not created succesfully.',
+      headline: 'Bulk operation not created successfully.',
       body: 'This is an unexpected error. Please try again later.',
     })
     throw new BugError('Bulk operation response returned null with no error message.')
@@ -159,14 +156,7 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
 }
 
 function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: string): void {
-  const document = parse(graphqlOperation)
-  const operationDefinitions = document.definitions.filter((def) => def.kind === 'OperationDefinition')
-
-  if (operationDefinitions.length !== 1) {
-    throw new AbortError(
-      'GraphQL document must contain exactly one operation definition. Multiple operations are not supported.',
-    )
-  }
+  validateSingleOperation(graphqlOperation)
 
   if (!isMutation(graphqlOperation) && variablesJsonl) {
     throw new AbortError(
