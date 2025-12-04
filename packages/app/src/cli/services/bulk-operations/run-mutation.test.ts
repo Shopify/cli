@@ -40,4 +40,17 @@ describe('runBulkOperationMutation', () => {
     expect(bulkOperationResult?.bulkOperation).toEqual(successfulBulkOperation)
     expect(bulkOperationResult?.userErrors).toEqual([])
   })
+
+  test('starts bulk mutation with specific API version when provided', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
+
+    await runBulkOperationMutation({
+      adminSession: mockSession,
+      query: 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }',
+      variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
+      version: '2025-01',
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(expect.objectContaining({version: '2025-01'}))
+  })
 })

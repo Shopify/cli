@@ -52,6 +52,7 @@ export default class BulkExecute extends AppLinkedCommand {
       variableFile: flags['variable-file'],
       watch: flags.watch,
       outputFile: flags['output-file'],
+      ...(flags.version && {version: flags.version}),
     })
 
     return {app: appContextResult.app}
