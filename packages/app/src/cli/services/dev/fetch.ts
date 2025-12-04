@@ -125,7 +125,10 @@ export async function fetchStore(
 ): Promise<OrganizationStore> {
   const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
 
-  if (!store) throw new AbortError(`Could not find Store for domain ${storeFqdn} in Organization ${org.businessName}.`)
+  if (!store)
+    throw new AbortError(
+      `Could not find store for domain ${storeFqdn} in organization ${org.businessName}. Ensure you've provided the correct store domain, that the store is a Dev Store, and that you have access to the store.`,
+    )
 
   return store
 }
