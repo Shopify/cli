@@ -3,6 +3,7 @@ import {createAdminSessionAsApp} from './graphql/common.js'
 import {OrganizationApp} from '../models/organization.js'
 import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {ClientError} from 'graphql-request'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
@@ -172,7 +173,7 @@ describe('executeOperation', () => {
     )
   })
 
-  test('renders error and rethrows when API request fails', async () => {
+  test('throws when API request fails', async () => {
     const query = 'query { shop { name } }'
     const apiError = new Error('API request failed')
     vi.mocked(adminRequestDoc).mockRejectedValue(apiError)
@@ -184,13 +185,6 @@ describe('executeOperation', () => {
         query,
       }),
     ).rejects.toThrow('API request failed')
-
-    expect(renderError).toHaveBeenCalledWith(
-      expect.objectContaining({
-        headline: 'Operation failed.',
-        body: 'API request failed',
-      }),
-    )
   })
 
   test('handles GraphQL errors in response', async () => {
@@ -211,5 +205,30 @@ describe('executeOperation', () => {
     const mockOutput = mockAndCaptureOutput()
     const expectedOutput = JSON.stringify(mockResult, null, 2)
     expect(mockOutput.info()).toContain(expectedOutput)
+  })
+
+  test('handles ClientError from GraphQL validation failures', async () => {
+    const query = 'query { invalidField }'
+    const graphqlErrors = [
+      {message: 'Field "invalidField" doesn\'t exist on type "QueryRoot"', locations: [{line: 1, column: 9}]},
+    ]
+    const clientError = new ClientError({errors: graphqlErrors} as any, {query: '', variables: {}})
+    // Set response property that our code accesses
+    ;(clientError as any).response = {errors: graphqlErrors}
+
+    vi.mocked(adminRequestDoc).mockRejectedValue(clientError)
+
+    await executeOperation({
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    expect(renderError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: 'GraphQL operation failed.',
+        body: expect.stringContaining('invalidField'),
+      }),
+    )
   })
 })

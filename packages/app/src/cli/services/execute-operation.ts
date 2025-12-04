@@ -4,6 +4,7 @@ import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {ClientError} from 'graphql-request'
 import {parse} from 'graphql'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 
@@ -22,8 +23,9 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
   try {
     return JSON.parse(variables)
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     throw new AbortError(
-      outputContent`Invalid JSON in ${outputToken.yellow('--variables')} flag.`,
+      outputContent`Invalid JSON in ${outputToken.yellow('--variables')} flag: ${errorMessage}`,
       'Please provide valid JSON format.',
     )
   }
@@ -72,12 +74,20 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
       outputResult(resultString)
     }
   } catch (error) {
-    if (error instanceof Error) {
+    if (error instanceof ClientError) {
+      // GraphQL errors from user's query - render as error
+      const errorResult = {
+        errors: error.response.errors,
+      }
+      const errorString = JSON.stringify(errorResult, null, 2)
+
       renderError({
-        headline: 'Operation failed.',
-        body: error.message,
+        headline: 'GraphQL operation failed.',
+        body: errorString,
       })
+      return
     }
+    // Network/system errors - let them propagate
     throw error
   }
 }
