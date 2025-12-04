@@ -1,6 +1,6 @@
 import {createAdminSessionAsApp, validateSingleOperation} from './graphql/common.js'
 import {OrganizationApp} from '../models/organization.js'
-import {renderSuccess, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
@@ -44,12 +44,17 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
   validateSingleOperation(query)
 
   try {
-    const result = await adminRequestDoc({
-      query: parse(query),
-      session: adminSession,
-      variables: parsedVariables,
-      version: apiVersion,
-      responseOptions: {handleErrors: false},
+    const result = await renderSingleTask({
+      title: outputContent`Executing GraphQL operation...`,
+      task: async () => {
+        return adminRequestDoc({
+          query: parse(query),
+          session: adminSession,
+          variables: parsedVariables,
+          version: apiVersion,
+          responseOptions: {handleErrors: false},
+        })
+      },
     })
 
     const resultString = JSON.stringify(result, null, 2)
