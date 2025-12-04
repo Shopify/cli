@@ -4,10 +4,11 @@ import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {renderSuccess, renderInfo, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 import {parse} from 'graphql'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
@@ -76,8 +77,19 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   const createdOperation = bulkOperationResponse?.bulkOperation
   if (createdOperation) {
     if (watch) {
-      const finishedOperation = await watchBulkOperation(adminSession, createdOperation.id)
-      await renderBulkOperationResult(finishedOperation, outputFile)
+      const abortController = new AbortController()
+      const operation = await watchBulkOperation(adminSession, createdOperation.id, abortController.signal, () =>
+        abortController.abort(),
+      )
+
+      if (abortController.signal.aborted) {
+        renderInfo({
+          headline: `Bulk operation ${operation.id} is still running in the background.`,
+          body: statusCommandHelpMessage(operation.id),
+        })
+      } else {
+        await renderBulkOperationResult(operation, outputFile)
+      }
     } else {
       await renderBulkOperationResult(createdOperation, outputFile)
     }
@@ -105,7 +117,11 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
 
   switch (operation.status) {
     case 'CREATED':
-      renderSuccess({headline: 'Bulk operation started.', customSections})
+      renderSuccess({
+        headline: 'Bulk operation started.',
+        body: statusCommandHelpMessage(operation.id),
+        customSections,
+      })
       break
     case 'COMPLETED':
       if (operation.url) {
@@ -145,6 +161,10 @@ function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: stri
       )} flags can only be used with mutations, not queries.`,
     )
   }
+}
+
+function statusCommandHelpMessage(operationId: string): TokenItem {
+  return ['Monitor its progress with:', {command: `shopify app bulk status --id="${operationId}}"`}]
 }
 
 function isMutation(graphqlOperation: string): boolean {

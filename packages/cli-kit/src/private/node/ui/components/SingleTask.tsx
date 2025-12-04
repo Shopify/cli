@@ -1,21 +1,33 @@
 import {LoadingBar} from './LoadingBar.js'
-import {useExitOnCtrlC} from '../hooks/use-exit-on-ctrl-c.js'
+import {handleCtrlC} from '../../ui.js'
 import {TokenizedString} from '../../../../public/node/output.js'
 import React, {useEffect, useState} from 'react'
-import {useApp} from 'ink'
+import {useApp, useInput, useStdin} from 'ink'
 
 interface SingleTaskProps<T> {
   title: TokenizedString
   task: (updateStatus: (status: TokenizedString) => void) => Promise<T>
   onComplete?: (result: T) => void
+  onAbort?: () => void
   noColor?: boolean
 }
 
-const SingleTask = <T,>({task, title, onComplete, noColor}: SingleTaskProps<T>) => {
+const SingleTask = <T,>({task, title, onComplete, onAbort, noColor}: SingleTaskProps<T>) => {
   const [status, setStatus] = useState(title)
   const [isDone, setIsDone] = useState(false)
   const {exit: unmountInk} = useApp()
-  useExitOnCtrlC()
+  const {isRawModeSupported} = useStdin()
+
+  useInput(
+    (input, key) => {
+      if (onAbort) {
+        handleCtrlC(input, key, onAbort)
+      } else {
+        handleCtrlC(input, key)
+      }
+    },
+    {isActive: Boolean(isRawModeSupported)},
+  )
 
   useEffect(() => {
     task(setStatus)
