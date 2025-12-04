@@ -4,7 +4,7 @@ import {OrganizationStore} from '../models/organization.js'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
-export interface AppStoreContextFlags {
+interface AppStoreContextFlags {
   path: string
   'client-id'?: string
   reset: boolean
@@ -12,16 +12,16 @@ export interface AppStoreContextFlags {
   store?: string
 }
 
-export interface AppStoreContext {
+interface AppStoreContext {
   appContextResult: LoadedAppContextOutput
   store: OrganizationStore
 }
 
-export interface ExecuteCommandFlags extends AppStoreContextFlags {
+interface ExecuteCommandFlags extends AppStoreContextFlags {
   query?: string
 }
 
-export interface ExecuteContext extends AppStoreContext {
+interface ExecuteContext extends AppStoreContext {
   query: string
 }
 
