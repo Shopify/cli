@@ -65,7 +65,7 @@ export async function prepareExecuteContext(
   if (!query) {
     throw new AbortError(
       'No query provided. Use the --query flag or pipe input via stdin.',
-      `Example: echo "query { shop { name } }" | shopify app ${commandName}`,
+      `Example: echo "query { ... }" | shopify app ${commandName}`,
     )
   }
 
