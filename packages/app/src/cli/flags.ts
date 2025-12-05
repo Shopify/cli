@@ -77,3 +77,32 @@ export const bulkOperationFlags = {
     env: 'SHOPIFY_FLAG_VERSION',
   }),
 }
+
+export const operationFlags = {
+  query: Flags.string({
+    char: 'q',
+    description: 'The GraphQL query or mutation, as a string.',
+    env: 'SHOPIFY_FLAG_QUERY',
+    required: false,
+  }),
+  variables: Flags.string({
+    char: 'v',
+    description: 'The values for any GraphQL variables in your query or mutation, in JSON format.',
+    env: 'SHOPIFY_FLAG_VARIABLES',
+  }),
+  store: Flags.string({
+    char: 's',
+    description:
+      'The myshopify.com domain of the store to execute against. The app must be installed on the store. If not specified, you will be prompted to select a store.',
+    env: 'SHOPIFY_FLAG_STORE',
+    parse: async (input) => normalizeStoreFqdn(input),
+  }),
+  version: Flags.string({
+    description: 'The API version to use for the query or mutation. Defaults to the latest stable version.',
+    env: 'SHOPIFY_FLAG_VERSION',
+  }),
+  'output-file': Flags.string({
+    description: 'The file name where results should be written, instead of STDOUT.',
+    env: 'SHOPIFY_FLAG_OUTPUT_FILE',
+  }),
+}

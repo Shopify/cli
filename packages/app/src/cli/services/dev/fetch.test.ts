@@ -121,7 +121,12 @@ describe('fetchStore', () => {
     const got = fetchStore(ORG1, 'domain1', developerPlatformClient)
 
     // Then
-    await expect(got).rejects.toThrow(new AbortError(`Could not find Store for domain domain1 in Organization org1.`))
+    await expect(got).rejects.toThrow(
+      new AbortError(
+        `Could not find store for domain domain1 in organization org1.`,
+        `Ensure you've provided the correct store domain, that the store is a dev store, and that you have access to the store.`,
+      ),
+    )
   })
 })
 

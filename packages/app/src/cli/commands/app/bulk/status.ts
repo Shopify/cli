@@ -1,7 +1,6 @@
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../../services/app-context.js'
-import {storeContext} from '../../../services/store-context.js'
+import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
 import {getBulkOperationStatus, listBulkOperations} from '../../../services/bulk-operations/bulk-operation-status.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
@@ -33,18 +32,7 @@ export default class BulkStatus extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(BulkStatus)
 
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
-
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-    })
+    const {appContextResult, store} = await prepareAppStoreContext(flags)
 
     if (flags.id) {
       await getBulkOperationStatus({
