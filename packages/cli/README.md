@@ -16,6 +16,7 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
+* [`shopify app import-custom-data-definitions`](#shopify-app-import-custom-data-definitions)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
@@ -546,6 +547,32 @@ DESCRIPTION
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
+```
+
+## `shopify app import-custom-data-definitions`
+
+Import metafield and metaobject definitions.
+
+```
+USAGE
+  $ shopify app import-custom-data-definitions [--client-id <value> | -c <value>] [--include-existing] [--no-color] [--path <value>]
+    [--reset | ] [-s <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+      --client-id=<value>  The Client ID of your app.
+      --include-existing   Include existing declared definitions in the output.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Import metafield and metaobject definitions.
+
+  Import metafield and metaobject definitions from your development store. "Read more about declarative custom data
+  definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
 ```
 
 ## `shopify app import-extensions`
