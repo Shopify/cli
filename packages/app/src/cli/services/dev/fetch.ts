@@ -117,19 +117,25 @@ export async function fetchOrgFromId(
  * @param org - Organization
  * @param storeFqdn - store domain fqdn
  * @param developerPlatformClient - The client to access the platform API
+ * @param includeAllStores - Whether to include all store types or only Dev Stores
  */
 export async function fetchStore(
   org: Organization,
   storeFqdn: string,
   developerPlatformClient: DeveloperPlatformClient,
+  includeAllStores = false,
 ): Promise<OrganizationStore> {
-  const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn)
+  const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn, includeAllStores)
 
-  if (!store)
+  if (!store) {
+    const storeTypeMessage = includeAllStores
+      ? 'Ensure you have provided the correct store domain and that you have access to the store.'
+      : 'Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.'
     throw new AbortError(
       `Could not find store for domain ${storeFqdn} in organization ${org.businessName}.`,
-      `Ensure you've provided the correct store domain, that the store is a dev store, and that you have access to the store.`,
+      storeTypeMessage,
     )
+  }
 
   return store
 }

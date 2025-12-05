@@ -50,6 +50,16 @@ describe('executeBulkOperation', () => {
   } as OrganizationApp
 
   const storeFqdn = 'test-store.myshopify.com'
+  const mockStore = {
+    shopId: '123',
+    link: 'link',
+    shopDomain: storeFqdn,
+    shopName: 'Test Store',
+    transferDisabled: true,
+    convertableToPartnerTest: false,
+    provisionable: true,
+    storeType: 'APP_DEVELOPMENT',
+  }
   const mockAdminSession = {token: 'test-token', storeFqdn}
 
   const createdBulkOperation: NonNullable<
@@ -87,7 +97,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -110,7 +120,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -133,7 +143,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query: mutation,
     })
 
@@ -158,7 +168,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query: mutation,
       variables,
     })
@@ -181,7 +191,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -206,7 +216,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -242,7 +252,7 @@ describe('executeBulkOperation', () => {
       await executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query: mutation,
         variableFile: variableFilePath,
       })
@@ -265,7 +275,7 @@ describe('executeBulkOperation', () => {
         executeBulkOperation({
           organization: mockOrganization,
           remoteApp: mockRemoteApp,
-          storeFqdn,
+          store: mockStore,
           query: mutation,
           variableFile: nonExistentPath,
         }),
@@ -284,7 +294,7 @@ describe('executeBulkOperation', () => {
       executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         variables,
       }),
@@ -305,7 +315,7 @@ describe('executeBulkOperation', () => {
         executeBulkOperation({
           organization: mockOrganization,
           remoteApp: mockRemoteApp,
-          storeFqdn,
+          store: mockStore,
           query,
           variableFile: variableFilePath,
         }),
@@ -338,7 +348,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -378,7 +388,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -467,7 +477,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
       outputFile,
@@ -501,7 +511,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -530,7 +540,7 @@ describe('executeBulkOperation', () => {
       await executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         watch: true,
       })
@@ -555,7 +565,7 @@ describe('executeBulkOperation', () => {
       executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
       }),
     ).rejects.toThrow('Bulk operation response returned null with no error message.')
