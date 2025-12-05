@@ -513,7 +513,12 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
+  async storeByDomain(
+    orgId: string,
+    shopDomain: string,
+    _includeAllStores = false,
+  ): Promise<OrganizationStore | undefined> {
+    // Note: includeAllStores parameter not implemented for PartnersClient
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
     const result: FindStoreByDomainSchema = await this.request(FindStoreByDomainQuery, variables)
 

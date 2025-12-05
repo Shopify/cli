@@ -210,6 +210,8 @@ export type BulkOperationsSortKeys =
   | 'COMPLETED_AT'
   /** Sort by the `created_at` value. */
   | 'CREATED_AT'
+  /** Sort by the `status` value. */
+  | 'STATUS'
 
 /**
  * The possible HTTP methods that can be used when sending a request to upload a file using information from a

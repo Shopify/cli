@@ -26,7 +26,7 @@ export default class BulkExecute extends AppLinkedCommand {
     await executeBulkOperation({
       organization: appContextResult.organization,
       remoteApp: appContextResult.remoteApp,
-      storeFqdn: store.shopDomain,
+      store,
       query,
       variables: flags.variables,
       variableFile: flags['variable-file'],

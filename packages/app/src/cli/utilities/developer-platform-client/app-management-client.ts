@@ -86,10 +86,11 @@ import {
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
+import {FetchDevStoreByDomain} from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
 import {
-  FetchDevStoreByDomain,
-  FetchDevStoreByDomainQueryVariables,
-} from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
+  FetchStoreByDomain,
+  FetchStoreByDomainQueryVariables,
+} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
 import {
   ListAppDevStores,
   ListAppDevStoresQuery,
@@ -834,10 +835,14 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
-    const queryVariables: FetchDevStoreByDomainQueryVariables = {domain: shopDomain}
+  async storeByDomain(
+    orgId: string,
+    shopDomain: string,
+    includeAllStores = false,
+  ): Promise<OrganizationStore | undefined> {
+    const queryVariables: FetchStoreByDomainQueryVariables = {domain: shopDomain}
     const storesResult = await this.businessPlatformOrganizationsRequest({
-      query: FetchDevStoreByDomain,
+      query: includeAllStores ? FetchStoreByDomain : FetchDevStoreByDomain,
       organizationId: String(numberFromGid(orgId)),
       variables: queryVariables,
     })
@@ -1303,7 +1308,7 @@ function mapBusinessPlatformStoresToOrganizationStores(
   provisionable: boolean,
 ): OrganizationStore[] {
   return storesArray.map((store: ShopNode) => {
-    const {externalId, primaryDomain, name, url} = store
+    const {externalId, primaryDomain, name, url, storeType} = store
     const shopDomain = url ?? primaryDomain
     if (!shopDomain) throw new BugError('The selected store does not have a valid URL')
     return {
@@ -1314,6 +1319,7 @@ function mapBusinessPlatformStoresToOrganizationStores(
       transferDisabled: true,
       convertableToPartnerTest: true,
       provisionable,
+      storeType,
     } as OrganizationStore
   })
 }

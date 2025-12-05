@@ -3,8 +3,9 @@ import {
   validateSingleOperation,
   resolveApiVersion,
   formatOperationInfo,
+  validateMutationStore,
 } from './graphql/common.js'
-import {OrganizationApp, Organization} from '../models/organization.js'
+import {OrganizationApp, Organization, OrganizationStore} from '../models/organization.js'
 import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -16,7 +17,7 @@ import {writeFile} from '@shopify/cli-kit/node/fs'
 interface ExecuteOperationInput {
   organization: Organization
   remoteApp: OrganizationApp
-  storeFqdn: string
+  store: OrganizationStore
   query: string
   variables?: string
   outputFile?: string
@@ -38,9 +39,9 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {organization, remoteApp, storeFqdn, query, variables, version: userSpecifiedVersion, outputFile} = input
+  const {organization, remoteApp, store, query, variables, version: userSpecifiedVersion, outputFile} = input
 
-  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
+  const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
 
   const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
 
@@ -49,7 +50,7 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn, version}),
+          items: formatOperationInfo({organization, remoteApp, storeFqdn: store.shopDomain, version}),
         },
       },
     ],
@@ -58,6 +59,7 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
   const parsedVariables = await parseVariables(variables)
 
   validateSingleOperation(query)
+  validateMutationStore(query, store)
 
   try {
     const result = await renderSingleTask({

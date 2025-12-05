@@ -44,6 +44,7 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
     appContextResult,
     storeFqdn: flags.store,
     forceReselectStore: flags.reset,
+    includeAllStores: true,
   })
 
   return {appContextResult, store}
