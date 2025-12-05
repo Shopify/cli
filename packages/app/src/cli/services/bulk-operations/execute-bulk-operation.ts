@@ -142,8 +142,8 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
           await writeFile(outputFile, results)
           renderSuccess({headline, body: [`Results written to ${outputFile}`], customSections})
         } else {
-          outputResult(results)
           renderSuccess({headline, customSections})
+          outputResult(results)
         }
       } else {
         renderSuccess({headline, customSections})
