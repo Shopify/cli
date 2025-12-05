@@ -7,7 +7,8 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 export default class BulkExecute extends AppLinkedCommand {
   static summary = 'Execute bulk operations.'
 
-  static description = 'Execute bulk operations against the Shopify Admin API.'
+  static description =
+    'Executes an Admin API GraphQL query or mutation on the specified dev store, as a bulk operation.'
 
   static hidden = true
 
