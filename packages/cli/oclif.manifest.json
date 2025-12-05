@@ -6858,6 +6858,17 @@
           "name": "live",
           "type": "boolean"
         },
+        "name": {
+          "description": "The name for the theme. Will always create a new theme.",
+          "env": "SHOPIFY_FLAG_NAME",
+          "exclusive": [
+            "theme"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "name",
+          "type": "option"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
