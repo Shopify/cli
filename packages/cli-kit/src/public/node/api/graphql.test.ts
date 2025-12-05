@@ -9,6 +9,7 @@ import {LocalStorage} from '../local-storage.js'
 import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
 import {nonRandomUUID} from '../crypto.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
+import * as system from '../system.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {setupServer} from 'msw/node'
@@ -17,6 +18,8 @@ import {graphql, HttpResponse} from 'msw'
 let mockedRequestId = 'request-id-123'
 
 vi.spyOn(debugRequest, 'debugLogRequestInfo').mockResolvedValue(undefined)
+
+vi.spyOn(system, 'sleep').mockImplementation(async () => {})
 
 const mockedAddress = 'https://shopify.example/graphql'
 const mockVariables = {some: 'variables'}
@@ -35,6 +38,14 @@ const handlers = [
       {
         data: {
           QueryName: {example: 'hello'},
+        },
+        extensions: {
+          cost: {
+            actualQueryCost: 10,
+            throttleStatus: {
+              restoreRate: 10000,
+            },
+          },
         },
       },
       {
@@ -364,6 +375,47 @@ describe('graphqlRequestDoc', () => {
       mockVariables,
       expect.anything(),
     )
+  })
+
+  test('applies rate limit restoration', async () => {
+    const document = {
+      kind: 'Document',
+      definitions: [
+        {
+          kind: 'OperationDefinition',
+          operation: 'query',
+          name: {kind: 'Name', value: 'QueryName'},
+          selectionSet: {
+            kind: 'SelectionSet',
+            selections: [
+              {
+                kind: 'Field',
+                name: {kind: 'Name', value: 'example'},
+              },
+            ],
+          },
+        },
+      ],
+    } as unknown as TypedDocumentNode<unknown, unknown>
+
+    // When
+    const res = await graphqlRequestDoc({
+      query: document,
+      api: 'mockApi',
+      url: mockedAddress,
+      token: mockToken,
+      addedHeaders: mockedAddedHeaders,
+      variables: mockVariables,
+      autoRateLimitRestore: true,
+    })
+    expect(res).toMatchInlineSnapshot(`
+      {
+        "QueryName": {
+          "example": "hello",
+        },
+      }
+    `)
+    expect(system.sleep).toHaveBeenCalledWith(0.001)
   })
 })
 

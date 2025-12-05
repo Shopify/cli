@@ -38,7 +38,7 @@ type AutomaticCancellationBehaviour =
       useAbortSignal: AbortSignal | (() => AbortSignal)
     }
 
-type RequestBehaviour = NetworkRetryBehaviour & AutomaticCancellationBehaviour
+export type RequestBehaviour = NetworkRetryBehaviour & AutomaticCancellationBehaviour
 
 export type RequestModeInput = PresetFetchBehaviour | RequestBehaviour
 
