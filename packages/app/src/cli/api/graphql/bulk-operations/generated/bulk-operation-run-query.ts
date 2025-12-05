@@ -49,11 +49,6 @@ export const BulkOperationRunQuery = {
                 name: {kind: 'Name', value: 'query'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'query'}},
               },
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'groupObjects'},
-                value: {kind: 'BooleanValue', value: false},
-              },
             ],
             selectionSet: {
               kind: 'SelectionSet',
