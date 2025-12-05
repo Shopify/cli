@@ -1,6 +1,7 @@
-import {createAdminSessionAsApp, validateSingleOperation} from './common.js'
+import {createAdminSessionAsApp, validateSingleOperation, validateApiVersion} from './common.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
+import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session', async () => {
@@ -8,6 +9,14 @@ vi.mock('@shopify/cli-kit/node/session', async () => {
   return {
     ...actual,
     ensureAuthenticatedAdminAsApp: vi.fn(),
+  }
+})
+
+vi.mock('@shopify/cli-kit/node/api/admin', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/api/admin')
+  return {
+    ...actual,
+    supportedApiVersions: vi.fn(),
   }
 })
 
@@ -94,5 +103,31 @@ describe('validateSingleOperation', () => {
     `
 
     expect(() => validateSingleOperation(fragmentOnly)).toThrow('must contain exactly one operation definition')
+  })
+})
+
+describe('validateApiVersion', () => {
+  const mockAdminSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
+
+  test('allows unstable version without validation', async () => {
+    await expect(validateApiVersion(mockAdminSession, 'unstable')).resolves.not.toThrow()
+
+    expect(supportedApiVersions).not.toHaveBeenCalled()
+  })
+
+  test('allows supported API version', async () => {
+    vi.mocked(supportedApiVersions).mockResolvedValue(['2024-01', '2024-04', '2024-07'])
+
+    await expect(validateApiVersion(mockAdminSession, '2024-04')).resolves.not.toThrow()
+
+    expect(supportedApiVersions).toHaveBeenCalledWith(mockAdminSession)
+  })
+
+  test('throws error when API version is not supported', async () => {
+    vi.mocked(supportedApiVersions).mockResolvedValue(['2024-01', '2024-04', '2024-07'])
+
+    await expect(validateApiVersion(mockAdminSession, '2023-01')).rejects.toThrow('Invalid API version: 2023-01')
+
+    expect(supportedApiVersions).toHaveBeenCalledWith(mockAdminSession)
   })
 })

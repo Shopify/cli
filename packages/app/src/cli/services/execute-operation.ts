@@ -1,4 +1,4 @@
-import {createAdminSessionAsApp, validateSingleOperation} from './graphql/common.js'
+import {createAdminSessionAsApp, validateSingleOperation, validateApiVersion} from './graphql/common.js'
 import {OrganizationApp} from '../models/organization.js'
 import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
@@ -13,8 +13,8 @@ interface ExecuteOperationInput {
   storeFqdn: string
   query: string
   variables?: string
-  apiVersion?: string
   outputFile?: string
+  version?: string
 }
 
 async function parseVariables(variables?: string): Promise<{[key: string]: unknown} | undefined> {
@@ -32,14 +32,26 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, apiVersion, outputFile} = input
+  const {remoteApp, storeFqdn, query, variables, version, outputFile} = input
 
   renderInfo({
     headline: 'Executing GraphQL operation.',
-    body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
+    body: [
+      {
+        list: {
+          items: [
+            `App: ${remoteApp.title}`,
+            `Store: ${storeFqdn}`,
+            `API version: ${version ?? 'default (latest stable)'}`,
+          ],
+        },
+      },
+    ],
   })
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
+
+  if (version) await validateApiVersion(adminSession, version)
 
   const parsedVariables = await parseVariables(variables)
 
@@ -53,7 +65,7 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
           query: parse(query),
           session: adminSession,
           variables: parsedVariables,
-          version: apiVersion,
+          version,
           responseOptions: {handleErrors: false},
         })
       },

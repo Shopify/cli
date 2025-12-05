@@ -92,7 +92,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Execute bulk operations against the Shopify Admin API.",
+      "description": "Executes an Admin API GraphQL query or mutation on the specified dev store, as a bulk operation.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -1130,7 +1130,7 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Executes a GraphQL query or mutation on the specified store, and writes the result to STDOUT or a file.",
+      "description": "Executes an Admin API GraphQL query or mutation on the specified dev store.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",

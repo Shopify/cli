@@ -3,11 +3,10 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {createAdminSessionAsApp, validateSingleOperation} from '../graphql/common.js'
+import {createAdminSessionAsApp, validateSingleOperation, validateApiVersion} from '../graphql/common.js'
 import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {parse} from 'graphql'
@@ -175,16 +174,4 @@ function isMutation(graphqlOperation: string): boolean {
   const document = parse(graphqlOperation)
   const operation = document.definitions.find((def) => def.kind === 'OperationDefinition')
   return operation?.kind === 'OperationDefinition' && operation.operation === 'mutation'
-}
-
-async function validateApiVersion(adminSession: {token: string; storeFqdn: string}, version: string): Promise<void> {
-  if (version === 'unstable') return
-
-  const supportedVersions = await supportedApiVersions(adminSession)
-  if (supportedVersions.includes(version)) return
-
-  const firstLine = outputContent`Invalid API version: ${version}`.value
-  const secondLine = outputContent`Supported versions: ${supportedVersions.join(', ')}`.value
-
-  throw new AbortError(`${firstLine}\n${secondLine}`)
 }

@@ -378,7 +378,7 @@ FLAGS
 DESCRIPTION
   Execute GraphQL queries and mutations.
 
-  Executes a GraphQL query or mutation on the specified store, and writes the result to STDOUT or a file.
+  Executes an Admin API GraphQL query or mutation on the specified dev store.
 ```
 
 ## `shopify app function build`

@@ -3,6 +3,7 @@ import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation} from './watch-bulk-operation.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
+import {validateApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp} from '../../models/organization.js'
@@ -17,6 +18,13 @@ vi.mock('./run-query.js')
 vi.mock('./run-mutation.js')
 vi.mock('./watch-bulk-operation.js')
 vi.mock('./download-bulk-operation-results.js')
+vi.mock('../graphql/common.js', async () => {
+  const actual = await vi.importActual('../graphql/common.js')
+  return {
+    ...actual,
+    validateApiVersion: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/session', async () => {
@@ -24,13 +32,6 @@ vi.mock('@shopify/cli-kit/node/session', async () => {
   return {
     ...actual,
     ensureAuthenticatedAdminAsApp: vi.fn(),
-  }
-})
-vi.mock('@shopify/cli-kit/node/api/admin', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/api/admin')
-  return {
-    ...actual,
-    supportedApiVersions: vi.fn(() => Promise.resolve(['2025-01', '2025-04', '2025-07', '2025-10'])),
   }
 })
 
@@ -469,62 +470,46 @@ describe('executeBulkOperation', () => {
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
-  test('allows executing bulk operations against unstable', async () => {
+  test('validates API version when provided', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const version = '2025-01'
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+    vi.mocked(validateApiVersion).mockResolvedValue()
+
+    await executeBulkOperation({
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      version,
+    })
+
+    expect(validateApiVersion).toHaveBeenCalledWith(mockAdminSession, version)
+    expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query,
+      version,
+    })
+  })
+
+  test('does not validate version when not provided', async () => {
     const query = '{ products { edges { node { id } } } }'
     const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
     }
     vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+    vi.mocked(validateApiVersion).mockClear()
 
     await executeBulkOperation({
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
-      version: 'unstable',
     })
 
-    expect(runBulkOperationQuery).toHaveBeenCalledWith({
-      adminSession: mockAdminSession,
-      query,
-      version: 'unstable',
-    })
-  })
-
-  test('allows executing bulk operations against a specific stable version', async () => {
-    const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
-      bulkOperation: createdBulkOperation,
-      userErrors: [],
-    }
-    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
-
-    await executeBulkOperation({
-      remoteApp: mockRemoteApp,
-      storeFqdn,
-      query,
-      version: '2025-01',
-    })
-
-    expect(runBulkOperationQuery).toHaveBeenCalledWith({
-      adminSession: mockAdminSession,
-      query,
-      version: '2025-01',
-    })
-  })
-
-  test('throws error when an API version is specified but is not supported', async () => {
-    const query = '{ products { edges { node { id } } } }'
-
-    await expect(
-      executeBulkOperation({
-        remoteApp: mockRemoteApp,
-        storeFqdn,
-        query,
-        version: '2099-12',
-      }),
-    ).rejects.toThrow('Invalid API version')
-
-    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(validateApiVersion).not.toHaveBeenCalled()
   })
 })

@@ -1,6 +1,8 @@
 import {OrganizationApp} from '../../models/organization.js'
 import {ensureAuthenticatedAdminAsApp, AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent} from '@shopify/cli-kit/node/output'
+import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {parse} from 'graphql'
 
 /**
@@ -41,4 +43,27 @@ export function validateSingleOperation(graphqlOperation: string): void {
       'GraphQL document must contain exactly one operation definition. Multiple operations are not supported.',
     )
   }
+}
+
+/**
+ * Validates that the specified API version is supported by the store.
+ * The 'unstable' version is always allowed without validation.
+ *
+ * @param adminSession - Admin session containing store credentials.
+ * @param version - The API version to validate.
+ * @throws AbortError if the version is not supported by the store.
+ */
+export async function validateApiVersion(
+  adminSession: {token: string; storeFqdn: string},
+  version: string,
+): Promise<void> {
+  if (version === 'unstable') return
+
+  const supportedVersions = await supportedApiVersions(adminSession)
+  if (supportedVersions.includes(version)) return
+
+  const firstLine = outputContent`Invalid API version: ${version}`.value
+  const secondLine = outputContent`Supported versions: ${supportedVersions.join(', ')}`.value
+
+  throw new AbortError(`${firstLine}\n${secondLine}`)
 }
