@@ -65,12 +65,12 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
     if (outputFile) {
       await writeFile(outputFile, resultString)
       renderSuccess({
-        headline: 'Operation completed successfully.',
+        headline: 'Operation succeeded.',
         body: `Results written to ${outputFile}`,
       })
     } else {
       renderSuccess({
-        headline: 'Operation completed successfully.',
+        headline: 'Operation succeeded.',
       })
       outputResult(resultString)
     }

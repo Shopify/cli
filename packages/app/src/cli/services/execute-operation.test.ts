@@ -168,7 +168,7 @@ describe('executeOperation', () => {
 
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
-        headline: 'Operation completed successfully.',
+        headline: 'Operation succeeded.',
       }),
     )
   })
