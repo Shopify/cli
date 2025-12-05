@@ -123,7 +123,8 @@ describe('fetchStore', () => {
     // Then
     await expect(got).rejects.toThrow(
       new AbortError(
-        `Could not find store for domain domain1 in organization org1. Ensure you've provided the correct store domain, that the store is a Dev Store, and that you have access to the store.`,
+        `Could not find store for domain domain1 in organization org1.`,
+        `Ensure you've provided the correct store domain, that the store is a Dev Store, and that you have access to the store.`,
       ),
     )
   })

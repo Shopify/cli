@@ -127,7 +127,8 @@ export async function fetchStore(
 
   if (!store)
     throw new AbortError(
-      `Could not find store for domain ${storeFqdn} in organization ${org.businessName}. Ensure you've provided the correct store domain, that the store is a Dev Store, and that you have access to the store.`,
+      `Could not find store for domain ${storeFqdn} in organization ${org.businessName}.`,
+      `Ensure you've provided the correct store domain, that the store is a Dev Store, and that you have access to the store.`,
     )
 
   return store
