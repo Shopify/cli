@@ -13,6 +13,7 @@ interface AdminAsAppRequestOptions<TResult, TVariables extends Variables> {
   query: TypedDocumentNode<TResult, TVariables>
   session: AdminSession
   variables?: TVariables
+  autoRateLimitRestore?: boolean
 }
 
 /**
@@ -33,6 +34,10 @@ async function setupAdminAsAppRequest(session: AdminSession) {
 /**
  * Executes a GraphQL query against the Shopify Admin API, on behalf of the app. Uses typed documents.
  *
+ * If `autoRateLimitRestore` is true, the function will wait for a period of time such that the rate limit consumed by
+ * the query is restored back to its original value. This means this function is suitable for use in loops with
+ * multiple queries performed.
+ *
  * @param options - The options for the request.
  * @returns The response of the query of generic type <T>.
  */
@@ -43,5 +48,6 @@ export async function adminAsAppRequestDoc<TResult, TVariables extends Variables
     query: options.query,
     ...(await setupAdminAsAppRequest(options.session)),
     variables: options.variables,
+    autoRateLimitRestore: options.autoRateLimitRestore,
   })
 }
