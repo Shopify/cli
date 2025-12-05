@@ -12,11 +12,13 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
  * @param appContextResult - The result of the app context function.
  * @param forceReselectStore - Whether to force reselecting the store.
  * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
+ * @param includeAllStores - Whether to include all store types or only Dev Stores.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
   forceReselectStore: boolean
   storeFqdn?: string
+  includeAllStores?: boolean
 }
 
 /**
@@ -30,6 +32,7 @@ export async function storeContext({
   appContextResult,
   storeFqdn,
   forceReselectStore,
+  includeAllStores = false,
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
@@ -46,9 +49,11 @@ export async function storeContext({
   const storeFqdnToUse = storeFqdn ?? cachedStoreInToml
 
   if (storeFqdnToUse) {
-    selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
+    selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient, includeAllStores)
     // never automatically convert a store provided via the command line
-    await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
+    if (!includeAllStores) {
+      await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
+    }
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
     const allStores = await developerPlatformClient.devStoresForOrg(organization.id)

@@ -1,5 +1,12 @@
-import {createAdminSessionAsApp, formatOperationInfo, resolveApiVersion, validateSingleOperation} from './common.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {
+  createAdminSessionAsApp,
+  validateSingleOperation,
+  resolveApiVersion,
+  validateMutationStore,
+  formatOperationInfo,
+  isMutation,
+} from './common.js'
+import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from '../bulk-operations/constants.js'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
@@ -235,5 +242,79 @@ describe('formatOperationInfo', () => {
 
     expect(result).toEqual(['Organization: Test Organization', 'App: Test App', 'Store: test-store.myshopify.com'])
     expect(result).not.toContain(expect.stringContaining('API version'))
+  })
+})
+
+describe('isMutation', () => {
+  test('returns true for mutation operation', () => {
+    const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
+
+    expect(isMutation(mutation)).toBe(true)
+  })
+
+  test('returns false for query operation', () => {
+    const query = 'query { shop { name } }'
+
+    expect(isMutation(query)).toBe(false)
+  })
+
+  test('returns false for shorthand query syntax', () => {
+    const query = '{ shop { name } }'
+
+    expect(isMutation(query)).toBe(false)
+  })
+})
+
+describe('validateMutationStore', () => {
+  const devStore: OrganizationStore = {
+    shopId: '123',
+    link: 'link',
+    shopDomain: 'dev-store.myshopify.com',
+    shopName: 'Dev Store',
+    transferDisabled: true,
+    convertableToPartnerTest: false,
+    provisionable: true,
+    storeType: 'APP_DEVELOPMENT',
+  }
+
+  const nonDevStore: OrganizationStore = {
+    shopId: '456',
+    link: 'link',
+    shopDomain: 'prod-store.myshopify.com',
+    shopName: 'Production Store',
+    transferDisabled: false,
+    convertableToPartnerTest: false,
+    provisionable: false,
+    storeType: 'PRODUCTION',
+  }
+
+  test('allows queries on Dev Stores', () => {
+    const query = 'query { shop { name } }'
+
+    expect(() => validateMutationStore(query, devStore)).not.toThrow()
+  })
+
+  test('allows queries on non-dev stores', () => {
+    const query = 'query { shop { name } }'
+
+    expect(() => validateMutationStore(query, nonDevStore)).not.toThrow()
+  })
+
+  test('allows mutations on Dev Stores', () => {
+    const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
+
+    expect(() => validateMutationStore(mutation, devStore)).not.toThrow()
+  })
+
+  test('throws when attempting mutation on non-dev store', () => {
+    const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
+
+    expect(() => validateMutationStore(mutation, nonDevStore)).toThrow('Mutations can only be executed on Dev Stores')
+  })
+
+  test('includes store domain in error message for non-dev store mutations', () => {
+    const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
+
+    expect(() => validateMutationStore(mutation, nonDevStore)).toThrow('Dev Stores')
   })
 })

@@ -1,4 +1,4 @@
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {ensureAuthenticatedAdminAsApp, AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
@@ -114,4 +114,30 @@ export function formatOperationInfo(options: {
   }
 
   return items
+}
+
+/**
+ * Checks if a GraphQL operation is a mutation.
+ *
+ * @param graphqlOperation - The GraphQL query or mutation string to check.
+ * @returns True if the operation is a mutation, false otherwise.
+ */
+export function isMutation(graphqlOperation: string): boolean {
+  const document = parse(graphqlOperation)
+  const operationDefinition = document.definitions.find((def) => def.kind === 'OperationDefinition')
+
+  return operationDefinition?.operation === 'mutation'
+}
+
+/**
+ * Validates that mutations can only be executed on Dev Stores.
+ *
+ * @param graphqlOperation - The GraphQL operation to validate.
+ * @param store - The store where the operation will be executed.
+ * @throws AbortError if attempting to run a mutation on a non-dev store.
+ */
+export function validateMutationStore(graphqlOperation: string, store: OrganizationStore): void {
+  if (isMutation(graphqlOperation) && store.storeType !== 'APP_DEVELOPMENT') {
+    throw new AbortError(`Mutations can only be executed on Dev Stores.`)
+  }
 }
