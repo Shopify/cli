@@ -60,4 +60,5 @@ export interface OrganizationStore {
   transferDisabled: boolean
   convertableToPartnerTest: boolean
   provisionable: boolean
+  storeType?: string
 }

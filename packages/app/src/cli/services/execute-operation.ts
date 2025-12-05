@@ -1,5 +1,5 @@
-import {createAdminSessionAsApp, validateSingleOperation} from './graphql/common.js'
-import {OrganizationApp} from '../models/organization.js'
+import {createAdminSessionAsApp, validateSingleOperation, validateMutationStore} from './graphql/common.js'
+import {OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -10,7 +10,7 @@ import {writeFile} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteOperationInput {
   remoteApp: OrganizationApp
-  storeFqdn: string
+  store: OrganizationStore
   query: string
   variables?: string
   apiVersion?: string
@@ -32,18 +32,19 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, apiVersion, outputFile} = input
+  const {remoteApp, store, query, variables, apiVersion, outputFile} = input
 
   renderInfo({
     headline: 'Executing GraphQL operation.',
-    body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
+    body: `App: ${remoteApp.title}\nStore: ${store.shopDomain}`,
   })
 
-  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
+  const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
 
   const parsedVariables = await parseVariables(variables)
 
   validateSingleOperation(query)
+  validateMutationStore(query, store)
 
   try {
     const result = await renderSingleTask({

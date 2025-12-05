@@ -3,19 +3,18 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {createAdminSessionAsApp, validateSingleOperation} from '../graphql/common.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {createAdminSessionAsApp, validateSingleOperation, validateMutationStore, isMutation} from '../graphql/common.js'
+import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {parse} from 'graphql'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
   remoteApp: OrganizationApp
-  storeFqdn: string
+  store: OrganizationStore
   query: string
   variables?: string[]
   variableFile?: string
@@ -42,15 +41,21 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false, version} = input
+  const {remoteApp, store, query, variables, variableFile, outputFile, watch = false, version} = input
 
-  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
+  renderInfo({
+    headline: 'Starting bulk operation.',
+    body: `App: ${remoteApp.title}\nStore: ${store.shopDomain}`,
+  })
+
+  const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
 
   if (version) await validateApiVersion(adminSession, version)
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
   validateGraphQLDocument(query, variablesJsonl)
+  validateMutationStore(query, store)
 
   renderInfo({
     headline: 'Starting bulk operation.',
@@ -59,7 +64,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
         list: {
           items: [
             `App: ${remoteApp.title}`,
-            `Store: ${storeFqdn}`,
+            `Store: ${store.shopDomain}`,
             `API version: ${version || 'default (latest stable)'}`,
           ],
         },
@@ -169,12 +174,6 @@ function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: stri
 
 function statusCommandHelpMessage(operationId: string): TokenItem {
   return ['Monitor its progress with:', {command: `shopify app bulk status --id="${operationId}}"`}]
-}
-
-function isMutation(graphqlOperation: string): boolean {
-  const document = parse(graphqlOperation)
-  const operation = document.definitions.find((def) => def.kind === 'OperationDefinition')
-  return operation?.kind === 'OperationDefinition' && operation.operation === 'mutation'
 }
 
 async function validateApiVersion(adminSession: {token: string; storeFqdn: string}, version: string): Promise<void> {
