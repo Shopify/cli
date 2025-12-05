@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-dynamic-delete */
 import {buildCookies} from './storefront-renderer.js'
+import {cleanHeader, defaultHeaders} from './storefront-utils.js'
 import {logRequestLine} from '../log-request-line.js'
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
@@ -305,6 +306,16 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
+  const finalHeaders = cleanHeader({
+    ...headers,
+    ...defaultHeaders(),
+    Authorization: `Bearer ${ctx.session.storefrontToken}`,
+    // Required header for CDN requests
+    referer: url.origin,
+    // Update the cookie with the latest session
+    Cookie: buildCookies(ctx.session, {headers}),
+  })
+
   // eslint-disable-next-line no-restricted-globals
   return fetch(url, {
     method: event.method,
@@ -312,13 +323,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     duplex: body ? 'half' : undefined,
     // Important to return 3xx responses to the client
     redirect: 'manual',
-    headers: {
-      ...headers,
-      // Required header for CDN requests
-      referer: url.origin,
-      // Update the cookie with the latest session
-      cookie: buildCookies(ctx.session, {headers}),
-    },
+    headers: finalHeaders,
   } as RequestInit & {duplex?: 'half'})
     .then((response) => patchProxiedResponseHeaders(ctx, response))
     .catch((error: Error) => {

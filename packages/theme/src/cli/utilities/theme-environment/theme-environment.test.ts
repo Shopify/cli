@@ -82,10 +82,10 @@ describe('setupDevServer', () => {
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const defaultServerContext: DevServerContext = {
     session: {
-      storefrontToken: '',
+      storefrontToken: 'shptka_test_token_123',
       token: '',
       storeFqdn: 'my-store.myshopify.com',
-      sessionCookies: {},
+      sessionCookies: {_shopify_essential: 'test-cookie-value'},
     },
     lastRequestedPath: '',
     localThemeFileSystem,
@@ -703,7 +703,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 
@@ -724,7 +728,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
     })
@@ -784,7 +792,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 
@@ -807,7 +819,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 
@@ -853,7 +869,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 

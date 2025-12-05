@@ -26,3 +26,10 @@ export function defaultHeaders() {
     'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
   }
 }
+
+export function cleanHeader(headers: {[key: string]: string}): {[key: string]: string} {
+  // Force the use of the 'Cookie' key if consumers also provide the 'cookie' key
+  delete headers.cookie
+  delete headers.authorization
+  return headers
+}
