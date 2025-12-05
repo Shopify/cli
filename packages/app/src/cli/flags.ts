@@ -72,4 +72,8 @@ export const bulkOperationFlags = {
     description: 'The file path where results should be written. If not specified, results will be written to STDOUT.',
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
   }),
+  version: Flags.string({
+    description: 'The API version to use for the bulk operation. If not specified, uses the latest stable version.',
+    env: 'SHOPIFY_FLAG_VERSION',
+  }),
 }

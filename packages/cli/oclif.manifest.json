@@ -202,6 +202,14 @@
           "name": "verbose",
           "type": "boolean"
         },
+        "version": {
+          "description": "The API version to use for the bulk operation. If not specified, uses the latest stable version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        },
         "watch": {
           "allowNo": false,
           "description": "Wait for bulk operation results before exiting.",

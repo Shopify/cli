@@ -7,6 +7,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
+import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {parse} from 'graphql'
@@ -20,6 +21,7 @@ interface ExecuteBulkOperationInput {
   variableFile?: string
   watch?: boolean
   outputFile?: string
+  version?: string
 }
 
 async function parseVariablesToJsonl(variables?: string[], variableFile?: string): Promise<string | undefined> {
@@ -40,25 +42,37 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false} = input
-
-  renderInfo({
-    headline: 'Starting bulk operation.',
-    body: `App: ${remoteApp.title}\nStore: ${storeFqdn}`,
-  })
+  const {remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false, version} = input
 
   const appSecret = remoteApp.apiSecretKeys[0]?.secret
   if (!appSecret) throw new BugError('No API secret keys found for app')
 
   const adminSession = await ensureAuthenticatedAdminAsApp(storeFqdn, remoteApp.apiKey, appSecret)
 
+  if (version) await validateApiVersion(adminSession, version)
+
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
   validateGraphQLDocument(query, variablesJsonl)
 
+  renderInfo({
+    headline: 'Starting bulk operation.',
+    body: [
+      {
+        list: {
+          items: [
+            `App: ${remoteApp.title}`,
+            `Store: ${storeFqdn}`,
+            `API version: ${version || 'default (latest stable)'}`,
+          ],
+        },
+      },
+    ],
+  })
+
   const bulkOperationResponse = isMutation(query)
-    ? await runBulkOperationMutation({adminSession, query, variablesJsonl})
-    : await runBulkOperationQuery({adminSession, query})
+    ? await runBulkOperationMutation({adminSession, query, variablesJsonl, version})
+    : await runBulkOperationQuery({adminSession, query, version})
 
   if (bulkOperationResponse?.userErrors?.length) {
     const errorMessages = bulkOperationResponse.userErrors
@@ -171,4 +185,16 @@ function isMutation(graphqlOperation: string): boolean {
   const document = parse(graphqlOperation)
   const operation = document.definitions.find((def) => def.kind === 'OperationDefinition')
   return operation?.kind === 'OperationDefinition' && operation.operation === 'mutation'
+}
+
+async function validateApiVersion(adminSession: {token: string; storeFqdn: string}, version: string): Promise<void> {
+  if (version === 'unstable') return
+
+  const supportedVersions = await supportedApiVersions(adminSession)
+  if (supportedVersions.includes(version)) return
+
+  const firstLine = outputContent`Invalid API version: ${version}`.value
+  const secondLine = outputContent`Supported versions: ${supportedVersions.join(', ')}`.value
+
+  throw new AbortError(`${firstLine}\n${secondLine}`)
 }
