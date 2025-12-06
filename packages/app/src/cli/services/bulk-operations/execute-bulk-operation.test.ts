@@ -49,6 +49,7 @@ describe('executeBulkOperation', () => {
     NonNullable<BulkOperationRunQueryMutation['bulkOperationRunQuery']>['bulkOperation']
   > = {
     id: 'gid://shopify/BulkOperation/123',
+    type: 'QUERY',
     status: 'CREATED',
     errorCode: null,
     createdAt: '2024-01-01T00:00:00Z',
