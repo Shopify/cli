@@ -36,6 +36,12 @@ export function normalizeBulkOperationId(id: string): string {
   return id
 }
 
+export function extractBulkOperationId(gid: string): string {
+  // Extract the numeric ID from a GID like "gid://shopify/BulkOperation/123"
+  const match = gid.match(/\/BulkOperation\/(\d+)$/)
+  return match?.[1] ?? gid
+}
+
 interface GetBulkOperationStatusOptions {
   organization: Organization
   storeFqdn: string
@@ -119,7 +125,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
   })
 
   const operations = response.bulkOperations.nodes.map((operation) => ({
-    id: operation.id,
+    id: extractBulkOperationId(operation.id),
     status: formatStatus(operation.status),
     count: formatCount(operation.objectCount as number),
     dateCreated: formatDate(new Date(String(operation.createdAt))),
