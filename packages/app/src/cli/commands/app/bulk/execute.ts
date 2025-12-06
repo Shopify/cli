@@ -29,7 +29,7 @@ export default class BulkExecute extends AppLinkedCommand {
       query,
       variables: flags.variables,
       variableFile: flags['variable-file'],
-      watch: flags.watch,
+      watch: flags.watch ?? false,
       outputFile: flags['output-file'],
       ...(flags.version && {version: flags.version}),
     })
