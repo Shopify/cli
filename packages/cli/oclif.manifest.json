@@ -263,7 +263,7 @@
           "type": "option"
         },
         "id": {
-          "description": "The bulk operation ID. If not provided, lists all bulk operations in the last 7 days.",
+          "description": "The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations in the last 7 days.",
           "env": "SHOPIFY_FLAG_ID",
           "hasDynamicHelp": false,
           "multiple": false,
