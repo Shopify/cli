@@ -8,54 +8,62 @@ function createMockOperation(overrides: Partial<BulkOperation> = {}): BulkOperat
   return {
     id: 'gid://shopify/BulkOperation/123',
     status: 'CREATED',
+    type: 'QUERY',
     errorCode: null,
     createdAt: '2024-01-01T00:00:00Z',
     completedAt: null,
     objectCount: '0',
     url: null,
+    partialDataUrl: null,
     ...overrides,
   }
 }
 
 describe('formatBulkOperationStatus', () => {
-  test('formats RUNNING status with object count', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'RUNNING', objectCount: 42}))
-    expect(result.value).toContain('Bulk operation in progress...')
-    expect(result.value).toContain('(42 objects)')
+  test('formats RUNNING status for query with object count', () => {
+    const result = formatBulkOperationStatus(createMockOperation({status: 'RUNNING', type: 'QUERY', objectCount: '42'}))
+    expect(result.value).toContain('Bulk operation in progress')
+    expect(result.value).toContain('(42 objects read)')
+  })
+
+  test('formats RUNNING status for mutation with object count', () => {
+    const result = formatBulkOperationStatus(createMockOperation({status: 'RUNNING', type: 'MUTATION', objectCount: '42'}))
+    expect(result.value).toContain('Bulk operation in progress')
+    expect(result.value).toContain('(42 objects written)')
   })
 
   test('formats CREATED status', () => {
     const result = formatBulkOperationStatus(createMockOperation({status: 'CREATED'}))
-    expect(result.value).toBe('Starting...')
+    expect(result.value).toBe('Starting')
   })
 
   test('formats COMPLETED status', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'COMPLETED', objectCount: 100}))
+    const result = formatBulkOperationStatus(createMockOperation({status: 'COMPLETED', objectCount: '100'}))
     expect(result.value).toContain('Bulk operation succeeded:')
     expect(result.value).toContain('100 objects')
   })
 
   test('formats FAILED status with error code', () => {
     const result = formatBulkOperationStatus(
-      createMockOperation({status: 'FAILED', objectCount: 10, errorCode: 'ACCESS_DENIED'}),
+      createMockOperation({status: 'FAILED', objectCount: '10', errorCode: 'ACCESS_DENIED'}),
     )
     expect(result.value).toContain('Bulk operation failed.')
     expect(result.value).toContain('Error: ACCESS_DENIED')
   })
 
   test('formats FAILED status without error code', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'FAILED', objectCount: 10, errorCode: null}))
+    const result = formatBulkOperationStatus(createMockOperation({status: 'FAILED', objectCount: '10', errorCode: null}))
     expect(result.value).toContain('Bulk operation failed.')
     expect(result.value).toContain('Error: unknown')
   })
 
   test('formats CANCELING status', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'CANCELING', objectCount: 5}))
+    const result = formatBulkOperationStatus(createMockOperation({status: 'CANCELING', objectCount: '5'}))
     expect(result.value).toBe('Bulk operation canceling...')
   })
 
   test('formats CANCELED status', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'CANCELED', objectCount: 5}))
+    const result = formatBulkOperationStatus(createMockOperation({status: 'CANCELED', objectCount: '5'}))
     expect(result.value).toBe('Bulk operation canceled.')
   })
 
