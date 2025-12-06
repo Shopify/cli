@@ -24,6 +24,7 @@ export default class BulkExecute extends AppLinkedCommand {
     const {query, appContextResult, store} = await prepareExecuteContext(flags, 'bulk execute')
 
     await executeBulkOperation({
+      organization: appContextResult.organization,
       remoteApp: appContextResult.remoteApp,
       storeFqdn: store.shopDomain,
       query,

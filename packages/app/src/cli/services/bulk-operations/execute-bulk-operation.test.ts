@@ -6,7 +6,7 @@ import {downloadBulkOperationResults} from './download-bulk-operation-results.js
 import {validateApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
 import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -36,6 +36,12 @@ vi.mock('@shopify/cli-kit/node/session', async () => {
 })
 
 describe('executeBulkOperation', () => {
+  const mockOrganization = {
+    id: 'test-org-id',
+    businessName: 'Test Organization',
+    source: OrganizationSource.BusinessPlatform,
+  }
+
   const mockRemoteApp = {
     apiKey: 'test-app-client-id',
     apiSecretKeys: [{secret: 'test-api-secret'}],
@@ -76,6 +82,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -97,6 +104,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -118,6 +126,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query: mutation,
@@ -141,6 +150,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query: mutation,
@@ -162,6 +172,7 @@ describe('executeBulkOperation', () => {
     }
     vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -186,6 +197,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -217,6 +229,7 @@ describe('executeBulkOperation', () => {
       vi.mocked(runBulkOperationMutation).mockResolvedValue(mockResponse as any)
 
       await executeBulkOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query: mutation,
@@ -239,6 +252,7 @@ describe('executeBulkOperation', () => {
 
       await expect(
         executeBulkOperation({
+          organization: mockOrganization,
           remoteApp: mockRemoteApp,
           storeFqdn,
           query: mutation,
@@ -257,6 +271,7 @@ describe('executeBulkOperation', () => {
 
     await expect(
       executeBulkOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query,
@@ -277,6 +292,7 @@ describe('executeBulkOperation', () => {
 
       await expect(
         executeBulkOperation({
+          organization: mockOrganization,
           remoteApp: mockRemoteApp,
           storeFqdn,
           query,
@@ -307,6 +323,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(downloadBulkOperationResults).mockResolvedValue('{"id":"gid://shopify/Product/123"}')
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -339,6 +356,7 @@ describe('executeBulkOperation', () => {
     })
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -373,6 +391,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsContent)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -405,6 +424,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsContent)
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -433,6 +453,7 @@ describe('executeBulkOperation', () => {
       vi.mocked(watchBulkOperation).mockResolvedValue(finishedOperation)
 
       await executeBulkOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query,
@@ -457,6 +478,7 @@ describe('executeBulkOperation', () => {
 
     await expect(
       executeBulkOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query,
@@ -482,6 +504,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(validateApiVersion).mockResolvedValue()
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -506,6 +529,7 @@ describe('executeBulkOperation', () => {
     vi.mocked(validateApiVersion).mockClear()
 
     await executeBulkOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
