@@ -64,13 +64,13 @@ export const bulkOperationFlags = {
     parse: async (input) => normalizeStoreFqdn(input),
   }),
   watch: Flags.boolean({
-    description: 'Wait for bulk operation results before exiting.',
+    description: 'Wait for bulk operation results before exiting. Defaults to false.',
     env: 'SHOPIFY_FLAG_WATCH',
-    default: false,
   }),
   'output-file': Flags.string({
     description: 'The file path where results should be written. If not specified, results will be written to STDOUT.',
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
+    dependsOn: ['watch'],
   }),
   version: Flags.string({
     description: 'The API version to use for the bulk operation. If not specified, uses the latest stable version.',
