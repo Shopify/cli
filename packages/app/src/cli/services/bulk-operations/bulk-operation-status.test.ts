@@ -1,4 +1,9 @@
-import {getBulkOperationStatus, listBulkOperations, normalizeBulkOperationId} from './bulk-operation-status.js'
+import {
+  getBulkOperationStatus,
+  listBulkOperations,
+  normalizeBulkOperationId,
+  extractBulkOperationId,
+} from './bulk-operation-status.js'
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
 import {ListBulkOperationsQuery} from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
@@ -50,6 +55,18 @@ describe('normalizeBulkOperationId', () => {
   test('returns non-numeric, non-GID string as-is', () => {
     const invalidId = 'invalid-id'
     expect(normalizeBulkOperationId(invalidId)).toBe(invalidId)
+  })
+})
+
+describe('extractBulkOperationId', () => {
+  test('extracts numeric ID from GID', () => {
+    expect(extractBulkOperationId('gid://shopify/BulkOperation/123')).toBe('123')
+    expect(extractBulkOperationId('gid://shopify/BulkOperation/456789')).toBe('456789')
+  })
+
+  test('returns input as-is if not a valid GID format', () => {
+    expect(extractBulkOperationId('invalid-id')).toBe('invalid-id')
+    expect(extractBulkOperationId('123')).toBe('123')
   })
 })
 
@@ -239,15 +256,15 @@ describe('listBulkOperations', () => {
       │                                                                              │
       ╰──────────────────────────────────────────────────────────────────────────────╯
 
-      ID               STATUS COU DATE CREATED DATE        RESULTS
-                              T                FINISHED
+      I STATUS  COUNT DATE CREATED   DATE FINISHED  RESULTS
 
-      ──────────────── ────── ─── ──────────── ─────────── ───────────────────────────
-      ────────────     ──     ──  ───────      ───────     ───────────────────
-      gid://shopify/Bu COMPLE 123 2025-11-10   2025-11-10  download ( https://example.
-      kOperation/1     ED     5K  12:37:52     16:37:12    com/results.jsonl )
-      gid://shopify/Bu RUNNIN 100 2025-11-11
-      kOperation/2                15:37:52"
+      ─ ─────── ───── ────────────── ────────────── ──────────────────────────────────
+        ─             ────           ────           ────────────
+      1 COMPLET 123.5 2025-11-10     2025-11-10     download (
+        D             12:37:52       16:37:12       https://example.com/results.jsonl
+                                                    )
+      2 RUNNING 100   2025-11-11
+                      15:37:52"
     `)
   })
 
