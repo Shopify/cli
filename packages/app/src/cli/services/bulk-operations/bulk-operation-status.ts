@@ -21,6 +21,21 @@ import colors from '@shopify/cli-kit/node/colors'
 
 const API_VERSION = '2026-01'
 
+export function normalizeBulkOperationId(id: string): string {
+  // If already a GID, return as-is
+  if (id.startsWith('gid://')) {
+    return id
+  }
+
+  // If numeric, convert to GID
+  if (/^\d+$/.test(id)) {
+    return `gid://shopify/BulkOperation/${id}`
+  }
+
+  // Otherwise return as-is (let API handle any errors)
+  return id
+}
+
 interface GetBulkOperationStatusOptions {
   organization: Organization
   storeFqdn: string
