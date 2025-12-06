@@ -3,8 +3,13 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {createAdminSessionAsApp, validateSingleOperation, validateApiVersion} from '../graphql/common.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {
+  createAdminSessionAsApp,
+  validateSingleOperation,
+  validateApiVersion,
+  formatOperationInfo,
+} from '../graphql/common.js'
+import {OrganizationApp, Organization} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -13,6 +18,7 @@ import {parse} from 'graphql'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
+  organization: Organization
   remoteApp: OrganizationApp
   storeFqdn: string
   query: string
@@ -41,7 +47,7 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false, version} = input
+  const {organization, remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false, version} = input
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
@@ -56,11 +62,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     body: [
       {
         list: {
-          items: [
-            `App: ${remoteApp.title}`,
-            `Store: ${storeFqdn}`,
-            `API version: ${version || 'default (latest stable)'}`,
-          ],
+          items: formatOperationInfo({organization, remoteApp, storeFqdn, version}),
         },
       },
     ],
