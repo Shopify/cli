@@ -68,7 +68,8 @@ export const bulkOperationFlags = {
     env: 'SHOPIFY_FLAG_WATCH',
   }),
   'output-file': Flags.string({
-    description: 'The file path where results should be written. If not specified, results will be written to STDOUT.',
+    description:
+      'The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.',
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
     dependsOn: ['watch'],
   }),
