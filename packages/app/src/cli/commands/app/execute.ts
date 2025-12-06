@@ -21,6 +21,7 @@ export default class Execute extends AppLinkedCommand {
     const {query, appContextResult, store} = await prepareExecuteContext(flags, 'execute')
 
     await executeOperation({
+      organization: appContextResult.organization,
       remoteApp: appContextResult.remoteApp,
       storeFqdn: store.shopDomain,
       query,

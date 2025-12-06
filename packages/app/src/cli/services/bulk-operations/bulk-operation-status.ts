@@ -4,7 +4,8 @@ import {
   GetBulkOperationById,
   GetBulkOperationByIdQuery,
 } from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {OrganizationApp} from '../../models/organization.js'
+import {formatOperationInfo} from '../graphql/common.js'
+import {OrganizationApp, Organization} from '../../models/organization.js'
 import {
   ListBulkOperations,
   ListBulkOperationsQuery,
@@ -21,18 +22,31 @@ import colors from '@shopify/cli-kit/node/colors'
 const API_VERSION = '2026-01'
 
 interface GetBulkOperationStatusOptions {
+  organization: Organization
   storeFqdn: string
   operationId: string
   remoteApp: OrganizationApp
 }
 
 interface ListBulkOperationsOptions {
+  organization: Organization
   storeFqdn: string
   remoteApp: OrganizationApp
 }
 
 export async function getBulkOperationStatus(options: GetBulkOperationStatusOptions): Promise<void> {
-  const {storeFqdn, operationId, remoteApp} = options
+  const {organization, storeFqdn, operationId, remoteApp} = options
+
+  renderInfo({
+    headline: 'Checking bulk operation status.',
+    body: [
+      {
+        list: {
+          items: formatOperationInfo({organization, remoteApp, storeFqdn, showVersion: false}),
+        },
+      },
+    ],
+  })
 
   const appSecret = remoteApp.apiSecretKeys[0]?.secret
   if (!appSecret) throw new BugError('No API secret keys found for app')
@@ -57,7 +71,18 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
 }
 
 export async function listBulkOperations(options: ListBulkOperationsOptions): Promise<void> {
-  const {storeFqdn, remoteApp} = options
+  const {organization, storeFqdn, remoteApp} = options
+
+  renderInfo({
+    headline: 'Listing bulk operations.',
+    body: [
+      {
+        list: {
+          items: formatOperationInfo({organization, remoteApp, storeFqdn, showVersion: false}),
+        },
+      },
+    ],
+  })
 
   const appSecret = remoteApp.apiSecretKeys[0]?.secret
   if (!appSecret) throw new BugError('No API secret keys found for app')
@@ -90,7 +115,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
   outputNewline()
 
   if (operations.length === 0) {
-    renderInfo({body: 'no bulk operations found in the last 7 days'})
+    renderInfo({body: 'No bulk operations found in the last 7 days.'})
   } else {
     renderTable({
       rows: operations,

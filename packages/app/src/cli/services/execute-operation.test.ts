@@ -1,6 +1,6 @@
 import {executeOperation} from './execute-operation.js'
 import {createAdminSessionAsApp, validateApiVersion} from './graphql/common.js'
-import {OrganizationApp} from '../models/organization.js'
+import {OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ClientError} from 'graphql-request'
@@ -15,6 +15,12 @@ vi.mock('@shopify/cli-kit/node/api/admin')
 vi.mock('@shopify/cli-kit/node/fs')
 
 describe('executeOperation', () => {
+  const mockOrganization = {
+    id: 'test-org-id',
+    businessName: 'Test Organization',
+    source: OrganizationSource.BusinessPlatform,
+  }
+
   const mockRemoteApp = {
     apiKey: 'test-app-client-id',
     apiSecretKeys: [{secret: 'test-api-secret'}],
@@ -41,6 +47,7 @@ describe('executeOperation', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -64,6 +71,7 @@ describe('executeOperation', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -83,6 +91,7 @@ describe('executeOperation', () => {
 
     await expect(
       executeOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query,
@@ -101,6 +110,7 @@ describe('executeOperation', () => {
     vi.mocked(validateApiVersion).mockResolvedValue()
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -122,6 +132,7 @@ describe('executeOperation', () => {
     vi.mocked(validateApiVersion).mockClear()
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -138,6 +149,7 @@ describe('executeOperation', () => {
     const mockOutput = mockAndCaptureOutput()
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -156,6 +168,7 @@ describe('executeOperation', () => {
       vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
       await executeOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query,
@@ -178,6 +191,7 @@ describe('executeOperation', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -197,6 +211,7 @@ describe('executeOperation', () => {
 
     await expect(
       executeOperation({
+        organization: mockOrganization,
         remoteApp: mockRemoteApp,
         storeFqdn,
         query,
@@ -213,6 +228,7 @@ describe('executeOperation', () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
@@ -236,6 +252,7 @@ describe('executeOperation', () => {
     vi.mocked(adminRequestDoc).mockRejectedValue(clientError)
 
     await executeOperation({
+      organization: mockOrganization,
       remoteApp: mockRemoteApp,
       storeFqdn,
       query,
