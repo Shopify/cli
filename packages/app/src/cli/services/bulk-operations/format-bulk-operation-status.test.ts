@@ -27,7 +27,9 @@ describe('formatBulkOperationStatus', () => {
   })
 
   test('formats RUNNING status for mutation with object count', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'RUNNING', type: 'MUTATION', objectCount: '42'}))
+    const result = formatBulkOperationStatus(
+      createMockOperation({status: 'RUNNING', type: 'MUTATION', objectCount: '42'}),
+    )
     expect(result.value).toContain('Bulk operation in progress')
     expect(result.value).toContain('(42 objects written)')
   })
@@ -52,7 +54,9 @@ describe('formatBulkOperationStatus', () => {
   })
 
   test('formats FAILED status without error code', () => {
-    const result = formatBulkOperationStatus(createMockOperation({status: 'FAILED', objectCount: '10', errorCode: null}))
+    const result = formatBulkOperationStatus(
+      createMockOperation({status: 'FAILED', objectCount: '10', errorCode: null}),
+    )
     expect(result.value).toContain('Bulk operation failed.')
     expect(result.value).toContain('Error: unknown')
   })
