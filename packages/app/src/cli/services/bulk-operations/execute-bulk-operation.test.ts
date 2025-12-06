@@ -365,7 +365,7 @@ describe('executeBulkOperation', () => {
 
     expect(renderInfo).toHaveBeenCalledWith({
       headline: `Bulk operation ${createdBulkOperation.id} is still running in the background.`,
-      body: ['Monitor its progress with:', {command: expect.stringContaining('shopify app bulk status')}],
+      body: ['Monitor its progress with:\n', {command: expect.stringContaining('shopify app bulk status')}],
     })
     expect(downloadBulkOperationResults).not.toHaveBeenCalled()
   })
