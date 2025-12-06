@@ -9,7 +9,7 @@ import {
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
-import {AppInterface} from '../../models/app/app.js'
+import {AppInterface, AppConfiguration} from '../../models/app/app.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -108,10 +108,13 @@ const LOCAL_APP = (
     directory: '/app',
     configuration: {
       path: '/shopify.app.toml',
-      scopes: 'read_products',
+      client_id: 'test-client-id',
+      access_scopes: {
+        scopes: 'read_products',
+      },
       extension_directories: ['extensions/*'],
       ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),
-    },
+    } as AppConfiguration,
     allExtensions: [...uiExtensions, ...functionExtensions, ...configExtensions],
   })
 }
@@ -935,7 +938,8 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
 
     // When
     const CONFIG_A = await testAppConfigExtensions()
-    const ensureExtensionsIdsOptions = options([], [], {configExtensions: [CONFIG_A], developerPlatformClient})
+    // Don't pass config extensions when includeConfigOnDeploy is false - they won't be in allExtensions
+    const ensureExtensionsIdsOptions = options([], [], {developerPlatformClient})
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
       extensionsToCreate,
       validMatches,

@@ -1,7 +1,7 @@
 import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {AppConfiguration, CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {AppConfiguration, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -76,7 +76,7 @@ export function setCurrentConfigPreference(
   },
 ): asserts configuration is CurrentAppConfiguration {
   const {configFileName, directory} = options
-  if (isCurrentAppSchema(configuration) && configuration.client_id) {
+  if (configuration.client_id) {
     setCachedAppInfo({
       directory,
       configFile: configFileName,
