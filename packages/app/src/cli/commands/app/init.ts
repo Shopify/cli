@@ -64,6 +64,12 @@ export default class Init extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
+    'organization-id': Flags.string({
+      hidden: false,
+      description:
+        'The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+    }),
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
@@ -93,10 +99,31 @@ export default class Init extends AppLinkedCommand {
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
-      const org = await selectOrg()
+      let org: Organization
+      if (flags['organization-id']) {
+        // If an organization-id is provided, fetch the organization directly
+        const matchingOrg = await developerPlatformClient.orgFromId(flags['organization-id'])
+        if (!matchingOrg) {
+          throw new AbortError(
+            `Organization with ID ${flags['organization-id']} not found`,
+            "Run `shopify auth login` to confirm you've selected the right account, and verify your organization ID. " +
+              'You can find your organization ID in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+          )
+        }
+        org = matchingOrg
+      } else {
+        org = await selectOrg()
+      }
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-      selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
+      selectAppResult = await selectAppOrNewAppName(
+        flags.name !== undefined,
+        name,
+        apps,
+        hasMorePages,
+        organization,
+        developerPlatformClient,
+      )
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 
@@ -152,18 +179,19 @@ export type SelectAppOrNewAppNameResult =
  * But doesn't create the app yet, the app creation is deferred and is responsibility of the caller.
  */
 async function selectAppOrNewAppName(
+  nameProvidedAsFlag: boolean,
   localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<SelectAppOrNewAppNameResult> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.length === 0 || nameProvidedAsFlag
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(localAppName)
+    const name = nameProvidedAsFlag ? localAppName : await appNamePrompt(localAppName)
     return {result: 'new', name, org}
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)

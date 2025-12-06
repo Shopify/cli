@@ -637,8 +637,8 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [-d
-    npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
+  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [--organization-id
+    <value>] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  <options: npm|yarn|pnpm|bun>
@@ -648,6 +648,8 @@ FLAGS
                                   existing app. Using this flag avoids the app selection prompt.
       --flavor=<value>            Which flavor of the given template to use.
       --no-color                  Disable color output.
+      --organization-id=<value>   The organization ID. Your organization ID can be found in your Dev Dashboard URL:
+                                  https://dev.shopify.com/dashboard/<organization-id>
       --template=<value>          The app template. Accepts one of the following:
                                   - <reactRouter|remix|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,
