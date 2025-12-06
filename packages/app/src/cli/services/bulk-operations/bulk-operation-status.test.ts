@@ -1,4 +1,4 @@
-import {getBulkOperationStatus, listBulkOperations} from './bulk-operation-status.js'
+import {getBulkOperationStatus, listBulkOperations, normalizeBulkOperationId} from './bulk-operation-status.js'
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
 import {ListBulkOperationsQuery} from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
@@ -34,6 +34,23 @@ beforeEach(() => {
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
+})
+
+describe('normalizeBulkOperationId', () => {
+  test('returns GID as-is when already in GID format', () => {
+    const gid = 'gid://shopify/BulkOperation/123'
+    expect(normalizeBulkOperationId(gid)).toBe(gid)
+  })
+
+  test('converts numeric ID to GID format', () => {
+    expect(normalizeBulkOperationId('123')).toBe('gid://shopify/BulkOperation/123')
+    expect(normalizeBulkOperationId('456789')).toBe('gid://shopify/BulkOperation/456789')
+  })
+
+  test('returns non-numeric, non-GID string as-is', () => {
+    const invalidId = 'invalid-id'
+    expect(normalizeBulkOperationId(invalidId)).toBe(invalidId)
+  })
 })
 
 describe('getBulkOperationStatus', () => {

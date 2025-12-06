@@ -1,7 +1,11 @@
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers.js'
-import {getBulkOperationStatus, listBulkOperations} from '../../../services/bulk-operations/bulk-operation-status.js'
+import {
+  getBulkOperationStatus,
+  listBulkOperations,
+  normalizeBulkOperationId,
+} from '../../../services/bulk-operations/bulk-operation-status.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -18,7 +22,8 @@ export default class BulkStatus extends AppLinkedCommand {
     ...globalFlags,
     ...appFlags,
     id: Flags.string({
-      description: 'The bulk operation ID. If not provided, lists all bulk operations in the last 7 days.',
+      description:
+        'The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations in the last 7 days.',
       env: 'SHOPIFY_FLAG_ID',
     }),
     store: Flags.string({
@@ -38,7 +43,7 @@ export default class BulkStatus extends AppLinkedCommand {
       await getBulkOperationStatus({
         organization: appContextResult.organization,
         storeFqdn: store.shopDomain,
-        operationId: flags.id,
+        operationId: normalizeBulkOperationId(flags.id),
         remoteApp: appContextResult.remoteApp,
       })
     } else {
