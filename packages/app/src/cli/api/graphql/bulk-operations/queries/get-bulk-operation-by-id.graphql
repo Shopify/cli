@@ -1,5 +1,6 @@
 query GetBulkOperationById($id: ID!) {
   bulkOperation(id: $id) {
+    type
     completedAt
     createdAt
     errorCode

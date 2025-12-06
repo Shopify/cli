@@ -6,11 +6,11 @@ export function formatBulkOperationStatus(
 ): TokenizedString {
   switch (operation.status) {
     case 'RUNNING':
-      return outputContent`Bulk operation in progress... ${outputToken.gray(
-        `(${String(operation.objectCount)} objects)`,
+      return outputContent`Bulk operation in progress ${outputToken.gray(
+        `(${String(operation.objectCount)} objects ${operation.type === 'MUTATION' ? 'written' : 'read'})`,
       )}`
     case 'CREATED':
-      return outputContent`Starting...`
+      return outputContent`Starting`
     case 'COMPLETED':
       return outputContent`Bulk operation succeeded: ${outputToken.gray(`${String(operation.objectCount)} objects`)}`
     case 'FAILED':
