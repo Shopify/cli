@@ -11,7 +11,9 @@ import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 
 const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'CANCELED', 'EXPIRED']
-const POLL_INTERVAL_SECONDS = 5
+const INITIAL_POLL_INTERVAL_SECONDS = 1
+const REGULAR_POLL_INTERVAL_SECONDS = 5
+const INITIAL_POLL_COUNT = 10
 const API_VERSION = '2026-01'
 
 export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
@@ -47,6 +49,8 @@ async function* pollBulkOperation(
   operationId: string,
   abortSignal: AbortSignal,
 ): AsyncGenerator<BulkOperation, BulkOperation> {
+  let pollCount = 0
+
   while (true) {
     // eslint-disable-next-line no-await-in-loop
     const response = await fetchBulkOperation(adminSession, operationId)
@@ -63,11 +67,13 @@ async function* pollBulkOperation(
       yield latestOperationState
     }
 
+    pollCount++
+
+    // Use shorter interval for the first 10 polls, then switch to regular interval
+    const pollInterval = pollCount <= INITIAL_POLL_COUNT ? INITIAL_POLL_INTERVAL_SECONDS : REGULAR_POLL_INTERVAL_SECONDS
+
     // eslint-disable-next-line no-await-in-loop
-    await Promise.race([
-      sleep(POLL_INTERVAL_SECONDS),
-      new Promise((resolve) => abortSignal.addEventListener('abort', resolve)),
-    ])
+    await Promise.race([sleep(pollInterval), new Promise((resolve) => abortSignal.addEventListener('abort', resolve))])
   }
 }
 
