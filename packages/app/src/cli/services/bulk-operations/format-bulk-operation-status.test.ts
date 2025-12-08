@@ -34,6 +34,12 @@ describe('formatBulkOperationStatus', () => {
     expect(result.value).toContain('(42 objects written)')
   })
 
+  test('formats RUNNING status without object count when count is 0', () => {
+    const result = formatBulkOperationStatus(createMockOperation({status: 'RUNNING', type: 'QUERY', objectCount: '0'}))
+    expect(result.value).toBe('Bulk operation in progress')
+    expect(result.value).not.toContain('objects read')
+  })
+
   test('formats CREATED status', () => {
     const result = formatBulkOperationStatus(createMockOperation({status: 'CREATED'}))
     expect(result.value).toBe('Starting')
