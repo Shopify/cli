@@ -138,7 +138,7 @@ const CLEANUP_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP']
  * Returns a cleanup function to remove the handlers when the lock is released normally.
  */
 function registerLockCleanupHandlers(releaseLock: () => Promise<void>): () => void {
-  const handlers: Map<NodeJS.Signals, NodeJS.SignalsListener> = new Map()
+  const handlers = new Map<NodeJS.Signals, NodeJS.SignalsListener>()
 
   for (const signal of CLEANUP_SIGNALS) {
     const handler: NodeJS.SignalsListener = () => {
@@ -180,11 +180,13 @@ async function cleanupStaleLock(lockfilePath: string): Promise<void> {
         outputDebug(`Removing stale build lock: ${lockfilePath}`)
         await rmdir(lockfilePath, {force: true})
       }
+      // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
-      // If check fails, try to remove the lock anyway - it's likely corrupted
+      // If check fails (e.g., ENOENT, corrupted lock), try to remove the lock anyway
       outputDebug(`Failed to check lock status, attempting cleanup: ${lockfilePath}`)
       try {
         await rmdir(lockfilePath, {force: true})
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
         // Ignore cleanup errors - the lock acquisition will fail with a clear message if needed
       }
