@@ -178,13 +178,13 @@ async function cleanupStaleLock(lockfilePath: string): Promise<void> {
       if (!isLocked) {
         // Lock exists but is stale - remove it
         outputDebug(`Removing stale build lock: ${lockfilePath}`)
-        await rmdir(lockfilePath, {recursive: true})
+        await rmdir(lockfilePath, {force: true})
       }
     } catch (error) {
       // If check fails, try to remove the lock anyway - it's likely corrupted
       outputDebug(`Failed to check lock status, attempting cleanup: ${lockfilePath}`)
       try {
-        await rmdir(lockfilePath, {recursive: true})
+        await rmdir(lockfilePath, {force: true})
       } catch {
         // Ignore cleanup errors - the lock acquisition will fail with a clear message if needed
       }

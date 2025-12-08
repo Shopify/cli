@@ -314,7 +314,7 @@ describe('buildFunctionExtension', () => {
 
     // Then
     expect(lockfile.check).toHaveBeenCalled()
-    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {recursive: true})
+    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {force: true})
     expect(lockfile.lock).toHaveBeenCalled()
     expect(releaseLock).toHaveBeenCalled()
   })
@@ -362,7 +362,7 @@ describe('buildFunctionExtension', () => {
 
     // Then
     expect(lockfile.check).toHaveBeenCalled()
-    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {recursive: true})
+    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {force: true})
     expect(lockfile.lock).toHaveBeenCalled()
     expect(releaseLock).toHaveBeenCalled()
   })
