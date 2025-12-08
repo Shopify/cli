@@ -10,7 +10,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {readFile, touchFile, writeFile, fileExistsSync, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -126,6 +126,36 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions
 
+// Duration in milliseconds after which a lock is considered stale (default: 10 seconds)
+// This should be long enough to allow for slow builds but short enough to recover from crashes
+const LOCK_STALE_MS = 10000
+
+/**
+ * Removes a stale lockfile if it exists and is not actively held.
+ * This handles cases where a previous build process crashed without releasing the lock.
+ */
+async function cleanupStaleLock(lockfilePath: string): Promise<void> {
+  if (await fileExists(lockfilePath)) {
+    try {
+      // Check if the lock is stale (no active process holding it)
+      const isLocked = await lockfile.check(lockfilePath, {stale: LOCK_STALE_MS, lockfilePath})
+      if (!isLocked) {
+        // Lock exists but is stale - remove it
+        outputDebug(`Removing stale build lock: ${lockfilePath}`)
+        await rmdir(lockfilePath, {recursive: true})
+      }
+    } catch (error) {
+      // If check fails, try to remove the lock anyway - it's likely corrupted
+      outputDebug(`Failed to check lock status, attempting cleanup: ${lockfilePath}`)
+      try {
+        await rmdir(lockfilePath, {recursive: true})
+      } catch {
+        // Ignore cleanup errors - the lock acquisition will fail with a clear message if needed
+      }
+    }
+  }
+}
+
 /**
  * Builds a function extension
  * @param extension - The function extension to build.
@@ -136,15 +166,27 @@ export async function buildFunctionExtension(
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
   const lockfilePath = joinPath(extension.directory, '.build-lock')
+
+  // Clean up any stale locks from crashed builds before attempting to acquire
+  await cleanupStaleLock(lockfilePath)
+
   let releaseLock
   try {
-    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
+    releaseLock = await lockfile.lock(extension.directory, {
+      retries: {
+        retries: 3,
+        minTimeout: 100,
+        maxTimeout: 1000,
+      },
+      stale: LOCK_STALE_MS,
+      lockfilePath,
+    })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
     throw new AbortError('Failed to build function.', 'This is likely due to another in-progress build.', [
       'Ensure there are no other function builds in-progress.',
-      'Delete the `.build-lock` file in your function directory.',
+      `If no other build is running, delete the \`${lockfilePath}\` directory and try again.`,
     ])
   }
 

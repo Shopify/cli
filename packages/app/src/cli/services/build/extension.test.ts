@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, fileExists, rmdir} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -293,5 +293,99 @@ describe('buildFunctionExtension', () => {
     })
     expect(releaseLock).toHaveBeenCalled()
     expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  test('cleans up stale lock before acquiring new lock', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(true) // Lock file exists
+    vi.mocked(lockfile.check).mockResolvedValue(false) // Lock is stale (not actively held)
+    vi.mocked(rmdir).mockResolvedValue()
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).toHaveBeenCalled()
+    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {recursive: true})
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('does not clean up lock that is actively held', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(true) // Lock file exists
+    vi.mocked(lockfile.check).mockResolvedValue(true) // Lock is active (held by another process)
+    vi.mocked(rmdir).mockResolvedValue()
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).toHaveBeenCalled()
+    expect(rmdir).not.toHaveBeenCalled() // Should not remove active lock
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('cleans up corrupted lock when check fails', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(true) // Lock file exists
+    vi.mocked(lockfile.check).mockRejectedValue(new Error('ENOENT or corrupted lock'))
+    vi.mocked(rmdir).mockResolvedValue()
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).toHaveBeenCalled()
+    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {recursive: true})
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('proceeds normally when no stale lock exists', async () => {
+    // Given
+    vi.mocked(fileExists).mockResolvedValue(false) // No lock file exists
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).not.toHaveBeenCalled() // Should not check if file doesn't exist
+    expect(rmdir).not.toHaveBeenCalled()
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
   })
 })
