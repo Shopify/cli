@@ -297,8 +297,10 @@ describe('buildFunctionExtension', () => {
 
   test('cleans up stale lock before acquiring new lock', async () => {
     // Given
-    vi.mocked(fileExists).mockResolvedValue(true) // Lock file exists
-    vi.mocked(lockfile.check).mockResolvedValue(false) // Lock is stale (not actively held)
+    // Lock file exists
+    vi.mocked(fileExists).mockResolvedValue(true)
+    // Lock is stale (not actively held)
+    vi.mocked(lockfile.check).mockResolvedValue(false)
     vi.mocked(rmdir).mockResolvedValue()
 
     // When
@@ -321,8 +323,10 @@ describe('buildFunctionExtension', () => {
 
   test('does not clean up lock that is actively held', async () => {
     // Given
-    vi.mocked(fileExists).mockResolvedValue(true) // Lock file exists
-    vi.mocked(lockfile.check).mockResolvedValue(true) // Lock is active (held by another process)
+    // Lock file exists
+    vi.mocked(fileExists).mockResolvedValue(true)
+    // Lock is active (held by another process)
+    vi.mocked(lockfile.check).mockResolvedValue(true)
     vi.mocked(rmdir).mockResolvedValue()
 
     // When
@@ -338,14 +342,16 @@ describe('buildFunctionExtension', () => {
 
     // Then
     expect(lockfile.check).toHaveBeenCalled()
-    expect(rmdir).not.toHaveBeenCalled() // Should not remove active lock
+    // Should not remove active lock
+    expect(rmdir).not.toHaveBeenCalled()
     expect(lockfile.lock).toHaveBeenCalled()
     expect(releaseLock).toHaveBeenCalled()
   })
 
   test('cleans up corrupted lock when check fails', async () => {
     // Given
-    vi.mocked(fileExists).mockResolvedValue(true) // Lock file exists
+    // Lock file exists
+    vi.mocked(fileExists).mockResolvedValue(true)
     vi.mocked(lockfile.check).mockRejectedValue(new Error('ENOENT or corrupted lock'))
     vi.mocked(rmdir).mockResolvedValue()
 
@@ -369,7 +375,8 @@ describe('buildFunctionExtension', () => {
 
   test('proceeds normally when no stale lock exists', async () => {
     // Given
-    vi.mocked(fileExists).mockResolvedValue(false) // No lock file exists
+    // No lock file exists
+    vi.mocked(fileExists).mockResolvedValue(false)
 
     // When
     await expect(
@@ -383,7 +390,8 @@ describe('buildFunctionExtension', () => {
     ).resolves.toBeUndefined()
 
     // Then
-    expect(lockfile.check).not.toHaveBeenCalled() // Should not check if file doesn't exist
+    // Should not check if file doesn't exist
+    expect(lockfile.check).not.toHaveBeenCalled()
     expect(rmdir).not.toHaveBeenCalled()
     expect(lockfile.lock).toHaveBeenCalled()
     expect(releaseLock).toHaveBeenCalled()
