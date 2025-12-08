@@ -388,4 +388,36 @@ describe('buildFunctionExtension', () => {
     expect(lockfile.lock).toHaveBeenCalled()
     expect(releaseLock).toHaveBeenCalled()
   })
+
+  test('registers signal handlers after acquiring lock and removes them after release', async () => {
+    // Given
+    const processOnSpy = vi.spyOn(process, 'on')
+    const processRemoveListenerSpy = vi.spyOn(process, 'removeListener')
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    // Verify signal handlers were registered for SIGINT, SIGTERM, SIGHUP
+    expect(processOnSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
+    expect(processOnSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function))
+    expect(processOnSpy).toHaveBeenCalledWith('SIGHUP', expect.any(Function))
+
+    // Verify signal handlers were removed after build completed
+    expect(processRemoveListenerSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
+    expect(processRemoveListenerSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function))
+    expect(processRemoveListenerSpy).toHaveBeenCalledWith('SIGHUP', expect.any(Function))
+
+    // Cleanup spies
+    processOnSpy.mockRestore()
+    processRemoveListenerSpy.mockRestore()
+  })
 })

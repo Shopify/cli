@@ -130,6 +130,42 @@ type BuildFunctionExtensionOptions = ExtensionBuildOptions
 // This should be long enough to allow for slow builds but short enough to recover from crashes
 const LOCK_STALE_MS = 10000
 
+// Signals that should trigger lock cleanup
+const CLEANUP_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP']
+
+/**
+ * Registers signal handlers to release the lock on abnormal termination.
+ * Returns a cleanup function to remove the handlers when the lock is released normally.
+ */
+function registerLockCleanupHandlers(releaseLock: () => Promise<void>): () => void {
+  const handlers: Map<NodeJS.Signals, NodeJS.SignalsListener> = new Map()
+
+  for (const signal of CLEANUP_SIGNALS) {
+    const handler: NodeJS.SignalsListener = () => {
+      outputDebug(`Received ${signal}, releasing build lock...`)
+      // Use sync-style cleanup since we're in a signal handler
+      // The lock release is async but we need to at least initiate it
+      releaseLock()
+        .catch((err) => outputDebug(`Failed to release lock on ${signal}: ${err}`))
+        .finally(() => {
+          // Re-emit the signal after cleanup so the process can terminate normally
+          // Remove our handler first to avoid infinite loop
+          process.removeListener(signal, handler)
+          process.kill(process.pid, signal)
+        })
+    }
+    handlers.set(signal, handler)
+    process.on(signal, handler)
+  }
+
+  // Return cleanup function to remove handlers
+  return () => {
+    for (const [signal, handler] of handlers) {
+      process.removeListener(signal, handler)
+    }
+  }
+}
+
 /**
  * Removes a stale lockfile if it exists and is not actively held.
  * This handles cases where a previous build process crashed without releasing the lock.
@@ -170,7 +206,8 @@ export async function buildFunctionExtension(
   // Clean up any stale locks from crashed builds before attempting to acquire
   await cleanupStaleLock(lockfilePath)
 
-  let releaseLock
+  let releaseLock: () => Promise<void>
+  let removeSignalHandlers: () => void
   try {
     releaseLock = await lockfile.lock(extension.directory, {
       retries: {
@@ -181,6 +218,8 @@ export async function buildFunctionExtension(
       stale: LOCK_STALE_MS,
       lockfilePath,
     })
+    // Register signal handlers to release lock on SIGINT, SIGTERM, SIGHUP
+    removeSignalHandlers = registerLockCleanupHandlers(releaseLock)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
@@ -231,6 +270,8 @@ export async function buildFunctionExtension(
     newError.errors = error.errors
     throw newError
   } finally {
+    // Remove signal handlers before releasing lock (normal termination path)
+    removeSignalHandlers()
     await releaseLock()
   }
 }
