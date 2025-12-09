@@ -125,7 +125,10 @@
           "type": "boolean"
         },
         "output-file": {
-          "description": "The file path where results should be written. If not specified, results will be written to STDOUT.",
+          "dependsOn": [
+            "watch"
+          ],
+          "description": "The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.",
           "env": "SHOPIFY_FLAG_OUTPUT_FILE",
           "hasDynamicHelp": false,
           "multiple": false,
@@ -212,7 +215,7 @@
         },
         "watch": {
           "allowNo": false,
-          "description": "Wait for bulk operation results before exiting.",
+          "description": "Wait for bulk operation results before exiting. Defaults to false.",
           "env": "SHOPIFY_FLAG_WATCH",
           "name": "watch",
           "type": "boolean"
