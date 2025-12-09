@@ -203,6 +203,19 @@ describe('getBulkOperationStatus', () => {
     )
   })
 
+  test('uses resolved API version in admin request', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
+
+    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 'test-api-version',
+      }),
+    )
+  })
+
   describe('time formatting', () => {
     test('uses "Started" for running operations', async () => {
       vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
@@ -372,6 +385,19 @@ describe('listBulkOperations', () => {
       adminSession: {token: 'test-token', storeFqdn},
       minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
     })
+  })
+
+  test('uses resolved API version in admin request', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
+
+    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 'test-api-version',
+      }),
+    )
   })
 
   test('uses resolved API version in admin request', async () => {
