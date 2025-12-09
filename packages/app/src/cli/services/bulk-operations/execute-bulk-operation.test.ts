@@ -3,6 +3,7 @@ import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, shortBulkOperationPoll} from './watch-bulk-operation.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {resolveApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
@@ -674,5 +675,46 @@ describe('executeBulkOperation', () => {
         body: `Results written to ${outputFile}. Check file for error details.`,
       }),
     )
+  })
+
+  test('calls resolveApiVersion with minimum API version constant', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    expect(resolveApiVersion).toHaveBeenCalledWith(mockAdminSession, undefined, BULK_OPERATIONS_MIN_API_VERSION)
+  })
+
+  test('uses resolved API version when running bulk operation', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query,
+      version: 'test-api-version',
+    })
   })
 })

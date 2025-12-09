@@ -179,7 +179,7 @@ describe('getBulkOperationStatus', () => {
     expect(output.info()).toContain('Bulk operation canceled.')
   })
 
-  test('calls resolveApiVersion with minimum API version', async () => {
+  test('calls resolveApiVersion with minimum API version constant', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
 
     await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
@@ -188,6 +188,19 @@ describe('getBulkOperationStatus', () => {
       {token: 'test-token', storeFqdn},
       undefined,
       BULK_OPERATIONS_MIN_API_VERSION,
+    )
+  })
+
+  test('uses resolved API version in admin request', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
+
+    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 'test-api-version',
+      }),
     )
   })
 
@@ -351,7 +364,7 @@ describe('listBulkOperations', () => {
     expect(output.info()).toContain('No bulk operations found in the last 7 days.')
   })
 
-  test('calls resolveApiVersion with minimum API version', async () => {
+  test('calls resolveApiVersion with minimum API version constant', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
 
     await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
@@ -360,6 +373,19 @@ describe('listBulkOperations', () => {
       {token: 'test-token', storeFqdn},
       undefined,
       BULK_OPERATIONS_MIN_API_VERSION,
+    )
+  })
+
+  test('uses resolved API version in admin request', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
+
+    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 'test-api-version',
+      }),
     )
   })
 })
