@@ -38,7 +38,7 @@ export function normalizeBulkOperationId(id: string): string {
 
 export function extractBulkOperationId(gid: string): string {
   // Extract the numeric ID from a GID like "gid://shopify/BulkOperation/123"
-  const match = gid.match(/\/BulkOperation\/(\d+)$/)
+  const match = gid.match(/^gid:\/\/shopify\/BulkOperation\/(\d+)$/)
   return match?.[1] ?? gid
 }
 

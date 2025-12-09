@@ -65,6 +65,8 @@ describe('extractBulkOperationId', () => {
   })
 
   test('returns input as-is if not a valid GID format', () => {
+    expect(extractBulkOperationId('gid://shopify/BulkOperation/ABC')).toBe('gid://shopify/BulkOperation/ABC')
+    expect(extractBulkOperationId('BulkOperation/123')).toBe('BulkOperation/123')
     expect(extractBulkOperationId('invalid-id')).toBe('invalid-id')
     expect(extractBulkOperationId('123')).toBe('123')
   })
