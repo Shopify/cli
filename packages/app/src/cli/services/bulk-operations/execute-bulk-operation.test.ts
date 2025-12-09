@@ -204,9 +204,13 @@ describe('executeBulkOperation', () => {
       query,
     })
 
-    expect(renderWarning).toHaveBeenCalledWith({
-      headline: 'Bulk operation errors.',
-      body: 'query: Invalid query syntax\nunknown: Another error',
+    expect(renderError).toHaveBeenCalledWith({
+      headline: 'Error creating bulk operation.',
+      body: {
+        list: {
+          items: ['query: Invalid query syntax', 'Another error'],
+        },
+      },
     })
 
     expect(renderSuccess).not.toHaveBeenCalled()
