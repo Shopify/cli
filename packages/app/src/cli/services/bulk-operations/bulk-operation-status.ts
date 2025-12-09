@@ -1,10 +1,11 @@
 import {BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {
   GetBulkOperationById,
   GetBulkOperationByIdQuery,
 } from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {formatOperationInfo} from '../graphql/common.js'
+import {formatOperationInfo, resolveApiVersion} from '../graphql/common.js'
 import {OrganizationApp, Organization} from '../../models/organization.js'
 import {
   ListBulkOperations,
@@ -18,8 +19,6 @@ import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
 import {BugError} from '@shopify/cli-kit/node/error'
 import colors from '@shopify/cli-kit/node/colors'
-
-const API_VERSION = '2026-01'
 
 export function normalizeBulkOperationId(id: string): string {
   // If already a GID, return as-is
@@ -63,7 +62,7 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn, showVersion: false}),
+          items: formatOperationInfo({organization, remoteApp, storeFqdn}),
         },
       },
     ],
@@ -78,7 +77,7 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
     query: GetBulkOperationById,
     session: adminSession,
     variables: {id: operationId},
-    version: API_VERSION,
+    version: await resolveApiVersion(adminSession, undefined, BULK_OPERATIONS_MIN_API_VERSION),
   })
 
   if (response.bulkOperation) {
@@ -99,7 +98,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn, showVersion: false}),
+          items: formatOperationInfo({organization, remoteApp, storeFqdn}),
         },
       },
     ],
@@ -121,7 +120,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
       sortKey: 'CREATED_AT',
       reverse: true,
     },
-    version: API_VERSION,
+    version: await resolveApiVersion(adminSession, undefined, BULK_OPERATIONS_MIN_API_VERSION),
   })
 
   const operations = response.bulkOperations.nodes.map((operation) => ({

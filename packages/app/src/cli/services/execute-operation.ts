@@ -1,7 +1,7 @@
 import {
   createAdminSessionAsApp,
   validateSingleOperation,
-  validateApiVersion,
+  resolveApiVersion,
   formatOperationInfo,
 } from './graphql/common.js'
 import {OrganizationApp, Organization} from '../models/organization.js'
@@ -38,7 +38,11 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {organization, remoteApp, storeFqdn, query, variables, version, outputFile} = input
+  const {organization, remoteApp, storeFqdn, query, variables, version: versionFlag, outputFile} = input
+
+  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
+
+  const version = await resolveApiVersion(adminSession, versionFlag)
 
   renderInfo({
     headline: 'Executing GraphQL operation.',
@@ -50,10 +54,6 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
       },
     ],
   })
-
-  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
-
-  if (version) await validateApiVersion(adminSession, version)
 
   const parsedVariables = await parseVariables(variables)
 

@@ -157,7 +157,10 @@ export async function supportedApiVersions(
  * @param preferredBehaviour - Custom request behaviour for retries and timeouts.
  * @returns - An array of supported and unsupported API versions.
  */
-async function fetchApiVersions(session: AdminSession, preferredBehaviour?: RequestModeInput): Promise<ApiVersion[]> {
+export async function fetchApiVersions(
+  session: AdminSession,
+  preferredBehaviour?: RequestModeInput,
+): Promise<ApiVersion[]> {
   try {
     const response = await adminRequestDoc({
       query: PublicApiVersions,

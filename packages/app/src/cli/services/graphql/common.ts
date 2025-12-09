@@ -2,7 +2,7 @@ import {OrganizationApp} from '../../models/organization.js'
 import {ensureAuthenticatedAdminAsApp, AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
-import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {parse} from 'graphql'
 
 /**
@@ -46,31 +46,47 @@ export function validateSingleOperation(graphqlOperation: string): void {
 }
 
 /**
- * Validates that the specified API version is supported by the store.
+ * Determines the API version to use based on the user provided version and the available versions.
  * The 'unstable' version is always allowed without validation.
  *
  * @param adminSession - Admin session containing store credentials.
- * @param version - The API version to validate.
- * @throws AbortError if the version is not supported by the store.
+ * @param versionFlag - The API version to validate.
+ * @param minimumVersion - Optional minimum version to use as a fallback when no version is specified.
+ * @throws AbortError if the provided version is not allowed.
  */
-export async function validateApiVersion(
+export async function resolveApiVersion(
   adminSession: {token: string; storeFqdn: string},
-  version: string,
-): Promise<void> {
-  if (version === 'unstable') return
+  versionFlag?: string,
+  minimumVersion?: string,
+): Promise<string> {
+  if (versionFlag === 'unstable') return versionFlag
 
-  const supportedVersions = await supportedApiVersions(adminSession)
-  if (supportedVersions.includes(version)) return
+  const availableVersions = await fetchApiVersions(adminSession)
 
-  const firstLine = outputContent`Invalid API version: ${version}`.value
-  const secondLine = outputContent`Supported versions: ${supportedVersions.join(', ')}`.value
+  // Return the most recent supported version, or minimumVersion if specified, whichever is newer
+  if (!versionFlag) {
+    const supportedVersions = availableVersions.filter((version) => version.supported).map((version) => version.handle)
 
-  throw new AbortError(`${firstLine}\n${secondLine}`)
+    if (minimumVersion) {
+      supportedVersions.push(minimumVersion)
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return supportedVersions.sort().reverse()[0]!
+  }
+
+  // Check if the user provided version is allowed. Unsupported versions (RC) are allowed here.
+  const versionList = availableVersions.map((version) => version.handle)
+  if (versionList.includes(versionFlag)) return versionFlag
+
+  const firstLine = outputContent`Invalid API version: ${versionFlag}`.value
+  const secondLine = outputContent`Allowed versions: ${versionList.join(', ')}`.value
+  throw new AbortError(firstLine, secondLine)
 }
 
 /**
  * Creates formatted info list items for GraphQL operations.
- * Includes organization, app, store, and API version information.
+ * Includes organization, app, store, and optionally API version information.
  *
  * @param options - The operation context information
  * @returns Array of formatted strings for display
@@ -80,14 +96,13 @@ export function formatOperationInfo(options: {
   remoteApp: {title: string}
   storeFqdn: string
   version?: string
-  showVersion?: boolean
 }): string[] {
-  const {organization, remoteApp, storeFqdn, version, showVersion = true} = options
+  const {organization, remoteApp, storeFqdn, version} = options
 
   const items = [`Organization: ${organization.businessName}`, `App: ${remoteApp.title}`, `Store: ${storeFqdn}`]
 
-  if (showVersion) {
-    items.push(`API version: ${version ?? 'default (latest stable)'}`)
+  if (version) {
+    items.push(`API version: ${version}`)
   }
 
   return items

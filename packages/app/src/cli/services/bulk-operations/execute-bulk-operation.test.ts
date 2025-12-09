@@ -3,7 +3,7 @@ import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, shortBulkOperationPoll} from './watch-bulk-operation.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {validateApiVersion} from '../graphql/common.js'
+import {resolveApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
@@ -22,7 +22,7 @@ vi.mock('../graphql/common.js', async () => {
   const actual = await vi.importActual('../graphql/common.js')
   return {
     ...actual,
-    validateApiVersion: vi.fn(),
+    resolveApiVersion: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/ui')
@@ -68,6 +68,7 @@ describe('executeBulkOperation', () => {
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
+    vi.mocked(resolveApiVersion).mockResolvedValue('2026-01')
   })
 
   afterEach(() => {
@@ -92,6 +93,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
+      version: '2026-01',
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -114,6 +116,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
+      version: '2026-01',
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -137,6 +140,7 @@ describe('executeBulkOperation', () => {
       adminSession: mockAdminSession,
       query: mutation,
       variablesJsonl: undefined,
+      version: '2026-01',
     })
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
   })
@@ -162,6 +166,7 @@ describe('executeBulkOperation', () => {
       adminSession: mockAdminSession,
       query: mutation,
       variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
+      version: '2026-01',
     })
   })
 
@@ -560,51 +565,6 @@ describe('executeBulkOperation', () => {
     })
 
     expect(renderSuccess).not.toHaveBeenCalled()
-  })
-
-  test('validates API version when provided', async () => {
-    const query = '{ products { edges { node { id } } } }'
-    const version = '2025-01'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
-      bulkOperation: createdBulkOperation,
-      userErrors: [],
-    }
-    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
-    vi.mocked(validateApiVersion).mockResolvedValue()
-
-    await executeBulkOperation({
-      organization: mockOrganization,
-      remoteApp: mockRemoteApp,
-      storeFqdn,
-      query,
-      version,
-    })
-
-    expect(validateApiVersion).toHaveBeenCalledWith(mockAdminSession, version)
-    expect(runBulkOperationQuery).toHaveBeenCalledWith({
-      adminSession: mockAdminSession,
-      query,
-      version,
-    })
-  })
-
-  test('does not validate version when not provided', async () => {
-    const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
-      bulkOperation: createdBulkOperation,
-      userErrors: [],
-    }
-    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
-    vi.mocked(validateApiVersion).mockClear()
-
-    await executeBulkOperation({
-      organization: mockOrganization,
-      remoteApp: mockRemoteApp,
-      storeFqdn,
-      query,
-    })
-
-    expect(validateApiVersion).not.toHaveBeenCalled()
   })
 
   test('renders warning when completed operation results contain userErrors', async () => {
