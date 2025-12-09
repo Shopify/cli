@@ -50,25 +50,24 @@ export function validateSingleOperation(graphqlOperation: string): void {
  * The 'unstable' version is always allowed without validation.
  *
  * @param adminSession - Admin session containing store credentials.
- * @param versionFlag - The API version to validate.
- * @param minimumVersion - Optional minimum version to use as a fallback when no version is specified.
+ * @param userSpecifiedVersion - The API version to validate.
+ * @param minimumDefaultVersion - Optional minimum version to use as a fallback when no version is specified.
  * @throws AbortError if the provided version is not allowed.
  */
 export async function resolveApiVersion(
   adminSession: {token: string; storeFqdn: string},
-  versionFlag?: string,
-  minimumVersion?: string,
+  userSpecifiedVersion?: string,
+  minimumDefaultVersion?: string,
 ): Promise<string> {
-  if (versionFlag === 'unstable') return versionFlag
+  if (userSpecifiedVersion === 'unstable') return userSpecifiedVersion
 
   const availableVersions = await fetchApiVersions(adminSession)
 
-  // Return the most recent supported version, or minimumVersion if specified, whichever is newer
-  if (!versionFlag) {
+  if (!userSpecifiedVersion) {
+    // Return the most recent supported version, or minimumDefaultVersion if specified, whichever is newer.
     const supportedVersions = availableVersions.filter((version) => version.supported).map((version) => version.handle)
-
-    if (minimumVersion) {
-      supportedVersions.push(minimumVersion)
+    if (minimumDefaultVersion) {
+      supportedVersions.push(minimumDefaultVersion)
     }
 
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -77,9 +76,10 @@ export async function resolveApiVersion(
 
   // Check if the user provided version is allowed. Unsupported versions (RC) are allowed here.
   const versionList = availableVersions.map((version) => version.handle)
-  if (versionList.includes(versionFlag)) return versionFlag
+  if (versionList.includes(userSpecifiedVersion)) return userSpecifiedVersion
 
-  const firstLine = outputContent`Invalid API version: ${versionFlag}`.value
+  // Invalid user provided version.
+  const firstLine = outputContent`Invalid API version: ${userSpecifiedVersion}`.value
   const secondLine = outputContent`Allowed versions: ${versionList.join(', ')}`.value
   throw new AbortError(firstLine, secondLine)
 }

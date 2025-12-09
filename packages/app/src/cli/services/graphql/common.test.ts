@@ -123,7 +123,7 @@ describe('resolveApiVersion', () => {
       {handle: '2024-07', supported: true},
     ])
 
-    const result = await resolveApiVersion(mockAdminSession, '2024-04')
+    const result = await resolveApiVersion(mockAdminSession, '2024-04', '2026-01')
 
     expect(result).toBe('2024-04')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
