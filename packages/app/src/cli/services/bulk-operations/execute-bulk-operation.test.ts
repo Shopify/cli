@@ -7,7 +7,7 @@ import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {resolveApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
-import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
+import {OrganizationApp, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -24,6 +24,7 @@ vi.mock('../graphql/common.js', async () => {
   return {
     ...actual,
     resolveApiVersion: vi.fn(),
+    validateMutationStore: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/ui')
@@ -50,15 +51,14 @@ describe('executeBulkOperation', () => {
   } as OrganizationApp
 
   const storeFqdn = 'test-store.myshopify.com'
-  const mockStore = {
+  const mockStore: OrganizationStore = {
     shopId: '123',
-    link: 'link',
+    link: 'https://test-store.myshopify.com/admin',
     shopDomain: storeFqdn,
     shopName: 'Test Store',
-    transferDisabled: true,
+    transferDisabled: false,
     convertableToPartnerTest: false,
     provisionable: true,
-    storeType: 'APP_DEVELOPMENT',
   }
   const mockAdminSession = {token: 'test-token', storeFqdn}
 
@@ -413,7 +413,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: false,
     })
@@ -440,7 +440,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: false,
     })
@@ -600,7 +600,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -636,7 +636,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -672,7 +672,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
       outputFile,
