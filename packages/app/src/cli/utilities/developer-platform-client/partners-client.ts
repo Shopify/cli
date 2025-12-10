@@ -262,6 +262,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     cacheOptions?: CacheOptions,
     preferredBehaviour?: RequestModeInput,
   ): Promise<T> {
+    const allowedQueries = [MigrateToUiExtensionQuery, MigrateFlowExtensionMutation, MigrateAppModuleMutation]
+    const forceUsePartnersApi = allowedQueries.some((allowedQuery) => query === allowedQuery)
     return partnersRequest(
       query,
       await this.token(),
@@ -269,6 +271,7 @@ export class PartnersClient implements DeveloperPlatformClient {
       cacheOptions,
       preferredBehaviour,
       this.createUnauthorizedHandler(),
+      forceUsePartnersApi,
     )
   }
 

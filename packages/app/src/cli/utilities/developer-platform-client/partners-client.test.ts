@@ -1,5 +1,8 @@
 import {PartnersClient} from './partners-client.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
+import {MigrateToUiExtensionQuery} from '../../api/graphql/extension_migrate_to_ui_extension.js'
+import {MigrateFlowExtensionMutation} from '../../api/graphql/extension_migrate_flow_extension.js'
+import {MigrateAppModuleMutation} from '../../api/graphql/extension_migrate_app_module.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
@@ -107,10 +110,18 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
-    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
-      type: 'token_refresh',
-      handler: expect.any(Function),
-    })
+    expect(partnersRequest).toHaveBeenCalledWith(
+      CreateAppQuery,
+      'token',
+      variables,
+      undefined,
+      undefined,
+      {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+      false,
+    )
   })
 
   test('creates an app with non-launchable defaults', async () => {
@@ -139,10 +150,18 @@ describe('createApp', () => {
 
     // Then
     expect(got).toEqual({...APP1, newApp: true, developerPlatformClient: partnersClient})
-    expect(partnersRequest).toHaveBeenCalledWith(CreateAppQuery, 'token', variables, undefined, undefined, {
-      type: 'token_refresh',
-      handler: expect.any(Function),
-    })
+    expect(partnersRequest).toHaveBeenCalledWith(
+      CreateAppQuery,
+      'token',
+      variables,
+      undefined,
+      undefined,
+      {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+      false,
+    )
   })
 
   test('throws error if requests has a user error', async () => {
@@ -173,10 +192,18 @@ describe('fetchApp', async () => {
 
     // Then
     expect(got).toEqual({organization: partnerMarkedOrg, apps: [APP1, APP2], hasMorePages: false})
-    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
-      type: 'token_refresh',
-      handler: expect.any(Function),
-    })
+    expect(partnersRequest).toHaveBeenCalledWith(
+      FindOrganizationQuery,
+      'token',
+      {id: ORG1.id},
+      undefined,
+      undefined,
+      {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+      false,
+    )
   })
 
   test('throws if there are no organizations', async () => {
@@ -189,10 +216,18 @@ describe('fetchApp', async () => {
 
     // Then
     await expect(got).rejects.toThrow('No Organization found')
-    expect(partnersRequest).toHaveBeenCalledWith(FindOrganizationQuery, 'token', {id: ORG1.id}, undefined, undefined, {
-      type: 'token_refresh',
-      handler: expect.any(Function),
-    })
+    expect(partnersRequest).toHaveBeenCalledWith(
+      FindOrganizationQuery,
+      'token',
+      {id: ORG1.id},
+      undefined,
+      undefined,
+      {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+      false,
+    )
   })
 })
 
@@ -228,5 +263,107 @@ describe('singleton pattern', () => {
 
     // Then
     expect(instance1).not.toBe(instance2)
+  })
+})
+
+describe('request with forceUsePartnersApi', () => {
+  test('passes forceUsePartnersApi=true for MigrateToUiExtensionQuery', async () => {
+    // Given
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const mockResponse = {migrateToUiExtension: {userErrors: [], migratedToUiExtension: true}}
+    vi.mocked(partnersRequest).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await partnersClient.request(MigrateToUiExtensionQuery, {extensionId: '123'})
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(
+      MigrateToUiExtensionQuery,
+      testPartnersUserSession.token,
+      {extensionId: '123'},
+      undefined,
+      undefined,
+      expect.objectContaining({
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      }),
+      // forceUsePartnersApi should be true
+      true,
+    )
+  })
+
+  test('passes forceUsePartnersApi=true for MigrateFlowExtensionMutation', async () => {
+    // Given
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const mockResponse = {migrateFlowExtension: {userErrors: [], migratedFlowExtension: true}}
+    vi.mocked(partnersRequest).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await partnersClient.request(MigrateFlowExtensionMutation, {extensionId: '123'})
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(
+      MigrateFlowExtensionMutation,
+      testPartnersUserSession.token,
+      {extensionId: '123'},
+      undefined,
+      undefined,
+      expect.objectContaining({
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      }),
+      // forceUsePartnersApi should be true
+      true,
+    )
+  })
+
+  test('passes forceUsePartnersApi=true for MigrateAppModuleMutation', async () => {
+    // Given
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const mockResponse = {migrateAppModule: {userErrors: [], migratedAppModule: true}}
+    vi.mocked(partnersRequest).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await partnersClient.request(MigrateAppModuleMutation, {appModuleId: '123'})
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(
+      MigrateAppModuleMutation,
+      testPartnersUserSession.token,
+      {appModuleId: '123'},
+      undefined,
+      undefined,
+      expect.objectContaining({
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      }),
+      // forceUsePartnersApi should be true
+      true,
+    )
+  })
+
+  test('passes forceUsePartnersApi=false for other queries', async () => {
+    // Given
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const mockResponse = {organizations: {nodes: []}}
+    vi.mocked(partnersRequest).mockResolvedValueOnce(mockResponse)
+
+    // When
+    await partnersClient.request(FindOrganizationQuery, {id: '1'})
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(
+      FindOrganizationQuery,
+      testPartnersUserSession.token,
+      {id: '1'},
+      undefined,
+      undefined,
+      expect.objectContaining({
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      }),
+      // forceUsePartnersApi should be false for non-migration queries
+      false,
+    )
   })
 })

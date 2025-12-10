@@ -8,11 +8,9 @@ import {
   adminFqdn,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
-import {blockPartnersAccess} from '../environment.js'
 import {expect, describe, test, vi} from 'vitest'
 
 vi.mock('../../../private/node/context/service.js')
-vi.mock('../environment.js')
 
 vi.mock('../vendor/dev_server/index.js', () => {
   return {
@@ -34,7 +32,6 @@ describe('partners', () => {
   test('returns the local fqdn when the environment is local', async () => {
     // Given
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
-    vi.mocked(blockPartnersAccess).mockReturnValue(false)
 
     // When
     const got = await partnersFqdn()
@@ -46,7 +43,6 @@ describe('partners', () => {
   test('returns the production fqdn when the environment is production', async () => {
     // Given
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
-    vi.mocked(blockPartnersAccess).mockReturnValue(false)
 
     // When
     const got = await partnersFqdn()

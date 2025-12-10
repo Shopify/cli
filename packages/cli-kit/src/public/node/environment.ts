@@ -86,17 +86,19 @@ export function jsonOutputEnabled(environment = getEnvironmentVariables()): bool
 /**
  * If true, the CLI should not use the Partners API.
  *
+ * @param forceUsePartnersApi - If true, the CLI will force to use the Partners API.
  * @returns True when the CLI should not use the Partners API.
  */
-export function blockPartnersAccess(): boolean {
+export function blockPartnersAccess(forceUsePartnersApi?: boolean): boolean {
+  // If explicitly forcing to use Partners API, do not block
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+  if (forceUsePartnersApi || isTruthy(getEnvironmentVariables()[environmentVariables.usePartnersApi])) {
+    return false
+  }
+
   // Block if explicitly set to never use Partners API
   if (isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])) {
     return true
-  }
-
-  // If explicitly forcing to use Partners API, do not block
-  if (isTruthy(getEnvironmentVariables()[environmentVariables.usePartnersApi])) {
-    return false
   }
 
   // Block for 3P devs

@@ -11,9 +11,10 @@ import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {getPackageManager} from '../node-package-manager.js'
 import {cwd} from '../path.js'
-import {AbortError} from '../error.js'
+import {AbortError, BugError} from '../error.js'
 import {formatPackageManagerCommand} from '../output.js'
 import {RequestModeInput} from '../http.js'
+import {blockPartnersAccess} from '../environment.js'
 import Bottleneck from 'bottleneck'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -30,8 +31,13 @@ const limiter = new Bottleneck({
  * Sets up the request to the Partners API.
  *
  * @param token - Partners token.
+ * @param forceUsePartnersApi - If true, the request will be forced to use the Partners API.
  */
-async function setupRequest(token: string) {
+async function setupRequest(token: string, forceUsePartnersApi = false) {
+  if (blockPartnersAccess(forceUsePartnersApi)) {
+    throw new BugError('Partners API is no longer available.')
+  }
+
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`
@@ -52,6 +58,7 @@ async function setupRequest(token: string) {
  * @param cacheOptions - Cache options.
  * @param preferredBehaviour - Preferred behaviour for the request.
  * @param unauthorizedHandler - Optional handler for unauthorized requests.
+ * @param forceUsePartnersApi - If true, the request will be forced to use the Partners API.
  * @returns The response of the query of generic type <T>.
  */
 export async function partnersRequest<T>(
@@ -61,8 +68,9 @@ export async function partnersRequest<T>(
   cacheOptions?: CacheOptions,
   preferredBehaviour?: RequestModeInput,
   unauthorizedHandler?: UnauthorizedHandler,
+  forceUsePartnersApi = false,
 ): Promise<T> {
-  const opts = await setupRequest(token)
+  const opts = await setupRequest(token, forceUsePartnersApi)
   const result = limiter.schedule(() =>
     graphqlRequest<T>({
       ...opts,
