@@ -7,6 +7,8 @@ import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {formData, fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent} from '@shopify/cli-kit/node/output'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 interface StageFileOptions {
   adminSession: AdminSession
@@ -106,9 +108,18 @@ async function uploadFileToStagedUrl(
     contentType: 'text/jsonl',
   })
 
-  const uploadResponse = await fetch(uploadUrl, {
-    method: 'POST',
-    body: form,
+  const uploadResponse = await renderSingleTask({
+    title: outputContent`Uploading bulk operation variables`,
+    task: async () => {
+      return fetch(
+        uploadUrl,
+        {
+          method: 'POST',
+          body: form,
+        },
+        'slow-request',
+      )
+    },
   })
 
   if (!uploadResponse.ok) {
