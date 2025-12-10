@@ -1,7 +1,6 @@
-import {AbortError, BugError} from '../error.js'
+import {AbortError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import {DevServer, DevServerCore} from '../vendor/dev_server/index.js'
-import {blockPartnersAccess} from '../environment.js'
 
 export const NotProvidedStoreFQDNError = new AbortError(
   "Couldn't obtain the Shopify FQDN because the store FQDN was not provided.",
@@ -13,9 +12,6 @@ export const NotProvidedStoreFQDNError = new AbortError(
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function partnersFqdn(): Promise<string> {
-  if (blockPartnersAccess()) {
-    throw new BugError('Partners API is is no longer available.')
-  }
   const environment = serviceEnvironment()
   const productionFqdn = 'partners.shopify.com'
   switch (environment) {

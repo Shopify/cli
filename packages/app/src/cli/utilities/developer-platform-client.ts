@@ -58,7 +58,6 @@ import {
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
-import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
@@ -85,9 +84,7 @@ export function allDeveloperPlatformClients(): DeveloperPlatformClient[] {
 
   clients.push(AppManagementClient.getInstance())
 
-  if (!blockPartnersAccess()) {
-    clients.push(PartnersClient.getInstance())
-  }
+  clients.push(PartnersClient.getInstance())
 
   return clients
 }
@@ -105,8 +102,6 @@ function selectDeveloperPlatformClientByOrg(organization: Organization): Develop
 }
 
 function defaultDeveloperPlatformClient(): DeveloperPlatformClient {
-  if (blockPartnersAccess()) return AppManagementClient.getInstance()
-
   return PartnersClient.getInstance()
 }
 
