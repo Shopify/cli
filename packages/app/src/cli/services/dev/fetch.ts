@@ -117,7 +117,7 @@ export async function fetchOrgFromId(
  * @param org - Organization
  * @param storeFqdn - store domain fqdn
  * @param developerPlatformClient - The client to access the platform API
- * @param includeAllStores - Whether to include all store types or only Dev Stores
+ * @param includeAllStores - Whether to include all store types or only dev stores
  */
 export async function fetchStore(
   org: Organization,
