@@ -1,5 +1,6 @@
 import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
+import {filterCustomHeaders} from './utilities.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
@@ -185,8 +186,12 @@ export function setupGraphiQLServer({
     try {
       const reqBody = JSON.stringify(req.body)
 
+      // Extract custom headers from the request, filtering out blocked headers
+      const customHeaders = filterCustomHeaders(req.headers)
+
       const runRequest = async () => {
         const headers = {
+          ...customHeaders,
           Accept: 'application/json',
           'Content-Type': 'application/json',
           'X-Shopify-Access-Token': await token(),
