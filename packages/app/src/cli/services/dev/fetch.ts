@@ -3,6 +3,7 @@ import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.
 import {fetchCurrentAccountInformation} from '../context/partner-account-info.js'
 import {
   DeveloperPlatformClient,
+  Store,
   allDeveloperPlatformClients,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
@@ -117,20 +118,21 @@ export async function fetchOrgFromId(
  * @param org - Organization
  * @param storeFqdn - store domain fqdn
  * @param developerPlatformClient - The client to access the platform API
- * @param includeAllStores - Whether to include all store types or only dev stores
+ * @param storeTypes - Store types to filter by. Defaults to dev stores only.
  */
 export async function fetchStore(
   org: Organization,
   storeFqdn: string,
   developerPlatformClient: DeveloperPlatformClient,
-  includeAllStores = false,
+  storeTypes: Store[] = ['APP_DEVELOPMENT'],
 ): Promise<OrganizationStore> {
-  const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn, includeAllStores)
+  const store = await developerPlatformClient.storeByDomain(org.id, storeFqdn, storeTypes)
 
   if (!store) {
-    const storeTypeMessage = includeAllStores
-      ? 'Ensure you have provided the correct store domain and that you have access to the store.'
-      : 'Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.'
+    const isDevStoresOnly = storeTypes.length === 1 && storeTypes[0] === 'APP_DEVELOPMENT'
+    const storeTypeMessage = isDevStoresOnly
+      ? 'Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.'
+      : 'Ensure you have provided the correct store domain and that you have access to the store.'
     throw new AbortError(
       `Could not find store for domain ${storeFqdn} in organization ${org.businessName}.`,
       storeTypeMessage,

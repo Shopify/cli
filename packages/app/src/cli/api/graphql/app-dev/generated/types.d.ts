@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, tsdoc/syntax  */
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax  */
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 export type Maybe<T> = T | null
@@ -16,6 +16,12 @@ export type Scalars = {
   Int: {input: number; output: number}
   Float: {input: number; output: number}
   /**
+   * Represents an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601)-encoded date and time string.
+   * For example, 3:50 pm on September 7, 2019 in the time zone of UTC (Coordinated Universal Time) is
+   * represented as `"2019-09-07T15:50:00Z`".
+   */
+  DateTime: {input: any; output: any}
+  /**
    * A [JSON](https://www.json.org/json-en.html) object.
    *
    * Example value:
@@ -31,4 +37,12 @@ export type Scalars = {
    * }`
    */
   JSON: {input: JsonMapType | string; output: JsonMapType}
+  /**
+   * Represents an [RFC 3986](https://datatracker.ietf.org/doc/html/rfc3986) and
+   * [RFC 3987](https://datatracker.ietf.org/doc/html/rfc3987)-compliant URI string.
+   *
+   * For example, `"https://example.myshopify.com"` is a valid URL. It includes a scheme (`https`) and a host
+   * (`example.myshopify.com`).
+   */
+  URL: {input: string; output: string}
 }

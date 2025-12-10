@@ -86,7 +86,6 @@ import {
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
-import {FetchDevStoreByDomain} from '../../api/graphql/business-platform-organizations/generated/fetch_dev_store_by_domain.js'
 import {
   FetchStoreByDomain,
   FetchStoreByDomainQueryVariables,
@@ -99,6 +98,7 @@ import {
   ProvisionShopAccess,
   ProvisionShopAccessMutationVariables,
 } from '../../api/graphql/business-platform-organizations/generated/provision_shop_access.js'
+import {Store} from '../../api/graphql/business-platform-organizations/generated/types.js'
 import {
   ActiveAppReleaseQuery,
   ReleasedAppModuleFragment,
@@ -835,14 +835,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async storeByDomain(
-    orgId: string,
-    shopDomain: string,
-    includeAllStores = false,
-  ): Promise<OrganizationStore | undefined> {
-    const queryVariables: FetchStoreByDomainQueryVariables = {domain: shopDomain}
+  async storeByDomain(orgId: string, shopDomain: string, storeTypes: Store[]): Promise<OrganizationStore | undefined> {
+    const queryVariables: FetchStoreByDomainQueryVariables = {
+      domain: shopDomain,
+      storeTypes: storeTypes.map((t) => t.toLowerCase()).join(','),
+    }
     const storesResult = await this.businessPlatformOrganizationsRequest({
-      query: includeAllStores ? FetchStoreByDomain : FetchDevStoreByDomain,
+      query: FetchStoreByDomain,
       organizationId: String(numberFromGid(orgId)),
       variables: queryVariables,
     })
