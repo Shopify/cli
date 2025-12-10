@@ -288,7 +288,7 @@ describe('validateMutationStore', () => {
     storeType: 'PRODUCTION',
   }
 
-  test('allows queries on Dev Stores', () => {
+  test('allows queries on dev stores', () => {
     const query = 'query { shop { name } }'
 
     expect(() => validateMutationStore(query, devStore)).not.toThrow()
@@ -300,7 +300,7 @@ describe('validateMutationStore', () => {
     expect(() => validateMutationStore(query, nonDevStore)).not.toThrow()
   })
 
-  test('allows mutations on Dev Stores', () => {
+  test('allows mutations on dev stores', () => {
     const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
 
     expect(() => validateMutationStore(mutation, devStore)).not.toThrow()
@@ -309,12 +309,12 @@ describe('validateMutationStore', () => {
   test('throws when attempting mutation on non-dev store', () => {
     const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
 
-    expect(() => validateMutationStore(mutation, nonDevStore)).toThrow('Mutations can only be executed on Dev Stores')
+    expect(() => validateMutationStore(mutation, nonDevStore)).toThrow('Mutations can only be executed on dev stores')
   })
 
   test('includes store domain in error message for non-dev store mutations', () => {
     const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
 
-    expect(() => validateMutationStore(mutation, nonDevStore)).toThrow('Dev Stores')
+    expect(() => validateMutationStore(mutation, nonDevStore)).toThrow('dev stores')
   })
 })
