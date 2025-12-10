@@ -38,6 +38,7 @@ describe('getBulkOperationStatus', () => {
     return {
       bulkOperation: {
         id: operationId,
+        type: 'QUERY',
         status: 'RUNNING',
         errorCode: null,
         objectCount: 100,
@@ -75,8 +76,8 @@ describe('getBulkOperationStatus', () => {
     const output = mockAndCaptureOutput()
     await getBulkOperationStatus({storeFqdn, operationId, remoteApp})
 
-    expect(output.info()).toContain('Bulk operation in progress...')
-    expect(output.info()).toContain('500 objects')
+    expect(output.info()).toContain('Bulk operation in progress')
+    expect(output.info()).toContain('500 objects read')
     expect(output.info()).toContain('Started')
   })
 
@@ -114,7 +115,7 @@ describe('getBulkOperationStatus', () => {
     const output = mockAndCaptureOutput()
     await getBulkOperationStatus({storeFqdn, operationId, remoteApp})
 
-    expect(output.info()).toContain('Starting...')
+    expect(output.info()).toContain('Starting')
   })
 
   test('renders info banner for canceled operation', async () => {
@@ -160,6 +161,7 @@ describe('listBulkOperations', () => {
       bulkOperations: {
         nodes: operations.map((op) => ({
           id: 'gid://shopify/BulkOperation/123',
+          type: 'QUERY',
           status: 'RUNNING',
           errorCode: null,
           objectCount: 100,

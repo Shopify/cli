@@ -3,6 +3,7 @@ mutation BulkOperationRunQuery($query: String!) {
     query: $query
   ) {
     bulkOperation {
+      type
       completedAt
       createdAt
       errorCode
