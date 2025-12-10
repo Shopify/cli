@@ -130,7 +130,7 @@ export function isMutation(graphqlOperation: string): boolean {
 }
 
 /**
- * Validates that mutations can only be executed on Dev Stores.
+ * Validates that mutations can only be executed on dev stores.
  *
  * @param graphqlOperation - The GraphQL operation to validate.
  * @param store - The store where the operation will be executed.
@@ -138,6 +138,6 @@ export function isMutation(graphqlOperation: string): boolean {
  */
 export function validateMutationStore(graphqlOperation: string, store: OrganizationStore): void {
   if (isMutation(graphqlOperation) && store.storeType !== 'APP_DEVELOPMENT') {
-    throw new AbortError(`Mutations can only be executed on Dev Stores.`)
+    throw new AbortError(`Mutations can only be executed on dev stores.`)
   }
 }
