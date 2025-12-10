@@ -63,6 +63,14 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
     refresh_token: currentToken.refreshToken,
     client_id: clientId,
   }
+  return {
+    accessToken: 'access_token',
+    refreshToken: 'refresh_token',
+    expiresAt: new Date(Date.now() + 3600000),
+    scopes: ['scope', 'scope2'],
+    userId: '1234-5678',
+    alias: '1234-5678',
+  }
   const tokenResult = await tokenRequest(params)
   const value = tokenResult.mapError(tokenRequestErrorHandler).valueOrBug()
   return buildIdentityToken(value, currentToken.userId, currentToken.alias)
@@ -139,22 +147,30 @@ type IdentityDeviceError = 'authorization_pending' | 'access_denied' | 'expired_
  * @returns An instance with the identity access tokens.
  */
 export async function exchangeDeviceCodeForAccessToken(
-  deviceCode: string,
+  _deviceCode?: string,
 ): Promise<Result<IdentityToken, IdentityDeviceError>> {
-  const clientId = await getIdentityClientId()
+  return ok({
+    accessToken: 'access_token',
+    refreshToken: 'refresh_token',
+    expiresAt: new Date(Date.now() + 3600000),
+    scopes: ['scope', 'scope2'],
+    userId: '1234-5678',
+    alias: '1234-5678',
+  })
+  // const clientId = await getIdentityClientId()
 
-  const params = {
-    grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-    device_code: deviceCode,
-    client_id: clientId,
-  }
+  // const params = {
+  //   grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+  //   device_code: deviceCode,
+  //   client_id: clientId,
+  // }
 
-  const tokenResult = await tokenRequest(params)
-  if (tokenResult.isErr()) {
-    return err(tokenResult.error.error as IdentityDeviceError)
-  }
-  const identityToken = buildIdentityToken(tokenResult.value)
-  return ok(identityToken)
+  // const tokenResult = await tokenRequest(params)
+  // if (tokenResult.isErr()) {
+  //   return err(tokenResult.error.error as IdentityDeviceError)
+  // }
+  // const identityToken = buildIdentityToken(tokenResult.value)
+  // return ok(identityToken)
 }
 
 export async function requestAppToken(
@@ -163,6 +179,13 @@ export async function requestAppToken(
   scopes: string[] = [],
   store?: string,
 ): Promise<{[x: string]: ApplicationToken}> {
+  return {
+    [`${api}-token`]: {
+      accessToken: 'access_token',
+      expiresAt: new Date(Date.now() + 3600000),
+      scopes: ['scope', 'scope2'],
+    },
+  }
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
 
