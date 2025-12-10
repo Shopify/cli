@@ -5,6 +5,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 
 export type FetchStoreByDomainQueryVariables = Types.Exact<{
   domain?: Types.InputMaybe<Types.Scalars['String']['input']>
+  storeTypes: Types.Scalars['String']['input']
 }>
 
 export type FetchStoreByDomainQuery = {
@@ -41,6 +42,11 @@ export const FetchStoreByDomain = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'domain'}},
           type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
         },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'storeTypes'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
+        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -57,6 +63,30 @@ export const FetchStoreByDomain = {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'accessibleShops'},
                   arguments: [
+                    {
+                      kind: 'Argument',
+                      name: {kind: 'Name', value: 'filters'},
+                      value: {
+                        kind: 'ObjectValue',
+                        fields: [
+                          {
+                            kind: 'ObjectField',
+                            name: {kind: 'Name', value: 'field'},
+                            value: {kind: 'EnumValue', value: 'STORE_TYPE'},
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: {kind: 'Name', value: 'operator'},
+                            value: {kind: 'EnumValue', value: 'IN'},
+                          },
+                          {
+                            kind: 'ObjectField',
+                            name: {kind: 'Name', value: 'value'},
+                            value: {kind: 'Variable', name: {kind: 'Name', value: 'storeTypes'}},
+                          },
+                        ],
+                      },
+                    },
                     {
                       kind: 'Argument',
                       name: {kind: 'Name', value: 'search'},

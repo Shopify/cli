@@ -59,7 +59,7 @@ describe('prepareAppStoreContext', () => {
       appContextResult: mockAppContextResult,
       storeFqdn: mockFlags.store,
       forceReselectStore: mockFlags.reset,
-      includeAllStores: true,
+      storeTypes: ['APP_DEVELOPMENT', 'DEVELOPMENT', 'DEVELOPMENT_SUPERSET', 'PRODUCTION'],
     })
   })
 

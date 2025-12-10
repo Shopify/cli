@@ -113,7 +113,7 @@ describe('fetchStore', () => {
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1', false)
+    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1', ['APP_DEVELOPMENT'])
   })
 
   test('throws error if store not found', async () => {

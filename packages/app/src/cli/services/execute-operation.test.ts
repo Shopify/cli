@@ -1,6 +1,6 @@
 import {executeOperation} from './execute-operation.js'
-import {createAdminSessionAsApp, resolveApiVersion} from './graphql/common.js'
-import {OrganizationApp, OrganizationSource} from '../models/organization.js'
+import {createAdminSessionAsApp, resolveApiVersion, validateMutationStore} from './graphql/common.js'
+import {OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {ClientError} from 'graphql-request'
@@ -28,12 +28,12 @@ describe('executeOperation', () => {
   } as OrganizationApp
 
   const storeFqdn = 'test-store.myshopify.com'
-  const mockStore = {
+  const mockStore: OrganizationStore = {
     shopId: '123',
-    link: 'link',
+    link: 'https://test-store.myshopify.com/admin',
     shopDomain: storeFqdn,
     shopName: 'Test Store',
-    transferDisabled: true,
+    transferDisabled: false,
     convertableToPartnerTest: false,
     provisionable: true,
     storeType: 'APP_DEVELOPMENT',
@@ -127,7 +127,7 @@ describe('executeOperation', () => {
       await executeOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         variableFile,
       })
@@ -149,7 +149,7 @@ describe('executeOperation', () => {
         executeOperation({
           organization: mockOrganization,
           remoteApp: mockRemoteApp,
-          storeFqdn,
+          store: mockStore,
           query,
           variableFile: nonExistentFile,
         }),
@@ -170,7 +170,7 @@ describe('executeOperation', () => {
         executeOperation({
           organization: mockOrganization,
           remoteApp: mockRemoteApp,
-          storeFqdn,
+          store: mockStore,
           query,
           variableFile,
         }),
@@ -326,5 +326,38 @@ describe('executeOperation', () => {
         body: expect.stringContaining('invalidField'),
       }),
     )
+  })
+
+  test('throws AbortError when attempting mutation on non-dev store', async () => {
+    const nonDevStore: OrganizationStore = {
+      shopId: '456',
+      link: 'https://prod-store.myshopify.com/admin',
+      shopDomain: 'prod-store.myshopify.com',
+      shopName: 'Production Store',
+      transferDisabled: false,
+      convertableToPartnerTest: false,
+      provisionable: false,
+      storeType: 'PRODUCTION',
+    }
+
+    const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
+
+    // Import the real validateMutationStore to test end-to-end validation
+    const {validateMutationStore: realValidateMutationStore} = await vi.importActual<
+      typeof import('./graphql/common.js')
+    >('./graphql/common.js')
+    vi.mocked(validateMutationStore).mockImplementation((query, store) => realValidateMutationStore(query, store))
+
+    await expect(
+      executeOperation({
+        organization: mockOrganization,
+        remoteApp: mockRemoteApp,
+        store: nonDevStore,
+        query: mutation,
+      }),
+    ).rejects.toThrow('Mutations can only be executed on dev stores')
+
+    // Verify no API call was made - validation should fail before reaching the API
+    expect(adminRequestDoc).not.toHaveBeenCalled()
   })
 })
