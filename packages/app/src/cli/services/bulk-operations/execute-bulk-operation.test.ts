@@ -698,7 +698,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -721,7 +721,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 

@@ -113,7 +113,7 @@ describe('fetchStore', () => {
 
     // Then
     expect(got).toEqual(STORE1)
-    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1')
+    expect(developerPlatformClient.storeByDomain).toHaveBeenCalledWith(ORG1.id, 'domain1', false)
   })
 
   test('throws error if store not found', async () => {
@@ -129,7 +129,7 @@ describe('fetchStore', () => {
     await expect(got).rejects.toThrow(
       new AbortError(
         `Could not find store for domain domain1 in organization org1.`,
-        `Ensure you've provided the correct store domain, that the store is a dev store, and that you have access to the store.`,
+        `Ensure you have provided the correct store domain, that the store is a dev store, and that you have access to the store.`,
       ),
     )
   })
