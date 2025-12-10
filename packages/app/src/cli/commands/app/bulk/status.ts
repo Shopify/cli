@@ -36,12 +36,14 @@ export default class BulkStatus extends AppLinkedCommand {
 
     if (flags.id) {
       await getBulkOperationStatus({
+        organization: appContextResult.organization,
         storeFqdn: store.shopDomain,
         operationId: flags.id,
         remoteApp: appContextResult.remoteApp,
       })
     } else {
       await listBulkOperations({
+        organization: appContextResult.organization,
         storeFqdn: store.shopDomain,
         remoteApp: appContextResult.remoteApp,
       })

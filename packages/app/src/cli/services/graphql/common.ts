@@ -67,3 +67,28 @@ export async function validateApiVersion(
 
   throw new AbortError(`${firstLine}\n${secondLine}`)
 }
+
+/**
+ * Creates formatted info list items for GraphQL operations.
+ * Includes organization, app, store, and API version information.
+ *
+ * @param options - The operation context information
+ * @returns Array of formatted strings for display
+ */
+export function formatOperationInfo(options: {
+  organization: {businessName: string}
+  remoteApp: {title: string}
+  storeFqdn: string
+  version?: string
+  showVersion?: boolean
+}): string[] {
+  const {organization, remoteApp, storeFqdn, version, showVersion = true} = options
+
+  const items = [`Organization: ${organization.businessName}`, `App: ${remoteApp.title}`, `Store: ${storeFqdn}`]
+
+  if (showVersion) {
+    items.push(`API version: ${version ?? 'default (latest stable)'}`)
+  }
+
+  return items
+}

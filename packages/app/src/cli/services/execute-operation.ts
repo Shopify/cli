@@ -1,5 +1,10 @@
-import {createAdminSessionAsApp, validateSingleOperation, validateApiVersion} from './graphql/common.js'
-import {OrganizationApp} from '../models/organization.js'
+import {
+  createAdminSessionAsApp,
+  validateSingleOperation,
+  validateApiVersion,
+  formatOperationInfo,
+} from './graphql/common.js'
+import {OrganizationApp, Organization} from '../models/organization.js'
 import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -9,6 +14,7 @@ import {parse} from 'graphql'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteOperationInput {
+  organization: Organization
   remoteApp: OrganizationApp
   storeFqdn: string
   query: string
@@ -32,18 +38,14 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {remoteApp, storeFqdn, query, variables, version, outputFile} = input
+  const {organization, remoteApp, storeFqdn, query, variables, version, outputFile} = input
 
   renderInfo({
     headline: 'Executing GraphQL operation.',
     body: [
       {
         list: {
-          items: [
-            `App: ${remoteApp.title}`,
-            `Store: ${storeFqdn}`,
-            `API version: ${version ?? 'default (latest stable)'}`,
-          ],
+          items: formatOperationInfo({organization, remoteApp, storeFqdn, version}),
         },
       },
     ],
