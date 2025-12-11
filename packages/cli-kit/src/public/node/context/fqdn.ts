@@ -2,6 +2,7 @@ import {AbortError, BugError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import {DevServer, DevServerCore} from '../vendor/dev_server/index.js'
 import {blockPartnersAccess} from '../environment.js'
+import {setAssertRunning} from '../vendor/dev_server/dev-server-2024.js'
 
 export const NotProvidedStoreFQDNError = new AbortError(
   "Couldn't obtain the Shopify FQDN because the store FQDN was not provided.",
@@ -115,6 +116,8 @@ export async function identityFqdn(): Promise<string> {
   const productionFqdn = 'accounts.shopify.com'
   switch (environment) {
     case 'local':
+      // force identity uptime check to pass
+      setAssertRunning((projectName) => projectName === 'identity')
       return new DevServer('identity').host()
     default:
       return productionFqdn
