@@ -3,6 +3,7 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
+import {extractBulkOperationId} from './bulk-operation-status.js'
 import {
   createAdminSessionAsApp,
   validateSingleOperation,
@@ -169,7 +170,10 @@ function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: stri
 }
 
 function statusCommandHelpMessage(operationId: string): TokenItem {
-  return ['Monitor its progress with:', {command: `shopify app bulk status --id="${operationId}}"`}]
+  return [
+    'Monitor its progress with:\n',
+    {command: `shopify app bulk status --id=${extractBulkOperationId(operationId)}`},
+  ]
 }
 
 function isMutation(graphqlOperation: string): boolean {

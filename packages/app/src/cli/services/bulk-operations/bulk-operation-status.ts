@@ -21,6 +21,27 @@ import colors from '@shopify/cli-kit/node/colors'
 
 const API_VERSION = '2026-01'
 
+export function normalizeBulkOperationId(id: string): string {
+  // If already a GID, return as-is
+  if (id.startsWith('gid://')) {
+    return id
+  }
+
+  // If numeric, convert to GID
+  if (/^\d+$/.test(id)) {
+    return `gid://shopify/BulkOperation/${id}`
+  }
+
+  // Otherwise return as-is (let API handle any errors)
+  return id
+}
+
+export function extractBulkOperationId(gid: string): string {
+  // Extract the numeric ID from a GID like "gid://shopify/BulkOperation/123"
+  const match = gid.match(/^gid:\/\/shopify\/BulkOperation\/(\d+)$/)
+  return match?.[1] ?? gid
+}
+
 interface GetBulkOperationStatusOptions {
   organization: Organization
   storeFqdn: string
@@ -104,7 +125,7 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
   })
 
   const operations = response.bulkOperations.nodes.map((operation) => ({
-    id: operation.id,
+    id: extractBulkOperationId(operation.id),
     status: formatStatus(operation.status),
     count: formatCount(operation.objectCount as number),
     dateCreated: formatDate(new Date(String(operation.createdAt))),
