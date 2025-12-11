@@ -89,15 +89,13 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     : await runBulkOperationQuery({adminSession, query, version})
 
   if (bulkOperationResponse?.userErrors?.length) {
-    const errorMessages = bulkOperationResponse.userErrors.map(
-      (error: {field?: string[] | null; message: string}) =>
-        `${error.field ? `${error.field.join('.')}: ` : ''}${error.message}`,
-    )
     renderError({
       headline: 'Error creating bulk operation.',
       body: {
         list: {
-          items: errorMessages,
+          items: bulkOperationResponse.userErrors.map((error) =>
+            error.field ? `${error.field.join('.')}: ${error.message}` : error.message,
+          ),
         },
       },
     })

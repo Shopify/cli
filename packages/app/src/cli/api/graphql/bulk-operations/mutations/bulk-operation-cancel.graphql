@@ -1,0 +1,23 @@
+mutation BulkOperationCancel($id: ID!) {
+  bulkOperationCancel(id: $id) {
+    bulkOperation {
+      completedAt
+      createdAt
+      errorCode
+      fileSize
+      id
+      objectCount
+      partialDataUrl
+      query
+      rootObjectCount
+      status
+      type
+      url
+    }
+    userErrors {
+      field
+      message
+    }
+  }
+}
+
