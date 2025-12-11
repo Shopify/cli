@@ -12,8 +12,10 @@ import {
   timeIntervalToMilliseconds,
 } from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
-import {abortSignalFromRequestBehaviour, requestMode, RequestModeInput} from '../http.js'
+import {abortSignalFromRequestBehaviour, RequestBehaviour, requestMode, RequestModeInput} from '../http.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
+import {sleep} from '../system.js'
+import {outputContent, outputDebug} from '../output.js'
 import {
   GraphQLClient,
   rawRequest,
@@ -65,6 +67,7 @@ type PerformGraphQLRequestOptions<TResult> = GraphQLRequestBaseOptions<TResult> 
   queryAsString: string
   variables?: Variables
   unauthorizedHandler?: UnauthorizedHandler
+  autoRateLimitRestore?: boolean
 }
 
 export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
@@ -77,12 +80,27 @@ export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOp
   query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
   variables?: TVariables
   unauthorizedHandler?: UnauthorizedHandler
+  autoRateLimitRestore?: boolean
+}
+
+interface RunRawGraphQLRequestOptions<TResult> {
+  client: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setAbortSignal: (signal: any) => void
+    rawRequest: (query: string, variables?: Variables) => Promise<GraphQLResponse<TResult>>
+  }
+  behaviour: RequestBehaviour
+  queryAsString: string
+  variables?: Variables
+  autoRateLimitRestore: boolean
 }
 
 export interface GraphQLResponseOptions<T> {
   handleErrors?: boolean
   onResponse?: (response: GraphQLResponse<T>) => void
 }
+
+const MAX_RATE_LIMIT_RESTORE_DELAY_SECONDS = 0.3
 
 async function createGraphQLClient({
   url,
@@ -105,38 +123,77 @@ async function createGraphQLClient({
   }
 }
 
-/**
- * Handles execution of a GraphQL query.
- *
- * @param options - GraphQL request options.
- */
+async function waitForRateLimitRestore(fullResponse: GraphQLResponse<unknown>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cost = (fullResponse.extensions as any)?.cost
+  const actualQueryCost = cost?.actualQueryCost
+  const restoreRate = cost?.throttleStatus?.restoreRate
+  if (actualQueryCost && typeof actualQueryCost === 'number' && restoreRate && typeof restoreRate === 'number') {
+    const secondsToRestoreRate = actualQueryCost / restoreRate
+    outputDebug(outputContent`Sleeping for ${secondsToRestoreRate.toString()} seconds to restore the rate limit.`)
+    await sleep(Math.min(secondsToRestoreRate, MAX_RATE_LIMIT_RESTORE_DELAY_SECONDS))
+  }
+}
+
+async function runSingleRawGraphQLRequest<TResult>(
+  options: RunRawGraphQLRequestOptions<TResult>,
+): Promise<GraphQLResponse<TResult>> {
+  const {client, behaviour, queryAsString, variables, autoRateLimitRestore} = options
+  let fullResponse: GraphQLResponse<TResult>
+  // there is a errorPolicy option which returns rather than throwing on errors, but we _do_ ultimately want to
+  // throw.
+  try {
+    client.setAbortSignal(abortSignalFromRequestBehaviour(behaviour))
+    fullResponse = await client.rawRequest(queryAsString, variables)
+    await logLastRequestIdFromResponse(fullResponse)
+
+    if (autoRateLimitRestore) {
+      await waitForRateLimitRestore(fullResponse)
+    }
+
+    return fullResponse
+  } catch (error) {
+    if (error instanceof ClientError) {
+      // error.response does have a headers property like a normal response, but it's not typed as such.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await logLastRequestIdFromResponse(error.response as any)
+    }
+    throw error
+  }
+}
+
 async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOptions<TResult>) {
-  const {token, addedHeaders, queryAsString, variables, api, url, responseOptions, unauthorizedHandler, cacheOptions} =
-    options
+  const {
+    token,
+    addedHeaders,
+    queryAsString,
+    variables,
+    api,
+    url,
+    responseOptions,
+    unauthorizedHandler,
+    cacheOptions,
+    autoRateLimitRestore,
+  } = options
   const behaviour = requestMode(options.preferredBehaviour ?? 'default')
 
   let {headers, client} = await createGraphQLClient({url, addedHeaders, token})
   debugLogRequestInfo(api, queryAsString, url, variables, headers)
 
   const rawGraphQLRequest = async () => {
-    let fullResponse: GraphQLResponse<TResult>
-    // there is a errorPolicy option which returns rather than throwing on errors, but we _do_ ultimately want to
-    // throw.
-    try {
-      // mapping signal to any due to polyfill meaning types don't exactly match (but are functionally equivalent)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      client.requestConfig.signal = abortSignalFromRequestBehaviour(behaviour) as any
-      fullResponse = await client.rawRequest<TResult>(queryAsString, variables)
-      await logLastRequestIdFromResponse(fullResponse)
-      return fullResponse
-    } catch (error) {
-      if (error instanceof ClientError) {
-        // error.response does have a headers property like a normal response, but it's not typed as such.
+    return runSingleRawGraphQLRequest({
+      client: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await logLastRequestIdFromResponse(error.response as any)
-      }
-      throw error
-    }
+        setAbortSignal: (signal: any) => {
+          client.requestConfig.signal = signal
+        },
+        rawRequest: (query: string, variables?: Variables) => client.rawRequest<TResult>(query, variables),
+      },
+      behaviour,
+      queryAsString,
+      variables,
+      autoRateLimitRestore: autoRateLimitRestore ?? false,
+    })
   }
 
   const tokenRefreshHandler = unauthorizedHandler?.handler
