@@ -1,4 +1,5 @@
 import Build from './commands/app/build.js'
+import BulkCancel from './commands/app/bulk/cancel.js'
 import BulkStatus from './commands/app/bulk/status.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
@@ -39,6 +40,7 @@ import FunctionInfo from './commands/app/function/info.js'
  */
 export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlinkedCommand} = {
   'app:build': Build,
+  'app:bulk:cancel': BulkCancel,
   'app:bulk:status': BulkStatus,
   'app:deploy': Deploy,
   'app:dev': Dev,

@@ -1,5 +1,6 @@
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export function formatBulkOperationStatus(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
@@ -29,5 +30,69 @@ export function formatBulkOperationStatus(
       return outputContent`Bulk operation expired.`
     default:
       return outputContent`Bulk operation status: ${operation.status}`
+  }
+}
+
+interface UserError {
+  field?: string[] | null
+  message: string
+}
+
+export function renderBulkOperationUserErrors(userErrors: UserError[], headline: string): void {
+  const errorMessages = userErrors
+    .map((error) => outputContent`${error.field?.join('.') ?? 'unknown'}: ${error.message}`.value)
+    .join('\n')
+
+  renderWarning({
+    headline,
+    body: errorMessages,
+  })
+}
+
+interface BulkOperationCancellationResult {
+  headline: string
+  body?: string
+  customSections: {body: {list: {items: string[]}}[]}[]
+  renderType: 'success' | 'warning' | 'info'
+}
+
+export function formatBulkOperationCancellationResult(
+  operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,
+): BulkOperationCancellationResult {
+  const headline = formatBulkOperationStatus(operation).value
+  const items = [
+    outputContent`ID: ${outputToken.cyan(operation.id)}`.value,
+    outputContent`Status: ${outputToken.yellow(operation.status)}`.value,
+    outputContent`Created at: ${outputToken.gray(String(operation.createdAt))}`.value,
+    ...(operation.completedAt
+      ? [outputContent`Completed at: ${outputToken.gray(String(operation.completedAt))}`.value]
+      : []),
+  ]
+
+  const customSections = [{body: [{list: {items}}]}]
+
+  switch (operation.status) {
+    case 'CANCELING':
+      return {
+        headline: outputContent`Bulk operation cancellation initiated.`.value,
+        body: outputContent`The operation is being canceled. This may take a few moments.`.value,
+        customSections,
+        renderType: 'success',
+      }
+    case 'CANCELED':
+    case 'COMPLETED':
+    case 'FAILED':
+      return {
+        headline: outputContent`Bulk operation is already ${operation.status.toLowerCase()}.`.value,
+        body: outputContent`This operation has already finished and can't be canceled.`.value,
+        customSections,
+        renderType: 'warning',
+      }
+    default:
+      return {
+        headline,
+        customSections,
+        renderType: 'info',
+      }
   }
 }
