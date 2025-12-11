@@ -18,9 +18,10 @@ runs:
         version: ${{ env.PNPM_VERSION }}
         run_install: false
     - name: Install Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
+        registry-url: 'https://registry.npmjs.org'
         cache: 'pnpm'
         cache-dependency-path: 'pnpm-lock.yaml'
     - name: Install dependencies
