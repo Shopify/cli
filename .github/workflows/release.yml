@@ -41,6 +41,10 @@ jobs:
     name: Snapit
     if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
     steps:
       # WARNING: DO NOT RUN ANY CUSTOM LOCAL SCRIPT BEFORE RUNNING THE SNAPIT ACTION
       # This action can be executed by 3rd party users and it should not be able to run arbitrary code from a PR.
@@ -71,7 +75,8 @@ jobs:
           build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ''
+          NPM_CONFIG_PROVENANCE: true
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
 
   # Changeset release job - runs on push to main or stable branches
@@ -80,7 +85,7 @@ jobs:
     if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag == '') }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       id-token: write
     steps:
@@ -99,7 +104,7 @@ jobs:
           title: Version Packages - ${{ github.ref_name }}
           publish: pnpm release latest
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
@@ -110,7 +115,7 @@ jobs:
     if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') }}
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
       pull-requests: write
       id-token: write
     steps:
@@ -122,16 +127,10 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: 24.1.0
-      - name: Creating .npmrc
-        run: |
-          cat << EOF > "$HOME/.npmrc"
-            //registry.npmjs.org/:_authToken=$NPM_TOKEN
-          EOF
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Release
         run: pnpm release ${{ github.event.inputs.tag || 'nightly' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
