@@ -111,6 +111,34 @@ describe('watchBulkOperation', () => {
     )
   })
 
+  test('uses 1 second interval for first 10 polls, then 5 seconds', async () => {
+    // Mock 12 running responses, then completed
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: completedOperation})
+
+    await watchBulkOperation(mockAdminSession, operationId, abortController.signal, () => {})
+
+    // Verify first 10 polls use 1 second interval
+    for (let i = 0; i < 10; i++) {
+      expect(sleep).toHaveBeenNthCalledWith(i + 1, 1)
+    }
+    // Verify subsequent polls use 5 second interval
+    expect(sleep).toHaveBeenNthCalledWith(11, 5)
+    expect(sleep).toHaveBeenNthCalledWith(12, 5)
+  })
+
   describe('when signal is aborted during polling', () => {
     beforeEach(() => {
       let callCount = 0
