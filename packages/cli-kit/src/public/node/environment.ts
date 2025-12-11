@@ -89,18 +89,7 @@ export function jsonOutputEnabled(environment = getEnvironmentVariables()): bool
  * @returns True when the CLI should not use the Partners API.
  */
 export function blockPartnersAccess(): boolean {
-  // Block if explicitly set to never use Partners API
-  if (isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])) {
-    return true
-  }
-
-  // If explicitly forcing to use Partners API, do not block
-  if (isTruthy(getEnvironmentVariables()[environmentVariables.usePartnersApi])) {
-    return false
-  }
-
-  // Block for 3P devs
-  return !isTruthy(getEnvironmentVariables()[environmentVariables.firstPartyDev])
+  return isTruthy(getEnvironmentVariables()[environmentVariables.neverUsePartnersApi])
 }
 
 /**
