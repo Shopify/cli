@@ -22,23 +22,30 @@ export const QUICK_WATCH_POLL_INTERVAL_MS = 300
 export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
 
 export async function shortBulkOperationPoll(adminSession: AdminSession, operationId: string): Promise<BulkOperation> {
-  const startTime = Date.now()
-  const poller = pollBulkOperation({
-    adminSession,
-    operationId,
-    pollIntervalSeconds: QUICK_WATCH_POLL_INTERVAL_MS / 1000,
+  return renderSingleTask<BulkOperation>({
+    title: outputContent`Starting bulk operation...`,
+    task: async () => {
+      const startTime = Date.now()
+      const poller = pollBulkOperation({
+        adminSession,
+        operationId,
+        pollIntervalSeconds: QUICK_WATCH_POLL_INTERVAL_MS / 1000,
+        useAdaptivePolling: false,
+      })
+
+      let latestOperationState: BulkOperation | undefined
+
+      do {
+        // eslint-disable-next-line no-await-in-loop
+        const {value, done} = await poller.next()
+        latestOperationState = value
+        if (done) return latestOperationState
+      } while (Date.now() - startTime < QUICK_WATCH_TIMEOUT_MS)
+
+      return latestOperationState
+    },
+    renderOptions: {stdout: process.stderr},
   })
-
-  let latestOperationState: BulkOperation | undefined
-
-  do {
-    // eslint-disable-next-line no-await-in-loop
-    const {value, done} = await poller.next()
-    latestOperationState = value
-    if (done) return latestOperationState
-  } while (Date.now() - startTime < QUICK_WATCH_TIMEOUT_MS)
-
-  return latestOperationState
 }
 
 export async function watchBulkOperation(

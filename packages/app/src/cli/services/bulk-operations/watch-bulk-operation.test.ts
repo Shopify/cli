@@ -171,7 +171,7 @@ describe('watchBulkOperation', () => {
   })
 })
 
-describe('quickWatchBulkOperation', () => {
+describe('shortBulkOperationPoll', () => {
   const mockAdminSession = {token: 'test-token', storeFqdn: 'test.myshopify.com'}
   const operationId = 'gid://shopify/BulkOperation/123'
 
@@ -206,6 +206,9 @@ describe('quickWatchBulkOperation', () => {
 
   beforeEach(() => {
     vi.mocked(sleep).mockResolvedValue()
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
+      return task(() => {})
+    })
   })
 
   test('returns immediately when operation is already completed', async () => {
