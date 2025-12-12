@@ -692,7 +692,11 @@ describe('executeBulkOperation', () => {
       query,
     })
 
-    expect(resolveApiVersion).toHaveBeenCalledWith(mockAdminSession, undefined, BULK_OPERATIONS_MIN_API_VERSION)
+    expect(resolveApiVersion).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      userSpecifiedVersion: undefined,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
   })
 
   test('uses resolved API version when running bulk operation', async () => {

@@ -77,7 +77,10 @@ export async function getBulkOperationStatus(options: GetBulkOperationStatusOpti
     query: GetBulkOperationById,
     session: adminSession,
     variables: {id: operationId},
-    version: await resolveApiVersion(adminSession, undefined, BULK_OPERATIONS_MIN_API_VERSION),
+    version: await resolveApiVersion({
+      adminSession,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    }),
   })
 
   if (response.bulkOperation) {
@@ -120,7 +123,10 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
       sortKey: 'CREATED_AT',
       reverse: true,
     },
-    version: await resolveApiVersion(adminSession, undefined, BULK_OPERATIONS_MIN_API_VERSION),
+    version: await resolveApiVersion({
+      adminSession,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    }),
   })
 
   const operations = response.bulkOperations.nodes.map((operation) => ({

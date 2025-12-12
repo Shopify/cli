@@ -38,11 +38,11 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {organization, remoteApp, storeFqdn, query, variables, version: versionFlag, outputFile} = input
+  const {organization, remoteApp, storeFqdn, query, variables, version: userSpecifiedVersion, outputFile} = input
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
-  const version = await resolveApiVersion(adminSession, versionFlag)
+  const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
 
   renderInfo({
     headline: 'Executing GraphQL operation.',

@@ -46,19 +46,27 @@ export function validateSingleOperation(graphqlOperation: string): void {
 }
 
 /**
+ * Options for resolving an API version.
+ */
+export interface ResolveApiVersionOptions {
+  /** Admin session containing store credentials. */
+  adminSession: {token: string; storeFqdn: string}
+  /** The API version specified by the user. */
+  userSpecifiedVersion?: string
+  /** Optional minimum version to use as a fallback when no version is specified. */
+  minimumDefaultVersion?: string
+}
+
+/**
  * Determines the API version to use based on the user provided version and the available versions.
  * The 'unstable' version is always allowed without validation.
  *
- * @param adminSession - Admin session containing store credentials.
- * @param userSpecifiedVersion - The API version to validate.
- * @param minimumDefaultVersion - Optional minimum version to use as a fallback when no version is specified.
+ * @param options - Options for resolving the API version.
  * @throws AbortError if the provided version is not allowed.
  */
-export async function resolveApiVersion(
-  adminSession: {token: string; storeFqdn: string},
-  userSpecifiedVersion?: string,
-  minimumDefaultVersion?: string,
-): Promise<string> {
+export async function resolveApiVersion(options: ResolveApiVersionOptions): Promise<string> {
+  const {adminSession, userSpecifiedVersion, minimumDefaultVersion} = options
+
   if (userSpecifiedVersion === 'unstable') return userSpecifiedVersion
 
   const availableVersions = await fetchApiVersions(adminSession)

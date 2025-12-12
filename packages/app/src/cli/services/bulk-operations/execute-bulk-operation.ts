@@ -58,12 +58,16 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     variableFile,
     outputFile,
     watch = false,
-    version: versionFlag,
+    version: userSpecifiedVersion,
   } = input
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
-  const version = await resolveApiVersion(adminSession, versionFlag, BULK_OPERATIONS_MIN_API_VERSION)
+  const version = await resolveApiVersion({
+    adminSession,
+    userSpecifiedVersion,
+    minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+  })
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 

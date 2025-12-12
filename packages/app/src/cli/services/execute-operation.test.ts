@@ -55,7 +55,7 @@ describe('executeOperation', () => {
     })
 
     expect(createAdminSessionAsApp).toHaveBeenCalledWith(mockRemoteApp, storeFqdn)
-    expect(resolveApiVersion).toHaveBeenCalledWith(mockAdminSession, undefined)
+    expect(resolveApiVersion).toHaveBeenCalledWith({adminSession: mockAdminSession})
     expect(adminRequestDoc).toHaveBeenCalledWith({
       // parsed GraphQL document
       query: expect.any(Object),
@@ -119,7 +119,7 @@ describe('executeOperation', () => {
       version,
     })
 
-    expect(resolveApiVersion).toHaveBeenCalledWith(mockAdminSession, version)
+    expect(resolveApiVersion).toHaveBeenCalledWith({adminSession: mockAdminSession, userSpecifiedVersion: version})
     expect(adminRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
         version,

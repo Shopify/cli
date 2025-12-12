@@ -184,11 +184,10 @@ describe('getBulkOperationStatus', () => {
 
     await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
-    expect(resolveApiVersion).toHaveBeenCalledWith(
-      {token: 'test-token', storeFqdn},
-      undefined,
-      BULK_OPERATIONS_MIN_API_VERSION,
-    )
+    expect(resolveApiVersion).toHaveBeenCalledWith({
+      adminSession: {token: 'test-token', storeFqdn},
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
   })
 
   test('uses resolved API version in admin request', async () => {
@@ -369,11 +368,10 @@ describe('listBulkOperations', () => {
 
     await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
 
-    expect(resolveApiVersion).toHaveBeenCalledWith(
-      {token: 'test-token', storeFqdn},
-      undefined,
-      BULK_OPERATIONS_MIN_API_VERSION,
-    )
+    expect(resolveApiVersion).toHaveBeenCalledWith({
+      adminSession: {token: 'test-token', storeFqdn},
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
   })
 
   test('uses resolved API version in admin request', async () => {

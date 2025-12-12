@@ -110,7 +110,7 @@ describe('resolveApiVersion', () => {
   const mockAdminSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
 
   test('returns unstable version without validation', async () => {
-    const result = await resolveApiVersion(mockAdminSession, 'unstable')
+    const result = await resolveApiVersion({adminSession: mockAdminSession, userSpecifiedVersion: 'unstable'})
 
     expect(result).toBe('unstable')
     expect(fetchApiVersions).not.toHaveBeenCalled()
@@ -123,7 +123,11 @@ describe('resolveApiVersion', () => {
       {handle: '2024-07', supported: true},
     ])
 
-    const result = await resolveApiVersion(mockAdminSession, '2024-04', '2026-01')
+    const result = await resolveApiVersion({
+      adminSession: mockAdminSession,
+      userSpecifiedVersion: '2024-04',
+      minimumDefaultVersion: '2026-01',
+    })
 
     expect(result).toBe('2024-04')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
@@ -136,7 +140,7 @@ describe('resolveApiVersion', () => {
       {handle: '2024-07', supported: true},
     ])
 
-    const result = await resolveApiVersion(mockAdminSession, '2024-04')
+    const result = await resolveApiVersion({adminSession: mockAdminSession, userSpecifiedVersion: '2024-04'})
 
     expect(result).toBe('2024-04')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
@@ -149,7 +153,9 @@ describe('resolveApiVersion', () => {
       {handle: '2024-07', supported: true},
     ])
 
-    await expect(resolveApiVersion(mockAdminSession, '2023-01')).rejects.toThrow('Invalid API version: 2023-01')
+    await expect(resolveApiVersion({adminSession: mockAdminSession, userSpecifiedVersion: '2023-01'})).rejects.toThrow(
+      'Invalid API version: 2023-01',
+    )
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
   })
 
@@ -161,7 +167,7 @@ describe('resolveApiVersion', () => {
       {handle: '2025-01', supported: false},
     ])
 
-    const result = await resolveApiVersion(mockAdminSession)
+    const result = await resolveApiVersion({adminSession: mockAdminSession})
 
     expect(result).toBe('2024-07')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
@@ -175,7 +181,7 @@ describe('resolveApiVersion', () => {
       {handle: '2025-10', supported: true},
     ])
 
-    const result = await resolveApiVersion(mockAdminSession, undefined, '2026-01')
+    const result = await resolveApiVersion({adminSession: mockAdminSession, minimumDefaultVersion: '2026-01'})
 
     expect(result).toBe('2026-01')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
@@ -189,7 +195,7 @@ describe('resolveApiVersion', () => {
       {handle: '2027-01', supported: false},
     ])
 
-    const result = await resolveApiVersion(mockAdminSession, undefined, '2026-01')
+    const result = await resolveApiVersion({adminSession: mockAdminSession, minimumDefaultVersion: '2026-01'})
 
     expect(result).toBe('2026-07')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
