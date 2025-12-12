@@ -48,7 +48,7 @@ export function validateSingleOperation(graphqlOperation: string): void {
 /**
  * Options for resolving an API version.
  */
-export interface ResolveApiVersionOptions {
+interface ResolveApiVersionOptions {
   /** Admin session containing store credentials. */
   adminSession: {token: string; storeFqdn: string}
   /** The API version specified by the user. */
