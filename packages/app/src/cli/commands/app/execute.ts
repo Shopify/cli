@@ -7,6 +7,8 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 export default class Execute extends AppLinkedCommand {
   static summary = 'Execute GraphQL queries and mutations.'
 
+  static hidden = true
+
   static description = 'Executes an Admin API GraphQL query or mutation on the specified dev store.'
 
   static flags = {

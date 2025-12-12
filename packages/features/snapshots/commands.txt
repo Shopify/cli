@@ -10,7 +10,6 @@
 │  ├─ env
 │  │  ├─ pull
 │  │  └─ show
-│  ├─ execute
 │  ├─ function
 │  │  ├─ build
 │  │  ├─ info
