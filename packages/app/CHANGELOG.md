@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.89.0
+
+### Minor Changes
+
+- fa354f2: Added `shopify app execute` for convenient execution of queries and mutations against the Admin API.
+
+### Patch Changes
+
+- 6c34c47: Unblock Partners API to fix import-extensions
+- Updated dependencies [6c34c47]
+  - @shopify/cli-kit@3.89.0
+  - @shopify/plugin-cloudflare@3.89.0
+  - @shopify/theme@3.89.0
+
 ## 3.88.0
 
 ### Minor Changes
