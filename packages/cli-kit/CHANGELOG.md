@@ -1,5 +1,11 @@
 # @shopify/cli-kit
 
+## 3.89.0
+
+### Patch Changes
+
+- 6c34c47: Unblock Partners API to fix import-extensions
+
 ## 3.88.0
 
 ### Minor Changes
