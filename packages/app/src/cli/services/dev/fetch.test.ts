@@ -12,6 +12,7 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 
 const ORG1: Organization = {
   id: '1',
@@ -36,6 +37,7 @@ const STORE1: OrganizationStore = {
 vi.mock('@shopify/cli-kit/node/api/partners')
 vi.mock('../../utilities/developer-platform-client/partners-client.js')
 vi.mock('../../utilities/developer-platform-client/app-management-client.js')
+vi.mock('@shopify/cli-kit/node/environment')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
@@ -46,6 +48,7 @@ describe('fetchOrganizations', async () => {
   test('returns fetched organizations from Partners and App Management for 1P development', async () => {
     // Given
     vi.stubEnv('SHOPIFY_CLI_1P_DEV', 'true')
+    vi.mocked(blockPartnersAccess).mockReturnValue(false)
     const partnersClient: PartnersClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG1]),
     }) as PartnersClient
@@ -66,6 +69,7 @@ describe('fetchOrganizations', async () => {
 
   test('returns fetched organizations from App Management for 3P development', async () => {
     // Given
+    vi.mocked(blockPartnersAccess).mockReturnValue(true)
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([ORG2]),
     }) as AppManagementClient
@@ -82,6 +86,7 @@ describe('fetchOrganizations', async () => {
 
   test('throws if there are no organizations', async () => {
     // Given
+    vi.mocked(blockPartnersAccess).mockReturnValue(true)
     const appManagementClient: AppManagementClient = testDeveloperPlatformClient({
       organizations: () => Promise.resolve([]),
     }) as AppManagementClient

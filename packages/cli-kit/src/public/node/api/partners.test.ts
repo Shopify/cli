@@ -1,12 +1,15 @@
 import {partnersRequest, handleDeprecations} from './partners.js'
 import {graphqlRequest, GraphQLResponse} from './graphql.js'
 import {partnersFqdn} from '../context/fqdn.js'
+import {blockPartnersAccess} from '../environment.js'
+import {BugError} from '../error.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {test, vi, expect, describe, beforeEach, beforeAll} from 'vitest'
 
 vi.mock('./graphql.js')
 vi.mock('../../../private/node/context/deprecations-store.js')
 vi.mock('../context/fqdn.js')
+vi.mock('../environment.js')
 
 const mockedResult = 'OK'
 const partnersFQDN = 'partners.shopify.com'
@@ -16,6 +19,7 @@ const mockedToken = 'token'
 
 beforeEach(() => {
   vi.mocked(partnersFqdn).mockResolvedValue(partnersFQDN)
+  vi.mocked(blockPartnersAccess).mockReturnValue(false)
 })
 
 describe('partnersRequest', () => {
@@ -35,6 +39,28 @@ describe('partnersRequest', () => {
       variables: {variables: 'variables'},
       responseOptions: {onResponse: handleDeprecations},
     })
+  })
+
+  test('throws BugError when blockPartnersAccess returns true', async () => {
+    // Given
+    vi.mocked(blockPartnersAccess).mockReturnValue(true)
+
+    // When/Then
+    await expect(partnersRequest('query', mockedToken, {variables: 'variables'})).rejects.toThrow(BugError)
+    expect(blockPartnersAccess).toHaveBeenCalled()
+  })
+
+  test('does not throw when blockPartnersAccess returns false', async () => {
+    // Given
+    vi.mocked(blockPartnersAccess).mockReturnValue(false)
+    vi.mocked(graphqlRequest).mockResolvedValue(mockedResult)
+
+    // When
+    await partnersRequest('query', mockedToken, {variables: 'variables'})
+
+    // Then
+    expect(blockPartnersAccess).toHaveBeenCalled()
+    expect(graphqlRequest).toHaveBeenCalled()
   })
 })
 

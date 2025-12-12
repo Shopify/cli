@@ -8,11 +8,9 @@ import {
   adminFqdn,
 } from './fqdn.js'
 import {Environment, serviceEnvironment} from '../../../private/node/context/service.js'
-import {blockPartnersAccess} from '../environment.js'
 import {expect, describe, test, vi} from 'vitest'
 
 vi.mock('../../../private/node/context/service.js')
-vi.mock('../environment.js')
 
 vi.mock('../vendor/dev_server/index.js', () => {
   return {
@@ -34,7 +32,6 @@ describe('partners', () => {
   test('returns the local fqdn when the environment is local', async () => {
     // Given
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
-    vi.mocked(blockPartnersAccess).mockReturnValue(false)
 
     // When
     const got = await partnersFqdn()
@@ -46,7 +43,6 @@ describe('partners', () => {
   test('returns the production fqdn when the environment is production', async () => {
     // Given
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Production)
-    vi.mocked(blockPartnersAccess).mockReturnValue(false)
 
     // When
     const got = await partnersFqdn()
@@ -181,7 +177,7 @@ describe('adminFqdn', () => {
 describe('normalizeStore', () => {
   test('parses store name with http', async () => {
     // When
-    const got = await normalizeStoreFqdn('http://example.myshopify.com')
+    const got = normalizeStoreFqdn('http://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -189,7 +185,7 @@ describe('normalizeStore', () => {
 
   test('parses store name with https', async () => {
     // When
-    const got = await normalizeStoreFqdn('https://example.myshopify.com')
+    const got = normalizeStoreFqdn('https://example.myshopify.com')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -197,7 +193,7 @@ describe('normalizeStore', () => {
 
   test('parses store name without domain', async () => {
     // When
-    const got = await normalizeStoreFqdn('example')
+    const got = normalizeStoreFqdn('example')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
@@ -208,7 +204,7 @@ describe('normalizeStore', () => {
     vi.mocked(serviceEnvironment).mockReturnValue(Environment.Local)
 
     // When
-    const got = await normalizeStoreFqdn('example')
+    const got = normalizeStoreFqdn('example')
 
     // Then
     expect(got).toEqual('example.myshopify.io')
@@ -216,7 +212,7 @@ describe('normalizeStore', () => {
 
   test('parses store name with admin', async () => {
     // When
-    const got = await normalizeStoreFqdn('https://example.myshopify.com/admin/')
+    const got = normalizeStoreFqdn('https://example.myshopify.com/admin/')
 
     // Then
     expect(got).toEqual('example.myshopify.com')
