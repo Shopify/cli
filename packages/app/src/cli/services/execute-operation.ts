@@ -21,6 +21,7 @@ interface ExecuteOperationInput {
   variables?: string
   outputFile?: string
   version?: string
+  headers?: string[]
 }
 
 async function parseVariables(variables?: string): Promise<{[key: string]: unknown} | undefined> {
@@ -37,8 +38,47 @@ async function parseVariables(variables?: string): Promise<{[key: string]: unkno
   }
 }
 
+function parseHeaders(headers?: string[]): {[header: string]: string} | undefined {
+  if (!headers || headers.length === 0) return undefined
+
+  const parsedHeaders: {[header: string]: string} = {}
+
+  for (const header of headers) {
+    const separatorIndex = header.indexOf(':')
+    if (separatorIndex === -1) {
+      throw new AbortError(
+        outputContent`Invalid header format: ${outputToken.yellow(header)}`,
+        'Headers must be in "Key: Value" format.',
+      )
+    }
+
+    const key = header.slice(0, separatorIndex).trim()
+    const value = header.slice(separatorIndex + 1).trim()
+
+    if (!key) {
+      throw new AbortError(
+        outputContent`Invalid header format: ${outputToken.yellow(header)}`,
+        "Header key can't be empty.",
+      )
+    }
+
+    parsedHeaders[key] = value
+  }
+
+  return parsedHeaders
+}
+
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {organization, remoteApp, storeFqdn, query, variables, version: userSpecifiedVersion, outputFile} = input
+  const {
+    organization,
+    remoteApp,
+    storeFqdn,
+    query,
+    variables,
+    version: userSpecifiedVersion,
+    outputFile,
+    headers,
+  } = input
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
@@ -56,10 +96,13 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
   })
 
   const parsedVariables = await parseVariables(variables)
+  const parsedHeaders = parseHeaders(headers)
 
   validateSingleOperation(query)
 
   try {
+    let extensions: unknown
+
     const result = await renderSingleTask({
       title: outputContent`Executing GraphQL operation`,
       task: async () => {
@@ -68,13 +111,20 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
           session: adminSession,
           variables: parsedVariables,
           version,
-          responseOptions: {handleErrors: false},
+          responseOptions: {
+            handleErrors: false,
+            onResponse: (response) => {
+              extensions = response.extensions
+            },
+          },
+          addedHeaders: parsedHeaders,
         })
       },
       renderOptions: {stdout: process.stderr},
     })
 
-    const resultString = JSON.stringify(result, null, 2)
+    const output = extensions ? {data: result, extensions} : result
+    const resultString = JSON.stringify(output, null, 2)
 
     if (outputFile) {
       await writeFile(outputFile, resultString)
