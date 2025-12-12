@@ -3,7 +3,8 @@ import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, shortBulkOperationPoll} from './watch-bulk-operation.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {validateApiVersion} from '../graphql/common.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
+import {resolveApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
@@ -22,7 +23,7 @@ vi.mock('../graphql/common.js', async () => {
   const actual = await vi.importActual('../graphql/common.js')
   return {
     ...actual,
-    validateApiVersion: vi.fn(),
+    resolveApiVersion: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/ui')
@@ -68,6 +69,7 @@ describe('executeBulkOperation', () => {
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
+    vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
   })
 
   afterEach(() => {
@@ -92,6 +94,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -114,6 +117,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -137,6 +141,7 @@ describe('executeBulkOperation', () => {
       adminSession: mockAdminSession,
       query: mutation,
       variablesJsonl: undefined,
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
   })
@@ -162,6 +167,7 @@ describe('executeBulkOperation', () => {
       adminSession: mockAdminSession,
       query: mutation,
       variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
   })
 
@@ -204,9 +210,13 @@ describe('executeBulkOperation', () => {
       query,
     })
 
-    expect(renderWarning).toHaveBeenCalledWith({
-      headline: 'Bulk operation errors.',
-      body: 'query: Invalid query syntax\nunknown: Another error',
+    expect(renderError).toHaveBeenCalledWith({
+      headline: 'Error creating bulk operation.',
+      body: {
+        list: {
+          items: ['query: Invalid query syntax', 'Another error'],
+        },
+      },
     })
 
     expect(renderSuccess).not.toHaveBeenCalled()
@@ -558,51 +568,6 @@ describe('executeBulkOperation', () => {
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
-  test('validates API version when provided', async () => {
-    const query = '{ products { edges { node { id } } } }'
-    const version = '2025-01'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
-      bulkOperation: createdBulkOperation,
-      userErrors: [],
-    }
-    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
-    vi.mocked(validateApiVersion).mockResolvedValue()
-
-    await executeBulkOperation({
-      organization: mockOrganization,
-      remoteApp: mockRemoteApp,
-      storeFqdn,
-      query,
-      version,
-    })
-
-    expect(validateApiVersion).toHaveBeenCalledWith(mockAdminSession, version)
-    expect(runBulkOperationQuery).toHaveBeenCalledWith({
-      adminSession: mockAdminSession,
-      query,
-      version,
-    })
-  })
-
-  test('does not validate version when not provided', async () => {
-    const query = '{ products { edges { node { id } } } }'
-    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
-      bulkOperation: createdBulkOperation,
-      userErrors: [],
-    }
-    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
-    vi.mocked(validateApiVersion).mockClear()
-
-    await executeBulkOperation({
-      organization: mockOrganization,
-      remoteApp: mockRemoteApp,
-      storeFqdn,
-      query,
-    })
-
-    expect(validateApiVersion).not.toHaveBeenCalled()
-  })
-
   test('renders warning when completed operation results contain userErrors', async () => {
     const query = '{ products { edges { node { id } } } }'
     const resultsWithErrors = '{"data":{"productUpdate":{"userErrors":[{"message":"invalid input"}]}},"__lineNumber":0}'
@@ -710,5 +675,50 @@ describe('executeBulkOperation', () => {
         body: `Results written to ${outputFile}. Check file for error details.`,
       }),
     )
+  })
+
+  test('calls resolveApiVersion with minimum API version constant', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    expect(resolveApiVersion).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      userSpecifiedVersion: undefined,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+  })
+
+  test('uses resolved API version when running bulk operation', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    expect(runBulkOperationQuery).toHaveBeenCalledWith({
+      adminSession: mockAdminSession,
+      query,
+      version: 'test-api-version',
+    })
   })
 })

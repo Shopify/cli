@@ -4,11 +4,12 @@ import {watchBulkOperation, shortBulkOperationPoll, type BulkOperation} from './
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {extractBulkOperationId} from './bulk-operation-status.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {
   createAdminSessionAsApp,
   validateSingleOperation,
-  validateApiVersion,
   formatOperationInfo,
+  resolveApiVersion,
 } from '../graphql/common.js'
 import {OrganizationApp, Organization} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
@@ -48,11 +49,25 @@ async function parseVariablesToJsonl(variables?: string[], variableFile?: string
 }
 
 export async function executeBulkOperation(input: ExecuteBulkOperationInput): Promise<void> {
-  const {organization, remoteApp, storeFqdn, query, variables, variableFile, outputFile, watch = false, version} = input
+  const {
+    organization,
+    remoteApp,
+    storeFqdn,
+    query,
+    variables,
+    variableFile,
+    outputFile,
+    watch = false,
+    version: userSpecifiedVersion,
+  } = input
 
   const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
 
-  if (version) await validateApiVersion(adminSession, version)
+  const version = await resolveApiVersion({
+    adminSession,
+    userSpecifiedVersion,
+    minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+  })
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
@@ -74,15 +89,17 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     : await runBulkOperationQuery({adminSession, query, version})
 
   if (bulkOperationResponse?.userErrors?.length) {
-    const errorMessages = bulkOperationResponse.userErrors
-      .map(
-        (error: {field?: string[] | null; message: string}) =>
-          `${error.field?.join('.') ?? 'unknown'}: ${error.message}`,
-      )
-      .join('\n')
-    renderWarning({
-      headline: 'Bulk operation errors.',
-      body: errorMessages,
+    const errorMessages = bulkOperationResponse.userErrors.map(
+      (error: {field?: string[] | null; message: string}) =>
+        `${error.field ? `${error.field.join('.')}: ` : ''}${error.message}`,
+    )
+    renderError({
+      headline: 'Error creating bulk operation.',
+      body: {
+        list: {
+          items: errorMessages,
+        },
+      },
     })
     return
   }

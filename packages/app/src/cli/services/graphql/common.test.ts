@@ -1,7 +1,8 @@
-import {createAdminSessionAsApp, validateSingleOperation, validateApiVersion} from './common.js'
+import {createAdminSessionAsApp, formatOperationInfo, resolveApiVersion, validateSingleOperation} from './common.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from '../bulk-operations/constants.js'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/session', async () => {
@@ -16,7 +17,7 @@ vi.mock('@shopify/cli-kit/node/api/admin', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/api/admin')
   return {
     ...actual,
-    supportedApiVersions: vi.fn(),
+    fetchApiVersions: vi.fn(),
   }
 })
 
@@ -106,28 +107,133 @@ describe('validateSingleOperation', () => {
   })
 })
 
-describe('validateApiVersion', () => {
+describe('resolveApiVersion', () => {
   const mockAdminSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
 
-  test('allows unstable version without validation', async () => {
-    await expect(validateApiVersion(mockAdminSession, 'unstable')).resolves.not.toThrow()
+  test('returns unstable version without validation', async () => {
+    const result = await resolveApiVersion({adminSession: mockAdminSession, userSpecifiedVersion: 'unstable'})
 
-    expect(supportedApiVersions).not.toHaveBeenCalled()
+    expect(result).toBe('unstable')
+    expect(fetchApiVersions).not.toHaveBeenCalled()
   })
 
-  test('allows supported API version', async () => {
-    vi.mocked(supportedApiVersions).mockResolvedValue(['2024-01', '2024-04', '2024-07'])
+  test('returns user-provided version when allowed', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([
+      {handle: '2024-01', supported: true},
+      {handle: '2024-04', supported: true},
+      {handle: '2024-07', supported: true},
+    ])
 
-    await expect(validateApiVersion(mockAdminSession, '2024-04')).resolves.not.toThrow()
+    const result = await resolveApiVersion({
+      adminSession: mockAdminSession,
+      userSpecifiedVersion: '2024-04',
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
 
-    expect(supportedApiVersions).toHaveBeenCalledWith(mockAdminSession)
+    expect(result).toBe('2024-04')
+    expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
   })
 
-  test('throws error when API version is not supported', async () => {
-    vi.mocked(supportedApiVersions).mockResolvedValue(['2024-01', '2024-04', '2024-07'])
+  test('returns user-provided version even when marked as unsupported', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([
+      {handle: '2024-01', supported: true},
+      {handle: '2024-04', supported: false},
+      {handle: '2024-07', supported: true},
+    ])
 
-    await expect(validateApiVersion(mockAdminSession, '2023-01')).rejects.toThrow('Invalid API version: 2023-01')
+    const result = await resolveApiVersion({adminSession: mockAdminSession, userSpecifiedVersion: '2024-04'})
 
-    expect(supportedApiVersions).toHaveBeenCalledWith(mockAdminSession)
+    expect(result).toBe('2024-04')
+    expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
+  })
+
+  test('throws error when user-provided version is not in API version list', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([
+      {handle: '2024-01', supported: true},
+      {handle: '2024-04', supported: true},
+      {handle: '2024-07', supported: true},
+    ])
+
+    await expect(resolveApiVersion({adminSession: mockAdminSession, userSpecifiedVersion: '2023-01'})).rejects.toThrow(
+      'Invalid API version: 2023-01',
+    )
+    expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
+  })
+
+  test('returns most recent supported version when no version or minimum version provided', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([
+      {handle: '2024-01', supported: true},
+      {handle: '2024-04', supported: true},
+      {handle: '2024-07', supported: true},
+      {handle: '2025-01', supported: false},
+    ])
+
+    const result = await resolveApiVersion({adminSession: mockAdminSession})
+
+    expect(result).toBe('2024-07')
+    expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
+  })
+
+  test('returns minimum version when no version provided and most recent supported is older', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([
+      {handle: '2024-01', supported: true},
+      {handle: '2024-04', supported: true},
+      {handle: '2025-01', supported: false},
+      {handle: '2025-10', supported: true},
+    ])
+
+    const result = await resolveApiVersion({
+      adminSession: mockAdminSession,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+
+    expect(result).toBe(BULK_OPERATIONS_MIN_API_VERSION)
+    expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
+  })
+
+  test('returns most recent supported version when newer than minimum version', async () => {
+    vi.mocked(fetchApiVersions).mockResolvedValue([
+      {handle: BULK_OPERATIONS_MIN_API_VERSION, supported: true},
+      {handle: '2026-04', supported: true},
+      {handle: '2026-07', supported: true},
+      {handle: '2027-01', supported: false},
+    ])
+
+    const result = await resolveApiVersion({
+      adminSession: mockAdminSession,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+
+    expect(result).toBe('2026-07')
+    expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
+  })
+})
+
+describe('formatOperationInfo', () => {
+  const mockOptions = {
+    organization: {businessName: 'Test Organization'},
+    remoteApp: {title: 'Test App'},
+    storeFqdn: 'test-store.myshopify.com',
+  }
+
+  test('includes API version when provided', () => {
+    const result = formatOperationInfo({
+      ...mockOptions,
+      version: '2024-07',
+    })
+
+    expect(result).toEqual([
+      'Organization: Test Organization',
+      'App: Test App',
+      'Store: test-store.myshopify.com',
+      'API version: 2024-07',
+    ])
+  })
+
+  test('omits API version when not provided', () => {
+    const result = formatOperationInfo(mockOptions)
+
+    expect(result).toEqual(['Organization: Test Organization', 'App: Test App', 'Store: test-store.myshopify.com'])
+    expect(result).not.toContain(expect.stringContaining('API version'))
   })
 })

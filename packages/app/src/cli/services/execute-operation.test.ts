@@ -1,5 +1,5 @@
 import {executeOperation} from './execute-operation.js'
-import {createAdminSessionAsApp, validateApiVersion} from './graphql/common.js'
+import {createAdminSessionAsApp, resolveApiVersion} from './graphql/common.js'
 import {OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
@@ -32,6 +32,7 @@ describe('executeOperation', () => {
 
   beforeEach(() => {
     vi.mocked(createAdminSessionAsApp).mockResolvedValue(mockAdminSession)
+    vi.mocked(resolveApiVersion).mockResolvedValue('2024-07')
     vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
       return task(() => {})
     })
@@ -54,12 +55,13 @@ describe('executeOperation', () => {
     })
 
     expect(createAdminSessionAsApp).toHaveBeenCalledWith(mockRemoteApp, storeFqdn)
+    expect(resolveApiVersion).toHaveBeenCalledWith({adminSession: mockAdminSession})
     expect(adminRequestDoc).toHaveBeenCalledWith({
       // parsed GraphQL document
       query: expect.any(Object),
       session: mockAdminSession,
       variables: undefined,
-      version: undefined,
+      version: '2024-07',
       responseOptions: {handleErrors: false},
     })
   })
@@ -107,7 +109,7 @@ describe('executeOperation', () => {
     const version = '2024-01'
     const mockResult = {data: {shop: {name: 'Test Shop'}}}
     vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
-    vi.mocked(validateApiVersion).mockResolvedValue()
+    vi.mocked(resolveApiVersion).mockResolvedValue(version)
 
     await executeOperation({
       organization: mockOrganization,
@@ -117,28 +119,12 @@ describe('executeOperation', () => {
       version,
     })
 
-    expect(validateApiVersion).toHaveBeenCalledWith(mockAdminSession, version)
+    expect(resolveApiVersion).toHaveBeenCalledWith({adminSession: mockAdminSession, userSpecifiedVersion: version})
     expect(adminRequestDoc).toHaveBeenCalledWith(
       expect.objectContaining({
         version,
       }),
     )
-  })
-
-  test('does not validate version when not provided', async () => {
-    const query = 'query { shop { name } }'
-    const mockResult = {data: {shop: {name: 'Test Shop'}}}
-    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
-    vi.mocked(validateApiVersion).mockClear()
-
-    await executeOperation({
-      organization: mockOrganization,
-      remoteApp: mockRemoteApp,
-      storeFqdn,
-      query,
-    })
-
-    expect(validateApiVersion).not.toHaveBeenCalled()
   })
 
   test('writes formatted JSON results to stdout by default', async () => {

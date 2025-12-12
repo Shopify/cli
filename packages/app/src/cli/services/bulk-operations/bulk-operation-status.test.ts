@@ -4,9 +4,11 @@ import {
   normalizeBulkOperationId,
   extractBulkOperationId,
 } from './bulk-operation-status.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
 import {ListBulkOperationsQuery} from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
+import {resolveApiVersion} from '../graphql/common.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
@@ -14,6 +16,13 @@ import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('@shopify/cli-kit/node/session')
 vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('../graphql/common.js', async () => {
+  const actual = await vi.importActual('../graphql/common.js')
+  return {
+    ...actual,
+    resolveApiVersion: vi.fn(),
+  }
+})
 
 const storeFqdn = 'test-store.myshopify.com'
 const operationId = 'gid://shopify/BulkOperation/123'
@@ -35,6 +44,7 @@ const remoteApp = {
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({token: 'test-token', storeFqdn})
+  vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
 })
 
 afterEach(() => {
@@ -167,6 +177,30 @@ describe('getBulkOperationStatus', () => {
     await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
 
     expect(output.info()).toContain('Bulk operation canceled.')
+  })
+
+  test('calls resolveApiVersion with minimum API version constant', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
+
+    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+
+    expect(resolveApiVersion).toHaveBeenCalledWith({
+      adminSession: {token: 'test-token', storeFqdn},
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+  })
+
+  test('uses resolved API version in admin request', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperation({status: 'RUNNING'}))
+
+    await getBulkOperationStatus({organization: mockOrganization, storeFqdn, operationId, remoteApp})
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 'test-api-version',
+      }),
+    )
   })
 
   describe('time formatting', () => {
@@ -327,5 +361,29 @@ describe('listBulkOperations', () => {
 
     expect(output.info()).toContain('Listing bulk operations.')
     expect(output.info()).toContain('No bulk operations found in the last 7 days.')
+  })
+
+  test('calls resolveApiVersion with minimum API version constant', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
+
+    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+
+    expect(resolveApiVersion).toHaveBeenCalledWith({
+      adminSession: {token: 'test-token', storeFqdn},
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
+  })
+
+  test('uses resolved API version in admin request', async () => {
+    vi.mocked(resolveApiVersion).mockResolvedValue('test-api-version')
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockBulkOperationsList([]))
+
+    await listBulkOperations({organization: mockOrganization, storeFqdn, remoteApp})
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        version: 'test-api-version',
+      }),
+    )
   })
 })
