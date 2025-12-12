@@ -33,6 +33,7 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
+import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
 
 /**
  * All app commands should extend AppCommand.
@@ -45,6 +46,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:dev:clean': DevClean,
   'app:logs': Logs,
   'app:logs:sources': Sources,
+  'app:import-custom-data-definitions': ImportCustomDataDefinitions,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
