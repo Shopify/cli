@@ -17,7 +17,7 @@ if (args.length !== 3) {
     [
       `Usage: bin/${path.basename(__filename)} <GITHUB_ACCESS_TOKEN>\n`,
       'This script needs a Github access token to avoid hitting rate limits.',
-      'You can grab your existing one by running `dev github print-auth`.',
+      'You can grab your existing one by running `dev github print-auth --password`.',
     ].join('\n'),
   )
   process.exit(1)

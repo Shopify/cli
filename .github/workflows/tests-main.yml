@@ -66,7 +66,7 @@ jobs:
           SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
         run: pnpm nx run features:test
       - name: Send Slack notification on failure
-        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # pin@v1.23.0
+        uses: slackapi/slack-github-action@007b2c3c751a190b6f0f040e47ed024deaa72844 # v1.23.0
         if: ${{ failure() && !cancelled() }}
         with:
           payload: |
