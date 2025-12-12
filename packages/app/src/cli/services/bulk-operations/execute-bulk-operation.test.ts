@@ -69,7 +69,7 @@ describe('executeBulkOperation', () => {
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
-    vi.mocked(resolveApiVersion).mockResolvedValue('2026-01')
+    vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
   })
 
   afterEach(() => {
@@ -94,7 +94,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
-      version: '2026-01',
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -117,7 +117,7 @@ describe('executeBulkOperation', () => {
     expect(runBulkOperationQuery).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query,
-      version: '2026-01',
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
@@ -141,7 +141,7 @@ describe('executeBulkOperation', () => {
       adminSession: mockAdminSession,
       query: mutation,
       variablesJsonl: undefined,
-      version: '2026-01',
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
   })
@@ -167,7 +167,7 @@ describe('executeBulkOperation', () => {
       adminSession: mockAdminSession,
       query: mutation,
       variablesJsonl: '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}',
-      version: '2026-01',
+      version: BULK_OPERATIONS_MIN_API_VERSION,
     })
   })
 
