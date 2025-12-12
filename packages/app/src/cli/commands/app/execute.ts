@@ -28,6 +28,7 @@ export default class Execute extends AppLinkedCommand {
       variables: flags.variables,
       outputFile: flags['output-file'],
       ...(flags.version && {version: flags.version}),
+      ...(flags.header && {headers: flags.header}),
     })
 
     return {app: appContextResult.app}
