@@ -1,4 +1,9 @@
-import {watchBulkOperation} from './watch-bulk-operation.js'
+import {
+  watchBulkOperation,
+  shortBulkOperationPoll,
+  QUICK_WATCH_POLL_INTERVAL_MS,
+  QUICK_WATCH_TIMEOUT_MS,
+} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {sleep} from '@shopify/cli-kit/node/system'
@@ -163,5 +168,112 @@ describe('watchBulkOperation', () => {
       await watchBulkOperation(mockAdminSession, operationId, abortController.signal, onAbort)
       expect(onAbort).toHaveBeenCalled()
     })
+  })
+})
+
+describe('quickWatchBulkOperation', () => {
+  const mockAdminSession = {token: 'test-token', storeFqdn: 'test.myshopify.com'}
+  const operationId = 'gid://shopify/BulkOperation/123'
+
+  const createdOperation = {
+    id: operationId,
+    status: 'CREATED',
+    objectCount: '0',
+    url: null,
+  }
+
+  const runningOperation = {
+    id: operationId,
+    status: 'RUNNING',
+    objectCount: '50',
+    url: null,
+  }
+
+  const completedOperation = {
+    id: operationId,
+    status: 'COMPLETED',
+    objectCount: '100',
+    url: 'https://example.com/download',
+  }
+
+  const failedOperation = {
+    id: operationId,
+    status: 'FAILED',
+    objectCount: '25',
+    url: null,
+    errorCode: 'INTERNAL_SERVER_ERROR',
+  }
+
+  beforeEach(() => {
+    vi.mocked(sleep).mockResolvedValue()
+  })
+
+  test('returns immediately when operation is already completed', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperation: completedOperation})
+
+    const result = await shortBulkOperationPoll(mockAdminSession, operationId)
+
+    expect(result).toEqual(completedOperation)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+  })
+
+  test('returns immediately when operation has failed', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperation: failedOperation})
+
+    const result = await shortBulkOperationPoll(mockAdminSession, operationId)
+
+    expect(result).toEqual(failedOperation)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+  })
+
+  test.each(['FAILED', 'CANCELED', 'EXPIRED'])(
+    'returns when operation reaches %s status within timeout',
+    async (status) => {
+      const terminalOperation = {
+        id: operationId,
+        status,
+        objectCount: '25',
+        url: null,
+      }
+
+      vi.mocked(adminRequestDoc)
+        .mockResolvedValueOnce({bulkOperation: runningOperation})
+        .mockResolvedValueOnce({bulkOperation: terminalOperation})
+
+      const result = await shortBulkOperationPoll(mockAdminSession, operationId)
+
+      expect(result).toEqual(terminalOperation)
+    },
+  )
+
+  test('polls multiple times before returning terminal status', async () => {
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({bulkOperation: createdOperation})
+      .mockResolvedValueOnce({bulkOperation: runningOperation})
+      .mockResolvedValueOnce({bulkOperation: completedOperation})
+
+    const result = await shortBulkOperationPoll(mockAdminSession, operationId)
+
+    expect(result).toEqual(completedOperation)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(3)
+    expect(sleep).toHaveBeenCalledWith(QUICK_WATCH_POLL_INTERVAL_MS / 1000)
+  })
+
+  test('returns latest state when timeout is reached without terminal status', async () => {
+    const originalDateNow = Date.now
+    let mockTime = 0
+    vi.spyOn(Date, 'now').mockImplementation(() => {
+      const currentTime = mockTime
+      mockTime += QUICK_WATCH_TIMEOUT_MS + 1
+      return currentTime
+    })
+
+    vi.mocked(adminRequestDoc).mockResolvedValue({bulkOperation: runningOperation})
+
+    const result = await shortBulkOperationPoll(mockAdminSession, operationId)
+
+    expect(result.status).toBe('RUNNING')
+
+    vi.spyOn(Date, 'now').mockImplementation(originalDateNow)
   })
 })

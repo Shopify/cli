@@ -1,6 +1,6 @@
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
-import {watchBulkOperation, type BulkOperation} from './watch-bulk-operation.js'
+import {watchBulkOperation, shortBulkOperationPoll, type BulkOperation} from './watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {extractBulkOperationId} from './bulk-operation-status.js'
@@ -104,7 +104,8 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
         await renderBulkOperationResult(operation, outputFile)
       }
     } else {
-      await renderBulkOperationResult(createdOperation, outputFile)
+      const operation = await shortBulkOperationPoll(adminSession, createdOperation.id)
+      await renderBulkOperationResult(operation, outputFile)
     }
   } else {
     renderWarning({
@@ -136,16 +137,38 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
         customSections,
       })
       break
+    case 'RUNNING':
+      renderSuccess({
+        headline: 'Bulk operation is running.',
+        body: statusCommandHelpMessage(operation.id),
+        customSections,
+      })
+      break
     case 'COMPLETED':
       if (operation.url) {
         const results = await downloadBulkOperationResults(operation.url)
+        const hasUserErrors = resultsContainUserErrors(results)
 
         if (outputFile) {
           await writeFile(outputFile, results)
-          renderSuccess({headline, body: [`Results written to ${outputFile}`], customSections})
         } else {
-          renderSuccess({headline, customSections})
           outputResult(results)
+        }
+
+        if (hasUserErrors) {
+          renderWarning({
+            headline: 'Bulk operation completed with errors.',
+            body: outputFile
+              ? `Results written to ${outputFile}. Check file for error details.`
+              : 'Check results for error details.',
+            customSections,
+          })
+        } else {
+          renderSuccess({
+            headline,
+            body: outputFile ? [`Results written to ${outputFile}`] : undefined,
+            customSections,
+          })
         }
       } else {
         renderSuccess({headline, customSections})
@@ -155,6 +178,17 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
       renderError({headline, customSections})
       break
   }
+}
+
+function resultsContainUserErrors(results: string): boolean {
+  const lines = results.trim().split('\n')
+
+  return lines.some((line) => {
+    const parsed = JSON.parse(line)
+    if (!parsed.data) return false
+    const result = Object.values(parsed.data)[0] as {userErrors?: unknown[]} | undefined
+    return result?.userErrors !== undefined && result.userErrors.length > 0
+  })
 }
 
 function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: string): void {

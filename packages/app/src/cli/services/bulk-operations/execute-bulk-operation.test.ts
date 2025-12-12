@@ -1,7 +1,7 @@
 import {executeBulkOperation} from './execute-bulk-operation.js'
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
-import {watchBulkOperation} from './watch-bulk-operation.js'
+import {watchBulkOperation, shortBulkOperationPoll} from './watch-bulk-operation.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {validateApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
@@ -67,6 +67,7 @@ describe('executeBulkOperation', () => {
 
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
+    vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
   })
 
   afterEach(() => {
@@ -305,7 +306,7 @@ describe('executeBulkOperation', () => {
     })
   })
 
-  test('waits for operation to finish and renders success when watch is provided and operation finishes with COMPLETED status', async () => {
+  test('uses watchBulkOperation (not quickWatchBulkOperation) when watch flag is true', async () => {
     const query = '{ products { edges { node { id } } } }'
     const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
       bulkOperation: createdBulkOperation,
@@ -320,7 +321,9 @@ describe('executeBulkOperation', () => {
 
     vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
     vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
-    vi.mocked(downloadBulkOperationResults).mockResolvedValue('{"id":"gid://shopify/Product/123"}')
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue(
+      '{"data":{"products":{"edges":[{"node":{"id":"gid://shopify/Product/123"}}],"userErrors":[]}},"__lineNumber":0}',
+    )
 
     await executeBulkOperation({
       organization: mockOrganization,
@@ -330,6 +333,13 @@ describe('executeBulkOperation', () => {
       watch: true,
     })
 
+    expect(watchBulkOperation).toHaveBeenCalledWith(
+      mockAdminSession,
+      createdBulkOperation.id,
+      expect.any(Object),
+      expect.any(Function),
+    )
+    expect(shortBulkOperationPoll).not.toHaveBeenCalled()
     expect(renderSuccess).toHaveBeenCalledWith(
       expect.objectContaining({
         headline: expect.stringContaining('Bulk operation succeeded:'),
@@ -370,10 +380,64 @@ describe('executeBulkOperation', () => {
     expect(downloadBulkOperationResults).not.toHaveBeenCalled()
   })
 
+  test('uses quickWatchBulkOperation (not watchBulkOperation) when watch flag is false', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+    vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      watch: false,
+    })
+
+    expect(shortBulkOperationPoll).toHaveBeenCalledWith(mockAdminSession, createdBulkOperation.id)
+    expect(watchBulkOperation).not.toHaveBeenCalled()
+  })
+
+  test('renders info message when quickWatchBulkOperation returns RUNNING status', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const runningOperation = {
+      ...createdBulkOperation,
+      status: 'RUNNING' as const,
+      objectCount: '50',
+    }
+    const mockResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(mockResponse)
+    vi.mocked(shortBulkOperationPoll).mockResolvedValue(runningOperation)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      watch: false,
+    })
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: 'Bulk operation is running.',
+        body: ['Monitor its progress with:\n', {command: expect.stringContaining('shopify app bulk status')}],
+      }),
+    )
+  })
+
   test('writes results to file when --output-file flag is provided', async () => {
     const query = '{ products { edges { node { id } } } }'
     const outputFile = '/tmp/results.jsonl'
-    const resultsContent = '{"id":"gid://shopify/Product/123"}\n{"id":"gid://shopify/Product/456"}'
+    const resultsContent =
+      '{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/123"},"userErrors":[]}},"__lineNumber":0}\n{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/456"},"userErrors":[]}},"__lineNumber":1}'
 
     const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
       bulkOperation: createdBulkOperation,
@@ -404,7 +468,8 @@ describe('executeBulkOperation', () => {
 
   test('writes results to stdout when --output-file flag is not provided', async () => {
     const query = '{ products { edges { node { id } } } }'
-    const resultsContent = '{"id":"gid://shopify/Product/123"}\n{"id":"gid://shopify/Product/456"}'
+    const resultsContent =
+      '{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/123"},"userErrors":[]}},"__lineNumber":0}\n{"data":{"productCreate":{"product":{"id":"gid://shopify/Product/456"},"userErrors":[]}},"__lineNumber":1}'
 
     const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
       bulkOperation: createdBulkOperation,
@@ -536,5 +601,114 @@ describe('executeBulkOperation', () => {
     })
 
     expect(validateApiVersion).not.toHaveBeenCalled()
+  })
+
+  test('renders warning when completed operation results contain userErrors', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const resultsWithErrors = '{"data":{"productUpdate":{"userErrors":[{"message":"invalid input"}]}},"__lineNumber":0}'
+
+    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    const completedOperation = {
+      ...createdBulkOperation,
+      status: 'COMPLETED' as const,
+      url: 'https://example.com/download',
+      objectCount: '1',
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
+    vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsWithErrors)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      watch: true,
+    })
+
+    expect(renderWarning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: 'Bulk operation completed with errors.',
+        body: 'Check results for error details.',
+      }),
+    )
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
+
+  test('renders success when completed operation results have no userErrors', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const resultsWithoutErrors = '{"data":{"productUpdate":{"product":{"id":"123"},"userErrors":[]}},"__lineNumber":0}'
+
+    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    const completedOperation = {
+      ...createdBulkOperation,
+      status: 'COMPLETED' as const,
+      url: 'https://example.com/download',
+      objectCount: '1',
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
+    vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsWithoutErrors)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      watch: true,
+    })
+
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: expect.stringContaining('Bulk operation succeeded'),
+      }),
+    )
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
+  test('renders warning when results written to file contain userErrors', async () => {
+    const query = '{ products { edges { node { id } } } }'
+    const outputFile = '/tmp/results.jsonl'
+    const resultsWithErrors = '{"data":{"productUpdate":{"userErrors":[{"message":"invalid input"}]}},"__lineNumber":0}'
+
+    const initialResponse: BulkOperationRunQueryMutation['bulkOperationRunQuery'] = {
+      bulkOperation: createdBulkOperation,
+      userErrors: [],
+    }
+    const completedOperation = {
+      ...createdBulkOperation,
+      status: 'COMPLETED' as const,
+      url: 'https://example.com/download',
+      objectCount: '1',
+    }
+
+    vi.mocked(runBulkOperationQuery).mockResolvedValue(initialResponse)
+    vi.mocked(watchBulkOperation).mockResolvedValue(completedOperation)
+    vi.mocked(downloadBulkOperationResults).mockResolvedValue(resultsWithErrors)
+
+    await executeBulkOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      watch: true,
+      outputFile,
+    })
+
+    expect(writeFile).toHaveBeenCalledWith(outputFile, resultsWithErrors)
+    expect(renderWarning).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headline: 'Bulk operation completed with errors.',
+        body: `Results written to ${outputFile}. Check file for error details.`,
+      }),
+    )
   })
 })
