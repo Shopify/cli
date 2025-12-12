@@ -12,6 +12,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from '@shopify/cli-kit/node/colors'
 import readline from 'readline'
 
@@ -126,31 +127,8 @@ export async function dev(options: DevOptions) {
     process.stdin.setRawMode(true)
   }
 
-  process.stdin.on('keypress', (_str, key) => {
-    if (key.ctrl && key.name === 'c') {
-      process.exit()
-    }
-
-    switch (key.name) {
-      case 't':
-        openURLSafely(urls.local, 'localhost')
-        break
-      case 'p':
-        openURLSafely(urls.preview, 'theme preview')
-        break
-      case 'e':
-        openURLSafely(
-          ctx.lastRequestedPath === '/'
-            ? urls.themeEditor
-            : `${urls.themeEditor}&previewPath=${encodeURIComponent(ctx.lastRequestedPath)}`,
-          'theme editor',
-        )
-        break
-      case 'g':
-        openURLSafely(urls.giftCard, 'gift card preview')
-        break
-    }
-  })
+  const keypressHandler = createKeypressHandler(urls, ctx)
+  process.stdin.on('keypress', keypressHandler)
 
   await Promise.all([
     backgroundJobPromise,
@@ -163,6 +141,41 @@ export async function dev(options: DevOptions) {
         }
       }),
   ])
+}
+
+export function createKeypressHandler(
+  urls: {local: string; giftCard: string; themeEditor: string; preview: string},
+  ctx: {lastRequestedPath: string},
+) {
+  const debouncedOpenURL = debounce(openURLSafely, 100, {leading: true, trailing: false})
+
+  return (_str: string, key: {ctrl?: boolean; name?: string}) => {
+    if (key.ctrl && key.name === 'c') {
+      process.exit()
+    }
+
+    switch (key.name) {
+      case 't':
+        debouncedOpenURL(urls.local, 'localhost')
+        break
+      case 'p':
+        debouncedOpenURL(urls.preview, 'theme preview')
+        break
+      case 'e':
+        debouncedOpenURL(
+          ctx.lastRequestedPath === '/'
+            ? urls.themeEditor
+            : `${urls.themeEditor}&previewPath=${encodeURIComponent(ctx.lastRequestedPath)}`,
+          'theme editor',
+        )
+        break
+      case 'g':
+        debouncedOpenURL(urls.giftCard, 'gift card preview')
+        break
+      default:
+        break
+    }
+  }
 }
 
 export function openURLSafely(url: string, label: string) {
