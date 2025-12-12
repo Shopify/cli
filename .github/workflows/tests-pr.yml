@@ -240,7 +240,7 @@ jobs:
         working-directory: workspace
         id: type-diff
         run: pnpm nx run type-diff
-      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+      - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
         if: steps.type-diff.outputs.report != ''
         with:
           header: Type-diff

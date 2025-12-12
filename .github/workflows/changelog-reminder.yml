@@ -10,7 +10,7 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft }}
     steps:
       - uses: actions/checkout@v3
-      - uses: mskelton/changelog-reminder-action@7039cd14fb784c0a2b37f6e7a6ade2c9148c2245 # pin@v2
+      - uses: mskelton/changelog-reminder-action@7039cd14fb784c0a2b37f6e7a6ade2c9148c2245 # v2
         with:
           changelogRegex: \.changeset
           message: |

@@ -59,7 +59,7 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@8dacdbe980a7628cf65d9b1d838ee7103450c6b8
+        uses: Shopify/snapit@8dacdbe980a7628cf65d9b1d838ee7103450c6b8 # 8dacdbe980a7628cf65d9b1d838ee7103450c6b8
         with:
           global_install: 'true'
           github_comment_included_packages: '@shopify/cli'
@@ -99,7 +99,7 @@ jobs:
         with:
           node-version: 24.12.0
       - name: Create Release Pull Request
-        uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a #  pin@v1
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1
         with:
           version: pnpm changeset-manifests
           title: Version Packages - ${{ github.ref_name }}

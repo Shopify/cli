@@ -19,14 +19,14 @@ runs:
       continue-on-error: true
       id: download-artifact
       # We use this action and not Github's default, due to https://github.com/actions/download-artifact/issues/3
-      uses: dawidd6/action-download-artifact@e6e25ac3a2b93187502a8be1ef9e9603afc34925 # pin@v2.24.2
+      uses: dawidd6/action-download-artifact@e6e25ac3a2b93187502a8be1ef9e9603afc34925 # v2.24.2
       with:
         workflow: shopify-cli.yml
         workflow_conclusion: success
         branch: ${{ inputs.base-branch-name }}
         name: ${{ env.SAFE_BASE_REF_NAME }}--coverage-report
         if_no_artifact_found: ignore
-    - uses: ArtiomTr/jest-coverage-report-action@df2b025553c31d68f84be6337843e277e2576844 # pin@v2.2.1
+    - uses: ArtiomTr/jest-coverage-report-action@df2b025553c31d68f84be6337843e277e2576844 # v2.2.1
       id: coverage
       with:
         annotations: none
@@ -34,6 +34,6 @@ runs:
         coverage-file: './report.json'
         base-coverage-file: './baseline-report.json'
         threshold: 0
-    - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # pin@v2.3.1
+    - uses: marocchino/sticky-pull-request-comment@fcf6fe9e4a0409cd9316a5011435be0f3327f1e1 # v2.3.1
       with:
         message: ${{ steps.coverage.outputs.report }}
