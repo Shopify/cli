@@ -44,7 +44,7 @@ const remoteApp = {
 
 beforeEach(() => {
   vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue({token: 'test-token', storeFqdn})
-  vi.mocked(resolveApiVersion).mockResolvedValue('2026-01')
+  vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)
 })
 
 afterEach(() => {

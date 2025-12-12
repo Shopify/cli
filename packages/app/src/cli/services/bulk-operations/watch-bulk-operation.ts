@@ -1,4 +1,5 @@
 import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {
   GetBulkOperationById,
   GetBulkOperationByIdQuery,
@@ -14,7 +15,6 @@ const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'CANCELED', 'EXPIRED']
 const INITIAL_POLL_INTERVAL_SECONDS = 1
 const REGULAR_POLL_INTERVAL_SECONDS = 5
 const INITIAL_POLL_COUNT = 10
-const API_VERSION = '2026-01'
 
 export const QUICK_WATCH_TIMEOUT_MS = 3000
 export const QUICK_WATCH_POLL_INTERVAL_MS = 300
@@ -146,6 +146,6 @@ async function fetchBulkOperation(adminSession: AdminSession, operationId: strin
     query: GetBulkOperationById,
     session: adminSession,
     variables: {id: operationId},
-    version: API_VERSION,
+    version: BULK_OPERATIONS_MIN_API_VERSION,
   })
 }

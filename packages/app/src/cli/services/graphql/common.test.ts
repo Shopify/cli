@@ -1,5 +1,6 @@
 import {createAdminSessionAsApp, formatOperationInfo, resolveApiVersion, validateSingleOperation} from './common.js'
 import {OrganizationApp} from '../../models/organization.js'
+import {BULK_OPERATIONS_MIN_API_VERSION} from '../bulk-operations/constants.js'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
@@ -126,7 +127,7 @@ describe('resolveApiVersion', () => {
     const result = await resolveApiVersion({
       adminSession: mockAdminSession,
       userSpecifiedVersion: '2024-04',
-      minimumDefaultVersion: '2026-01',
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
     })
 
     expect(result).toBe('2024-04')
@@ -181,21 +182,27 @@ describe('resolveApiVersion', () => {
       {handle: '2025-10', supported: true},
     ])
 
-    const result = await resolveApiVersion({adminSession: mockAdminSession, minimumDefaultVersion: '2026-01'})
+    const result = await resolveApiVersion({
+      adminSession: mockAdminSession,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
 
-    expect(result).toBe('2026-01')
+    expect(result).toBe(BULK_OPERATIONS_MIN_API_VERSION)
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
   })
 
   test('returns most recent supported version when newer than minimum version', async () => {
     vi.mocked(fetchApiVersions).mockResolvedValue([
-      {handle: '2026-01', supported: true},
+      {handle: BULK_OPERATIONS_MIN_API_VERSION, supported: true},
       {handle: '2026-04', supported: true},
       {handle: '2026-07', supported: true},
       {handle: '2027-01', supported: false},
     ])
 
-    const result = await resolveApiVersion({adminSession: mockAdminSession, minimumDefaultVersion: '2026-01'})
+    const result = await resolveApiVersion({
+      adminSession: mockAdminSession,
+      minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+    })
 
     expect(result).toBe('2026-07')
     expect(fetchApiVersions).toHaveBeenCalledWith(mockAdminSession)
