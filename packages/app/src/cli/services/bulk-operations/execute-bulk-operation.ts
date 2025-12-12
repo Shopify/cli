@@ -10,19 +10,20 @@ import {
   validateSingleOperation,
   formatOperationInfo,
   resolveApiVersion,
+  validateMutationStore,
+  isMutation,
 } from '../graphql/common.js'
-import {OrganizationApp, Organization} from '../../models/organization.js'
+import {OrganizationApp, Organization, OrganizationStore} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {parse} from 'graphql'
 import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
 
 interface ExecuteBulkOperationInput {
   organization: Organization
   remoteApp: OrganizationApp
-  storeFqdn: string
+  store: OrganizationStore
   query: string
   variables?: string[]
   variableFile?: string
@@ -52,7 +53,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   const {
     organization,
     remoteApp,
-    storeFqdn,
+    store,
     query,
     variables,
     variableFile,
@@ -61,7 +62,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     version: userSpecifiedVersion,
   } = input
 
-  const adminSession = await createAdminSessionAsApp(remoteApp, storeFqdn)
+  const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
 
   const version = await resolveApiVersion({
     adminSession,
@@ -72,13 +73,14 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
   validateGraphQLDocument(query, variablesJsonl)
+  validateMutationStore(query, store)
 
   renderInfo({
     headline: 'Starting bulk operation.',
     body: [
       {
         list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn, version}),
+          items: formatOperationInfo({organization, remoteApp, storeFqdn: store.shopDomain, version}),
         },
       },
     ],
@@ -225,10 +227,4 @@ function statusCommandHelpMessage(operationId: string): TokenItem {
     'Monitor its progress with:\n',
     {command: `shopify app bulk status --id=${extractBulkOperationId(operationId)}`},
   ]
-}
-
-function isMutation(graphqlOperation: string): boolean {
-  const document = parse(graphqlOperation)
-  const operation = document.definitions.find((def) => def.kind === 'OperationDefinition')
-  return operation?.kind === 'OperationDefinition' && operation.operation === 'mutation'
 }

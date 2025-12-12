@@ -28,6 +28,16 @@ describe('executeOperation', () => {
   } as OrganizationApp
 
   const storeFqdn = 'test-store.myshopify.com'
+  const mockStore = {
+    shopId: '123',
+    link: 'link',
+    shopDomain: storeFqdn,
+    shopName: 'Test Store',
+    transferDisabled: true,
+    convertableToPartnerTest: false,
+    provisionable: true,
+    storeType: 'APP_DEVELOPMENT',
+  }
   const mockAdminSession = {token: 'test-token', storeFqdn}
 
   beforeEach(() => {
@@ -50,7 +60,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -75,7 +85,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       variables,
     })
@@ -95,7 +105,7 @@ describe('executeOperation', () => {
       executeOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         variables: invalidVariables,
       }),
@@ -114,7 +124,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       version,
     })
@@ -137,7 +147,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -156,7 +166,7 @@ describe('executeOperation', () => {
       await executeOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         outputFile,
       })
@@ -179,7 +189,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -199,7 +209,7 @@ describe('executeOperation', () => {
       executeOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
       }),
     ).rejects.toThrow('API request failed')
@@ -216,7 +226,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -240,7 +250,7 @@ describe('executeOperation', () => {
     await executeOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
