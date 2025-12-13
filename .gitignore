@@ -180,6 +180,7 @@ vite.config.ts.timestamp*
 
 # from nested gitignores
 packages/app/assets/dev-console
+packages/app/assets/graphiql
 packages/ui-extensions-server-kit/*.d.ts
 packages/ui-extensions-server-kit/!typings.d.ts
 packages/ui-extensions-server-kit/index.*
