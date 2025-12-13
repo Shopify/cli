@@ -1,7 +1,7 @@
 import {runBulkOperationQuery} from './run-query.js'
 import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, shortBulkOperationPoll, type BulkOperation} from './watch-bulk-operation.js'
-import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
+import {formatBulkOperationStatus, renderBulkOperationUserErrors} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {extractBulkOperationId} from './bulk-operation-status.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
@@ -89,18 +89,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     : await runBulkOperationQuery({adminSession, query, version})
 
   if (bulkOperationResponse?.userErrors?.length) {
-    const errorMessages = bulkOperationResponse.userErrors.map(
-      (error: {field?: string[] | null; message: string}) =>
-        `${error.field ? `${error.field.join('.')}: ` : ''}${error.message}`,
-    )
-    renderError({
-      headline: 'Error creating bulk operation.',
-      body: {
-        list: {
-          items: errorMessages,
-        },
-      },
-    })
+    renderBulkOperationUserErrors(bulkOperationResponse.userErrors, 'Bulk operation errors.')
     return
   }
 
