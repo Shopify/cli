@@ -1,6 +1,8 @@
 # Commands
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
+* [`shopify app bulk execute`](#shopify-app-bulk-execute)
+* [`shopify app bulk status`](#shopify-app-bulk-status)
 * [`shopify app config link`](#shopify-app-config-link)
 * [`shopify app config pull`](#shopify-app-config-pull)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
@@ -116,6 +118,80 @@ DESCRIPTION
   If you're building a "theme app extension" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
   running the `build` command runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) against your
   extension to ensure that it's valid.
+```
+
+## `shopify app bulk execute`
+
+Execute bulk operations.
+
+```
+USAGE
+  $ shopify app bulk execute [--client-id <value> | -c <value>] [--no-color] [--output-file <value> --watch] [--path
+    <value>] [-q <value>] [--reset | ] [-s <value>] [--variable-file <value> | -v <value>...] [--verbose] [--version
+    <value>]
+
+FLAGS
+  -c, --config=<value>         The name of the app configuration.
+  -q, --query=<value>          The GraphQL query or mutation to run as a bulk operation. If omitted, reads from standard
+                               input.
+  -s, --store=<value>          The store domain. Must be an existing dev store.
+  -v, --variables=<value>...   The values for any GraphQL variables in your mutation, in JSON format. Can be specified
+                               multiple times.
+      --client-id=<value>      The Client ID of your app.
+      --no-color               Disable color output.
+      --output-file=<value>    The file path where results should be written if --watch is specified. If not specified,
+                               results will be written to STDOUT.
+      --path=<value>           The path to your app directory.
+      --reset                  Reset all your settings.
+      --variable-file=<value>  Path to a file containing GraphQL variables in JSONL format (one JSON object per line).
+                               Can't be used with --variables.
+      --verbose                Increase the verbosity of the output.
+      --version=<value>        The API version to use for the bulk operation. If not specified, uses the latest stable
+                               version.
+      --watch                  Wait for bulk operation results before exiting. Defaults to false.
+
+DESCRIPTION
+  Execute bulk operations.
+
+  Executes an Admin API GraphQL query or mutation on the specified dev store, as a bulk operation.
+
+  Bulk operations allow you to process large amounts of data asynchronously. Learn more about "bulk query operations"
+  (https://shopify.dev/docs/api/usage/bulk-operations/queries) and "bulk mutation operations"
+  (https://shopify.dev/docs/api/usage/bulk-operations/imports).
+
+  Use "`bulk status`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk
+  operations.
+```
+
+## `shopify app bulk status`
+
+Check the status of bulk operations.
+
+```
+USAGE
+  $ shopify app bulk status [--client-id <value> | -c <value>] [--id <value>] [--no-color] [--path <value>] [--reset
+    | ] [-s <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -s, --store=<value>      The store domain. Must be an existing dev store.
+      --client-id=<value>  The Client ID of your app.
+      --id=<value>         The bulk operation ID. If not provided, lists all bulk operations in the last 7 days.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Check the status of bulk operations.
+
+  Check the status of a specific bulk operation by ID, or list all bulk operations in the last 7 days.
+
+  Bulk operations allow you to process large amounts of data asynchronously. Learn more about "bulk query operations"
+  (https://shopify.dev/docs/api/usage/bulk-operations/queries) and "bulk mutation operations"
+  (https://shopify.dev/docs/api/usage/bulk-operations/imports).
+
+  Use "`bulk execute`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.
 ```
 
 ## `shopify app config link`
@@ -379,6 +455,9 @@ DESCRIPTION
   Execute GraphQL queries and mutations.
 
   Executes an Admin API GraphQL query or mutation on the specified dev store.
+
+  For operations that process large amounts of data, use "`bulk execute`"
+  (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.
 ```
 
 ## `shopify app function build`
