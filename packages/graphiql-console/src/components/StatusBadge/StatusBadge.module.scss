@@ -1,0 +1,6 @@
+// Shrink icons in badges to match original GraphiQL styling
+.Badge :global(.Polaris-Icon) {
+  height: 1rem;
+  width: 1rem;
+  margin: 0.125rem;
+}
