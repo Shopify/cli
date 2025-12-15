@@ -23,7 +23,7 @@ export type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation
 
 export async function shortBulkOperationPoll(adminSession: AdminSession, operationId: string): Promise<BulkOperation> {
   return renderSingleTask<BulkOperation>({
-    title: outputContent`Starting bulk operation...`,
+    title: outputContent`Starting bulk operation`,
     task: async () => {
       const startTime = Date.now()
       const poller = pollBulkOperation({
@@ -55,7 +55,7 @@ export async function watchBulkOperation(
   onAbort: () => void,
 ): Promise<BulkOperation> {
   return renderSingleTask<BulkOperation>({
-    title: outputContent`Polling bulk operation...`,
+    title: outputContent`Polling bulk operation`,
     task: async (updateStatus) => {
       const poller = pollBulkOperation({
         adminSession,
