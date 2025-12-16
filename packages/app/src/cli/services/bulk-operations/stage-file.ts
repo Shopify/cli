@@ -120,6 +120,7 @@ async function uploadFileToStagedUrl(
         'slow-request',
       )
     },
+    renderOptions: {stdout: process.stderr},
   })
 
   if (!uploadResponse.ok) {
