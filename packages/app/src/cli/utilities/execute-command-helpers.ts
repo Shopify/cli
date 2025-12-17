@@ -3,6 +3,8 @@ import {storeContext} from '../services/store-context.js'
 import {OrganizationStore} from '../models/organization.js'
 import {readStdinString} from '@shopify/cli-kit/node/system'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 interface AppStoreContextFlags {
   path: string
@@ -19,6 +21,7 @@ interface AppStoreContext {
 
 interface ExecuteCommandFlags extends AppStoreContextFlags {
   query?: string
+  'query-file'?: string
 }
 
 interface ExecuteContext extends AppStoreContext {
@@ -51,7 +54,7 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
 
 /**
  * Prepares the execution context for GraphQL operations.
- * Handles query input from flag or stdin, and sets up app and store contexts.
+ * Handles query input from flag, file, or stdin, and sets up app and store contexts.
  *
  * @param flags - Command flags containing configuration options.
  * @param commandName - Name of the command for error messages (e.g., 'execute', 'bulk execute').
@@ -61,11 +64,26 @@ export async function prepareExecuteContext(
   flags: ExecuteCommandFlags,
   commandName = 'execute',
 ): Promise<ExecuteContext> {
-  const query = flags.query ?? (await readStdinString())
+  let query: string | undefined
+
+  if (flags.query) {
+    query = flags.query
+  } else if (flags['query-file']) {
+    const queryFile = flags['query-file']
+    if (!(await fileExists(queryFile))) {
+      throw new AbortError(
+        outputContent`Query file not found at ${outputToken.path(queryFile)}. Please check the path and try again.`,
+      )
+    }
+    query = await readFile(queryFile, {encoding: 'utf8'})
+  } else {
+    query = await readStdinString()
+  }
+
   if (!query) {
     throw new AbortError(
-      'No query provided. Use the --query flag or pipe input via stdin.',
-      `Example: echo "query { ... }" | shopify app ${commandName}`,
+      'No query provided. Use the --query flag, --query-file flag, or pipe input via stdin.',
+      `Example: shopify app ${commandName} --query-file query.graphql`,
     )
   }
 

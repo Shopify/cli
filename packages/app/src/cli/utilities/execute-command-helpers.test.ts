@@ -2,11 +2,13 @@ import {prepareAppStoreContext, prepareExecuteContext} from './execute-command-h
 import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
 import {readStdinString} from '@shopify/cli-kit/node/system'
+import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('../services/app-context.js')
 vi.mock('../services/store-context.js')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/fs')
 
 describe('prepareAppStoreContext', () => {
   const mockFlags = {
@@ -169,5 +171,39 @@ describe('prepareExecuteContext', () => {
 
     expect(linkedAppContext).toHaveBeenCalled()
     expect(storeContext).toHaveBeenCalled()
+  })
+
+  test('reads query from file when query-file flag is provided', async () => {
+    const queryFileContent = 'query { shop { name } }'
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(readFile).mockResolvedValue(queryFileContent as any)
+
+    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/query.graphql'}
+    const result = await prepareExecuteContext(flagsWithQueryFile)
+
+    expect(fileExists).toHaveBeenCalledWith('/path/to/query.graphql')
+    expect(readFile).toHaveBeenCalledWith('/path/to/query.graphql', {encoding: 'utf8'})
+    expect(result.query).toBe(queryFileContent)
+    expect(readStdinString).not.toHaveBeenCalled()
+  })
+
+  test('throws AbortError when query file does not exist', async () => {
+    vi.mocked(fileExists).mockResolvedValue(false)
+
+    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/nonexistent.graphql'}
+
+    await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('Query file not found')
+    expect(readFile).not.toHaveBeenCalled()
+  })
+
+  test('falls back to stdin when neither query nor query-file provided', async () => {
+    const stdinQuery = 'query { shop { name } }'
+    vi.mocked(readStdinString).mockResolvedValue(stdinQuery)
+
+    const flagsWithoutQueryOrFile = {...mockFlags, query: undefined}
+    const result = await prepareExecuteContext(flagsWithoutQueryOrFile)
+
+    expect(readStdinString).toHaveBeenCalled()
+    expect(result.query).toBe(stdinQuery)
   })
 })
