@@ -90,6 +90,13 @@ export const operationFlags = {
     char: 'v',
     description: 'The values for any GraphQL variables in your query or mutation, in JSON format.',
     env: 'SHOPIFY_FLAG_VARIABLES',
+    exclusive: ['variable-file'],
+  }),
+  'variable-file': Flags.string({
+    description: "Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.",
+    env: 'SHOPIFY_FLAG_VARIABLE_FILE',
+    parse: async (input) => resolvePath(input),
+    exclusive: ['variables'],
   }),
   store: Flags.string({
     char: 's',

@@ -104,6 +104,72 @@ describe('executeOperation', () => {
     expect(adminRequestDoc).not.toHaveBeenCalled()
   })
 
+  test('reads and parses variables from a JSON file', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const variableFile = joinPath(tmpDir, 'variables.json')
+      const variables = {input: {id: 'gid://shopify/Product/123', title: 'Updated'}}
+      await writeFile(variableFile, JSON.stringify(variables))
+
+      const query = 'mutation UpdateProduct($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+      const mockResult = {data: {productUpdate: {product: {id: 'gid://shopify/Product/123'}}}}
+      vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+
+      await executeOperation({
+        organization: mockOrganization,
+        remoteApp: mockRemoteApp,
+        storeFqdn,
+        query,
+        variableFile,
+      })
+
+      expect(adminRequestDoc).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables,
+        }),
+      )
+    })
+  })
+
+  test('throws AbortError when variable file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const nonExistentFile = joinPath(tmpDir, 'nonexistent.json')
+      const query = 'query { shop { name } }'
+
+      await expect(
+        executeOperation({
+          organization: mockOrganization,
+          remoteApp: mockRemoteApp,
+          storeFqdn,
+          query,
+          variableFile: nonExistentFile,
+        }),
+      ).rejects.toThrow('Variable file not found')
+
+      expect(adminRequestDoc).not.toHaveBeenCalled()
+    })
+  })
+
+  test('throws AbortError when variable file contains invalid JSON', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const variableFile = joinPath(tmpDir, 'invalid.json')
+      await writeFile(variableFile, '{invalid json}')
+
+      const query = 'query { shop { name } }'
+
+      await expect(
+        executeOperation({
+          organization: mockOrganization,
+          remoteApp: mockRemoteApp,
+          storeFqdn,
+          query,
+          variableFile,
+        }),
+      ).rejects.toThrow('Invalid JSON')
+
+      expect(adminRequestDoc).not.toHaveBeenCalled()
+    })
+  })
+
   test('uses specified API version when provided', async () => {
     const query = 'query { shop { name } }'
     const version = '2024-01'
