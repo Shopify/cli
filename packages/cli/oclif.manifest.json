@@ -148,9 +148,6 @@
           "char": "q",
           "description": "The GraphQL query or mutation to run as a bulk operation.",
           "env": "SHOPIFY_FLAG_QUERY",
-          "exclusive": [
-            "query-file"
-          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "query",
@@ -1197,9 +1194,6 @@
           "char": "q",
           "description": "The GraphQL query or mutation, as a string.",
           "env": "SHOPIFY_FLAG_QUERY",
-          "exclusive": [
-            "query-file"
-          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "query",
