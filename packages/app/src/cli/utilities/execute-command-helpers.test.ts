@@ -1,14 +1,18 @@
 import {prepareAppStoreContext, prepareExecuteContext} from './execute-command-helpers.js'
 import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
-import {readStdinString} from '@shopify/cli-kit/node/system'
+import {validateSingleOperation} from '../services/graphql/common.js'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {readStdinString} from '@shopify/cli-kit/node/system'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('../services/app-context.js')
 vi.mock('../services/store-context.js')
-vi.mock('@shopify/cli-kit/node/system')
 vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/node/system')
+vi.mock('../services/graphql/common.js', () => ({
+  validateSingleOperation: vi.fn(),
+}))
 
 describe('prepareAppStoreContext', () => {
   const mockFlags = {
@@ -205,5 +209,11 @@ describe('prepareExecuteContext', () => {
 
     expect(readStdinString).toHaveBeenCalled()
     expect(result.query).toBe(stdinQuery)
+  })
+
+  test('validates GraphQL query using validateSingleOperation', async () => {
+    await prepareExecuteContext(mockFlags)
+
+    expect(validateSingleOperation).toHaveBeenCalledWith(mockFlags.query)
   })
 })

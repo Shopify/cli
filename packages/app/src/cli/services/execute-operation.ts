@@ -1,9 +1,4 @@
-import {
-  createAdminSessionAsApp,
-  validateSingleOperation,
-  resolveApiVersion,
-  formatOperationInfo,
-} from './graphql/common.js'
+import {createAdminSessionAsApp, resolveApiVersion, formatOperationInfo} from './graphql/common.js'
 import {OrganizationApp, Organization} from '../models/organization.js'
 import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
@@ -88,8 +83,6 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
   })
 
   const parsedVariables = await parseVariables(variables, variableFile)
-
-  validateSingleOperation(query)
 
   try {
     const result = await renderSingleTask({

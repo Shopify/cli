@@ -5,12 +5,7 @@ import {formatBulkOperationStatus} from './format-bulk-operation-status.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {extractBulkOperationId} from './bulk-operation-status.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
-import {
-  createAdminSessionAsApp,
-  validateSingleOperation,
-  formatOperationInfo,
-  resolveApiVersion,
-} from '../graphql/common.js'
+import {createAdminSessionAsApp, formatOperationInfo, resolveApiVersion} from '../graphql/common.js'
 import {OrganizationApp, Organization} from '../../models/organization.js'
 import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
@@ -71,7 +66,7 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
 
-  validateGraphQLDocument(query, variablesJsonl)
+  validateBulkOperationVariables(query, variablesJsonl)
 
   renderInfo({
     headline: 'Starting bulk operation.',
@@ -208,9 +203,10 @@ function resultsContainUserErrors(results: string): boolean {
   })
 }
 
-function validateGraphQLDocument(graphqlOperation: string, variablesJsonl?: string): void {
-  validateSingleOperation(graphqlOperation)
-
+/**
+ * Validates bulk operation-specific constraints for variables.
+ */
+function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl?: string): void {
   if (!isMutation(graphqlOperation) && variablesJsonl) {
     throw new AbortError(
       outputContent`The ${outputToken.yellow('--variables')} and ${outputToken.yellow(
