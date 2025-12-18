@@ -19,6 +19,7 @@
 │  │  └─ typegen
 │  ├─ generate
 │  │  └─ extension
+│  ├─ import-custom-data-definitions
 │  ├─ import-extensions
 │  ├─ info
 │  ├─ init

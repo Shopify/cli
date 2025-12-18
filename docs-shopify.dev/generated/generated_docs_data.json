@@ -1751,6 +1751,116 @@
     "related": []
   },
   {
+    "name": "app import-custom-data-definitions",
+    "description": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+    "overviewPreviewDescription": "Import metafield and metaobject definitions.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app import-custom-data-definitions",
+            "code": "shopify app import-custom-data-definitions [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app import-custom-data-definitions"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app import-custom-data-definitions` command:",
+        "type": "appimportcustomdatadefinitions",
+        "typeDefinitions": {
+          "appimportcustomdatadefinitions": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+            "name": "appimportcustomdatadefinitions",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_CLIENT_ID"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--include-existing",
+                "value": "\"\"",
+                "description": "Include existing declared definitions in the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_INCLUDE_EXISTING"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_RESET"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. Must be an existing development or Shopify Plus sandbox store.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              }
+            ],
+            "value": "export interface appimportcustomdatadefinitions {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Include existing declared definitions in the output.\n   * @environment SHOPIFY_FLAG_INCLUDE_EXISTING\n   */\n  '--include-existing'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Store URL. Must be an existing development or Shopify Plus sandbox store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "app",
+    "related": []
+  },
+  {
     "name": "app import-extensions",
     "description": "Import dashboard-managed extensions into your app.",
     "overviewPreviewDescription": "Import dashboard-managed extensions into your app.",
