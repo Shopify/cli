@@ -3,7 +3,6 @@ import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
 import {validateSingleOperation} from '../services/graphql/common.js'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {readStdinString} from '@shopify/cli-kit/node/system'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('../services/app-context.js')
@@ -116,48 +115,18 @@ describe('prepareExecuteContext', () => {
   beforeEach(() => {
     vi.mocked(linkedAppContext).mockResolvedValue(mockAppContextResult as any)
     vi.mocked(storeContext).mockResolvedValue(mockStore as any)
-    vi.mocked(readStdinString).mockResolvedValue('')
   })
 
   test('uses query from flags when provided', async () => {
     const result = await prepareExecuteContext(mockFlags)
 
     expect(result.query).toBe(mockFlags.query)
-    expect(readStdinString).not.toHaveBeenCalled()
   })
 
-  test('reads query from stdin when flag not provided', async () => {
-    const stdinQuery = 'query { products { edges { node { id } } } }'
-    vi.mocked(readStdinString).mockResolvedValue(stdinQuery)
-
-    const flagsWithoutQuery = {...mockFlags, query: undefined}
-    const result = await prepareExecuteContext(flagsWithoutQuery)
-
-    expect(readStdinString).toHaveBeenCalled()
-    expect(result.query).toBe(stdinQuery)
-  })
-
-  test('throws AbortError when no query provided via flag or stdin', async () => {
-    vi.mocked(readStdinString).mockResolvedValue('')
-
+  test('throws BugError when no query provided', async () => {
     const flagsWithoutQuery = {...mockFlags, query: undefined}
 
-    await expect(prepareExecuteContext(flagsWithoutQuery)).rejects.toThrow('No query provided')
-  })
-
-  test('includes command name in error message', async () => {
-    vi.mocked(readStdinString).mockResolvedValue('')
-
-    const flagsWithoutQuery = {...mockFlags, query: undefined}
-
-    try {
-      await prepareExecuteContext(flagsWithoutQuery, 'bulk execute')
-      expect.fail('Should have thrown an error')
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error: any) {
-      expect(error.message).toContain('No query provided')
-      expect(error.tryMessage).toMatch(/shopify app bulk execute/)
-    }
+    await expect(prepareExecuteContext(flagsWithoutQuery)).rejects.toThrow('exactlyOne constraint')
   })
 
   test('returns query, app context, and store', async () => {
@@ -188,7 +157,6 @@ describe('prepareExecuteContext', () => {
     expect(fileExists).toHaveBeenCalledWith('/path/to/query.graphql')
     expect(readFile).toHaveBeenCalledWith('/path/to/query.graphql', {encoding: 'utf8'})
     expect(result.query).toBe(queryFileContent)
-    expect(readStdinString).not.toHaveBeenCalled()
   })
 
   test('throws AbortError when query file does not exist', async () => {
@@ -198,17 +166,6 @@ describe('prepareExecuteContext', () => {
 
     await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('Query file not found')
     expect(readFile).not.toHaveBeenCalled()
-  })
-
-  test('falls back to stdin when neither query nor query-file provided', async () => {
-    const stdinQuery = 'query { shop { name } }'
-    vi.mocked(readStdinString).mockResolvedValue(stdinQuery)
-
-    const flagsWithoutQueryOrFile = {...mockFlags, query: undefined}
-    const result = await prepareExecuteContext(flagsWithoutQueryOrFile)
-
-    expect(readStdinString).toHaveBeenCalled()
-    expect(result.query).toBe(stdinQuery)
   })
 
   test('validates GraphQL query using validateSingleOperation', async () => {

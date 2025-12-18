@@ -2,8 +2,7 @@ import {linkedAppContext, LoadedAppContextOutput} from '../services/app-context.
 import {storeContext} from '../services/store-context.js'
 import {validateSingleOperation} from '../services/graphql/common.js'
 import {OrganizationStore} from '../models/organization.js'
-import {readStdinString} from '@shopify/cli-kit/node/system'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
@@ -55,16 +54,12 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
 
 /**
  * Prepares the execution context for GraphQL operations.
- * Handles query input from flag, file, or stdin, validates GraphQL syntax, and sets up app and store contexts.
+ * Handles query input from flag or file, validates GraphQL syntax, and sets up app and store contexts.
  *
  * @param flags - Command flags containing configuration options.
- * @param commandName - Name of the command for error messages (e.g., 'execute', 'bulk execute').
  * @returns Context object containing query, app context, and store information.
  */
-export async function prepareExecuteContext(
-  flags: ExecuteCommandFlags,
-  commandName = 'execute',
-): Promise<ExecuteContext> {
+export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise<ExecuteContext> {
   let query: string | undefined
 
   if (flags.query) {
@@ -77,14 +72,11 @@ export async function prepareExecuteContext(
       )
     }
     query = await readFile(queryFile, {encoding: 'utf8'})
-  } else {
-    query = await readStdinString()
   }
 
   if (!query) {
-    throw new AbortError(
-      'No query provided. Use the --query flag, --query-file flag, or pipe input via stdin.',
-      `Example: shopify app ${commandName} --query-file query.graphql`,
+    throw new BugError(
+      'Query should have been provided via --query or --query-file flags due to exactlyOne constraint. This indicates the oclif flag validation failed.',
     )
   }
 

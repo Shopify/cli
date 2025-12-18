@@ -146,7 +146,7 @@
         },
         "query": {
           "char": "q",
-          "description": "The GraphQL query or mutation to run as a bulk operation. If omitted, reads from standard input.",
+          "description": "The GraphQL query or mutation to run as a bulk operation.",
           "env": "SHOPIFY_FLAG_QUERY",
           "exclusive": [
             "query-file"
@@ -160,9 +160,6 @@
         "query-file": {
           "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
           "env": "SHOPIFY_FLAG_QUERY_FILE",
-          "exclusive": [
-            "query"
-          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "query-file",
@@ -1212,9 +1209,6 @@
         "query-file": {
           "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
           "env": "SHOPIFY_FLAG_QUERY_FILE",
-          "exclusive": [
-            "query"
-          ],
           "hasDynamicHelp": false,
           "multiple": false,
           "name": "query-file",
