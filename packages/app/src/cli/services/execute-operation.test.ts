@@ -62,7 +62,11 @@ describe('executeOperation', () => {
       session: mockAdminSession,
       variables: undefined,
       version: '2024-07',
-      responseOptions: {handleErrors: false},
+      responseOptions: {
+        handleErrors: false,
+        onResponse: expect.any(Function),
+      },
+      addedHeaders: undefined,
     })
   })
 
@@ -250,5 +254,206 @@ describe('executeOperation', () => {
         body: expect.stringContaining('invalidField'),
       }),
     )
+  })
+
+  test('passes custom headers correctly when provided', async () => {
+    const query = 'query { shop { name } }'
+    const headers = ['X-Custom-Header: custom-value', 'Authorization: Bearer token123']
+    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+
+    await executeOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      headers,
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addedHeaders: {
+          'X-Custom-Header': 'custom-value',
+          Authorization: 'Bearer token123',
+        },
+      }),
+    )
+  })
+
+  test('throws AbortError when header format is invalid (missing colon)', async () => {
+    const query = 'query { shop { name } }'
+    const headers = ['InvalidHeader']
+
+    await expect(
+      executeOperation({
+        organization: mockOrganization,
+        remoteApp: mockRemoteApp,
+        storeFqdn,
+        query,
+        headers,
+      }),
+    ).rejects.toThrow(/Invalid header format/)
+  })
+
+  test('throws AbortError when header key is empty', async () => {
+    const query = 'query { shop { name } }'
+    const headers = [': value-only']
+
+    await expect(
+      executeOperation({
+        organization: mockOrganization,
+        remoteApp: mockRemoteApp,
+        storeFqdn,
+        query,
+        headers,
+      }),
+    ).rejects.toThrow(/Invalid header format/)
+  })
+
+  test('handles headers with whitespace correctly', async () => {
+    const query = 'query { shop { name } }'
+    const headers = ['  X-Header  :  value with spaces  ']
+    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+
+    await executeOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      headers,
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addedHeaders: {
+          'X-Header': 'value with spaces',
+        },
+      }),
+    )
+  })
+
+  test('allows empty header value', async () => {
+    const query = 'query { shop { name } }'
+    const headers = ['X-Empty-Header:']
+    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+
+    await executeOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+      headers,
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        addedHeaders: {
+          'X-Empty-Header': '',
+        },
+      }),
+    )
+  })
+
+  test('includes response extensions in output when present', async () => {
+    const query = 'query { shop { name } }'
+    const mockResult = {shop: {name: 'Test Shop'}}
+    const mockExtensions = {cost: {requestedQueryCost: 1, actualQueryCost: 1}}
+
+    vi.mocked(adminRequestDoc).mockImplementation(async (options) => {
+      // Simulate the onResponse callback being called with extensions
+      if (options.responseOptions?.onResponse) {
+        options.responseOptions.onResponse({
+          data: mockResult,
+          extensions: mockExtensions,
+          headers: new Headers(),
+          status: 200,
+        } as any)
+      }
+      return mockResult
+    })
+
+    const mockOutput = mockAndCaptureOutput()
+
+    await executeOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    const output = mockOutput.info()
+    const parsedOutput = JSON.parse(output)
+
+    expect(parsedOutput).toEqual({
+      data: mockResult,
+      extensions: mockExtensions,
+    })
+  })
+
+  test('outputs only data when no extensions are present', async () => {
+    const query = 'query { shop { name } }'
+    const mockResult = {shop: {name: 'Test Shop'}}
+
+    vi.mocked(adminRequestDoc).mockImplementation(async (options) => {
+      // Simulate the onResponse callback being called without extensions
+      if (options.responseOptions?.onResponse) {
+        options.responseOptions.onResponse({
+          data: mockResult,
+          extensions: undefined,
+          headers: new Headers(),
+          status: 200,
+        } as any)
+      }
+      return mockResult
+    })
+
+    const mockOutput = mockAndCaptureOutput()
+
+    await executeOperation({
+      organization: mockOrganization,
+      remoteApp: mockRemoteApp,
+      storeFqdn,
+      query,
+    })
+
+    const output = mockOutput.info()
+    const parsedOutput = JSON.parse(output)
+
+    // Should output just the result, not wrapped in {data: ...}
+    expect(parsedOutput).toEqual(mockResult)
+  })
+
+  test('includes extensions in file output when present', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const outputFile = joinPath(tmpDir, 'results.json')
+      const query = 'query { shop { name } }'
+      const mockResult = {shop: {name: 'Test Shop'}}
+      const mockExtensions = {cost: {requestedQueryCost: 1, actualQueryCost: 1}}
+
+      vi.mocked(adminRequestDoc).mockImplementation(async (options) => {
+        if (options.responseOptions?.onResponse) {
+          options.responseOptions.onResponse({
+            data: mockResult,
+            extensions: mockExtensions,
+            headers: new Headers(),
+            status: 200,
+          } as any)
+        }
+        return mockResult
+      })
+
+      await executeOperation({
+        organization: mockOrganization,
+        remoteApp: mockRemoteApp,
+        storeFqdn,
+        query,
+        outputFile,
+      })
+
+      const expectedContent = JSON.stringify({data: mockResult, extensions: mockExtensions}, null, 2)
+      expect(writeFile).toHaveBeenCalledWith(outputFile, expectedContent)
+    })
   })
 })

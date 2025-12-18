@@ -62,6 +62,8 @@ export interface AdminRequestOptions<TResult, TVariables extends Variables> {
   responseOptions?: GraphQLResponseOptions<TResult>
   /** Custom request behaviour for retries and timeouts. */
   preferredBehaviour?: RequestModeInput
+  /** Custom HTTP headers to include with the request. */
+  addedHeaders?: {[header: string]: string}
 }
 
 /**
@@ -73,14 +75,14 @@ export interface AdminRequestOptions<TResult, TVariables extends Variables> {
 export async function adminRequestDoc<TResult, TVariables extends Variables>(
   options: AdminRequestOptions<TResult, TVariables>,
 ): Promise<TResult> {
-  const {query, session, variables, version, responseOptions, preferredBehaviour} = options
+  const {query, session, variables, version, responseOptions, preferredBehaviour, addedHeaders: customHeaders} = options
 
   let apiVersion = version ?? LatestApiVersionByFQDN.get(session.storeFqdn)
   if (!apiVersion) {
     apiVersion = await fetchLatestSupportedApiVersion(session, preferredBehaviour)
   }
   let storeDomain = session.storeFqdn
-  const addedHeaders = themeAccessHeaders(session)
+  const addedHeaders = {...themeAccessHeaders(session), ...customHeaders}
 
   if (serviceEnvironment() === 'local') {
     addedHeaders['x-forwarded-host'] = storeDomain

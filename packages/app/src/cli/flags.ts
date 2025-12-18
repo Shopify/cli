@@ -106,4 +106,9 @@ export const operationFlags = {
     description: 'The file name where results should be written, instead of STDOUT.',
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
   }),
+  header: Flags.string({
+    description: 'Custom HTTP header to include with the request, in "Key: Value" format. Can be specified multiple times.',
+    env: 'SHOPIFY_FLAG_HEADER',
+    multiple: true,
+  }),
 }
