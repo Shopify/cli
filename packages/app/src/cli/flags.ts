@@ -41,6 +41,13 @@ export const bulkOperationFlags = {
     description: 'The GraphQL query or mutation to run as a bulk operation. If omitted, reads from standard input.',
     env: 'SHOPIFY_FLAG_QUERY',
     required: false,
+    exclusive: ['query-file'],
+  }),
+  'query-file': Flags.string({
+    description: "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+    env: 'SHOPIFY_FLAG_QUERY_FILE',
+    parse: async (input) => resolvePath(input),
+    exclusive: ['query'],
   }),
   variables: Flags.string({
     char: 'v',
@@ -85,6 +92,13 @@ export const operationFlags = {
     description: 'The GraphQL query or mutation, as a string.',
     env: 'SHOPIFY_FLAG_QUERY',
     required: false,
+    exclusive: ['query-file'],
+  }),
+  'query-file': Flags.string({
+    description: "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+    env: 'SHOPIFY_FLAG_QUERY_FILE',
+    parse: async (input) => resolvePath(input),
+    exclusive: ['query'],
   }),
   variables: Flags.string({
     char: 'v',
