@@ -28,6 +28,7 @@ export default class Execute extends AppLinkedCommand {
       storeFqdn: store.shopDomain,
       query,
       variables: flags.variables,
+      variableFile: flags['variable-file'],
       outputFile: flags['output-file'],
       ...(flags.version && {version: flags.version}),
     })
