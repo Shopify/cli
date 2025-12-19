@@ -16,7 +16,7 @@ import {
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
-import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
+import {addPublicMetadata, addSensitiveMetadata, getAllPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -59,6 +59,21 @@ export default abstract class ThemeCommand extends Command {
     _args?: ArgOutput,
     _context?: {stdout?: Writable; stderr?: Writable},
   ): Promise<void> {}
+
+  async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
+    const metadata = getAllPublicMetadata()
+    const requestId = metadata.cmd_all_last_graphql_request_id
+
+    if (
+      requestId &&
+      /** Request id may have alreayd been added by `packages/cli-kit/src/private/node/api/graphql.ts` */
+      !error.message.includes('Request ID:')
+    ) {
+      error.message += `\n\nRequest ID: ${requestId}`
+    }
+
+    return super.catch(error)
+  }
 
   async run<
     TFlags extends FlagOutput & {path?: string; verbose?: boolean},
