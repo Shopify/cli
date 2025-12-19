@@ -21,7 +21,7 @@ export default class BulkExecute extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(BulkExecute)
 
-    const {query, appContextResult, store} = await prepareExecuteContext(flags, 'bulk execute')
+    const {query, appContextResult, store} = await prepareExecuteContext(flags)
 
     await executeBulkOperation({
       organization: appContextResult.organization,

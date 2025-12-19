@@ -20,7 +20,7 @@ export default class Execute extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Execute)
 
-    const {query, appContextResult, store} = await prepareExecuteContext(flags, 'execute')
+    const {query, appContextResult, store} = await prepareExecuteContext(flags)
 
     await executeOperation({
       organization: appContextResult.organization,
