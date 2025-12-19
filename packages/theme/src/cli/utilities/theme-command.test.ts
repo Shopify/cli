@@ -8,6 +8,7 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {getAllPublicMetadata} from '@shopify/cli-kit/node/metadata'
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')
@@ -15,6 +16,7 @@ vi.mock('@shopify/cli-kit/node/environments')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('./theme-store.js')
 vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/node/metadata')
 
 const CommandConfig = new Config({root: __dirname})
 
@@ -726,6 +728,69 @@ describe('ThemeCommand', () => {
 
       // Then
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('catch', () => {
+    test('appends request ID to error message when available', async () => {
+      // Given
+      vi.mocked(getAllPublicMetadata).mockReturnValue({
+        cmd_all_last_graphql_request_id: 'test-request-id-12345',
+      })
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+      const error = new Error('Something went wrong') as Error & {skipOclifErrorHandling: boolean}
+      error.skipOclifErrorHandling = false
+
+      // When
+      await command.catch(error).catch(() => {
+        // Expected to throw, we just want to verify the error was modified
+      })
+
+      // Then
+      expect(error.message).toContain('Something went wrong')
+      expect(error.message).toContain('Request ID: test-request-id-12345')
+    })
+
+    test('does not append request ID when not available', async () => {
+      // Given
+      vi.mocked(getAllPublicMetadata).mockReturnValue({})
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+      const error = new Error('Something went wrong') as Error & {skipOclifErrorHandling: boolean}
+      error.skipOclifErrorHandling = false
+
+      // When
+      await command.catch(error).catch(() => {
+        // Expected to throw
+      })
+
+      // Then
+      expect(error.message).toBe('Something went wrong')
+      expect(error.message).not.toContain('Request ID:')
+    })
+
+    test('does not duplicate request ID if already present in error message', async () => {
+      // Given
+      vi.mocked(getAllPublicMetadata).mockReturnValue({
+        cmd_all_last_graphql_request_id: 'test-request-id-12345',
+      })
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand([], CommandConfig)
+      const error = new Error('API error\n\nRequest ID: existing-id') as Error & {skipOclifErrorHandling: boolean}
+      error.skipOclifErrorHandling = false
+
+      // When
+      await command.catch(error).catch(() => {
+        // Expected to throw
+      })
+
+      // Then
+      expect(error.message).toBe('API error\n\nRequest ID: existing-id')
+      expect(error.message.match(/Request ID:/g)).toHaveLength(1)
     })
   })
 })
