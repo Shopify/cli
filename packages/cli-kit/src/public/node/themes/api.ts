@@ -486,7 +486,6 @@ export async function themeDuplicate(
     session,
     variables: {id: composeThemeGid(id), name},
     preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
-    version: '2025-10',
     responseOptions: {
       onResponse: (response) => {
         requestId = response.headers.get('x-request-id') ?? undefined
