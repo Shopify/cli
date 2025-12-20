@@ -1,5 +1,5 @@
-mutation DevSessionUpdate($appId: String!, $assetsUrl: String, $manifest: JSON, $inheritedModuleUids: [String!]!) {
-  devSessionUpdate(appId: $appId, assetsUrl: $assetsUrl, manifest: $manifest, inheritedModuleUids: $inheritedModuleUids) {
+mutation DevSessionUpdate($appId: String!, $assetsUrl: String, $websocketUrl: String, $manifest: JSON, $inheritedModuleUids: [String!]!) {
+  devSessionUpdate(appId: $appId, assetsUrl: $assetsUrl, websocketUrl: $websocketUrl, manifest: $manifest, inheritedModuleUids: $inheritedModuleUids) {
     userErrors {
       message
       on
