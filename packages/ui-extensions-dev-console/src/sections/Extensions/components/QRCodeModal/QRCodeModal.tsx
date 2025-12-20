@@ -7,9 +7,10 @@ import copyToClipboard from 'copy-to-clipboard'
 import QRCode from 'qrcode.react'
 import {toast} from 'react-toastify'
 import {Surface} from '@shopify/ui-extensions-server-kit'
-import {ClipboardIcon} from '@shopify/polaris-icons'
+import {ClipboardIcon, ExternalIcon} from '@shopify/polaris-icons'
 import {Modal, ModalProps} from '@/components/Modal'
 import {IconButton} from '@/components/IconButton'
+import {isMobileDevice} from '@/utilities/device'
 
 interface Code {
   url: string
@@ -42,6 +43,8 @@ function QRCodeContent({url, type}: Code) {
 
   const {store, app} = useApp()
 
+  const shouldShowOpenInPOSCTA = type === 'point_of_sale' && isMobileDevice()
+
   const qrCodeURL = useMemo(() => {
     // The Websocket hasn't loaded data yet.
     // Shouldn't happen since you can't open modal without data,
@@ -64,10 +67,15 @@ function QRCodeContent({url, type}: Code) {
     return `https://${store}/admin/extensions-dev/mobile?url=${url}`
   }, [url, app, app?.mobileUrl])
 
-  const onButtonClick = useCallback(() => {
+  const onCopyClick = useCallback(() => {
     if (qrCodeURL && copyToClipboard(qrCodeURL)) {
       toast(i18n.translate('qrcode.copied'), {toastId: `copy-qrcode-${qrCodeURL}`})
     }
+  }, [qrCodeURL])
+
+  const onOpenInPOSClick = useCallback(() => {
+    if (!qrCodeURL) return
+    window.location.assign(qrCodeURL)
   }, [qrCodeURL])
 
   if (!qrCodeURL) {
@@ -84,14 +92,25 @@ function QRCodeContent({url, type}: Code) {
       <span className={styles.RightColumn}>
         {i18n.translate('right.one')}
         <span className={styles.UrlCta}>
-          {i18n.translate('right.two')}{' '}
+          {i18n.translate('right.two')}
           <IconButton
             type="button"
             source={ClipboardIcon}
             accessibilityLabel={i18n.translate('qrcode.copy')}
-            onClick={onButtonClick}
+            onClick={onCopyClick}
           />
         </span>
+        {shouldShowOpenInPOSCTA && (
+          <span className={styles.UrlCta}>
+            {i18n.translate('right.three')}
+            <IconButton
+              type="button"
+              source={ExternalIcon}
+              accessibilityLabel={i18n.translate('qrcode.openPos')}
+              onClick={onOpenInPOSClick}
+            />
+          </span>
+        )}
       </span>
     </div>
   )
