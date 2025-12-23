@@ -25,7 +25,7 @@ export default class Execute extends AppLinkedCommand {
     await executeOperation({
       organization: appContextResult.organization,
       remoteApp: appContextResult.remoteApp,
-      storeFqdn: store.shopDomain,
+      store,
       query,
       variables: flags.variables,
       variableFile: flags['variable-file'],
