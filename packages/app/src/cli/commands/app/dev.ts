@@ -88,9 +88,9 @@ If you're using the Ruby app template, then you need to complete the following s
       exclusive: ['tunnel-url'],
     }),
     host: Flags.string({
-      description: 'Set which network interface the web server listens on. The default value is localhost.',
+      description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
-      default: 'localhost',
+      default: '127.0.0.1',
     }),
     'localhost-port': Flags.integer({
       description: 'Port to use for localhost.',

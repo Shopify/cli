@@ -95,7 +95,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
-      host: 'localhost',
+      host: '127.0.0.1',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -289,7 +289,7 @@ describe('setup-dev-processes', () => {
           cert: 'cert',
           key: 'key',
         },
-        host: 'localhost',
+        host: '127.0.0.1',
         rules: {
           '/extensions': `http://localhost:${previewExtensionPort}`,
           '/ping': `http://localhost:${hmrPort}`,
@@ -384,7 +384,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
-      host: 'localhost',
+      host: '127.0.0.1',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -458,7 +458,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
-      host: 'localhost',
+      host: '127.0.0.1',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -555,7 +555,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
-      host: 'localhost',
+      host: '127.0.0.1',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
@@ -642,7 +642,7 @@ describe('setup-dev-processes', () => {
       commandConfig: new Config({root: ''}),
       skipDependenciesInstallation: false,
       tunnel: {mode: 'auto'},
-      host: 'localhost',
+      host: '127.0.0.1',
     }
     const network: DevConfig['network'] = {
       proxyUrl: 'https://example.com/proxy',
