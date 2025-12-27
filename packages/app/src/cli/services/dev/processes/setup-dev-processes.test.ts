@@ -301,7 +301,7 @@ describe('setup-dev-processes', () => {
   })
 
   test('proxy server process includes host parameter when configured for Docker', async () => {
-    // Given  
+    // Given
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: false})
     const storeFqdn = 'store.myshopify.io'
     const storeId = '123456789'
@@ -331,23 +331,25 @@ describe('setup-dev-processes', () => {
         certPath: 'path',
       },
     }
-    
+
     // Create simple app without theme extensions to avoid the theme API calls
     const localApp = testAppWithConfig({
       config: {},
       app: testAppLinked({
         allExtensions: [await testUIExtension({type: 'web_pixel_extension'})],
-        webs: [{
-          directory: 'web',
-          configuration: {
-            roles: [WebType.Backend, WebType.Frontend],
-            commands: {dev: 'npm exec remix dev'},
-            webhooks_path: '/webhooks',
-            hmr_server: {
-              http_paths: ['/ping'],
+        webs: [
+          {
+            directory: 'web',
+            configuration: {
+              roles: [WebType.Backend, WebType.Frontend],
+              commands: {dev: 'npm exec remix dev'},
+              webhooks_path: '/webhooks',
+              hmr_server: {
+                http_paths: ['/ping'],
+              },
             },
           },
-        }],
+        ],
       }),
     })
     vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
