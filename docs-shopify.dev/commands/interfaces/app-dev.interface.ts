@@ -19,6 +19,12 @@ export interface appdev {
   '-c, --config <value>'?: string
 
   /**
+   * Set which network interface the web server listens on. The default value is 127.0.0.1.
+   * @environment SHOPIFY_FLAG_HOST
+   */
+  '--host <value>'?: string
+
+  /**
    * Port to use for localhost.
    * @environment SHOPIFY_FLAG_LOCALHOST_PORT
    */
