@@ -202,7 +202,12 @@ export async function setupDevProcesses({
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
-  const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort, network.reverseProxyCert, commandOptions)
+  const processesWithProxy = await setPortsAndAddProxyProcess(
+    processes,
+    network.proxyPort,
+    network.reverseProxyCert,
+    commandOptions,
+  )
 
   return {
     processes: processesWithProxy,
