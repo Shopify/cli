@@ -30,6 +30,7 @@ interface ProxyServerProcess
     port: number
     rules: {[key: string]: string}
     localhostCert?: LocalhostCert
+    host: string
   }> {
   type: 'proxy-server'
 }
@@ -201,7 +202,12 @@ export async function setupDevProcesses({
   ].filter(stripUndefineds)
 
   // Add http server proxy & configure ports, for processes that need it
-  const processesWithProxy = await setPortsAndAddProxyProcess(processes, network.proxyPort, network.reverseProxyCert)
+  const processesWithProxy = await setPortsAndAddProxyProcess(
+    processes,
+    network.proxyPort,
+    network.reverseProxyCert,
+    commandOptions,
+  )
 
   return {
     processes: processesWithProxy,
@@ -218,7 +224,8 @@ const stripUndefineds = <T>(process: T | undefined | false): process is T => {
 async function setPortsAndAddProxyProcess(
   processes: DevProcesses,
   proxyPort: number,
-  reverseProxyCert?: LocalhostCert,
+  reverseProxyCert: LocalhostCert | undefined,
+  commandOptions: DevOptions,
 ): Promise<DevProcesses> {
   // Convert processes that use proxying to have a port number and register their mapping rules
   const processesAndRules = await Promise.all(
@@ -251,11 +258,12 @@ async function setPortsAndAddProxyProcess(
     newProcesses.push({
       type: 'proxy-server',
       prefix: 'proxy',
-      function: startProxyServer,
+      function: proxyService,
       options: {
         port: proxyPort,
         rules: allRules,
         localhostCert: reverseProxyCert,
+        host: commandOptions.host,
       },
     })
   }
@@ -263,15 +271,16 @@ async function setPortsAndAddProxyProcess(
   return newProcesses
 }
 
-export const startProxyServer: DevProcessFunction<{
+export const proxyService: DevProcessFunction<{
   port: number
   rules: {[key: string]: string}
   localhostCert?: LocalhostCert
-}> = async ({abortSignal, stdout}, {port, rules, localhostCert}) => {
+  host: string
+}> = async ({abortSignal, stdout}, {port, rules, localhostCert, host}) => {
   const {server} = await getProxyingWebServer(rules, abortSignal, localhostCert, stdout)
   outputInfo(
-    `Proxy server started on port ${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
+    `Proxy server started on ${host}:${port} ${localhostCert ? `with certificate ${localhostCert.certPath}` : ''}`,
     stdout,
   )
-  await server.listen(port, 'localhost')
+  await server.listen(port, host)
 }
