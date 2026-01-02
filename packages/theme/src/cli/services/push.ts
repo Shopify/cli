@@ -205,16 +205,20 @@ async function executePush(
   const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
   recordTiming('theme-service:push:file-system')
 
-  const {uploadResults, renderThemeSyncProgress} = uploadTheme(
+  const {uploadResults, renderThemeSyncProgress, syncRewrittenFilesPromise} = uploadTheme(
     theme,
     session,
     themeChecksums,
     themeFileSystem,
-    options,
+    {
+      ...options,
+      handleRewrittenFiles: 'warn',
+    },
     context,
   )
 
   await renderThemeSyncProgress()
+  await syncRewrittenFilesPromise
 
   if (options.publish) {
     await themePublish(theme.id, session)

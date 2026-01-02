@@ -7,10 +7,17 @@ import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
 import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+import {
+  outputContent,
+  outputDebug,
+  outputInfo,
+  outputToken,
+  outputWarn,
+  TokenizedString,
+} from '@shopify/cli-kit/node/output'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import EventEmitter from 'node:events'
 import {fileURLToPath} from 'node:url'
 import type {
@@ -125,6 +132,19 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     return notifier?.notify(fileKey) ?? Promise.resolve()
   }
 
+  const write = async (asset: ThemeAsset) => {
+    files.set(
+      asset.key,
+      buildThemeAsset({
+        key: asset.key,
+        checksum: asset.checksum,
+        value: asset.value ?? '',
+        attachment: asset.attachment ?? '',
+      }),
+    )
+    await writeThemeFile(root, asset)
+  }
+
   const handleFileUpdate = (
     eventName: 'add' | 'change',
     themeId: string,
@@ -152,6 +172,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
         value: file.value || undefined,
         attachment: file.attachment,
+        checksum: file.checksum,
       }
     })
 
@@ -159,7 +180,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       .then((content) => {
         if (!content) return
 
-        return handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession)(content)
+        return handleSyncUpdate(unsyncedFileKeys, uploadErrors, fileKey, themeId, adminSession, write)(content)
       })
       .catch(createSyncingCatchError(fileKey, 'upload'))
 
@@ -242,18 +263,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       files.delete(fileKey)
       await removeThemeFile(root, fileKey)
     },
-    write: async (asset: ThemeAsset) => {
-      files.set(
-        asset.key,
-        buildThemeAsset({
-          key: asset.key,
-          checksum: asset.checksum,
-          value: asset.value ?? '',
-          attachment: asset.attachment ?? '',
-        }),
-      )
-      await writeThemeFile(root, asset)
-    },
+    write,
     read,
     applyIgnoreFilters: (files) => applyIgnoreFilters(files, filterPatterns),
     addEventListener: (eventName, cb) => {
@@ -282,7 +292,8 @@ export function handleSyncUpdate(
   fileKey: string,
   themeId: string,
   adminSession: AdminSession,
-): (content: {value?: string; attachment?: string}) => PromiseLike<boolean> {
+  write: (asset: ThemeAsset) => Promise<void>,
+): (content: {value?: string; attachment?: string; checksum: string}) => Promise<boolean> {
   return async (content) => {
     if (!unsyncedFileKeys.has(fileKey)) {
       return false
@@ -305,6 +316,15 @@ export function handleSyncUpdate(
 
     unsyncedFileKeys.delete(fileKey)
     outputSyncResult('update', fileKey)
+
+    if (content.value && content.checksum !== result?.asset?.checksum) {
+      const [remoteAsset] = await fetchThemeAssets(Number(themeId), [fileKey], adminSession)
+
+      if (remoteAsset) {
+        await write(remoteAsset)
+        outputSyncResult('rewrite', fileKey)
+      }
+    }
 
     return true
   }
@@ -462,10 +482,18 @@ function dirPath(filePath: string) {
   return filePath.substring(0, fileNameIndex)
 }
 
-function outputSyncResult(action: 'update' | 'delete', fileKey: string): void {
-  outputInfo(
-    outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw('»')} ${action} ${fileKey}`,
-  )
+function outputSyncResult(action: 'update' | 'delete' | 'rewrite', fileKey: string): void {
+  let content: TokenizedString
+
+  if (action === 'rewrite') {
+    content = outputContent`• ${timestampDateFormat.format(new Date())}  Overwritten ${fileKey}`
+  } else {
+    content = outputContent`• ${timestampDateFormat.format(new Date())}  Synced ${outputToken.raw(
+      '»',
+    )} ${action} ${fileKey}`
+  }
+
+  outputInfo(content)
 }
 
 export function inferLocalHotReloadScriptPath() {

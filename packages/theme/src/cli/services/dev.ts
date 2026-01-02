@@ -120,7 +120,10 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  const {serverStart, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(options.theme, ctx)
+  const {serverStart, renderDevSetupProgress, backgroundJobPromise, syncRewrittenFilesPromise} = setupDevServer(
+    options.theme,
+    ctx,
+  )
 
   readline.emitKeypressEvents(process.stdin)
   if (process.stdin.isTTY) {
@@ -140,6 +143,7 @@ export async function dev(options: DevOptions) {
           openURLSafely(urls.local, 'development server')
         }
       }),
+    syncRewrittenFilesPromise(),
   ])
 }
 

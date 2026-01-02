@@ -3,10 +3,11 @@ import {rejectGeneratedStaticAssets} from './asset-checksum.js'
 import {createSyncingCatchError, renderThrownError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {renderTasksToStdErr} from './theme-ui.js'
+import {downloadFiles} from './theme-downloader.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Result, Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Task} from '@shopify/cli-kit/node/ui'
+import {renderInfo, Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {Writable} from 'stream'
@@ -17,6 +18,7 @@ interface UploadOptions {
   backgroundWorkCatch?: (error: Error) => never
   environment?: string
   multiEnvironment?: boolean
+  handleRewrittenFiles?: 'warn' | 'fix'
 }
 
 type ChecksumWithSize = Checksum & {size: number}
@@ -60,7 +62,7 @@ export function uploadTheme(
     .then(() => buildDeleteJob(remoteChecksums, themeFileSystem, theme, session, options, uploadResults))
 
   const workPromise = options?.deferPartialWork
-    ? themeCreationPromise
+    ? themeCreationPromise.then(() => {})
     : deleteJobPromise.then((result) => result.promise)
 
   if (options?.backgroundWorkCatch) {
@@ -72,9 +74,71 @@ export function uploadTheme(
     ]).catch(options.backgroundWorkCatch)
   }
 
+  const syncRewrittenFilesPromise = options?.handleRewrittenFiles
+    ? Promise.all([themeFileSystem.ready(), themeCreationPromise, uploadJobPromise, deleteJobPromise]).then(
+        async () => {
+          const filesDifferentFromRemote: string[] = []
+
+          for (const uploadResult of uploadResults.values()) {
+            if (!uploadResult.key.endsWith('.liquid')) continue
+
+            const localFile = themeFileSystem.files.get(uploadResult.key)
+
+            if (
+              localFile?.value &&
+              uploadResult.success &&
+              uploadResult.asset?.checksum &&
+              uploadResult.asset.checksum !== localFile.checksum
+            ) {
+              filesDifferentFromRemote.push(uploadResult.key)
+            }
+          }
+
+          if (filesDifferentFromRemote.length > 0) {
+            if (options.handleRewrittenFiles === 'fix') {
+              renderInfo({
+                headline: `Updated Liquid files to conform to latest Liquid standards.`,
+                body: [
+                  `The following Liquid files were updated locally and remotely:`,
+                  {
+                    list: {
+                      items: filesDifferentFromRemote,
+                    },
+                  },
+                ],
+              })
+              await downloadFiles(theme, themeFileSystem, filesDifferentFromRemote, session)
+            } else if (options.handleRewrittenFiles === 'warn') {
+              renderInfo({
+                headline: `Liquid files were updated remotely to conform to latest Liquid standards.`,
+                body: [
+                  'The following Liquid files were updated remotely:',
+                  {
+                    list: {
+                      items: filesDifferentFromRemote,
+                    },
+                  },
+                ],
+                nextSteps: [
+                  [
+                    'Fetch the latest files using',
+                    {
+                      command: 'shopify theme pull',
+                    },
+                    'to sync them locally.',
+                  ],
+                ],
+              })
+            }
+          }
+        },
+      )
+    : Promise.resolve()
+
   return {
     uploadResults,
     workPromise,
+    syncRewrittenFilesPromise,
     renderThemeSyncProgress: async () => {
       if (options?.deferPartialWork) return
 
@@ -237,9 +301,11 @@ async function ensureThemeCreation(theme: Theme, session: AdminSession, remoteCh
   const remoteAssetKeys = new Set(remoteChecksums.map((checksum) => checksum.key))
   const missingAssets = MINIMUM_THEME_ASSETS.filter(({key}) => !remoteAssetKeys.has(key))
 
-  if (missingAssets.length > 0) {
-    await bulkUploadThemeAssets(theme.id, missingAssets, session)
+  if (missingAssets.length === 0) {
+    return Promise.resolve([])
   }
+
+  return bulkUploadThemeAssets(theme.id, missingAssets, session)
 }
 
 interface SyncJob {
