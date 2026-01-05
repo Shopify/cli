@@ -120,7 +120,7 @@ const PromptLayout = ({
 
       {state === PromptState.Submitted && submittedAnswerLabel ? (
         <Box>
-          <Box marginRight={2}>
+          <Box width={3}>
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 
