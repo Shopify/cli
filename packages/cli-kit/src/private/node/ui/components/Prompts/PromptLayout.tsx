@@ -6,7 +6,7 @@ import {AbortSignal} from '../../../../../public/node/abort.js'
 import useAbortSignal from '../../hooks/use-abort-signal.js'
 import {PromptState} from '../../hooks/use-prompt.js'
 import React, {ReactElement, cloneElement, useCallback, useLayoutEffect, useState} from 'react'
-import {Box, measureElement, Text, useStdout} from 'ink'
+import {Box, measureElement, Text, useStdout, DOMElement} from 'ink'
 import figures from 'figures'
 
 export type Message = TokenItem<Exclude<InlineToken, LinkToken>>
@@ -40,7 +40,7 @@ const PromptLayout = ({
   const [availableLines, setAvailableLines] = useState(currentAvailableLines)
 
   const wrapperRef = useCallback(
-    (node) => {
+    (node: DOMElement | null) => {
       if (node !== null) {
         const {height} = measureElement(node)
         if (wrapperHeight !== height) {
@@ -51,14 +51,14 @@ const PromptLayout = ({
     [wrapperHeight],
   )
 
-  const promptAreaRef = useCallback((node) => {
+  const promptAreaRef = useCallback((node: DOMElement | null) => {
     if (node !== null) {
       const {height} = measureElement(node)
       setPromptAreaHeight(height)
     }
   }, [])
 
-  const inputFixedAreaRef = useCallback((node) => {
+  const inputFixedAreaRef = useCallback((node: DOMElement | null) => {
     if (node !== null) {
       const {height} = measureElement(node)
       // + 3 accounts for the margins inside the input elements and the last empty line of the terminal

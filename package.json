@@ -74,7 +74,6 @@
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^3.3.1",
-    "react": "17.0.2",
     "rimraf": "^3.0.2",
     "tmp": "^0.2.5",
     "ts-node": "^10.9.1",
@@ -98,6 +97,7 @@
   },
   "version": "0.0.0",
   "resolutions": {
+    "@types/react": "18.3.12",
     "vite": "6.4.1",
     "whatwg-url": "14.0.0",
     "supports-hyperlinks": "3.1.0",
@@ -161,7 +161,6 @@
           "@nx/workspace",
           "graphql-tag",
           "pin-github-action",
-          "react",
           "esbuild"
         ],
         "ignore": [

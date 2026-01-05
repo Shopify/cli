@@ -4,10 +4,16 @@ interface PromiseWithResolvers<T> {
   reject: (reason?: unknown) => void
 }
 
+declare global {
+  interface PromiseConstructor {
+    withResolvers?<T>(): PromiseWithResolvers<T>
+  }
+}
+
 // Polyfill for Promise.withResolvers
 // Can remove once our minimum supported Node version is 22
 export function promiseWithResolvers<T>(): PromiseWithResolvers<T> {
-  if (typeof Promise.withResolvers === 'function') {
+  if (Promise.withResolvers) {
     return Promise.withResolvers<T>()
   }
 
