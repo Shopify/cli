@@ -221,10 +221,7 @@ export class DevSession {
       await this.logger.debug('❌ Dev preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
-      if (
-        result.error instanceof Error &&
-        (result.error as Error & {cause?: string}).cause === 'validation-error'
-      ) {
+      if (result.error instanceof Error && (result.error as Error & {cause?: string}).cause === 'validation-error') {
         this.statusManager.setMessage('VALIDATION_ERROR')
       } else {
         if (event) this.failedEvents.push(event)

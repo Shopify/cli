@@ -51,7 +51,8 @@ function getProxyServerWebsocketUpgradeListener(
     if (target) {
       return proxy.ws(req, socket, head, {target}, (err) => {
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-          const error = isAggregateError(err) && err.errors.length > 0 ? err.errors[err.errors.length - 1]! : err
+          const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
+          const error = lastError ?? err
           outputWarn(`Error forwarding websocket request: ${error.message}`, stdout)
           outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })
@@ -71,7 +72,8 @@ function getProxyServerRequestListener(
     if (target) {
       return proxy.web(req, res, {target}, (err) => {
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-          const error = isAggregateError(err) && err.errors.length > 0 ? err.errors[err.errors.length - 1]! : err
+          const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
+          const error = lastError ?? err
           outputWarn(`Error forwarding web request: ${error.message}`, stdout)
           outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })
