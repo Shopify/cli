@@ -1040,7 +1040,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
     shopFqdn,
     manifest,
     inheritedModuleUids,
-    websocketUrl,
   }: DevSessionUpdateOptions): Promise<DevSessionUpdateMutation> {
     const appIdNumber = String(numberFromGid(appId))
     const variables: DevSessionUpdateMutationVariables = {
@@ -1048,7 +1047,6 @@ export class AppManagementClient implements DeveloperPlatformClient {
       assetsUrl,
       manifest: JSON.stringify(manifest),
       inheritedModuleUids,
-      websocketUrl,
     }
     return this.appDevRequest({query: DevSessionUpdate, shopFqdn, variables})
   }
