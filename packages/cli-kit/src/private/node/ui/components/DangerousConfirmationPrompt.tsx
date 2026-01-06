@@ -146,7 +146,7 @@ interface CompletedPromptProps {
 
 const CompletedPrompt: FunctionComponent<CompletedPromptProps> = ({cancelled}) => (
   <Box>
-    <Box marginRight={2}>
+    <Box width={3}>
       {cancelled ? <Text color="red">{figures.cross}</Text> : <Text color="cyan">{figures.tick}</Text>}
     </Box>
 

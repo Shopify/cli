@@ -25,7 +25,7 @@ function MountHook({callback}: {callback(): void}) {
 
 export function renderHook<T, TP>(
   hook: () => T,
-  Providers: React.ComponentType<TP> = ({children}) => <>{children}</>,
+  Providers: React.ComponentType<React.PropsWithChildren<TP>> = ({children}) => <>{children}</>,
   options: Omit<TP, 'children'> = {} as TP,
 ) {
   const hookResult: HookWrapper<T> = {} as any

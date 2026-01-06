@@ -6,6 +6,10 @@ import * as https from 'https'
 import {Writable} from 'stream'
 import type Server from 'http-proxy-node16'
 
+function isAggregateError(err: Error): err is Error & {errors: Error[]} {
+  return 'errors' in err && Array.isArray((err as {errors?: unknown}).errors)
+}
+
 export interface LocalhostCert {
   key: string
   cert: string
@@ -47,7 +51,8 @@ function getProxyServerWebsocketUpgradeListener(
     if (target) {
       return proxy.ws(req, socket, head, {target}, (err) => {
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-          const error = err instanceof AggregateError && err.errors.length > 0 ? err.errors[err.errors.length - 1] : err
+          const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
+          const error = lastError ?? err
           outputWarn(`Error forwarding websocket request: ${error.message}`, stdout)
           outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })
@@ -67,7 +72,8 @@ function getProxyServerRequestListener(
     if (target) {
       return proxy.web(req, res, {target}, (err) => {
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
-          const error = err instanceof AggregateError && err.errors.length > 0 ? err.errors[err.errors.length - 1] : err
+          const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
+          const error = lastError ?? err
           outputWarn(`Error forwarding web request: ${error.message}`, stdout)
           outputWarn(`└  Unreachable target "${target}" for path: "${req.url}"`, stdout)
         })

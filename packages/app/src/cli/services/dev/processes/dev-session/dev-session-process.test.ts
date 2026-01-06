@@ -360,7 +360,7 @@ describe('pushUpdatesForDevSession', () => {
   test('sets validation error status message when error cause is validation-error', async () => {
     // Given
     const validationError = new Error('Validation failed')
-    validationError.cause = 'validation-error'
+    ;(validationError as Error & {cause: string}).cause = 'validation-error'
 
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)

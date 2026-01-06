@@ -114,7 +114,7 @@ export function canProxyRequest(event: H3Event) {
 }
 
 function getStoreFqdnForRegEx(ctx: DevServerContext) {
-  return ctx.session.storeFqdn.replaceAll('.', '\\.')
+  return ctx.session.storeFqdn.replace(/\\/g, '\\\\').replace(/\./g, '\\.')
 }
 
 /**
@@ -289,7 +289,7 @@ export function getProxyStorefrontHeaders(event: H3Event) {
 }
 
 export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): Promise<Response> {
-  const path = event.path.replaceAll(EXTENSION_CDN_PREFIX, '/')
+  const path = event.path.replace(new RegExp(EXTENSION_CDN_PREFIX, 'g'), '/')
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
 

@@ -229,7 +229,7 @@ export const subscribeToAppLogs = async (
   return jwtToken
 }
 
-export function prettyPrintJsonIfPossible(json: unknown) {
+export function prettyPrintJsonIfPossible(json: unknown): string | undefined {
   try {
     if (typeof json === 'string') {
       const jsonObject = JSON.parse(json)
@@ -237,7 +237,7 @@ export function prettyPrintJsonIfPossible(json: unknown) {
     } else if (typeof json === 'object' && json !== null) {
       return JSON.stringify(json, null, 2)
     } else {
-      return json
+      return undefined
     }
   } catch (error) {
     throw new Error(`Error parsing JSON: ${error as string}`)

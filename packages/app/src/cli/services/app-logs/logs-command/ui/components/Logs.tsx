@@ -77,9 +77,9 @@ const Logs: FunctionComponent<LogsProps> = ({
             </Box>
             <Box flexDirection="column" marginLeft={4}>
               {appLog instanceof FunctionRunLog && (
-                <>
+                <Box flexDirection="column">
                   <Text>{appLog.logs}</Text>
-                  {appLog.inputQueryVariablesMetafieldKey && appLog.inputQueryVariablesMetafieldNamespace && (
+                  {appLog.inputQueryVariablesMetafieldKey && appLog.inputQueryVariablesMetafieldNamespace ? (
                     <Box flexDirection="column" marginTop={1}>
                       <Text bold>Input Query Variables:</Text>
                       <Box flexDirection="row" marginLeft={1} marginTop={1}>
@@ -98,8 +98,8 @@ const Logs: FunctionComponent<LogsProps> = ({
                         </Text>
                       </Box>
                     </Box>
-                  )}
-                  {appLog.input && (
+                  ) : null}
+                  {appLog.input ? (
                     <Box flexDirection="column" marginTop={1}>
                       <Text bold>
                         Input <Text dimColor>({appLog.inputBytes} bytes):</Text>
@@ -108,8 +108,8 @@ const Logs: FunctionComponent<LogsProps> = ({
                         <Text>{prettyPrintJsonIfPossible(appLog.input)}</Text>
                       </Box>
                     </Box>
-                  )}
-                  {appLog.output && (
+                  ) : null}
+                  {appLog.output ? (
                     <Box flexDirection="column" marginTop={1}>
                       <Text bold>
                         Output <Text dimColor>({appLog.outputBytes} bytes):</Text>
@@ -118,41 +118,41 @@ const Logs: FunctionComponent<LogsProps> = ({
                         <Text>{prettyPrintJsonIfPossible(appLog.output)}</Text>
                       </Box>
                     </Box>
-                  )}
-                </>
+                  ) : null}
+                </Box>
               )}
               {appLog instanceof NetworkAccessResponseFromCacheLog && (
-                <>
+                <Box flexDirection="column">
                   <Text>Cache write time: {new Date(appLog.cacheEntryEpochMs).toISOString()}</Text>
                   <Text>Cache TTL: {appLog.cacheTtlMs / 1000} s</Text>
                   <Text>HTTP request:</Text>
                   <Text>{prettyPrintJsonIfPossible(appLog.httpRequest)}</Text>
                   <Text>HTTP response:</Text>
                   <Text>{prettyPrintJsonIfPossible(appLog.httpResponse)}</Text>
-                </>
+                </Box>
               )}
               {appLog instanceof NetworkAccessRequestExecutionInBackgroundLog && (
-                <>
+                <Box flexDirection="column">
                   <Text>Reason: {getBackgroundExecutionReasonMessage(appLog.reason)}</Text>
                   <Text>HTTP request:</Text>
                   <Text>{prettyPrintJsonIfPossible(appLog.httpRequest)}</Text>
-                </>
+                </Box>
               )}
               {appLog instanceof NetworkAccessRequestExecutedLog && (
-                <>
+                <Box flexDirection="column">
                   <Text>Attempt: {appLog.attempt}</Text>
-                  {appLog.connectTimeMs && <Text>Connect time: {appLog.connectTimeMs} ms</Text>}
-                  {appLog.writeReadTimeMs && <Text>Write read time: {appLog.writeReadTimeMs} ms</Text>}
+                  {appLog.connectTimeMs ? <Text>Connect time: {appLog.connectTimeMs} ms</Text> : null}
+                  {appLog.writeReadTimeMs ? <Text>Write read time: {appLog.writeReadTimeMs} ms</Text> : null}
                   <Text>HTTP request:</Text>
                   <Text>{prettyPrintJsonIfPossible(appLog.httpRequest)}</Text>
-                  {appLog.httpResponse && (
-                    <>
+                  {appLog.httpResponse ? (
+                    <Box flexDirection="column">
                       <Text>HTTP response:</Text>
                       <Text>{prettyPrintJsonIfPossible(appLog.httpResponse)}</Text>
-                    </>
-                  )}
-                  {appLog.error && <Text>Error: {appLog.error}</Text>}
-                </>
+                    </Box>
+                  ) : null}
+                  {appLog.error ? <Text>Error: {appLog.error}</Text> : null}
+                </Box>
               )}
             </Box>
           </Box>
