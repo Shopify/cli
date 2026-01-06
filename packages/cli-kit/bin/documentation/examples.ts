@@ -583,7 +583,8 @@ export const examples: {[key in string]: Example} = {
         () => Boolean(stdout.lastFrame()?.includes('Installing dependencies')),
       )
 
-      return stdout.lastFrame()!
+      // Return first frame with the title for deterministic output
+      return stdout.frames.find((frame) => frame.includes('Installing dependencies'))!
     },
   },
   renderSingleTask: {
@@ -596,14 +597,11 @@ export const examples: {[key in string]: Example} = {
         task: async () => {
           await sleep(1)
         },
-        renderOptions: {stdout: stdout as any, debug: true}
+        renderOptions: {stdout: stdout as any, debug: true},
       })
 
-      // Find the last frame that includes mention of "Loading"
-      const loadingFrame = stdout.frames.findLast(frame => frame.includes('Loading'))
-
-      // Gives a frame where the loading bar is visible
-      return loadingFrame ?? stdout.lastFrame()!
+      // Return first frame with the title for deterministic output
+      return stdout.frames.find((frame) => frame.includes('Loading'))!
     },
   },
   renderTextPrompt: {
