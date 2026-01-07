@@ -753,6 +753,45 @@ redirect_urls = [ "https://example.com/api/auth" ]
     expect(app.webs.length).toBe(0)
   })
 
+  test('ignores web blocks in gitignored directories', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // Create a gitignored directory with a web config
+    const ignoredDirectory = joinPath(tmpDir, 'ignored-worktree')
+    await mkdir(ignoredDirectory)
+    await writeWebConfiguration({webDirectory: ignoredDirectory, role: 'backend'})
+
+    // Create .gitignore file
+    const gitignoreContent = 'ignored-worktree/\n'
+    await writeFile(joinPath(tmpDir, '.gitignore'), gitignoreContent)
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    // Should only load the web from the non-ignored directory
+    expect(app.webs.length).toBe(1)
+    expect(app.webs[0]!.directory).not.toContain('ignored-worktree')
+  })
+
+  test('loads all web blocks when no .gitignore file exists', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // Create another directory with a web config (but no .gitignore file)
+    const anotherDirectory = joinPath(tmpDir, 'another-web')
+    await mkdir(anotherDirectory)
+    await writeWebConfiguration({webDirectory: anotherDirectory, role: 'frontend'})
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    // Should load both web blocks since there's no .gitignore
+    expect(app.webs.length).toBe(2)
+  })
+
   test('loads the app when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -832,6 +871,44 @@ redirect_urls = [ "https://example.com/api/auth" ]
     expect(app.allExtensions[0]!.configuration.name).toBe('custom_extension')
     expect(app.allExtensions[0]!.idEnvironmentVariableName).toBe('SHOPIFY_CUSTOM_EXTENSION_ID')
     expect(app.allExtensions[0]!.localIdentifier).toBe('custom-extension')
+  })
+
+  test('ignores extensions in gitignored directories', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    // Create a non-ignored extension
+    const blockConfiguration = `
+      name = "my_extension"
+      type = "checkout_post_purchase"
+    `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
+
+    // Create a gitignored directory with an extension
+    const ignoredExtensionDir = joinPath(tmpDir, 'extensions', 'ignored-extension')
+    await mkdir(ignoredExtensionDir)
+    const ignoredBlockConfiguration = `
+      name = "ignored_extension"
+      type = "checkout_post_purchase"
+    `
+    await writeFile(joinPath(ignoredExtensionDir, 'my-ignored-extension.extension.toml'), ignoredBlockConfiguration)
+    await writeFile(joinPath(ignoredExtensionDir, 'index.js'), '')
+
+    // Create .gitignore file
+    const gitignoreContent = 'extensions/ignored-extension/\n'
+    await writeFile(joinPath(tmpDir, '.gitignore'), gitignoreContent)
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    // Should only load the non-ignored extension
+    expect(app.allExtensions.length).toBe(1)
+    expect(app.allExtensions[0]!.configuration.name).toBe('my_extension')
   })
 
   test('loads the app from a extension directory when it has a extension with a valid configuration', async () => {
