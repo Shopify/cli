@@ -487,6 +487,138 @@ describe('ui_extension', async () => {
       ])
     })
 
+    test('build_manifest includes tools asset when tools is present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            tools: './tools.json',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              tools: {
+                filepath: 'test-ui-extension-tools-tools.json',
+                module: './tools.json',
+                static: true,
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
+    test('build_manifest includes instructions asset when instructions is present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            instructions: './instructions.md',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              instructions: {
+                filepath: 'test-ui-extension-instructions-instructions.md',
+                module: './instructions.md',
+                static: true,
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
     test('returns error if there is no targeting or extension_points', async () => {
       // Given
       const allSpecs = await loadLocalExtensionsSpecifications()
@@ -545,7 +677,7 @@ describe('ui_extension', async () => {
 
         expect(result).toEqual(
           err(`Couldn't find ${notFoundPath}
-Please check the module path for EXTENSION::POINT::A
+  Please check the module path for EXTENSION::POINT::A
 
 Please check the configuration in ${uiExtension.configurationPath}`),
         )
@@ -583,6 +715,288 @@ Extension point targets must be unique
 Please check the configuration in ${uiExtension.configurationPath}`),
         )
       })
+    })
+
+    test('returns err(message) when tools file does not exist', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              tools: './tools.json',
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
+
+        const notFoundPath = joinPath(tmpDir, './tools.json')
+        expect(result).toEqual(
+          err(`Couldn't find ${notFoundPath}
+  Please check the tools path for EXTENSION::POINT::A
+
+Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
+        )
+      })
+    })
+
+    test('returns err(message) when instructions file does not exist', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              instructions: './instructions.md',
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
+
+        const notFoundPath = joinPath(tmpDir, './instructions.md')
+        expect(result).toEqual(
+          err(`Couldn't find ${notFoundPath}
+  Please check the instructions path for EXTENSION::POINT::A
+
+Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
+        )
+      })
+    })
+
+    test('returns err(message) with multiple errors when both tools and instructions files are missing', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              tools: './tools.json',
+              instructions: './instructions.md',
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
+
+        const toolsNotFoundPath = joinPath(tmpDir, './tools.json')
+        const instructionsNotFoundPath = joinPath(tmpDir, './instructions.md')
+        expect(result).toEqual(
+          err(`Couldn't find ${toolsNotFoundPath}
+  Please check the tools path for EXTENSION::POINT::A
+
+Couldn't find ${instructionsNotFoundPath}
+  Please check the instructions path for EXTENSION::POINT::A
+
+Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
+        )
+      })
+    })
+
+    test('returns ok({}) when tools and instructions files exist', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+        await writeFile(joinPath(tmpDir, 'tools.json'), '{"tools": []}')
+        await writeFile(joinPath(tmpDir, 'instructions.md'), '# Instructions')
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              tools: './tools.json',
+              instructions: './instructions.md',
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
+
+        expect(result).toStrictEqual(ok({}))
+      })
+    })
+
+    test('build_manifest includes both tools and instructions when both are present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            tools: './tools.json',
+            instructions: './instructions.md',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              tools: {
+                filepath: 'test-ui-extension-tools-tools.json',
+                module: './tools.json',
+                static: true,
+              },
+              instructions: {
+                filepath: 'test-ui-extension-instructions-instructions.md',
+                module: './instructions.md',
+                static: true,
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
     })
   })
 
