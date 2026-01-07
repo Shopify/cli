@@ -1,5 +1,13 @@
 # @shopify/theme
 
+## 3.89.0
+
+### Patch Changes
+
+- e92155e: Abort theme command when an invalid environment is passed in so it doesn't fall back to cached store data
+- eda441d: Create a slight delay when keypressing theme dev shortcut keys to stop accidental copy pasting and opening up a ton of tabs
+  - @shopify/cli-kit@3.89.0
+
 ## 3.88.0
 
 ### Minor Changes
