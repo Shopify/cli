@@ -225,6 +225,7 @@ export async function testUIExtension(
       block_progress: false,
       network_access: false,
       api_access: false,
+      supports_offline: false,
       collect_buyer_consent: {
         sms_marketing: false,
         customer_privacy: false,

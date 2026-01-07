@@ -32,6 +32,7 @@ describe('getUIExtensionPayload', () => {
             network_access: true,
             api_access: true,
             block_progress: false,
+            supports_offline: true,
             collect_buyer_consent: {
               sms_marketing: false,
               customer_privacy: false,
@@ -88,6 +89,7 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: true,
           apiAccess: true,
+          supportsOffline: true,
           collectBuyerConsent: {
             smsMarketing: false,
           },
@@ -156,6 +158,7 @@ describe('getUIExtensionPayload', () => {
             network_access: true,
             api_access: true,
             block_progress: false,
+            supports_offline: true,
             collect_buyer_consent: {
               sms_marketing: false,
               customer_privacy: false,
@@ -217,6 +220,7 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: true,
           apiAccess: true,
+          supportsOffline: true,
           collectBuyerConsent: {
             smsMarketing: false,
           },
@@ -291,6 +295,7 @@ describe('getUIExtensionPayload', () => {
             network_access: true,
             api_access: true,
             block_progress: false,
+            supports_offline: true,
             collect_buyer_consent: {
               sms_marketing: false,
               customer_privacy: false,
@@ -351,6 +356,7 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: true,
           apiAccess: true,
+          supportsOffline: true,
           collectBuyerConsent: {
             smsMarketing: false,
           },
@@ -410,6 +416,7 @@ describe('getUIExtensionPayload', () => {
           blockProgress: false,
           networkAccess: false,
           apiAccess: false,
+          supportsOffline: false,
           collectBuyerConsent: {
             smsMarketing: false,
           },

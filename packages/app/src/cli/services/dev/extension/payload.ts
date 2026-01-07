@@ -48,6 +48,7 @@ export async function getUIExtensionPayload(
         blockProgress: extension.configuration.capabilities?.block_progress ?? false,
         networkAccess: extension.configuration.capabilities?.network_access ?? false,
         apiAccess: extension.configuration.capabilities?.api_access ?? false,
+        supportsOffline: extension.configuration.capabilities?.supports_offline ?? false,
         collectBuyerConsent: {
           smsMarketing: extension.configuration.capabilities?.collect_buyer_consent?.sms_marketing ?? false,
           customerPrivacy: extension.configuration.capabilities?.collect_buyer_consent?.customer_privacy ?? false,
