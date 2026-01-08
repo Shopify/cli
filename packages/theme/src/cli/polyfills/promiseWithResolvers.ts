@@ -6,7 +6,7 @@ interface PromiseWithResolvers<T> {
 
 declare global {
   interface PromiseConstructor {
-    withResolvers?<T>(): PromiseWithResolvers<T>
+    withResolvers<T>(): PromiseWithResolvers<T>
   }
 }
 
