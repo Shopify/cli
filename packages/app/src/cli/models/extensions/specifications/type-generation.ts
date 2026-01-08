@@ -2,6 +2,9 @@ import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import ts from 'typescript'
+import {compile} from 'json-schema-to-typescript'
+import {pascalize} from '@shopify/cli-kit/common/string'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -154,12 +157,41 @@ export async function findAllImportedFiles(filePath: string, visited = new Set<s
   return [...new Set(allFiles)]
 }
 
-export function createTypeDefinition(
-  fullPath: string,
-  typeFilePath: string,
-  targets: string[],
-  apiVersion: string,
-): string | null {
+interface CreateTypeDefinitionOptions {
+  fullPath: string
+  typeFilePath: string
+  targets: string[]
+  apiVersion: string
+  toolsTypeDefinition?: string
+}
+
+/**
+ * Builds the shopify API type based on targets and optional tools type.
+ * Returns null if no targets are provided.
+ */
+function buildShopifyType(targets: string[], toolsTypeDefinition?: string): string | null {
+  const toolsSuffix = toolsTypeDefinition ? ' & { tools: ShopifyTools }' : ''
+
+  if (targets.length === 1) {
+    const target = targets[0] ?? ''
+    return `import('@shopify/ui-extensions/${target}').Api${toolsSuffix}`
+  }
+
+  if (targets.length > 1) {
+    const unionType = targets.map((target) => `import('@shopify/ui-extensions/${target}').Api`).join(' | ')
+    return `(${unionType})${toolsSuffix}`
+  }
+
+  return null
+}
+
+export function createTypeDefinition({
+  fullPath,
+  typeFilePath,
+  targets,
+  apiVersion,
+  toolsTypeDefinition,
+}: CreateTypeDefinitionOptions): string | null {
   try {
     // Validate that all targets can be resolved
     for (const target of targets) {
@@ -177,15 +209,20 @@ export function createTypeDefinition(
 
     const relativePath = relativizePath(fullPath, dirname(typeFilePath))
 
-    if (targets.length === 1) {
-      const target = targets[0] ?? ''
-      return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: import('@shopify/ui-extensions/${target}').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`
-    } else if (targets.length > 1) {
-      const unionType = targets.map((target) => `    import('@shopify/ui-extensions/${target}').Api`).join(' |\n')
-      return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: \n${unionType};\n  const globalThis: { shopify: typeof shopify };\n}\n`
-    }
+    const shopifyType = buildShopifyType(targets, toolsTypeDefinition)
+    if (!shopifyType) return null
 
-    return null
+    const lines = [
+      '//@ts-ignore',
+      `declare module './${relativePath}' {`,
+      ...(toolsTypeDefinition ? [`  ${toolsTypeDefinition}`] : []),
+      `  const shopify: ${shopifyType};`,
+      '  const globalThis: { shopify: typeof shopify };',
+      '}',
+      '',
+    ]
+
+    return lines.join('\n')
   } catch (error) {
     // Re-throw AbortError as-is, wrap other errors
     if (error instanceof AbortError) {
@@ -215,4 +252,79 @@ export async function findNearestTsConfigDir(
       return dirname(tsconfigPath)
     }
   }
+}
+
+interface ToolDefinition {
+  name: string
+  description: string
+  inputSchema: object
+  outputSchema?: object
+}
+const ToolDefinitionSchema: zod.ZodType<ToolDefinition> = zod.object({
+  name: zod.string(),
+  description: zod.string(),
+  inputSchema: zod.object({}).passthrough(),
+  outputSchema: zod.object({}).passthrough().optional(),
+})
+
+export const ToolsFileSchema = zod.array(ToolDefinitionSchema)
+
+/**
+ * Generates TypeScript types for shopify.tools.register based on tool definitions
+ * @param tools - Array of tool definitions from tools.json
+ * @returns TypeScript declaration string
+ */
+export async function createToolsTypeDefinition(tools: ToolDefinition[]): Promise<string> {
+  if (tools.length === 0) return ''
+
+  const toolNames = new Set<string>()
+  const typePromises = tools.map(async (tool) => {
+    // Tool names must be unique within a tools file
+    if (toolNames.has(tool.name)) {
+      throw new AbortError(
+        `Tool name "${tool.name}" is defined multiple times. Tool names must be unique within a tools file.`,
+      )
+    }
+    toolNames.add(tool.name)
+
+    // Generate input type definition
+    const inputTypeName = pascalize(`${tool.name}Input`)
+    const inputType = await formatJsonSchemaType(inputTypeName, tool.inputSchema)
+
+    // Generate output type definition
+    const outputTypeName = pascalize(`${tool.name}Output`)
+    const outputType = await formatJsonSchemaType(outputTypeName, tool.outputSchema)
+
+    return {
+      name: tool.name,
+      description: tool.description,
+      inputType,
+      outputType,
+      inputTypeName,
+      outputTypeName,
+    }
+  })
+
+  const types = await Promise.all(typePromises)
+
+  const toolRegistrations = types
+    .map(({name, description, inputTypeName, outputTypeName}) => {
+      const formattedDescription = description
+        .replace(/\*\//g, '*\\/')
+        .split('\n')
+        .map((line) => `   * ${line}`)
+        .join('\n')
+      return `  /**\n${formattedDescription}\n   */\n  register(name: '${name}', handler: (input: ${inputTypeName}) => ${outputTypeName} | Promise<${outputTypeName}>);`
+    })
+    .join('\n')
+
+  return `${types
+    .map(({inputType, outputType}) => `${inputType}\n${outputType}`)
+    .join('\n')}\ninterface ShopifyTools {\n${toolRegistrations}\n}\n`
+}
+
+async function formatJsonSchemaType(name: string, schema?: object): Promise<string> {
+  const outputType = schema ? await compile(schema, name, {bannerComment: ''}) : `type ${name} = unknown`
+  // The json-schema-to-typescript library adds an export keyword to the type definition, we need to remove it
+  return outputType.startsWith('export ') ? outputType.slice(7) : outputType
 }
