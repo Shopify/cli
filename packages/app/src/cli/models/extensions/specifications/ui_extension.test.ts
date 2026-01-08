@@ -148,6 +148,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
@@ -213,6 +214,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
@@ -274,6 +276,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           urls: {},
@@ -335,6 +338,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -399,6 +403,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -465,6 +470,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
