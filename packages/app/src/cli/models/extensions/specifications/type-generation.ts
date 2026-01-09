@@ -2,6 +2,9 @@ import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import ts from 'typescript'
+import {compile} from 'json-schema-to-typescript'
+import {pascalize} from '@shopify/cli-kit/common/string'
+import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)
@@ -159,6 +162,7 @@ export function createTypeDefinition(
   typeFilePath: string,
   targets: string[],
   apiVersion: string,
+  toolsTypeDefinition?: string,
 ): string | null {
   try {
     // Validate that all targets can be resolved
@@ -177,12 +181,14 @@ export function createTypeDefinition(
 
     const relativePath = relativizePath(fullPath, dirname(typeFilePath))
 
+    const toolsType = toolsTypeDefinition ? ` & { tools: ShopifyTools }` : ''
+    const toolsDefinition = toolsTypeDefinition ? `\n  ${toolsTypeDefinition}` : ''
     if (targets.length === 1) {
       const target = targets[0] ?? ''
-      return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: import('@shopify/ui-extensions/${target}').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`
+      return `//@ts-ignore\ndeclare module './${relativePath}' {${toolsDefinition}\n  const shopify: import('@shopify/ui-extensions/${target}').Api${toolsType};\n  const globalThis: { shopify: typeof shopify };\n}\n`
     } else if (targets.length > 1) {
       const unionType = targets.map((target) => `    import('@shopify/ui-extensions/${target}').Api`).join(' |\n')
-      return `//@ts-ignore\ndeclare module './${relativePath}' {\n  const shopify: \n${unionType};\n  const globalThis: { shopify: typeof shopify };\n}\n`
+      return `//@ts-ignore\ndeclare module './${relativePath}' {${toolsDefinition}\n  const shopify: \n${unionType}${toolsType};\n  const globalThis: { shopify: typeof shopify };\n}\n`
     }
 
     return null
@@ -215,4 +221,91 @@ export async function findNearestTsConfigDir(
       return dirname(tsconfigPath)
     }
   }
+}
+
+interface ToolDefinition {
+  name: string
+  description: string
+  inputSchema: object
+  outputSchema?: object
+}
+const ToolDefinitionSchema: zod.ZodType<ToolDefinition> = zod.object({
+  name: zod.string(),
+  description: zod.string(),
+  inputSchema: zod.object({}).passthrough(),
+  outputSchema: zod.object({}).passthrough().optional(),
+})
+
+export const ToolsFileSchema = zod.array(ToolDefinitionSchema)
+
+/**
+ * Generates TypeScript types for shopify.tools.register based on tool definitions
+ * @param tools - Array of tool definitions from tools.json
+ * @returns TypeScript declaration string
+ */
+export async function createToolsTypeDefinition(tools: ToolDefinition[]): Promise<string> {
+  if (tools.length === 0) return ''
+
+  const toolNames = new Set<string>()
+  const typePromises = tools.map(async (tool) => {
+    // Tool names must be unique within a tools file
+    if (toolNames.has(tool.name)) {
+      throw new AbortError(
+        `Tool name "${tool.name}" is defined multiple times. Tool names must be unique within a tools file.`,
+      )
+    }
+    toolNames.add(tool.name)
+
+    // Generate input type definition
+    const inputTypeName = pascalize(`${tool.name}Input`)
+    let inputType = tool.inputSchema
+      ? await compile(tool.inputSchema, inputTypeName, {
+          bannerComment: '',
+          unknownAny: true,
+        })
+      : `type ${inputTypeName} = unknown`
+    // The json-schema-to-typescript library adds an export keyword to the type definition, we need to remove it
+    if (inputType.startsWith('export ')) {
+      inputType = inputType.slice(7)
+    }
+
+    // Generate output type definition
+    const outputTypeName = pascalize(`${tool.name}Output`)
+    let outputType = tool.outputSchema
+      ? await compile(tool.outputSchema, outputTypeName, {
+          bannerComment: '',
+          unknownAny: true,
+        })
+      : `type ${outputTypeName} = unknown`
+    // The json-schema-to-typescript library adds an export keyword to the type definition, we need to remove it
+    if (outputType.startsWith('export ')) {
+      outputType = outputType.slice(7)
+    }
+
+    return {
+      name: tool.name,
+      description: tool.description,
+      inputType,
+      outputType,
+      inputTypeName,
+      outputTypeName,
+    }
+  })
+
+  const types = await Promise.all(typePromises)
+
+  const toolRegistrations = types
+    .map(({name, description, inputTypeName, outputTypeName}) => {
+      const formattedDescription = description
+        .replace(/\*\//g, '*\\/')
+        .split('\n')
+        .map((line) => ` * ${line}`)
+        .join('\n')
+      return `/**\n${formattedDescription}\n */\nregister(name: '${name}', handler: (input: ${inputTypeName}) => ${outputTypeName} | Promise<${outputTypeName}>);`
+    })
+    .join('\n')
+
+  return `${types
+    .map(({inputType, outputType}) => `${inputType}\n${outputType}`)
+    .join('\n')}\ninterface ShopifyTools {\n${toolRegistrations}\n}\n`
 }
