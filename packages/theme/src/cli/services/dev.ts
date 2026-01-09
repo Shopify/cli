@@ -123,9 +123,6 @@ export async function dev(options: DevOptions) {
   const {serverStart, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(options.theme, ctx)
 
   readline.emitKeypressEvents(process.stdin)
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(true)
-  }
 
   const keypressHandler = createKeypressHandler(urls, ctx)
   process.stdin.on('keypress', keypressHandler)
@@ -135,6 +132,9 @@ export async function dev(options: DevOptions) {
     renderDevSetupProgress()
       .then(serverStart)
       .then(() => {
+        if (process.stdin.isTTY) {
+          process.stdin.setRawMode(true)
+        }
         renderLinks(urls)
         if (options.open) {
           openURLSafely(urls.local, 'development server')
