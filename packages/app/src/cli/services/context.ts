@@ -173,6 +173,8 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     envIdentifiers: getAppIdentifiers({app}),
     remoteApp,
     activeAppVersion,
+    allowUpdates: options.allowUpdates,
+    allowDeletes: options.allowDeletes,
   })
 
   await updateAppIdentifiers({app, identifiers, command: 'deploy', developerPlatformClient})

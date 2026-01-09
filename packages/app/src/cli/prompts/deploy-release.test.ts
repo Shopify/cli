@@ -6,10 +6,15 @@ import {
   buildDashboardBreakdownInfo,
   buildExtensionBreakdownInfo,
 } from '../services/context/breakdown-extensions.js'
-import {MockInstance, describe, expect, test, vi} from 'vitest'
+import {MockInstance, beforeEach, describe, expect, test, vi} from 'vitest'
 import * as ui from '@shopify/cli-kit/node/ui'
 
 vi.mock('@shopify/cli-kit/node/context/local')
+
+beforeEach(() => {
+  // Mock isTTY to return true so prompts are shown instead of errors in tests
+  vi.spyOn(ui, 'isTTY').mockReturnValue(true)
+})
 
 describe('deployOrReleaseConfirmationPrompt', () => {
   describe('when release', () => {
@@ -406,6 +411,142 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         }),
       )
       expect(result).toBe(true)
+    })
+  })
+
+  describe('allow-updates and allow-deletes flags', () => {
+    test('allowUpdates and allowDeletes together should skip prompt and return true', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt')
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle: 'app title',
+        release: true,
+        force: false,
+        allowUpdates: true,
+        allowDeletes: true,
+      })
+
+      // Then
+      expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    test('allowUpdates without deletes should skip prompt and return true', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+      // Remove all deletions
+      breakdownInfo.extensionIdentifiersBreakdown.onlyRemote = []
+      breakdownInfo.configExtensionIdentifiersBreakdown!.deletedFieldNames = []
+
+      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt')
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle: 'app title',
+        release: true,
+        force: false,
+        allowUpdates: true,
+        allowDeletes: false,
+      })
+
+      // Then
+      expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    test('allowUpdates with deletes should show prompt in TTY', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+
+      const renderDangerousConfirmationPromptSpyOn = vi
+        .spyOn(ui, 'renderDangerousConfirmationPrompt')
+        .mockResolvedValue(true)
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      vi.spyOn(ui, 'isTTY').mockReturnValue(true)
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle: 'app title',
+        release: true,
+        force: false,
+        allowUpdates: true,
+        allowDeletes: false,
+      })
+
+      // Then
+      expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    test('allowDeletes without updates should skip prompt and return true', async () => {
+      // Given
+      const breakdownInfo = buildEmptyBreakdownInfo()
+      // Add only deletions
+      breakdownInfo.extensionIdentifiersBreakdown.onlyRemote = [buildExtensionBreakdownInfo('remote', 'uid')]
+      breakdownInfo.configExtensionIdentifiersBreakdown!.deletedFieldNames = ['deleted field']
+
+      const renderConfirmationPromptSpyOn = vi.spyOn(ui, 'renderConfirmationPrompt')
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+
+      // When
+      const result = await deployOrReleaseConfirmationPrompt({
+        ...breakdownInfo,
+        appTitle: 'app title',
+        release: true,
+        force: false,
+        allowUpdates: false,
+        allowDeletes: true,
+      })
+
+      // Then
+      expect(renderConfirmationPromptSpyOn).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    test('non-TTY with deletes and without allowDeletes should throw error', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      vi.spyOn(ui, 'isTTY').mockReturnValue(false)
+
+      // When/Then
+      await expect(
+        deployOrReleaseConfirmationPrompt({
+          ...breakdownInfo,
+          appTitle: 'app title',
+          release: true,
+          force: false,
+          allowUpdates: true,
+          allowDeletes: false,
+        }),
+      ).rejects.toThrow('This deployment includes changes that require confirmation.')
+    })
+
+    test('non-TTY with updates and without allowUpdates should throw error', async () => {
+      // Given
+      const breakdownInfo = buildCompleteBreakdownInfo()
+      vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
+      vi.spyOn(ui, 'isTTY').mockReturnValue(false)
+
+      // When/Then
+      await expect(
+        deployOrReleaseConfirmationPrompt({
+          ...breakdownInfo,
+          appTitle: 'app title',
+          release: true,
+          force: false,
+          allowUpdates: false,
+          allowDeletes: true,
+        }),
+      ).rejects.toThrow('This deployment includes changes that require confirmation.')
     })
   })
 })
