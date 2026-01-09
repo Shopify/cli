@@ -332,6 +332,147 @@ describe('app-event-watcher', () => {
     )
   })
 
+  describe('generateExtensionTypes', () => {
+    test('is called after extensions are rebuilt on file changes', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const fileWatchEvent: WatcherEvent = {
+          type: 'file_updated',
+          path: '/extensions/ui_extension_1/src/file.js',
+          extensionPath: '/extensions/ui_extension_1',
+          startTime: [0, 0],
+        }
+
+        // Given
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [extension1],
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+        })
+        const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
+
+        const mockManager = new MockESBuildContextManager()
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+
+        // When
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+        await flushPromises()
+
+        // Wait for event processing
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        // Then
+        expect(generateTypesSpy).toHaveBeenCalled()
+      })
+    })
+
+    test('is not called again when extensions are created (already called during app reload)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const fileWatchEvent: WatcherEvent = {
+          type: 'extension_folder_created',
+          path: '/extensions/ui_extension_2',
+          extensionPath: '/extensions/ui_extension_2',
+          startTime: [0, 0],
+        }
+
+        // Given
+        const mockedApp = testAppLinked({allExtensions: [extension1, extension2]})
+        const generateTypesSpy = vi.spyOn(mockedApp, 'generateExtensionTypes')
+        vi.mocked(reloadApp).mockResolvedValue(mockedApp)
+
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [extension1],
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+        })
+
+        const mockManager = new MockESBuildContextManager()
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+
+        // When
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+        await flushPromises()
+
+        // Wait for event processing
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        // Then - not called in watcher because it was already called during reloadApp
+        expect(generateTypesSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    test('is not called again when app config is updated (already called during app reload)', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const fileWatchEvent: WatcherEvent = {
+          type: 'extensions_config_updated',
+          path: 'shopify.app.custom.toml',
+          extensionPath: '/',
+          startTime: [0, 0],
+        }
+
+        // Given
+        const mockedApp = testAppLinked({allExtensions: [extension1, posExtensionUpdated]})
+        const generateTypesSpy = vi.spyOn(mockedApp, 'generateExtensionTypes')
+        vi.mocked(reloadApp).mockResolvedValue(mockedApp)
+
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [extension1, posExtension],
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+        })
+
+        const mockManager = new MockESBuildContextManager()
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+
+        // When
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+        await flushPromises()
+
+        // Wait for event processing
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        // Then - not called in watcher because it was already called during reloadApp
+        expect(generateTypesSpy).not.toHaveBeenCalled()
+      })
+    })
+
+    test('is called when extensions are deleted to clean up types', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const fileWatchEvent: WatcherEvent = {
+          type: 'extension_folder_deleted',
+          path: '/extensions/ui_extension_1',
+          extensionPath: '/extensions/ui_extension_1',
+          startTime: [0, 0],
+        }
+
+        // Given
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [extension1, extension2],
+          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+        })
+        const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
+
+        const mockManager = new MockESBuildContextManager()
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+
+        // When
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+        await flushPromises()
+
+        // Wait for event processing
+        await new Promise((resolve) => setTimeout(resolve, 100))
+
+        // Then - generateExtensionTypes should still be called when extensions are deleted
+        // to clean up type definitions for the removed extension
+        expect(generateTypesSpy).toHaveBeenCalled()
+      })
+    })
+  })
+
   describe('app-event-watcher build extension errors', () => {
     test('esbuild errors are logged with a custom format', async () => {
       await inTemporaryDirectory(async (tmpDir) => {

@@ -163,6 +163,12 @@ export class AppEventWatcher extends EventEmitter {
           // Build the created/updated extensions and update the extension events with the build result
           await this.buildExtensions(buildableEvents)
 
+          // Generate the extension types after building the extensions so new imports are included
+          // Skip if the app was reloaded, as generateExtensionTypes was already called during reload
+          if (!appEvent.appWasReloaded) {
+            await this.app.generateExtensionTypes()
+          }
+
           // Find deleted extensions and delete their previous build output
           await this.deleteExtensionsBuildOutput(appEvent)
           this.emit('all', appEvent)

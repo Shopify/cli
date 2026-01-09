@@ -10,8 +10,8 @@ import sortBy from 'lodash/sortBy.js'
 
 declare module 'react' {
   function forwardRef<T, P>(
-    render: (props: P, ref: React.Ref<T>) => JSX.Element | null,
-  ): (props: P & React.RefAttributes<T>) => JSX.Element | null
+    render: (props: P, ref: React.Ref<T>) => React.ReactElement | null,
+  ): (props: P & React.RefAttributes<T>) => React.ReactElement | null
 }
 export interface SelectInputProps<T> {
   items: Item<T>[]
@@ -90,7 +90,7 @@ function Item<T>({
   items,
   hasAnyGroup,
   index,
-}: ItemProps<T>): JSX.Element {
+}: ItemProps<T>): React.ReactElement {
   const label = highlightedLabel(item.label, highlightedTerm)
   let title: string | undefined
   let labelColor
@@ -153,7 +153,7 @@ function SelectInputInner<T>(
     groupOrder,
   }: SelectInputProps<T>,
   ref: React.ForwardedRef<DOMElement>,
-): JSX.Element | null {
+): React.ReactElement | null {
   let noItems = false
 
   if (rawItems.length === 0) {

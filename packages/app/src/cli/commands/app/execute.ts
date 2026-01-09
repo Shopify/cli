@@ -1,47 +1,36 @@
-import {appFlags, bulkOperationFlags} from '../../flags.js'
+import {appFlags, operationFlags} from '../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
-import {storeContext} from '../../services/store-context.js'
-import {executeBulkOperation} from '../../services/bulk-operations/execute-bulk-operation.js'
+import {executeOperation} from '../../services/execute-operation.js'
+import {prepareExecuteContext} from '../../utilities/execute-command-helpers.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Execute extends AppLinkedCommand {
-  static summary = 'Execute bulk operations.'
-
-  static description = 'Execute bulk operations against the Shopify Admin API.'
+  static summary = 'Execute GraphQL queries and mutations.'
 
   static hidden = true
+
+  static description = 'Executes an Admin API GraphQL query or mutation on the specified dev store.'
 
   static flags = {
     ...globalFlags,
     ...appFlags,
-    ...bulkOperationFlags,
+    ...operationFlags,
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Execute)
 
-    const appContextResult = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-    })
+    const {query, appContextResult, store} = await prepareExecuteContext(flags)
 
-    const store = await storeContext({
-      appContextResult,
-      storeFqdn: flags.store,
-      forceReselectStore: flags.reset,
-    })
-
-    await executeBulkOperation({
-      app: appContextResult.app,
+    await executeOperation({
+      organization: appContextResult.organization,
+      remoteApp: appContextResult.remoteApp,
       storeFqdn: store.shopDomain,
-      query: flags.query,
+      query,
       variables: flags.variables,
       variableFile: flags['variable-file'],
-      watch: flags.watch,
       outputFile: flags['output-file'],
+      ...(flags.version && {version: flags.version}),
     })
 
     return {app: appContextResult.app}

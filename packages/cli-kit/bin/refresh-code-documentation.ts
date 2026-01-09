@@ -1,7 +1,5 @@
 import {examples} from './documentation/examples.js'
 import {unstyled} from '../src/public/node/output.js'
-import {renderFatalError} from '../src/public/node/ui.js'
-import {AbortError} from '../src/public/node/error.js'
 import {FunctionDeclaration, JSDocTag, Project} from 'ts-morph'
 import difference from 'lodash/difference.js'
 
@@ -17,11 +15,13 @@ async function refreshDocumentation(): Promise<void> {
   validateMissingDocs(renderFunctions, validationErrors)
 
   if (validationErrors.length > 0) {
-    renderFatalError(
-      new AbortError('Refreshing the documentation failed', {
-        list: {items: validationErrors.map((error) => error.message)},
-      }),
-    )
+    // eslint-disable-next-line no-console
+    console.error('Refreshing the documentation failed:')
+    validationErrors.forEach((error) => {
+      // eslint-disable-next-line no-console
+      console.error(`  - ${error.message}`)
+    })
+    process.exit(1)
   }
 
   const exampleTags: {[key: string]: JSDocTag[]} = renderFunctions.reduce((acc, func) => {

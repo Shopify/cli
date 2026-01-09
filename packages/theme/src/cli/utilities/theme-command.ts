@@ -79,6 +79,10 @@ export default abstract class ThemeCommand extends Command {
 
     // Single environment or no environment
     if (environments.length <= 1) {
+      if (environments[0] && !flags.store) {
+        throw new AbortError(`Please provide a valid environment.`)
+      }
+
       const session = commandRequiresAuth ? await this.createSession(flags) : undefined
       const commandName = this.constructor.name.toLowerCase()
 

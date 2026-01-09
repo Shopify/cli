@@ -565,45 +565,64 @@ export const examples: {[key in string]: Example} = {
   renderTasks: {
     type: 'async',
     basic: async () => {
-      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+      // Force colors for deterministic output (solid blocks vs animated wave)
+      const originalForceColor = process.env.FORCE_COLOR
+      process.env.FORCE_COLOR = '1'
+      try {
+        const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
-      const tasks = [
-        {
-          title: 'Installing dependencies',
-          task: async () => {
-            await new Promise((resolve) => setTimeout(resolve, 2000))
+        const tasks = [
+          {
+            title: 'Installing dependencies',
+            task: async () => {
+              await new Promise((resolve) => setTimeout(resolve, 2000))
+            },
           },
-        },
-      ]
+        ]
 
-      renderTasks(tasks, {renderOptions: {stdout: stdout as any, debug: true}})
+        renderTasks(tasks, {renderOptions: {stdout: stdout as any, debug: true}})
 
-      await waitFor(
-        () => {},
-        () => Boolean(stdout.lastFrame()?.includes('Installing dependencies')),
-      )
+        await waitFor(
+          () => {},
+          () => Boolean(stdout.lastFrame()?.includes('Installing dependencies')),
+        )
 
-      return stdout.lastFrame()!
+        return stdout.lastFrame()!
+      } finally {
+        if (originalForceColor === undefined) {
+          delete process.env.FORCE_COLOR
+        } else {
+          process.env.FORCE_COLOR = originalForceColor
+        }
+      }
     },
   },
   renderSingleTask: {
     type: 'async',
     basic: async () => {
-      const stdout = new Stdout({columns: TERMINAL_WIDTH})
+      // Force colors for deterministic output (solid blocks vs animated wave)
+      const originalForceColor = process.env.FORCE_COLOR
+      process.env.FORCE_COLOR = '1'
+      try {
+        const stdout = new Stdout({columns: TERMINAL_WIDTH})
 
-      await renderSingleTask({
-        title: outputContent`Loading app`,
-        task: async () => {
-          await sleep(1)
-        },
-        renderOptions: {stdout: stdout as any, debug: true}
-      })
+        await renderSingleTask({
+          title: outputContent`Loading app`,
+          task: async () => {
+            await sleep(1)
+          },
+          renderOptions: {stdout: stdout as any, debug: true},
+        })
 
-      // Find the last frame that includes mention of "Loading"
-      const loadingFrame = stdout.frames.findLast(frame => frame.includes('Loading'))
-
-      // Gives a frame where the loading bar is visible
-      return loadingFrame ?? stdout.lastFrame()!
+        // Return first frame with the title for deterministic output
+        return stdout.frames.find((frame) => frame.includes('Loading'))!
+      } finally {
+        if (originalForceColor === undefined) {
+          delete process.env.FORCE_COLOR
+        } else {
+          process.env.FORCE_COLOR = originalForceColor
+        }
+      }
     },
   },
   renderTextPrompt: {

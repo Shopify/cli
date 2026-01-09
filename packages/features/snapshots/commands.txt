@@ -2,6 +2,7 @@
 │  ├─ build
 │  ├─ config
 │  │  ├─ link
+│  │  ├─ pull
 │  │  └─ use
 │  ├─ deploy
 │  ├─ dev
@@ -18,6 +19,7 @@
 │  │  └─ typegen
 │  ├─ generate
 │  │  └─ extension
+│  ├─ import-custom-data-definitions
 │  ├─ import-extensions
 │  ├─ info
 │  ├─ init

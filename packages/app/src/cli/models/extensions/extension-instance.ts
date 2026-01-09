@@ -352,7 +352,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       case 'function':
         return buildFunctionExtension(this, options)
       case 'ui':
-        return buildUIExtension(this, options)
+        await buildUIExtension(this, options)
+        // Copy static assets after build completes
+        return this.copyStaticAssets()
       case 'tax_calculation':
         await touchFile(this.outputPath)
         await writeFile(this.outputPath, '(()=>{})();')
@@ -490,6 +492,16 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
+  }
+
+  /**
+   * Copy static assets from the extension directory to the output path
+   * Used by both dev and deploy builds
+   */
+  async copyStaticAssets(outputPath?: string) {
+    if (this.specification.copyStaticAssets) {
+      return this.specification.copyStaticAssets(this.configuration, this.directory, outputPath ?? this.outputPath)
+    }
   }
 
   /**

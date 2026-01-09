@@ -11,12 +11,13 @@ interface BulkOperationRunMutationOptions {
   adminSession: AdminSession
   query: string
   variablesJsonl?: string
+  version?: string
 }
 
 export async function runBulkOperationMutation(
   options: BulkOperationRunMutationOptions,
 ): Promise<BulkOperationRunMutationMutation['bulkOperationRunMutation']> {
-  const {adminSession, query: mutation, variablesJsonl} = options
+  const {adminSession, query: mutation, variablesJsonl, version} = options
 
   const stagedUploadPath = await stageFile({
     adminSession,
@@ -30,6 +31,7 @@ export async function runBulkOperationMutation(
       mutation,
       stagedUploadPath,
     },
+    ...(version && {version}),
   })
 
   return response.bulkOperationRunMutation

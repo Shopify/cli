@@ -132,7 +132,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
     expect(spyContext).toHaveBeenCalledWith({outputPrefix: 'test-ui-extension', stripAnsi: false}, expect.anything())
 
     // In theory this shouldn't be necessary, but vitest doesn't restore spies automatically.
@@ -163,7 +163,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(stdout.write).toHaveBeenCalledWith(
-      expect.stringContaining('Change detected, but app preview is not ready yet.'),
+      expect.stringContaining('Change detected, but dev preview is not ready yet.'),
     )
     expect(developerPlatformClient.devSessionCreate).not.toHaveBeenCalled()
     expect(developerPlatformClient.devSessionUpdate).not.toHaveBeenCalled()
@@ -201,7 +201,7 @@ describe('pushUpdatesForDevSession', () => {
     await flushPromises()
 
     // Then
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
     expect(stdout.write).toHaveBeenCalledWith(
       expect.stringContaining('Access scopes auto-granted: read_products, write_products'),
     )
@@ -284,13 +284,13 @@ describe('pushUpdatesForDevSession', () => {
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
 
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(`Preparing app preview on ${options.storeFqdn}`))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining(`Preparing dev preview on ${options.storeFqdn}`))
 
     const statusSpy = vi.spyOn(devSessionStatusManager, 'setMessage')
 
     // Then - Initial loading state
     expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Preparing app preview',
+      message: 'Preparing dev preview',
       type: 'loading',
     })
 
@@ -355,7 +355,7 @@ describe('pushUpdatesForDevSession', () => {
 
     // Then
     expect(devSessionStatusManager.status.statusMessage).toEqual({
-      message: 'Error updating app preview',
+      message: 'Error updating dev preview',
       type: 'error',
     })
   })
@@ -363,7 +363,7 @@ describe('pushUpdatesForDevSession', () => {
   test('sets validation error status message when error cause is validation-error', async () => {
     // Given
     const validationError = new Error('Validation failed')
-    validationError.cause = 'validation-error'
+    ;(validationError as Error & {cause: string}).cause = 'validation-error'
 
     // When
     await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
@@ -562,7 +562,7 @@ describe('pushUpdatesForDevSession', () => {
     // Verify the update was attempted and failed
     expect(developerPlatformClient.devSessionUpdate).toHaveBeenCalledTimes(1)
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Simulated failure'))
-    expect(devSessionStatusManager.status.statusMessage?.message).toBe('Error updating app preview')
+    expect(devSessionStatusManager.status.statusMessage?.message).toBe('Error updating dev preview')
 
     // Second event (should include retry of first failed event)
     appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: extension2}]})
@@ -582,7 +582,7 @@ describe('pushUpdatesForDevSession', () => {
     expect(secondCallPayload.manifest.modules.length).toBe(2)
 
     // Verify success status was set
-    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated app preview on test.myshopify.com'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
     expect(devSessionStatusManager.status.statusMessage?.message).toBe('Updated')
   })
 })

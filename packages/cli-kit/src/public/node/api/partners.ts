@@ -11,9 +11,10 @@ import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {getPackageManager} from '../node-package-manager.js'
 import {cwd} from '../path.js'
-import {AbortError} from '../error.js'
+import {AbortError, BugError} from '../error.js'
 import {formatPackageManagerCommand} from '../output.js'
 import {RequestModeInput} from '../http.js'
+import {blockPartnersAccess} from '../environment.js'
 import Bottleneck from 'bottleneck'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -32,6 +33,10 @@ const limiter = new Bottleneck({
  * @param token - Partners token.
  */
 async function setupRequest(token: string) {
+  if (blockPartnersAccess()) {
+    throw new BugError('Partners API is no longer available.')
+  }
+
   const api = 'Partners'
   const fqdn = await partnersFqdn()
   const url = `https://${fqdn}/api/cli/graphql`

@@ -1,11 +1,31 @@
-name: Changeset Release
+name: Release
 
 on:
-  workflow_dispatch:
+  # Trigger for snapit functionality
+  issue_comment:
+    types:
+      - created
+
+  # Trigger for changeset release functionality
   push:
     branches:
       - main
       - stable/3.*
+
+  # Trigger for manual/cron release functionality
+  schedule:
+    - cron: '0 6 * * *' # 6:00 AM UTC every day
+
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag'
+        default: 'nightly'
+        type: choice
+        options:
+          - nightly
+          - latest
+          - experimental
 
 concurrency:
   group: changeset-${{ github.head_ref || github.run_id }}
@@ -16,8 +36,54 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  # Snapit job - runs when /snapit comment is made on a PR
+  snapit:
+    name: Snapit
+    if: ${{ github.event_name == 'issue_comment' && github.event.issue.pull_request && github.event.comment.body == '/snapit' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      # WARNING: DO NOT RUN ANY CUSTOM LOCAL SCRIPT BEFORE RUNNING THE SNAPIT ACTION
+      # This action can be executed by 3rd party users and it should not be able to run arbitrary code from a PR.
+      - name: Checkout current branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 24.12.0
+      - name: Force snapshot changeset
+        run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
+      - name: Create snapshot version
+        uses: Shopify/snapit@8dacdbe980a7628cf65d9b1d838ee7103450c6b8 # 8dacdbe980a7628cf65d9b1d838ee7103450c6b8
+        with:
+          global_install: 'true'
+          github_comment_included_packages: '@shopify/cli'
+          custom_message_suffix: "
+            > [!CAUTION]
+
+            > After installing, validate the version by running just `shopify` in your terminal.
+
+            > If the versions don't match, you might have multiple global instances installed.
+
+            > Use `which shopify` to find out which one you are running and uninstall it."
+          package_manager: 'npm'
+          shopify_registry: 'https://registry.npmjs.org'
+          build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ''
+          NPM_CONFIG_PROVENANCE: true
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
+
+  # Changeset release job - runs on push to main or stable branches
   changeset-release:
     name: Changeset Release
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag == '') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,19 +93,52 @@ jobs:
       - uses: actions/checkout@v3
         # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
         with:
-          fetch-depth: 1
+          fetch-depth: 0
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: 24.1.0
+          node-version: 24.12.0
       - name: Create Release Pull Request
-        uses: changesets/action@e9cc34b540dd3ad1b030c57fd97269e8f6ad905a #  pin@v1
+        id: changesets
+        uses: changesets/action@e0145edc7d9d8679003495b11f87bd8ef63c0cba # v1
         with:
           version: pnpm changeset-manifests
           title: Version Packages - ${{ github.ref_name }}
-          publish: pnpm release latest
+          createGithubReleases: false
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish packages
+        if: steps.changesets.outputs.hasChangesets == 'false'
+        run: pnpm release latest
+        env:
+          NPM_TOKEN: ''
           NPM_CONFIG_PROVENANCE: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}
+
+  # Manual/Cron release job - runs on schedule or manual trigger with tag
+  manual-cron-release:
+    name: Manual & Cron Release
+    if: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.tag != '') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        # This makes Actions fetch all Git history so that Changesets can generate changelogs with the correct commits
+        with:
+          fetch-depth: 0
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: 24.12.0
+      - name: Release
+        run: pnpm release ${{ github.event.inputs.tag || 'nightly' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ''
+          NPM_CONFIG_PROVENANCE: true
           SHOPIFY_CLI_BUILD_REPO: ${{ github.repository }}

@@ -97,7 +97,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
       </Box>
       {promptState === PromptState.Submitted ? (
         <Box>
-          <Box marginRight={2}>
+          <Box width={3}>
             <Text color="cyan">{figures.tick}</Text>
           </Box>
 

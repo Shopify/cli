@@ -66,6 +66,6 @@ jobs:
         run: pnpm test:features --output-style=stream
       - name: Setup tmate session
         if: ${{ failure() && inputs.debug-enabled }}
-        uses: mxschmitt/action-tmate@e5c7151931ca95bad1c6f4190c730ecf8c7dde48 # pin@v3
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101 # v3
         with:
           limit-access-to-actor: true

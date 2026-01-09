@@ -12,6 +12,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {openURL} from '@shopify/cli-kit/node/system'
+import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from '@shopify/cli-kit/node/colors'
 import readline from 'readline'
 
@@ -119,43 +120,49 @@ export async function dev(options: DevOptions) {
     },
   }
 
-  if (options['theme-editor-sync']) {
-    session.storefrontPassword = await storefrontPasswordPromise
-  }
-
-  const {serverStart, renderDevSetupProgress} = setupDevServer(options.theme, ctx)
-
-  if (!options['theme-editor-sync']) {
-    session.storefrontPassword = await storefrontPasswordPromise
-  }
-
-  await renderDevSetupProgress()
-  await serverStart()
-
-  renderLinks(urls)
-  if (options.open) {
-    openURLSafely(urls.local, 'development server')
-  }
+  const {serverStart, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(options.theme, ctx)
 
   readline.emitKeypressEvents(process.stdin)
   if (process.stdin.isTTY) {
     process.stdin.setRawMode(true)
   }
 
-  process.stdin.on('keypress', (_str, key) => {
+  const keypressHandler = createKeypressHandler(urls, ctx)
+  process.stdin.on('keypress', keypressHandler)
+
+  await Promise.all([
+    backgroundJobPromise,
+    renderDevSetupProgress()
+      .then(serverStart)
+      .then(() => {
+        renderLinks(urls)
+        if (options.open) {
+          openURLSafely(urls.local, 'development server')
+        }
+      }),
+  ])
+}
+
+export function createKeypressHandler(
+  urls: {local: string; giftCard: string; themeEditor: string; preview: string},
+  ctx: {lastRequestedPath: string},
+) {
+  const debouncedOpenURL = debounce(openURLSafely, 100, {leading: true, trailing: false})
+
+  return (_str: string, key: {ctrl?: boolean; name?: string}) => {
     if (key.ctrl && key.name === 'c') {
       process.exit()
     }
 
     switch (key.name) {
       case 't':
-        openURLSafely(urls.local, 'localhost')
+        debouncedOpenURL(urls.local, 'localhost')
         break
       case 'p':
-        openURLSafely(urls.preview, 'theme preview')
+        debouncedOpenURL(urls.preview, 'theme preview')
         break
       case 'e':
-        openURLSafely(
+        debouncedOpenURL(
           ctx.lastRequestedPath === '/'
             ? urls.themeEditor
             : `${urls.themeEditor}&previewPath=${encodeURIComponent(ctx.lastRequestedPath)}`,
@@ -163,10 +170,12 @@ export async function dev(options: DevOptions) {
         )
         break
       case 'g':
-        openURLSafely(urls.giftCard, 'gift card preview')
+        debouncedOpenURL(urls.giftCard, 'gift card preview')
+        break
+      default:
         break
     }
-  })
+  }
 }
 
 export function openURLSafely(url: string, label: string) {

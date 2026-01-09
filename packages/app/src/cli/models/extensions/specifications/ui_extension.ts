@@ -5,8 +5,8 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {copyFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -27,6 +27,7 @@ export interface BuildManifest {
     [key in AssetIdentifier]?: {
       filepath: string
       module?: string
+      static?: boolean
     }
   }
 }
@@ -54,6 +55,15 @@ export const UIExtensionSchema = BaseSchema.extend({
                 [AssetIdentifier.ShouldRender]: {
                   filepath: `${config.handle}-conditions.js`,
                   module: targeting.should_render.module,
+                },
+              }
+            : null),
+          ...(targeting.tools
+            ? {
+                [AssetIdentifier.Tools]: {
+                  filepath: `${config.handle}-${AssetIdentifier.Tools}-${basename(targeting.tools)}`,
+                  module: targeting.tools,
+                  static: true,
                 },
               }
             : null),
@@ -125,6 +135,11 @@ const uiExtensionSpec = createExtensionSpecification({
           return
         }
 
+        // Skip static assets - they are copied after esbuild completes in rebuildContext
+        if (asset.static && asset.module) {
+          return
+        }
+
         assets[identifier] = {
           identifier: identifier as AssetIdentifier,
           outputFileName: asset.filepath,
@@ -142,6 +157,26 @@ const uiExtensionSpec = createExtensionSpecification({
       main,
       ...(assetsArray.length ? {assets: assetsArray} : {}),
     }
+  },
+  copyStaticAssets: async (config, directory, outputPath) => {
+    if (!isRemoteDomExtension(config)) return
+
+    await Promise.all(
+      config.extension_points.map((extensionPoint) => {
+        if (!('build_manifest' in extensionPoint)) return Promise.resolve()
+
+        return Object.entries(extensionPoint.build_manifest.assets).map(([_, asset]) => {
+          if (asset.static && asset.module) {
+            const sourceFile = joinPath(directory, asset.module)
+            const outputFilePath = joinPath(dirname(outputPath), asset.filepath)
+            return copyFile(sourceFile, outputFilePath).catch((error) => {
+              throw new Error(`Failed to copy static asset ${asset.module} to ${outputFilePath}: ${error.message}`)
+            })
+          }
+          return Promise.resolve()
+        })
+      }),
+    )
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (

@@ -10,6 +10,7 @@ export type BulkOperationRunQueryMutationVariables = Types.Exact<{
 export type BulkOperationRunQueryMutation = {
   bulkOperationRunQuery?: {
     bulkOperation?: {
+      type: Types.BulkOperationType
       completedAt?: unknown | null
       createdAt: unknown
       errorCode?: Types.BulkOperationErrorCode | null
@@ -49,11 +50,6 @@ export const BulkOperationRunQuery = {
                 name: {kind: 'Name', value: 'query'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'query'}},
               },
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'groupObjects'},
-                value: {kind: 'BooleanValue', value: false},
-              },
             ],
             selectionSet: {
               kind: 'SelectionSet',
@@ -64,6 +60,7 @@ export const BulkOperationRunQuery = {
                   selectionSet: {
                     kind: 'SelectionSet',
                     selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'type'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'completedAt'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},
                       {kind: 'Field', name: {kind: 'Name', value: 'errorCode'}},

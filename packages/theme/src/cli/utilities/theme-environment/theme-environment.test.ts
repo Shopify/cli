@@ -11,10 +11,11 @@ import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
+import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
-vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: () => Promise.resolve([])}))
+vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: vi.fn(() => Promise.resolve([]))}))
 vi.mock('./remote-theme-watcher.js')
 vi.mock('./storefront-renderer.js')
 vi.spyOn(output, 'outputDebug')
@@ -81,10 +82,10 @@ describe('setupDevServer', () => {
   const localThemeExtensionFileSystem = emptyThemeExtFileSystem()
   const defaultServerContext: DevServerContext = {
     session: {
-      storefrontToken: '',
+      storefrontToken: 'shptka_test_token_123',
       token: '',
       storeFqdn: 'my-store.myshopify.com',
-      sessionCookies: {},
+      sessionCookies: {_shopify_essential: 'test-cookie-value'},
     },
     lastRequestedPath: '',
     localThemeFileSystem,
@@ -158,7 +159,15 @@ describe('setupDevServer', () => {
       [],
       context.localThemeFileSystem,
       {noDelete: true, ...filters},
+      expect.anything(),
     )
+    // This is the best way I could think of verifying the rejectBackgroundJob
+    // Verify the rejectBackgroundJob callback is a function accepting one argument
+    const callArgs = vi.mocked(reconcileAndPollThemeEditorChanges).mock.calls[0]
+    const rejectCallback = callArgs?.[5]
+    expect(rejectCallback).toBeTypeOf('function')
+    // Reject callbacks take 1 argument: the rejection reason
+    expect(rejectCallback).toHaveLength(1)
   })
 
   test('should skip deletion of remote files if noDelete flag is passed', async () => {
@@ -177,6 +186,22 @@ describe('setupDevServer', () => {
       deferPartialWork: true,
       backgroundWorkCatch: expect.any(Function),
     })
+  })
+
+  test('should catch errors from fetchChecksums and reject backgroundJobPromise', async () => {
+    // Given
+    const context: DevServerContext = {
+      ...defaultServerContext,
+    }
+    const expectedError = new Error('Failed to fetch checksums from API')
+
+    vi.mocked(fetchChecksums).mockRejectedValueOnce(expectedError)
+
+    // When
+    const {backgroundJobPromise} = setupDevServer(developmentTheme, context)
+
+    // Then
+    await expect(backgroundJobPromise).rejects.toThrow('Failed to fetch checksums from API')
   })
 
   describe('request handling', async () => {
@@ -678,7 +703,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 
@@ -699,7 +728,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
     })
@@ -759,7 +792,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 
@@ -782,7 +819,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 
@@ -828,7 +869,11 @@ describe('setupDevServer', () => {
         expect.objectContaining({
           method: 'GET',
           redirect: 'manual',
-          headers: {referer},
+          headers: expect.objectContaining({
+            referer,
+            'User-Agent': expect.stringContaining('Shopify CLI'),
+            Authorization: expect.stringContaining('Bearer'),
+          }),
         }),
       )
 

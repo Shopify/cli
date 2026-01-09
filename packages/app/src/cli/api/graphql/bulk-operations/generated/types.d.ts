@@ -188,6 +188,13 @@ export type BulkOperationStatus =
   /** The bulk operation is runnning. */
   | 'RUNNING'
 
+/** The valid values for the bulk operation's type. */
+export type BulkOperationType =
+  /** The bulk operation is a mutation. */
+  | 'MUTATION'
+  /** The bulk operation is a query. */
+  | 'QUERY'
+
 /** Possible error codes that can be returned by `BulkOperationUserError`. */
 export type BulkOperationUserErrorCode =
   /** The input value is invalid. */
@@ -196,6 +203,13 @@ export type BulkOperationUserErrorCode =
   | 'LIMIT_REACHED'
   /** A bulk operation is already in progress. */
   | 'OPERATION_IN_PROGRESS'
+
+/** The set of valid sort keys for the BulkOperations query. */
+export type BulkOperationsSortKeys =
+  /** Sort by the `completed_at` value. */
+  | 'COMPLETED_AT'
+  /** Sort by the `created_at` value. */
+  | 'CREATED_AT'
 
 /**
  * The possible HTTP methods that can be used when sending a request to upload a file using information from a

@@ -120,7 +120,7 @@ describe('DevSessionStatusManager', () => {
       expect(listener).toHaveBeenCalledWith(
         expect.objectContaining({
           statusMessage: {
-            message: 'Preparing app preview',
+            message: 'Preparing dev preview',
             type: 'loading',
           },
         }),

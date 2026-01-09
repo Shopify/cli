@@ -1,6 +1,9 @@
 import Build from './commands/app/build.js'
+import BulkCancel from './commands/app/bulk/cancel.js'
+import BulkStatus from './commands/app/bulk/status.js'
 import ConfigLink from './commands/app/config/link.js'
 import ConfigUse from './commands/app/config/use.js'
+import ConfigPull from './commands/app/config/pull.js'
 import DemoWatcher from './commands/app/demo/watcher.js'
 import Deploy from './commands/app/deploy.js'
 import Dev from './commands/app/dev.js'
@@ -8,6 +11,7 @@ import Logs from './commands/app/logs.js'
 import Sources from './commands/app/app-logs/sources.js'
 import EnvPull from './commands/app/env/pull.js'
 import EnvShow from './commands/app/env/show.js'
+import BulkExecute from './commands/app/bulk/execute.js'
 import Execute from './commands/app/execute.js'
 import FunctionBuild from './commands/app/function/build.js'
 import FunctionReplay from './commands/app/function/replay.js'
@@ -30,26 +34,32 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
+import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
 
 /**
  * All app commands should extend AppCommand.
  */
 export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlinkedCommand} = {
   'app:build': Build,
+  'app:bulk:cancel': BulkCancel,
+  'app:bulk:status': BulkStatus,
   'app:deploy': Deploy,
   'app:dev': Dev,
   'app:dev:clean': DevClean,
   'app:logs': Logs,
   'app:logs:sources': Sources,
+  'app:import-custom-data-definitions': ImportCustomDataDefinitions,
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
   'app:release': Release,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
+  'app:config:pull': ConfigPull,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
   'app:execute': Execute,
+  'app:bulk:execute': BulkExecute,
   'app:generate:schema': GenerateSchema,
   'app:function:build': FunctionBuild,
   'app:function:replay': FunctionReplay,

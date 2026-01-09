@@ -21,6 +21,7 @@ export function pollThemeEditorChanges(
   remoteChecksum: Checksum[],
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
+  rejectBackgroundJob: (reason?: unknown) => void,
 ) {
   outputDebug('Listening for changes in the theme editor')
 
@@ -51,14 +52,12 @@ export function pollThemeEditorChanges(
         }
 
         if (failedPollingAttempts >= maxPollingAttempts) {
-          renderFatalError(
-            new AbortError(
-              'Too many polling errors...',
-              'Please check the errors above and ensure you have a stable internet connection.',
-            ),
+          const fatalError = new AbortError(
+            'Too many polling errors...',
+            'Please check the errors above and ensure you have a stable internet connection.',
           )
-
-          process.exit(1)
+          renderFatalError(fatalError)
+          rejectBackgroundJob(fatalError)
         }
 
         return latestChecksums

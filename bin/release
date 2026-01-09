@@ -2,7 +2,7 @@
 
 tag=$1
 
-## If no tag is provided, default to latest
+## If no tag is provided, default to nightly
 if [ -z "$tag" ]; then
   tag="nightly"
 fi

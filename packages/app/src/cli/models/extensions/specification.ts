@@ -38,6 +38,7 @@ type UidStrategy = 'single' | 'dynamic' | 'uuid'
 export enum AssetIdentifier {
   ShouldRender = 'should_render',
   Main = 'main',
+  Tools = 'tools',
 }
 
 export interface Asset {
@@ -118,6 +119,11 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     extension: ExtensionInstance<TConfiguration>,
     typeDefinitionsByFile: Map<string, Set<string>>,
   ) => Promise<void>
+
+  /**
+   * Copy static assets from the extension directory to the output path
+   */
+  copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
 }
 
 /**

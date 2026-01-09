@@ -2,6 +2,7 @@
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
 * [`shopify app config link`](#shopify-app-config-link)
+* [`shopify app config pull`](#shopify-app-config-pull)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
@@ -15,6 +16,7 @@
 * [`shopify app function schema`](#shopify-app-function-schema)
 * [`shopify app function typegen`](#shopify-app-function-typegen)
 * [`shopify app generate extension`](#shopify-app-generate-extension)
+* [`shopify app import-custom-data-definitions`](#shopify-app-import-custom-data-definitions)
 * [`shopify app import-extensions`](#shopify-app-import-extensions)
 * [`shopify app info`](#shopify-app-info)
 * [`shopify app init`](#shopify-app-init)
@@ -142,6 +144,31 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
+## `shopify app config pull`
+
+Refresh an already-linked app configuration without prompts.
+
+```
+USAGE
+  $ shopify app config pull [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+      --client-id=<value>  The Client ID of your app.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Refresh an already-linked app configuration without prompts.
+
+  Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.
+
+  This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
+  target a specific configuration file, or omit it to use the default one.
+```
+
 ## `shopify app config use [config] [flags]`
 
 Activate an app configuration.
@@ -252,7 +279,7 @@ DESCRIPTION
 
 ## `shopify app dev clean`
 
-Cleans up the app preview from the selected store.
+Cleans up the dev preview from the selected store.
 
 ```
 USAGE
@@ -269,9 +296,9 @@ FLAGS
       --verbose            Increase the verbosity of the output.
 
 DESCRIPTION
-  Cleans up the app preview from the selected store.
+  Cleans up the dev preview from the selected store.
 
-  Stop the app preview that was started with `shopify app dev`.
+  Stop the dev preview that was started with `shopify app dev`.
 
   It restores the app's active version to the selected development store.
 ```
@@ -520,6 +547,32 @@ DESCRIPTION
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
   refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
+```
+
+## `shopify app import-custom-data-definitions`
+
+Import metafield and metaobject definitions.
+
+```
+USAGE
+  $ shopify app import-custom-data-definitions [--client-id <value> | -c <value>] [--include-existing] [--no-color] [--path <value>]
+    [--reset | ] [-s <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -s, --store=<value>      Store URL. Must be an existing development or Shopify Plus sandbox store.
+      --client-id=<value>  The Client ID of your app.
+      --include-existing   Include existing declared definitions in the output.
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Import metafield and metaobject definitions.
+
+  Import metafield and metaobject definitions from your development store. "Read more about declarative custom data
+  definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
 ```
 
 ## `shopify app import-extensions`

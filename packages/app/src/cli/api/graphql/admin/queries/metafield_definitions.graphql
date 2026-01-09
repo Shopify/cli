@@ -1,0 +1,36 @@
+fragment MetafieldForImport on MetafieldDefinition {
+  key
+  name
+  namespace
+  description
+  type {
+    category
+    name
+  }
+  access {
+    admin
+    storefront
+    customerAccount
+  }
+  capabilities {
+    adminFilterable {
+      enabled
+    }
+  }
+  validations {
+    name
+    value
+  }
+}
+
+query metafieldDefinitions($ownerType: MetafieldOwnerType!, $after: String) {
+  metafieldDefinitions(ownerType: $ownerType, first: 30, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    nodes {
+      ...MetafieldForImport
+    }
+  }
+}

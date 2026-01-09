@@ -191,6 +191,18 @@ describe('ThemeCommand', () => {
       })
     })
 
+    test('single environment provided but not found in TOML - throws AbortError', async () => {
+      // Given
+      vi.mocked(loadEnvironment).mockResolvedValue(undefined)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommand(['--environment', 'notreal'], CommandConfig)
+
+      // When/Then
+      await expect(command.run()).rejects.toThrow(AbortError)
+      await expect(command.run()).rejects.toThrow('Please provide a valid environment.')
+    })
+
     test('multiple environments provided - uses renderConcurrent for parallel execution', async () => {
       // Given
       vi.mocked(loadEnvironment)

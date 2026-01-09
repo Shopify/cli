@@ -13,14 +13,15 @@ runs:
         git config --global user.name "App Management"
       shell: bash
     - name: Install pnpm
-      uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # pin@v4.0.0
+      uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # v4.0.0
       with:
         version: ${{ env.PNPM_VERSION }}
         run_install: false
     - name: Install Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
+        registry-url: 'https://registry.npmjs.org'
         cache: 'pnpm'
         cache-dependency-path: 'pnpm-lock.yaml'
     - name: Install dependencies

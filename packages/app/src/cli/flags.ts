@@ -40,7 +40,14 @@ export const bulkOperationFlags = {
     char: 'q',
     description: 'The GraphQL query or mutation to run as a bulk operation.',
     env: 'SHOPIFY_FLAG_QUERY',
-    required: true,
+    required: false,
+    exactlyOne: ['query', 'query-file'],
+  }),
+  'query-file': Flags.string({
+    description: "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+    env: 'SHOPIFY_FLAG_QUERY_FILE',
+    parse: async (input) => resolvePath(input),
+    exactlyOne: ['query', 'query-file'],
   }),
   variables: Flags.string({
     char: 'v',
@@ -64,12 +71,60 @@ export const bulkOperationFlags = {
     parse: async (input) => normalizeStoreFqdn(input),
   }),
   watch: Flags.boolean({
-    description: 'Wait for bulk operation results before exiting.',
+    description: 'Wait for bulk operation results before exiting. Defaults to false.',
     env: 'SHOPIFY_FLAG_WATCH',
-    default: false,
   }),
   'output-file': Flags.string({
-    description: 'The file path where results should be written. If not specified, results will be written to STDOUT.',
+    description:
+      'The file path where results should be written if --watch is specified. If not specified, results will be written to STDOUT.',
+    env: 'SHOPIFY_FLAG_OUTPUT_FILE',
+    dependsOn: ['watch'],
+  }),
+  version: Flags.string({
+    description: 'The API version to use for the bulk operation. If not specified, uses the latest stable version.',
+    env: 'SHOPIFY_FLAG_VERSION',
+  }),
+}
+
+export const operationFlags = {
+  query: Flags.string({
+    char: 'q',
+    description: 'The GraphQL query or mutation, as a string.',
+    env: 'SHOPIFY_FLAG_QUERY',
+    required: false,
+    exactlyOne: ['query', 'query-file'],
+  }),
+  'query-file': Flags.string({
+    description: "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+    env: 'SHOPIFY_FLAG_QUERY_FILE',
+    parse: async (input) => resolvePath(input),
+    exactlyOne: ['query', 'query-file'],
+  }),
+  variables: Flags.string({
+    char: 'v',
+    description: 'The values for any GraphQL variables in your query or mutation, in JSON format.',
+    env: 'SHOPIFY_FLAG_VARIABLES',
+    exclusive: ['variable-file'],
+  }),
+  'variable-file': Flags.string({
+    description: "Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.",
+    env: 'SHOPIFY_FLAG_VARIABLE_FILE',
+    parse: async (input) => resolvePath(input),
+    exclusive: ['variables'],
+  }),
+  store: Flags.string({
+    char: 's',
+    description:
+      'The myshopify.com domain of the store to execute against. The app must be installed on the store. If not specified, you will be prompted to select a store.',
+    env: 'SHOPIFY_FLAG_STORE',
+    parse: async (input) => normalizeStoreFqdn(input),
+  }),
+  version: Flags.string({
+    description: 'The API version to use for the query or mutation. Defaults to the latest stable version.',
+    env: 'SHOPIFY_FLAG_VERSION',
+  }),
+  'output-file': Flags.string({
+    description: 'The file name where results should be written, instead of STDOUT.',
     env: 'SHOPIFY_FLAG_OUTPUT_FILE',
   }),
 }

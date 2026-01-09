@@ -154,6 +154,7 @@ describe('app-watcher-esbuild', () => {
     const manager = new ESBuildContextManager(options)
     await manager.createContexts([extension1])
     const spyContext = vi.spyOn(manager.contexts.uid1![0]!, 'rebuild').mockResolvedValue({} as any)
+    const spyCopyStaticAssets = vi.spyOn(extension1, 'copyStaticAssets').mockResolvedValue()
     const spyCopy = vi.spyOn(fs, 'copyFile').mockResolvedValue()
 
     // When
@@ -161,6 +162,7 @@ describe('app-watcher-esbuild', () => {
 
     // Then
     expect(spyContext).toHaveBeenCalled()
+    expect(spyCopyStaticAssets).toHaveBeenCalledWith('/path/to/output/uid1/dist/test-ui-extension.js')
     expect(spyCopy).toHaveBeenCalledWith('/path/to/output/uid1/dist', '/extensions/ui_extension_1/dist')
   })
 

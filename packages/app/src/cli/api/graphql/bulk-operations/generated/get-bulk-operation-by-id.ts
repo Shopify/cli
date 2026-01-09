@@ -9,11 +9,13 @@ export type GetBulkOperationByIdQueryVariables = Types.Exact<{
 
 export type GetBulkOperationByIdQuery = {
   bulkOperation?: {
+    type: Types.BulkOperationType
     completedAt?: unknown | null
     createdAt: unknown
     errorCode?: Types.BulkOperationErrorCode | null
     id: string
     objectCount: unknown
+    partialDataUrl?: string | null
     status: Types.BulkOperationStatus
     url?: string | null
   } | null
@@ -49,11 +51,13 @@ export const GetBulkOperationById = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                {kind: 'Field', name: {kind: 'Name', value: 'type'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'completedAt'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'createdAt'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'errorCode'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'id'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'objectCount'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'partialDataUrl'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'status'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'url'}},
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},

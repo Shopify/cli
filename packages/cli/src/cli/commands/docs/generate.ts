@@ -123,7 +123,7 @@ const data: ReferenceEntityTemplateSchema = {
 
 export default data`
 
-  const updatedDocString = docString.replaceAll('<%= config.bin %>', 'shopify')
+  const updatedDocString = docString.replace(/<%= config\.bin %>/g, 'shopify')
 
   await writeFile(`${docsPath}/${fileName}.doc.ts`, updatedDocString)
   outputInfo(`Generated docs for ${commandName}`)

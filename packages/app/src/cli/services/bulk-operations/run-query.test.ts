@@ -33,4 +33,16 @@ describe('runBulkOperationQuery', () => {
     expect(bulkOperationResult?.bulkOperation).toEqual(successfulBulkOperation)
     expect(bulkOperationResult?.userErrors).toEqual([])
   })
+
+  test('starts bulk query with specific API version when provided', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
+
+    await runBulkOperationQuery({
+      adminSession: mockSession,
+      query: 'query { products { edges { node { id } } } }',
+      version: '2025-01',
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(expect.objectContaining({version: '2025-01'}))
+  })
 })

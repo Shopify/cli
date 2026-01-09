@@ -7,6 +7,7 @@ export type BannerType = 'success' | 'error' | 'warning' | 'info' | 'external_er
 
 interface BannerProps {
   type: BannerType
+  children?: React.ReactNode
 }
 
 function typeToColor(type: BannerProps['type']) {
