@@ -7,6 +7,7 @@ import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/co
 export type DevSessionUpdateMutationVariables = Types.Exact<{
   appId: Types.Scalars['String']['input']
   assetsUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
+  websocketUrl?: Types.InputMaybe<Types.Scalars['String']['input']>
   manifest?: Types.InputMaybe<Types.Scalars['JSON']['input']>
   inheritedModuleUids: Types.Scalars['String']['input'][] | Types.Scalars['String']['input']
 }>
@@ -17,7 +18,7 @@ export type DevSessionUpdateMutation = {
   } | null
 }
 
-export const DevSessionUpdate = {
+export const DevSessionUpdateDocument = {
   kind: 'Document',
   definitions: [
     {
@@ -33,6 +34,11 @@ export const DevSessionUpdate = {
         {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
+          type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'websocketUrl'}},
           type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
         },
         {
@@ -68,6 +74,11 @@ export const DevSessionUpdate = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'assetsUrl'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'assetsUrl'}},
+              },
+              {
+                kind: 'Argument',
+                name: {kind: 'Name', value: 'websocketUrl'},
+                value: {kind: 'Variable', name: {kind: 'Name', value: 'websocketUrl'}},
               },
               {
                 kind: 'Argument',
