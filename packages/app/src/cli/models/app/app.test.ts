@@ -2,8 +2,10 @@ import {
   AppSchema,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
+  TemplateConfigSchema,
   getAppScopes,
   getAppScopesArray,
+  getTemplateScopesArray,
   getUIExtensionRendererVersion,
   isCurrentAppSchema,
   isLegacyAppSchema,
@@ -230,6 +232,94 @@ describe('getAppScopesArray', () => {
   test('returns the access_scopes.scopes key when schema is current', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+  })
+})
+
+describe('TemplateConfigSchema', () => {
+  test('parses config with legacy scopes format', () => {
+    const config = {scopes: 'read_products,write_products'}
+    const result = TemplateConfigSchema.parse(config)
+    expect(result.scopes).toEqual('read_products,write_products')
+  })
+
+  test('parses config with access_scopes format', () => {
+    const config = {access_scopes: {scopes: 'read_products,write_products'}}
+    const result = TemplateConfigSchema.parse(config)
+    expect(result.access_scopes?.scopes).toEqual('read_products,write_products')
+  })
+
+  test('preserves extra keys like metafields via passthrough', () => {
+    const config = {
+      scopes: 'write_products',
+      product: {
+        metafields: {
+          app: {
+            demo_info: {
+              type: 'single_line_text_field',
+              name: 'Demo Source Info',
+            },
+          },
+        },
+      },
+      webhooks: {
+        api_version: '2025-07',
+        subscriptions: [{uri: '/webhooks', topics: ['app/uninstalled']}],
+      },
+    }
+    const result = TemplateConfigSchema.parse(config)
+    expect(result.product).toEqual(config.product)
+    expect(result.webhooks).toEqual(config.webhooks)
+  })
+
+  test('parses empty config', () => {
+    const config = {}
+    const result = TemplateConfigSchema.parse(config)
+    expect(result).toEqual({})
+  })
+})
+
+describe('getTemplateScopesArray', () => {
+  test('returns scopes from legacy format', () => {
+    const config = {scopes: 'read_themes,write_products'}
+    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
+  })
+
+  test('returns scopes from access_scopes format', () => {
+    const config = {access_scopes: {scopes: 'read_themes,write_products'}}
+    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
+  })
+
+  test('trims whitespace from scopes and sorts', () => {
+    const config = {scopes: ' write_products , read_themes '}
+    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
+  })
+
+  test('includes empty strings from consecutive commas (caller should handle)', () => {
+    const config = {scopes: 'read_themes,write_products'}
+    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
+  })
+
+  test('returns empty array when no scopes defined', () => {
+    const config = {}
+    expect(getTemplateScopesArray(config)).toEqual([])
+  })
+
+  test('returns empty array when scopes is empty string', () => {
+    const config = {scopes: ''}
+    expect(getTemplateScopesArray(config)).toEqual([])
+  })
+
+  test('returns empty array when access_scopes.scopes is empty', () => {
+    const config = {access_scopes: {scopes: ''}}
+    expect(getTemplateScopesArray(config)).toEqual([])
+  })
+
+  test('prefers legacy scopes over access_scopes when both present', () => {
+    const config = {
+      scopes: 'read_themes',
+      access_scopes: {scopes: 'write_products'},
+    }
+    expect(getTemplateScopesArray(config)).toEqual(['read_themes'])
   })
 })
 

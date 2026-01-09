@@ -2,6 +2,7 @@ import {
   getAppConfigurationShorthand,
   getAppConfigurationFileName,
   loadApp,
+  loadOpaqueApp,
   loadDotEnv,
   parseConfigurationObject,
   checkFolderIsValidApp,
@@ -3555,20 +3556,17 @@ describe('getAppConfigurationState', () => {
 })
 
 describe('loadConfigForAppCreation', () => {
-  test('returns correct configuration for a basic app with no webs', async () => {
-    // Given
+  test('extracts top-level scopes from legacy format', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        scopes = "write_products,read_orders"
-        name = "my-app"
+scopes = "write_products,read_orders"
+name = "my-app"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
-      // When
       const result = await loadConfigForAppCreation(tmpDir, 'my-app')
 
-      // Then
       expect(result).toEqual({
         isLaunchable: false,
         scopesArray: ['read_orders', 'write_products'],
@@ -3579,30 +3577,70 @@ describe('loadConfigForAppCreation', () => {
     })
   })
 
-  test('returns correct configuration for an app with a frontend web', async () => {
-    // Given
+  test('extracts access_scopes.scopes from current format', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        scopes = "write_products"
-        name = "my-app"
+client_id = "12345"
+name = "my-app"
+
+[access_scopes]
+scopes = "read_orders,write_products"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: ['read_orders', 'write_products'],
+        name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
+      })
+    })
+  })
+
+  test('defaults to empty scopes when scopes field is missing', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: [],
+        name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
+      })
+    })
+  })
+
+  test('detects launchable app with frontend web', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+scopes = "write_products"
+name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
       await writeFile(
         joinPath(tmpDir, 'shopify.web.toml'),
         `roles = ["frontend"]
 name = "web"
 
 [commands]
-dev = "echo 'Hello, world!'"
+dev = "echo 'dev'"
         `,
       )
 
-      // When
       const result = await loadConfigForAppCreation(tmpDir, 'my-app')
 
-      // Then
       expect(result).toEqual({
         isLaunchable: true,
         scopesArray: ['write_products'],
@@ -3613,62 +3651,24 @@ dev = "echo 'Hello, world!'"
     })
   })
 
-  test('returns correct configuration for an app with a backend web', async () => {
-    // Given
+  test('ignores unknown configuration sections with legacy scopes', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        scopes = "write_products"
-        name = "my-app"
+scopes = "write_products"
+name = "my-app"
+
+[product.metafields.app.example]
+type = "single_line_text_field"
+name = "Example"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
-      // Create web directory with backend configuration
-      const webDir = joinPath(tmpDir, 'web')
-      await mkdir(webDir)
-      await writeFile(
-        joinPath(tmpDir, 'shopify.web.toml'),
-        `roles = ["backend"]
-name = "web"
-
-[commands]
-dev = "echo 'Hello, world!'"
-        `,
-      )
-
-      // When
       const result = await loadConfigForAppCreation(tmpDir, 'my-app')
 
-      // Then
-      expect(result).toEqual({
-        isLaunchable: true,
-        scopesArray: ['write_products'],
-        name: 'my-app',
-        directory: tmpDir,
-        isEmbedded: true,
-      })
-    })
-  })
-
-  test('returns correct configuration for a connected app', async () => {
-    // Given
-    await inTemporaryDirectory(async (tmpDir) => {
-      const config = `
-        client_id = "12345"
-        name = "my-app"
-        [access_scopes]
-        scopes = "read_orders,write_products"
-      `
-      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
-      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
-
-      // When
-      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
-
-      // Then
       expect(result).toEqual({
         isLaunchable: false,
-        scopesArray: ['read_orders', 'write_products'],
+        scopesArray: ['write_products'],
         name: 'my-app',
         directory: tmpDir,
         isEmbedded: false,
@@ -3676,23 +3676,56 @@ dev = "echo 'Hello, world!'"
     })
   })
 
-  test('handles empty scopes correctly', async () => {
-    // Given
+  test('ignores unknown configuration sections with access_scopes format', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const config = `
-        name = "my-app"
-        scopes = ""
+client_id = "12345"
+name = "my-app"
+
+[access_scopes]
+scopes = "write_products"
+
+[product.metafields.app.example]
+type = "single_line_text_field"
+name = "Example"
       `
       await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
       await writeFile(joinPath(tmpDir, 'package.json'), '{}')
 
-      // When
       const result = await loadConfigForAppCreation(tmpDir, 'my-app')
 
-      // Then
       expect(result).toEqual({
         isLaunchable: false,
-        scopesArray: [],
+        scopesArray: ['write_products'],
+        name: 'my-app',
+        directory: tmpDir,
+        isEmbedded: false,
+      })
+    })
+  })
+
+  test('ignores completely unrecognized configuration sections', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const config = `
+scopes = "write_products"
+name = "my-app"
+nonsense_field = "whatever"
+
+[completely_made_up]
+foo = "bar"
+baz = 123
+
+[another.deeply.nested.thing]
+value = true
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      const result = await loadConfigForAppCreation(tmpDir, 'my-app')
+
+      expect(result).toEqual({
+        isLaunchable: false,
+        scopesArray: ['write_products'],
         name: 'my-app',
         directory: tmpDir,
         isEmbedded: false,
@@ -3829,6 +3862,261 @@ describe('loadHiddenConfig', () => {
 
       // Then
       expect(got).toEqual({})
+    })
+  })
+})
+
+describe('loadOpaqueApp', () => {
+  let specifications: ExtensionSpecification[]
+
+  beforeAll(async () => {
+    specifications = await loadLocalExtensionsSpecifications()
+  })
+
+  test('returns loaded-app state when app loads successfully', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a valid linked app configuration
+      const config = `
+client_id = "12345"
+name = "my-app"
+application_url = "https://example.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = ["https://example.com/callback"]
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'report',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-app')
+      if (result.state === 'loaded-app') {
+        expect(result.app).toBeDefined()
+        expect(result.configuration.client_id).toBe('12345')
+      }
+    })
+  })
+
+  test('returns loaded-app state for legacy app configuration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a legacy (unlinked) app configuration
+      const config = `
+scopes = "write_products,read_orders"
+name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'report',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-app')
+      if (result.state === 'loaded-app') {
+        expect(result.app).toBeDefined()
+      }
+    })
+  })
+
+  test('returns loaded-template state when config has extra keys that fail strict validation', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a template with metafield configuration that would fail loadApp
+      const config = `
+scopes = "write_products"
+name = "my-app"
+
+[product.metafields.app.example]
+type = "single_line_text_field"
+name = "Example"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      // Strict mode will cause loadApp to fail due to extra config keys
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'strict',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-template')
+      if (result.state === 'loaded-template') {
+        expect(result.scopes).toBe('write_products')
+        expect(result.appDirectory).toBe(normalizePath(tmpDir))
+        expect(result.rawConfig).toHaveProperty('product')
+      }
+    })
+  })
+
+  test('returns loaded-template with access_scopes format', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a template with access_scopes format and extra config
+      const config = `
+name = "my-app"
+
+[access_scopes]
+scopes = "read_orders,write_products"
+
+[completely_unknown_section]
+foo = "bar"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'strict',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-template')
+      if (result.state === 'loaded-template') {
+        expect(result.scopes).toBe('read_orders,write_products')
+      }
+    })
+  })
+
+  test('returns error state when config file does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - no config file
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'report',
+      })
+
+      // Then
+      expect(result.state).toBe('error')
+    })
+  })
+
+  test('preserves all raw config keys in loaded-template state for merging', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a template with various configuration sections
+      const config = `
+scopes = "write_products"
+name = "my-app"
+
+[metaobjects.app.author]
+name = "Author"
+
+[metaobjects.app.author.fields.name]
+type = "single_line_text_field"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'strict',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-template')
+      if (result.state === 'loaded-template') {
+        expect(result.rawConfig).toHaveProperty('metaobjects')
+        expect(result.rawConfig).toHaveProperty('name', 'my-app')
+        expect(result.rawConfig).toHaveProperty('scopes', 'write_products')
+      }
+    })
+  })
+
+  test('uses specified configName parameter when loading', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a custom config file name
+      const config = `
+scopes = "write_products"
+name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.staging.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        configName: 'shopify.app.staging.toml',
+        mode: 'report',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-app')
+      if (result.state === 'loaded-app') {
+        expect(result.app).toBeDefined()
+      }
+    })
+  })
+
+  test('returns package manager in loaded-template state', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a template with extra config
+      const config = `
+scopes = "write_products"
+name = "my-app"
+
+[unknown_section]
+foo = "bar"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+        mode: 'strict',
+      })
+
+      // Then
+      expect(result.state).toBe('loaded-template')
+      if (result.state === 'loaded-template') {
+        // Package manager is detected from the environment
+        expect(typeof result.packageManager).toBe('string')
+      }
+    })
+  })
+
+  test('defaults to report mode when mode is not specified', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given - a valid config
+      const config = `
+scopes = "write_products"
+name = "my-app"
+      `
+      await writeFile(joinPath(tmpDir, 'shopify.app.toml'), config)
+      await writeFile(joinPath(tmpDir, 'package.json'), '{}')
+
+      // When - mode is not specified
+      const result = await loadOpaqueApp({
+        directory: tmpDir,
+        specifications,
+      })
+
+      // Then - should still work (defaults to report mode)
+      expect(result.state).toBe('loaded-app')
     })
   })
 })
