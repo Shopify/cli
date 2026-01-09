@@ -6,7 +6,6 @@ import {
   isCurrentAppSchema,
   CliBuildPreferences,
   getAppScopes,
-  LegacyAppConfiguration,
 } from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
@@ -15,6 +14,7 @@ import {
   AppConfigurationStateLinked,
   getAppConfigurationFileName,
   loadApp,
+  loadOpaqueApp,
 } from '../../../models/app/loader.js'
 import {
   fetchOrCreateOrganizationApp,
@@ -189,6 +189,11 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
   }
 }
 
+// Allows both parsed configs and raw templates with extra keys (metafields, etc.)
+interface ExistingConfig {
+  [key: string]: unknown
+}
+
 type LocalAppOptions =
   | {
       state: 'legacy'
@@ -196,7 +201,7 @@ type LocalAppOptions =
       scopes: string
       localAppIdMatchedRemote: false
       existingBuildOptions: undefined
-      existingConfig: LegacyAppConfiguration
+      existingConfig: ExistingConfig
       appDirectory: string
       packageManager: PackageManager
     }
@@ -206,7 +211,7 @@ type LocalAppOptions =
       scopes: string
       localAppIdMatchedRemote: true
       existingBuildOptions: CliBuildPreferences
-      existingConfig: CurrentAppConfiguration
+      existingConfig: ExistingConfig
       appDirectory: string
       packageManager: PackageManager
     }
@@ -236,6 +241,9 @@ type LocalAppOptions =
  * The existing config is only re-used if the app is in the current format and the client_id in the config file
  * matches that of the selected remote app, or the existing config is in legacy/freshly minted template format.
  *
+ * Uses loadOpaqueApp internally to handle templates with extra configuration keys (metafields, metaobjects, etc.)
+ * that don't fit standard schemas.
+ *
  * @param specifications - Module specs to use for loading. These must have come from the platform.
  * @returns Either a loaded app, or some placeholder data
  */
@@ -245,63 +253,77 @@ export async function loadLocalAppOptions(
   remoteFlags: Flag[],
   remoteAppApiKey: string,
 ): Promise<LocalAppOptions> {
-  // Though we already loaded the app once, we have to go again now that we have the remote aware specifications in
-  // place. We didn't have them earlier.
-  try {
-    const app = await loadApp({
-      specifications,
-      directory: options.directory,
-      mode: 'report',
-      userProvidedConfigName: options.configName,
-      remoteFlags,
-    })
-    const configuration = app.configuration
+  const result = await loadOpaqueApp({
+    directory: options.directory,
+    configName: options.configName,
+    specifications,
+    remoteFlags,
+    mode: 'report',
+  })
 
-    if (!isCurrentAppSchema(configuration)) {
+  switch (result.state) {
+    case 'loaded-app': {
+      const {app, configuration} = result
+
+      if (!isCurrentAppSchema(configuration)) {
+        return {
+          state: 'legacy',
+          configFormat: 'legacy',
+          scopes: getAppScopes(configuration),
+          localAppIdMatchedRemote: false,
+          existingBuildOptions: undefined,
+          existingConfig: configuration,
+          appDirectory: app.directory,
+          packageManager: app.packageManager,
+        }
+      } else if (configuration.client_id === remoteAppApiKey || options.isNewApp) {
+        return {
+          state: 'reusable-current-app',
+          configFormat: 'current',
+          scopes: getAppScopes(configuration),
+          localAppIdMatchedRemote: true,
+          existingBuildOptions: configuration.build,
+          existingConfig: {...configuration},
+          appDirectory: app.directory,
+          packageManager: app.packageManager,
+        }
+      }
+      return {
+        state: 'unable-to-reuse-current-config',
+        configFormat: 'current',
+        scopes: '',
+        localAppIdMatchedRemote: true,
+        appDirectory: undefined,
+        existingBuildOptions: undefined,
+        existingConfig: undefined,
+        packageManager: 'npm',
+      }
+    }
+
+    case 'loaded-template':
+      // Template with extra config keys (metafields, etc.) - treat as legacy for linking
       return {
         state: 'legacy',
         configFormat: 'legacy',
-        scopes: getAppScopes(configuration),
+        scopes: result.scopes,
         localAppIdMatchedRemote: false,
         existingBuildOptions: undefined,
-        existingConfig: configuration as LegacyAppConfiguration,
-        appDirectory: app.directory,
-        packageManager: app.packageManager,
+        existingConfig: result.rawConfig,
+        appDirectory: result.appDirectory,
+        packageManager: result.packageManager,
       }
-    } else if (app.configuration.client_id === remoteAppApiKey || options.isNewApp) {
+
+    case 'error':
       return {
-        state: 'reusable-current-app',
-        configFormat: 'current',
-        scopes: getAppScopes(configuration),
-        localAppIdMatchedRemote: true,
-        existingBuildOptions: configuration.build,
-        existingConfig: configuration,
-        appDirectory: app.directory,
-        packageManager: app.packageManager,
+        state: 'unable-to-load-config',
+        configFormat: 'legacy',
+        scopes: '',
+        localAppIdMatchedRemote: false,
+        appDirectory: undefined,
+        existingBuildOptions: undefined,
+        existingConfig: undefined,
+        packageManager: 'npm',
       }
-    }
-    return {
-      state: 'unable-to-reuse-current-config',
-      configFormat: 'current',
-      scopes: '',
-      localAppIdMatchedRemote: true,
-      appDirectory: undefined,
-      existingBuildOptions: undefined,
-      existingConfig: undefined,
-      packageManager: 'npm',
-    }
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (error) {
-    return {
-      state: 'unable-to-load-config',
-      configFormat: 'legacy',
-      scopes: '',
-      localAppIdMatchedRemote: false,
-      appDirectory: undefined,
-      existingBuildOptions: undefined,
-      existingConfig: undefined,
-      packageManager: 'npm',
-    }
   }
 }
 

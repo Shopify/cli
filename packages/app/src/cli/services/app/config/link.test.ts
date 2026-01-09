@@ -7,7 +7,7 @@ import {
   testDeveloperPlatformClient,
 } from '../../../models/app/app.test-data.js'
 import {selectConfigName} from '../../../prompts/config.js'
-import {loadApp} from '../../../models/app/loader.js'
+import {loadApp, loadOpaqueApp} from '../../../models/app/loader.js'
 import {InvalidApiKeyErrorMessage, fetchOrCreateOrganizationApp, appFromIdentifiers} from '../../context.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {AppInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
@@ -29,6 +29,7 @@ vi.mock('../../../models/app/loader.js', async () => {
     ...loader,
     loadApp: vi.fn(),
     loadAppConfiguration: vi.fn(),
+    loadOpaqueApp: vi.fn(),
   }
 })
 vi.mock('../../local-storage')
@@ -75,7 +76,7 @@ describe('link', () => {
         configName: 'Default value',
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -132,7 +133,7 @@ describe('link', () => {
       client_id = "${remoteApp.apiKey}"
       `
       writeFileSync(filePath, initialContent)
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, undefined, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, undefined, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(remoteApp)
 
       // When
@@ -194,7 +195,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockRejectedValue('App not found')
+      mockLoadOpaqueAppWithError()
       const apiClientConfiguration = {
         title: 'new-title',
         applicationUrl: 'https://api-client-config.com',
@@ -312,7 +313,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockRejectedValue('App not found')
+      mockLoadOpaqueAppWithError()
       const apiClientConfiguration = {
         title: 'new-title',
         applicationUrl: 'https://api-client-config.com',
@@ -466,7 +467,7 @@ url = "https://api-client-config.com/preferences"
           },
         } as CurrentAppConfiguration,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
@@ -584,7 +585,7 @@ embedded = false
           },
         },
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: 'different-api-key',
@@ -660,7 +661,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -741,7 +742,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -804,7 +805,7 @@ embedded = false
         apiKey: 'api-key',
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
       vi.mocked(appFromIdentifiers).mockImplementation(async ({apiKey}: {apiKey: string}) => {
         return (await developerPlatformClient.appFromIdentifiers(apiKey))!
@@ -853,7 +854,7 @@ embedded = false
         apiKey: 'wrong-api-key',
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
 
       // When
@@ -884,7 +885,7 @@ embedded = false
           },
         } as CurrentAppConfiguration,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp))
+      await mockLoadOpaqueAppWithApp(tmp, localApp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
@@ -955,7 +956,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockRejectedValue(new Error('Shopify.app.toml not found'))
+      mockLoadOpaqueAppWithError()
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
@@ -1015,7 +1016,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1106,7 +1107,7 @@ embedded = false
         developerPlatformClient,
       }
 
-      vi.mocked(loadApp).mockRejectedValue('App not found')
+      mockLoadOpaqueAppWithError()
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1246,6 +1247,7 @@ embedded = false
         developerPlatformClient,
       }
 
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1274,6 +1276,7 @@ embedded = false
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
+extension_directories = [ ]
 name = "app1"
 application_url = "https://my-app-url.com"
 embedded = true
@@ -1301,6 +1304,7 @@ embedded = false
         name: 'app1',
         application_url: 'https://my-app-url.com',
         embedded: true,
+        extension_directories: [],
         access_scopes: {
           use_legacy_install_flow: true,
         },
@@ -1320,7 +1324,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        scopes: undefined,
         path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
@@ -1348,7 +1351,7 @@ embedded = false
           embedded: true,
         },
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
           apiKey: '12345',
@@ -1430,7 +1433,7 @@ embedded = true
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...mockRemoteApp(),
         newApp: true,
@@ -1482,7 +1485,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue({
         ...mockRemoteApp(),
         newApp: true,
@@ -1531,7 +1534,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1579,7 +1582,7 @@ embedded = false
         directory: tmp,
         developerPlatformClient,
       }
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp))
+      await mockLoadOpaqueAppWithApp(tmp)
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1649,7 +1652,7 @@ embedded = false
         } as CurrentAppConfiguration,
       }
 
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1728,7 +1731,7 @@ embedded = false
         } as CurrentAppConfiguration,
       }
 
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1807,7 +1810,7 @@ embedded = false
         } as CurrentAppConfiguration,
       }
 
-      vi.mocked(loadApp).mockResolvedValue(await mockApp(tmp, localApp, [], 'current'))
+      await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(appFromIdentifiers).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
@@ -1870,6 +1873,34 @@ async function mockApp(
   localApp.directory = directory
   setPathValue(localApp, 'remoteFlags', flags)
   return localApp
+}
+
+/**
+ * Helper to mock loadOpaqueApp with a successful app load result.
+ * Call this instead of mocking loadApp directly, as loadLocalAppOptions now uses loadOpaqueApp.
+ */
+async function mockLoadOpaqueAppWithApp(
+  directory: string,
+  app?: Partial<AppInterface>,
+  flags = [],
+  schemaType: 'current' | 'legacy' = 'legacy',
+) {
+  const mockedApp = await mockApp(directory, app, flags, schemaType)
+  vi.mocked(loadOpaqueApp).mockResolvedValue({
+    state: 'loaded-app',
+    app: mockedApp,
+    configuration: mockedApp.configuration,
+  })
+  // Also mock loadApp for backward compatibility with getAppCreationDefaultsFromLocalApp
+  vi.mocked(loadApp).mockResolvedValue(mockedApp)
+}
+
+/**
+ * Helper to mock loadOpaqueApp with an error state (app couldn't be loaded).
+ */
+function mockLoadOpaqueAppWithError() {
+  vi.mocked(loadOpaqueApp).mockResolvedValue({state: 'error'})
+  vi.mocked(loadApp).mockRejectedValue(new Error('App not found'))
 }
 
 function mockRemoteApp(extraRemoteAppFields: Partial<OrganizationApp> = {}) {
