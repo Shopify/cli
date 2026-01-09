@@ -16,6 +16,10 @@ export interface EnsureDeploymentIdsPresenceOptions {
   appName: string
   envIdentifiers: Partial<Identifiers>
   force: boolean
+  /** If true, allow adding and updating extensions and configuration without user confirmation */
+  allowUpdates?: boolean
+  /** If true, allow removing extensions and configuration without user confirmation */
+  allowDeletes?: boolean
   release: boolean
   remoteApp: PartnersAppForIdentifierMatching
   includeDraftExtensions?: boolean
@@ -60,6 +64,8 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     appTitle: options.remoteApp?.title,
     release: options.release,
     force: options.force,
+    allowUpdates: options.allowUpdates,
+    allowDeletes: options.allowDeletes,
   })
   if (!confirmed) throw new AbortSilentError()
 
