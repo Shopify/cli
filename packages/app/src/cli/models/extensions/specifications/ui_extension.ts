@@ -67,6 +67,15 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
+          ...(targeting.instructions
+            ? {
+                [AssetIdentifier.Instructions]: {
+                  filepath: `${config.handle}-${AssetIdentifier.Instructions}-${basename(targeting.instructions)}`,
+                  module: targeting.instructions,
+                  static: true,
+                },
+              }
+            : null),
         },
       }
 
@@ -309,9 +318,25 @@ function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest
   }
 }
 
+async function checkForMissingPath(
+  directory: string,
+  assetModule: string | undefined,
+  target: string,
+  assetType: string,
+): Promise<string | undefined> {
+  if (!assetModule) return undefined
+
+  const assetPath = joinPath(directory, assetModule)
+  const exists = await fileExists(assetPath)
+  return exists
+    ? undefined
+    : outputContent`Couldn't find ${outputToken.path(assetPath)}
+  Please check the ${assetType} path for ${target}`.value
+}
+
 async function validateUIExtensionPointConfig(
   directory: string,
-  extensionPoints: NewExtensionPointSchemaType[],
+  extensionPoints: (NewExtensionPointSchemaType & {build_manifest?: BuildManifest})[],
   configPath: string,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
@@ -322,17 +347,32 @@ async function validateUIExtensionPointConfig(
     return err(missingExtensionPointsMessage)
   }
 
-  for await (const {module, target} of extensionPoints) {
-    const fullPath = joinPath(directory, module)
-    const exists = await fileExists(fullPath)
+  for await (const extensionPoint of extensionPoints) {
+    const {module, target, build_manifest: buildManifest} = extensionPoint
 
-    if (!exists) {
-      const notFoundPath = outputToken.path(joinPath(directory, module))
+    const missingModuleError = await checkForMissingPath(directory, module, target, 'module')
+    if (missingModuleError) {
+      errors.push(missingModuleError)
+    }
 
-      errors.push(
-        outputContent`Couldn't find ${notFoundPath}
-Please check the module path for ${target}`.value,
-      )
+    const missingToolsError = await checkForMissingPath(
+      directory,
+      buildManifest?.assets[AssetIdentifier.Tools]?.module,
+      target,
+      AssetIdentifier.Tools,
+    )
+    if (missingToolsError) {
+      errors.push(missingToolsError)
+    }
+
+    const missingInstructionsError = await checkForMissingPath(
+      directory,
+      buildManifest?.assets[AssetIdentifier.Instructions]?.module,
+      target,
+      AssetIdentifier.Instructions,
+    )
+    if (missingInstructionsError) {
+      errors.push(missingInstructionsError)
     }
 
     if (uniqueTargets.includes(target)) {
