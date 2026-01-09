@@ -35,8 +35,14 @@ export interface DeployOptions {
   /** If true, ignore any cached appId or extensionId */
   reset: boolean
 
-  /** If true, proceed with deploy without asking for confirmation */
+  /** If true, proceed with deploy without asking for confirmation (equivalent to allowUpdates && allowDeletes) */
   force: boolean
+
+  /** If true, allow adding and updating extensions and configuration without user confirmation */
+  allowUpdates?: boolean
+
+  /** If true, allow removing extensions and configuration without user confirmation */
+  allowDeletes?: boolean
 
   /** If true, deploy app without releasing it to the users */
   noRelease: boolean
@@ -171,7 +177,7 @@ export async function importExtensionsIfNeeded(options: ImportExtensionsIfNeeded
 }
 
 export async function deploy(options: DeployOptions) {
-  const {remoteApp, developerPlatformClient, noRelease, force} = options
+  const {remoteApp, developerPlatformClient, noRelease, force, allowUpdates, allowDeletes} = options
 
   const app = await importExtensionsIfNeeded({
     app: options.app,
@@ -184,6 +190,8 @@ export async function deploy(options: DeployOptions) {
     ...options,
     app,
     developerPlatformClient,
+    allowUpdates,
+    allowDeletes,
   })
 
   const release = !noRelease

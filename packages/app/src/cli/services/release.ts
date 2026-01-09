@@ -20,8 +20,14 @@ interface ReleaseOptions {
   /** The developer platform client */
   developerPlatformClient: DeveloperPlatformClient
 
-  /** If true, proceed with deploy without asking for confirmation */
+  /** If true, proceed with deploy without asking for confirmation (equivalent to allowUpdates && allowDeletes) */
   force: boolean
+
+  /** If true, allow adding and updating extensions and configuration without user confirmation */
+  allowUpdates?: boolean
+
+  /** If true, allow removing extensions and configuration without user confirmation */
+  allowDeletes?: boolean
 
   /** App version tag */
   version: string
@@ -51,6 +57,8 @@ export async function release(options: ReleaseOptions) {
     appTitle: remoteApp.title,
     release: true,
     force: options.force,
+    allowUpdates: options.allowUpdates,
+    allowDeletes: options.allowDeletes,
   })
   if (!confirmed) throw new AbortSilentError()
   interface Context {

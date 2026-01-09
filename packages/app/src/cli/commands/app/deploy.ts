@@ -1,6 +1,5 @@
 import {appFlags} from '../../flags.js'
 import {deploy} from '../../services/deploy.js'
-import {getAppConfigurationState} from '../../models/app/loader.js'
 import {validateVersion} from '../../validations/version-name.js'
 import {validateMessage} from '../../validations/message.js'
 import metadata from '../../metadata.js'
@@ -27,9 +26,21 @@ export default class Deploy extends AppLinkedCommand {
     ...appFlags,
     force: Flags.boolean({
       hidden: false,
-      description: 'Deploy without asking for confirmation.',
+      description: 'Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
+    }),
+    'allow-updates': Flags.boolean({
+      hidden: false,
+      description:
+        'Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.',
+      env: 'SHOPIFY_FLAG_ALLOW_UPDATES',
+    }),
+    'allow-deletes': Flags.boolean({
+      hidden: false,
+      description:
+        'Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.',
+      env: 'SHOPIFY_FLAG_ALLOW_DELETES',
     }),
     'no-release': Flags.boolean({
       hidden: false,
@@ -80,12 +91,17 @@ export default class Deploy extends AppLinkedCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const requiredNonTTYFlags = ['force']
-    const configurationState = await getAppConfigurationState(flags.path, flags.config)
-    if (configurationState.state === 'template-only' && !clientId) {
-      requiredNonTTYFlags.push('client-id')
+    // When using --no-release, we don't require --force or --allow-updates/--allow-deletes for non-TTY
+    // because we're just creating a version, not releasing it. Validation happens at release time.
+    // When releasing (no --no-release), we require either --force or --allow-updates for non-TTY.
+    // The --allow-deletes flag is only required when there are actual deletions (validated at runtime).
+    const requiredNonTTYFlags: string[] = []
+    if (!flags['no-release']) {
+      const hasAnyForceFlags = flags.force || flags['allow-updates'] || flags['allow-deletes']
+      if (!hasAnyForceFlags) {
+        requiredNonTTYFlags.push('force')
+      }
     }
-    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
@@ -94,6 +110,9 @@ export default class Deploy extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
+    const allowUpdates = flags.force || flags['allow-updates']
+    const allowDeletes = flags.force || flags['allow-deletes']
+
     const result = await deploy({
       app,
       remoteApp,
@@ -101,6 +120,8 @@ export default class Deploy extends AppLinkedCommand {
       developerPlatformClient,
       reset: flags.reset,
       force: flags.force,
+      allowUpdates,
+      allowDeletes,
       noRelease: flags['no-release'],
       message: flags.message,
       version: flags.version,
