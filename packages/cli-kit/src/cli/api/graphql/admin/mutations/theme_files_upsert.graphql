@@ -2,6 +2,7 @@ mutation themeFilesUpsert($files: [OnlineStoreThemeFilesUpsertFileInput!]!, $the
   themeFilesUpsert(files: $files, themeId: $themeId) {
     upsertedThemeFiles {
       filename
+      checksumMd5
     }
     userErrors {
       filename

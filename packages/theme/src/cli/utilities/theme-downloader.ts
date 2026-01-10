@@ -86,7 +86,12 @@ function buildDownloadTasks(
   return batches
 }
 
-async function downloadFiles(theme: Theme, fileSystem: ThemeFileSystem, filenames: string[], session: AdminSession) {
+export async function downloadFiles(
+  theme: Theme,
+  fileSystem: ThemeFileSystem,
+  filenames: string[],
+  session: AdminSession,
+) {
   const assets = await fetchThemeAssets(theme.id, filenames, session)
   if (!assets) return
 

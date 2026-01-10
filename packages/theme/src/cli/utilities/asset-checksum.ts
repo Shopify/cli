@@ -35,9 +35,15 @@ function minifiedJSONFileChecksum(fileContent: string) {
 function regularFileChecksum(fileKey: string, fileContent: string) {
   let content = fileContent
 
+  // eslint-disable-next-line no-console
+  console.log('MD5 before replace newlines:', md5(content))
+
   if (isTextFile(fileKey)) {
     content = content.replace(/\r\n/g, '\n')
   }
+
+  // eslint-disable-next-line no-console
+  console.log('MD5 after replace newlines:', md5(content))
 
   return md5(content)
 }
