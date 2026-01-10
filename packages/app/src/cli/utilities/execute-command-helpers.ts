@@ -47,6 +47,7 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
     appContextResult,
     storeFqdn: flags.store,
     forceReselectStore: flags.reset,
+    storeTypes: ['APP_DEVELOPMENT', 'DEVELOPMENT', 'DEVELOPMENT_SUPERSET', 'PRODUCTION'],
   })
 
   return {appContextResult, store}

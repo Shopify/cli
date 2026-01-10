@@ -1,8 +1,8 @@
-query FetchDevStoreByDomain($domain: String) {
+query FetchStoreByDomain($domain: String, $storeTypes: String!) {
   organization {
     id
     name
-    accessibleShops(filters: {field: STORE_TYPE, operator: EQUALS, value: "app_development"}, search: $domain) {
+    accessibleShops(filters: {field: STORE_TYPE, operator: IN, value: $storeTypes}, search: $domain) {
       edges {
         node {
           id

@@ -60,6 +60,7 @@ describe('storeContext', () => {
         mockOrganization,
         'explicit-store.myshopify.com',
         mockDeveloperPlatformClient,
+        ['APP_DEVELOPMENT'],
       )
       expect(convertToTransferDisabledStoreIfNeeded).toHaveBeenCalledWith(
         mockStore,
@@ -85,6 +86,7 @@ describe('storeContext', () => {
         mockOrganization,
         'cached-store.myshopify.com',
         mockDeveloperPlatformClient,
+        ['APP_DEVELOPMENT'],
       )
       expect(result).toEqual(mockStore)
     })

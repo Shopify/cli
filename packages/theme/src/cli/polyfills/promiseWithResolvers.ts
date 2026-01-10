@@ -1,22 +1,22 @@
-interface PromiseWithResolvers<T> {
+interface PromiseWithResolversResult<T> {
   promise: Promise<T>
   resolve: (value: T | PromiseLike<T>) => void
   reject: (reason?: unknown) => void
 }
 
-declare global {
-  interface PromiseConstructor {
-    withResolvers?<T>(): PromiseWithResolvers<T>
-  }
-}
-
 // Polyfill for Promise.withResolvers
 // Can remove once our minimum supported Node version is 22
-export function promiseWithResolvers<T>(): PromiseWithResolvers<T> {
-  if (Promise.withResolvers) {
-    return Promise.withResolvers<T>()
+export function promiseWithResolvers<T>(): PromiseWithResolversResult<T> {
+  // Use native implementation if available (Node 22+)
+  const promiseConstructor = Promise as typeof Promise & {
+    withResolvers?: <T>() => PromiseWithResolversResult<T>
   }
 
+  if (typeof promiseConstructor.withResolvers === 'function') {
+    return promiseConstructor.withResolvers<T>()
+  }
+
+  // Fallback for older Node versions
   let resolve!: (value: T | PromiseLike<T>) => void
   let reject!: (reason?: unknown) => void
   const promise = new Promise<T>((_resolve, _reject) => {
