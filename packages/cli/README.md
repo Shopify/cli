@@ -931,16 +931,16 @@ DESCRIPTION
 
 ## `shopify config autocorrect status`
 
-Check whether autocorrect is enabled or disabled. On by default.
+Check whether autocorrect is enabled or disabled. Off by default.
 
 ```
 USAGE
   $ shopify config autocorrect status
 
 DESCRIPTION
-  Check whether autocorrect is enabled or disabled. On by default.
+  Check whether autocorrect is enabled or disabled. Off by default.
 
-  Check whether autocorrect is enabled or disabled. On by default.
+  Check whether autocorrect is enabled or disabled. Off by default.
 
   When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is
   available.
