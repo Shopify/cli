@@ -26,25 +26,27 @@ export default class Deploy extends AppLinkedCommand {
     ...appFlags,
     force: Flags.boolean({
       hidden: false,
-      description: 'Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes.',
+      description:
+        'Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
     }),
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
-        'Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.',
+        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.',
       env: 'SHOPIFY_FLAG_ALLOW_UPDATES',
     }),
     'allow-deletes': Flags.boolean({
       hidden: false,
       description:
-        'Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.',
+        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.',
       env: 'SHOPIFY_FLAG_ALLOW_DELETES',
     }),
     'no-release': Flags.boolean({
       hidden: false,
-      description: "Creates a version but doesn't release it - it's not made available to merchants.",
+      description:
+        "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
       env: 'SHOPIFY_FLAG_NO_RELEASE',
       default: false,
     }),
@@ -91,17 +93,15 @@ export default class Deploy extends AppLinkedCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    // When using --no-release, we don't require --force or --allow-updates/--allow-deletes for non-TTY
-    // because we're just creating a version, not releasing it. Validation happens at release time.
-    // When releasing (no --no-release), we require either --force or --allow-updates for non-TTY.
-    // The --allow-deletes flag is only required when there are actual deletions (validated at runtime).
+    const force = flags.force || flags['no-release']
+
+    // When releasing, we require --force or --allow-updates or --allow-deletes for non-TTY.
     const requiredNonTTYFlags: string[] = []
-    if (!flags['no-release']) {
-      const hasAnyForceFlags = flags.force || flags['allow-updates'] || flags['allow-deletes']
-      if (!hasAnyForceFlags) {
-        requiredNonTTYFlags.push('force')
-      }
+    const hasAnyForceFlags = force || flags['allow-updates'] || flags['allow-deletes']
+    if (!hasAnyForceFlags) {
+      requiredNonTTYFlags.push('allow-updates')
     }
+    this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
     const {app, remoteApp, developerPlatformClient, organization} = await linkedAppContext({
       directory: flags.path,
@@ -110,8 +110,8 @@ export default class Deploy extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    const allowUpdates = flags.force || flags['allow-updates']
-    const allowDeletes = flags.force || flags['allow-deletes']
+    const allowUpdates = force || flags['allow-updates']
+    const allowDeletes = force || flags['allow-deletes']
 
     const result = await deploy({
       app,
@@ -119,7 +119,7 @@ export default class Deploy extends AppLinkedCommand {
       organization,
       developerPlatformClient,
       reset: flags.reset,
-      force: flags.force,
+      force,
       allowUpdates,
       allowDeletes,
       noRelease: flags['no-release'],

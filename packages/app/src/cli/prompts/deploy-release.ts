@@ -70,21 +70,18 @@ function shouldSkipConfirmationPrompt({
     (configExtensionIdentifiersBreakdown?.existingUpdatedFieldNames.length ?? 0) > 0
   const hasUpdates = hasNewOrUpdatedExtensions || hasNewOrUpdatedConfig
 
-  // If we only have updates (no deletes) and allowUpdates is true, skip prompt
+  // Skip prompt if we only have updates or deletes and the corresponding allow flag is true
   if (allowUpdates && !hasDeletes) return true
-
-  // If we only have deletes (no updates) and allowDeletes is true, skip prompt
   if (allowDeletes && !hasUpdates) return true
 
   // If we're in non-TTY mode and there are changes that require confirmation, throw an error
   if (!isTTY() && (hasDeletes || hasUpdates)) {
+    let suggestedFlag = '--force'
+    if (hasUpdates && !hasDeletes) suggestedFlag = '--allow-updates'
+    if (hasDeletes && !hasUpdates) suggestedFlag = '--allow-deletes'
     throw new AbortError('This deployment includes changes that require confirmation.', [
       'Run the command with',
-      {command: '--force'},
-      'or',
-      {command: '--allow-updates'},
-      'or',
-      {command: '--allow-deletes'},
+      {command: suggestedFlag},
       'to deploy without confirmation.',
     ])
   }

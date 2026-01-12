@@ -21,20 +21,21 @@ export default class Release extends AppLinkedCommand {
     ...appFlags,
     force: Flags.boolean({
       hidden: false,
-      description: 'Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes.',
+      description:
+        'Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
     }),
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
-        'Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.',
+        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.',
       env: 'SHOPIFY_FLAG_ALLOW_UPDATES',
     }),
     'allow-deletes': Flags.boolean({
       hidden: false,
       description:
-        'Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.',
+        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.',
       env: 'SHOPIFY_FLAG_ALLOW_DELETES',
     }),
     version: Flags.string({
@@ -53,12 +54,11 @@ export default class Release extends AppLinkedCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    // For releases, require either --force or --allow-updates for non-TTY
-    // The --allow-deletes flag is only required when there are actual deletions (validated at runtime).
+    // We require --force or --allow-updates or --allow-deletes for non-TTY.
     const requiredNonTTYFlags: string[] = []
     const hasAnyForceFlags = flags.force || flags['allow-updates'] || flags['allow-deletes']
     if (!hasAnyForceFlags) {
-      requiredNonTTYFlags.push('force')
+      requiredNonTTYFlags.push('allow-updates')
     }
     const configurationState = await getAppConfigurationState(flags.path, flags.config)
     if (configurationState.state === 'template-only' && !clientId) {
@@ -73,7 +73,6 @@ export default class Release extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    // --force is a synonym for --allow-updates --allow-deletes
     const allowUpdates = flags.force || flags['allow-updates']
     const allowDeletes = flags.force || flags['allow-deletes']
 

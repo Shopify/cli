@@ -401,7 +401,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-deletes",
                 "value": "\"\"",
-                "description": "Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.",
+                "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_DELETES"
               },
@@ -410,7 +410,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-updates",
                 "value": "\"\"",
-                "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.",
+                "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_UPDATES"
               },
@@ -455,7 +455,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--no-release",
                 "value": "\"\"",
-                "description": "Creates a version but doesn't release it - it's not made available to merchants.",
+                "description": "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_RELEASE"
               },
@@ -518,12 +518,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
-                "description": "Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes.",
+                "description": "Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
               }
             ],
-            "value": "export interface appdeploy {\n  /**\n   * Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.\n   * @environment SHOPIFY_FLAG_ALLOW_DELETES\n   */\n  '--allow-deletes'?: ''\n\n  /**\n   * Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.\n   * @environment SHOPIFY_FLAG_ALLOW_UPDATES\n   */\n  '--allow-updates'?: ''\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Optional message that will be associated with this version. This is for internal use only and won't be available externally.\n   * @environment SHOPIFY_FLAG_MESSAGE\n   */\n  '--message <value>'?: string\n\n  /**\n   * Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.\n   * @environment SHOPIFY_FLAG_NO_BUILD\n   */\n  '--no-build'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Creates a version but doesn't release it - it's not made available to merchants.\n   * @environment SHOPIFY_FLAG_NO_RELEASE\n   */\n  '--no-release'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * URL associated with the new app version.\n   * @environment SHOPIFY_FLAG_SOURCE_CONTROL_URL\n   */\n  '--source-control-url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+            "value": "export interface appdeploy {\n  /**\n   * Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.\n   * @environment SHOPIFY_FLAG_ALLOW_DELETES\n   */\n  '--allow-deletes'?: ''\n\n  /**\n   * Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.\n   * @environment SHOPIFY_FLAG_ALLOW_UPDATES\n   */\n  '--allow-updates'?: ''\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Optional message that will be associated with this version. This is for internal use only and won't be available externally.\n   * @environment SHOPIFY_FLAG_MESSAGE\n   */\n  '--message <value>'?: string\n\n  /**\n   * Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.\n   * @environment SHOPIFY_FLAG_NO_BUILD\n   */\n  '--no-build'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.\n   * @environment SHOPIFY_FLAG_NO_RELEASE\n   */\n  '--no-release'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * URL associated with the new app version.\n   * @environment SHOPIFY_FLAG_SOURCE_CONTROL_URL\n   */\n  '--source-control-url <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * Optional version tag that will be associated with this app version. If not provided, an auto-generated identifier will be generated for this app version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
           }
         }
       }
@@ -2444,7 +2444,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-deletes",
                 "value": "\"\"",
-                "description": "Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.",
+                "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_DELETES"
               },
@@ -2453,7 +2453,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-updates",
                 "value": "\"\"",
-                "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.",
+                "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_UPDATES"
               },
@@ -2524,12 +2524,12 @@
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
                 "value": "\"\"",
-                "description": "Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes.",
+                "description": "Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
               }
             ],
-            "value": "export interface apprelease {\n  /**\n   * Allows removing extensions and configuration without requiring user confirmation. Required for non-interactive release that removes any configuration or extensions.\n   * @environment SHOPIFY_FLAG_ALLOW_DELETES\n   */\n  '--allow-deletes'?: ''\n\n  /**\n   * Allows adding and updating extensions and configuration without requiring user confirmation. Required for non-interactive release.\n   * @environment SHOPIFY_FLAG_ALLOW_UPDATES\n   */\n  '--allow-updates'?: ''\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The name of the app version to release.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>': string\n}"
+            "value": "export interface apprelease {\n  /**\n   * Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.\n   * @environment SHOPIFY_FLAG_ALLOW_DELETES\n   */\n  '--allow-deletes'?: ''\n\n  /**\n   * Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.\n   * @environment SHOPIFY_FLAG_ALLOW_UPDATES\n   */\n  '--allow-updates'?: ''\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The name of the app version to release.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>': string\n}"
           }
         }
       }
