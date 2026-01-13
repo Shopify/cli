@@ -39,6 +39,7 @@ export enum AssetIdentifier {
   ShouldRender = 'should_render',
   Main = 'main',
   Tools = 'tools',
+  Instructions = 'instructions',
 }
 
 export interface Asset {
