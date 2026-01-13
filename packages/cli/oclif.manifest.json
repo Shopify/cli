@@ -669,6 +669,22 @@
       "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your \"web app\" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to \"deploy your web app\" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.\n  ",
       "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.\n  ",
       "flags": {
+        "allow-deletes": {
+          "allowNo": false,
+          "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
+          "env": "SHOPIFY_FLAG_ALLOW_DELETES",
+          "hidden": false,
+          "name": "allow-deletes",
+          "type": "boolean"
+        },
+        "allow-updates": {
+          "allowNo": false,
+          "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
+          "env": "SHOPIFY_FLAG_ALLOW_UPDATES",
+          "hidden": false,
+          "name": "allow-updates",
+          "type": "boolean"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -694,7 +710,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Deploy without asking for confirmation.",
+          "description": "Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.",
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
           "name": "force",
@@ -726,7 +742,7 @@
         },
         "no-release": {
           "allowNo": false,
-          "description": "Creates a version but doesn't release it - it's not made available to merchants.",
+          "description": "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
           "env": "SHOPIFY_FLAG_NO_RELEASE",
           "hidden": false,
           "name": "no-release",
@@ -2715,6 +2731,22 @@
       "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "descriptionWithMarkdown": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "flags": {
+        "allow-deletes": {
+          "allowNo": false,
+          "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
+          "env": "SHOPIFY_FLAG_ALLOW_DELETES",
+          "hidden": false,
+          "name": "allow-deletes",
+          "type": "boolean"
+        },
+        "allow-updates": {
+          "allowNo": false,
+          "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
+          "env": "SHOPIFY_FLAG_ALLOW_UPDATES",
+          "hidden": false,
+          "name": "allow-updates",
+          "type": "boolean"
+        },
         "client-id": {
           "description": "The Client ID of your app.",
           "env": "SHOPIFY_FLAG_CLIENT_ID",
@@ -2740,7 +2772,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Release without asking for confirmation.",
+          "description": "Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.",
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
           "name": "force",
