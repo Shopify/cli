@@ -54,6 +54,7 @@ import {
   FindStoreByDomainQueryVariables,
   FindStoreByDomainSchema,
 } from '../../api/graphql/find_store_by_domain.js'
+import {Store} from '../../api/graphql/business-platform-organizations/generated/types.js'
 import {
   AppVersionsQuery,
   AppVersionsQueryVariables,
@@ -513,7 +514,8 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(ConvertDevToTransferDisabledStoreQuery, input)
   }
 
-  async storeByDomain(orgId: string, shopDomain: string): Promise<OrganizationStore | undefined> {
+  async storeByDomain(orgId: string, shopDomain: string, _storeTypes: Store[]): Promise<OrganizationStore | undefined> {
+    // Note: storeTypes filtering not implemented for PartnersClient
     const variables: FindStoreByDomainQueryVariables = {orgId, shopDomain}
     const result: FindStoreByDomainSchema = await this.request(FindStoreByDomainQuery, variables)
 

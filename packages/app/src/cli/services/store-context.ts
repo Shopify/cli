@@ -2,6 +2,7 @@ import {fetchStore} from './dev/fetch.js'
 import {convertToTransferDisabledStoreIfNeeded, selectStore} from './dev/select-store.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
+import {Store} from '../utilities/developer-platform-client.js'
 import metadata from '../metadata.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -12,11 +13,13 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
  * @param appContextResult - The result of the app context function.
  * @param forceReselectStore - Whether to force reselecting the store.
  * @param storeFqdn - a store FQDN, optional, when explicitly provided it has preference over anything else.
+ * @param storeTypes - Store types to filter by. Defaults to dev stores only.
  */
 interface StoreContextOptions {
   appContextResult: LoadedAppContextOutput
   forceReselectStore: boolean
   storeFqdn?: string
+  storeTypes?: Store[]
 }
 
 /**
@@ -30,6 +33,7 @@ export async function storeContext({
   appContextResult,
   storeFqdn,
   forceReselectStore,
+  storeTypes = ['APP_DEVELOPMENT'],
 }: StoreContextOptions): Promise<OrganizationStore> {
   const {app, organization, developerPlatformClient} = appContextResult
   let selectedStore: OrganizationStore
@@ -45,10 +49,15 @@ export async function storeContext({
   // An explicit storeFqdn has preference over anything else.
   const storeFqdnToUse = storeFqdn ?? cachedStoreInToml
 
+  // Check if we're filtering to dev stores only
+  const isDevStoresOnly = storeTypes.length === 1 && storeTypes[0] === 'APP_DEVELOPMENT'
+
   if (storeFqdnToUse) {
-    selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient)
+    selectedStore = await fetchStore(organization, storeFqdnToUse, developerPlatformClient, storeTypes)
     // never automatically convert a store provided via the command line
-    await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
+    if (isDevStoresOnly) {
+      await convertToTransferDisabledStoreIfNeeded(selectedStore, organization.id, developerPlatformClient, 'never')
+    }
   } else {
     // If no storeFqdn is provided, fetch all stores for the organization and let the user select one.
     const allStores = await developerPlatformClient.devStoresForOrg(organization.id)
