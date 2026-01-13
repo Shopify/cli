@@ -5,7 +5,7 @@ import {
 } from '../../api/graphql/bulk-operations/generated/staged-uploads-create.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
@@ -97,16 +97,13 @@ async function uploadFileToStagedUrl(
   parameters: {name: string; value: string}[],
   filename: string,
 ): Promise<void> {
-  const form = formData()
+  const form = new FormData()
 
   for (const param of parameters) {
     form.append(param.name, param.value)
   }
 
-  form.append('file', fileContents, {
-    filename,
-    contentType: 'text/jsonl',
-  })
+  form.append('file', new Blob([fileContents], {type: 'text/jsonl'}), filename)
 
   const uploadResponse = await renderSingleTask({
     title: outputContent`Uploading bulk operation variables`,
