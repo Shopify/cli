@@ -18,6 +18,8 @@ import {
   AppLinkedInterface,
   AppHiddenConfig,
   isLegacyAppSchema,
+  TemplateConfigSchema,
+  getTemplateScopesArray,
 } from './app.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -42,6 +44,7 @@ import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
   getDependencies,
   getPackageManager,
+  PackageManager,
   usesWorkspaces as appUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
@@ -214,22 +217,47 @@ export async function checkFolderIsValidApp(directory: string) {
 }
 
 export async function loadConfigForAppCreation(directory: string, name: string): Promise<CreateAppOptions> {
-  const state = await getAppConfigurationState(directory)
-  const config: AppConfiguration = state.state === 'connected-app' ? state.basicConfiguration : state.startingOptions
-  const loadedConfiguration = await loadAppConfigurationFromState(state, [], [])
+  const appDirectory = await getAppDirectory(directory)
+  const {configurationPath} = await getConfigurationPath(appDirectory, undefined)
 
-  const loader = new AppLoader({loadedConfiguration})
-  const webs = await loader.loadWebs(directory)
-
-  const isLaunchable = webs.webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
+  // Use permissive schema to allow templates with extra configuration (metafields, metaobjects, etc.)
+  const config = await parseConfigurationFile(TemplateConfigSchema, configurationPath)
+  const webs = await loadWebsForAppCreation(appDirectory, config.web_directories)
+  const isLaunchable = webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
 
   return {
     isLaunchable,
-    scopesArray: getAppScopesArray(config),
+    scopesArray: getTemplateScopesArray(config),
     name,
     directory,
     // By default, and ONLY for `app init`, we consider the app as embedded if it is launchable.
     isEmbedded: isLaunchable,
+  }
+}
+
+async function loadWebsForAppCreation(appDirectory: string, webDirectories?: string[]): Promise<Web[]> {
+  const webTomlPaths = await findWebConfigPaths(appDirectory, webDirectories)
+  return Promise.all(webTomlPaths.map((path) => loadSingleWeb(path)))
+}
+
+async function findWebConfigPaths(appDirectory: string, webDirectories?: string[]): Promise<string[]> {
+  const defaultWebDirectory = '**'
+  const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
+    return joinPath(appDirectory, webGlob, configurationFileNames.web)
+  })
+  webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
+  return glob(webConfigGlobs)
+}
+
+async function loadSingleWeb(webConfigPath: string, abortOrReport: AbortOrReport = abort): Promise<Web> {
+  const config = await parseConfigurationFile(WebConfigurationSchema, webConfigPath, abortOrReport)
+  const roles = new Set('roles' in config ? config.roles : [])
+  if ('type' in config) roles.add(config.type)
+  const {type, ...processedWebConfiguration} = {...config, roles: Array.from(roles), type: undefined}
+  return {
+    directory: dirname(webConfigPath),
+    configuration: processedWebConfiguration,
+    framework: await resolveFramework(dirname(webConfigPath)),
   }
 }
 
@@ -255,6 +283,83 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
     loadedConfiguration,
   })
   return loader.loaded()
+}
+
+/**
+ * Result of loading an app with relaxed validation.
+ * Used when we need to load app configuration even if it doesn't fully validate,
+ * such as during linking where templates may have extra configuration keys
+ * (metafields, metaobjects, etc.).
+ */
+export type OpaqueAppLoadResult =
+  | {
+      state: 'loaded-app'
+      app: AppInterface
+      configuration: AppConfiguration
+    }
+  | {
+      state: 'loaded-template'
+      rawConfig: JsonMapType
+      scopes: string
+      appDirectory: string
+      packageManager: PackageManager
+    }
+  | {
+      state: 'error'
+    }
+
+/**
+ * Load an app with relaxed validation, falling back to raw template loading if strict parsing fails.
+ *
+ * This is useful for flows like linking where templates may contain extra configuration keys
+ * (e.g., metafields, metaobjects) that don't fit the standard schemas but should be preserved.
+ *
+ * @param options - Options for loading the app
+ * @returns A discriminated union representing the load result:
+ *   - 'loaded-app': Successfully loaded as a full AppInterface
+ *   - 'loaded-template': Loaded as raw template config (validation failed but file is readable)
+ *   - 'error': Failed to load entirely
+ */
+export async function loadOpaqueApp(options: {
+  directory: string
+  configName?: string
+  specifications: ExtensionSpecification[]
+  remoteFlags?: Flag[]
+  mode?: AppLoaderMode
+}): Promise<OpaqueAppLoadResult> {
+  // Try to load the app normally first
+  try {
+    const app = await loadApp({
+      directory: options.directory,
+      userProvidedConfigName: options.configName,
+      specifications: options.specifications,
+      remoteFlags: options.remoteFlags,
+      mode: options.mode ?? 'report',
+    })
+    return {state: 'loaded-app', app, configuration: app.configuration}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // loadApp failed - try loading as raw template config
+    try {
+      const appDirectory = await getAppDirectory(options.directory)
+      const {configurationPath} = await getConfigurationPath(appDirectory, options.configName)
+      const rawConfig = await loadConfigurationFileContent(configurationPath)
+      const parsed = TemplateConfigSchema.parse(rawConfig)
+      const packageManager = await getPackageManager(appDirectory)
+
+      return {
+        state: 'loaded-template',
+        rawConfig,
+        scopes: getTemplateScopesArray(parsed).join(','),
+        appDirectory,
+        packageManager,
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch {
+      // Both attempts failed
+      return {state: 'error'}
+    }
+  }
 }
 
 export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
@@ -395,14 +500,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
-    const defaultWebDirectory = '**'
-    const webConfigGlobs = [...(webDirectories ?? [defaultWebDirectory])].map((webGlob) => {
-      return joinPath(appDirectory, webGlob, configurationFileNames.web)
-    })
-    webConfigGlobs.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
-    const webTomlPaths = await glob(webConfigGlobs)
-
-    const webs = await Promise.all(webTomlPaths.map((path) => this.loadWeb(path)))
+    const webTomlPaths = await findWebConfigPaths(appDirectory, webDirectories)
+    const webs = await Promise.all(webTomlPaths.map((path) => loadSingleWeb(path, this.abortOrReport.bind(this))))
     this.validateWebs(webs)
 
     const webTomlsInStandardLocation = await glob(joinPath(appDirectory, `web/**/${configurationFileNames.web}`))
@@ -444,18 +543,6 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         )
       }
     })
-  }
-
-  private async loadWeb(WebConfigurationFile: string): Promise<Web> {
-    const config = await this.parseConfigurationFile(WebConfigurationSchema, WebConfigurationFile)
-    const roles = new Set('roles' in config ? config.roles : [])
-    if ('type' in config) roles.add(config.type)
-    const {type, ...processedWebConfiguration} = {...config, roles: Array.from(roles), type: undefined}
-    return {
-      directory: dirname(WebConfigurationFile),
-      configuration: processedWebConfiguration,
-      framework: await resolveFramework(dirname(WebConfigurationFile)),
-    }
   }
 
   private async createExtensionInstance(
@@ -999,7 +1086,7 @@ async function checkIfGitTracked(appDirectory: string, configurationPath: string
   return isTracked
 }
 
-async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
+export async function getConfigurationPath(appDirectory: string, configName: string | undefined) {
   const configurationFileName = getAppConfigurationFileName(configName)
   const configurationPath = joinPath(appDirectory, configurationFileName)
 
@@ -1016,7 +1103,7 @@ async function getConfigurationPath(appDirectory: string, configName: string | u
  *
  * @param directory - The current working directory, or the `--path` option
  */
-async function getAppDirectory(directory: string) {
+export async function getAppDirectory(directory: string) {
   if (!(await fileExists(directory))) {
     throw new AbortError(outputContent`Couldn't find directory ${outputToken.path(directory)}`)
   }

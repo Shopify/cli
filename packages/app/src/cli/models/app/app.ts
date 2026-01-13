@@ -76,6 +76,37 @@ function fixSingleWildcards(value: string[] | undefined) {
 }
 
 /**
+ * Schema for loading template config during app init.
+ * Uses passthrough() to allow any extra keys from full-featured templates
+ * (e.g., metafields, metaobjects, webhooks) without strict validation.
+ */
+export const TemplateConfigSchema = zod
+  .object({
+    scopes: zod
+      .string()
+      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
+      .optional(),
+    access_scopes: zod
+      .object({
+        scopes: zod.string().transform((scopes) => normalizeDelimitedString(scopes) ?? ''),
+      })
+      .optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .passthrough()
+
+export type TemplateConfig = zod.infer<typeof TemplateConfigSchema>
+
+export function getTemplateScopesArray(config: TemplateConfig): string[] {
+  const scopesString = config.scopes ?? config.access_scopes?.scopes ?? ''
+  if (scopesString.length === 0) return []
+  return scopesString
+    .split(',')
+    .map((scope) => scope.trim())
+    .sort()
+}
+
+/**
  * Schema for a normal, linked app. Properties from modules are not validated.
  */
 export const AppSchema = zod.object({

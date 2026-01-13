@@ -127,4 +127,104 @@ embedded = false
       expect(content).toEqual(expectedContent)
     })
   })
+
+  test('preserves template metafield config when creating new app', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Template with metafield configuration that doesn't fit standard schemas
+      const initialContent = `
+scopes = "write_products"
+
+[product.metafields.app.demo_info]
+type = "single_line_text_field"
+name = "Demo Source Info"
+description = "Tracks products created by the Shopify app template"
+
+[webhooks]
+api_version = "2025-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks/app/uninstalled"
+  topics = ["app/uninstalled"]
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+`
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      writeFileSync(filePath, initialContent)
+      writeFileSync(joinPath(tmp, 'package.json'), '{}')
+
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+      vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
+      vi.mocked(appNamePrompt).mockResolvedValue('My App')
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
+        id: '12345',
+        businessName: 'test',
+        source: OrganizationSource.BusinessPlatform,
+      })
+
+      const options = {
+        directory: tmp,
+        developerPlatformClient,
+      }
+      await link(options, false)
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+
+      // Verify metafield config is preserved
+      expect(content).toContain('[product.metafields.app.demo_info]')
+      expect(content).toContain('type = "single_line_text_field"')
+      expect(content).toContain('name = "Demo Source Info"')
+
+      // Verify webhook subscriptions are preserved
+      expect(content).toContain('[[webhooks.subscriptions]]')
+      expect(content).toContain('uri = "/webhooks/app/uninstalled"')
+      expect(content).toContain('topics = [ "app/uninstalled" ]')
+      expect(content).toContain('uri = "/webhooks/app/scopes_update"')
+    })
+  })
+
+  test('preserves template metaobject config when creating new app', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Template with metaobject configuration
+      const initialContent = `
+scopes = "write_products"
+
+[metaobjects.app.author]
+name = "Author"
+description = "Content author"
+
+[metaobjects.app.author.fields.name]
+type = "single_line_text_field"
+name = "Author Name"
+required = true
+`
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      writeFileSync(filePath, initialContent)
+      writeFileSync(joinPath(tmp, 'package.json'), '{}')
+
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      vi.mocked(selectDeveloperPlatformClient).mockReturnValue(developerPlatformClient)
+      vi.mocked(createAsNewAppPrompt).mockResolvedValue(true)
+      vi.mocked(appNamePrompt).mockResolvedValue('My App')
+      vi.mocked(selectOrganizationPrompt).mockResolvedValue({
+        id: '12345',
+        businessName: 'test',
+        source: OrganizationSource.BusinessPlatform,
+      })
+
+      const options = {
+        directory: tmp,
+        developerPlatformClient,
+      }
+      await link(options, false)
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
+
+      // Verify metaobject config is preserved
+      expect(content).toContain('[metaobjects.app.author]')
+      expect(content).toContain('name = "Author"')
+      expect(content).toContain('[metaobjects.app.author.fields.name]')
+      expect(content).toContain('type = "single_line_text_field"')
+    })
+  })
 })
