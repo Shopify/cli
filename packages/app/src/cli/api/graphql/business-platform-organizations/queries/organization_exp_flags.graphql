@@ -1,0 +1,6 @@
+query OrganizationExpFlags($organizationId: OrganizationID!, $flagHandles: [String!]!) {
+  organization(organizationId: $organizationId) {
+    id
+    enabledFlags(flagHandles: $flagHandles)
+  }
+}
