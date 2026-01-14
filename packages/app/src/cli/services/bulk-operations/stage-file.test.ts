@@ -1,7 +1,7 @@
 import {stageFile} from './stage-file.js'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
 import {readFile, fileSize} from '@shopify/cli-kit/node/fs'
-import {fetch, formData} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/admin')
@@ -32,16 +32,16 @@ describe('stageFile', () => {
     },
   }
 
+  let formDataAppendSpy: ReturnType<typeof vi.spyOn>
+
   beforeEach(() => {
     vi.mocked(readFile).mockResolvedValue(Buffer.from(mockFileContents))
     vi.mocked(fileSize).mockResolvedValue(mockFileSize)
-    vi.mocked(formData).mockReturnValue({
-      append: vi.fn(),
-    } as any)
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(''),
     } as any)
+    formDataAppendSpy = vi.spyOn(FormData.prototype, 'append')
   })
 
   test('returns staged upload key when file is successfully staged with no variables', async () => {
@@ -57,8 +57,6 @@ describe('stageFile', () => {
 
   test('converts JSONL string to buffer when uploading file', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
-    const mockAppend = vi.fn()
-    vi.mocked(formData).mockReturnValue({append: mockAppend} as any)
 
     const variablesJsonl = '{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}'
 
@@ -67,20 +65,15 @@ describe('stageFile', () => {
       variablesJsonl,
     })
 
-    const fileAppendCall = mockAppend.mock.calls.find((call) => {
-      const fieldName = call[0]
-      return fieldName === 'file'
-    })
-    const uploadedBuffer = fileAppendCall?.[1]
-    const uploadedContent = uploadedBuffer?.toString('utf-8')
+    const fileAppendCall = formDataAppendSpy.mock.calls.find((call) => call[0] === 'file')
+    const uploadedBlob = fileAppendCall?.[1] as Blob
+    const uploadedContent = await uploadedBlob?.text()
 
     expect(uploadedContent).toBe('{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}\n')
   })
 
   test('handles JSONL with multiple lines correctly', async () => {
     vi.mocked(adminRequestDoc).mockResolvedValue(mockSuccessResponse)
-    const mockAppend = vi.fn()
-    vi.mocked(formData).mockReturnValue({append: mockAppend} as any)
 
     const variablesJsonl = [
       '{"input":{"id":"gid://shopify/Product/1","title":"New Shirt"}}',
@@ -93,12 +86,9 @@ describe('stageFile', () => {
       variablesJsonl,
     })
 
-    const fileAppendCall = mockAppend.mock.calls.find((call) => {
-      const fieldName = call[0]
-      return fieldName === 'file'
-    })
-    const uploadedBuffer = fileAppendCall?.[1]
-    const uploadedContent = uploadedBuffer?.toString('utf-8')
+    const fileAppendCall = formDataAppendSpy.mock.calls.find((call) => call[0] === 'file')
+    const uploadedBlob = fileAppendCall?.[1] as Blob
+    const uploadedContent = await uploadedBlob?.text()
 
     const expectedContent = [
       '{"input":{"id":"gid://shopify/Product/1","title":"New Shirt"}}',
