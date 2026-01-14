@@ -1,5 +1,6 @@
 import {PartnersClient} from './partners-client.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
+import {RemoteTemplateSpecificationsQuery} from '../../api/graphql/template_specifications.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
@@ -11,7 +12,9 @@ import {
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
-import {describe, expect, vi, test, beforeEach} from 'vitest'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
@@ -228,5 +231,99 @@ describe('singleton pattern', () => {
 
     // Then
     expect(instance1).not.toBe(instance2)
+  })
+})
+
+describe('templateSpecifications', () => {
+  const originalEnv = process.env
+
+  afterEach(() => {
+    process.env = originalEnv
+  })
+
+  test('fetches templates from GraphQL when no override is set', async () => {
+    // Given
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const mockTemplates = {
+      templateSpecifications: [
+        {
+          identifier: 'test-template',
+          name: 'Test Template',
+          defaultName: 'test',
+          group: 'TestGroup',
+          sortPriority: 1,
+          supportLinks: [],
+          types: [{url: 'https://example.com', type: 'test', extensionPoints: [], supportedFlavors: []}],
+        },
+      ],
+    }
+    vi.mocked(partnersRequest).mockResolvedValueOnce(mockTemplates)
+
+    // When
+    const result = await partnersClient.templateSpecifications({apiKey: 'test-api-key'})
+
+    // Then
+    expect(partnersRequest).toHaveBeenCalledWith(
+      RemoteTemplateSpecificationsQuery,
+      'token',
+      {apiKey: 'test-api-key'},
+      undefined,
+      undefined,
+      {type: 'token_refresh', handler: expect.any(Function)},
+    )
+    expect(result.templates).toHaveLength(1)
+    expect(result.templates[0]!.identifier).toBe('test-template')
+  })
+
+  test('loads templates from JSON file when SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH is set', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const templatesPath = joinPath(tmpDir, 'templates.json')
+      const templates = [
+        {
+          identifier: 'json-template',
+          name: 'JSON Template',
+          defaultName: 'json-test',
+          group: 'JsonGroup',
+          sortPriority: 1,
+          supportLinks: [],
+          type: 'json-type',
+          url: 'https://example.com/json',
+          extensionPoints: [],
+          supportedFlavors: [],
+        },
+      ]
+      await writeFile(templatesPath, JSON.stringify(templates))
+      process.env = {...originalEnv, SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH: templatesPath}
+
+      const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+
+      // When
+      const result = await partnersClient.templateSpecifications({apiKey: 'test-api-key'})
+
+      // Then
+      expect(partnersRequest).not.toHaveBeenCalledWith(
+        RemoteTemplateSpecificationsQuery,
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+      )
+      expect(result.templates).toHaveLength(1)
+      expect(result.templates[0]!.identifier).toBe('json-template')
+      expect(result.templates[0]!.type).toBe('json-type')
+    })
+  })
+
+  test('throws error when SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH points to non-existent file', async () => {
+    // Given
+    process.env = {...originalEnv, SHOPIFY_CLI_APP_TEMPLATES_JSON_PATH: '/non/existent/path.json'}
+    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+
+    // When/Then
+    await expect(partnersClient.templateSpecifications({apiKey: 'test-api-key'})).rejects.toThrow(
+      'There is no file at the path specified for template specifications',
+    )
   })
 })

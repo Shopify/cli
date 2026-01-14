@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import {environmentVariableNames} from '../../constants.js'
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
   AppVersion,
@@ -157,6 +158,7 @@ import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-managemen
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {ensureAuthenticatedPartners, Session} from '@shopify/cli-kit/node/session'
@@ -367,18 +369,35 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async templateSpecifications({apiKey}: MinimalAppIdentifiers): Promise<ExtensionTemplatesResult> {
-    const variables: RemoteTemplateSpecificationsVariables = {apiKey}
-    const result: RemoteTemplateSpecificationsSchema = await this.request(RemoteTemplateSpecificationsQuery, variables)
-    const templates = result.templateSpecifications.map((template) => {
-      const {types, ...rest} = template
-      return {
-        ...rest,
-        ...types[0],
+    const {templatesJsonPath} = environmentVariableNames
+    const overrideFile = process.env[templatesJsonPath]
+
+    let templates
+    if (overrideFile) {
+      if (!(await fileExists(overrideFile))) {
+        throw new AbortError('There is no file at the path specified for template specifications')
       }
-    })
+      const templatesJson = await readFile(overrideFile)
+      // JSON file is already in flattened ExtensionTemplate format
+      templates = JSON.parse(templatesJson)
+    } else {
+      const variables: RemoteTemplateSpecificationsVariables = {apiKey}
+      const result: RemoteTemplateSpecificationsSchema = await this.request(
+        RemoteTemplateSpecificationsQuery,
+        variables,
+      )
+      // GraphQL result needs transformation to flatten the types array
+      templates = result.templateSpecifications.map((template) => {
+        const {types, ...rest} = template
+        return {
+          ...rest,
+          ...types[0],
+        }
+      })
+    }
 
     let counter = 0
-    const templatesWithPriority = templates.map((template) => ({
+    const templatesWithPriority = templates.map((template: {sortPriority?: number; group?: string}) => ({
       ...template,
       sortPriority: template.sortPriority ?? counter++,
     }))
