@@ -14,7 +14,6 @@ import {
   testWebhookExtensions,
 } from '../../../../models/app/app.test-data.js'
 import {getUploadURL} from '../../../bundle.js'
-import {formData} from '@shopify/cli-kit/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
@@ -81,7 +80,6 @@ describe('pushUpdatesForDevSession', () => {
   let devSessionStatusManager: DevSessionStatusManager
 
   beforeEach(() => {
-    vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
     stdout = {write: vi.fn()}
     stderr = {write: vi.fn()}
     developerPlatformClient = testDeveloperPlatformClient()
@@ -425,7 +423,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('assetsURL is only generated if affected extensions have assets', async () => {
     // Given
-    vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
     // Mock readdir to return that a folder for the extension assets exists
     vi.mocked(readdir).mockResolvedValue(['other-folders', 'ui-extension-uid'])
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
@@ -456,7 +453,6 @@ describe('pushUpdatesForDevSession', () => {
 
   test('assetsURL is always generated for create, even if there are no assets', async () => {
     // Given
-    vi.mocked(formData).mockReturnValue({append: vi.fn(), getHeaders: vi.fn()} as any)
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
 
     // When

@@ -3,7 +3,6 @@ import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-da
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {formData} from '@shopify/cli-kit/node/http'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/http')
@@ -16,8 +15,6 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
-      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       const developerPlatformClient = testDeveloperPlatformClient()
 
       // When
@@ -62,8 +59,6 @@ describe('uploadExtensionsBundle', () => {
   test('calls a mutation on partners with a message and a version', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
-      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       const developerPlatformClient = testDeveloperPlatformClient()
 
       // When
@@ -111,8 +106,6 @@ describe('uploadExtensionsBundle', () => {
 
   test('calls a mutation on partners when there are no extensions', async () => {
     const developerPlatformClient = testDeveloperPlatformClient()
-    const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
-    vi.mocked<any>(formData).mockReturnValue(mockedFormData)
     // When
     await uploadExtensionsBundle({
       appManifest,
@@ -222,8 +215,6 @@ describe('uploadExtensionsBundle', () => {
         deploy: (_input: AppDeployVariables) => Promise.resolve(errorResponse),
       })
 
-      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
-      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       // When
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
 
@@ -327,8 +318,6 @@ describe('uploadExtensionsBundle', () => {
       const developerPlatformClient = testDeveloperPlatformClient({
         deploy: (_input: AppDeployVariables) => Promise.resolve(errorResponse),
       })
-      const mockedFormData = {append: vi.fn(), getHeaders: vi.fn()}
-      vi.mocked<any>(formData).mockReturnValue(mockedFormData)
       await writeFile(joinPath(tmpDir, 'test.zip'), '')
 
       // When

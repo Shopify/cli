@@ -1,4 +1,4 @@
-import {downloadFile, shopifyFetch, formData, requestMode, fetch} from './http.js'
+import {downloadFile, shopifyFetch, requestMode, fetch} from './http.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {fileExists, inTemporaryDirectory, readFile} from './fs.js'
 import {joinPath} from './path.js'
@@ -7,7 +7,6 @@ import {platformAndArch} from './os.js'
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {setupServer} from 'msw/node'
 import {delay, http, HttpResponse} from 'msw'
-import FormData from 'form-data'
 
 const DURATION_UNTIL_ABORT_IS_SEEN = 100
 
@@ -74,14 +73,6 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
-})
-
-describe('formData', () => {
-  test('make an empty form data object', () => {
-    const res = formData()
-    expect(res).toBeInstanceOf(FormData)
-    expect(res.getLengthSync()).toBe(0)
-  })
 })
 
 describe('shopifyFetch', () => {

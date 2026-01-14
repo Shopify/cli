@@ -3,9 +3,13 @@ import {sanitizeURL} from './api/urls.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
-import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 import {performance} from 'perf_hooks'
+
+interface ResponseHeaders {
+  forEach(callback: (value: string, key: string) => void): void
+  get?(key: string): string | null
+}
 
 export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management'
 
@@ -135,7 +139,7 @@ export function isNetworkError(error: unknown): boolean {
   return false
 }
 
-async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; status: number}>(
+async function runRequestWithNetworkLevelRetry<T extends {headers: ResponseHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
 ): Promise<T> {
   if (!requestOptions.useNetworkLevelRetry) {
@@ -164,7 +168,7 @@ async function runRequestWithNetworkLevelRetry<T extends {headers: Headers; stat
   throw lastSeenError
 }
 
-async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
+async function makeVerboseRequest<T extends {headers: ResponseHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
 ): Promise<VerboseResponse<T>> {
   const t0 = performance.now()
@@ -264,7 +268,7 @@ function errorsIncludeStatus429(error: ClientError): boolean {
   return error.response.errors?.some((error) => error.extensions?.code === '429') ?? false
 }
 
-export async function simpleRequestWithDebugLog<T extends {headers: Headers; status: number}>(
+export async function simpleRequestWithDebugLog<T extends {headers: ResponseHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
 ): Promise<T> {
@@ -327,7 +331,7 @@ ${result.sanitizedHeaders}
  * @param retryOptions - Options for the retry
  * @returns The response from the request
  */
-export async function retryAwareRequest<T extends {headers: Headers; status: number}>(
+export async function retryAwareRequest<T extends {headers: ResponseHeaders; status: number}>(
   requestOptions: RequestOptions<T>,
   errorHandler?: (error: unknown, requestId: string | undefined) => unknown,
   retryOptions: {

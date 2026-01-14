@@ -8,19 +8,9 @@ import {sanitizeURL} from '../../private/node/api/urls.js'
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {NetworkRetryBehaviour, simpleRequestWithDebugLog} from '../../private/node/api.js'
 import {DEFAULT_MAX_TIME_MS} from '../../private/node/sleep-with-backoff.js'
-import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit, Response} from 'node-fetch'
 
 export {FetchError, Request, Response} from 'node-fetch'
-
-/**
- * Create a new FormData object.
- *
- * @returns A FormData object.
- */
-export function formData(): FormData {
-  return new FormData()
-}
 
 type AbortSignal = RequestInit['signal']
 

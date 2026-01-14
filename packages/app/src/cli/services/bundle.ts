@@ -4,7 +4,7 @@ import {AssetUrlSchema, DeveloperPlatformClient} from '../utilities/developer-pl
 import {MinimalAppIdentifiers} from '../models/organization.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {readFileSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {writeFile} from 'fs/promises'
@@ -29,10 +29,8 @@ export async function compressBundle(inputDirectory: string, outputPath: string,
  * @param filePath - The path to the file
  */
 export async function uploadToGCS(signedURL: string, filePath: string) {
-  const form = formData()
   const buffer = readFileSync(filePath)
-  form.append('my_upload', buffer)
-  await fetch(signedURL, {method: 'put', body: buffer, headers: form.getHeaders()}, 'slow-request')
+  await fetch(signedURL, {method: 'put', body: buffer}, 'slow-request')
 }
 
 /**
