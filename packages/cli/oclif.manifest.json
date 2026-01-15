@@ -862,6 +862,15 @@
           "name": "graphiql-port",
           "type": "option"
         },
+        "host": {
+          "default": "127.0.0.1",
+          "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
+          "env": "SHOPIFY_FLAG_HOST",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "host",
+          "type": "option"
+        },
         "localhost-port": {
           "description": "Port to use for localhost.",
           "env": "SHOPIFY_FLAG_LOCALHOST_PORT",
