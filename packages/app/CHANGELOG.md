@@ -1,5 +1,23 @@
 # @shopify/app
 
+## 3.89.0
+
+### Minor Changes
+
+- 2f3ae6c: Add `shopify app import-custom-data-definitions` -- a command to automatically convert existing metafields and metaobjects to declarative TOML.
+- b19f3fc: Add --allow-updates and --allow-delete flags to deploy and release
+- 437aedf: Add support for an optional name field for webhook subscriptions in shopify.app.toml
+
+### Patch Changes
+
+- 6869482: Support flexible templates in `shopify app init`
+- Updated dependencies [e92155e]
+- Updated dependencies [04917c9]
+- Updated dependencies [eda441d]
+  - @shopify/theme@3.89.0
+  - @shopify/cli-kit@3.89.0
+  - @shopify/plugin-cloudflare@3.89.0
+
 ## 3.88.0
 
 ### Minor Changes
