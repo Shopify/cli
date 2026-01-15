@@ -206,6 +206,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
@@ -271,6 +272,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
@@ -332,6 +334,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           urls: {},
@@ -393,6 +396,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -457,6 +461,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -523,6 +528,7 @@ describe('ui_extension', async () => {
       expect(got.extension_points).toStrictEqual([
         {
           target: 'EXTENSION::POINT::A',
+          tools: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -589,6 +595,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
+          tools: './tools.json',
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -655,6 +662,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
+          tools: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -881,6 +889,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
+          tools: './tools.json',
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -1534,7 +1543,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
 
         // Then - should generate union type for shared module
         expect(Array.from(types ?? [])).toContain(
-          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify: \n    import('@shopify/ui-extensions/admin.product-details.action.render').Api |\n    import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './shared/utils.js' {\n  const shopify:\n    | import('@shopify/ui-extensions/admin.product-details.action.render').Api\n    | import('@shopify/ui-extensions/admin.orders-details.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
         )
       })
     })
@@ -1595,7 +1604,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
         // Then - should generate union types for shared files
         // when targets are from different surfaces (admin vs checkout)
         expect(types).toContain(
-          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify: \n    import('@shopify/ui-extensions/admin.product-details.action.render').Api |\n    import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
+          `//@ts-ignore\ndeclare module './src/components/Shared.jsx' {\n  const shopify:\n    | import('@shopify/ui-extensions/admin.product-details.action.render').Api\n    | import('@shopify/ui-extensions/purchase.checkout.block.render').Api;\n  const globalThis: { shopify: typeof shopify };\n}\n`,
         )
       })
     })
@@ -2008,6 +2017,285 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
 
         // Verify we have exactly 3 type definitions (no duplicates)
         expect(types).toHaveLength(3)
+      })
+    })
+
+    test('generates shopify.d.ts with ShopifyTools interface when tools file is present', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+        })
+
+        // Create tools.json file
+        const toolsContent = JSON.stringify([
+          {
+            name: 'search_products',
+            description: 'Search for products by query',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                query: {type: 'string'},
+              },
+              required: ['query'],
+            },
+            outputSchema: {
+              type: 'object',
+              properties: {
+                products: {type: 'array', items: {type: 'string'}},
+              },
+            },
+          },
+        ])
+        await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
+
+        // Update extension configuration to include tools
+        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should include ShopifyTools interface and tool type definitions
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain('interface ShopifyTools')
+        expect(typeDefinition).toContain('interface SearchProductsInput')
+        expect(typeDefinition).toContain('interface SearchProductsOutput')
+        expect(typeDefinition).toContain("name: 'search_products'")
+        expect(typeDefinition).toContain('tools: ShopifyTools')
+      })
+    })
+
+    test('generates shopify.d.ts with multiple tools in ShopifyTools interface', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+        })
+
+        // Create tools.json file with multiple tools
+        const toolsContent = JSON.stringify([
+          {
+            name: 'get_product',
+            description: 'Get product by ID',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                productId: {type: 'string'},
+              },
+              required: ['productId'],
+            },
+            outputSchema: {
+              type: 'object',
+              properties: {
+                title: {type: 'string'},
+                price: {type: 'number'},
+              },
+            },
+          },
+          {
+            name: 'update_inventory',
+            description: 'Update inventory count',
+            inputSchema: {
+              type: 'object',
+              properties: {
+                sku: {type: 'string'},
+                quantity: {type: 'number'},
+              },
+              required: ['sku', 'quantity'],
+            },
+          },
+        ])
+        await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
+
+        // Update extension configuration to include tools
+        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should include type definitions for both tools
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).toContain('interface ShopifyTools')
+        expect(typeDefinition).toContain('interface GetProductInput')
+        expect(typeDefinition).toContain('interface GetProductOutput')
+        expect(typeDefinition).toContain("name: 'get_product'")
+        expect(typeDefinition).toContain('interface UpdateInventoryInput')
+        expect(typeDefinition).toContain('type UpdateInventoryOutput = unknown')
+        expect(typeDefinition).toContain("name: 'update_inventory'")
+      })
+    })
+
+    test('does not include ShopifyTools when tools file does not exist', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+        })
+
+        // Update extension configuration to reference a non-existent tools file
+        ;(extension.configuration.extension_points[0] as any).tools = './non-existent-tools.json'
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should generate type definition without ShopifyTools
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).not.toContain('ShopifyTools')
+        expect(typeDefinition).toContain("import('@shopify/ui-extensions/admin.product-details.action.render').Api")
+      })
+    })
+
+    test('does not include ShopifyTools when tools file has invalid JSON', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+        })
+
+        // Create invalid tools.json file
+        await writeFile(joinPath(tmpDir, 'tools.json'), 'not valid json {{{')
+
+        // Update extension configuration to include tools
+        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should generate type definition without ShopifyTools (graceful fallback)
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).not.toContain('ShopifyTools')
+      })
+    })
+
+    test('does not include ShopifyTools when tools file has invalid schema', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: '// Extension code',
+          apiVersion: '2025-10',
+        })
+
+        // Create tools.json with invalid schema (missing required fields)
+        const invalidToolsContent = JSON.stringify([
+          {
+            name: 'incomplete_tool',
+            // missing description and inputSchema
+          },
+        ])
+        await writeFile(joinPath(tmpDir, 'tools.json'), invalidToolsContent)
+
+        // Update extension configuration to include tools
+        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should generate type definition without ShopifyTools (graceful fallback)
+        expect(types).toHaveLength(1)
+        const typeDefinition = types[0]!
+        expect(typeDefinition).not.toContain('ShopifyTools')
+      })
+    })
+
+    test('generates ShopifyTools only for entry point file, not for imported files', async () => {
+      const typeDefinitionsByFile = new Map<string, Set<string>>()
+
+      await inTemporaryDirectory(async (tmpDir) => {
+        const {extension} = await setupUIExtensionWithNodeModules({
+          tmpDir,
+          fileContent: `
+            import './utils/helper.js';
+            // Main extension code
+          `,
+          apiVersion: '2025-10',
+        })
+
+        // Create imported file
+        const utilsDir = joinPath(tmpDir, 'src', 'utils')
+        await mkdir(utilsDir)
+        await writeFile(joinPath(utilsDir, 'helper.js'), 'export const helper = () => {};')
+
+        // Create tools.json file
+        const toolsContent = JSON.stringify([
+          {
+            name: 'my_tool',
+            description: 'A tool',
+            inputSchema: {type: 'object'},
+          },
+        ])
+        await writeFile(joinPath(tmpDir, 'tools.json'), toolsContent)
+
+        // Update extension configuration to include tools
+        ;(extension.configuration.extension_points[0] as any).tools = './tools.json'
+
+        // Create tsconfig.json
+        await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+
+        // When
+        await extension.contributeToSharedTypeFile?.(typeDefinitionsByFile)
+
+        const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+        const types = Array.from(typeDefinitionsByFile.get(shopifyDtsPath) ?? [])
+
+        // Then - should have 2 type definitions (entry point and helper)
+        expect(types).toHaveLength(2)
+
+        // Entry point should have ShopifyTools
+        const entryPointType = types.find((t) => t.includes('./src/index.jsx'))
+        expect(entryPointType).toContain('ShopifyTools')
+        expect(entryPointType).toContain('tools: ShopifyTools')
+
+        // Imported file should NOT have ShopifyTools
+        const helperType = types.find((t) => t.includes('./src/utils/helper.js'))
+        expect(helperType).not.toContain('ShopifyTools')
       })
     })
   })
