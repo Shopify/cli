@@ -5,6 +5,14 @@ import {AsyncLocalStorage} from 'node:async_hooks'
 
 type DevelopmentThemeId = string
 
+export interface ThemeDevSessionInfo {
+  pid: number
+  port: number
+  store: string
+  startedAt: number
+  themeId: string
+}
+
 export interface ThemeLocalStorageSchema {
   themeStore: string
 }
@@ -17,6 +25,10 @@ interface ThemeStorePasswordSchema {
   [themeStore: string]: string
 }
 
+interface ThemeDevSessionsSchema {
+  [directory: string]: ThemeDevSessionInfo
+}
+
 /** Preserves the theme store a command is acting on during multi environment execution */
 const themeStoreContext = new AsyncLocalStorage<{store: string}>()
 
@@ -24,6 +36,7 @@ let _themeLocalStorageInstance: LocalStorage<ThemeLocalStorageSchema> | undefine
 let _developmentThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
 let _replThemeLocalStorageInstance: LocalStorage<DevelopmentThemeLocalStorageSchema> | undefined
 let _themeStorePasswordStorageInstance: LocalStorage<ThemeStorePasswordSchema> | undefined
+let _themeDevSessionsStorageInstance: LocalStorage<ThemeDevSessionsSchema> | undefined
 
 function themeLocalStorage() {
   if (!_themeLocalStorageInstance) {
@@ -57,6 +70,15 @@ function themeStorePasswordStorage() {
     })
   }
   return _themeStorePasswordStorageInstance
+}
+
+function themeDevSessionsStorage() {
+  if (!_themeDevSessionsStorageInstance) {
+    _themeDevSessionsStorageInstance = new LocalStorage<ThemeDevSessionsSchema>({
+      projectName: 'shopify-cli-dev-sessions',
+    })
+  }
+  return _themeDevSessionsStorageInstance
 }
 
 export function getThemeStore(storage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage()) {
@@ -110,6 +132,21 @@ export function removeREPLTheme(themeStorage: LocalStorage<ThemeLocalStorageSche
   replThemeLocalStorage().delete(assertThemeStoreExists(themeStorage))
 }
 
+export function getThemeDevSession(directory: string): ThemeDevSessionInfo | undefined {
+  outputDebug(outputContent`Getting dev session for ${directory}...`)
+  return themeDevSessionsStorage().get(directory)
+}
+
+export function setThemeDevSession(directory: string, session: ThemeDevSessionInfo): void {
+  outputDebug(outputContent`Recording dev session for ${directory}...`)
+  themeDevSessionsStorage().set(directory, session)
+}
+
+export function removeThemeDevSession(directory: string): void {
+  outputDebug(outputContent`Removing dev session for ${directory}...`)
+  themeDevSessionsStorage().delete(directory)
+}
+
 export function getStorefrontPassword(
   themeStorage: LocalStorage<ThemeLocalStorageSchema> = themeLocalStorage(),
 ): string | undefined {
@@ -153,4 +190,44 @@ function assertThemeStoreExists(storage: LocalStorage<ThemeLocalStorageSchema> =
 /** Provides theme store context to each environment during concurrent multi environment execution */
 export async function useThemeStoreContext<T>(store: string, callback: () => Promise<T>): Promise<T> {
   return themeStoreContext.run({store}, callback)
+}
+
+// eslint-disable-next-line no-warning-comments
+// TODO: Change to use processKill from tree-kill.ts
+/**
+ * Checks if a process with the given PID is still running.
+ * Uses signal 0 which doesn't kill the process, just checks existence.
+ */
+export function isProcessRunning(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Gets the active dev session for a directory, cleaning up stale sessions.
+ * Returns the session if it exists AND the process is still running.
+ * If the session exists but process is dead, cleans up and returns undefined.
+ */
+export function getActiveThemeDevSession(directory: string): ThemeDevSessionInfo | undefined {
+  const session = getThemeDevSession(directory)
+
+  if (!session) {
+    return undefined
+  }
+
+  // Check if the process is actually still running
+  if (isProcessRunning(session.pid)) {
+    return session
+  }
+
+  // Process is dead - this is a stale session, clean it up
+  outputDebug(
+    outputContent`Cleaning up stale dev session for ${directory} (PID ${session.pid.toString()} no longer running)...`,
+  )
+  removeThemeDevSession(directory)
+  return undefined
 }

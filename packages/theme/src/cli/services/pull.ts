@@ -6,10 +6,11 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {getActiveThemeDevSession} from './local-storage.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
@@ -219,6 +220,26 @@ export async function isEmptyDir(path: string) {
  * @returns Whether the directory is valid.
  */
 async function validateDirectory(path: string, force: boolean, environment?: string, multiEnvironment?: boolean) {
+  /**
+   * Check if theme dev is running in this directory. If so, warn the user
+   * because pull may delete local files which the dev watcher will sync,
+   * potentially causing unexpected file deletions on the remote theme.
+   */
+  const activeDevSession = getActiveThemeDevSession(path)
+  if (activeDevSession) {
+    renderWarning({
+      headline: 'theme dev is running in this directory',
+      body: [
+        `A dev session is active (PID: ${activeDevSession.pid}, port: ${activeDevSession.port}).`,
+        '\n\n',
+        'Running pull while dev is active may cause files to be unexpectedly ',
+        'deleted from your development theme due to the file watcher syncing deletions.',
+        '\n\n',
+        'Consider stopping the dev server first, or use the --nodelete flag.',
+      ],
+    })
+  }
+
   if (force) return true
 
   /**

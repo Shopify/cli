@@ -1,3 +1,4 @@
+import {setThemeDevSession, removeThemeDevSession} from './local-storage.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
@@ -85,6 +86,28 @@ export async function dev(options: DevOptions) {
   }
 
   const port = options.port ?? String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
+
+  setThemeDevSession(options.directory, {
+    pid: process.pid,
+    port: Number(port),
+    store: options.store,
+    startedAt: Date.now(),
+    themeId: options.theme.id.toString(),
+  })
+
+  const cleanup = () => {
+    removeThemeDevSession(options.directory)
+  }
+
+  // eslint-disable-next-line no-warning-comments
+  // TODO: I don't like this approach. We should clean up in the same spot we force analytics logging even on error or kill.
+  process.on('exit', cleanup)
+  process.on('SIGINT', () => {
+    process.exit()
+  })
+  process.on('SIGTERM', () => {
+    process.exit()
+  })
 
   const urls = {
     local: `http://${host}:${port}`,
