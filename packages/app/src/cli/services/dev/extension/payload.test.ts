@@ -40,6 +40,9 @@ describe('getUIExtensionPayload', () => {
               sources: ['https://my-iframe.com'],
             },
           },
+          supported_features: {
+            offline_mode: true,
+          },
           extension_points: ['CUSTOM_EXTENSION_POINT'],
         },
         devUUID: 'devUUID',
@@ -83,6 +86,9 @@ describe('getUIExtensionPayload', () => {
             name: 'main',
             url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
           },
+        },
+        supportedFeatures: {
+          supportsOffline: true,
         },
         capabilities: {
           blockProgress: false,
@@ -164,6 +170,9 @@ describe('getUIExtensionPayload', () => {
               sources: ['https://my-iframe.com'],
             },
           },
+          supported_features: {
+            offline_mode: true,
+          },
           extension_points: [
             {
               target: 'CUSTOM_EXTENSION_POINT',
@@ -212,6 +221,9 @@ describe('getUIExtensionPayload', () => {
             name: 'main',
             url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
           },
+        },
+        supportedFeatures: {
+          supportsOffline: true,
         },
         capabilities: {
           blockProgress: false,
@@ -299,6 +311,9 @@ describe('getUIExtensionPayload', () => {
               sources: ['https://my-iframe.com'],
             },
           },
+          supported_features: {
+            offline_mode: true,
+          },
           extension_points: [
             {
               target: 'CUSTOM_EXTENSION_POINT',
@@ -346,6 +361,9 @@ describe('getUIExtensionPayload', () => {
             name: 'main',
             url: 'http://tunnel-url.com/extensions/devUUID/assets/test-post-purchase-extension.js',
           },
+        },
+        supportedFeatures: {
+          supportsOffline: true,
         },
         capabilities: {
           blockProgress: false,
@@ -405,6 +423,9 @@ describe('getUIExtensionPayload', () => {
       expect(got).toMatchObject({
         development: {
           hidden: false,
+        },
+        supportedFeatures: {
+          supportsOffline: false,
         },
         capabilities: {
           blockProgress: false,

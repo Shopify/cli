@@ -91,14 +91,9 @@ export async function developerDashboardFqdn(): Promise<string> {
  * @returns Fully-qualified domain of the partners service we should interact with.
  */
 export async function businessPlatformFqdn(): Promise<string> {
-  const environment = serviceEnvironment()
-  const productionFqdn = 'destinations.shopifysvc.com'
-  switch (environment) {
-    case 'local':
-      return new DevServer('business-platform').host()
-    default:
-      return productionFqdn
-  }
+  // Always use production - the business-platform repo is deprecated
+  // and this service is now served by shopify core
+  return 'destinations.shopifysvc.com'
 }
 
 /**
