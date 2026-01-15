@@ -61,9 +61,9 @@ jobs:
       - name: Create snapshot version
         uses: Shopify/snapit@05253a195cc870a9eb6519f5e1f9a98ffd54431f # registry-and-package-manager
         with:
-          global_install: 'true'
-          github_comment_included_packages: '@shopify/cli'
-          custom_message_suffix: "
+          comment_is_global: 'true'
+          comment_packages: '@shopify/cli'
+          comment_suffix: "
             > [!CAUTION]
 
             > After installing, validate the version by running just `shopify` in your terminal.
@@ -71,8 +71,8 @@ jobs:
             > If the versions don't match, you might have multiple global instances installed.
 
             > Use `which shopify` to find out which one you are running and uninstall it."
-          package_manager: 'npm'
-          shopify_registry: 'https://registry.npmjs.org'
+          comment_package_manager: 'npm'
+          comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
           build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
