@@ -125,6 +125,7 @@ const uiExtensionSpec = createExtensionSpecification({
       api_version: config.api_version,
       extension_points: transformedExtensionPoints,
       capabilities: config.capabilities,
+      supported_features: config.supported_features,
       name: config.name,
       description: config.description,
       settings: config.settings,

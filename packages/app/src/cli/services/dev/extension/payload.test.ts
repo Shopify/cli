@@ -421,6 +421,98 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  describe('supportedFeatures', () => {
+    test('returns supportedFeatures with offlineMode true when offline_mode is enabled', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const uiExtension = await testUIExtension({
+          directory: tmpDir,
+          configuration: {
+            name: 'test-extension',
+            type: 'ui_extension',
+            metafields: [],
+            capabilities: {},
+            supported_features: {
+              offline_mode: true,
+            },
+            extension_points: [],
+          },
+        })
+        const options: ExtensionsPayloadStoreOptions = {} as ExtensionsPayloadStoreOptions
+
+        // When
+        const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+          ...options,
+          currentDevelopmentPayload: {},
+        })
+
+        // Then
+        expect(got.supportedFeatures).toStrictEqual({
+          offlineMode: true,
+        })
+      })
+    })
+
+    test('returns supportedFeatures with offlineMode false when offline_mode is disabled', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const uiExtension = await testUIExtension({
+          directory: tmpDir,
+          configuration: {
+            name: 'test-extension',
+            type: 'ui_extension',
+            metafields: [],
+            capabilities: {},
+            supported_features: {
+              offline_mode: false,
+            },
+            extension_points: [],
+          },
+        })
+        const options: ExtensionsPayloadStoreOptions = {} as ExtensionsPayloadStoreOptions
+
+        // When
+        const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+          ...options,
+          currentDevelopmentPayload: {},
+        })
+
+        // Then
+        expect(got.supportedFeatures).toStrictEqual({
+          offlineMode: false,
+        })
+      })
+    })
+
+    test('returns supportedFeatures with offlineMode false when supported_features is not configured', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        const uiExtension = await testUIExtension({
+          directory: tmpDir,
+          configuration: {
+            name: 'test-extension',
+            type: 'ui_extension',
+            metafields: [],
+            capabilities: {},
+            extension_points: [],
+          },
+        })
+        const options: ExtensionsPayloadStoreOptions = {} as ExtensionsPayloadStoreOptions
+
+        // When
+        const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+          ...options,
+          currentDevelopmentPayload: {},
+        })
+
+        // Then
+        expect(got.supportedFeatures).toStrictEqual({
+          offlineMode: false,
+        })
+      })
+    })
+  })
+
   test('adds root.url, resource.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given

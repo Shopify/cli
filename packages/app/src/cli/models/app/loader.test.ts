@@ -1483,6 +1483,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
         [extensions.capabilities.iframe]
         sources = ["https://my-iframe.com"]
 
+        [extensions.supported_features]
+        offline_mode = true
+
         [extensions.settings]
           [[extensions.settings.fields]]
           key = "field_key"
@@ -1559,6 +1562,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
           iframe: {
             sources: ['https://my-iframe.com'],
           },
+        },
+        supported_features: {
+          offline_mode: true,
         },
         settings: {
           fields: [

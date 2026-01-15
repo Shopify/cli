@@ -45,10 +45,15 @@ export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType 
   }
 }
 
+interface SupportedFeatures {
+  offlineMode: boolean
+}
+
 export interface UIExtensionPayload {
   assets: {
     main: Asset
   }
+  supportedFeatures?: SupportedFeatures
   capabilities?: Capabilities
   development: {
     resource: {

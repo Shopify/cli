@@ -44,6 +44,9 @@ export async function getUIExtensionPayload(
           lastUpdated: (await fileLastUpdatedTimestamp(extensionOutputPath)) ?? 0,
         },
       },
+      supportedFeatures: {
+        offlineMode: extension.configuration.supported_features?.offline_mode ?? false,
+      },
       capabilities: {
         blockProgress: extension.configuration.capabilities?.block_progress ?? false,
         networkAccess: extension.configuration.capabilities?.network_access ?? false,

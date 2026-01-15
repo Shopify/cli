@@ -978,11 +978,124 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
               ...uiExtension.configuration.capabilities.iframe,
             },
           },
+          supported_features: undefined,
           name: uiExtension.configuration.name,
           description: uiExtension.configuration.description,
           api_version: uiExtension.configuration.api_version,
           settings: uiExtension.configuration.settings,
         })
+      })
+    })
+
+    test('returns supported_features with offline_mode true when configured', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+        const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const uiExtension = new ExtensionInstance({
+          configuration: {
+            extension_points: [],
+            api_version: '2023-01' as const,
+            name: 'UI Extension',
+            type: 'ui_extension',
+            metafields: [],
+            capabilities: {},
+            supported_features: {
+              offline_mode: true,
+            },
+            settings: {},
+          },
+          directory: tmpDir,
+          specification,
+          configurationPath,
+          entryPath: '',
+        })
+
+        // When
+        const deployConfig = await uiExtension.deployConfig({
+          apiKey: 'apiKey',
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(deployConfig?.supported_features).toStrictEqual({
+          offline_mode: true,
+        })
+      })
+    })
+
+    test('returns supported_features with offline_mode false when configured', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+        const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const uiExtension = new ExtensionInstance({
+          configuration: {
+            extension_points: [],
+            api_version: '2023-01' as const,
+            name: 'UI Extension',
+            type: 'ui_extension',
+            metafields: [],
+            capabilities: {},
+            supported_features: {
+              offline_mode: false,
+            },
+            settings: {},
+          },
+          directory: tmpDir,
+          specification,
+          configurationPath,
+          entryPath: '',
+        })
+
+        // When
+        const deployConfig = await uiExtension.deployConfig({
+          apiKey: 'apiKey',
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(deployConfig?.supported_features).toStrictEqual({
+          offline_mode: false,
+        })
+      })
+    })
+
+    test('returns supported_features as undefined when not configured', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Given
+        vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
+        const configurationPath = joinPath(tmpDir, 'shopify.extension.toml')
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+        const uiExtension = new ExtensionInstance({
+          configuration: {
+            extension_points: [],
+            api_version: '2023-01' as const,
+            name: 'UI Extension',
+            type: 'ui_extension',
+            metafields: [],
+            capabilities: {},
+            settings: {},
+          },
+          directory: tmpDir,
+          specification,
+          configurationPath,
+          entryPath: '',
+        })
+
+        // When
+        const deployConfig = await uiExtension.deployConfig({
+          apiKey: 'apiKey',
+          appConfiguration: placeholderAppConfiguration,
+        })
+
+        // Then
+        expect(deployConfig?.supported_features).toBeUndefined()
       })
     })
   })
