@@ -28,6 +28,10 @@ const CapabilitiesSchema = zod.object({
   iframe: IframeCapabilitySchema.optional(),
 })
 
+const SupportedFeaturesSchema = zod.object({
+  offline_mode: zod.boolean().optional(),
+})
+
 export const ExtensionsArraySchema = zod.object({
   type: zod.string().optional(),
   extensions: zod.array(zod.any()).optional(),
@@ -108,6 +112,7 @@ export const BaseSchema = zod.object({
   api_version: ApiVersionSchema.optional(),
   extension_points: zod.any().optional(),
   capabilities: CapabilitiesSchema.optional(),
+  supported_features: SupportedFeaturesSchema.optional(),
   settings: SettingsSchema.optional(),
 })
 
