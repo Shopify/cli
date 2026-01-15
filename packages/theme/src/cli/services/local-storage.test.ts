@@ -12,6 +12,11 @@ import {
   setThemeStore,
   getThemeStore,
   useThemeStoreContext,
+  getThemeDevSession,
+  setThemeDevSession,
+  removeThemeDevSession,
+  getActiveThemeDevSession,
+  isProcessRunning,
 } from './local-storage.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
@@ -106,6 +111,102 @@ describe('local-storage', () => {
         expect(results.env3).toBe('store3.myshopify.com')
         expect(results.env4).toBe('storage-store.myshopify.com')
       })
+    })
+  })
+
+  describe('isProcessRunning', () => {
+    test('returns true for current process', () => {
+      expect(isProcessRunning(process.pid)).toBe(true)
+    })
+
+    test('returns false for non-existent process', () => {
+      // Use a very high PID that's unlikely to exist
+      expect(isProcessRunning(999999999)).toBe(false)
+    })
+  })
+
+  describe('theme dev sessions', () => {
+    test('setThemeDevSession and getThemeDevSession store and retrieve session', () => {
+      const directory = '/test/directory'
+      const session = {
+        pid: 12345,
+        port: 9292,
+        store: 'test.myshopify.com',
+        startedAt: Date.now(),
+        themeId: '123',
+      }
+
+      setThemeDevSession(directory, session)
+      const retrieved = getThemeDevSession(directory)
+
+      expect(retrieved).toEqual(session)
+
+      // Cleanup
+      removeThemeDevSession(directory)
+    })
+
+    test('removeThemeDevSession removes the session', () => {
+      const directory = '/test/directory/remove'
+      const session = {
+        pid: 12345,
+        port: 9292,
+        store: 'test.myshopify.com',
+        startedAt: Date.now(),
+        themeId: '123',
+      }
+
+      setThemeDevSession(directory, session)
+      removeThemeDevSession(directory)
+      const retrieved = getThemeDevSession(directory)
+
+      expect(retrieved).toBeUndefined()
+    })
+
+    test('getThemeDevSession returns undefined for non-existent directory', () => {
+      const retrieved = getThemeDevSession('/non/existent/directory')
+      expect(retrieved).toBeUndefined()
+    })
+
+    test('getActiveThemeDevSession returns session when process is running', () => {
+      const directory = '/test/directory/active'
+      // Use current process PID so it's definitely running
+      const session = {
+        pid: process.pid,
+        port: 9292,
+        store: 'test.myshopify.com',
+        startedAt: Date.now(),
+        themeId: '123',
+      }
+
+      setThemeDevSession(directory, session)
+      const retrieved = getActiveThemeDevSession(directory)
+
+      expect(retrieved).toEqual(session)
+
+      // Cleanup
+      removeThemeDevSession(directory)
+    })
+
+    test('getActiveThemeDevSession returns undefined and cleans up stale session', () => {
+      const directory = '/test/directory/stale'
+      // Use a non-existent PID to simulate a stale session
+      const session = {
+        pid: 999999999,
+        port: 9292,
+        store: 'test.myshopify.com',
+        startedAt: Date.now(),
+        themeId: '123',
+      }
+
+      setThemeDevSession(directory, session)
+      const retrieved = getActiveThemeDevSession(directory)
+
+      // Should return undefined because process isn't running
+      expect(retrieved).toBeUndefined()
+
+      // Should have cleaned up the stale session
+      const afterCleanup = getThemeDevSession(directory)
+      expect(afterCleanup).toBeUndefined()
     })
   })
 })

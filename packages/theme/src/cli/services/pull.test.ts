@@ -1,5 +1,5 @@
 import {isEmptyDir, pull, PullFlags} from './pull.js'
-import {setThemeStore} from './local-storage.js'
+import {setThemeStore, getActiveThemeDevSession} from './local-storage.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
@@ -12,10 +12,18 @@ import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
+import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {fileURLToPath} from 'node:url'
 
+vi.mock('./local-storage.js', async (importOriginal) => {
+  const actual: object = await importOriginal()
+  return {
+    ...actual,
+    getActiveThemeDevSession: vi.fn(),
+  }
+})
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-fs.js')
@@ -130,6 +138,32 @@ describe('pull', () => {
     expect(vi.mocked(insideGitDirectory)).not.toHaveBeenCalled()
     expect(vi.mocked(isClean)).not.toHaveBeenCalled()
     expect(vi.mocked(ensureDirectoryConfirmed)).not.toHaveBeenCalled()
+  })
+
+  test('should warn when a dev session is active in the directory', async () => {
+    // Given
+    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    vi.mocked(fetchDevelopmentThemeSpy).mockResolvedValue(undefined)
+    vi.mocked(getActiveThemeDevSession).mockReturnValue({
+      pid: 12345,
+      port: 9292,
+      store: 'example.myshopify.com',
+      startedAt: Date.now(),
+      themeId: '1',
+    })
+
+    // When
+    await pull({...defaultFlags, theme: theme.id.toString()})
+
+    // Then
+    expect(renderWarning).toHaveBeenCalledWith({
+      headline: 'A theme dev session is active in this directory.',
+      body: [
+        'A dev session is active on port: 9292).',
+        'Running pull while dev is active may cause files to be unexpectedly deleted from your development theme. Consider stopping the dev server first.',
+      ],
+    })
   })
 
   describe('isEmptyDir', () => {

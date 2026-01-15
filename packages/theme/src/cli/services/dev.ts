@@ -1,3 +1,4 @@
+import {setThemeDevSession, removeThemeDevSession} from './local-storage.js'
 import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {setupDevServer} from '../utilities/theme-environment/theme-environment.js'
@@ -86,6 +87,14 @@ export async function dev(options: DevOptions) {
 
   const port = options.port ?? String(await getAvailableTCPPort(Number(DEFAULT_PORT)))
 
+  setThemeDevSession(options.directory, {
+    pid: process.pid,
+    port: Number(port),
+    store: options.store,
+    startedAt: Date.now(),
+    themeId: options.theme.id.toString(),
+  })
+
   const urls = {
     local: `http://${host}:${port}`,
     giftCard: `http://${host}:${port}/gift_cards/[store_id]/preview`,
@@ -121,6 +130,10 @@ export async function dev(options: DevOptions) {
   }
 
   const {serverStart, renderDevSetupProgress, backgroundJobPromise} = setupDevServer(options.theme, ctx)
+
+  process.on('exit', () => {
+    removeThemeDevSession(options.directory)
+  })
 
   readline.emitKeypressEvents(process.stdin)
 
