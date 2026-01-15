@@ -142,7 +142,11 @@ export async function pollForDeviceAuthorization(code: string, interval = 5): Pr
           startPolling()
           return
         case 'access_denied':
+          reject(new AbortError(`Device authorization failed: Access denied.`))
+          return
         case 'expired_token':
+          reject(new AbortError(`Device authorization failed: Token expired. Please try again.`))
+          return
         case 'unknown_failure': {
           reject(new Error(`Device authorization failed: ${error}`))
         }
