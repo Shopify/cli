@@ -20,7 +20,7 @@ up:
 
 env:
   SHOPIFY_CLI_ENV: development
-  SHOPIFY_SERVICE_ENV: local
+  SHOPIFY_SERVICE_ENV: production
 
 open:
   app: http://localhost:3000
