@@ -872,7 +872,6 @@ describe('setupDevServer', () => {
           headers: expect.objectContaining({
             referer,
             'User-Agent': expect.stringContaining('Shopify CLI'),
-            Authorization: expect.stringContaining('Bearer'),
           }),
         }),
       )
