@@ -2,6 +2,7 @@ import {getExtensionPointRedirectUrl, getExtensionUrl, getRedirectUrl, sendError
 import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
+import {getWebSocketUrl} from '../../extension.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {IncomingMessage, ServerResponse, sendRedirect, send} from 'h3'
 import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
@@ -199,7 +200,7 @@ export function getExtensionPayloadMiddleware({devOptions, getExtensions}: GetEx
           url: new URL('/extensions', devOptions.url).toString(),
         },
         socket: {
-          url: getWebsocketUrl(devOptions),
+          url: getWebSocketUrl(devOptions.url),
         },
         devConsole: {
           url: new URL('/extensions/dev-console', devOptions.url).toString(),
@@ -244,11 +245,4 @@ export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExte
 
     await sendRedirect(response.event, url, 307)
   }
-}
-
-function getWebsocketUrl(devOptions: GetExtensionsMiddlewareOptions['devOptions']) {
-  const socket = new URL('/extensions', devOptions.url)
-  socket.protocol = 'wss:'
-
-  return socket.toString()
 }
