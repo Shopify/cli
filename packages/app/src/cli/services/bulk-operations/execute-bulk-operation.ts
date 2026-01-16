@@ -121,7 +121,16 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
       }
     } else {
       const operation = await shortBulkOperationPoll(adminSession, createdOperation.id)
-      await renderBulkOperationResult(operation, outputFile)
+      const errorStatuses = ['FAILED', 'CANCELED', 'EXPIRED']
+      if (errorStatuses.includes(operation.status)) {
+        await renderBulkOperationResult(operation, outputFile)
+      } else {
+        renderSuccess({
+          headline: 'Bulk operation is running.',
+          body: statusCommandHelpMessage(operation.id),
+          customSections: [{body: [{list: {items: [outputContent`ID: ${outputToken.cyan(operation.id)}`.value]}}]}],
+        })
+      }
     }
   } else {
     renderWarning({
