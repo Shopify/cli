@@ -338,6 +338,97 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('returns the right payload for UI Extensions with intents in build_manifest', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
+      await touchFile(outputPath)
+
+      const intentsDir = joinPath(tmpDir, 'intents')
+      await mkdir(intentsDir)
+      await writeFile(joinPath(intentsDir, 'create-schema.json'), '{"type": "object"}')
+      await writeFile(joinPath(intentsDir, 'update-schema.json'), '{"type": "object"}')
+
+      const buildManifest = {
+        assets: {
+          main: {module: './src/ExtensionPointA.js', filepath: '/test-ui-extension.js'},
+          intents: [
+            {
+              module: './intents/create-schema.json',
+              filepath: '/test-ui-extension-intent-create-app_intent-create-schema.json',
+              static: true,
+            },
+            {
+              module: './intents/update-schema.json',
+              filepath: '/test-ui-extension-intent-update-app_intent-update-schema.json',
+              static: true,
+            },
+          ],
+        },
+      }
+
+      const uiExtension = await testUIExtension({
+        outputPath,
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+              build_manifest: buildManifest,
+              intents: [
+                {type: 'application/email', action: 'create', schema: './intents/create-schema.json'},
+                {type: 'application/email', action: 'update', schema: './intents/update-schema.json'},
+              ],
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      // Then
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          assets: {
+            main: {
+              name: 'main',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+              lastUpdated: expect.any(Number),
+            },
+          },
+          intents: [
+            {
+              type: 'application/email',
+              action: 'create',
+              schema: {
+                name: 'schema',
+                url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-intent-create-app_intent-create-schema.json',
+                lastUpdated: expect.any(Number),
+              },
+            },
+            {
+              type: 'application/email',
+              action: 'update',
+              schema: {
+                name: 'schema',
+                url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-intent-update-app_intent-update-schema.json',
+                lastUpdated: expect.any(Number),
+              },
+            },
+          ],
+        },
+      ])
+    })
+  })
+
   test('returns the right payload for post-purchase extensions', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
