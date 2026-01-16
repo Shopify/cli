@@ -23,6 +23,8 @@ import type {
   ThemeFSEventPayload,
 } from '@shopify/cli-kit/node/themes/types'
 
+const FILE_EVENT_DEBOUNCE_TIME_IN_MS = 250
+
 const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',
   'config/**/*.json',
@@ -319,10 +321,29 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         ignoreInitial: true,
       })
 
+      // Debounce file events per-file
+      const pendingEvents = new Map<string, {eventName: 'add' | 'change' | 'unlink'; timeout: NodeJS.Timeout}>()
+
+      const queueFsEvent = (eventName: 'add' | 'change' | 'unlink', filePath: string) => {
+        const fileKey = getKey(filePath)
+
+        const pending = pendingEvents.get(fileKey)
+        if (pending) {
+          clearTimeout(pending.timeout)
+        }
+
+        const timeout = setTimeout(() => {
+          pendingEvents.delete(fileKey)
+          handleFsEvent(eventName, themeId, adminSession, filePath)
+        }, FILE_EVENT_DEBOUNCE_TIME_IN_MS)
+
+        pendingEvents.set(fileKey, {eventName, timeout})
+      }
+
       watcher
-        .on('add', handleFsEvent.bind(null, 'add', themeId, adminSession))
-        .on('change', handleFsEvent.bind(null, 'change', themeId, adminSession))
-        .on('unlink', handleFsEvent.bind(null, 'unlink', themeId, adminSession))
+        .on('add', queueFsEvent.bind(null, 'add'))
+        .on('change', queueFsEvent.bind(null, 'change'))
+        .on('unlink', queueFsEvent.bind(null, 'unlink'))
     },
   }
 }
