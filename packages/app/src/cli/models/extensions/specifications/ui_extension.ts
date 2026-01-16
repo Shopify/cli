@@ -31,6 +31,7 @@ export interface BuildManifest {
     [AssetIdentifier.ShouldRender]?: BuildAsset
     [AssetIdentifier.Tools]?: BuildAsset
     [AssetIdentifier.Instructions]?: BuildAsset
+    [AssetIdentifier.Intents]?: BuildAsset[]
   }
 }
 
@@ -78,6 +79,17 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
+          ...(targeting.intents
+            ? {
+                [AssetIdentifier.Intents]: targeting.intents.map((intent, index) => {
+                  return {
+                    filepath: `${config.handle}-${AssetIdentifier.Intents}-${index + 1}-${basename(intent.schema)}`,
+                    module: intent.schema,
+                    static: true,
+                  }
+                }),
+              }
+            : null),
         },
       }
 
@@ -92,6 +104,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         build_manifest: buildManifest,
         tools: targeting.tools,
         instructions: targeting.instructions,
+        ...(targeting.intents ? {intents: targeting.intents} : {}),
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -163,14 +176,11 @@ const uiExtensionSpec = createExtensionSpecification({
         if (!('build_manifest' in extensionPoint)) return []
 
         return Object.entries(extensionPoint.build_manifest.assets).map(([_, asset]) => {
-          if (asset.static && asset.module) {
-            const sourceFile = joinPath(directory, asset.module)
-            const outputFilePath = joinPath(dirname(outputPath), asset.filepath)
-            return copyFile(sourceFile, outputFilePath).catch((error) => {
-              throw new Error(`Failed to copy static asset ${asset.module} to ${outputFilePath}: ${error.message}`)
-            })
+          if (Array.isArray(asset)) {
+            return Promise.all(asset.map((childAsset) => copyAsset(childAsset, directory, outputPath)))
           }
-          return Promise.resolve()
+
+          return copyAsset(asset, directory, outputPath)
         })
       }),
     )
@@ -337,10 +347,15 @@ function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest
       assets: Object.fromEntries(
         Object.entries(extP.build_manifest.assets).map(([key, value]) => [
           key as AssetIdentifier,
-          {
-            ...value,
-            filepath: joinPath('dist', value.filepath),
-          },
+          Array.isArray(value)
+            ? value.map((asset) => ({
+                ...asset,
+                filepath: joinPath('dist', asset.filepath),
+              }))
+            : {
+                ...value,
+                filepath: joinPath('dist', value.filepath),
+              },
         ]),
       ),
     },
@@ -404,6 +419,17 @@ async function validateUIExtensionPointConfig(
       errors.push(missingInstructionsError)
     }
 
+    // Validate intent schema files
+    const intentsAssets = buildManifest?.assets[AssetIdentifier.Intents]
+    if (Array.isArray(intentsAssets)) {
+      for await (const intentAsset of intentsAssets) {
+        const missingIntentError = await checkForMissingPath(directory, intentAsset.module, target, 'intent schema')
+        if (missingIntentError) {
+          errors.push(missingIntentError)
+        }
+      }
+    }
+
     if (uniqueTargets.includes(target)) {
       duplicateTargets.push(target)
     } else {
@@ -454,6 +480,17 @@ function buildShouldRenderAsset(
         )}', (...args) => shouldRender(...args));`
       : `import '${shouldRenderAsset.module}'`,
   }
+}
+
+function copyAsset({module, filepath, static: isStatic}: BuildAsset, directory: string, outputPath: string) {
+  if (isStatic) {
+    const sourceFile = joinPath(directory, module)
+    const outputFilePath = joinPath(dirname(outputPath), filepath)
+    return copyFile(sourceFile, outputFilePath).catch((error) => {
+      throw new Error(`Failed to copy static asset ${module} to ${outputFilePath}: ${error.message}`)
+    })
+  }
+  return Promise.resolve()
 }
 
 export default uiExtensionSpec
