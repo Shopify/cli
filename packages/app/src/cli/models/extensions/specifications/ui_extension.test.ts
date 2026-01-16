@@ -693,6 +693,264 @@ describe('ui_extension', async () => {
       ])
     })
 
+    test('build_manifest includes intents assets when intents are present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            intents: [
+              {
+                type: 'app_intent',
+                action: 'create',
+                schema: './intents/create-schema.json',
+                name: 'Create Intent',
+                description: 'Creates a new item',
+              },
+            ],
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              intents: [
+                {
+                  filepath: 'test-ui-extension-intents-1-create-schema.json',
+                  module: './intents/create-schema.json',
+                  static: true,
+                },
+              ],
+            },
+          },
+          tools: undefined,
+          instructions: undefined,
+          intents: [
+            {
+              type: 'app_intent',
+              action: 'create',
+              schema: './intents/create-schema.json',
+              name: 'Create Intent',
+              description: 'Creates a new item',
+            },
+          ],
+          urls: {},
+        },
+      ])
+    })
+
+    test('build_manifest includes multiple intents assets when multiple intents are present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            intents: [
+              {
+                type: 'app_intent',
+                action: 'create',
+                schema: './intents/create-schema.json',
+              },
+              {
+                type: 'app_intent',
+                action: 'update',
+                schema: './intents/update-schema.json',
+              },
+              {
+                type: 'app_intent',
+                action: 'delete',
+                schema: './intents/delete-schema.json',
+              },
+            ],
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points[0]?.build_manifest?.assets?.intents).toHaveLength(3)
+      expect(got.extension_points[0]?.build_manifest?.assets?.intents).toEqual([
+        {
+          filepath: 'test-ui-extension-intents-1-create-schema.json',
+          module: './intents/create-schema.json',
+          static: true,
+        },
+        {
+          filepath: 'test-ui-extension-intents-2-update-schema.json',
+          module: './intents/update-schema.json',
+          static: true,
+        },
+        {
+          filepath: 'test-ui-extension-intents-3-delete-schema.json',
+          module: './intents/delete-schema.json',
+          static: true,
+        },
+      ])
+    })
+
+    test('build_manifest includes both intents and other assets when both are present', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            tools: './tools.json',
+            instructions: './instructions.md',
+            intents: [
+              {
+                type: 'app_intent',
+                action: 'create',
+                schema: './intents/create-schema.json',
+              },
+            ],
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+              tools: {
+                filepath: 'test-ui-extension-tools-tools.json',
+                module: './tools.json',
+                static: true,
+              },
+              instructions: {
+                filepath: 'test-ui-extension-instructions-instructions.md',
+                module: './instructions.md',
+                static: true,
+              },
+              intents: [
+                {
+                  filepath: 'test-ui-extension-intents-1-create-schema.json',
+                  module: './intents/create-schema.json',
+                  static: true,
+                },
+              ],
+            },
+          },
+          tools: './tools.json',
+          instructions: './instructions.md',
+          intents: [
+            {
+              type: 'app_intent',
+              action: 'create',
+              schema: './intents/create-schema.json',
+            },
+          ],
+          urls: {},
+        },
+      ])
+    })
+
     test('returns error if there is no targeting or extension_points', async () => {
       // Given
       const allSpecs = await loadLocalExtensionsSpecifications()
@@ -847,6 +1105,189 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
           instructions: './instructions.md',
           createFiles: true,
         })
+
+        expect(result).toStrictEqual(ok({}))
+      })
+    })
+
+    test('shows an error when an intent schema file is missing', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              intents: [
+                {
+                  type: 'app_intent',
+                  action: 'create',
+                  schema: './intents/create-schema.json',
+                },
+              ],
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
+
+        const notFoundPath = joinPath(tmpDir, './intents/create-schema.json')
+        expect(result).toEqual(
+          err(`Couldn't find ${notFoundPath}
+  Please check the intent schema path for EXTENSION::POINT::A
+
+Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
+        )
+      })
+    })
+
+    test('shows multiple errors when multiple intent schema files are missing', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              intents: [
+                {
+                  type: 'app_intent',
+                  action: 'create',
+                  schema: './intents/create-schema.json',
+                },
+                {
+                  type: 'app_intent',
+                  action: 'update',
+                  schema: './intents/update-schema.json',
+                },
+              ],
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
+
+        const notFoundPath1 = joinPath(tmpDir, './intents/create-schema.json')
+        const notFoundPath2 = joinPath(tmpDir, './intents/update-schema.json')
+        expect(result).toEqual(
+          err(`Couldn't find ${notFoundPath1}
+  Please check the intent schema path for EXTENSION::POINT::A
+
+Couldn't find ${notFoundPath2}
+  Please check the intent schema path for EXTENSION::POINT::A
+
+Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`),
+        )
+      })
+    })
+
+    test('succeeds when intent schema files exist', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        await mkdir(joinPath(tmpDir, 'src'))
+        await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
+
+        await mkdir(joinPath(tmpDir, 'intents'))
+        await writeFile(joinPath(tmpDir, 'intents', 'create-schema.json'), '{"schema": "content"}')
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+
+        const configuration = {
+          targeting: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              intents: [
+                {
+                  type: 'app_intent',
+                  action: 'create',
+                  schema: './intents/create-schema.json',
+                },
+              ],
+            },
+          ],
+          api_version: '2023-01' as const,
+          name: 'UI Extension',
+          description: 'This is an ordinary test extension',
+          type: 'ui_extension',
+          handle: 'test-ui-extension',
+          capabilities: {
+            block_progress: false,
+            network_access: false,
+            api_access: false,
+            collect_buyer_consent: {
+              customer_privacy: true,
+              sms_marketing: false,
+            },
+            iframe: {
+              sources: [],
+            },
+          },
+          settings: {},
+        }
+
+        const parsed = specification.parseConfigurationObject(configuration)
+        if (parsed.state !== 'ok') {
+          throw new Error("Couldn't parse configuration")
+        }
+
+        const result = await specification.validate?.(parsed.data, joinPath(tmpDir, 'shopify.extension.toml'), tmpDir)
 
         expect(result).toStrictEqual(ok({}))
       })
