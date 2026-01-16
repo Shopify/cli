@@ -26,7 +26,7 @@ export interface ExtensionsEndpointPayload extends ExtensionsPayloadInterface {
     url: string
   }
 }
-export interface Asset {
+interface Asset {
   name: string
   url: string
   lastUpdated: number

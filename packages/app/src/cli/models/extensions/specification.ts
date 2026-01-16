@@ -48,6 +48,12 @@ export interface Asset {
   content: string
 }
 
+export interface BuildAsset {
+  filepath: string
+  module: string
+  static?: boolean
+}
+
 type BuildConfig =
   | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none'}
   | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
