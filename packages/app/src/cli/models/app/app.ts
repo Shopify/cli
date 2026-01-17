@@ -22,12 +22,15 @@ import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify
 import {
   fileExistsSync,
   fileRealPath,
+  fileSize,
   findPathUp,
+  glob,
   readFileSync,
   removeFileSync,
   writeFileSync,
 } from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderInfo} from '@shopify/cli-kit/node/ui'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -120,6 +123,7 @@ export const AppSchema = zod.object({
     .optional(),
   extension_directories: ExtensionDirectoriesSchema,
   web_directories: zod.array(zod.string()).optional(),
+  static_root: zod.string().optional(),
 })
 
 /**
@@ -376,6 +380,10 @@ export class App<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > implements AppInterface<TConfig, TModuleSpec>
 {
+  private static readonly MAX_STATIC_FILE_COUNT = 50
+  private static readonly MAX_STATIC_TOTAL_SIZE_MB = 2
+  private static readonly MAX_STATIC_TOTAL_SIZE_BYTES = App.MAX_STATIC_TOTAL_SIZE_MB * 1024 * 1024
+
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
@@ -495,6 +503,7 @@ export class App<
 
   async preDeployValidation() {
     this.validateWebhookLegacyFlowCompatibility()
+    await this.validateStaticAssets()
 
     const functionExtensionsWithUiHandle = this.allExtensions.filter(
       (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
@@ -605,6 +614,44 @@ export class App<
     if (this.configuration.auth?.redirect_urls) {
       this.configuration.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
     }
+  }
+
+  /**
+   * Validates that static assets folder is within limits.
+   * @throws When static root exceeds file count or size limits
+   */
+  private async validateStaticAssets(): Promise<void> {
+    if (!isCurrentAppSchema(this.configuration)) return
+
+    const staticRoot = this.configuration.static_root
+    if (!staticRoot) return
+
+    const staticDir = joinPath(this.directory, staticRoot)
+    const files = await glob(joinPath(staticDir, '**/*'), {onlyFiles: true})
+
+    if (files.length > App.MAX_STATIC_FILE_COUNT) {
+      throw new AbortError(
+        `Static root folder contains ${files.length} files, which exceeds the limit of ${App.MAX_STATIC_FILE_COUNT} files.`,
+        `Reduce the number of files in "${staticRoot}" and try again.`,
+      )
+    }
+
+    const fileSizes = await Promise.all(files.map((file) => fileSize(file)))
+    const totalSize = fileSizes.reduce((sum, size) => sum + size, 0)
+    const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2)
+
+    if (totalSize > App.MAX_STATIC_TOTAL_SIZE_BYTES) {
+      throw new AbortError(
+        `Static root folder is ${totalSizeMB} MB, which exceeds the limit of ${App.MAX_STATIC_TOTAL_SIZE_MB} MB.`,
+        `Reduce the total size of files in "${staticRoot}" and try again.`,
+      )
+    }
+
+    const fileWord = files.length === 1 ? 'file' : 'files'
+    renderInfo({
+      headline: 'Static assets.',
+      body: [`Loading ${files.length} static ${fileWord} (${totalSizeMB} MB) from "${staticRoot}"`],
+    })
   }
 
   /**

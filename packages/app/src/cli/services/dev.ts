@@ -15,6 +15,7 @@ import {
   showReusedDevValues,
 } from './context.js'
 import {fetchAppPreviewMode} from './dev/fetch.js'
+import {uploadStaticAssetsToGCS} from './static-assets.js'
 import {installAppDependencies} from './dependencies.js'
 import {DevConfig, DevProcesses, setupDevProcesses} from './dev/processes/setup-dev-processes.js'
 import {frontAndBackendConfig} from './dev/processes/utils.js'
@@ -185,6 +186,12 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
 async function actionsBeforeSettingUpDevProcesses(devConfig: DevConfig) {
   await warnIfScopesDifferBeforeDev(devConfig)
   await blockIfMigrationIncomplete(devConfig)
+  await devConfig.localApp.preDeployValidation()
+  await uploadStaticAssetsToGCS({
+    app: devConfig.localApp,
+    developerPlatformClient: devConfig.developerPlatformClient,
+    appId: devConfig.remoteApp,
+  })
 }
 
 /**
@@ -306,7 +313,7 @@ async function handleUpdatingOfPartnerUrls(
           localApp.setDevApplicationURLs(newURLs)
         } else {
           // When running dev app urls are pushed directly to API Client config instead of creating a new app version
-          // so current app version and API Client config will have diferent url values.
+          // so current app version and API Client config will have different url values.
           await updateURLs(newURLs, apiKey, developerPlatformClient, localApp)
         }
       }

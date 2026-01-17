@@ -1,4 +1,3 @@
-// import {AppInterface} from '../models/app/app.js'
 import {AppManifest} from '../models/app/app.js'
 import {AssetUrlSchema, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../models/organization.js'
@@ -32,6 +31,7 @@ export async function uploadToGCS(signedURL: string, filePath: string) {
   const form = formData()
   const buffer = readFileSync(filePath)
   form.append('my_upload', buffer)
+  console.log(`🐝🐝🐝 Uploading file to GCS: ${signedURL}`)
   await fetch(signedURL, {method: 'put', body: buffer, headers: form.getHeaders()}, 'slow-request')
 }
 

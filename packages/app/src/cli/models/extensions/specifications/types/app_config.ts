@@ -28,4 +28,5 @@ export interface AppConfigurationUsedByCli {
   auth?: {
     redirect_urls: string[]
   }
+  static_root?: string
 }
