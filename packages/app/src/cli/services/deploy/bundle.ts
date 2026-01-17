@@ -2,6 +2,7 @@ import {AppInterface, AppManifest} from '../../models/app/app.js'
 import {Identifiers} from '../../models/app/identifiers.js'
 import {installJavy} from '../function/build.js'
 import {compressBundle, writeManifestToBundle} from '../bundle.js'
+import {copyStaticAssetsToBundle} from '../static-assets.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -59,6 +60,8 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     }),
     showTimestamps: false,
   })
+
+  await copyStaticAssetsToBundle(options.app, bundleDirectory)
 
   if (options.bundlePath) {
     await compressBundle(bundleDirectory, options.bundlePath)
