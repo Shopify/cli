@@ -84,4 +84,4 @@ export type OrganizationUserProvisionShopAccessInput = {
   shopifyShopId: Scalars['PropertyPublicID']['input']
 }
 
-export type Store = 'APP_DEVELOPMENT' | 'DEVELOPMENT' | 'DEVELOPMENT_SUPERSET' | 'PRODUCTION'
+export type Store = 'APP_DEVELOPMENT' | 'CLIENT_TRANSFER' | 'DEVELOPMENT' | 'DEVELOPMENT_SUPERSET' | 'PRODUCTION'

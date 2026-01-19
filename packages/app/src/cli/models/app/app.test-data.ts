@@ -38,6 +38,7 @@ import {
   DevSessionCreateOptions,
   DevSessionDeleteOptions,
   DevSessionUpdateOptions,
+  Store,
 } from '../../utilities/developer-platform-client.js'
 import {AllAppExtensionRegistrationsQuerySchema} from '../../api/graphql/all_app_extension_registrations.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
@@ -1439,7 +1440,7 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
       Promise.resolve({organization: testOrganization(), apps: [testOrganizationApp()], hasMorePages: false}),
     createApp: (_organization: Organization, _options: CreateAppOptions) => Promise.resolve(testOrganizationApp()),
     devStoresForOrg: (_organizationId: string) => Promise.resolve({stores: [], hasMorePages: false}),
-    storeByDomain: (_orgId: string, _shopDomain: string) => Promise.resolve(undefined),
+    storeByDomain: (_orgId: string, _shopDomain: string, _storeTypes: Store[]) => Promise.resolve(undefined),
     ensureUserAccessToStore: (_orgId: string, _store: OrganizationStore) => Promise.resolve(),
     appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppExtensionRegistrations),
     appVersions: (_app: MinimalAppIdentifiers) => Promise.resolve(emptyAppVersions),

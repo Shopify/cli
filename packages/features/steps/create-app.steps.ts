@@ -50,13 +50,13 @@ When(
   /I create a (.+) app named (.+) with (.+) as package manager/,
   {timeout: 5 * 60 * 1000},
   async function (appType: string, appName: string, packageManager: string) {
-    let template
+    let templateArgs
     switch (appType) {
-      case 'remix':
-        template = 'https://github.com/Shopify/shopify-app-template-remix'
+      case 'react-router':
+        templateArgs = ['--template', 'reactRouter', '--flavor', 'javascript']
         break
       case 'extension-only':
-        template = 'https://github.com/Shopify/shopify-app-template-none'
+        templateArgs = ['--template', 'none']
         break
       default:
         throw new Error(`Unknown app type: ${appType}`)
@@ -73,8 +73,7 @@ When(
         '--package-manager',
         packageManager,
         '--local',
-        '--template',
-        template,
+        ...templateArgs,
       ],
       {env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: '', FORCE_COLOR: '0'}},
     )

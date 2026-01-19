@@ -5,8 +5,8 @@ Feature: Apps
 Background:
   Given I have a working directory
 
-Scenario: I scaffold ui, theme and function extensions in a remix app
-  And I create a remix app named MyExtendedApp with npm as package manager
+Scenario: I scaffold ui, theme and function extensions in a react-router app
+  And I create a react-router app named MyExtendedApp with npm as package manager
 #  When I create an extension named TestPurchaseExtensionReact of type post_purchase_ui and flavor react
 #  Then I have an extension named TestPurchaseExtensionReact of type checkout_post_purchase and flavor react
 #  When I create an extension named TestThemeExtension of type theme_app_extension

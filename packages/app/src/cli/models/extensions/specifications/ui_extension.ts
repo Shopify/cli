@@ -1,13 +1,21 @@
-import {findAllImportedFiles, createTypeDefinition, findNearestTsConfigDir, parseApiVersion} from './type-generation.js'
+import {
+  findAllImportedFiles,
+  createTypeDefinition,
+  findNearestTsConfigDir,
+  parseApiVersion,
+  createToolsTypeDefinition,
+  ToolsFileSchema,
+} from './type-generation.js'
 import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
+import {formatContent} from '../../../utilities/file-formatter.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {copyFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {copyFile, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/checkout-ui-extensions'
@@ -67,10 +75,20 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
+          ...(targeting.instructions
+            ? {
+                [AssetIdentifier.Instructions]: {
+                  filepath: `${config.handle}-${AssetIdentifier.Instructions}-${basename(targeting.instructions)}`,
+                  module: targeting.instructions,
+                  static: true,
+                },
+              }
+            : null),
         },
       }
 
       return {
+        tools: targeting.tools,
         target: targeting.target,
         module: targeting.module,
         metafields: targeting.metafields ?? config.metafields ?? [],
@@ -194,6 +212,7 @@ const uiExtensionSpec = createExtensionSpecification({
 
     // Track all files and their associated targets
     const fileToTargetsMap = new Map<string, string[]>()
+    const fileToToolsMap = new Map<string, string>()
 
     // First pass: collect all entry point files and their targets
     for await (const extensionPoint of configuration.extension_points) {
@@ -206,6 +225,10 @@ const uiExtensionSpec = createExtensionSpecification({
       currentTargets.push(extensionPoint.target)
       fileToTargetsMap.set(fullPath, currentTargets)
 
+      // Add tools module if present
+      if (extensionPoint.tools) {
+        fileToToolsMap.set(fullPath, extensionPoint.tools)
+      }
       // Add should render module if present
       if (extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]?.module) {
         const shouldRenderPath = joinPath(
@@ -266,9 +289,45 @@ const uiExtensionSpec = createExtensionSpecification({
       const uniqueTargets = [...new Set(targets)]
 
       try {
-        const typeDefinition = createTypeDefinition(filePath, typeFilePath, uniqueTargets, configuration.api_version)
+        const toolsDefinition = fileToToolsMap.get(filePath)
+        let toolsTypeDefinition = ''
+        if (toolsDefinition) {
+          try {
+            const toolsFilePath = joinPath(extension.directory, toolsDefinition)
+            if (await fileExists(toolsFilePath)) {
+              // Read and parse the tools JSON file
+              const toolsContent = await readFile(toolsFilePath)
+              const tools = ToolsFileSchema.safeParse(JSON.parse(toolsContent))
+              if (tools.success) {
+                // Generate tools type definition
+                toolsTypeDefinition = await createToolsTypeDefinition(tools.data)
+              } else {
+                outputWarn(
+                  `Invalid tools definition in "${toolsDefinition}": ${tools.error.issues
+                    .map((issue) => issue.message)
+                    .join(', ')}`,
+                )
+              }
+            }
+            // eslint-disable-next-line no-catch-all/no-catch-all
+          } catch (error) {
+            outputWarn(
+              `Failed to create tools type definition for tools file "${toolsDefinition}": ${
+                error instanceof Error ? error.message : 'Unknown error'
+              }`,
+            )
+          }
+        }
+        let typeDefinition = createTypeDefinition({
+          fullPath: filePath,
+          typeFilePath,
+          targets: uniqueTargets,
+          apiVersion: configuration.api_version,
+          toolsTypeDefinition,
+        })
         if (typeDefinition) {
           const currentTypes = typeDefinitionsByFile.get(typeFilePath) ?? new Set<string>()
+          typeDefinition = await formatContent(typeDefinition, {parser: 'typescript', singleQuote: true})
           currentTypes.add(typeDefinition)
           typeDefinitionsByFile.set(typeFilePath, currentTypes)
         }
@@ -309,9 +368,25 @@ function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest
   }
 }
 
+async function checkForMissingPath(
+  directory: string,
+  assetModule: string | undefined,
+  target: string,
+  assetType: string,
+): Promise<string | undefined> {
+  if (!assetModule) return undefined
+
+  const assetPath = joinPath(directory, assetModule)
+  const exists = await fileExists(assetPath)
+  return exists
+    ? undefined
+    : outputContent`Couldn't find ${outputToken.path(assetPath)}
+  Please check the ${assetType} path for ${target}`.value
+}
+
 async function validateUIExtensionPointConfig(
   directory: string,
-  extensionPoints: NewExtensionPointSchemaType[],
+  extensionPoints: (NewExtensionPointSchemaType & {build_manifest?: BuildManifest})[],
   configPath: string,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
@@ -322,17 +397,32 @@ async function validateUIExtensionPointConfig(
     return err(missingExtensionPointsMessage)
   }
 
-  for await (const {module, target} of extensionPoints) {
-    const fullPath = joinPath(directory, module)
-    const exists = await fileExists(fullPath)
+  for await (const extensionPoint of extensionPoints) {
+    const {module, target, build_manifest: buildManifest} = extensionPoint
 
-    if (!exists) {
-      const notFoundPath = outputToken.path(joinPath(directory, module))
+    const missingModuleError = await checkForMissingPath(directory, module, target, 'module')
+    if (missingModuleError) {
+      errors.push(missingModuleError)
+    }
 
-      errors.push(
-        outputContent`Couldn't find ${notFoundPath}
-Please check the module path for ${target}`.value,
-      )
+    const missingToolsError = await checkForMissingPath(
+      directory,
+      buildManifest?.assets[AssetIdentifier.Tools]?.module,
+      target,
+      AssetIdentifier.Tools,
+    )
+    if (missingToolsError) {
+      errors.push(missingToolsError)
+    }
+
+    const missingInstructionsError = await checkForMissingPath(
+      directory,
+      buildManifest?.assets[AssetIdentifier.Instructions]?.module,
+      target,
+      AssetIdentifier.Instructions,
+    )
+    if (missingInstructionsError) {
+      errors.push(missingInstructionsError)
     }
 
     if (uniqueTargets.includes(target)) {

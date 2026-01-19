@@ -3,11 +3,12 @@ import * as Types from './types.js'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
-export type FetchDevStoreByDomainQueryVariables = Types.Exact<{
+export type FetchStoreByDomainQueryVariables = Types.Exact<{
   domain?: Types.InputMaybe<Types.Scalars['String']['input']>
+  storeTypes: Types.Scalars['String']['input']
 }>
 
-export type FetchDevStoreByDomainQuery = {
+export type FetchStoreByDomainQuery = {
   organization?: {
     id: string
     name: string
@@ -28,18 +29,23 @@ export type FetchDevStoreByDomainQuery = {
   } | null
 }
 
-export const FetchDevStoreByDomain = {
+export const FetchStoreByDomain = {
   kind: 'Document',
   definitions: [
     {
       kind: 'OperationDefinition',
       operation: 'query',
-      name: {kind: 'Name', value: 'FetchDevStoreByDomain'},
+      name: {kind: 'Name', value: 'FetchStoreByDomain'},
       variableDefinitions: [
         {
           kind: 'VariableDefinition',
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'domain'}},
           type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}},
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: {kind: 'Variable', name: {kind: 'Name', value: 'storeTypes'}},
+          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'String'}}},
         },
       ],
       selectionSet: {
@@ -71,12 +77,12 @@ export const FetchDevStoreByDomain = {
                           {
                             kind: 'ObjectField',
                             name: {kind: 'Name', value: 'operator'},
-                            value: {kind: 'EnumValue', value: 'EQUALS'},
+                            value: {kind: 'EnumValue', value: 'IN'},
                           },
                           {
                             kind: 'ObjectField',
                             name: {kind: 'Name', value: 'value'},
-                            value: {kind: 'StringValue', value: 'app_development', block: false},
+                            value: {kind: 'Variable', name: {kind: 'Name', value: 'storeTypes'}},
                           },
                         ],
                       },
@@ -140,4 +146,4 @@ export const FetchDevStoreByDomain = {
       },
     },
   ],
-} as unknown as DocumentNode<FetchDevStoreByDomainQuery, FetchDevStoreByDomainQueryVariables>
+} as unknown as DocumentNode<FetchStoreByDomainQuery, FetchStoreByDomainQueryVariables>

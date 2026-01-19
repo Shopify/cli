@@ -200,12 +200,18 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
-    [--no-release] [--path <value>] [--reset | ] [--source-control-url <value>] [--verbose] [--version <value>]
+  $ shopify app deploy [--allow-deletes] [--allow-updates] [--client-id <value> | -c <value>] [-f] [--message
+    <value>] [--no-build] [--no-color] [--no-release] [--path <value>] [--reset | ] [--source-control-url <value>]
+    [--verbose] [--version <value>]
 
 FLAGS
   -c, --config=<value>              The name of the app configuration.
-  -f, --force                       Deploy without asking for confirmation.
+  -f, --force                       Deploy without asking for confirmation. Equivalent to --allow-updates
+                                    --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.
+      --allow-deletes               Allows removing extensions and configuration without requiring user confirmation.
+                                    For CI/CD environments, the recommended flag is --allow-updates.
+      --allow-updates               Allows adding and updating extensions and configuration without requiring user
+                                    confirmation. Recommended option for CI/CD environments.
       --client-id=<value>           The Client ID of your app.
       --message=<value>             Optional message that will be associated with this version. This is for internal use
                                     only and won't be available externally.
@@ -214,6 +220,7 @@ FLAGS
                                     build` or by caching build artifacts.
       --no-color                    Disable color output.
       --no-release                  Creates a version but doesn't release it - it's not made available to merchants.
+                                    With this flag, a user confirmation is not required.
       --path=<value>                The path to your app directory.
       --reset                       Reset all your settings.
       --source-control-url=<value>  URL associated with the new app version.
@@ -720,7 +727,12 @@ USAGE
 
 FLAGS
   -c, --config=<value>     The name of the app configuration.
-  -f, --force              Release without asking for confirmation.
+  -f, --force              Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For
+                           CI/CD environments, the recommended flag is --allow-updates.
+      --allow-deletes      Allows removing extensions and configuration without requiring user confirmation. For CI/CD
+                           environments, the recommended flag is --allow-updates.
+      --allow-updates      Allows adding and updating extensions and configuration without requiring user confirmation.
+                           Recommended option for CI/CD environments.
       --client-id=<value>  The Client ID of your app.
       --no-color           Disable color output.
       --path=<value>       The path to your app directory.

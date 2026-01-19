@@ -7,7 +7,7 @@ import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
 import {resolveApiVersion} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
-import {OrganizationApp, OrganizationSource} from '../../models/organization.js'
+import {OrganizationApp, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
 import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
@@ -24,6 +24,7 @@ vi.mock('../graphql/common.js', async () => {
   return {
     ...actual,
     resolveApiVersion: vi.fn(),
+    validateMutationStore: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/ui')
@@ -50,6 +51,15 @@ describe('executeBulkOperation', () => {
   } as OrganizationApp
 
   const storeFqdn = 'test-store.myshopify.com'
+  const mockStore: OrganizationStore = {
+    shopId: '123',
+    link: 'https://test-store.myshopify.com/admin',
+    shopDomain: storeFqdn,
+    shopName: 'Test Store',
+    transferDisabled: false,
+    convertableToPartnerTest: false,
+    provisionable: true,
+  }
   const mockAdminSession = {token: 'test-token', storeFqdn}
 
   const createdBulkOperation: NonNullable<
@@ -87,7 +97,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -110,7 +120,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -133,7 +143,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query: mutation,
     })
 
@@ -158,7 +168,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query: mutation,
       variables,
     })
@@ -181,7 +191,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -206,7 +216,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -242,7 +252,7 @@ describe('executeBulkOperation', () => {
       await executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query: mutation,
         variableFile: variableFilePath,
       })
@@ -265,7 +275,7 @@ describe('executeBulkOperation', () => {
         executeBulkOperation({
           organization: mockOrganization,
           remoteApp: mockRemoteApp,
-          storeFqdn,
+          store: mockStore,
           query: mutation,
           variableFile: nonExistentPath,
         }),
@@ -284,7 +294,7 @@ describe('executeBulkOperation', () => {
       executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         variables,
       }),
@@ -305,7 +315,7 @@ describe('executeBulkOperation', () => {
         executeBulkOperation({
           organization: mockOrganization,
           remoteApp: mockRemoteApp,
-          storeFqdn,
+          store: mockStore,
           query,
           variableFile: variableFilePath,
         }),
@@ -338,7 +348,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -378,7 +388,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -403,7 +413,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: false,
     })
@@ -430,7 +440,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: false,
     })
@@ -467,7 +477,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
       outputFile,
@@ -501,7 +511,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -530,7 +540,7 @@ describe('executeBulkOperation', () => {
       await executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
         watch: true,
       })
@@ -555,7 +565,7 @@ describe('executeBulkOperation', () => {
       executeBulkOperation({
         organization: mockOrganization,
         remoteApp: mockRemoteApp,
-        storeFqdn,
+        store: mockStore,
         query,
       }),
     ).rejects.toThrow('Bulk operation response returned null with no error message.')
@@ -590,7 +600,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -626,7 +636,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
     })
@@ -662,7 +672,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
       watch: true,
       outputFile,
@@ -688,7 +698,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 
@@ -711,7 +721,7 @@ describe('executeBulkOperation', () => {
     await executeBulkOperation({
       organization: mockOrganization,
       remoteApp: mockRemoteApp,
-      storeFqdn,
+      store: mockStore,
       query,
     })
 

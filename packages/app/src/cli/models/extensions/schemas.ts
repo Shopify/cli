@@ -46,6 +46,7 @@ const NewExtensionPointSchema = zod.object({
   module: zod.string(),
   should_render: ShouldRenderSchema.optional(),
   tools: zod.string().optional(),
+  instructions: zod.string().optional(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
   urls: zod

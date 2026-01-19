@@ -21,9 +21,22 @@ export default class Release extends AppLinkedCommand {
     ...appFlags,
     force: Flags.boolean({
       hidden: false,
-      description: 'Release without asking for confirmation.',
+      description:
+        'Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
+    }),
+    'allow-updates': Flags.boolean({
+      hidden: false,
+      description:
+        'Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.',
+      env: 'SHOPIFY_FLAG_ALLOW_UPDATES',
+    }),
+    'allow-deletes': Flags.boolean({
+      hidden: false,
+      description:
+        'Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.',
+      env: 'SHOPIFY_FLAG_ALLOW_DELETES',
     }),
     version: Flags.string({
       hidden: false,
@@ -41,7 +54,12 @@ export default class Release extends AppLinkedCommand {
       cmd_app_reset_used: flags.reset,
     }))
 
-    const requiredNonTTYFlags = ['force']
+    // We require --force or --allow-updates or --allow-deletes for non-TTY.
+    const requiredNonTTYFlags: string[] = []
+    const hasAnyForceFlags = flags.force || flags['allow-updates'] || flags['allow-deletes']
+    if (!hasAnyForceFlags) {
+      requiredNonTTYFlags.push('allow-updates')
+    }
     const configurationState = await getAppConfigurationState(flags.path, flags.config)
     if (configurationState.state === 'template-only' && !clientId) {
       requiredNonTTYFlags.push('client-id')
@@ -55,11 +73,16 @@ export default class Release extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
+    const allowUpdates = flags.force || flags['allow-updates']
+    const allowDeletes = flags.force || flags['allow-deletes']
+
     await release({
       app,
       remoteApp,
       developerPlatformClient,
       force: flags.force,
+      allowUpdates,
+      allowDeletes,
       version: flags.version,
     })
 

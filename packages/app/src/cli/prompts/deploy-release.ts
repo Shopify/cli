@@ -5,7 +5,13 @@ import {
   ExtensionIdentifierBreakdownInfo,
   ExtensionIdentifiersBreakdown,
 } from '../services/context/breakdown-extensions.js'
-import {InfoTableSection, renderConfirmationPrompt, renderDangerousConfirmationPrompt} from '@shopify/cli-kit/node/ui'
+import {
+  InfoTableSection,
+  renderConfirmationPrompt,
+  renderDangerousConfirmationPrompt,
+  isTTY,
+} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 interface DeployOrReleaseConfirmationPromptOptions {
   extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
@@ -13,6 +19,10 @@ interface DeployOrReleaseConfirmationPromptOptions {
   appTitle?: string
   release: boolean
   force: boolean
+  /** If true, allow adding and updating extensions and configuration without user confirmation */
+  allowUpdates?: boolean
+  /** If true, allow removing extensions and configuration without user confirmation */
+  allowDeletes?: boolean
   showConfig?: boolean
 }
 
@@ -28,15 +38,77 @@ interface DeployConfirmationPromptOptions {
   release: boolean
 }
 
+/**
+ * Determines whether the confirmation prompt can be skipped based on the allow flags and change types.
+ * Returns true if the prompt should be skipped, false if the prompt should be shown.
+ * Throws an error if in non-TTY mode and there are changes that require confirmation.
+ */
+function shouldSkipConfirmationPrompt({
+  force,
+  allowUpdates,
+  allowDeletes,
+  extensionIdentifiersBreakdown,
+  configExtensionIdentifiersBreakdown,
+}: {
+  force: boolean
+  allowUpdates?: boolean
+  allowDeletes?: boolean
+  extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown
+  configExtensionIdentifiersBreakdown?: ConfigExtensionIdentifiersBreakdown
+}): boolean {
+  // --force is equivalent to --allow-updates --allow-deletes
+  if (force || (allowUpdates && allowDeletes)) return true
+
+  const hasDeletedExtensions = extensionIdentifiersBreakdown.onlyRemote.length > 0
+  const hasDeletedConfig = (configExtensionIdentifiersBreakdown?.deletedFieldNames.length ?? 0) > 0
+  const hasDeletes = hasDeletedExtensions || hasDeletedConfig
+
+  const hasNewOrUpdatedExtensions =
+    extensionIdentifiersBreakdown.toCreate.length > 0 || extensionIdentifiersBreakdown.toUpdate.length > 0
+  const hasNewOrUpdatedConfig =
+    (configExtensionIdentifiersBreakdown?.newFieldNames.length ?? 0) > 0 ||
+    (configExtensionIdentifiersBreakdown?.existingUpdatedFieldNames.length ?? 0) > 0
+  const hasUpdates = hasNewOrUpdatedExtensions || hasNewOrUpdatedConfig
+
+  // Skip prompt if we only have updates or deletes and the corresponding allow flag is true
+  if (allowUpdates && !hasDeletes) return true
+  if (allowDeletes && !hasUpdates) return true
+
+  // If we're in non-TTY mode and there are changes that require confirmation, throw an error
+  if (!isTTY() && (hasDeletes || hasUpdates)) {
+    const suggestedFlags: string[] = []
+    if (hasUpdates) suggestedFlags.push('--allow-updates')
+    if (hasDeletes) suggestedFlags.push('--allow-deletes')
+    throw new AbortError('This deployment includes changes that require confirmation.', [
+      'Run the command with',
+      {command: suggestedFlags.join(' ')},
+      'to deploy without confirmation.',
+    ])
+  }
+
+  return false
+}
+
 export async function deployOrReleaseConfirmationPrompt({
   force,
+  allowUpdates,
+  allowDeletes,
   extensionIdentifiersBreakdown,
   configExtensionIdentifiersBreakdown,
   appTitle,
   release,
-}: DeployOrReleaseConfirmationPromptOptions) {
+}: DeployOrReleaseConfirmationPromptOptions): Promise<boolean> {
   await metadata.addPublicMetadata(() => buildConfigurationBreakdownMetadata(configExtensionIdentifiersBreakdown))
-  if (force) return true
+
+  const shouldSkip = shouldSkipConfirmationPrompt({
+    force,
+    allowUpdates,
+    allowDeletes,
+    extensionIdentifiersBreakdown,
+    configExtensionIdentifiersBreakdown,
+  })
+  if (shouldSkip) return true
+
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
 

@@ -56,12 +56,15 @@ import {
   AppLogsSubscribeMutation,
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+
+export type {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 
 export enum ClientName {
   AppManagement = 'app-management',
@@ -250,7 +253,7 @@ export interface DeveloperPlatformClient {
   templateSpecifications: (app: MinimalAppIdentifiers) => Promise<ExtensionTemplatesResult>
   createApp: (org: Organization, options: CreateAppOptions) => Promise<OrganizationApp>
   devStoresForOrg: (orgId: string, searchTerm?: string) => Promise<Paginateable<{stores: OrganizationStore[]}>>
-  storeByDomain: (orgId: string, shopDomain: string) => Promise<OrganizationStore | undefined>
+  storeByDomain: (orgId: string, shopDomain: string, storeTypes: Store[]) => Promise<OrganizationStore | undefined>
   ensureUserAccessToStore: (orgId: string, store: OrganizationStore) => Promise<void>
   appExtensionRegistrations: (
     app: MinimalAppIdentifiers,
