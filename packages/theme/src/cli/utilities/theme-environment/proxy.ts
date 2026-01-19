@@ -306,15 +306,19 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  const finalHeaders = cleanHeader({
+  const baseHeaders: {[key: string]: string} = {
     ...headers,
     ...defaultHeaders(),
-    Authorization: `Bearer ${ctx.session.storefrontToken}`,
-    // Required header for CDN requests
     referer: url.origin,
-    // Update the cookie with the latest session
     Cookie: buildCookies(ctx.session, {headers}),
-  })
+  }
+
+  // Only include Authorization for theme dev, not theme-extensions
+  if (ctx.type === 'theme') {
+    baseHeaders.Authorization = `Bearer ${ctx.session.storefrontToken}`
+  }
+
+  const finalHeaders = cleanHeader(baseHeaders)
 
   // eslint-disable-next-line no-restricted-globals
   return fetch(url, {
