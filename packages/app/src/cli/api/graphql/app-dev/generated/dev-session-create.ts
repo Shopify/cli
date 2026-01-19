@@ -16,7 +16,7 @@ export type DevSessionCreateMutation = {
   } | null
 }
 
-export const DevSessionCreateDocument = {
+export const DevSessionCreate = {
   kind: 'Document',
   definitions: [
     {

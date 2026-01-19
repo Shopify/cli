@@ -174,7 +174,6 @@ export interface DevSessionUpdateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
   manifest: AppManifest
   inheritedModuleUids: string[]
-  websocketUrl?: string
 }
 
 export type DevSessionDeleteOptions = DevSessionSharedOptions

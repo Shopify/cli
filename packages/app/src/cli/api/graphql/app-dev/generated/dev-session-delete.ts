@@ -9,7 +9,7 @@ export type DevSessionDeleteMutationVariables = Types.Exact<{
 
 export type DevSessionDeleteMutation = {devSessionDelete?: {userErrors: {message: string}[]} | null}
 
-export const DevSessionDeleteDocument = {
+export const DevSessionDelete = {
   kind: 'Document',
   definitions: [
     {

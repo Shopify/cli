@@ -407,13 +407,13 @@ describe('pushUpdatesForDevSession', () => {
       appId: 'app123',
       // Assets URL is empty because the affected extension has no assets
       assetsUrl: undefined,
-      websocketUrl: 'wss://test.dev/extensions',
       manifest: {
         name: 'App',
         handle: '',
         modules: [
           {
             uid: 'test-ui-extension-uid',
+            uuid: undefined,
             assets: 'test-ui-extension-uid',
             handle: updatedExtension.handle,
             type: updatedExtension.externalType,
@@ -453,7 +453,6 @@ describe('pushUpdatesForDevSession', () => {
       shopFqdn: 'test.myshopify.com',
       appId: 'app123',
       assetsUrl: 'https://gcs.url',
-      websocketUrl: 'wss://test.dev/extensions',
       manifest: expect.any(Object),
       inheritedModuleUids: [],
     })

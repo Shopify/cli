@@ -285,7 +285,6 @@ export class DevSession {
           assetsUrl: signedURL,
           manifest,
           inheritedModuleUids,
-          websocketUrl,
         }
         return this.devSessionUpdateWithRetry(payload)
       } else {
