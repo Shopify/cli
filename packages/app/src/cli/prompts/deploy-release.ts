@@ -76,12 +76,12 @@ function shouldSkipConfirmationPrompt({
 
   // If we're in non-TTY mode and there are changes that require confirmation, throw an error
   if (!isTTY() && (hasDeletes || hasUpdates)) {
-    let suggestedFlag = '--force'
-    if (hasUpdates && !hasDeletes) suggestedFlag = '--allow-updates'
-    if (hasDeletes && !hasUpdates) suggestedFlag = '--allow-deletes'
+    const suggestedFlags: string[] = []
+    if (hasUpdates) suggestedFlags.push('--allow-updates')
+    if (hasDeletes) suggestedFlags.push('--allow-deletes')
     throw new AbortError('This deployment includes changes that require confirmation.', [
       'Run the command with',
-      {command: suggestedFlag},
+      {command: suggestedFlags.join(' ')},
       'to deploy without confirmation.',
     ])
   }
