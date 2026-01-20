@@ -59,7 +59,7 @@ jobs:
       - name: Force snapshot changeset
         run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
-        uses: Shopify/snapit@05253a195cc870a9eb6519f5e1f9a98ffd54431f # registry-and-package-manager
+        uses: Shopify/snapit@ee98df3a4a2b221fc3f06d56b9a6b60996613102 # registry-and-package-manager
         with:
           comment_is_global: 'true'
           comment_packages: '@shopify/cli'
