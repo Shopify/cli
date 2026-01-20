@@ -9,6 +9,9 @@ import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
+import Audit from './cli/commands/audit/audit.js'
+import AuditTheme from './cli/commands/audit/theme/index.js'
+import AuditThemeInit from './cli/commands/audit/theme/init.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
@@ -142,6 +145,9 @@ export const COMMANDS: any = {
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
+  audit: Audit,
+  'audit:theme': AuditTheme,
+  'audit:theme:init': AuditThemeInit,
   'docs:generate': DocsGenerate,
   'notifications:list': List,
   'notifications:generate': Generate,
