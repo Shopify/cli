@@ -49,6 +49,7 @@ export default class Deploy extends AppLinkedCommand {
         "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
       env: 'SHOPIFY_FLAG_NO_RELEASE',
       default: false,
+      exclusive: ['allow-updates', 'allow-deletes'],
     }),
     'no-build': Flags.boolean({
       description:
