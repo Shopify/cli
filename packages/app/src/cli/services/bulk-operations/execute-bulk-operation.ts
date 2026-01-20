@@ -216,10 +216,15 @@ function resultsContainUserErrors(results: string): boolean {
   })
 }
 
-/**
- * Validates bulk operation-specific constraints for variables.
- */
 function validateBulkOperationVariables(graphqlOperation: string, variablesJsonl?: string): void {
+  if (isMutation(graphqlOperation) && !variablesJsonl) {
+    throw new AbortError(
+      outputContent`Bulk mutations require variables. Provide a JSONL file with ${outputToken.yellow(
+        '--variable-file',
+      )} or individual JSON objects with ${outputToken.yellow('--variables')}.`,
+    )
+  }
+
   if (!isMutation(graphqlOperation) && variablesJsonl) {
     throw new AbortError(
       outputContent`The ${outputToken.yellow('--variables')} and ${outputToken.yellow(

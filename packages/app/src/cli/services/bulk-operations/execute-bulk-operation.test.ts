@@ -134,6 +134,7 @@ describe('executeBulkOperation', () => {
 
   test('runs mutation operation when GraphQL document starts with mutation', async () => {
     const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+    const variables = ['{"input":{"id":"gid://shopify/Product/123"}}']
     const mockResponse: BulkOperationRunMutationMutation['bulkOperationRunMutation'] = {
       bulkOperation: createdBulkOperation,
       userErrors: [],
@@ -145,12 +146,13 @@ describe('executeBulkOperation', () => {
       remoteApp: mockRemoteApp,
       store: mockStore,
       query: mutation,
+      variables,
     })
 
     expect(runBulkOperationMutation).toHaveBeenCalledWith({
       adminSession: mockAdminSession,
       query: mutation,
-      variablesJsonl: undefined,
+      variablesJsonl: '{"input":{"id":"gid://shopify/Product/123"}}',
       version: BULK_OPERATIONS_MIN_API_VERSION,
     })
     expect(runBulkOperationQuery).not.toHaveBeenCalled()
@@ -325,6 +327,22 @@ describe('executeBulkOperation', () => {
       expect(runBulkOperationQuery).not.toHaveBeenCalled()
       expect(runBulkOperationMutation).not.toHaveBeenCalled()
     })
+  })
+
+  test('throws error when mutation is provided without variables', async () => {
+    const mutation = 'mutation productUpdate($input: ProductInput!) { productUpdate(input: $input) { product { id } } }'
+
+    await expect(
+      executeBulkOperation({
+        organization: mockOrganization,
+        remoteApp: mockRemoteApp,
+        store: mockStore,
+        query: mutation,
+      }),
+    ).rejects.toThrow('Bulk mutations require variables')
+
+    expect(runBulkOperationQuery).not.toHaveBeenCalled()
+    expect(runBulkOperationMutation).not.toHaveBeenCalled()
   })
 
   test('uses watchBulkOperation (not quickWatchBulkOperation) when watch flag is true', async () => {
