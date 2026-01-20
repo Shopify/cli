@@ -10,6 +10,7 @@ import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {shopifyFetch} from '../../../public/node/http.js'
 import {isTTY} from '../../../public/node/ui.js'
 import {err, ok} from '../../../public/node/result.js'
+import {AbortError} from '../../../public/node/error.js'
 import {isCI} from '../../../public/node/system.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {Response} from 'node-fetch'
@@ -180,5 +181,27 @@ describe('pollForDeviceAuthorization', () => {
     // Then
     await expect(got).rejects.toThrow()
     expect(exchangeDeviceCodeForAccessToken).toBeCalledTimes(3)
+  })
+
+  test('when polling, if an access denied error is received, stop polling and throw AbortError', async () => {
+    // Given
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('access_denied'))
+
+    // When
+    const got = pollForDeviceAuthorization('device_code', 0.05)
+
+    // Then
+    await expect(got).rejects.toThrow(new AbortError(`Device authorization failed: Access denied.`))
+  })
+
+  test('when polling, if an expired token error is received, stop polling and throw AbortError', async () => {
+    // Given
+    vi.mocked(exchangeDeviceCodeForAccessToken).mockResolvedValueOnce(err('expired_token'))
+
+    // When
+    const got = pollForDeviceAuthorization('device_code', 0.05)
+
+    // Then
+    await expect(got).rejects.toThrow(new AbortError(`Device authorization failed: Token expired. Please try again.`))
   })
 })
