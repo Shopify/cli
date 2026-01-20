@@ -143,7 +143,7 @@ export interface ExtensionPayload {
   handle: string
   extensionPoints: ExtensionPoints
   capabilities?: Capabilities
-  supportedFeatures?: ExtensionSupportedFeatures
+  supportedFeatures: ExtensionSupportedFeatures
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   localization?: FlattenedLocalization | Localization | null
