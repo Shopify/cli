@@ -293,6 +293,13 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
 
+  // Check that we aren't redirecting to external hosts
+  if (url.hostname !== host) {
+    return Promise.reject(
+      new Error(`Request failed: Hostname mismatch. Expected host: ${host}. Resulting URL hostname: ${url.hostname}`),
+    )
+  }
+
   // When a .css.liquid or .js.liquid file is requested but it doesn't exist in SFR,
   // it will be rendered with a query string like `assets/file.css?1234`.
   // For some reason, after refreshing, this rendered URL keeps the wrong `?1234`
