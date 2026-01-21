@@ -26,6 +26,7 @@ const checkoutSpec = createExtensionSpecification({
     return {
       extension_points: config.extension_points,
       capabilities: config.capabilities,
+      supported_features: config.supported_features,
       metafields: config.metafields ?? [],
       name: config.name,
       settings: config.settings,

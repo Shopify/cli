@@ -234,6 +234,9 @@ export async function testUIExtension(
         sources: [],
       },
     },
+    supported_features: {
+      offline_mode: false,
+    },
     extension_points: [
       {
         target: 'target1',
