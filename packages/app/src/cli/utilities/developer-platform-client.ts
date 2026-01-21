@@ -167,7 +167,7 @@ interface DevSessionSharedOptions {
 
 export interface DevSessionCreateOptions extends DevSessionSharedOptions {
   assetsUrl?: string
-  manifest: AppManifest
+  websocketUrl?: string
 }
 
 export interface DevSessionUpdateOptions extends DevSessionSharedOptions {

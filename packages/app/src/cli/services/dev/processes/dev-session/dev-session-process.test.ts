@@ -90,9 +90,12 @@ describe('pushUpdatesForDevSession', () => {
     abortController = new AbortController()
     devSessionStatusManager = new DevSessionStatusManager()
     options = {
+      app: {} as AppLinkedInterface,
+      apiKey: 'test-api-key',
       developerPlatformClient,
       appWatcher,
       storeFqdn: 'test.myshopify.com',
+      url: 'https://test.dev',
       appId: 'app123',
       organizationId: 'org123',
       appPreviewURL: 'https://test.preview.url',
@@ -410,6 +413,7 @@ describe('pushUpdatesForDevSession', () => {
         modules: [
           {
             uid: 'test-ui-extension-uid',
+            uuid: undefined,
             assets: 'test-ui-extension-uid',
             handle: updatedExtension.handle,
             type: updatedExtension.externalType,
@@ -469,8 +473,7 @@ describe('pushUpdatesForDevSession', () => {
       shopFqdn: 'test.myshopify.com',
       appId: 'app123',
       assetsUrl: 'https://gcs.url',
-      manifest: expect.any(Object),
-      inheritedModuleUids: [],
+      websocketUrl: 'wss://test.dev/extensions',
     })
   })
 
