@@ -88,7 +88,9 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   })
     .then((filesPaths) => Promise.all([getPatternsFromShopifyIgnore(root), ...filesPaths.map(read)]))
     .then(([ignoredPatterns]) => {
-      filterPatterns.ignoreFromFile.push(...ignoredPatterns)
+      if (Array.isArray(ignoredPatterns)) {
+        filterPatterns.ignoreFromFile.push(...ignoredPatterns)
+      }
     })
 
   const getKey = (filePath: string) => relativePath(root, filePath)

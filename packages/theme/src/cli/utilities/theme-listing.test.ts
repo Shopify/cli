@@ -158,7 +158,7 @@ describe('theme-listing', () => {
         // Given
         const themeDir = joinPath(tmpDir, 'theme')
         const listingDir = joinPath(themeDir, 'listings', 'modern')
-        await mkdir(listingDir, {recursive: true})
+        await mkdir(listingDir)
 
         // When / Then (no throw)
         await ensureListingExists(themeDir, 'modern')
@@ -170,8 +170,8 @@ describe('theme-listing', () => {
         // Given
         const themeDir = joinPath(tmpDir, 'theme')
         const listingsRoot = joinPath(themeDir, 'listings')
-        await mkdir(joinPath(listingsRoot, 'modern'), {recursive: true})
-        await mkdir(joinPath(listingsRoot, 'classic'), {recursive: true})
+        await mkdir(joinPath(listingsRoot, 'modern'))
+        await mkdir(joinPath(listingsRoot, 'classic'))
 
         // When
         let errorMessage = ''
@@ -208,7 +208,7 @@ describe('theme-listing', () => {
         // Given
         const themeDir = joinPath(tmpDir, 'theme')
         const listingsRoot = joinPath(themeDir, 'listings')
-        await mkdir(listingsRoot, {recursive: true})
+        await mkdir(listingsRoot)
 
         // When / Then
         await expect(ensureListingExists(themeDir, 'unknown')).rejects.toThrow('No presets found under "listings/"')
