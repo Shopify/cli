@@ -4,6 +4,10 @@ import {
   OrganizationBetaFlagsQueryVariables,
   organizationBetaFlagsQuery,
 } from './app-management-client/graphql/organization_beta_flags.js'
+import {
+  OrganizationExpFlagsQueryVariables,
+  OrganizationExpFlags,
+} from '../../api/graphql/business-platform-organizations/generated/organization_exp_flags.js'
 import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
@@ -178,6 +182,7 @@ type ShopEdge = NonNullable<AccessibleShops['edges'][number]>
 type ShopNode = Exclude<ShopEdge['node'], {[key: string]: never}>
 export interface GatedExtensionTemplate extends ExtensionTemplate {
   organizationBetaFlags?: string[]
+  organizationExpFlags?: string[]
   minimumCliVersion?: string
   deprecatedFromCliVersion?: string
 }
@@ -491,8 +496,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
     // uses sortPriority, is gone.
     let counter = 0
     const filteredTemplates = (
-      await allowedTemplates(templates, async (betaFlags: string[]) =>
-        this.organizationBetaFlags(organizationId, betaFlags),
+      await allowedTemplates(
+        templates,
+        async (betaFlags: string[]) => this.organizationBetaFlags(organizationId, betaFlags),
+        async (expFlags: string[]) => this.organizationExpFlags(organizationId, expFlags),
       )
     ).map((template) => ({...template, sortPriority: counter++}))
 
@@ -1087,6 +1094,29 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return result
   }
 
+  private async organizationExpFlags(
+    organizationId: string,
+    allExpFlags: string[],
+  ): Promise<{[flag: (typeof allExpFlags)[number]]: boolean}> {
+    const variables: OrganizationExpFlagsQueryVariables = {
+      organizationId: encodedGidFromOrganizationIdForBP(organizationId),
+      flagHandles: allExpFlags,
+    }
+    const flagsResult = await businessPlatformOrganizationsRequestDoc({
+      query: OrganizationExpFlags,
+      token: await this.businessPlatformToken(),
+      organizationId,
+      variables,
+      unauthorizedHandler: this.createUnauthorizedHandler(),
+    })
+    const result: {[flag: (typeof allExpFlags)[number]]: boolean} = {}
+    const enabledFlags = flagsResult.organization?.enabledFlags ?? []
+    allExpFlags.forEach((flag, index) => {
+      result[flag] = Boolean(enabledFlags[index])
+    })
+    return result
+  }
+
   private async appManagementRequest<TResult, TVariables extends Variables>(
     options: Omit<AppManagementRequestOptions<TResult, TVariables>, 'unauthorizedHandler' | 'token'>,
   ): Promise<TResult> {
@@ -1287,19 +1317,34 @@ export function diffAppModules({currentModules, selectedVersionModules}: DiffApp
 export async function allowedTemplates(
   templates: GatedExtensionTemplate[],
   betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>,
+  expFlagsFetcher: (expFlags: string[]) => Promise<{[key: string]: boolean}>,
   version: string = CLI_KIT_VERSION,
 ): Promise<GatedExtensionTemplate[]> {
+  // Extract both types of flags from templates
   const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))
-  const enabledBetaFlags = await betaFlagsFetcher(allBetaFlags)
+  const allExpFlags = Array.from(new Set(templates.map((ext) => ext.organizationExpFlags ?? []).flat()))
+
+  // Fetch both flag types in parallel
+  const [enabledBetaFlags, enabledExpFlags] = await Promise.all([
+    allBetaFlags.length > 0 ? betaFlagsFetcher(allBetaFlags) : Promise.resolve({} as {[key: string]: boolean}),
+    allExpFlags.length > 0 ? expFlagsFetcher(allExpFlags) : Promise.resolve({} as {[key: string]: boolean}),
+  ])
+
   return templates.filter((ext) => {
-    const hasAnyNeededBetas =
+    // Check beta flags
+    const hasNeededBetaFlags =
       !ext.organizationBetaFlags || ext.organizationBetaFlags.every((flag) => enabledBetaFlags[flag])
+    // Check exp flags
+    const hasNeededExpFlags =
+      !ext.organizationExpFlags || ext.organizationExpFlags.every((flag) => enabledExpFlags[flag])
+    // Version checks
     const satisfiesMinCliVersion = !ext.minimumCliVersion || versionSatisfies(version, `>=${ext.minimumCliVersion}`)
     const satisfiesDeprecatedFromCliVersion =
       !ext.deprecatedFromCliVersion || versionSatisfies(version, `<${ext.deprecatedFromCliVersion}`)
     const satisfiesVersion = satisfiesMinCliVersion && satisfiesDeprecatedFromCliVersion
     const satisfiesPreReleaseVersion = isPreReleaseVersion(version) && ext.deprecatedFromCliVersion === undefined
-    return hasAnyNeededBetas && (satisfiesVersion || satisfiesPreReleaseVersion)
+    // Must satisfy both flag types AND version requirements
+    return hasNeededBetaFlags && hasNeededExpFlags && (satisfiesVersion || satisfiesPreReleaseVersion)
   })
 }
 

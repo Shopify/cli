@@ -8,6 +8,7 @@ import {
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
+import {OrganizationExpFlagsQuery} from '../../api/graphql/business-platform-organizations/generated/organization_exp_flags.js'
 import {
   testUIExtension,
   testRemoteExtensionTemplates,
@@ -187,7 +188,6 @@ describe('templateSpecifications', () => {
       organization: {
         id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
         flag_allowedFlag: true,
-        flag_notAllowedFlag: false,
       },
     }
     vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedFetchFlagsResponse)
@@ -200,17 +200,12 @@ describe('templateSpecifications', () => {
 
     // Then
     expect(vi.mocked(businessPlatformOrganizationsRequest)).toHaveBeenCalledWith({
-      query: `
-    query OrganizationBetaFlags($organizationId: OrganizationID!) {
-      organization(organizationId: $organizationId) {
-        id
-        flag_allowedFlag: hasFeatureFlag(handle: "allowedFlag")
-        flag_notAllowedFlag: hasFeatureFlag(handle: "notAllowedFlag")
-      }
-    }`,
+      query: expect.stringContaining('flag_allowedFlag: hasFeatureFlag(handle: "allowedFlag")'),
       token: 'business-platform-token',
       organizationId: orgApp.organizationId,
-      variables: {organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId)},
+      variables: {
+        organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+      },
       unauthorizedHandler: {
         type: 'token_refresh',
         handler: expect.any(Function),
@@ -249,6 +244,64 @@ describe('templateSpecifications', () => {
     expect(groupOrder).toEqual(['GroupA', 'GroupB', 'GroupC'])
   })
 
+  test('fetches and filters templates by exp flags using enabledFlags', async () => {
+    // Given
+    const orgApp = testOrganizationApp()
+    const templateWithExpFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      organizationExpFlags: ['hash_allowed'],
+    }
+    const templateWithDisallowedExpFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[2]!,
+      organizationExpFlags: ['hash_not_allowed'],
+    }
+    const templates: GatedExtensionTemplate[] = [
+      templateWithoutRules,
+      templateWithExpFlag,
+      templateWithDisallowedExpFlag,
+    ]
+    const mockedFetch = vi.fn().mockResolvedValueOnce(Response.json(templates))
+    vi.mocked(fetch).mockImplementation(mockedFetch)
+
+    const mockedBetaFlagsResponse: OrganizationBetaFlagsQuerySchema = {
+      organization: {
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValueOnce(mockedBetaFlagsResponse)
+
+    const mockedExpFlagsResponse: OrganizationExpFlagsQuery = {
+      organization: {
+        id: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+        enabledFlags: [true, false],
+      },
+    }
+    vi.mocked(businessPlatformOrganizationsRequestDoc).mockResolvedValueOnce(mockedExpFlagsResponse)
+
+    // When
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    const {templates: got} = await client.templateSpecifications(orgApp)
+    const gotLabels = got.map((template) => template.name)
+
+    // Then
+    expect(vi.mocked(businessPlatformOrganizationsRequestDoc)).toHaveBeenCalledWith({
+      query: expect.objectContaining({kind: 'Document'}),
+      token: 'business-platform-token',
+      organizationId: orgApp.organizationId,
+      variables: {
+        organizationId: encodedGidFromOrganizationIdForBP(orgApp.organizationId),
+        flagHandles: ['hash_allowed', 'hash_not_allowed'],
+      },
+      unauthorizedHandler: {
+        type: 'token_refresh',
+        handler: expect.any(Function),
+      },
+    })
+    const expectedAllowedTemplates = [templateWithoutRules, templateWithExpFlag]
+    expect(gotLabels).toEqual(expectedAllowedTemplates.map((template) => template.name))
+  })
+
   test('fails with an error message when fetching the specifications list fails', async () => {
     // Given
     vi.mocked(fetch).mockRejectedValueOnce(new Error('Failed to fetch'))
@@ -274,7 +327,11 @@ describe('allowedTemplates', () => {
     ]
 
     // When
-    const got = await allowedTemplates(templates, () => Promise.resolve({allowedFlag: true, notAllowedFlag: false}))
+    const got = await allowedTemplates(
+      templates,
+      () => Promise.resolve({allowedFlag: true, notAllowedFlag: false}),
+      () => Promise.resolve({}),
+    )
 
     // Then
     expect(got.length).toEqual(2)
@@ -293,12 +350,117 @@ describe('allowedTemplates', () => {
     const got = await allowedTemplates(
       templates,
       () => Promise.resolve({allowedFlag: true, notAllowedFlag: false}),
+      () => Promise.resolve({}),
       '0.0.0-nightly',
     )
 
     // Then
     expect(got.length).toEqual(2)
     expect(got).toEqual([allowedTemplate, templateDisallowedByMinimumCliVersion])
+  })
+
+  test('filters templates by exp flags', async () => {
+    // Given
+    const templateWithExpFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      organizationExpFlags: ['hash_allowed'],
+    }
+    const templateWithDisallowedExpFlag: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[2]!,
+      organizationExpFlags: ['hash_not_allowed'],
+    }
+    const templates: GatedExtensionTemplate[] = [
+      templateWithoutRules,
+      templateWithExpFlag,
+      templateWithDisallowedExpFlag,
+    ]
+
+    // When
+    const got = await allowedTemplates(
+      templates,
+      () => Promise.resolve({}),
+      () => Promise.resolve({hash_allowed: true, hash_not_allowed: false}),
+    )
+
+    // Then
+    expect(got.length).toEqual(2)
+    expect(got).toEqual([templateWithoutRules, templateWithExpFlag])
+  })
+
+  test('filters templates requiring both beta and exp flags', async () => {
+    // Given
+    const templateWithBothFlags: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      organizationBetaFlags: ['betaFlag'],
+      organizationExpFlags: ['hash_exp'],
+    }
+    const templateWithOnlyBeta: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[2]!,
+      organizationBetaFlags: ['betaFlag'],
+    }
+    const templateWithOnlyExp: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[3]!,
+      organizationExpFlags: ['hash_exp'],
+    }
+    const templates: GatedExtensionTemplate[] = [
+      templateWithoutRules,
+      templateWithBothFlags,
+      templateWithOnlyBeta,
+      templateWithOnlyExp,
+    ]
+
+    // When
+    const got = await allowedTemplates(
+      templates,
+      () => Promise.resolve({betaFlag: true}),
+      () => Promise.resolve({hash_exp: true}),
+    )
+
+    // Then
+    expect(got.length).toEqual(4)
+    expect(got).toEqual([templateWithoutRules, templateWithBothFlags, templateWithOnlyBeta, templateWithOnlyExp])
+  })
+
+  test('excludes template when beta flag is satisfied but exp flag is not', async () => {
+    // Given
+    const templateWithBothFlags: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      organizationBetaFlags: ['betaFlag'],
+      organizationExpFlags: ['hash_exp'],
+    }
+    const templates: GatedExtensionTemplate[] = [templateWithoutRules, templateWithBothFlags]
+
+    // When
+    const got = await allowedTemplates(
+      templates,
+      () => Promise.resolve({betaFlag: true}),
+      () => Promise.resolve({hash_exp: false}),
+    )
+
+    // Then
+    expect(got.length).toEqual(1)
+    expect(got).toEqual([templateWithoutRules])
+  })
+
+  test('excludes template when exp flag is satisfied but beta flag is not', async () => {
+    // Given
+    const templateWithBothFlags: GatedExtensionTemplate = {
+      ...testRemoteExtensionTemplates[1]!,
+      organizationBetaFlags: ['betaFlag'],
+      organizationExpFlags: ['hash_exp'],
+    }
+    const templates: GatedExtensionTemplate[] = [templateWithoutRules, templateWithBothFlags]
+
+    // When
+    const got = await allowedTemplates(
+      templates,
+      () => Promise.resolve({betaFlag: false}),
+      () => Promise.resolve({hash_exp: true}),
+    )
+
+    // Then
+    expect(got.length).toEqual(1)
+    expect(got).toEqual([templateWithoutRules])
   })
 })
 
