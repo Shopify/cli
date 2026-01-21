@@ -207,6 +207,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
+          instructions: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [{namespace: 'test', key: 'test'}],
           default_placement_reference: undefined,
@@ -273,6 +274,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
+          instructions: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: 'PLACEMENT_REFERENCE1',
@@ -335,6 +337,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
+          instructions: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           urls: {},
@@ -397,6 +400,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
+          instructions: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -462,6 +466,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
+          instructions: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -529,6 +534,7 @@ describe('ui_extension', async () => {
         {
           target: 'EXTENSION::POINT::A',
           tools: undefined,
+          instructions: undefined,
           module: './src/ExtensionPointA.js',
           metafields: [],
           default_placement_reference: undefined,
@@ -596,6 +602,7 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
           tools: './tools.json',
+          instructions: undefined,
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -663,6 +670,7 @@ describe('ui_extension', async () => {
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
           tools: undefined,
+          instructions: './instructions.md',
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,
@@ -890,6 +898,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
           target: 'EXTENSION::POINT::A',
           module: './src/ExtensionPointA.js',
           tools: './tools.json',
+          instructions: './instructions.md',
           metafields: [],
           default_placement_reference: undefined,
           capabilities: undefined,

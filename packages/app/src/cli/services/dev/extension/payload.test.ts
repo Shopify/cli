@@ -3,23 +3,45 @@ import {getUIExtensionPayload} from './payload.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import * as appModel from '../../../models/app/app.js'
-import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, touchFile} from '@shopify/cli-kit/node/fs'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
+import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 describe('getUIExtensionPayload', () => {
+  beforeEach(() => {
+    vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
+      name: 'extension-renderer',
+      version: '1.2.3',
+    })
+  })
+
+  function createMockOptions(tmpDir: string, extensions: any[]): Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> {
+    return {
+      signal: vi.fn() as any,
+      stdout: vi.fn() as any,
+      stderr: vi.fn() as any,
+      apiKey: 'api-key',
+      appName: 'foobar',
+      appDirectory: '/tmp',
+      extensions,
+      grantedScopes: ['scope-a'],
+      port: 123,
+      url: 'http://tunnel-url.com',
+      storeFqdn: 'my-domain.com',
+      storeId: '123456789',
+      buildDirectory: tmpDir,
+      checkoutCartUrl: 'https://my-domain.com/cart',
+      subscriptionProductUrl: 'https://my-domain.com/subscription',
+      manifestVersion: '3',
+      websocketURL: 'wss://mock.url/extensions',
+    }
+  }
+
   test('returns the right payload', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
       await touchFile(outputPath)
-      const signal: any = vi.fn()
-      const stdout: any = vi.fn()
-      const stderr: any = vi.fn()
-      vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
-        name: 'extension-renderer',
-        version: '1.2.3',
-      })
 
       const uiExtension = await testUIExtension({
         outputPath,
@@ -45,34 +67,10 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> = {
-        signal,
-        stdout,
-        stderr,
-        apiKey: 'api-key',
-        appName: 'foobar',
-        appDirectory: '/tmp',
-        extensions: [uiExtension],
-        grantedScopes: ['scope-a'],
-        port: 123,
-        url: 'http://tunnel-url.com',
-        storeFqdn: 'my-domain.com',
-        storeId: '123456789',
-        buildDirectory: tmpDir,
-        checkoutCartUrl: 'https://my-domain.com/cart',
-        subscriptionProductUrl: 'https://my-domain.com/subscription',
-        manifestVersion: '3',
-        websocketURL: 'wss://mock.url/extensions',
-      }
-      const development: Partial<UIExtensionPayload['development']> = {
-        hidden: true,
-        status: 'success',
-      }
-
       // When
       const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
-        ...options,
-        currentDevelopmentPayload: development,
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
 
       // Then
@@ -126,13 +124,6 @@ describe('getUIExtensionPayload', () => {
       // Given
       const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
       await touchFile(outputPath)
-      const signal: any = vi.fn()
-      const stdout: any = vi.fn()
-      const stderr: any = vi.fn()
-      vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
-        name: 'extension-renderer',
-        version: '1.2.3',
-      })
 
       const buildManifest = {
         assets: {
@@ -174,34 +165,10 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> = {
-        signal,
-        stdout,
-        stderr,
-        apiKey: 'api-key',
-        appName: 'foobar',
-        appDirectory: '/tmp',
-        extensions: [uiExtension],
-        grantedScopes: ['scope-a'],
-        port: 123,
-        url: 'http://tunnel-url.com',
-        storeFqdn: 'my-domain.com',
-        storeId: '123456789',
-        buildDirectory: tmpDir,
-        checkoutCartUrl: 'https://my-domain.com/cart',
-        subscriptionProductUrl: 'https://my-domain.com/subscription',
-        manifestVersion: '3',
-        websocketURL: 'wss://mock.url/extensions',
-      }
-      const development: Partial<UIExtensionPayload['development']> = {
-        hidden: true,
-        status: 'success',
-      }
-
       // When
       const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
-        ...options,
-        currentDevelopmentPayload: development,
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
 
       // Then
@@ -267,18 +234,115 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('returns the right payload for UI Extensions with tools in build_manifest', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
+      await touchFile(outputPath)
+      await writeFile(joinPath(tmpDir, 'tools.json'), '{"tools": []}')
+
+      const buildManifest = {
+        assets: {
+          main: {module: './src/ExtensionPointA.js', filepath: '/test-ui-extension.js'},
+          tools: {module: './tools.json', filepath: '/test-ui-extension-tools.json', static: true},
+        },
+      }
+
+      const uiExtension = await testUIExtension({
+        outputPath,
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [{target: 'CUSTOM_EXTENSION_POINT', build_manifest: buildManifest}],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      // Then
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          assets: {
+            main: {
+              name: 'main',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+              lastUpdated: expect.any(Number),
+            },
+            tools: {
+              name: 'tools',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-tools.json',
+              lastUpdated: expect.any(Number),
+            },
+          },
+        },
+      ])
+    })
+  })
+
+  test('returns the right payload for UI Extensions with instructions in build_manifest', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const outputPath = joinPath(tmpDir, 'test-ui-extension.js')
+      await touchFile(outputPath)
+      await writeFile(joinPath(tmpDir, 'instructions.md'), '# Instructions')
+
+      const buildManifest = {
+        assets: {
+          main: {module: './src/ExtensionPointA.js', filepath: '/test-ui-extension.js'},
+          instructions: {module: './instructions.md', filepath: '/test-ui-extension-instructions.md', static: true},
+        },
+      }
+
+      const uiExtension = await testUIExtension({
+        outputPath,
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [{target: 'CUSTOM_EXTENSION_POINT', build_manifest: buildManifest}],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // When
+      const got = await getUIExtensionPayload(uiExtension, 'mock-bundle-path', {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      // Then
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          assets: {
+            main: {
+              name: 'main',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension.js',
+              lastUpdated: expect.any(Number),
+            },
+            instructions: {
+              name: 'instructions',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/test-ui-extension-instructions.md',
+              lastUpdated: expect.any(Number),
+            },
+          },
+        },
+      ])
+    })
+  })
+
   test('returns the right payload for post-purchase extensions', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const outputPath = joinPath(tmpDir, 'test-post-purchase-extension.js')
       await touchFile(outputPath)
-      const signal: any = vi.fn()
-      const stdout: any = vi.fn()
-      const stderr: any = vi.fn()
-      vi.spyOn(appModel, 'getUIExtensionRendererVersion').mockResolvedValue({
-        name: 'extension-renderer',
-        version: '1.2.3',
-      })
 
       const postPurchaseExtension = await testUIExtension({
         outputPath,
@@ -308,34 +372,10 @@ describe('getUIExtensionPayload', () => {
         devUUID: 'devUUID',
       })
 
-      const options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> = {
-        signal,
-        stdout,
-        stderr,
-        apiKey: 'api-key',
-        appName: 'foobar',
-        appDirectory: '/tmp',
-        extensions: [postPurchaseExtension],
-        grantedScopes: ['scope-a'],
-        port: 123,
-        url: 'http://tunnel-url.com',
-        storeFqdn: 'my-domain.com',
-        storeId: '123456789',
-        buildDirectory: tmpDir,
-        checkoutCartUrl: 'https://my-domain.com/cart',
-        subscriptionProductUrl: 'https://my-domain.com/subscription',
-        manifestVersion: '3',
-        websocketURL: 'wss://mock.url/extensions',
-      }
-      const development: Partial<UIExtensionPayload['development']> = {
-        hidden: true,
-        status: 'success',
-      }
-
       // When
       const got = await getUIExtensionPayload(postPurchaseExtension, 'mock-bundle-path', {
-        ...options,
-        currentDevelopmentPayload: development,
+        ...createMockOptions(tmpDir, [postPurchaseExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
       })
 
       // Then
@@ -514,7 +554,7 @@ describe('getUIExtensionPayload', () => {
   })
 
   test('adds root.url, resource.url and surface to extensionPoints[n] when extensionPoints[n] is an object', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
+    await inTemporaryDirectory(async (_tmpDir) => {
       // Given
       const uiExtension = await testUIExtension({
         devUUID: 'devUUID',

@@ -6,7 +6,7 @@ import {
   createToolsTypeDefinition,
   ToolsFileSchema,
 } from './type-generation.js'
-import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
+import {Asset, AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
@@ -27,16 +27,10 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
 export interface BuildManifest {
   assets: {
     // Main asset is always required
-    [AssetIdentifier.Main]: {
-      filepath: string
-      module?: string
-    }
-  } & {
-    [key in AssetIdentifier]?: {
-      filepath: string
-      module?: string
-      static?: boolean
-    }
+    [AssetIdentifier.Main]: BuildAsset
+    [AssetIdentifier.ShouldRender]?: BuildAsset
+    [AssetIdentifier.Tools]?: BuildAsset
+    [AssetIdentifier.Instructions]?: BuildAsset
   }
 }
 
@@ -88,7 +82,6 @@ export const UIExtensionSchema = BaseSchema.extend({
       }
 
       return {
-        tools: targeting.tools,
         target: targeting.target,
         module: targeting.module,
         metafields: targeting.metafields ?? config.metafields ?? [],
@@ -97,6 +90,8 @@ export const UIExtensionSchema = BaseSchema.extend({
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
         build_manifest: buildManifest,
+        tools: targeting.tools,
+        instructions: targeting.instructions,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -148,27 +143,10 @@ const uiExtensionSpec = createExtensionSpecification({
 
     const assets: {[key: string]: Asset} = {}
     extensionPoints.forEach((extensionPoint) => {
-      // Start of Selection
-      Object.entries(extensionPoint.build_manifest.assets).forEach(([identifier, asset]) => {
-        if (identifier === AssetIdentifier.Main) {
-          return
-        }
-
-        // Skip static assets - they are copied after esbuild completes in rebuildContext
-        if (asset.static && asset.module) {
-          return
-        }
-
-        assets[identifier] = {
-          identifier: identifier as AssetIdentifier,
-          outputFileName: asset.filepath,
-          content: shouldIncludeShopifyExtend
-            ? `import shouldRender from '${asset.module}';shopify.extend('${getShouldRenderTarget(
-                extensionPoint.target,
-              )}', (...args) => shouldRender(...args));`
-            : `import '${asset.module}'`,
-        }
-      })
+      const shouldRenderAsset = buildShouldRenderAsset(extensionPoint, shouldIncludeShopifyExtend)
+      if (shouldRenderAsset) {
+        assets[AssetIdentifier.ShouldRender] = shouldRenderAsset
+      }
     })
 
     const assetsArray = Object.values(assets)
@@ -181,8 +159,8 @@ const uiExtensionSpec = createExtensionSpecification({
     if (!isRemoteDomExtension(config)) return
 
     await Promise.all(
-      config.extension_points.map((extensionPoint) => {
-        if (!('build_manifest' in extensionPoint)) return Promise.resolve()
+      config.extension_points.flatMap((extensionPoint) => {
+        if (!('build_manifest' in extensionPoint)) return []
 
         return Object.entries(extensionPoint.build_manifest.assets).map(([_, asset]) => {
           if (asset.static && asset.module) {
@@ -457,6 +435,25 @@ function isRemoteDomExtension(
 
 export function getShouldRenderTarget(target: string) {
   return target.replace(/\.render$/, '.should-render')
+}
+
+function buildShouldRenderAsset(
+  extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
+  shouldIncludeShopifyExtend: boolean,
+) {
+  const shouldRenderAsset = extensionPoint.build_manifest.assets[AssetIdentifier.ShouldRender]
+  if (!shouldRenderAsset) {
+    return
+  }
+  return {
+    identifier: AssetIdentifier.ShouldRender,
+    outputFileName: shouldRenderAsset.filepath,
+    content: shouldIncludeShopifyExtend
+      ? `import shouldRender from '${shouldRenderAsset.module}';shopify.extend('${getShouldRenderTarget(
+          extensionPoint.target,
+        )}', (...args) => shouldRender(...args));`
+      : `import '${shouldRenderAsset.module}'`,
+  }
 }
 
 export default uiExtensionSpec
