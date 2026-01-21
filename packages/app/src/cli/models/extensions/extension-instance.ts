@@ -2,29 +2,51 @@ import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './sch
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {ExtensionBuildOptions, bundleFunctionExtension} from '../../services/build/extension.js'
-import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
+import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
+import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
+import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
+import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
+import {PrivacyComplianceWebhooksSpecIdentifier} from './specifications/app_config_privacy_compliance_webhooks.js'
+import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
+import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
+import {EventsSpecIdentifier} from './specifications/app_config_events.js'
+import {HostedAppHomeSpecIdentifier} from './specifications/app_config_hosted_app_home.js'
+import {
+  ExtensionBuildOptions,
+  buildFunctionExtension,
+  buildThemeExtension,
+  buildUIExtension,
+  bundleFunctionExtension,
+} from '../../services/build/extension.js'
+import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppConfiguration} from '../app/app.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
-import {executeStep, BuildContext} from '../../services/build/client-steps.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, normalizePath, resolvePath, relativePath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, moveFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
+import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {
-  extractJSImports,
-  extractImportPathsRecursively,
-  clearImportPathsCache,
-  getImportScanningCacheStats,
-} from '@shopify/cli-kit/node/import-extractor'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
+import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {uniq} from '@shopify/cli-kit/common/array'
+
+export const CONFIG_EXTENSION_IDS: string[] = [
+  AppAccessSpecIdentifier,
+  AppHomeSpecIdentifier,
+  AppProxySpecIdentifier,
+  BrandingSpecIdentifier,
+  HostedAppHomeSpecIdentifier,
+  PosSpecIdentifier,
+  PrivacyComplianceWebhooksSpecIdentifier,
+  WebhookSubscriptionSpecIdentifier,
+  WebhooksSpecIdentifier,
+  EventsSpecIdentifier,
+]
 
 /**
  * Class that represents an instance of a local extension
@@ -101,7 +123,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isAppConfigExtension() {
-    return this.specification.experience === 'configuration'
+    return ['single', 'dynamic'].includes(this.specification.uidStrategy)
   }
 
   get isFlow() {
@@ -117,11 +139,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    return basename(this.outputRelativePath)
-  }
-
-  get outputRelativePath() {
-    return this.specification.getOutputRelativePath?.(this) ?? ''
+    const mode = this.specification.buildConfig.mode
+    if (mode === 'copy_files' || mode === 'theme') {
+      return ''
+    } else if (mode === 'function') {
+      return 'index.wasm'
+    } else {
+      return `${this.handle}.js`
+    }
   }
 
   constructor(options: {
@@ -139,9 +164,19 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.handle = this.buildHandle()
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
-    this.outputPath = joinPath(this.directory, this.outputRelativePath)
+    this.outputPath = this.directory
     this.uid = this.buildUIDFromStrategy()
     this.devUUID = `dev-${this.uid}`
+
+    if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
+      this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
+    }
+
+    if (this.isFunctionExtension) {
+      const config = this.configuration as unknown as FunctionConfigType
+      const defaultPath = joinPath('dist', 'index.wasm')
+      this.outputPath = joinPath(this.directory, config.build?.path ?? defaultPath)
+    }
   }
 
   get draftMessages() {
@@ -214,7 +249,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const pathToMove = pathsToMove[0]
     if (pathToMove === undefined) return Promise.resolve()
 
-    const outputPath = joinPath(this.directory, relativePath(inputPath, pathToMove))
+    const outputPath = joinPath(this.directory, 'dist', basename(pathToMove))
     await moveFile(pathToMove, outputPath, {overwrite: true})
     outputDebug(`Source map for ${this.localIdentifier} created: ${outputPath}`)
   }
@@ -315,29 +350,40 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const {clientSteps = []} = this.specification
+    const mode = this.specification.buildConfig.mode
 
-    const context: BuildContext = {
-      extension: this,
-      options,
-      stepResults: new Map(),
-    }
-
-    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
-
-    for (const step of steps) {
-      // eslint-disable-next-line no-await-in-loop
-      const result = await executeStep(step, context)
-      context.stepResults.set(step.id, result)
-
-      if (!result.success && !step.continueOnError) {
-        throw new Error(`Build step "${step.name}" failed: ${result.error?.message}`)
-      }
+    switch (mode) {
+      case 'theme':
+        await buildThemeExtension(this, options)
+        return bundleThemeExtension(this, options)
+      case 'function':
+        return buildFunctionExtension(this, options)
+      case 'ui':
+        await buildUIExtension(this, options)
+        // Copy static assets after build completes
+        return this.copyStaticAssets()
+      case 'tax_calculation':
+        await touchFile(this.outputPath)
+        await writeFile(this.outputPath, '(()=>{})();')
+        break
+      case 'copy_files':
+        return copyFilesForExtension(
+          this,
+          options,
+          this.specification.buildConfig.filePatterns,
+          this.specification.buildConfig.ignoredFilePatterns,
+        )
+      case 'static_app':
+        await this.copyStaticAssets()
+        break
+      case 'none':
+        break
     }
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
     this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
+
     await this.build(options)
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
@@ -367,7 +413,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
     const id = this.getOutputFolderId(outputId)
-    return joinPath(directory, id, this.outputRelativePath)
+    const outputFile = this.outputFileName === '' ? '' : joinPath('dist', this.outputFileName)
+    return joinPath(directory, id, outputFile)
   }
 
   get singleTarget() {
@@ -474,7 +521,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async rescanImports(): Promise<boolean> {
     const oldImportPaths = this.cachedImportPaths
     this.cachedImportPaths = undefined
-    clearImportPathsCache()
     this.scanImports()
     return oldImportPaths !== this.cachedImportPaths
   }
@@ -489,26 +535,13 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return this.cachedImportPaths
     }
 
-    if (isTruthy(process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING)) {
-      this.cachedImportPaths = []
-      return this.cachedImportPaths
-    }
-
     try {
-      const startTime = performance.now()
-      const entryFiles = this.devSessionDefaultWatchPaths()
-
-      const imports = entryFiles.flatMap((entryFile) => {
+      const imports = this.devSessionDefaultWatchPaths().flatMap((entryFile) => {
         return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
       })
-
+      // Cache and return unique paths
       this.cachedImportPaths = uniq(imports) ?? []
-      const elapsed = Math.round(performance.now() - startTime)
-      const cacheStats = getImportScanningCacheStats()
-      const cacheInfo = cacheStats ? ` (cache: ${cacheStats.directImports} parsed, ${cacheStats.fileExists} stats)` : ''
-      outputDebug(
-        `Import scan for "${this.handle}": ${entryFiles.length} entries, ${this.cachedImportPaths.length} files, ${elapsed}ms${cacheInfo}`,
-      )
+      outputDebug(`Found ${this.cachedImportPaths.length} external imports (recursively) for extension ${this.handle}`)
       return this.cachedImportPaths
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
@@ -533,8 +566,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         } else {
           return nonRandomUUID(JSON.stringify(this.configuration))
         }
-      default:
-        return this.specification.identifier
     }
   }
 
@@ -564,14 +595,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
 interface ExtensionDeployConfigOptions {
   apiKey: string
-  appConfiguration: AppConfiguration
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
-  appConfiguration: AppConfiguration
+  appConfiguration: AppConfigurationWithoutPath
 }
 
 interface BundleConfig {

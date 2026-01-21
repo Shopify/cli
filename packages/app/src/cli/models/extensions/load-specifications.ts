@@ -27,7 +27,7 @@ import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import channelSpecificationSpec from './specifications/channel.js'
-import adminSpecificationSpec from './specifications/admin.js'
+import hostedAppHomeSpec, {HostedAppHomeSpecIdentifier} from './specifications/app_config_hosted_app_home.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -39,6 +39,7 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   AppProxySpecIdentifier,
   PosSpecIdentifier,
   AppHomeSpecIdentifier,
+  HostedAppHomeSpecIdentifier,
 ]
 
 /**
@@ -62,7 +63,7 @@ function loadSpecifications() {
     appWebhooksSpec,
     appWebhookSubscriptionSpec,
     appEventsSpec,
-    adminSpecificationSpec,
+    hostedAppHomeSpec,
   ]
   const moduleSpecs = [
     checkoutPostPurchaseSpec,

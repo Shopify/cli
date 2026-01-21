@@ -1,10 +1,9 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
-import {ClientSteps} from '../../services/build/client-steps.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
-import {AppConfiguration} from '../app/app.js'
+import {AppConfigurationWithoutPath} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {Result} from '@shopify/cli-kit/node/result'
@@ -23,18 +22,16 @@ export type ExtensionFeature =
   | 'localization'
   | 'generates_source_maps'
 
-export type TransformationConfig = Record<string, string>
+export interface TransformationConfig {
+  [key: string]: string
+}
 
 export interface CustomTransformationConfig {
-  forward?: (obj: object, appConfiguration: AppConfiguration, options?: {flags?: Flag[]}) => object
+  forward?: (obj: object, appConfiguration: AppConfigurationWithoutPath, options?: {flags?: Flag[]}) => object
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
-
-export function isAppConfigSpecification(spec: {experience: string}): boolean {
-  return spec.experience === 'configuration'
-}
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 export enum AssetIdentifier {
@@ -57,9 +54,8 @@ export interface BuildAsset {
 }
 
 type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'hosted_app_home'}
+  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'static_app'}
   | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
-
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -73,18 +69,16 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   surface: string
   registrationLimit: number
   experience: ExtensionExperience
-  clientSteps?: ClientSteps
   buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
-  getOutputRelativePath?: (extension: ExtensionInstance<TConfiguration>) => string
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,
     directory: string,
     apiKey: string,
     moduleId?: string,
-  ) => Promise<Record<string, unknown> | undefined>
+  ) => Promise<{[key: string]: unknown} | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
@@ -99,7 +93,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * @param localContent - Content taken from the local filesystem
    * @returns Transformed configuration to send to the platform in place of the locally provided content
    */
-  transformLocalToRemote?: (localContent: object, appConfiguration: AppConfiguration) => object
+  transformLocalToRemote?: (localContent: object, appConfiguration: AppConfigurationWithoutPath) => object
 
   /**
    * If required, convert configuration from the platform to the format used locally in the filesystem.
@@ -209,7 +203,6 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
-    clientSteps: spec.clientSteps,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
   const merged = {...defaults, ...spec}
@@ -217,13 +210,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
   return {
     ...merged,
     contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => {
-      const isConfig = isAppConfigSpecification(merged)
-      const hasSchema = merged.schema._def.shape !== undefined
-      // This filters out webhook subscription specifications from contributing to the app configuration schema
-      const hasSingleUidStrategy = merged.uidStrategy === 'single'
-
-      const canContribute = isConfig && hasSchema && hasSingleUidStrategy
-      if (!canContribute) {
+      if (merged.uidStrategy !== 'single') {
         // no change
         return appConfigSchema
       }
@@ -258,13 +245,13 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
 export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
   schema: ZodSchemaType<TConfiguration>
-  clientSteps?: ClientSteps
   buildConfig?: BuildConfig
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
   getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
+  copyStaticAssets?: (config: TConfiguration, directory: string, outputPath: string) => Promise<void>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -277,34 +264,21 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
-    clientSteps: spec.clientSteps,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
+    copyStaticAssets: spec.copyStaticAssets,
   })
 }
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
-  spec: Pick<
-    CreateExtensionSpecType<TConfiguration>,
-    | 'identifier'
-    | 'appModuleFeatures'
-    | 'buildConfig'
-    | 'uidStrategy'
-    | 'clientSteps'
-    | 'experience'
-    | 'transformRemoteToLocal'
-  >,
+  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig'>,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
-    experience: spec.experience,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
-    clientSteps: spec.clientSteps,
-    uidStrategy: spec.uidStrategy,
-    transformRemoteToLocal: spec.transformRemoteToLocal,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
@@ -330,7 +304,7 @@ function resolveReverseAppConfigTransform<T>(
   transformConfig?: TransformationConfig | CustomTransformationConfig,
 ) {
   if (!transformConfig)
-    return (content: object) => defaultAppConfigReverseTransform(schema, content as Record<string, unknown>)
+    return (content: object) => defaultAppConfigReverseTransform(schema, content as {[key: string]: unknown})
 
   if (Object.keys(transformConfig).includes('reverse')) {
     return (transformConfig as CustomTransformationConfig).reverse!
@@ -398,8 +372,8 @@ function appConfigTransform(
  * @returns The nested object
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: Record<string, unknown>) {
-  return Object.keys(schema._def.shape()).reduce((result: Record<string, unknown>, key: string) => {
+function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
+  return Object.keys(schema._def.shape()).reduce((result: {[key: string]: unknown}, key: string) => {
     let innerSchema = schema._def.shape()[key]
     if (innerSchema instanceof zod.ZodOptional) {
       innerSchema = innerSchema._def.innerType
