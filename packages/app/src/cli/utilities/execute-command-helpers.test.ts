@@ -130,6 +130,18 @@ describe('prepareExecuteContext', () => {
     await expect(prepareExecuteContext(flagsWithoutQuery)).rejects.toThrow('exactlyOne constraint')
   })
 
+  test('throws AbortError when query flag is empty string', async () => {
+    const flagsWithEmptyQuery = {...mockFlags, query: ''}
+
+    await expect(prepareExecuteContext(flagsWithEmptyQuery)).rejects.toThrow('--query flag value is empty')
+  })
+
+  test('throws AbortError when query flag contains only whitespace', async () => {
+    const flagsWithWhitespaceQuery = {...mockFlags, query: '   \n\t  '}
+
+    await expect(prepareExecuteContext(flagsWithWhitespaceQuery)).rejects.toThrow('--query flag value is empty')
+  })
+
   test('returns query, app context, and store', async () => {
     const result = await prepareExecuteContext(mockFlags)
 
@@ -167,6 +179,24 @@ describe('prepareExecuteContext', () => {
 
     await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('Query file not found')
     expect(readFile).not.toHaveBeenCalled()
+  })
+
+  test('throws AbortError when query file is empty', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(readFile).mockResolvedValue('' as any)
+
+    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/empty.graphql'}
+
+    await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('is empty')
+  })
+
+  test('throws AbortError when query file contains only whitespace', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(readFile).mockResolvedValue('   \n\t  ' as any)
+
+    const flagsWithQueryFile = {...mockFlags, query: undefined, 'query-file': '/path/to/whitespace.graphql'}
+
+    await expect(prepareExecuteContext(flagsWithQueryFile)).rejects.toThrow('is empty')
   })
 
   test('validates GraphQL query using validateSingleOperation', async () => {

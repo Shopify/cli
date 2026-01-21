@@ -63,7 +63,10 @@ export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promi
 export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise<ExecuteContext> {
   let query: string | undefined
 
-  if (flags.query) {
+  if (flags.query !== undefined) {
+    if (!flags.query.trim()) {
+      throw new AbortError('The --query flag value is empty. Please provide a valid GraphQL query or mutation.')
+    }
     query = flags.query
   } else if (flags['query-file']) {
     const queryFile = flags['query-file']
@@ -73,6 +76,13 @@ export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise
       )
     }
     query = await readFile(queryFile, {encoding: 'utf8'})
+    if (!query.trim()) {
+      throw new AbortError(
+        outputContent`Query file at ${outputToken.path(
+          queryFile,
+        )} is empty. Please provide a valid GraphQL query or mutation.`,
+      )
+    }
   }
 
   if (!query) {
