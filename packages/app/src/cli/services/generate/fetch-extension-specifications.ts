@@ -78,7 +78,6 @@ async function mergeLocalAndRemoteSpecs(
 
     const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
       FlattenedRemoteSpecification
-
     // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
     let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
     switch (merged.uidStrategy) {
