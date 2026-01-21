@@ -35,6 +35,7 @@ import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
+import {firstPartyDev, skipLocalDevConsole} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -42,6 +43,7 @@ vi.mock('../fetch.js')
 vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/theme')
 vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/node/context/local')
 
 beforeEach(() => {
   // mocked for draft extensions
@@ -67,6 +69,10 @@ beforeEach(() => {
     role: 'theme',
     processing: false,
   })
+  // By default, firstPartyDev is false (dev console URL only used when enabled)
+  vi.mocked(firstPartyDev).mockReturnValue(false)
+  // By default, skipLocalDevConsole is false
+  vi.mocked(skipLocalDevConsole).mockReturnValue(false)
 })
 
 const appContextResult = {
@@ -162,6 +168,7 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
+    // Dev console is shown by default (only skipped when !firstPartyDev() AND skipLocalDevConsole())
     expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
     expect(res.processes[0]).toMatchObject({
       type: 'web',
