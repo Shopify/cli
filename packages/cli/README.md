@@ -200,8 +200,8 @@ Deploy your Shopify app.
 
 ```
 USAGE
-  $ shopify app deploy [--allow-deletes] [--allow-updates] [--client-id <value> | -c <value>] [-f] [--message
-    <value>] [--no-build] [--no-color] [--no-release] [--path <value>] [--reset | ] [--source-control-url <value>]
+  $ shopify app deploy [--client-id <value> | -c <value>] [-f] [--message <value>] [--no-build] [--no-color]
+    [--no-release | --allow-updates | --allow-deletes] [--path <value>] [--reset | ] [--source-control-url <value>]
     [--verbose] [--version <value>]
 
 FLAGS
