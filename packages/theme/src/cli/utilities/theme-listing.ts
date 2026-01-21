@@ -2,6 +2,7 @@ import {fileExists, readFile, glob} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {capitalizeWords} from '@shopify/cli-kit/common/string'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {parseJSON} from '@shopify/theme-check-node'
 
 function isListingFile(fileKey: string): boolean {
   return (fileKey.startsWith('templates/') || fileKey.startsWith('sections/')) && fileKey.endsWith('.json')
@@ -27,19 +28,16 @@ export async function updateSettingsDataForListing(themeDirectory: string, listi
   const settingsDataPath = joinPath(themeDirectory, 'config', 'settings_data.json')
   const settingsContent = await readFile(settingsDataPath, {encoding: 'utf8'})
 
-  try {
-    const settingsData = JSON.parse(settingsContent)
-    settingsData.current = capitalizeWords(listingName)
+  const settingsData = parseJSON(settingsContent, null, true)
 
-    return JSON.stringify(settingsData, null, 2)
-  } catch (error) {
-    // If JSON parsing fails, return original content
-    if (error instanceof SyntaxError) {
-      return settingsContent
-    }
-
-    throw error
+  // If JSON parsing fails, return original content
+  if (!settingsData) {
+    return settingsContent
   }
+
+  settingsData.current = capitalizeWords(listingName)
+
+  return JSON.stringify(settingsData, null, 2)
 }
 
 export async function ensureListingExists(themeDirectory: string, listingName: string): Promise<void> {
