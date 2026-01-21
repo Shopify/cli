@@ -55,7 +55,7 @@ export interface BuildAsset {
 }
 
 type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none'}
+  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'static_app'}
   | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
@@ -245,11 +245,13 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
 export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
   schema: ZodSchemaType<TConfiguration>
+  buildConfig?: BuildConfig
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
   getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
+  copyStaticAssets?: (config: TConfiguration, directory: string, outputPath: string) => Promise<void>
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
   return createExtensionSpecification({
@@ -262,8 +264,10 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
+    buildConfig: spec.buildConfig ?? {mode: 'none'},
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
+    copyStaticAssets: spec.copyStaticAssets,
   })
 }
 
