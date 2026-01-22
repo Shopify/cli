@@ -89,8 +89,6 @@ export type Scalars = {
   JSON: {input: JsonMapType | string; output: JsonMapType}
   /** A monetary value string without a currency symbol or code. Example value: `"100.57"`. */
   Money: {input: any; output: any}
-  /** A scalar value. */
-  Scalar: {input: any; output: any}
   /**
    * Represents a unique identifier in the Storefront API. A `StorefrontID` value can
    * be used wherever an ID is expected in the Storefront API.
