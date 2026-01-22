@@ -80,9 +80,21 @@ export async function pollRemoteJsonChanges(
   localFileSystem: ThemeFileSystem,
   options: PollingOptions,
 ): Promise<Checksum[]> {
-  const previousChecksums = applyFileFilters(remoteChecksums, localFileSystem)
+  /*
+   * Capture the current set of unsynced file keys to ensure
+   * consistent filtering between previousChecksums and
+   * latestChecksums.
+   *
+   * This prevents a race condition where a file saved locally
+   * during fetchChecksums() would be filtered out of
+   * latestChecksums but not previousChecksums, causing the file
+   * to incorrectly be deleted.
+   */
+  const currentUnsyncedKeys = new Set(localFileSystem.unsyncedFileKeys)
+
+  const previousChecksums = applyFileFilters(remoteChecksums, localFileSystem, currentUnsyncedKeys)
   const latestChecksums = await fetchChecksums(targetTheme.id, currentSession).then((checksums) =>
-    applyFileFilters(checksums, localFileSystem),
+    applyFileFilters(checksums, localFileSystem, currentUnsyncedKeys),
   )
 
   const changedAssets = getAssetsChangedOnRemote(previousChecksums, latestChecksums)
@@ -189,9 +201,7 @@ async function abortIfMultipleSourcesChange(localFileSystem: ThemeFileSystem, as
   }
 }
 
-function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem) {
+function applyFileFilters(files: Checksum[], localThemeFileSystem: ThemeFileSystem, unsyncedKeys: Set<string>) {
   const filteredFiles = localThemeFileSystem.applyIgnoreFilters(files)
-  return filteredFiles
-    .filter((file) => file.key.endsWith('.json'))
-    .filter((file) => !localThemeFileSystem.unsyncedFileKeys.has(file.key))
+  return filteredFiles.filter((file) => file.key.endsWith('.json')).filter((file) => !unsyncedKeys.has(file.key))
 }

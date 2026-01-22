@@ -266,6 +266,33 @@ describe('pollRemoteJsonChanges', async () => {
       expect(fetchThemeAssets).toHaveBeenCalledWith(1, ['templates/asset1.json', 'templates/asset3.json'], adminSession)
       expect(fetchThemeAssets).not.toHaveBeenCalledWith(1, ['templates/asset2.json'], adminSession)
     })
+
+    test('does not delete file when it becomes unsynced during fetchChecksums call (race condition)', async () => {
+      // Given
+      const files = new Map<string, ThemeAsset>([
+        ['templates/index.json', {checksum: '1', key: 'templates/index.json', value: '{}'}],
+      ])
+      const themeFileSystem = {
+        ...fakeThemeFileSystem('tmp', files),
+        unsyncedFileKeys: new Set<string>(),
+      }
+      const deleteSpy = vi.spyOn(themeFileSystem, 'delete')
+      const remoteChecksums = [{checksum: '1', key: 'templates/index.json'}]
+      const updatedRemoteChecksums = [{checksum: '1', key: 'templates/index.json'}]
+
+      // When
+      // Simulate the race condition: file becomes unsynced during fetchChecksums
+      vi.mocked(fetchChecksums).mockImplementation(async () => {
+        themeFileSystem.unsyncedFileKeys.add('templates/index.json')
+        return updatedRemoteChecksums
+      })
+
+      await pollRemoteJsonChanges(developmentTheme, adminSession, remoteChecksums, themeFileSystem, defaultOptions)
+
+      // Then
+      expect(deleteSpy).not.toHaveBeenCalled()
+      expect(themeFileSystem.files.get('templates/index.json')).toBeDefined()
+    })
   })
 
   describe('deleteRemovedAssets', () => {
