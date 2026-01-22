@@ -36,6 +36,7 @@ interface DeployConfirmationPromptOptions {
     configInfoTable: InfoTableSection
   }
   release: boolean
+  hostOnShopify: boolean
 }
 
 /**
@@ -112,11 +113,23 @@ export async function deployOrReleaseConfirmationPrompt({
   const extensionsContentPrompt = await buildExtensionsContentPrompt(extensionIdentifiersBreakdown)
   const configContentPrompt = await buildConfigContentPrompt(release, configExtensionIdentifiersBreakdown)
 
+  const hostOnShopify = await hostOnShopifyPrompt()
+  if (!hostOnShopify) return false
+
   return deployConfirmationPrompt({
     appTitle,
     extensionsContentPrompt,
     configContentPrompt,
     release,
+    hostOnShopify,
+  })
+}
+
+async function hostOnShopifyPrompt(): Promise<boolean> {
+  return renderConfirmationPrompt({
+    message: 'Do you want to host your app home on Shopify?',
+    confirmationMessage: 'Yes, host on Shopify',
+    cancellationMessage: "No, I'll host it myself",
   })
 }
 
@@ -125,6 +138,7 @@ async function deployConfirmationPrompt({
   extensionsContentPrompt: {extensionsInfoTable, hasDeletedExtensions},
   configContentPrompt,
   release,
+  hostOnShopify,
 }: DeployConfirmationPromptOptions): Promise<boolean> {
   const timeBeforeConfirmationMs = new Date().valueOf()
   let confirmationResponse = true
@@ -146,6 +160,13 @@ async function deployConfirmationPrompt({
     )
   } else {
     infoTable.push({header: 'Extensions:', emptyItemsText: 'None', items: []})
+  }
+
+  if (hostOnShopify) {
+    infoTable.push({
+      header: 'App home:',
+      items: ['build/client/'],
+    })
   }
 
   const question = `${release ? 'Release' : 'Create'} a new version${appTitle ? ` of ${appTitle}` : ''}?`

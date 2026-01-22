@@ -69,7 +69,15 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         confirmed: result,
         configExtensionIdentifiersBreakdown,
       })
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
+      // First call is the hosting prompt
+      expect(renderConfirmationPromptSpyOn).toHaveBeenNthCalledWith(1, {
+        message: 'Do you want to host your app home on Shopify?',
+        confirmationMessage: 'Yes, host on Shopify',
+        cancellationMessage: "No, I'll host it myself",
+      })
+      // Second call is the release confirmation
+      expect(renderConfirmationPromptSpyOn).toHaveBeenNthCalledWith(
+        2,
         renderConfirmationPromptContent({
           appTitle,
           infoTable: [
@@ -82,6 +90,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
               header: 'Extensions:',
               items: [],
               emptyItemsText: 'None',
+            },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
             },
           ],
           dangerPrompt: false,
@@ -114,7 +126,9 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
+      // Second call is the release confirmation (first is hosting prompt)
+      expect(renderConfirmationPromptSpyOn).toHaveBeenNthCalledWith(
+        2,
         renderConfirmationPromptContent({
           appTitle,
           infoTable: [
@@ -136,6 +150,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
             },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
+            },
           ],
           dangerPrompt: false,
         }),
@@ -148,6 +166,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const breakdownInfo = buildCompleteBreakdownInfo()
       breakdownInfo.extensionIdentifiersBreakdown.onlyRemote.push(buildDashboardBreakdownInfo('remote dashboard'))
       breakdownInfo.extensionIdentifiersBreakdown.toCreate.push(buildDashboardBreakdownInfo('to create dashboard'))
+      vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const renderDangerousConfirmationPromptSpyOn = vi
         .spyOn(ui, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
@@ -199,6 +218,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 {bullet: '-', item: ['remote dashboard', {subdued: '(removed, from Partner Dashboard)'}], color: 'red'},
               ],
             },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
+            },
           ],
           dangerPrompt: true,
         }),
@@ -228,7 +251,9 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
+      // Second call is the release confirmation (first is hosting prompt)
+      expect(renderConfirmationPromptSpyOn).toHaveBeenNthCalledWith(
+        2,
         renderConfirmationPromptContent({
           appTitle,
           infoTable: [
@@ -250,6 +275,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
                 {bullet: '-', item: ['remote extension (uid: uid-remove)', {subdued: '(removed)'}], color: 'red'},
               ],
+            },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
             },
           ],
           dangerPrompt: false,
@@ -282,7 +311,9 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
+      // Second call is the release confirmation (first is hosting prompt)
+      expect(renderConfirmationPromptSpyOn).toHaveBeenNthCalledWith(
+        2,
         renderConfirmationPromptContent({
           appTitle,
           infoTable: [
@@ -296,6 +327,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 {bullet: '-', item: ['remote extension (uid: uid-remove)', {subdued: '(removed)'}], color: 'red'},
               ],
             },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
+            },
           ],
           dangerPrompt: false,
         }),
@@ -308,6 +343,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       const breakdownInfo = buildCompleteBreakdownInfo()
       breakdownInfo.configExtensionIdentifiersBreakdown = buildEmptyConfigExtensionsBreakdownInfo()
 
+      vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const renderDangerousConfirmationPromptSpyOn = vi
         .spyOn(ui, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
@@ -349,6 +385,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 {bullet: '-', item: ['remote extension (uid: uid-remove)', {subdued: '(removed)'}], color: 'red'},
               ],
             },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
+            },
           ],
           dangerPrompt: true,
         }),
@@ -382,7 +422,9 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         confirmed: result,
         configExtensionIdentifiersBreakdown: breakdownInfo.configExtensionIdentifiersBreakdown!,
       })
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledWith(
+      // Second call is the release confirmation (first is hosting prompt)
+      expect(renderConfirmationPromptSpyOn).toHaveBeenNthCalledWith(
+        2,
         renderConfirmationPromptContent({
           appTitle,
           infoTable: [
@@ -403,6 +445,10 @@ describe('deployOrReleaseConfirmationPrompt', () => {
                 'unchanged extension',
                 ['from dashboard extension', {subdued: '(from Partner Dashboard)'}],
               ],
+            },
+            {
+              header: 'App home:',
+              items: ['web/dist'],
             },
           ],
           dangerPrompt: false,
@@ -465,6 +511,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
 
+      vi.spyOn(ui, 'renderConfirmationPrompt').mockResolvedValue(true)
       const renderDangerousConfirmationPromptSpyOn = vi
         .spyOn(ui, 'renderDangerousConfirmationPrompt')
         .mockResolvedValue(true)
@@ -636,8 +683,9 @@ describe('deployOrReleaseConfirmationPrompt', () => {
         force: false,
       })
 
-      // Then - should show the prompt normally since there are no changes requiring confirmation
-      expect(renderConfirmationPromptSpyOn).toHaveBeenCalled()
+      // Then - should show the prompts normally since there are no changes requiring confirmation
+      // First call is hosting prompt, second is release confirmation
+      expect(renderConfirmationPromptSpyOn).toHaveBeenCalledTimes(2)
       expect(result).toBe(true)
     })
   })

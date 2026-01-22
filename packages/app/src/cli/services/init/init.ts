@@ -261,7 +261,12 @@ async function clearCache(directory: string) {
 }
 
 function detectAdditionalWorkspacesFolders(directory: string) {
-  return ['web', 'web/frontend'].filter((folder) => fileExistsSync(joinPath(directory, folder)))
+  const additionalFolders = ['web', 'web/frontend'].filter((folder) => fileExistsSync(joinPath(directory, folder)))
+  // Include _packages workspace if it exists (for templates with local packages)
+  if (fileExistsSync(joinPath(directory, '_packages'))) {
+    additionalFolders.push('_packages/*')
+  }
+  return additionalFolders
 }
 
 export default init

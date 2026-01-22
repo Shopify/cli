@@ -32,14 +32,14 @@ interface Template {
 // That way we don't have to update the CLI every time we add a template
 export const templates = {
   reactRouter: {
-    url: 'https://github.com/Shopify/shopify-app-template-react-router',
+    url: 'https://github.com/shopify-playground/shopify-hosted-app-explorations#demo-1-spa-app-template',
     label: 'Build a React Router app (recommended)',
     visible: true,
     branches: {
       prompt: 'For your React Router template, which language do you want?',
       options: {
         javascript: {branch: 'javascript', label: 'JavaScript'},
-        typescript: {branch: 'main', label: 'TypeScript'},
+        typescript: {branch: 'typescript', label: 'TypeScript'},
       },
     },
   } as Template,
@@ -74,8 +74,6 @@ type PredefinedTemplate = keyof typeof templates
 const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
 export const visibleTemplates = allTemplates.filter((key) => templates[key].visible) as Readonly<PredefinedTemplate[]>
 
-const templateOptionsInOrder = ['reactRouter', 'none'] as const
-
 const init = async (options: InitOptions): Promise<InitOutput> => {
   let template = options.template
   const flavor = options.flavor
@@ -85,16 +83,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
   } as const
 
   if (!template) {
-    template = await renderSelectPrompt({
-      choices: templateOptionsInOrder.map((key) => {
-        return {
-          label: templates[key].label || key,
-          value: key,
-        }
-      }),
-      message: 'Get started building your app:',
-      defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
-    })
+    template = 'reactRouter'
   }
 
   const answers: InitOutput = {
@@ -125,7 +114,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     }
   }
 
-  if (branch) {
+  if (branch && !selectedUrl?.includes('#')) {
     selectedUrl = `${selectedUrl}#${branch}`
   }
 
