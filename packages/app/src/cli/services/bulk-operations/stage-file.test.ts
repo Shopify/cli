@@ -69,7 +69,7 @@ describe('stageFile', () => {
     const uploadedBlob = fileAppendCall?.[1] as Blob
     const uploadedContent = await uploadedBlob?.text()
 
-    expect(uploadedContent).toBe('{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}\n')
+    expect(uploadedContent).toBe('{"input":{"id":"gid://shopify/Product/123","tags":["test"]}}')
   })
 
   test('handles JSONL with multiple lines correctly', async () => {
@@ -94,7 +94,6 @@ describe('stageFile', () => {
       '{"input":{"id":"gid://shopify/Product/1","title":"New Shirt"}}',
       '{"input":{"id":"gid://shopify/Product/2","title":"Cool Pants"}}',
       '{"input":{"id":"gid://shopify/Product/3","title":"Nice Hat"}}',
-      '',
     ].join('\n')
 
     expect(uploadedContent).toBe(expectedContent)
