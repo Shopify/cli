@@ -1,5 +1,21 @@
 # @shopify/app
 
+## 3.90.0
+
+### Minor Changes
+
+- f903c47: Added CLI support for extensions.supported_features in toml
+- 82b1c33: Enable custom headers in CLI GraphiQL. Users can now set custom headers like `Shopify-Search-Query-Debug=1` in the GraphiQL interface to pass debugging headers to the Admin API.
+
+### Patch Changes
+
+- Updated dependencies [d935cfb]
+- Updated dependencies [f903c47]
+- Updated dependencies [f9cf001]
+  - @shopify/theme@3.90.0
+  - @shopify/cli-kit@3.90.0
+  - @shopify/plugin-cloudflare@3.90.0
+
 ## 3.89.0
 
 ### Minor Changes
