@@ -4,7 +4,7 @@ import {runBulkOperationMutation} from './run-mutation.js'
 import {watchBulkOperation, shortBulkOperationPoll} from './watch-bulk-operation.js'
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from './constants.js'
-import {resolveApiVersion} from '../graphql/common.js'
+import {resolveApiVersion, createAdminSessionAsApp} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp, OrganizationSource, OrganizationStore} from '../../models/organization.js'
@@ -23,11 +23,22 @@ vi.mock('../graphql/common.js', async () => {
   const actual = await vi.importActual('../graphql/common.js')
   return {
     ...actual,
+    createAdminSessionAsApp: vi.fn(),
     resolveApiVersion: vi.fn(),
     validateMutationStore: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/node/ui', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
+  return {
+    ...actual,
+    renderSingleTask: vi.fn(async ({task}) => task()),
+    renderSuccess: vi.fn(),
+    renderWarning: vi.fn(),
+    renderError: vi.fn(),
+    renderInfo: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/session', async () => {
   const actual = await vi.importActual('@shopify/cli-kit/node/session')
@@ -77,6 +88,7 @@ describe('executeBulkOperation', () => {
   }
 
   beforeEach(() => {
+    vi.mocked(createAdminSessionAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(ensureAuthenticatedAdminAsApp).mockResolvedValue(mockAdminSession)
     vi.mocked(shortBulkOperationPoll).mockResolvedValue(createdBulkOperation)
     vi.mocked(resolveApiVersion).mockResolvedValue(BULK_OPERATIONS_MIN_API_VERSION)

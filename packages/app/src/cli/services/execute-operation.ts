@@ -2,11 +2,11 @@ import {
   createAdminSessionAsApp,
   validateSingleOperation,
   resolveApiVersion,
-  formatOperationInfo,
   validateMutationStore,
 } from './graphql/common.js'
 import {OrganizationApp, Organization, OrganizationStore} from '../models/organization.js'
-import {renderSuccess, renderError, renderInfo, renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
@@ -62,30 +62,16 @@ async function parseVariables(
 }
 
 export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {
-    organization,
-    remoteApp,
-    store,
-    query,
-    variables,
-    variableFile,
-    version: userSpecifiedVersion,
-    outputFile,
-  } = input
+  const {remoteApp, store, query, variables, variableFile, version: userSpecifiedVersion, outputFile} = input
 
-  const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
-
-  const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
-
-  renderInfo({
-    headline: 'Executing GraphQL operation.',
-    body: [
-      {
-        list: {
-          items: formatOperationInfo({organization, remoteApp, storeFqdn: store.shopDomain, version}),
-        },
-      },
-    ],
+  const {adminSession, version} = await renderSingleTask({
+    title: outputContent`Authenticating`,
+    task: async (): Promise<{adminSession: AdminSession; version: string}> => {
+      const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
+      const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
+      return {adminSession, version}
+    },
+    renderOptions: {stdout: process.stderr},
   })
 
   const parsedVariables = await parseVariables(variables, variableFile)
