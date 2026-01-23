@@ -744,6 +744,10 @@
           "allowNo": false,
           "description": "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
           "env": "SHOPIFY_FLAG_NO_RELEASE",
+          "exclusive": [
+            "allow-updates",
+            "allow-deletes"
+          ],
           "hidden": false,
           "name": "no-release",
           "type": "boolean"
