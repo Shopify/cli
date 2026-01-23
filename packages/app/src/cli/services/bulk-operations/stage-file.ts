@@ -18,7 +18,7 @@ interface StageFileOptions {
 export async function stageFile(options: StageFileOptions): Promise<string> {
   const {adminSession, variablesJsonl} = options
 
-  const buffer = Buffer.from(variablesJsonl ? `${variablesJsonl}\n` : '', 'utf-8')
+  const buffer = Buffer.from(variablesJsonl ?? '', 'utf-8')
   const filename = 'bulk-variables.jsonl'
   const size = buffer.length
 
