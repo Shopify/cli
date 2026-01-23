@@ -143,6 +143,7 @@ export interface ExtensionPayload {
   handle: string
   extensionPoints: ExtensionPoints
   capabilities?: Capabilities
+  supportedFeatures: ExtensionSupportedFeatures
   authenticatedRedirectStartUrl?: string
   authenticatedRedirectRedirectUrls?: string[]
   localization?: FlattenedLocalization | Localization | null
@@ -156,6 +157,10 @@ export interface ExtensionPayload {
       validations?: any[]
     }[]
   }
+}
+
+export interface ExtensionSupportedFeatures {
+  offlineMode: boolean
 }
 
 export enum Status {
