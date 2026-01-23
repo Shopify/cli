@@ -12,7 +12,7 @@ Default exports force the module importer to decide on a name, which leads to in
 import { join } from "node:path"
 ```
 
-A better name for the above function would have beeen:
+A better name for the above function would have been:
 
 ```ts
 import { joinPath } from "node:path"
