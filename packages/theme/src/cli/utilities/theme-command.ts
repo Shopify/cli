@@ -77,13 +77,19 @@ export default abstract class ThemeCommand extends Command {
 
     const environments = (Array.isArray(flags.environment) ? flags.environment : [flags.environment]).filter(Boolean)
 
+    // Check if store flag is required by the command
+    const storeIsRequired =
+      requiredFlags !== null &&
+      requiredFlags.some((flag) => (Array.isArray(flag) ? flag.includes('store') : flag === 'store'))
+
     // Single environment or no environment
     if (environments.length <= 1) {
-      if (environments[0] && !flags.store) {
+      if (environments[0] && !flags.store && storeIsRequired) {
         throw new AbortError(`Please provide a valid environment.`)
       }
 
-      const session = commandRequiresAuth ? await this.createSession(flags) : undefined
+      const shouldCreateSession = commandRequiresAuth && (storeIsRequired || flags.store)
+      const session = shouldCreateSession ? await this.createSession(flags) : undefined
       const commandName = this.constructor.name.toLowerCase()
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)
