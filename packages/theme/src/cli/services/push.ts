@@ -108,6 +108,9 @@ export interface PushFlags {
 
   /** The environment to push the theme to. */
   environment?: string[]
+
+  /** The name of the theme. Will always create a new theme. */
+  name?: string
 }
 
 /**
@@ -366,13 +369,13 @@ export async function createOrSelectTheme(
   flags: PushFlags,
   multiEnvironment?: boolean,
 ): Promise<Theme | undefined> {
-  const {live, development, unpublished, theme, environment} = flags
+  const {live, development, unpublished, theme, environment, name} = flags
 
   if (development) {
     const themeManager = new DevelopmentThemeManager(session)
-    return themeManager.findOrCreate()
-  } else if (unpublished) {
-    const themeName = theme ?? (await promptThemeName('Name of the new theme'))
+    return themeManager.findOrCreate(name)
+  } else if (unpublished ?? name) {
+    const themeName = name ?? theme ?? (await promptThemeName('Name of the new theme'))
     return themeCreate(
       {
         name: themeName,

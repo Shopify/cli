@@ -37,6 +37,12 @@ export interface themepush {
   '-l, --live'?: ''
 
   /**
+   * The name for the theme. Will always create a new theme.
+   * @environment SHOPIFY_FLAG_NAME
+   */
+  '--name <value>'?: string
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */
