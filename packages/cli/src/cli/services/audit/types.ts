@@ -47,6 +47,16 @@ export interface AuditSuite {
   tests: AuditTest[]
 }
 
+/**
+ * Result from running an entire test suite class
+ */
+export interface SuiteResult {
+  name: string
+  description: string
+  results: TestResult[]
+  duration: number
+}
+
 export interface ThemeAuditOptions {
   // Working directory (defaults to cwd)
   path?: string

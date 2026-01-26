@@ -1,6 +1,13 @@
 import {renderInfo, renderSuccess, renderWarning, renderError} from '@shopify/cli-kit/node/ui'
 import type {TestResult, AssertionResult} from './types.js'
 
+export function reportSuiteStart(suiteName: string, description: string): void {
+  renderInfo({
+    headline: `Suite: ${suiteName}`,
+    body: description,
+  })
+}
+
 export function reportTestStart(testName: string): void {
   renderInfo({
     headline: `Running: ${testName}`,
