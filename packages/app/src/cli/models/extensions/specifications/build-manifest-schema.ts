@@ -1,5 +1,5 @@
 import {AssetIdentifier, BuildAsset} from '../specification.js'
-import {fileExists, copyFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, copyFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
@@ -14,7 +14,7 @@ export {ok, err}
  */
 export interface TargetingWithBuildManifest {
   target: string
-  build_manifest?: BuildManifest
+  build_manifest: BuildManifest
 }
 
 /**
@@ -142,6 +142,10 @@ async function copyAsset(
   if (isStatic) {
     const sourceFile = joinPath(directory, module)
     const outputFilePath = joinPath(dirname(outputPath), filepath)
+
+    // Ensure the directory exists before copying
+    await mkdir(dirname(outputFilePath))
+
     await copyFile(sourceFile, outputFilePath).catch((error) => {
       throw new Error(`Failed to copy static asset ${module} to ${outputFilePath}: ${error.message}`)
     })
@@ -217,9 +221,7 @@ export async function validateBuildManifestAssets(
  * @param extensionPoint - Extension point with build manifest
  * @returns Extension point with updated asset paths
  */
-export function addDistPathToAssets<T extends TargetingWithBuildManifest & {build_manifest: BuildManifest}>(
-  extP: T,
-): T {
+export function addDistPathToAssets<T extends TargetingWithBuildManifest>(extP: T): T {
   return {
     ...extP,
     build_manifest: {

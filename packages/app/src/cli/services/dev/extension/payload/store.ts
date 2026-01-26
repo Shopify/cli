@@ -104,7 +104,7 @@ export class ExtensionsPayloadStore extends EventEmitter {
               return (destinationArray as DevNewExtensionPointSchema[]).map((extensionPoint) => {
                 const extensionPointPayload = foundExtensionPointsPayloadMap[extensionPoint.target]
                 if (extensionPointPayload) {
-                  return deepMergeObjects(extensionPoint, extensionPointPayload)
+                  return deepMergeObjects(extensionPoint, extensionPointPayload, (_dest, source) => source)
                 }
                 return extensionPoint
               })
