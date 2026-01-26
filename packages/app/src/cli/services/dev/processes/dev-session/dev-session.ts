@@ -10,7 +10,7 @@ import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {firstPartyDev, isUnitTest, skipLocalDevConsole} from '@shopify/cli-kit/node/context/local'
+import {firstPartyDev, isUnitTest, useLocalDevConsole} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {readdir} from '@shopify/cli-kit/node/fs'
 import {SerialBatchProcessor} from '@shopify/cli-kit/node/serial-batch-processor'
@@ -240,13 +240,12 @@ export class DevSession {
   /**
    * Update the preview URL, it only changes if we move between a non-previewable state and a previewable state.
    * (i.e. if we go from a state with no extensions to a state with ui-extensions or vice versa)
-   * Skip the dev console only when BOTH: SHOPIFY_CLI_1P_DEV is NOT enabled AND SHOPIFY_SKIP_LOCAL_DEV_CONSOLE is set.
+   * Use local dev console only when BOTH: SHOPIFY_CLI_1P_DEV is enabled AND SHOPIFY_USE_LOCAL_DEV_CONSOLE is set.
    * @param event - The app event
    */
   private updatePreviewURL(event: AppEvent) {
     const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
-    const skipDevConsole = !firstPartyDev() && skipLocalDevConsole()
-    const useDevConsole = !skipDevConsole && hasPreview
+    const useDevConsole = firstPartyDev() && useLocalDevConsole() && hasPreview
     const newPreviewURL = useDevConsole ? this.options.appLocalProxyURL : this.options.appPreviewURL
     this.statusManager.updateStatus({previewURL: newPreviewURL})
   }
