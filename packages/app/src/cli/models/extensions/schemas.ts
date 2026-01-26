@@ -45,10 +45,8 @@ const ShouldRenderSchema = zod.object({
   module: zod.string(),
 })
 
-const NewExtensionPointSchema = zod.object({
+const StaticExtensionPointSchema = zod.object({
   target: zod.string(),
-  module: zod.string(),
-  should_render: ShouldRenderSchema.optional(),
   tools: zod.string().optional(),
   instructions: zod.string().optional(),
   intents: zod
@@ -62,6 +60,14 @@ const NewExtensionPointSchema = zod.object({
       }),
     )
     .optional(),
+})
+
+export const StaticExtensionPointsSchema = zod.array(StaticExtensionPointSchema)
+export type StaticExtensionPointSchemaType = zod.infer<typeof StaticExtensionPointSchema>
+
+const NewExtensionPointSchema = StaticExtensionPointSchema.extend({
+  module: zod.string(),
+  should_render: ShouldRenderSchema.optional(),
   metafields: zod.array(MetafieldSchema).optional(),
   default_placement: zod.string().optional(),
   urls: zod

@@ -614,7 +614,7 @@ describe('ui_extension', async () => {
                 module: './src/ExtensionPointA.js',
               },
               tools: {
-                filepath: 'test-ui-extension-tools-tools.json',
+                filepath: 'test-ui-extension-EXTENSION::POINT::A-tools-tools.json',
                 module: './tools.json',
                 static: true,
               },
@@ -682,7 +682,7 @@ describe('ui_extension', async () => {
                 module: './src/ExtensionPointA.js',
               },
               instructions: {
-                filepath: 'test-ui-extension-instructions-instructions.md',
+                filepath: 'test-ui-extension-EXTENSION::POINT::A-instructions-instructions.md',
                 module: './instructions.md',
                 static: true,
               },
@@ -757,7 +757,7 @@ describe('ui_extension', async () => {
               },
               intents: [
                 {
-                  filepath: 'test-ui-extension-intents-1-create-schema.json',
+                  filepath: 'test-ui-extension-EXTENSION::POINT::A-intents-1-create-schema.json',
                   module: './intents/create-schema.json',
                   static: true,
                 },
@@ -839,17 +839,17 @@ describe('ui_extension', async () => {
       expect(got.extension_points[0]?.build_manifest?.assets?.intents).toHaveLength(3)
       expect(got.extension_points[0]?.build_manifest?.assets?.intents).toEqual([
         {
-          filepath: 'test-ui-extension-intents-1-create-schema.json',
+          filepath: 'test-ui-extension-EXTENSION::POINT::A-intents-1-create-schema.json',
           module: './intents/create-schema.json',
           static: true,
         },
         {
-          filepath: 'test-ui-extension-intents-2-update-schema.json',
+          filepath: 'test-ui-extension-EXTENSION::POINT::A-intents-2-update-schema.json',
           module: './intents/update-schema.json',
           static: true,
         },
         {
-          filepath: 'test-ui-extension-intents-3-delete-schema.json',
+          filepath: 'test-ui-extension-EXTENSION::POINT::A-intents-3-delete-schema.json',
           module: './intents/delete-schema.json',
           static: true,
         },
@@ -919,18 +919,18 @@ describe('ui_extension', async () => {
                 module: './src/ExtensionPointA.js',
               },
               tools: {
-                filepath: 'test-ui-extension-tools-tools.json',
+                filepath: 'test-ui-extension-EXTENSION::POINT::A-tools-tools.json',
                 module: './tools.json',
                 static: true,
               },
               instructions: {
-                filepath: 'test-ui-extension-instructions-instructions.md',
+                filepath: 'test-ui-extension-EXTENSION::POINT::A-instructions-instructions.md',
                 module: './instructions.md',
                 static: true,
               },
               intents: [
                 {
-                  filepath: 'test-ui-extension-intents-1-create-schema.json',
+                  filepath: 'test-ui-extension-EXTENSION::POINT::A-intents-1-create-schema.json',
                   module: './intents/create-schema.json',
                   static: true,
                 },
@@ -1351,12 +1351,12 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
                 module: './src/ExtensionPointA.js',
               },
               tools: {
-                filepath: 'test-ui-extension-tools-tools.json',
+                filepath: 'test-ui-extension-EXTENSION::POINT::A-tools-tools.json',
                 module: './tools.json',
                 static: true,
               },
               instructions: {
-                filepath: 'test-ui-extension-instructions-instructions.md',
+                filepath: 'test-ui-extension-EXTENSION::POINT::A-instructions-instructions.md',
                 module: './instructions.md',
                 static: true,
               },
