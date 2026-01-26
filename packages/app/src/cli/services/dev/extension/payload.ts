@@ -212,12 +212,17 @@ async function mapBuildManifestToPayload(
   if (!buildManifest?.assets) return {}
 
   const mappingResults = await Promise.all(
-    Object.entries(buildManifest.assets).map(async ([identifier, asset]) => {
-      return (
-        ASSET_MAPPERS[identifier as AssetIdentifier]?.({identifier, asset, extensionPoint, url, extension}) ??
-        defaultAssetMapper({identifier, asset, extensionPoint, url, extension})
-      )
-    }),
+    Object.entries(buildManifest.assets)
+      .filter((entry): entry is [string, BuildAsset | BuildAsset[]] => {
+        const [_, asset] = entry
+        return asset !== undefined
+      })
+      .map(async ([identifier, asset]) => {
+        return (
+          ASSET_MAPPERS[identifier as AssetIdentifier]?.({identifier, asset, extensionPoint, url, extension}) ??
+          defaultAssetMapper({identifier, asset, extensionPoint, url, extension})
+        )
+      }),
   )
 
   return mappingResults.reduce<Partial<DevNewExtensionPointSchema>>(
