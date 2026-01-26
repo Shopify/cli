@@ -12,6 +12,7 @@ import {
   addDistPathToAssets,
   transformStaticAssets,
   BuildManifest,
+  TargetingWithBuildManifest,
 } from './build-manifest-schema.js'
 import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
@@ -304,7 +305,7 @@ const uiExtensionSpec = createExtensionSpecification({
 
 async function validateUIExtensionPointConfig(
   directory: string,
-  extensionPoints: (NewExtensionPointSchemaType & {build_manifest?: BuildManifest})[],
+  extensionPoints: (NewExtensionPointSchemaType & TargetingWithBuildManifest)[],
   configPath: string,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []
