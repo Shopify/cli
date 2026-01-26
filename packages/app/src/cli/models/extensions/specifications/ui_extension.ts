@@ -12,6 +12,7 @@ import {
   addDistPathToAssets,
   transformStaticAssets,
   BuildManifest,
+  TargetingWithBuildManifest,
 } from './build-manifest-schema.js'
 import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
@@ -32,6 +33,9 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
 }
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
+
+// Re-export BuildManifest for backward compatibility with files that import it from ui_extension
+export type {BuildManifest}
 
 type UIExtensionConfigType = zod.infer<typeof UIExtensionSchema>
 export const UIExtensionSchema = BaseSchema.extend({
@@ -303,7 +307,7 @@ const uiExtensionSpec = createExtensionSpecification({
 
 async function validateUIExtensionPointConfig(
   directory: string,
-  extensionPoints: (NewExtensionPointSchemaType & {build_manifest?: BuildManifest})[],
+  extensionPoints: (NewExtensionPointSchemaType & TargetingWithBuildManifest)[],
   configPath: string,
 ): Promise<Result<unknown, string>> {
   const errors: string[] = []

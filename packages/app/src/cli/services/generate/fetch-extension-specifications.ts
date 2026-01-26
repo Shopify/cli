@@ -4,6 +4,7 @@ import {
   createContractBasedModuleSpecification,
   ExtensionSpecification,
   RemoteAwareExtensionSpecification,
+  SPECIFICATION_OVERRIDES,
 } from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
@@ -68,10 +69,13 @@ async function mergeLocalAndRemoteSpecs(
     if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
       const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
       const hasLocalization = normalisedSchema.properties?.localization !== undefined
+      const override = SPECIFICATION_OVERRIDES[remoteSpec.identifier] ?? {}
+
       localSpec = createContractBasedModuleSpecification({
         identifier: remoteSpec.identifier,
         uidStrategy: remoteSpec.options.uidStrategy,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
+        ...override,
       })
       // Seed uidStrategy for contract specs using uidIsClientProvided as fallback (Partners API path).
       // This will be overridden below if the backend provides a typename-derived value.

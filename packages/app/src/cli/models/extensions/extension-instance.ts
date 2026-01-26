@@ -50,6 +50,7 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   // Hardcoded identifiers that don't exist locally.
   'data',
   'admin',
+  'sidekick',
 ]
 
 /**
@@ -364,6 +365,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           this.specification.buildConfig.filePatterns,
           this.specification.buildConfig.ignoredFilePatterns,
         )
+      case 'copy_static_assets':
+        return this.copyStaticAssets()
       case 'hosted_app_home':
       case 'none':
         break
