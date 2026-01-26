@@ -6,15 +6,22 @@ import {
   createToolsTypeDefinition,
   ToolsFileSchema,
 } from './type-generation.js'
-import {Asset, AssetIdentifier, BuildAsset, ExtensionFeature, createExtensionSpecification} from '../specification.js'
+import {
+  copyStaticBuildManifestAssets,
+  validateBuildManifestAssets,
+  addDistPathToAssets,
+  transformStaticAssets,
+  BuildManifest,
+} from './build-manifest-schema.js'
+import {Asset, AssetIdentifier, ExtensionFeature, createExtensionSpecification} from '../specification.js'
 import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {formatContent} from '../../../utilities/file-formatter.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {copyFile, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -24,18 +31,10 @@ const validatePoints = (config: {extension_points?: unknown[]; targeting?: unkno
   return config.extension_points !== undefined || config.targeting !== undefined
 }
 
-export interface BuildManifest {
-  assets: {
-    // Main asset is always required
-    [AssetIdentifier.Main]: BuildAsset
-    [AssetIdentifier.ShouldRender]?: BuildAsset
-    [AssetIdentifier.Tools]?: BuildAsset
-    [AssetIdentifier.Instructions]?: BuildAsset
-    [AssetIdentifier.Intents]?: BuildAsset[]
-  }
-}
-
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
+
+// Re-export BuildManifest for backward compatibility with files that import it from ui_extension
+export type {BuildManifest}
 
 export const UIExtensionSchema = BaseSchema.extend({
   name: zod.string(),
@@ -46,50 +45,27 @@ export const UIExtensionSchema = BaseSchema.extend({
 })
   .refine((config) => validatePoints(config), missingExtensionPointsMessage)
   .transform((config) => {
+    const handle = config.handle ?? 'extension'
     const extensionPoints = (config.targeting ?? config.extension_points ?? []).map((targeting) => {
+      // Create static assets configuration (tools, instructions, intents)
+      const {build_manifest: staticBuildManifest, ...staticAssetFields} = transformStaticAssets(targeting, handle)
+
       const buildManifest: BuildManifest = {
         assets: {
           [AssetIdentifier.Main]: {
-            filepath: `${config.handle}.js`,
+            filepath: `${handle}.js`,
             module: targeting.module,
           },
           ...(targeting.should_render?.module
             ? {
                 [AssetIdentifier.ShouldRender]: {
-                  filepath: `${config.handle}-conditions.js`,
+                  filepath: `${handle}-conditions.js`,
                   module: targeting.should_render.module,
                 },
               }
             : null),
-          ...(targeting.tools
-            ? {
-                [AssetIdentifier.Tools]: {
-                  filepath: `${config.handle}-${AssetIdentifier.Tools}-${basename(targeting.tools)}`,
-                  module: targeting.tools,
-                  static: true,
-                },
-              }
-            : null),
-          ...(targeting.instructions
-            ? {
-                [AssetIdentifier.Instructions]: {
-                  filepath: `${config.handle}-${AssetIdentifier.Instructions}-${basename(targeting.instructions)}`,
-                  module: targeting.instructions,
-                  static: true,
-                },
-              }
-            : null),
-          ...(targeting.intents
-            ? {
-                [AssetIdentifier.Intents]: targeting.intents.map((intent, index) => {
-                  return {
-                    filepath: `${config.handle}-${AssetIdentifier.Intents}-${index + 1}-${basename(intent.schema)}`,
-                    module: intent.schema,
-                    static: true,
-                  }
-                }),
-              }
-            : null),
+          // Merge in static assets (tools, instructions, intents)
+          ...staticBuildManifest.assets,
         },
       }
 
@@ -102,9 +78,8 @@ export const UIExtensionSchema = BaseSchema.extend({
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
         build_manifest: buildManifest,
-        tools: targeting.tools,
-        instructions: targeting.instructions,
-        ...(targeting.intents ? {intents: targeting.intents} : {}),
+        // tools, instructions, intents
+        ...staticAssetFields,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -171,19 +146,7 @@ const uiExtensionSpec = createExtensionSpecification({
   copyStaticAssets: async (config, directory, outputPath) => {
     if (!isRemoteDomExtension(config)) return
 
-    await Promise.all(
-      config.extension_points.flatMap((extensionPoint) => {
-        if (!('build_manifest' in extensionPoint)) return []
-
-        return Object.entries(extensionPoint.build_manifest.assets).map(([_, asset]) => {
-          if (Array.isArray(asset)) {
-            return Promise.all(asset.map((childAsset) => copyAsset(childAsset, directory, outputPath)))
-          }
-
-          return copyAsset(asset, directory, outputPath)
-        })
-      }),
-    )
+    await copyStaticBuildManifestAssets(config.extension_points, directory, outputPath)
   },
   hasExtensionPointTarget: (config, requestedTarget) => {
     return (
@@ -339,45 +302,6 @@ const uiExtensionSpec = createExtensionSpecification({
   },
 })
 
-function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest: BuildManifest}) {
-  return {
-    ...extP,
-    build_manifest: {
-      ...extP.build_manifest,
-      assets: Object.fromEntries(
-        Object.entries(extP.build_manifest.assets).map(([key, value]) => [
-          key as AssetIdentifier,
-          Array.isArray(value)
-            ? value.map((asset) => ({
-                ...asset,
-                filepath: joinPath('dist', asset.filepath),
-              }))
-            : {
-                ...value,
-                filepath: joinPath('dist', value.filepath),
-              },
-        ]),
-      ),
-    },
-  }
-}
-
-async function checkForMissingPath(
-  directory: string,
-  assetModule: string | undefined,
-  target: string,
-  assetType: string,
-): Promise<string | undefined> {
-  if (!assetModule) return undefined
-
-  const assetPath = joinPath(directory, assetModule)
-  const exists = await fileExists(assetPath)
-  return exists
-    ? undefined
-    : outputContent`Couldn't find ${outputToken.path(assetPath)}
-  Please check the ${assetType} path for ${target}`.value
-}
-
 async function validateUIExtensionPointConfig(
   directory: string,
   extensionPoints: (NewExtensionPointSchemaType & {build_manifest?: BuildManifest})[],
@@ -392,42 +316,16 @@ async function validateUIExtensionPointConfig(
   }
 
   for await (const extensionPoint of extensionPoints) {
-    const {module, target, build_manifest: buildManifest} = extensionPoint
+    const {module, target} = extensionPoint
 
-    const missingModuleError = await checkForMissingPath(directory, module, target, 'module')
-    if (missingModuleError) {
-      errors.push(missingModuleError)
-    }
-
-    const missingToolsError = await checkForMissingPath(
-      directory,
-      buildManifest?.assets[AssetIdentifier.Tools]?.module,
-      target,
-      AssetIdentifier.Tools,
-    )
-    if (missingToolsError) {
-      errors.push(missingToolsError)
-    }
-
-    const missingInstructionsError = await checkForMissingPath(
-      directory,
-      buildManifest?.assets[AssetIdentifier.Instructions]?.module,
-      target,
-      AssetIdentifier.Instructions,
-    )
-    if (missingInstructionsError) {
-      errors.push(missingInstructionsError)
-    }
-
-    // Validate intent schema files
-    const intentsAssets = buildManifest?.assets[AssetIdentifier.Intents]
-    if (Array.isArray(intentsAssets)) {
-      for await (const intentAsset of intentsAssets) {
-        const missingIntentError = await checkForMissingPath(directory, intentAsset.module, target, 'intent schema')
-        if (missingIntentError) {
-          errors.push(missingIntentError)
-        }
-      }
+    // Check if module file exists
+    const modulePath = joinPath(directory, module)
+    const moduleExists = await fileExists(modulePath)
+    if (!moduleExists) {
+      errors.push(
+        outputContent`Couldn't find ${outputToken.path(modulePath)}
+  Please check the module path for ${target}`.value,
+      )
     }
 
     if (uniqueTargets.includes(target)) {
@@ -435,6 +333,12 @@ async function validateUIExtensionPointConfig(
     } else {
       uniqueTargets.push(target)
     }
+  }
+
+  // Validate static assets in build manifest
+  const buildManifestValidation = await validateBuildManifestAssets(directory, extensionPoints)
+  if (buildManifestValidation.isErr()) {
+    errors.push(buildManifestValidation.error)
   }
 
   if (duplicateTargets.length) {
@@ -480,17 +384,6 @@ function buildShouldRenderAsset(
         )}', (...args) => shouldRender(...args));`
       : `import '${shouldRenderAsset.module}'`,
   }
-}
-
-function copyAsset({module, filepath, static: isStatic}: BuildAsset, directory: string, outputPath: string) {
-  if (isStatic) {
-    const sourceFile = joinPath(directory, module)
-    const outputFilePath = joinPath(dirname(outputPath), filepath)
-    return copyFile(sourceFile, outputFilePath).catch((error) => {
-      throw new Error(`Failed to copy static asset ${module} to ${outputFilePath}: ${error.message}`)
-    })
-  }
-  return Promise.resolve()
 }
 
 export default uiExtensionSpec
