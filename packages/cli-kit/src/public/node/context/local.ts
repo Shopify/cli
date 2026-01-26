@@ -113,13 +113,14 @@ export function firstPartyDev(env = process.env): boolean {
 }
 
 /**
- * Returns true if the local dev console should be skipped.
+ * Returns true if the local dev console should be used.
+ * This is an opt-in flag for 1P developers to use the local dev console.
  *
  * @param env - The environment variables from the environment of the current process.
- * @returns True if SHOPIFY_SKIP_LOCAL_DEV_CONSOLE is truthy.
+ * @returns True if SHOPIFY_USE_LOCAL_DEV_CONSOLE is truthy.
  */
-export function skipLocalDevConsole(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.skipLocalDevConsole])
+export function useLocalDevConsole(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.useLocalDevConsole])
 }
 
 /**
