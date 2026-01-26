@@ -1,5 +1,5 @@
 import {AssetIdentifier, BuildAsset} from '../specification.js'
-import {fileExists, copyFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, copyFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
@@ -107,6 +107,7 @@ export async function copyStaticBuildManifestAssets(
   directory: string,
   outputPath: string,
 ): Promise<void> {
+  console.log('copyStaticBuildManifestAssets -- targeting --->', JSON.stringify(targeting, null, 2))
   await Promise.all(
     targeting.flatMap((target) => {
       if (!('build_manifest' in target) || !target.build_manifest) return []
@@ -142,6 +143,10 @@ async function copyAsset(
   if (isStatic) {
     const sourceFile = joinPath(directory, module)
     const outputFilePath = joinPath(dirname(outputPath), filepath)
+
+    // Ensure the directory exists before copying
+    await mkdir(dirname(outputFilePath))
+
     await copyFile(sourceFile, outputFilePath).catch((error) => {
       throw new Error(`Failed to copy static asset ${module} to ${outputFilePath}: ${error.message}`)
     })
