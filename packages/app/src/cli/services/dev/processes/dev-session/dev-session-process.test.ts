@@ -20,7 +20,7 @@ import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import * as outputContext from '@shopify/cli-kit/node/ui/components'
 import {readdir} from '@shopify/cli-kit/node/fs'
-import {firstPartyDev, useLocalDevConsole} from '@shopify/cli-kit/node/context/local'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/archiver')
@@ -33,7 +33,6 @@ vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => {
   return {
     ...original,
     firstPartyDev: vi.fn().mockReturnValue(false),
-    useLocalDevConsole: vi.fn().mockReturnValue(false),
   }
 })
 
@@ -219,10 +218,9 @@ describe('pushUpdatesForDevSession', () => {
     contextSpy.mockRestore()
   })
 
-  test('updates preview URL to appPreviewURL by default (local dev console is opt-in)', async () => {
-    // Given - dev console is NOT shown by default (requires both firstPartyDev AND useLocalDevConsole)
+  test('updates preview URL to appPreviewURL by default (local dev console only for 1P devs)', async () => {
+    // Given - dev console is NOT shown by default (only for 1P devs)
     vi.mocked(firstPartyDev).mockReturnValue(false)
-    vi.mocked(useLocalDevConsole).mockReturnValue(false)
     const extension = await testUIExtension({type: 'ui_extension'})
     const newApp = testAppLinked({allExtensions: [extension]})
 
@@ -237,10 +235,9 @@ describe('pushUpdatesForDevSession', () => {
     expect(devSessionStatusManager.status.previewURL).toBe(options.appPreviewURL)
   })
 
-  test('updates preview URL to appLocalProxyURL when 1P dev opts in with useLocalDevConsole', async () => {
-    // Given - dev console is shown only when firstPartyDev() AND useLocalDevConsole()
+  test('updates preview URL to appLocalProxyURL when 1P dev has previewable extensions', async () => {
+    // Given - dev console is shown for 1P devs with previewable extensions
     vi.mocked(firstPartyDev).mockReturnValue(true)
-    vi.mocked(useLocalDevConsole).mockReturnValue(true)
     const extension = await testUIExtension({type: 'ui_extension'})
     const newApp = testAppLinked({allExtensions: [extension]})
 
@@ -254,7 +251,6 @@ describe('pushUpdatesForDevSession', () => {
     // Then
     expect(devSessionStatusManager.status.previewURL).toBe(options.appLocalProxyURL)
     vi.mocked(firstPartyDev).mockReturnValue(false)
-    vi.mocked(useLocalDevConsole).mockReturnValue(false)
   })
 
   test('updates preview URL to appPreviewURL when no previewable extensions', async () => {
