@@ -11,6 +11,7 @@ import {
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
+import * as fsKit from '@shopify/cli-kit/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
 import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
@@ -114,6 +115,38 @@ describe('theme-fs', () => {
         addEventListener: expect.any(Function),
         startWatcher: expect.any(Function),
       })
+    })
+
+    test('includes listing directory in watched directories when listing is specified', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      expect(watchSpy).toHaveBeenCalledWith(
+        expect.arrayContaining([joinPath(root, 'listings', 'modern')]),
+        expect.any(Object),
+      )
+    })
+
+    test('does not include listing directory when no listing is specified', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      const watchedPaths = watchSpy.mock.calls[0]?.[0] as string[]
+      expect(watchedPaths.some((path) => path.includes('listings'))).toBe(false)
     })
 
     test('"delete" removes the file from the local disk and updates the file map', async () => {
@@ -523,6 +556,129 @@ describe('theme-fs', () => {
 
       // Then
       expect(result).toBeFalsy()
+    })
+  })
+
+  describe('listing functionality', () => {
+    const themeId = '123'
+    const adminSession = {token: 'token'} as AdminSession
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    test('handles listing file changes as base theme file changes', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+
+      const changeEventPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('change', (event) => {
+          if (event.fileKey === 'templates/index.json') {
+            setImmediate(resolve)
+          }
+        })
+      })
+
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // When
+      const listingFilePath = joinPath(root, 'listings', 'modern', 'templates', 'index.json')
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('change', listingFilePath)
+
+      // Then
+      await changeEventPromise
+    })
+
+    test('writes template JSON into base when listing file does not exist', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: with Smart behavior, if overlay file does NOT exist yet, write to base
+      expect(writeFile).toHaveBeenCalledWith(`${root}/templates/index.json`, asset.value)
+    })
+
+    test('writes template JSON into listing folder when listing file already exists', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'templates/index.json', checksum: 'abcd', value: '{"sections":{}}'}
+      // Simulate existing overlay file by making fileExists return true for the overlay check
+      vi.spyOn(fsKit, 'fileExists').mockResolvedValueOnce(true)
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: writes to overlay
+      expect(writeFile).toHaveBeenCalledWith(`${root}/listings/modern/templates/index.json`, asset.value)
+    })
+
+    test('writes section JSON into listing folder when listing is active', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: Smart behavior writes to base if overlay does not exist
+      expect(writeFile).toHaveBeenCalledWith(`${root}/sections/header.json`, asset.value)
+    })
+
+    test('writes section JSON into listing folder when listing file already exists', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'sections/header.json', checksum: 'abc1', value: '{"name":"Header"}'}
+      // Simulate existing overlay file by making fileExists return true for the overlay check
+      vi.spyOn(fsKit, 'fileExists').mockResolvedValueOnce(true)
+      vi.mocked(writeFile).mockClear()
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then: writes to overlay
+      expect(writeFile).toHaveBeenCalledWith(`${root}/listings/modern/sections/header.json`, asset.value)
+    })
+
+    test('writes non-JSON files to base when listing is active', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root, {listing: 'modern'})
+      await themeFileSystem.ready()
+      const asset = {key: 'sections/announcement-bar.liquid', checksum: 'abc2', value: '{% comment %}x{% endcomment %}'}
+
+      // When
+      await themeFileSystem.write(asset as any)
+
+      // Then
+      expect(writeFile).toHaveBeenCalledWith(`${root}/sections/announcement-bar.liquid`, asset.value)
+    })
+
+    test('writes template JSON to base when no listing is specified', async () => {
+      // Given
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      const asset = {key: 'templates/index.json', checksum: 'ef01', value: '{"sections":{}}'}
+
+      // When
+      await themeFileSystem.write(asset)
+
+      // Then
+      expect(writeFile).toHaveBeenCalledWith(`${root}/templates/index.json`, asset.value)
     })
   })
 
