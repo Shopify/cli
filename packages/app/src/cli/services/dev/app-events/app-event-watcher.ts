@@ -148,6 +148,7 @@ export class AppEventWatcher extends EventEmitter {
     this.fileWatcher.onChange((events) => {
       handleWatcherEvents(events, this.app, this.options)
         .then(async (appEvent) => {
+          console.log({appEvent})
           if (appEvent?.extensionEvents.length === 0) outputDebug('Change detected, but no extensions were affected')
           if (!appEvent) return
 
@@ -167,6 +168,13 @@ export class AppEventWatcher extends EventEmitter {
           // Skip if the app was reloaded, as generateExtensionTypes was already called during reload
           if (!appEvent.appWasReloaded) {
             await this.app.generateExtensionTypes()
+          }
+
+          if (appEvent.appWasReloaded) {
+            const appHomeExtension = this.app.realExtensions.find((ext) => ext.specification.identifier === 'app_home')
+            if (appHomeExtension) {
+              await appHomeExtension.copyStaticAssets(this.buildOutputPath)
+            }
           }
 
           // Find deleted extensions and delete their previous build output
