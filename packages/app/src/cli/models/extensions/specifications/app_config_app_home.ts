@@ -37,7 +37,7 @@ const appHomeSpec = createConfigExtensionSpecification({
     return [`Using URL: ${config.application_url}`]
   },
   copyStaticAssets: async (config, directory, outputPath) => {
-    console.log({config})
+    console.log('&&&&&&&&&', {config})
     config.static_root = 'hosted-app/dist'
     if (!config.static_root) return
     const sourceDir = joinPath(directory, config.static_root)
