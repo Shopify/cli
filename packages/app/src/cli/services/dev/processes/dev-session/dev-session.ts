@@ -23,6 +23,12 @@ export interface UserError {
   category: string
 }
 
+interface DevSessionState {
+  websocketUrl?: string | null
+  userId?: string | null
+  userEmail?: string | null
+}
+
 type DevSessionResult =
   | {status: 'updated' | 'created' | 'aborted'}
   | {status: 'remote-error'; error: UserError[]}
@@ -42,6 +48,7 @@ export class DevSession {
   private readonly bundlePath: string
   private readonly appEventsProcessor: SerialBatchProcessor<AppEvent>
   private failedEvents: AppEvent[] = []
+  private currentSessionState: DevSessionState | null = null
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -401,6 +408,36 @@ export class DevSession {
   private async devSessionUpdateWithRetry(payload: DevSessionUpdateOptions): Promise<DevSessionResult> {
     const result = await this.options.developerPlatformClient.devSessionUpdate(payload)
     const errors = result.devSessionUpdate?.userErrors ?? []
+    const devSession = result.devSessionUpdate?.devSession
+
+    // Check for session takeover
+    if (devSession && this.currentSessionState) {
+      const expectedWebsocketUrl = getWebSocketUrl(this.options.url)
+      const expectedUserId = this.currentSessionState?.userId
+
+      if (devSession.websocketUrl !== expectedWebsocketUrl || devSession.user?.id !== expectedUserId) {
+        // Another user has taken over the session
+        const newUserEmail = devSession.user?.email
+        await this.logger.error(
+          `Another developer ${newUserEmail ? `(${newUserEmail}) ` : ''}has taken ownership of this dev preview.`,
+        )
+
+        // Throw AbortError to terminate gracefully
+        const message = `Another user${
+          newUserEmail ? ` (${newUserEmail})` : ''
+        } has taken ownership of this dev preview. Your preview is no longer active.`
+        const nextSteps = ['You can restart by running', {command: 'shopify app dev'}, 'again.']
+        throw new AbortError(message, nextSteps)
+      }
+
+      // Update stored session state for next comparison
+      this.currentSessionState = {
+        websocketUrl: devSession.websocketUrl,
+        userId: devSession.user?.id ?? null,
+        userEmail: devSession.user?.email ?? null,
+      }
+    }
+
     if (errors.length) return {status: 'remote-error', error: errors}
     return {status: 'updated'}
   }
@@ -414,7 +451,31 @@ export class DevSession {
   private async devSessionCreateWithRetry(payload: DevSessionCreateOptions): Promise<DevSessionResult> {
     const result = await this.options.developerPlatformClient.devSessionCreate(payload)
     const errors = result.devSessionCreate?.userErrors ?? []
+    const warnings = result.devSessionCreate?.warnings ?? []
+    const devSession = result.devSessionCreate?.devSession
+
+    // Store initial session state
+    if (devSession) {
+      this.currentSessionState = {
+        websocketUrl: devSession.websocketUrl,
+        userId: devSession.user?.id ?? null,
+        userEmail: devSession.user?.email ?? null,
+      }
+    }
+
+    // Display warnings (non-blocking)
+    if (warnings.length > 0) {
+      await Promise.all(
+        warnings.map((warning) => {
+          const message = warning.code === 'SESSION_TAKEOVER' ? `⚠️  ${warning.message}` : warning.message
+          return this.logger.warning(message)
+        }),
+      )
+    }
+
+    // Errors are blocking
     if (errors.length) return {status: 'remote-error', error: errors}
+
     return {status: 'created'}
   }
 }

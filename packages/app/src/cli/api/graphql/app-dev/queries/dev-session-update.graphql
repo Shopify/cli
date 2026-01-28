@@ -1,5 +1,17 @@
 mutation DevSessionUpdate($appId: String!, $assetsUrl: String, $manifest: JSON, $inheritedModuleUids: [String!]!) {
   devSessionUpdate(appId: $appId, assetsUrl: $assetsUrl, manifest: $manifest, inheritedModuleUids: $inheritedModuleUids) {
+    devSession {
+      websocketUrl
+      updatedAt
+      user {
+        id
+        email
+      }
+      app {
+        id
+        key
+      }
+    }
     userErrors {
       message
       on
