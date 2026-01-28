@@ -4,6 +4,7 @@ import {
   createContractBasedModuleSpecification,
   ExtensionSpecification,
   RemoteAwareExtensionSpecification,
+  SPECIFICATION_OVERRIDES,
 } from '../../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
@@ -68,9 +69,12 @@ async function mergeLocalAndRemoteSpecs(
     if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
       const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
       const hasLocalization = normalisedSchema.properties?.localization !== undefined
+      const override = SPECIFICATION_OVERRIDES[remoteSpec.identifier] ?? {}
+
       localSpec = createContractBasedModuleSpecification({
         identifier: remoteSpec.identifier,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
+        ...override,
       })
       localSpec.uidStrategy = remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single'
     }

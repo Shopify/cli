@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
+import {adminLinkOverride} from './specifications/remote-overrides/admin_link.js'
 import {blocks} from '../../constants.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
@@ -40,6 +41,7 @@ export enum AssetIdentifier {
   Main = 'main',
   Tools = 'tools',
   Instructions = 'instructions',
+  Intents = 'intents',
 }
 
 export interface Asset {
@@ -268,21 +270,23 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 }
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
-  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig'>,
+  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures'> &
+    Partial<Omit<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'schema'>>,
 ) {
+  const defaultDeployConfig = async (config: TConfiguration, directory: string) => {
+    let parsedConfig = configWithoutFirstClassFields(config)
+    if (spec.appModuleFeatures().includes('localization')) {
+      const localization = await loadLocalesConfig(directory, spec.identifier)
+      parsedConfig = {...parsedConfig, localization}
+    }
+    return parsedConfig
+  }
+
   return createExtensionSpecification({
-    identifier: spec.identifier,
+    ...spec,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
-    appModuleFeatures: spec.appModuleFeatures,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
-    deployConfig: async (config, directory) => {
-      let parsedConfig = configWithoutFirstClassFields(config)
-      if (spec.appModuleFeatures().includes('localization')) {
-        const localization = await loadLocalesConfig(directory, spec.identifier)
-        parsedConfig = {...parsedConfig, localization}
-      }
-      return parsedConfig
-    },
+    deployConfig: spec.deployConfig ?? defaultDeployConfig,
   })
 }
 
@@ -399,4 +403,38 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
 export function configWithoutFirstClassFields(config: JsonMapType): JsonMapType {
   const {type, handle, uid, path, extensions, ...configWithoutFirstClassFields} = config
   return configWithoutFirstClassFields
+}
+
+/**
+ * Specification overrides for remote specifications that need custom behavior.
+ * These overrides are applied when creating contract-based module specifications
+ * for extensions that are defined remotely but need local customization.
+ *
+ * Can include any method from ExtensionSpecification plus a schema.
+ * All properties are optional - only provide what you want to override.
+ */
+export type SpecificationOverride<TConfiguration extends BaseConfigType = BaseConfigType> = Partial<
+  ExtensionSpecification<TConfiguration>
+> & {
+  schema?: ZodSchemaType<TConfiguration>
+}
+
+/**
+ * Registry of specification overrides by identifier.
+ * Add custom behavior for remote specifications here.
+ */
+export const SPECIFICATION_OVERRIDES: {[key: string]: SpecificationOverride} = {
+  admin_link: adminLinkOverride as unknown as SpecificationOverride,
+}
+
+/**
+ * Get the override configuration for a specific specification identifier.
+ *
+ * @param identifier - The specification identifier
+ * @returns The override configuration if it exists, undefined otherwise
+ */
+export function getSpecificationOverride<TConfiguration extends BaseConfigType = BaseConfigType>(
+  identifier: string,
+): SpecificationOverride<TConfiguration> | undefined {
+  return SPECIFICATION_OVERRIDES[identifier] as SpecificationOverride<TConfiguration> | undefined
 }

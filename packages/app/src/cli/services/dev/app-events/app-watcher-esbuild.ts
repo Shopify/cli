@@ -77,11 +77,13 @@ export class ESBuildContextManager {
 
   async rebuildContext(extension: ExtensionInstance) {
     const context = this.contexts[extension.uid]
-    if (!context) return
-    await Promise.all(context.map((ctxt) => ctxt.rebuild()))
     const devBundleOutputPath = extension.getOutputPathForDirectory(this.outputPath)
 
-    // Copy static assets after build completes
+    if (context) {
+      await Promise.all(context.map((ctxt) => ctxt.rebuild()))
+    }
+
+    // Copy static assets after build completes (or even if there's no build context)
     // Pass in an explicit output path because the extension.outputPath is not the same as the dev bundle output path.
     await extension.copyStaticAssets(devBundleOutputPath)
 
