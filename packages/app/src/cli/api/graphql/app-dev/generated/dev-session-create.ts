@@ -12,6 +12,13 @@ export type DevSessionCreateMutationVariables = Types.Exact<{
 
 export type DevSessionCreateMutation = {
   devSessionCreate?: {
+    devSession?: {
+      websocketUrl?: string | null
+      updatedAt: string
+      user?: {id: string; email?: string | null} | null
+      app: {id: string; key: string}
+    } | null
+    warnings?: {message: string; code: Types.DevSessionWarningCode}[] | null
     userErrors: {message: string; on: JsonMapType; field?: string[] | null; category: string}[]
   } | null
 }
@@ -66,6 +73,54 @@ export const DevSessionCreate = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'devSession'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'websocketUrl'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'updatedAt'}},
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'user'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'email'}},
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'app'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'warnings'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'message'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'code'}},
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'userErrors'},
