@@ -78,10 +78,20 @@ export async function exec(command: string, args: string[], options?: ExecOption
   }
 
   if (options?.stderr && options.stderr !== 'inherit') {
+    outputDebug(`[exec] Piping stderr for command: ${command}`)
     commandProcess.stderr?.pipe(options.stderr, {end: false})
+    // Add debug listener to track data flow
+    commandProcess.stderr?.on('data', (chunk) => {
+      outputDebug(`[exec] stderr data received (${chunk.length} bytes) for: ${command}`)
+    })
   }
   if (options?.stdout && options.stdout !== 'inherit') {
+    outputDebug(`[exec] Piping stdout for command: ${command}`)
     commandProcess.stdout?.pipe(options.stdout, {end: false})
+    // Add debug listener to track data flow
+    commandProcess.stdout?.on('data', (chunk) => {
+      outputDebug(`[exec] stdout data received (${chunk.length} bytes) for: ${command}`)
+    })
   }
   let aborted = false
   options?.signal?.addEventListener('abort', () => {
@@ -137,6 +147,9 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     windowsHide: false,
     detached: options?.background,
     cleanup: !options?.background,
+    // Disable buffering for stdout/stderr to ensure real-time streaming
+    // This helps address output swallowing issues on Ubuntu 24.04 (#6726)
+    buffer: false,
   })
   outputDebug(`Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
