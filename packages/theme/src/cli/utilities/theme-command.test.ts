@@ -126,6 +126,46 @@ class TestNoMultiEnvThemeCommand extends TestThemeCommand {
   static multiEnvironmentsFlags: RequiredFlags = null
 }
 
+class TestThemeCommandWithoutStoreRequired extends ThemeCommand {
+  static flags = {
+    environment: Flags.string({
+      multiple: true,
+      default: [],
+      env: 'SHOPIFY_FLAG_ENVIRONMENT',
+    }),
+    path: Flags.string({
+      env: 'SHOPIFY_FLAG_PATH',
+      default: 'current/working/directory',
+    }),
+    password: Flags.string({
+      env: 'SHOPIFY_FLAG_PASSWORD',
+    }),
+    store: Flags.string({
+      env: 'SHOPIFY_FLAG_STORE',
+    }),
+  }
+
+  static multiEnvironmentsFlags: RequiredFlags = ['path']
+
+  commandCalls: {
+    flags: any
+    session: AdminSession | undefined
+    multiEnvironment?: boolean
+    args?: any
+    context?: any
+  }[] = []
+
+  async command(
+    flags: any,
+    session: AdminSession | undefined,
+    multiEnvironment?: boolean,
+    args?: any,
+    context?: {stdout?: Writable; stderr?: Writable},
+  ): Promise<void> {
+    this.commandCalls.push({flags, session, multiEnvironment, args, context})
+  }
+}
+
 describe('ThemeCommand', () => {
   let mockSession: AdminSession
 
@@ -201,6 +241,47 @@ describe('ThemeCommand', () => {
       // When/Then
       await expect(command.run()).rejects.toThrow(AbortError)
       await expect(command.run()).rejects.toThrow('Please provide a valid environment.')
+    })
+
+    test('single environment provided without store - does not throw when store is not required', async () => {
+      // Given
+      const environmentConfig = {path: '/some/path'}
+      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithoutStoreRequired(['--environment', 'development'], CommandConfig)
+
+      // When
+      await command.run()
+
+      // Then
+      expect(command.commandCalls).toHaveLength(1)
+      expect(command.commandCalls[0]).toMatchObject({
+        flags: {
+          environment: ['development'],
+          path: '/some/path',
+        },
+        session: undefined,
+        multiEnvironment: false,
+      })
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+    })
+
+    test('single environment provided with store - creates session when store is provided even if not required', async () => {
+      // Given
+      const environmentConfig = {path: '/some/path', store: 'store.myshopify.com'}
+      vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
+
+      await CommandConfig.load()
+      const command = new TestThemeCommandWithoutStoreRequired(['--environment', 'development'], CommandConfig)
+
+      // When
+      await command.run()
+
+      // Then
+      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(command.commandCalls).toHaveLength(1)
+      expect(command.commandCalls[0]?.session).toEqual(mockSession)
     })
 
     test('multiple environments provided - uses renderConcurrent for parallel execution', async () => {
