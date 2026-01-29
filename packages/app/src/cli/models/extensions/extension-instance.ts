@@ -367,12 +367,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           this.specification.buildConfig.ignoredFilePatterns,
         )
       case 'static_app':
-        console.log('mode: static_app', this.specification.identifier)
         await this.copyStaticAssets()
         break
       case 'none':
-        console.log('mode: none', this.specification.identifier)
-        await this.copyStaticAssets()
         break
     }
   }

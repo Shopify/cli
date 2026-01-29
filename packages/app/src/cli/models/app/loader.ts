@@ -90,7 +90,7 @@ export async function loadConfigurationFileContent(
 
   try {
     const configurationContent = await readFile(filepath)
-    console.log('Initial undecoded config from TOML file', {configurationContent})
+    // console.log('Initial undecoded config from TOML file', {configurationContent})
     return decode(configurationContent)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (err: any) {
@@ -141,7 +141,7 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const parseResult = schema.safeParse(configurationObject)
-  console.log('Config after comparing with schema (includes remote contract)', {parseResult})
+  // console.log('Config after comparing with schema (includes remote contract)', {parseResult})
   if (!parseResult.success) {
     return abortOrReport(
       outputContent`\n${outputToken.errorText('Validation errors')} in ${outputToken.path(
@@ -348,7 +348,7 @@ export async function loadOpaqueApp(options: {
       const rawConfig = await loadConfigurationFileContent(configurationPath)
       const parsed = TemplateConfigSchema.parse(rawConfig)
       const packageManager = await getPackageManager(appDirectory)
-      console.log('WE ARE NOT GETTING HERE', {rawConfig})
+      // console.log('WE ARE NOT GETTING HERE', {rawConfig})
       return {
         state: 'loaded-template',
         rawConfig,
@@ -858,6 +858,7 @@ export async function loadAppConfiguration(
   options: AppConfigurationLoaderConstructorArgs,
 ): Promise<AppConfigurationInterface> {
   const specifications = options.specifications ?? (await loadLocalExtensionsSpecifications())
+  console.log('SPECIFICATIONS', {specifications})
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
   const result = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
   await logMetadataFromAppLoadingProcess(result.configurationLoadResultMetadata)

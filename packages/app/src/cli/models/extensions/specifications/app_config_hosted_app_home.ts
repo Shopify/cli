@@ -8,18 +8,17 @@ const HostedAppHomeSchema = BaseSchemaWithoutHandle.extend({
   static_root: zod.string().optional(),
 })
 
-const AppHomeTransformConfig: TransformationConfig = {
+const HostedAppHomeTransformConfig: TransformationConfig = {
   static_root: 'static_root',
 }
 
-export const AppHomeSpecIdentifier = 'hosted_app'
+export const HostedAppHomeSpecIdentifier = 'hosted_app'
 
 const hostedAppHomeSpec = createConfigExtensionSpecification({
-  identifier: AppHomeSpecIdentifier,
-  // Why isn't this mode setting working?
+  identifier: HostedAppHomeSpecIdentifier,
   buildConfig: {mode: 'static_app'} as const,
   schema: HostedAppHomeSchema,
-  transformConfig: AppHomeTransformConfig,
+  transformConfig: HostedAppHomeTransformConfig,
   copyStaticAssets: async (config, directory, outputPath) => {
     if (!config.static_root) return
     const sourceDir = joinPath(directory, config.static_root)
