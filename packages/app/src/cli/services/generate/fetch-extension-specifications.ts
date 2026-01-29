@@ -38,8 +38,8 @@ export async function fetchSpecifications({
   const extensionSpecifications: FlattenedRemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
     .map((spec) => {
-      if (spec.identifier === 'app_home') {
-        console.log('App home spec', spec)
+      if (spec.identifier === 'hosted_app') {
+        console.log('Hosted app home spec', spec)
       }
       const newSpec = spec as FlattenedRemoteSpecification
       // WORKAROUND: The identifiers in the API are different for these extensions to the ones the CLI
