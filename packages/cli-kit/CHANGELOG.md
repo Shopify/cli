@@ -1,5 +1,15 @@
 # @shopify/cli-kit
 
+## 3.90.0
+
+### Minor Changes
+
+- f903c47: Added CLI support for extensions.supported_features in toml
+
+### Patch Changes
+
+- f9cf001: Throw descriptive AbortErrors during expected authorization errors
+
 ## 3.89.0
 
 ## 3.88.0
