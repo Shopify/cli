@@ -1,0 +1,57 @@
+import {AuditSuite} from '../../framework.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {getRandomName} from '@shopify/cli-kit/common/string'
+
+/**
+ * Tests for `shopify theme init` command
+ */
+export default class ThemeInitTests extends AuditSuite {
+  static description = 'Tests the theme init command creates a valid theme structure'
+
+  private themeName = ''
+  private themePath = ''
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  async 'test init creates theme directory'() {
+    this.themeName = `audit-theme-${getRandomName('creative')}`
+    this.themePath = joinPath(this.context.workingDirectory, this.themeName)
+
+    const result = await this.runInteractive(
+      `shopify theme init ${this.themeName} --path ${this.context.workingDirectory}`,
+    )
+    this.assertSuccess(result)
+
+    // Store for other tests
+    this.context.themeName = this.themeName
+    this.context.themePath = this.themePath
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  async 'test essential theme files exist'() {
+    const essentialFiles = ['layout/theme.liquid', 'config/settings_schema.json', 'templates/index.json']
+
+    for (const file of essentialFiles) {
+      // eslint-disable-next-line no-await-in-loop
+      await this.assertFile(joinPath(this.themePath, file))
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  async 'test theme directories exist'() {
+    const directories = ['sections', 'snippets', 'assets', 'locales']
+
+    for (const dir of directories) {
+      // eslint-disable-next-line no-await-in-loop
+      await this.assertDirectory(joinPath(this.themePath, dir))
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  async 'test layout/theme.liquid has valid content'() {
+    await this.assertFile(
+      joinPath(this.themePath, 'layout/theme.liquid'),
+      /<!doctype html>|<html|{{ content_for_header }}/i,
+      'layout/theme.liquid contains expected Liquid markup',
+    )
+  }
+}
