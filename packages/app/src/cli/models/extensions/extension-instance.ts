@@ -366,6 +366,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           this.specification.buildConfig.filePatterns,
           this.specification.buildConfig.ignoredFilePatterns,
         )
+      case 'copy_static_assets':
+        return this.copyStaticAssets()
       case 'none':
         break
     }
