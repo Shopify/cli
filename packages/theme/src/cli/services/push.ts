@@ -8,6 +8,7 @@ import {Role} from '../utilities/theme-selector/fetch.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
+import {ensureListingExists} from '../utilities/theme-listing.js'
 import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
@@ -38,6 +39,7 @@ interface PushOptions {
   allowLive?: boolean
   environment?: string
   multiEnvironment?: boolean
+  listing?: string
 }
 
 interface JsonOutput {
@@ -108,6 +110,9 @@ export interface PushFlags {
 
   /** The environment to push the theme to. */
   environment?: string[]
+
+  /** The listing preset to use for multi-preset themes. */
+  listing?: string
 }
 
 /**
@@ -161,6 +166,10 @@ export async function push(
     return
   }
 
+  if (flags.listing) {
+    await ensureListingExists(workingDirectory, flags.listing)
+  }
+
   const selectedTheme: Theme | undefined = await createOrSelectTheme(session, flags, multiEnvironment)
   if (!selectedTheme) {
     return
@@ -182,6 +191,7 @@ export async function push(
       only: flags.only ?? [],
       path: workingDirectory,
       publish: flags.publish ?? false,
+      listing: flags.listing,
     },
     context,
   )
@@ -202,7 +212,10 @@ async function executePush(
 ) {
   recordTiming('theme-service:push:file-system')
   const themeChecksums = await fetchChecksums(theme.id, session)
-  const themeFileSystem = mountThemeFileSystem(options.path, {filters: options})
+  const themeFileSystem = mountThemeFileSystem(options.path, {
+    filters: options,
+    listing: options.listing,
+  })
   recordTiming('theme-service:push:file-system')
 
   const {uploadResults, renderThemeSyncProgress} = uploadTheme(
