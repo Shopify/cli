@@ -1,5 +1,15 @@
 # @shopify/theme
 
+## 3.90.1
+
+### Patch Changes
+
+- 947025f: Fix the default environments infrastructure so it doesn’t fail when running commands that don't require authentication
+- 5e13c83: Add --listing flag to theme dev, push, and share commands
+- 8048cb9: Protect SSRF vulnerability in proxy requests when hosts don't match
+- Updated dependencies [5e13c83]
+  - @shopify/cli-kit@3.90.1
+
 ## 3.90.0
 
 ### Patch Changes
