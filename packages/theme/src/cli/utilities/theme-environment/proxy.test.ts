@@ -1,4 +1,10 @@
-import {canProxyRequest, getProxyStorefrontHeaders, injectCdnProxy, patchRenderingResponse} from './proxy.js'
+import {
+  canProxyRequest,
+  getProxyStorefrontHeaders,
+  injectCdnProxy,
+  patchRenderingResponse,
+  proxyStorefrontRequest,
+} from './proxy.js'
 import {describe, test, expect} from 'vitest'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
@@ -336,6 +342,20 @@ describe('dev proxy', () => {
     test('should proxy /account/logout requests', () => {
       const event = createH3Event('GET', '/account/logout')
       expect(canProxyRequest(event)).toBeTruthy()
+    })
+  })
+  describe('proxyStorefrontRequest', () => {
+    test('should reject hostname mismatch and throw error for non-CDN paths (SSRF protection)', async () => {
+      const event = createH3Event('GET', '//evil.com/some-path')
+      await expect(proxyStorefrontRequest(event, ctx)).rejects.toThrow(
+        'Request failed: Hostname mismatch. Expected host: my-store.myshopify.com. Resulting URL hostname: evil.com',
+      )
+    })
+    test('should reject hostname mismatch and throw error for CDN paths (SSRF protection)', async () => {
+      const event = createH3Event('GET', '/ext/cdn//evil.com/some-path')
+      await expect(proxyStorefrontRequest(event, ctx)).rejects.toThrow(
+        'Request failed: Hostname mismatch. Expected host: cdn.shopify.com. Resulting URL hostname: evil.com',
+      )
     })
   })
 })
