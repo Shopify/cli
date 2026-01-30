@@ -14,16 +14,21 @@ import {
 } from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
 import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 import {
+  StagedUploadsCreate,
+  StagedUploadsCreateMutation,
+} from '../../../cli/api/graphql/admin/generated/staged_uploads_create.js'
+import {
   OnlineStoreThemeFileBodyInputType,
   OnlineStoreThemeFilesUpsertFileInput,
   MetafieldOwnerType,
   ThemeRole,
 } from '../../../cli/api/graphql/admin/generated/types.js'
+import {lookupMimeType} from '../mimes.js'
+import {fetch, RequestModeInput} from '../http.js'
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
-import {RequestModeInput} from '../http.js'
 import {adminRequestDoc} from '../api/admin.js'
 import {AdminSession} from '../session.js'
 import {AbortError} from '../error.js'
@@ -39,6 +44,12 @@ const THEME_API_NETWORK_BEHAVIOUR: RequestModeInput = {
   maxRetryTimeMs: 90 * 1000,
   recordCommandRetries: true,
 }
+
+/**
+ * Files larger than 5MB must use staged uploads.
+ * The themeFilesUpsert mutation has size limits on inline BASE64/TEXT body content.
+ */
+export const LARGE_FILE_THRESHOLD = 5 * 1024 * 1024
 
 export async function fetchTheme(id: number, session: AdminSession): Promise<Theme | undefined> {
   const gid = composeThemeGid(id)
@@ -251,9 +262,41 @@ export async function bulkUploadThemeAssets(
 ): Promise<Result[]> {
   const results: Result[] = []
   recordEvent('theme-api:bulk-upload-assets')
-  for (let i = 0; i < assets.length; i += 50) {
-    const chunk = assets.slice(i, i + 50)
-    const files = prepareFilesForUpload(chunk)
+
+  // Partition assets by size: large files need staged uploads
+  const {smallAssets, largeAssets} = partitionAssetsBySize(assets)
+
+  // Upload large files first via staged upload (sequential to avoid rate limits)
+  const stagedUrls = new Map<string, string>()
+  for (const asset of largeAssets) {
+    try {
+      recordTiming('theme-api:staged-upload')
+      // eslint-disable-next-line no-await-in-loop
+      const resourceUrl = await uploadLargeFile(asset, session)
+      recordTiming('theme-api:staged-upload')
+      stagedUrls.set(asset.key, resourceUrl)
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      // Record error result for this asset and continue with other files
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      recordError(`Staged upload failed for ${asset.key}: ${errorMessage}`)
+      results.push({
+        key: asset.key,
+        success: false,
+        operation: Operation.Upload,
+        errors: {asset: [errorMessage]},
+      })
+    }
+  }
+
+  // Combine all assets for themeFilesUpsert (excluding failed staged uploads)
+  const successfulLargeAssets = largeAssets.filter((asset) => stagedUrls.has(asset.key))
+  const allAssets = [...smallAssets, ...successfulLargeAssets]
+
+  // Upload in chunks of 50
+  for (let i = 0; i < allAssets.length; i += 50) {
+    const chunk = allAssets.slice(i, i + 50)
+    const files = prepareFilesForUpload(chunk, stagedUrls)
 
     recordTiming('theme-api:upload-files')
     // eslint-disable-next-line no-await-in-loop
@@ -265,8 +308,23 @@ export async function bulkUploadThemeAssets(
   return results
 }
 
-function prepareFilesForUpload(assets: AssetParams[]): OnlineStoreThemeFilesUpsertFileInput[] {
+function prepareFilesForUpload(
+  assets: AssetParams[],
+  stagedUrls?: Map<string, string>,
+): OnlineStoreThemeFilesUpsertFileInput[] {
   return assets.map((asset) => {
+    // If this asset was uploaded via staged upload, use URL body type
+    const stagedUrl = stagedUrls?.get(asset.key)
+    if (stagedUrl) {
+      return {
+        filename: asset.key,
+        body: {
+          type: 'URL' as const,
+          value: stagedUrl,
+        },
+      }
+    }
+
     if (asset.attachment) {
       return {
         filename: asset.key,
@@ -333,6 +391,152 @@ function processUploadResults(uploadResults: ThemeFilesUpsertMutation): Result[]
   })
 
   return results
+}
+
+/**
+ * Calculate the byte size of an asset's content.
+ * For binary files (attachment), decodes base64 to get actual size.
+ * For text files, calculates UTF-8 byte length.
+ */
+export function calculateAssetSize(asset: AssetParams): number {
+  if (asset.attachment) {
+    // Base64 encoded - decode to get actual byte size
+    return Buffer.from(asset.attachment, 'base64').length
+  }
+  // Text content - UTF-8 byte length
+  return Buffer.byteLength(asset.value ?? '', 'utf8')
+}
+
+/**
+ * Partition assets into small (inline) and large (staged upload) categories.
+ * Files larger than the LARGE_FILE_THRESHOLD must use staged uploads.
+ */
+export function partitionAssetsBySize(assets: AssetParams[]): {
+  smallAssets: AssetParams[]
+  largeAssets: AssetParams[]
+} {
+  const smallAssets: AssetParams[] = []
+  const largeAssets: AssetParams[] = []
+
+  for (const asset of assets) {
+    const size = calculateAssetSize(asset)
+    if (size >= LARGE_FILE_THRESHOLD) {
+      largeAssets.push(asset)
+    } else {
+      smallAssets.push(asset)
+    }
+  }
+
+  return {smallAssets, largeAssets}
+}
+
+/**
+ * Request a staged upload URL from Shopify for a large file.
+ */
+async function requestStagedUpload(
+  session: AdminSession,
+  filename: string,
+  size: number,
+  mimeType: string,
+): Promise<StagedUploadsCreateMutation> {
+  return adminRequestDoc({
+    query: StagedUploadsCreate,
+    session,
+    variables: {
+      input: [
+        {
+          filename,
+          fileSize: size.toString(),
+          httpMethod: 'POST',
+          mimeType,
+          resource: 'FILE',
+        },
+      ],
+    },
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+  })
+}
+
+/**
+ * Validate the staged upload response and extract the upload target.
+ */
+function validateStagedUploadResponse(response: StagedUploadsCreateMutation): {
+  url: string
+  resourceUrl: string
+  parameters: {name: string; value: string}[]
+} {
+  if (!response.stagedUploadsCreate) {
+    throw recordError(new AbortError('No response received from stagedUploadsCreate mutation'))
+  }
+
+  if (response.stagedUploadsCreate.userErrors.length > 0) {
+    const errors = response.stagedUploadsCreate.userErrors.map((error) => error.message).join(', ')
+    throw recordError(new AbortError(`Failed to create staged upload: ${errors}`))
+  }
+
+  const target = response.stagedUploadsCreate.stagedTargets?.[0]
+  if (!target) {
+    throw recordError(new AbortError('No staged upload target returned from Shopify'))
+  }
+
+  if (!target.url || !target.resourceUrl) {
+    throw recordError(new AbortError('Invalid staged upload target: missing required URLs'))
+  }
+
+  return {
+    url: target.url,
+    resourceUrl: target.resourceUrl,
+    parameters: target.parameters,
+  }
+}
+
+/**
+ * Upload file content to a staged upload URL using FormData.
+ */
+async function uploadToStagedUrl(
+  content: Buffer,
+  uploadUrl: string,
+  parameters: {name: string; value: string}[],
+  filename: string,
+  mimeType: string,
+): Promise<void> {
+  const form = new FormData()
+
+  for (const param of parameters) {
+    form.append(param.name, param.value)
+  }
+
+  // Convert Buffer to Uint8Array for BlobPart compatibility
+  form.append('file', new Blob([new Uint8Array(content)], {type: mimeType}), filename)
+
+  const uploadResponse = await fetch(uploadUrl, {
+    method: 'POST',
+    body: form,
+  })
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text()
+    throw recordError(new AbortError(`Failed to upload file to staged URL: ${uploadResponse.statusText}\n${errorText}`))
+  }
+}
+
+/**
+ * Upload a large file using the staged upload flow.
+ * Returns the resourceUrl that can be used in themeFilesUpsert with URL body type.
+ */
+async function uploadLargeFile(asset: AssetParams, session: AdminSession): Promise<string> {
+  const mimeType = lookupMimeType(asset.key)
+  const content = asset.attachment ? Buffer.from(asset.attachment, 'base64') : Buffer.from(asset.value ?? '', 'utf8')
+  const size = content.length
+
+  // Step 1: Request staged upload URL
+  const response = await requestStagedUpload(session, asset.key, size, mimeType)
+  const {url, resourceUrl, parameters} = validateStagedUploadResponse(response)
+
+  // Step 2: Upload file content to staged URL
+  await uploadToStagedUrl(content, url, parameters, asset.key, mimeType)
+
+  return resourceUrl
 }
 
 export async function fetchChecksums(id: number, session: AdminSession): Promise<Checksum[]> {
@@ -594,7 +798,6 @@ export async function parseThemeFileContent(
       return {attachment: body.contentBase64}
     case 'OnlineStoreThemeFileBodyUrl':
       try {
-        // eslint-disable-next-line no-restricted-globals
         const response = await fetch(body.url)
 
         const arrayBuffer = await response.arrayBuffer()

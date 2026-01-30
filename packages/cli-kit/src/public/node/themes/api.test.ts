@@ -12,6 +12,9 @@ import {
   AssetParams,
   deleteThemeAssets,
   parseThemeFileContent,
+  calculateAssetSize,
+  partitionAssetsBySize,
+  LARGE_FILE_THRESHOLD,
 } from './api.js'
 import {Operation} from './types.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
@@ -22,6 +25,7 @@ import {ThemeCreate} from '../../../cli/api/graphql/admin/generated/theme_create
 import {GetThemeFileChecksums} from '../../../cli/api/graphql/admin/generated/get_theme_file_checksums.js'
 import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_files_upsert.js'
 import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
+import {StagedUploadsCreate} from '../../../cli/api/graphql/admin/generated/staged_uploads_create.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
@@ -698,5 +702,300 @@ describe('parseThemeFileContent', () => {
 
       expect(parsedContent).toEqual({attachment: base64Content})
     })
+  })
+})
+
+describe('calculateAssetSize', () => {
+  test('returns byte size for text content', () => {
+    const asset: AssetParams = {key: 'test.liquid', value: 'hello world'}
+    expect(calculateAssetSize(asset)).toBe(11) // 'hello world' is 11 bytes
+  })
+
+  test('returns byte size for UTF-8 text with multi-byte characters', () => {
+    const asset: AssetParams = {key: 'test.liquid', value: '你好'} // Each Chinese char is 3 bytes
+    expect(calculateAssetSize(asset)).toBe(6)
+  })
+
+  test('returns decoded byte size for base64 attachment', () => {
+    // 'hello world' = 11 bytes, base64 encoded
+    const base64Content = Buffer.from('hello world').toString('base64')
+    const asset: AssetParams = {key: 'test.png', attachment: base64Content}
+    expect(calculateAssetSize(asset)).toBe(11)
+  })
+
+  test('returns 0 for empty text content', () => {
+    const asset: AssetParams = {key: 'test.liquid', value: ''}
+    expect(calculateAssetSize(asset)).toBe(0)
+  })
+
+  test('returns 0 for undefined value', () => {
+    const asset: AssetParams = {key: 'test.liquid'}
+    expect(calculateAssetSize(asset)).toBe(0)
+  })
+})
+
+describe('partitionAssetsBySize', () => {
+  test('partitions all small files correctly', () => {
+    const assets: AssetParams[] = [
+      {key: 'small1.liquid', value: 'content1'},
+      {key: 'small2.liquid', value: 'content2'},
+    ]
+
+    const {smallAssets, largeAssets} = partitionAssetsBySize(assets)
+
+    expect(smallAssets).toHaveLength(2)
+    expect(largeAssets).toHaveLength(0)
+  })
+
+  test('partitions large files correctly', () => {
+    // Create a file larger than 5MB
+    const largeContent = Buffer.alloc(LARGE_FILE_THRESHOLD + 1, 'x').toString('base64')
+    const assets: AssetParams[] = [{key: 'large.png', attachment: largeContent}]
+
+    const {smallAssets, largeAssets} = partitionAssetsBySize(assets)
+
+    expect(smallAssets).toHaveLength(0)
+    expect(largeAssets).toHaveLength(1)
+    expect(largeAssets[0]!.key).toBe('large.png')
+  })
+
+  test('partitions mixed files correctly', () => {
+    const largeContent = Buffer.alloc(LARGE_FILE_THRESHOLD + 1, 'x').toString('base64')
+    const assets: AssetParams[] = [
+      {key: 'small.liquid', value: 'small content'},
+      {key: 'large.png', attachment: largeContent},
+      {key: 'another-small.json', value: '{}'},
+    ]
+
+    const {smallAssets, largeAssets} = partitionAssetsBySize(assets)
+
+    expect(smallAssets).toHaveLength(2)
+    expect(largeAssets).toHaveLength(1)
+    expect(smallAssets.map((a) => a.key)).toContain('small.liquid')
+    expect(smallAssets.map((a) => a.key)).toContain('another-small.json')
+    expect(largeAssets[0]!.key).toBe('large.png')
+  })
+
+  test('file exactly at threshold is considered large', () => {
+    const exactContent = Buffer.alloc(LARGE_FILE_THRESHOLD, 'x').toString('base64')
+    const assets: AssetParams[] = [{key: 'exact.png', attachment: exactContent}]
+
+    const {smallAssets, largeAssets} = partitionAssetsBySize(assets)
+
+    expect(smallAssets).toHaveLength(0)
+    expect(largeAssets).toHaveLength(1)
+  })
+})
+
+describe('bulkUploadThemeAssets with staged uploads', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  test('uploads small files without staged upload', async () => {
+    const id = 123
+    const assets: AssetParams[] = [{key: 'small.liquid', value: 'small content'}]
+
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themeFilesUpsert: {
+        upsertedThemeFiles: [{filename: 'small.liquid'}],
+        userErrors: [],
+      },
+    })
+
+    const results = await bulkUploadThemeAssets(id, assets, session)
+
+    // Should only call themeFilesUpsert (no staged upload for small files)
+    expect(adminRequestDoc).toHaveBeenCalledTimes(1)
+
+    // Should call themeFilesUpsert with TEXT type
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({
+        query: ThemeFilesUpsert,
+        variables: {
+          themeId: `gid://shopify/OnlineStoreTheme/${id}`,
+          files: [
+            {
+              filename: 'small.liquid',
+              body: {type: 'TEXT', value: 'small content'},
+            },
+          ],
+        },
+      }),
+    )
+
+    expect(results).toEqual([{key: 'small.liquid', success: true, operation: Operation.Upload}])
+  })
+
+  test('uploads large files using staged upload with URL body type', async () => {
+    const id = 123
+    const largeContent = Buffer.alloc(LARGE_FILE_THRESHOLD + 1, 'x').toString('base64')
+    const assets: AssetParams[] = [{key: 'large.png', attachment: largeContent}]
+
+    // Mock staged upload response
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({
+        stagedUploadsCreate: {
+          stagedTargets: [
+            {
+              url: 'https://storage.shopify.com/staged-upload',
+              resourceUrl: 'https://cdn.shopify.com/resource/large.png',
+              parameters: [{name: 'key', value: 'staged-key'}],
+            },
+          ],
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        themeFilesUpsert: {
+          upsertedThemeFiles: [{filename: 'large.png'}],
+          userErrors: [],
+        },
+      })
+
+    // Mock fetch for staged URL upload using dynamic import + spyOn
+    const httpModule = await import('../http.js')
+    const fetchSpy = vi.spyOn(httpModule, 'fetch').mockResolvedValueOnce({ok: true, text: vi.fn()} as any)
+
+    const results = await bulkUploadThemeAssets(id, assets, session)
+
+    // Should call both stagedUploadsCreate and themeFilesUpsert
+    expect(adminRequestDoc).toHaveBeenCalledTimes(2)
+
+    // First call should be stagedUploadsCreate
+    expect(adminRequestDoc).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        query: StagedUploadsCreate,
+        variables: {
+          input: [
+            {
+              filename: 'large.png',
+              fileSize: expect.any(String),
+              httpMethod: 'POST',
+              mimeType: 'image/png',
+              resource: 'FILE',
+            },
+          ],
+        },
+      }),
+    )
+
+    // Second call should be themeFilesUpsert with URL type
+    expect(adminRequestDoc).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        query: ThemeFilesUpsert,
+        variables: {
+          themeId: `gid://shopify/OnlineStoreTheme/${id}`,
+          files: [
+            {
+              filename: 'large.png',
+              body: {type: 'URL', value: 'https://cdn.shopify.com/resource/large.png'},
+            },
+          ],
+        },
+      }),
+    )
+
+    expect(results).toEqual([{key: 'large.png', success: true, operation: Operation.Upload}])
+    fetchSpy.mockRestore()
+  })
+
+  test('handles mixed small and large files', async () => {
+    const id = 123
+    const largeContent = Buffer.alloc(LARGE_FILE_THRESHOLD + 1, 'x').toString('base64')
+    const assets: AssetParams[] = [
+      {key: 'small.liquid', value: 'small content'},
+      {key: 'large.png', attachment: largeContent},
+      {key: 'another-small.json', value: '{}'},
+    ]
+
+    // Mock staged upload response for large file
+    vi.mocked(adminRequestDoc)
+      .mockResolvedValueOnce({
+        stagedUploadsCreate: {
+          stagedTargets: [
+            {
+              url: 'https://storage.shopify.com/staged-upload',
+              resourceUrl: 'https://cdn.shopify.com/resource/large.png',
+              parameters: [{name: 'key', value: 'staged-key'}],
+            },
+          ],
+          userErrors: [],
+        },
+      })
+      .mockResolvedValueOnce({
+        themeFilesUpsert: {
+          upsertedThemeFiles: [
+            {filename: 'small.liquid'},
+            {filename: 'another-small.json'},
+            {filename: 'large.png'},
+          ],
+          userErrors: [],
+        },
+      })
+
+    // Mock fetch for staged URL upload using dynamic import + spyOn
+    const httpModule = await import('../http.js')
+    const fetchSpy = vi.spyOn(httpModule, 'fetch').mockResolvedValueOnce({ok: true, text: vi.fn()} as any)
+
+    const results = await bulkUploadThemeAssets(id, assets, session)
+
+    expect(results).toHaveLength(3)
+    expect(results.every((r) => r.success)).toBe(true)
+    fetchSpy.mockRestore()
+  })
+
+  test('returns error result when staged upload mutation returns user errors', async () => {
+    const id = 123
+    const largeContent = Buffer.alloc(LARGE_FILE_THRESHOLD + 1, 'x').toString('base64')
+    const assets: AssetParams[] = [{key: 'large.png', attachment: largeContent}]
+
+    // Mock staged upload failure with user errors
+    vi.mocked(adminRequestDoc).mockResolvedValueOnce({
+      stagedUploadsCreate: {
+        stagedTargets: [],
+        userErrors: [{field: ['input'], message: 'Upload failed'}],
+      },
+    })
+
+    const results = await bulkUploadThemeAssets(id, assets, session)
+
+    expect(results).toHaveLength(1)
+    expect(results[0]!.success).toBe(false)
+    expect(results[0]!.key).toBe('large.png')
+    expect(results[0]!.errors).toBeDefined()
+  })
+
+  test('returns error result when upload to staged URL fails', async () => {
+    const id = 123
+    const largeContent = Buffer.alloc(LARGE_FILE_THRESHOLD + 1, 'x').toString('base64')
+    const assets: AssetParams[] = [{key: 'large.png', attachment: largeContent}]
+
+    // Mock staged upload response
+    vi.mocked(adminRequestDoc).mockResolvedValueOnce({
+      stagedUploadsCreate: {
+        stagedTargets: [
+          {
+            url: 'https://storage.shopify.com/staged-upload',
+            resourceUrl: 'https://cdn.shopify.com/resource/large.png',
+            parameters: [{name: 'key', value: 'staged-key'}],
+          },
+        ],
+        userErrors: [],
+      },
+    })
+
+    // Mock fetch failure using dynamic import + spyOn
+    const httpModule = await import('../http.js')
+    const fetchSpy = vi.spyOn(httpModule, 'fetch').mockResolvedValueOnce({ok: false, statusText: 'Internal Server Error', text: vi.fn().mockResolvedValue('Upload failed')} as any)
+
+    const results = await bulkUploadThemeAssets(id, assets, session)
+
+    expect(results).toHaveLength(1)
+    expect(results[0]!.success).toBe(false)
+    expect(results[0]!.key).toBe('large.png')
+    fetchSpy.mockRestore()
   })
 })
