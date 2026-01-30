@@ -321,23 +321,24 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         ignoreInitial: true,
       })
 
-      // Debounce file events per-file
-      const pendingEvents = new Map<string, {eventName: 'add' | 'change' | 'unlink'; timeout: NodeJS.Timeout}>()
+      // Debounce file events per-file and per-event-type
+      const pendingEvents = new Map<string, NodeJS.Timeout>()
 
       const queueFsEvent = (eventName: 'add' | 'change' | 'unlink', filePath: string) => {
         const fileKey = getKey(filePath)
+        const eventKey = `${fileKey}:${eventName}`
 
-        const pending = pendingEvents.get(fileKey)
+        const pending = pendingEvents.get(eventKey)
         if (pending) {
-          clearTimeout(pending.timeout)
+          clearTimeout(pending)
         }
 
         const timeout = setTimeout(() => {
-          pendingEvents.delete(fileKey)
+          pendingEvents.delete(eventKey)
           handleFsEvent(eventName, themeId, adminSession, filePath)
         }, FILE_EVENT_DEBOUNCE_TIME_IN_MS)
 
-        pendingEvents.set(fileKey, {eventName, timeout})
+        pendingEvents.set(eventKey, timeout)
       }
 
       watcher
