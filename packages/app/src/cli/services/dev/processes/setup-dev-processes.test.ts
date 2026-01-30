@@ -35,7 +35,7 @@ import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {firstPartyDev, skipLocalDevConsole} from '@shopify/cli-kit/node/context/local'
+import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -69,10 +69,8 @@ beforeEach(() => {
     role: 'theme',
     processing: false,
   })
-  // By default, firstPartyDev is false (dev console URL only used when enabled)
+  // By default, firstPartyDev is false (local dev console only shown for 1P devs)
   vi.mocked(firstPartyDev).mockReturnValue(false)
-  // By default, skipLocalDevConsole is false
-  vi.mocked(skipLocalDevConsole).mockReturnValue(false)
 })
 
 const appContextResult = {
@@ -168,8 +166,8 @@ describe('setup-dev-processes', () => {
       graphiqlKey,
     })
 
-    // Dev console is shown by default (only skipped when !firstPartyDev() AND skipLocalDevConsole())
-    expect(res.previewUrl).toBe('https://example.com/proxy/extensions/dev-console')
+    // Dev console is NOT shown by default (only shown for 1P devs)
+    expect(res.previewUrl).toBe('https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key')
     expect(res.processes[0]).toMatchObject({
       type: 'web',
       prefix: 'web-backend-frontend',
