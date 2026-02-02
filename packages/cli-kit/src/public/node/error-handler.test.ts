@@ -263,7 +263,7 @@ describe('sends errors to Bugsnag', () => {
     expect(capturedEventHandler).toHaveBeenCalled()
 
     const mockEvent = capturedEventHandler.mock.calls[0]![0]
-    expect(mockEvent.setUser).toHaveBeenCalledWith('unknown')
+    expect(mockEvent.setUser).toHaveBeenCalledWith(undefined)
   })
 
   test('attaches custom metadata with allowed slice_name when startCommand is present', async () => {
