@@ -1,6 +1,6 @@
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {exec, captureOutput} from '@shopify/cli-kit/node/system'
+import {execCommand, captureCommandWithExitCode} from '@shopify/cli-kit/node/system'
 import type {AuditContext, TestResult, AssertionResult} from './types.js'
 
 /**
@@ -22,22 +22,32 @@ interface CommandResult {
 }
 
 /**
+ * A registered test with its name and function
+ */
+interface RegisteredTest {
+  name: string
+  fn: () => Promise<void>
+}
+
+/**
  * Base class for audit test suites.
  *
- * Write tests as methods starting with "test":
+ * Write tests using the test() method:
  *
  * ```typescript
  * export default class MyTests extends AuditSuite {
  *   static description = 'My test suite'
  *
- *   async 'test basic case'() {
- *     const result = await this.run('shopify theme init')
- *     this.assertSuccess(result)
- *   }
+ *   tests() {
+ *     this.test('basic case', async () => {
+ *       const result = await this.run('shopify theme init')
+ *       this.assertSuccess(result)
+ *     })
  *
- *   async 'test error case'() {
- *     const result = await this.run('shopify theme init --invalid')
- *     this.assertError(result, /unknown flag/)
+ *     this.test('error case', async () => {
+ *       const result = await this.run('shopify theme init --invalid')
+ *       this.assertError(result, /unknown flag/)
+ *     })
  *   }
  * }
  * ```
@@ -47,27 +57,30 @@ export abstract class AuditSuite {
 
   protected context!: AuditContext
   private assertions: AssertionResult[] = []
+  private registeredTests: RegisteredTest[] = []
 
   /**
    * Run the entire test suite
    */
   async runSuite(context: AuditContext): Promise<TestResult[]> {
     this.context = context
+    this.registeredTests = []
     const results: TestResult[] = []
 
-    // Find all methods starting with "test"
-    const testMethods = this.getTestMethods()
+    // Call tests() to register tests via this.test()
+    this.tests()
 
-    for (const methodName of testMethods) {
+    // Run all registered tests
+    for (const registeredTest of this.registeredTests) {
       this.assertions = []
       const startTime = Date.now()
 
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-await-in-loop
-        await (this as any)[methodName]()
+        // eslint-disable-next-line no-await-in-loop
+        await registeredTest.fn()
 
         results.push({
-          name: methodName,
+          name: registeredTest.name,
           status: this.hasFailures() ? 'failed' : 'passed',
           duration: Date.now() - startTime,
           assertions: [...this.assertions],
@@ -75,7 +88,7 @@ export abstract class AuditSuite {
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error) {
         results.push({
-          name: methodName,
+          name: registeredTest.name,
           status: 'failed',
           duration: Date.now() - startTime,
           assertions: [...this.assertions],
@@ -85,6 +98,23 @@ export abstract class AuditSuite {
     }
 
     return results
+  }
+
+  /**
+   * Register a test with a name and function.
+   *
+   * @param name - The test name
+   * @param fn - The async test function
+   */
+  protected test(name: string, fn: () => Promise<void>): void {
+    this.registeredTests.push({name, fn})
+  }
+
+  /**
+   * Override this method to register tests using this.test()
+   */
+  protected tests(): void {
+    // Subclasses override this to register tests
   }
 
   // ============================================
@@ -102,41 +132,16 @@ export abstract class AuditSuite {
     command: string,
     options?: {cwd?: string; env?: {[key: string]: string}},
   ): Promise<CommandResult> {
-    const parts = command.split(' ').filter(Boolean)
-    const cmd = parts[0]
-    if (!cmd) {
-      throw new Error("Command can't be empty")
-    }
-    const args = parts.slice(1)
     const cwd = options?.cwd ?? this.context.workingDirectory
-
-    let stdout = ''
-    let stderr = ''
-    let exitCode = 0
-
-    try {
-      stdout = await captureOutput(cmd, args, {cwd, env: options?.env})
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      // captureOutput throws on non-zero exit
-      if (error instanceof Error) {
-        stderr = error.message
-        // Try to extract exit code from error
-        const match = /exit code (\d+)/i.exec(error.message)
-        const exitCodeStr = match?.[1]
-        exitCode = exitCodeStr ? parseInt(exitCodeStr, 10) : 1
-      } else {
-        exitCode = 1
-      }
-    }
+    const result = await captureCommandWithExitCode(command, {cwd, env: options?.env})
 
     return {
       command,
-      exitCode,
-      stdout,
-      stderr,
-      output: stdout + stderr,
-      success: exitCode === 0,
+      exitCode: result.exitCode,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      output: result.stdout + result.stderr,
+      success: result.exitCode === 0,
     }
   }
 
@@ -148,18 +153,11 @@ export abstract class AuditSuite {
     command: string,
     options?: {cwd?: string; env?: {[key: string]: string}},
   ): Promise<CommandResult> {
-    const parts = command.split(' ').filter(Boolean)
-    const cmd = parts[0]
-    if (!cmd) {
-      throw new Error("Command can't be empty")
-    }
-    const args = parts.slice(1)
     const cwd = options?.cwd ?? this.context.workingDirectory
-
     let exitCode = 0
 
     try {
-      await exec(cmd, args, {cwd, env: options?.env, stdin: 'inherit'})
+      await execCommand(command, {cwd, env: options?.env, stdin: 'inherit'})
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch {
       exitCode = 1
@@ -367,29 +365,6 @@ export abstract class AuditSuite {
       expected: String(expected),
       actual: String(actual),
     })
-  }
-
-  /**
-   * Get all test method names from this class
-   */
-  private getTestMethods(): string[] {
-    const methods: string[] = []
-    let proto = Object.getPrototypeOf(this)
-
-    while (proto && proto !== Object.prototype) {
-      const names = Object.getOwnPropertyNames(proto)
-      for (const name of names) {
-        if (name.startsWith('test')) {
-          const descriptor = Object.getOwnPropertyDescriptor(proto, name)
-          if (descriptor && typeof descriptor.value === 'function') {
-            methods.push(name)
-          }
-        }
-      }
-      proto = Object.getPrototypeOf(proto)
-    }
-
-    return methods
   }
 
   private hasFailures(): boolean {
