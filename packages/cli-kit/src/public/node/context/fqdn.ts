@@ -139,8 +139,5 @@ export function normalizeStoreFqdn(store: string): string {
   }
   const containDomain = (storeFqdn: string) =>
     storeFqdn.endsWith('.myshopify.com') || storeFqdn.endsWith('shopify.io') || storeFqdn.endsWith('.shop.dev')
-  const normalizedFqdn = containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
-  // Use dev-api domain for OAuth redirects in local environment
-  // See: https://github.com/Shopify/dev_server?tab=readme-ov-file#shop-redirects
-  return normalizedFqdn.replace('.my.shop.dev', '.dev-api.shop.dev')
+  return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
 }
