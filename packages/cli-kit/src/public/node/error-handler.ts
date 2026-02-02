@@ -126,7 +126,11 @@ export async function sendErrorToBugsnag(
 
     if (report) {
       initializeBugsnag()
-      const userId = await getLastSeenUserIdAfterAuth()
+      let userId: string | undefined = await getLastSeenUserIdAfterAuth()
+      if (userId === 'unknown') {
+        // Observe will use the IP when undefined
+        userId = undefined
+      }
       await new Promise((resolve, reject) => {
         outputDebug(`Reporting ${unhandled ? 'unhandled' : 'handled'} error to Bugsnag: ${reportableError.message}`)
         const eventHandler = (event: Event) => {
