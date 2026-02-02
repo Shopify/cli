@@ -11,6 +11,14 @@ export async function buildCartURLIfNeeded(extensions: ExtensionInstance[], stor
   const hasUIExtension = extensions.filter((extension) => extension.shouldFetchCartUrl()).length > 0
   if (!hasUIExtension) return undefined
   if (checkoutCartUrl) return checkoutCartUrl
+  
+  // In local development, skip fetching product variant if the flag is set
+  // This allows the CLI to work when local services don't have proper auth set up
+  if (process.env.SHOPIFY_SERVICE_ENV === 'local' && process.env.SHOPIFY_CLI_SKIP_PRODUCT_FETCH === '1') {
+    // Return a mock variant ID for local development
+    return '/cart/123456789:1'
+  }
+  
   const variantId = await fetchProductVariant(store)
   return `/cart/${variantId}:1`
 }

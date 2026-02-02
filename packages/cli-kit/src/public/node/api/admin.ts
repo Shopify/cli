@@ -161,6 +161,16 @@ export async function fetchApiVersions(
   session: AdminSession,
   preferredBehaviour?: RequestModeInput,
 ): Promise<ApiVersion[]> {
+  // In local development, skip the API version check and return a hardcoded list
+  // This allows the CLI to work when local services don't have proper auth set up
+  if (serviceEnvironment() === 'local' && process.env.SHOPIFY_CLI_SKIP_VERSION_CHECK === '1') {
+    return [
+      {handle: '2024-10', supported: true},
+      {handle: '2025-01', supported: true},
+      {handle: 'unstable', supported: true},
+    ]
+  }
+
   try {
     const response = await adminRequestDoc({
       query: PublicApiVersions,
