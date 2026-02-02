@@ -172,7 +172,6 @@
         }
       },
       "hasDynamicHelp": false,
-      "hidden": true,
       "hiddenAliases": [
       ],
       "id": "app:bulk:cancel",

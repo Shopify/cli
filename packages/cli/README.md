@@ -1,6 +1,7 @@
 # Commands
 <!-- commands -->
 * [`shopify app build`](#shopify-app-build)
+* [`shopify app bulk cancel`](#shopify-app-bulk-cancel)
 * [`shopify app bulk execute`](#shopify-app-bulk-execute)
 * [`shopify app bulk status`](#shopify-app-bulk-status)
 * [`shopify app config link`](#shopify-app-config-link)
@@ -119,6 +120,31 @@ DESCRIPTION
   If you're building a "theme app extension" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then
   running the `build` command runs "Theme Check" (https://shopify.dev/docs/themes/tools/theme-check) against your
   extension to ensure that it's valid.
+```
+
+## `shopify app bulk cancel`
+
+Cancel a bulk operation.
+
+```
+USAGE
+  $ shopify app bulk cancel --id <value> [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset |
+    ] [-s <value>] [--verbose]
+
+FLAGS
+  -c, --config=<value>     The name of the app configuration.
+  -s, --store=<value>      The store domain. Must be an existing dev store.
+      --client-id=<value>  The Client ID of your app.
+      --id=<value>         (required) The bulk operation ID to cancel (numeric ID or full GID).
+      --no-color           Disable color output.
+      --path=<value>       The path to your app directory.
+      --reset              Reset all your settings.
+      --verbose            Increase the verbosity of the output.
+
+DESCRIPTION
+  Cancel a bulk operation.
+
+  Cancels a running bulk operation by ID.
 ```
 
 ## `shopify app bulk execute`
