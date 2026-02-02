@@ -43,7 +43,7 @@ export async function cancelBulkOperation(options: CancelBulkOperationOptions): 
   })
 
   if (response.bulkOperationCancel?.userErrors?.length) {
-    renderBulkOperationUserErrors(response.bulkOperationCancel.userErrors, 'Bulk operation cancellation errors.')
+    renderBulkOperationUserErrors(response.bulkOperationCancel.userErrors, 'Failed to cancel bulk operation.')
     return
   }
 
