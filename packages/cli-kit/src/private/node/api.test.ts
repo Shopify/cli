@@ -19,6 +19,7 @@ describe('retryAwareRequest', () => {
   test('handles retries', async () => {
     // First give a network error; then a rate limit with an explicit retry; then an unknown rate limit; then a successful call
     const rateLimitedResponseWithRetry = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -29,10 +30,11 @@ describe('retryAwareRequest', () => {
       ],
       headers: new Headers({
         'retry-after': '200',
-      }),
+      }),      body: "",
     }
 
     const rateLimitedResponse = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -42,6 +44,7 @@ describe('retryAwareRequest', () => {
         } as any,
       ],
       headers: new Headers(),
+      body: "",
     }
 
     const mockRequestFn = vi
@@ -57,9 +60,11 @@ describe('retryAwareRequest', () => {
       })
       .mockImplementationOnce(() => {
         return Promise.resolve({
+      body: "",
           status: 200,
           data: {hello: 'world!'},
           headers: new Headers(),
+      body: "",
         })
       })
     const mockScheduleDelayFn = vi.fn((fn, delay) => {
@@ -82,6 +87,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {hello: 'world!'},
     })
@@ -96,6 +102,7 @@ describe('retryAwareRequest', () => {
     // This test gives a false warning from vitest if fake timers are used. It thinks the exception is uncaught.
     vi.useRealTimers()
     const rateLimitedResponse = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -105,6 +112,7 @@ describe('retryAwareRequest', () => {
         } as any,
       ],
       headers: new Headers(),
+      body: "",
     }
     const mockRequestFn = vi.fn().mockImplementation(() => {
       throw new ClientError(rateLimitedResponse, {query: ''})
@@ -146,9 +154,11 @@ describe('retryAwareRequest', () => {
       .mockImplementationOnce(() => {
         // good response -- won't hit this with retries disabled
         return Promise.resolve({
+      body: "",
           status: 200,
           data: {hello: 'world!'},
           headers: new Headers(),
+      body: "",
         })
       })
     const mockRequestFnDisabled = vi
@@ -160,9 +170,11 @@ describe('retryAwareRequest', () => {
       .mockImplementationOnce(() => {
         // good response -- won't hit this with retries disabled
         return Promise.resolve({
+      body: "",
           status: 200,
           data: {hello: 'world!'},
           headers: new Headers(),
+      body: "",
         })
       })
     const mockScheduleDelayFn = vi.fn((fn, delay) => {
@@ -184,6 +196,7 @@ describe('retryAwareRequest', () => {
 
     await expect(networkRetryEnabled).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {hello: 'world!'},
     })
@@ -212,9 +225,11 @@ describe('retryAwareRequest', () => {
       })
       .mockImplementationOnce(() => {
         return Promise.resolve({
+      body: "",
           status: 200,
           data: {ok: true},
           headers: new Headers(),
+      body: "",
         })
       })
 
@@ -238,6 +253,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {ok: true},
     })
@@ -254,9 +270,11 @@ describe('retryAwareRequest', () => {
       })
       .mockImplementationOnce(() => {
         return Promise.resolve({
+      body: "",
           status: 200,
           data: {ok: true},
           headers: new Headers(),
+      body: "",
         })
       })
 
@@ -280,6 +298,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {ok: true},
     })
@@ -297,9 +316,11 @@ describe('retryAwareRequest', () => {
       })
       .mockImplementationOnce(() => {
         return Promise.resolve({
+      body: "",
           status: 200,
           data: {ok: true},
           headers: new Headers(),
+      body: "",
         })
       })
 
@@ -318,6 +339,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {ok: true},
     })
@@ -382,6 +404,7 @@ describe('retryAwareRequest', () => {
 
   test('records retry events when recordRetries is enabled', async () => {
     const rateLimitedResponse = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -390,13 +413,15 @@ describe('retryAwareRequest', () => {
           },
         } as any,
       ],
-      headers: new Headers({'retry-after': '100'}),
+      headers: new Headers({'retry-after': '100'}),      body: "",
     }
 
     const successResponse = {
+      body: "",
       status: 200,
       data: {hello: 'world!'},
       headers: new Headers(),
+      body: "",
     }
 
     const mockRequestFn = vi
@@ -427,6 +452,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {hello: 'world!'},
     })
@@ -437,6 +463,7 @@ describe('retryAwareRequest', () => {
 
   test('does not record retry events when recordRetries is disabled', async () => {
     const rateLimitedResponse = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -446,12 +473,15 @@ describe('retryAwareRequest', () => {
         } as any,
       ],
       headers: new Headers(),
+      body: "",
     }
 
     const successResponse = {
+      body: "",
       status: 200,
       data: {hello: 'world!'},
       headers: new Headers(),
+      body: "",
     }
 
     const mockRequestFn = vi
@@ -482,6 +512,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {hello: 'world!'},
     })
@@ -491,6 +522,7 @@ describe('retryAwareRequest', () => {
 
   test('records multiple retry events with correct attempt numbers', async () => {
     const rateLimitedResponse = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -500,12 +532,15 @@ describe('retryAwareRequest', () => {
         } as any,
       ],
       headers: new Headers(),
+      body: "",
     }
 
     const successResponse = {
+      body: "",
       status: 200,
       data: {success: true},
       headers: new Headers(),
+      body: "",
     }
 
     const mockRequestFn = vi
@@ -539,6 +574,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {success: true},
     })
@@ -550,6 +586,7 @@ describe('retryAwareRequest', () => {
 
   test('records retry events for too many requests status', async () => {
     const rateLimitedResponse = {
+      body: "",
       status: 200,
       errors: [
         {
@@ -559,12 +596,15 @@ describe('retryAwareRequest', () => {
         } as any,
       ],
       headers: new Headers(),
+      body: "",
     }
 
     const successResponse = {
+      body: "",
       status: 200,
       data: {authenticated: true},
       headers: new Headers(),
+      body: "",
     }
 
     const mockRequestFn = vi
@@ -595,6 +635,7 @@ describe('retryAwareRequest', () => {
 
     await expect(result).resolves.toEqual({
       headers: expect.anything(),
+      body: "",
       status: 200,
       data: {authenticated: true},
     })

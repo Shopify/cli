@@ -51,7 +51,7 @@ function sanitizeDeepVariables(value: unknown, sensitiveKeys: string[]): unknown
     return value.map((item) => sanitizeDeepVariables(item, sensitiveKeys))
   }
 
-  const result: Variables = {}
+  const result: Record<string, unknown> = {}
 
   for (const [key, val] of Object.entries(value)) {
     if (sensitiveKeys.includes(key) && typeof val === 'string') {

@@ -16,15 +16,9 @@ import {abortSignalFromRequestBehaviour, RequestBehaviour, requestMode, RequestM
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {sleep} from '../system.js'
 import {outputContent, outputDebug} from '../output.js'
-import {
-  GraphQLClient,
-  rawRequest,
-  RequestDocument,
-  resolveRequestDocument,
-  Variables,
-  ClientError,
-} from 'graphql-request'
+import {GraphQLClient, rawRequest, RequestDocument, Variables, ClientError} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
+import {print, type DocumentNode} from 'graphql'
 
 // to replace TVariable type when there graphql query has no variables
 export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
@@ -305,8 +299,9 @@ export async function graphqlRequest<T>(options: GraphQLRequestOptions<T>): Prom
 export async function graphqlRequestDoc<TResult, TVariables extends Variables>(
   options: GraphQLRequestDocOptions<TResult, TVariables>,
 ): Promise<TResult> {
+  const queryAsString = typeof options.query === 'string' ? options.query : print(options.query as DocumentNode)
   return performGraphQLRequest<TResult>({
     ...options,
-    queryAsString: resolveRequestDocument(options.query).query,
+    queryAsString,
   })
 }

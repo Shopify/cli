@@ -429,8 +429,8 @@ importers:
         specifier: 16.10.0
         version: 16.10.0
       graphql-request:
-        specifier: 6.1.0
-        version: 6.1.0(graphql@16.10.0)
+        specifier: 7.4.0
+        version: 7.4.0(graphql@16.10.0)
       ignore:
         specifier: 6.0.2
         version: 6.0.2
@@ -6135,8 +6135,8 @@ packages:
     peerDependencies:
       graphql: 14 - 16
 
-  graphql-request@7.2.0:
-    resolution: {integrity: sha512-0GR7eQHBFYz372u9lxS16cOtEekFlZYB2qOyq8wDvzRmdRSJ0mgUVX1tzNcIzk3G+4NY+mGtSz411wZdeDF/+A==}
+  graphql-request@7.4.0:
+    resolution: {integrity: sha512-xfr+zFb/QYbs4l4ty0dltqiXIp07U6sl+tOKAb0t50/EnQek6CVVBLjETXi+FghElytvgaAWtIOt3EV7zLzIAQ==}
     peerDependencies:
       graphql: 14 - 16
 
@@ -13280,7 +13280,7 @@ snapshots:
       '@oclif/core': 3.26.5
       '@shopify/cli-kit': link:packages/cli-kit
       async: 3.2.6
-      graphql-request: 7.2.0(graphql@16.10.0)
+      graphql-request: 7.4.0(graphql@16.10.0)
     transitivePeerDependencies:
       - graphql
 
@@ -16690,7 +16690,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  graphql-request@7.2.0(graphql@16.10.0):
+  graphql-request@7.4.0(graphql@16.10.0):
     dependencies:
       '@graphql-typed-document-node/core': 3.2.0(graphql@16.10.0)
       graphql: 16.10.0

@@ -70,6 +70,8 @@ describe('fetchTheme', () => {
     const errorResponse = {
       status: 200,
       errors: [{message: 'Tema não existe'} as any],
+      headers: new Headers(),
+      body: '',
     }
     vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError(errorResponse, {query: ''}))
 

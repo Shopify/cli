@@ -154,13 +154,9 @@ describe('graphqlRequest', () => {
     const {'user-agent': userAgent, 'sec-ch-ua-platform': _platform, ...otherHeaders} = headers
     expect(otherHeaders).toMatchInlineSnapshot(`
       {
-        "accept": "*/*",
-        "accept-encoding": "gzip,deflate",
+        "accept": "application/graphql-response+json, application/json",
         "authorization": "Bearer token",
-        "connection": "close",
-        "content-length": "100",
         "content-type": "application/json",
-        "host": "shopify.example",
         "keep-alive": "timeout=30",
         "some": "header",
         "x-shopify-access-token": "Bearer token",
