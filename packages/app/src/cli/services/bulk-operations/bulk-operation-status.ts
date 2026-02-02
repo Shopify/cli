@@ -121,7 +121,6 @@ export async function listBulkOperations(options: ListBulkOperationsOptions): Pr
       query: `created_at:>=${sevenDaysAgo}`,
       first: 100,
       sortKey: 'CREATED_AT',
-      reverse: true,
     },
     version: await resolveApiVersion({
       adminSession,
