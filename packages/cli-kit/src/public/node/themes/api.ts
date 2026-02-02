@@ -22,6 +22,7 @@ import {
 import {MetafieldDefinitionsByOwnerType} from '../../../cli/api/graphql/admin/generated/metafield_definitions_by_owner_type.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {OnlineStorePasswordProtection} from '../../../cli/api/graphql/admin/generated/online_store_password_protection.js'
 import {RequestModeInput} from '../http.js'
 import {adminRequestDoc} from '../api/admin.js'
@@ -110,6 +111,38 @@ export async function fetchThemes(session: AdminSession): Promise<Theme[]> {
     }
 
     after = pageInfo.endCursor as string
+  }
+}
+
+export async function findDevelopmentThemeByName(name: string, session: AdminSession): Promise<Theme | undefined> {
+  recordEvent('theme-api:find-development-theme-by-name')
+
+  const {themes} = await adminRequestDoc({
+    query: FindDevelopmentThemeByName,
+    session,
+    variables: {name},
+    responseOptions: {handleErrors: false},
+    preferredBehaviour: THEME_API_NETWORK_BEHAVIOUR,
+  })
+
+  if (!themes) {
+    unexpectedGraphQLError('Failed to fetch themes')
+  }
+
+  if (themes.nodes.length > 1) {
+    throw recordError(new AbortError(`More than one development theme is named "${name}"`))
+  }
+
+  if (themes.nodes.length === 1) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const {id, processing, role, name} = themes.nodes[0]!
+
+    return buildTheme({
+      id: parseGid(id),
+      processing,
+      role: role.toLowerCase(),
+      name,
+    })
   }
 }
 
