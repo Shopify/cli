@@ -1,7 +1,7 @@
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {execCommand, captureCommandWithExitCode} from '@shopify/cli-kit/node/system'
-import type {AuditContext, TestResult, AssertionResult} from './types.js'
+import type {DoctorContext, TestResult, AssertionResult} from './types.js'
 
 /**
  * Result from running a CLI command
@@ -30,12 +30,12 @@ interface RegisteredTest {
 }
 
 /**
- * Base class for audit test suites.
+ * Base class for doctor test suites.
  *
  * Write tests using the test() method:
  *
  * ```typescript
- * export default class MyTests extends AuditSuite {
+ * export default class MyTests extends DoctorSuite {
  *   static description = 'My test suite'
  *
  *   tests() {
@@ -52,17 +52,17 @@ interface RegisteredTest {
  * }
  * ```
  */
-export abstract class AuditSuite {
-  static description = 'Audit test suite'
+export abstract class DoctorSuite {
+  static description = 'Doctor test suite'
 
-  protected context!: AuditContext
+  protected context!: DoctorContext
   private assertions: AssertionResult[] = []
   private registeredTests: RegisteredTest[] = []
 
   /**
    * Run the entire test suite
    */
-  async runSuite(context: AuditContext): Promise<TestResult[]> {
+  async runSuite(context: DoctorContext): Promise<TestResult[]> {
     this.context = context
     this.registeredTests = []
     const results: TestResult[] = []

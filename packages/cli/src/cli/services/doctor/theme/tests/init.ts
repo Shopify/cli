@@ -1,11 +1,11 @@
-import {AuditSuite} from '../../framework.js'
+import {DoctorSuite} from '../../framework.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getRandomName} from '@shopify/cli-kit/common/string'
 
 /**
  * Tests for `shopify theme init` command
  */
-export default class ThemeInitTests extends AuditSuite {
+export default class ThemeInitTests extends DoctorSuite {
   static description = 'Tests the theme init command creates a valid theme structure'
 
   private themeName = ''
@@ -13,7 +13,7 @@ export default class ThemeInitTests extends AuditSuite {
 
   tests() {
     this.test('init creates theme directory', async () => {
-      this.themeName = `audit-theme-${getRandomName('creative')}`
+      this.themeName = `doctor-theme-${getRandomName('creative')}`
       this.themePath = joinPath(this.context.workingDirectory, this.themeName)
 
       const result = await this.runInteractive(

@@ -1,13 +1,12 @@
-import {runThemeAudit} from '../../../services/audit/theme/runner.js'
+import {runThemeDoctor} from '../../../services/doctor/theme/runner.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 
-export default class AuditTheme extends Command {
-  static description = 'Run all theme command audit tests'
+export default class DoctorTheme extends Command {
+  static description = 'Run all theme command doctor tests'
   static hidden = true
-  static hiddenAliases = ['audit theme']
 
   static flags = {
     ...globalFlags,
@@ -36,9 +35,9 @@ export default class AuditTheme extends Command {
   }
 
   async run(): Promise<void> {
-    const {flags} = await this.parse(AuditTheme)
+    const {flags} = await this.parse(DoctorTheme)
 
-    const results = await runThemeAudit({
+    const results = await runThemeDoctor({
       path: flags.path,
       environment: flags.environment,
       store: flags.store,

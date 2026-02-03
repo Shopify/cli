@@ -1,4 +1,4 @@
-import {AuditSuite} from '../../framework.js'
+import {DoctorSuite} from '../../framework.js'
 
 interface PushJsonOutput {
   theme: {
@@ -14,7 +14,7 @@ interface PushJsonOutput {
 /**
  * Tests for `shopify theme push` command
  */
-export default class ThemePushTests extends AuditSuite {
+export default class ThemePushTests extends DoctorSuite {
   static description = 'Tests pushing a theme to the store creates an unpublished theme'
   static requiresStore = true
 
@@ -27,7 +27,7 @@ export default class ThemePushTests extends AuditSuite {
       }
 
       // Build command
-      const themeName = this.context.themeName ?? 'audit-theme'
+      const themeName = this.context.themeName ?? 'doctor-theme'
       let cmd = `shopify theme push --unpublished --json --path ${this.context.themePath} -t ${themeName}`
 
       if (this.context.environment) {
