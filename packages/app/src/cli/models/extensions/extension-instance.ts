@@ -373,7 +373,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           this.specification.buildConfig.filePatterns,
           this.specification.buildConfig.ignoredFilePatterns,
         )
-      case 'static_app':
+      case 'hosted_app_home':
         await this.copyStaticAssets()
         break
       case 'none':
