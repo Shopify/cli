@@ -1,14 +1,14 @@
-import {AuditSuite} from './framework.js'
+import {DoctorSuite} from './framework.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import type {AuditContext} from './types.js'
+import type {DoctorContext} from './types.js'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
 
 /**
- * Creates a minimal AuditContext for testing
+ * Creates a minimal DoctorContext for testing
  */
-function createTestContext(overrides?: Partial<AuditContext>): AuditContext {
+function createTestContext(overrides?: Partial<DoctorContext>): DoctorContext {
   return {
     workingDirectory: '/test/dir',
     environment: 'test',
@@ -18,9 +18,9 @@ function createTestContext(overrides?: Partial<AuditContext>): AuditContext {
 }
 
 /**
- * Concrete test suite for testing AuditSuite behavior
+ * Concrete test suite for testing DoctorSuite behavior
  */
-class TestSuite extends AuditSuite {
+class TestSuite extends DoctorSuite {
   static description = 'Test suite for framework testing'
 
   private readonly testDefinitions: {name: string; fn: () => Promise<void>}[] = []
@@ -45,9 +45,9 @@ class TestSuite extends AuditSuite {
   }
 }
 
-describe('AuditSuite', () => {
+describe('DoctorSuite', () => {
   let suite: TestSuite
-  let context: AuditContext
+  let context: DoctorContext
 
   beforeEach(() => {
     suite = new TestSuite()
