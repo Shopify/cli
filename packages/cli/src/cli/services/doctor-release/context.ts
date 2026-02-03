@@ -1,7 +1,7 @@
 import {cwd} from '@shopify/cli-kit/node/path'
-import type {AuditContext, ThemeAuditOptions} from './types.js'
+import type {DoctorContext, ThemeDoctorOptions} from './types.js'
 
-export function createAuditContext(options: ThemeAuditOptions): AuditContext {
+export function createDoctorContext(options: ThemeDoctorOptions): DoctorContext {
   return {
     workingDirectory: options.path ?? cwd(),
     environment: options.environment,

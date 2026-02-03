@@ -15,7 +15,7 @@ export interface TestResult {
   error?: Error
 }
 
-export interface AuditContext {
+export interface DoctorContext {
   // Working directory for tests (user's current directory)
   workingDirectory: string
   // Environment name from shopify.theme.toml (required)
@@ -34,7 +34,7 @@ export interface AuditContext {
   data: {[key: string]: unknown}
 }
 
-export interface ThemeAuditOptions {
+export interface ThemeDoctorOptions {
   // Working directory (defaults to cwd)
   path?: string
   // Environment name from shopify.theme.toml (required)

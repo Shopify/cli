@@ -75,9 +75,9 @@ export function reportSummary(results: TestResult[]): void {
   log(colors.bold('─'.repeat(40)))
 
   if (failed > 0) {
-    log(colors.red(colors.bold(`Audit Complete: ${failed}/${total} tests failed`)))
+    log(colors.red(colors.bold(`Doctor Complete: ${failed}/${total} tests failed`)))
   } else {
-    log(colors.green(colors.bold(`Audit Complete: ${passed}/${total} tests passed`)))
+    log(colors.green(colors.bold(`Doctor Complete: ${passed}/${total} tests passed`)))
   }
 
   log(`  Passed: ${colors.green(String(passed))}`)

@@ -1,20 +1,20 @@
 import ThemeInitTests from './tests/init.js'
 import ThemePushTests from './tests/push.js'
-import {createAuditContext} from '../context.js'
+import {createDoctorContext} from '../context.js'
 import {reportTestStart, reportTestResult, reportSuiteStart, reportSummary, initReporter} from '../reporter.js'
-import {AuditSuite} from '../framework.js'
-import type {TestResult, ThemeAuditOptions} from '../types.js'
+import {DoctorSuite} from '../framework.js'
+import type {TestResult, ThemeDoctorOptions} from '../types.js'
 
 // Test suites run in order. If a test relies on another, ensure that test runs after it's dependency.
-const themeSuites: (new () => AuditSuite)[] = [ThemeInitTests, ThemePushTests]
+const themeSuites: (new () => DoctorSuite)[] = [ThemeInitTests, ThemePushTests]
 
 /**
- * Run all theme audit tests.
+ * Run all theme doctor tests.
  * Stops on first failure.
  */
-export async function runThemeAudit(options: ThemeAuditOptions): Promise<TestResult[]> {
+export async function runThemeDoctor(options: ThemeDoctorOptions): Promise<TestResult[]> {
   const results: TestResult[] = []
-  const context = createAuditContext(options)
+  const context = createDoctorContext(options)
 
   // Initialize reporter with working directory
   initReporter(context.workingDirectory)
