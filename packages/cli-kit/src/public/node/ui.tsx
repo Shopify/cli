@@ -426,7 +426,7 @@ export async function renderAutocompletePrompt<T>(
   }
 
   return runWithTimer('cmd_all_timing_prompts_ms')(async () => {
-    let selectedValue: T
+    let selectedValue: T | undefined
     await render(
       <AutocompletePrompt
         {...newProps}
@@ -439,7 +439,14 @@ export async function renderAutocompletePrompt<T>(
         exitOnCtrlC: false,
       },
     )
-    return selectedValue!
+
+    if (selectedValue === undefined) {
+      throw new Error(
+        'Prompt was interrupted before a selection was made. This can happen if the process received a signal, was terminated, or the prompt was aborted.',
+      )
+    }
+
+    return selectedValue
   })
 }
 
