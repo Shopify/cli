@@ -55,7 +55,7 @@ export interface BuildAsset {
 }
 
 type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'static_app'}
+  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'hosted_app_home'}
   | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
