@@ -89,14 +89,14 @@ describe('hosted_app_home', () => {
   })
 
   describe('buildConfig', () => {
-    test('should have static_app build mode', () => {
-      expect(spec.buildConfig).toEqual({mode: 'static_app'})
+    test('should have hosted_app_home build mode', () => {
+      expect(spec.buildConfig).toEqual({mode: 'hosted_app_home'})
     })
   })
 
   describe('identifier', () => {
     test('should have correct identifier', () => {
-      expect(spec.identifier).toBe('hosted_app')
+      expect(spec.identifier).toBe('hosted_app_home')
     })
   })
 })
