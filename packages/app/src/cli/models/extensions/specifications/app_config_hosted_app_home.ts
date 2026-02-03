@@ -12,11 +12,11 @@ const HostedAppHomeTransformConfig: TransformationConfig = {
   static_root: 'static_root',
 }
 
-export const HostedAppHomeSpecIdentifier = 'hosted_app'
+export const HostedAppHomeSpecIdentifier = 'hosted_app_home'
 
 const hostedAppHomeSpec = createConfigExtensionSpecification({
   identifier: HostedAppHomeSpecIdentifier,
-  buildConfig: {mode: 'static_app'} as const,
+  buildConfig: {mode: 'hosted_app_home'} as const,
   schema: HostedAppHomeSchema,
   transformConfig: HostedAppHomeTransformConfig,
   copyStaticAssets: async (config, directory, outputPath) => {
