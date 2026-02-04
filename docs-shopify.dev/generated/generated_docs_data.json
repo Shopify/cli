@@ -101,6 +101,115 @@
     "related": []
   },
   {
+    "name": "app bulk cancel",
+    "description": "Cancels a running bulk operation by ID.",
+    "overviewPreviewDescription": "Cancel a bulk operation.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app bulk cancel",
+            "code": "shopify app bulk cancel [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app bulk cancel"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app bulk cancel` command:",
+        "type": "appbulkcancel",
+        "typeDefinitions": {
+          "appbulkcancel": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+            "name": "appbulkcancel",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_CLIENT_ID"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--id <value>",
+                "value": "string",
+                "description": "The bulk operation ID to cancel (numeric ID or full GID).",
+                "environmentValue": "SHOPIFY_FLAG_ID"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_RESET"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "The store domain. Must be an existing dev store.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              }
+            ],
+            "value": "export interface appbulkcancel {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * The bulk operation ID to cancel (numeric ID or full GID).\n   * @environment SHOPIFY_FLAG_ID\n   */\n  '--id <value>': string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * The store domain. Must be an existing dev store.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "app",
+    "related": []
+  },
+  {
     "name": "app bulk execute",
     "description": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk status`](/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.",
     "overviewPreviewDescription": "Execute bulk operations.",
