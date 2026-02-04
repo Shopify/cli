@@ -1,5 +1,5 @@
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {isAbsolutePath, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {execCommand, captureCommandWithExitCode} from '@shopify/cli-kit/node/system'
 import type {DoctorContext, TestResult, AssertionResult} from './types.js'
 
@@ -226,7 +226,7 @@ export abstract class DoctorSuite {
    * Assert that a file exists and optionally matches content
    */
   protected async assertFile(path: string, contentPattern?: RegExp | string, message?: string): Promise<void> {
-    const fullPath = path.startsWith('/') ? path : joinPath(this.context.workingDirectory, path)
+    const fullPath = isAbsolutePath(path) ? path : joinPath(this.context.workingDirectory, path)
     const displayPath = relativePath(this.context.workingDirectory, fullPath)
     const exists = await fileExists(fullPath)
 
@@ -264,7 +264,7 @@ export abstract class DoctorSuite {
    * Assert that a file does not exist
    */
   protected async assertNoFile(path: string, message?: string): Promise<void> {
-    const fullPath = path.startsWith('/') ? path : joinPath(this.context.workingDirectory, path)
+    const fullPath = isAbsolutePath(path) ? path : joinPath(this.context.workingDirectory, path)
     const displayPath = relativePath(this.context.workingDirectory, fullPath)
     const exists = await fileExists(fullPath)
     this.assertions.push({
@@ -279,7 +279,7 @@ export abstract class DoctorSuite {
    * Assert that a directory exists
    */
   protected async assertDirectory(path: string, message?: string): Promise<void> {
-    const fullPath = path.startsWith('/') ? path : joinPath(this.context.workingDirectory, path)
+    const fullPath = isAbsolutePath(path) ? path : joinPath(this.context.workingDirectory, path)
     const displayPath = relativePath(this.context.workingDirectory, fullPath)
     const exists = await fileExists(fullPath)
     this.assertions.push({

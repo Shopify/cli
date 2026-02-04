@@ -29,19 +29,13 @@ export default class ThemeInitTests extends DoctorSuite {
     this.test('essential theme files exist', async () => {
       const essentialFiles = ['layout/theme.liquid', 'config/settings_schema.json', 'templates/index.json']
 
-      for (const file of essentialFiles) {
-        // eslint-disable-next-line no-await-in-loop
-        await this.assertFile(joinPath(this.themePath, file))
-      }
+      await Promise.all(essentialFiles.map((file) => this.assertFile(joinPath(this.themePath, file))))
     })
 
     this.test('theme directories exist', async () => {
       const directories = ['sections', 'snippets', 'assets', 'locales']
 
-      for (const dir of directories) {
-        // eslint-disable-next-line no-await-in-loop
-        await this.assertDirectory(joinPath(this.themePath, dir))
-      }
+      await Promise.all(directories.map((dir) => this.assertDirectory(joinPath(this.themePath, dir))))
     })
 
     this.test('layout/theme.liquid has valid content', async () => {
