@@ -126,6 +126,50 @@ describe('dev proxy', () => {
         `"<https://cdn.shopify.com>; rel=\\"preconnect\\", <https://cdn.shopify.com>; rel=\\"preconnect\\"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as=\\"style\\"; rel=\\"preload\\""`,
       )
     })
+
+    test('proxies beacon endpoint URLs to local server', () => {
+      const content = html`<html>
+        <head></head>
+        <body>
+          <div data-shs-beacon-endpoint="https://my-store.myshopify.com/api/collect"></div>
+        </body>
+      </html>`
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
+        "<html>
+                <head></head>
+                <body>
+                  <div data-shs-beacon-endpoint=\\"/api/collect\\"></div>
+                </body>
+              </html>"
+      `)
+    })
+
+    test('proxies beacon endpoint URLs with single quotes', () => {
+      const content = `<div data-shs-beacon-endpoint='https://my-store.myshopify.com/api/collect'></div>`
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(
+        `"<div data-shs-beacon-endpoint='/api/collect'></div>"`,
+      )
+    })
+
+    test('proxies multiple beacon endpoint URLs in the same content', () => {
+      const content = html`<html>
+        <body>
+          <div data-shs-beacon-endpoint="https://my-store.myshopify.com/api/collect"></div>
+          <span data-shs-beacon-endpoint="https://my-store.myshopify.com/api/collect"></span>
+        </body>
+      </html>`
+
+      expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
+        "<html>
+                <body>
+                  <div data-shs-beacon-endpoint=\\"/api/collect\\"></div>
+                  <span data-shs-beacon-endpoint=\\"/api/collect\\"></span>
+                </body>
+              </html>"
+      `)
+    })
   })
 
   describe('patchRenderingResponse', () => {
