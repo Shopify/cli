@@ -456,8 +456,8 @@ importers:
         specifier: 10.20.1
         version: 10.20.1
       lodash:
-        specifier: 4.17.21
-        version: 4.17.21
+        specifier: 4.17.23
+        version: 4.17.23
       macaddress:
         specifier: 0.5.3
         version: 0.5.3
@@ -6299,21 +6299,23 @@ packages:
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@11.0.3:
     resolution: {integrity: sha512-2Nim7dha1KVkaiF4q6Dj+ngPPMdfvLJEOpZk/jKiUAkqKebpGAWQXAq9z1xu9HKu5lWfqw/FASuccEjyznjPaA==}
     engines: {node: 20 || >=22}
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
     hasBin: true
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
     engines: {node: '>=12'}
-    deprecated: Glob versions prior to v9 are no longer supported
+    deprecated: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
 
   global-agent@3.0.0:
     resolution: {integrity: sha512-PT6XReJ+D07JvGoxQMkT6qji/jVNfX/h364XHZOWeRzy64sSFr+xJ5OX7LI3b4MPQzdL4H8Y8M0xzPpsVMwA8Q==}
@@ -7241,6 +7243,9 @@ packages:
 
   lodash@4.17.21:
     resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
+
+  lodash@4.17.23:
+    resolution: {integrity: sha512-LgVTMpQtIopCi79SJeDiP0TfWi5CNEc/L/aRdTh3yIvmZXTnheWpKjSZhnvMl8iXbC1tFg9gdHHDMLoV7CnG+w==}
 
   log-symbols@4.1.0:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
@@ -11937,7 +11942,7 @@ snapshots:
       common-tags: 1.8.2
       graphql: 16.10.0
       import-from: 4.0.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       tslib: 2.4.1
 
   '@graphql-codegen/plugin-helpers@5.1.0(graphql@16.10.0)':
@@ -11947,7 +11952,7 @@ snapshots:
       common-tags: 1.8.2
       graphql: 16.10.0
       import-from: 4.0.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       tslib: 2.6.3
 
   '@graphql-codegen/plugin-helpers@5.1.1(graphql@16.10.0)':
@@ -11957,7 +11962,7 @@ snapshots:
       common-tags: 1.8.2
       graphql: 16.10.0
       import-from: 4.0.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       tslib: 2.6.3
     optional: true
 
@@ -11968,7 +11973,7 @@ snapshots:
       common-tags: 1.8.2
       graphql: 16.10.0
       import-from: 4.0.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       tslib: 2.6.3
 
   '@graphql-codegen/schema-ast@4.1.0(graphql@16.10.0)':
@@ -12510,7 +12515,7 @@ snapshots:
       https-proxy-agent: 7.0.6
       jose: 5.9.6
       js-yaml: 4.1.1
-      lodash: 4.17.21
+      lodash: 4.17.23
       scuid: 1.1.0
       tslib: 2.8.1
       yaml-ast-parser: 0.0.43
@@ -13282,7 +13287,7 @@ snapshots:
       ansis: 3.17.0
       debug: 4.4.3(supports-color@8.1.1)
       http-call: 5.3.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       registry-auth-token: 5.1.0
     transitivePeerDependencies:
       - supports-color
@@ -13997,7 +14002,7 @@ snapshots:
       cross-fetch: 4.1.0
       jsonc-parser: 3.3.1
       line-column: 1.0.2
-      lodash: 4.17.21
+      lodash: 4.17.23
       minimatch: 9.0.5
       vscode-json-languageservice: 5.5.0
       vscode-uri: 3.1.0
@@ -17608,7 +17613,7 @@ snapshots:
       code-excerpt: 4.0.0
       indent-string: 5.0.0
       is-in-ci: 0.1.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       patch-console: 2.0.0
       react: 18.3.1
       react-reconciler: 0.29.2(react@18.3.1)
@@ -17669,7 +17674,7 @@ snapshots:
       cli-cursor: 3.1.0
       cli-width: 3.0.0
       figures: 3.2.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       mute-stream: 0.0.8
       ora: 5.4.1
       run-async: 2.4.1
@@ -18266,6 +18271,8 @@ snapshots:
 
   lodash@4.17.21: {}
 
+  lodash@4.17.23: {}
+
   log-symbols@4.1.0:
     dependencies:
       chalk: 4.1.2
@@ -18800,7 +18807,7 @@ snapshots:
       fs-extra: 8.1.0
       github-slugger: 2.0.0
       got: 13.0.0
-      lodash: 4.17.21
+      lodash: 4.17.23
       normalize-package-data: 6.0.2
       semver: 7.7.3
       sort-package-json: 2.15.1
