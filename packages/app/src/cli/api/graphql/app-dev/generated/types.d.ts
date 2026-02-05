@@ -44,10 +44,10 @@ export type Scalars = {
    * For example, `"https://example.myshopify.com"` is a valid URL. It includes a scheme (`https`) and a host
    * (`example.myshopify.com`).
    */
-  URL: {input: string; output: string}
-}
+  URL: { input: string; output: string; }
+};
 
 /** The code for a dev session warning. */
 export type DevSessionWarningCode =
   /** Another user's dev session was overwritten. */
-  'SESSION_TAKEOVER'
+  | 'SESSION_TAKEOVER';
