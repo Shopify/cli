@@ -36,6 +36,7 @@ import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -44,6 +45,13 @@ vi.mock('@shopify/cli-kit/node/environment')
 vi.mock('@shopify/theme')
 vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('@shopify/cli-kit/node/context/fqdn', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/context/fqdn')>()
+  return {
+    ...original,
+    adminFqdn: vi.fn(),
+  }
+})
 
 beforeEach(() => {
   // mocked for draft extensions
@@ -71,6 +79,7 @@ beforeEach(() => {
   })
   // By default, firstPartyDev is false (local dev console only shown for 1P devs)
   vi.mocked(firstPartyDev).mockReturnValue(false)
+  vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
 })
 
 const appContextResult = {
@@ -167,7 +176,7 @@ describe('setup-dev-processes', () => {
     })
 
     // Dev console is NOT shown by default (only shown for 1P devs)
-    expect(res.previewUrl).toBe('https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key')
+    expect(res.previewUrl).toBe('https://admin.shopify.com/store/store/apps/api-key')
     expect(res.processes[0]).toMatchObject({
       type: 'web',
       prefix: 'web-backend-frontend',
@@ -197,7 +206,7 @@ describe('setup-dev-processes', () => {
         apiKey: 'api-key',
         apiSecret: 'api-secret',
         port: expect.any(Number),
-        appUrl: 'https://store.myshopify.io/admin/oauth/redirect_from_cli?client_id=api-key',
+        appUrl: 'https://admin.shopify.com/store/store/apps/api-key',
         key: 'somekey',
         storeFqdn: 'store.myshopify.io',
       },
