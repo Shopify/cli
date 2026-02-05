@@ -88,8 +88,7 @@ export default abstract class ThemeCommand extends Command {
         throw new AbortError(`Please provide a valid environment.`)
       }
 
-      const shouldCreateSession = commandRequiresAuth && (storeIsRequired || flags.store)
-      const session = shouldCreateSession ? await this.createSession(flags) : undefined
+      const session = commandRequiresAuth ? await this.createSession(flags) : undefined
       const commandName = this.constructor.name.toLowerCase()
 
       recordEvent(`theme-command:${commandName}:single-env:authenticated`)

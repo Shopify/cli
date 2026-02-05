@@ -6326,6 +6326,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:init",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6363,6 +6364,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:language-server",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
@@ -6705,6 +6707,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:package",
+      "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",

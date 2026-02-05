@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {packageTheme} from '../../services/package.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {InferredFlags} from '@oclif/core/interfaces'
@@ -22,6 +22,8 @@ export default class Package extends ThemeCommand {
     ...globalFlags,
     path: themeFlags.path,
   }
+
+  static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: PackageFlags) {
     await packageTheme(flags.path)
