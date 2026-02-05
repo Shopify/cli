@@ -1,6 +1,6 @@
 import {ThemeManager} from './theme-manager.js'
 import {Theme} from './types.js'
-import {fetchTheme, themeCreate} from './api.js'
+import {fetchTheme, findDevelopmentThemeByName, themeCreate} from './api.js'
 import {DEVELOPMENT_THEME_ROLE, UNPUBLISHED_THEME_ROLE} from './utils.js'
 import {BugError} from '../error.js'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
@@ -92,10 +92,24 @@ describe('ThemeManager', () => {
       expect(result).toEqual(mockTheme)
       expect(manager.getStoredThemeId()).toBe('123')
     })
+
+    test('searches through development themes of a given name', async () => {
+      // Given
+      vi.mocked(findDevelopmentThemeByName).mockResolvedValue(mockTheme)
+
+      // When
+      const result = await manager.findOrCreate('Dev', DEVELOPMENT_THEME_ROLE)
+
+      // Then
+      expect(fetchTheme).not.toHaveBeenCalled()
+      expect(findDevelopmentThemeByName).toHaveBeenCalledWith('Dev', session)
+      expect(result).toEqual(mockTheme)
+      expect(themeCreate).not.toHaveBeenCalled()
+    })
   })
 
   describe('fetch', () => {
-    test('returns undefined when no themeId is set', async () => {
+    test('returns undefined when no themeId or name is set', async () => {
       // Given
       manager.setThemeId(undefined)
 
@@ -117,6 +131,19 @@ describe('ThemeManager', () => {
 
       // Then
       expect(fetchTheme).toHaveBeenCalledWith(123, session)
+      expect(result).toEqual(mockTheme)
+    })
+
+    test('fetches and returns a theme when name is set and role is development', async () => {
+      // Given
+      vi.mocked(findDevelopmentThemeByName).mockResolvedValue(mockTheme)
+
+      // When
+      const result = await manager.fetch('Dev', DEVELOPMENT_THEME_ROLE)
+
+      // Then
+      expect(fetchTheme).not.toHaveBeenCalled()
+      expect(findDevelopmentThemeByName).toHaveBeenCalledWith('Dev', session)
       expect(result).toEqual(mockTheme)
     })
 

@@ -13,6 +13,12 @@ export interface themepush {
   '-d, --development'?: ''
 
   /**
+   * Unique identifier for a development theme context (e.g., PR number, branch name). Reuses an existing development theme with this context name, or creates one if none exists.
+   * @environment SHOPIFY_FLAG_DEVELOPMENT_CONTEXT
+   */
+  '-c, --development-context <value>'?: string
+
+  /**
    * The environment to apply to the current command.
    * @environment SHOPIFY_FLAG_ENVIRONMENT
    */

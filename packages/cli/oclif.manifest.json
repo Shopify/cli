@@ -7081,6 +7081,21 @@
           "name": "development",
           "type": "boolean"
         },
+        "development-context": {
+          "char": "c",
+          "dependsOn": [
+            "development"
+          ],
+          "description": "Unique identifier for a development theme context (e.g., PR number, branch name). Reuses an existing development theme with this context name, or creates one if none exists.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT_CONTEXT",
+          "exclusive": [
+            "theme"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "development-context",
+          "type": "option"
+        },
         "environment": {
           "char": "e",
           "description": "The environment to apply to the current command.",

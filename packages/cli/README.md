@@ -2612,31 +2612,36 @@ USAGE
   $ shopify theme push --unpublished --json
 
 FLAGS
-  -a, --allow-live              [env: SHOPIFY_FLAG_ALLOW_LIVE] Allow push to a live theme.
-  -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Push theme files from your remote development theme.
-  -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
-  -l, --live                    [env: SHOPIFY_FLAG_LIVE] Push theme files from your remote live theme.
-  -n, --nodelete                [env: SHOPIFY_FLAG_NODELETE] Prevent deleting remote files that don't exist locally.
-  -o, --only=<value>...         [env: SHOPIFY_FLAG_ONLY] Upload only the specified files (Multiple flags allowed). Wrap
-                                the value in double quotes if you're using wildcards.
-  -p, --publish                 [env: SHOPIFY_FLAG_PUBLISH] Publish as the live theme after uploading.
-  -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
-                                myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
-  -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
-  -u, --unpublished             [env: SHOPIFY_FLAG_UNPUBLISHED] Create a new unpublished theme and push to it.
-  -x, --ignore=<value>...       [env: SHOPIFY_FLAG_IGNORE] Skip uploading the specified files (Multiple flags allowed).
-                                Wrap the value in double quotes if you're using wildcards.
-      --listing=<value>         [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes. Applies
-                                preset files from listings/[preset-name] directory.
-      --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
-                                API token.
-      --path=<value>            [env: SHOPIFY_FLAG_PATH] The path where you want to run the command. Defaults to the
-                                current working directory.
-      --strict                  [env: SHOPIFY_FLAG_STRICT_PUSH] Require theme check to pass without errors before
-                                pushing. Warnings are allowed.
-      --verbose                 [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+  -a, --allow-live                   [env: SHOPIFY_FLAG_ALLOW_LIVE] Allow push to a live theme.
+  -c, --development-context=<value>  [env: SHOPIFY_FLAG_DEVELOPMENT_CONTEXT] Unique identifier for a development theme
+                                     context (e.g., PR number, branch name). Reuses an existing development theme with
+                                     this context name, or creates one if none exists.
+  -d, --development                  [env: SHOPIFY_FLAG_DEVELOPMENT] Push theme files from your remote development
+                                     theme.
+  -e, --environment=<value>...       [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+  -j, --json                         [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -l, --live                         [env: SHOPIFY_FLAG_LIVE] Push theme files from your remote live theme.
+  -n, --nodelete                     [env: SHOPIFY_FLAG_NODELETE] Prevent deleting remote files that don't exist
+                                     locally.
+  -o, --only=<value>...              [env: SHOPIFY_FLAG_ONLY] Upload only the specified files (Multiple flags allowed).
+                                     Wrap the value in double quotes if you're using wildcards.
+  -p, --publish                      [env: SHOPIFY_FLAG_PUBLISH] Publish as the live theme after uploading.
+  -s, --store=<value>                [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the
+                                     full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+  -t, --theme=<value>                [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+  -u, --unpublished                  [env: SHOPIFY_FLAG_UNPUBLISHED] Create a new unpublished theme and push to it.
+  -x, --ignore=<value>...            [env: SHOPIFY_FLAG_IGNORE] Skip uploading the specified files (Multiple flags
+                                     allowed). Wrap the value in double quotes if you're using wildcards.
+      --listing=<value>              [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes.
+                                     Applies preset files from listings/[preset-name] directory.
+      --no-color                     [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --password=<value>             [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an
+                                     Admin API token.
+      --path=<value>                 [env: SHOPIFY_FLAG_PATH] The path where you want to run the command. Defaults to
+                                     the current working directory.
+      --strict                       [env: SHOPIFY_FLAG_STRICT_PUSH] Require theme check to pass without errors before
+                                     pushing. Warnings are allowed.
+      --verbose                      [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
   Uploads your local theme files to the connected store, overwriting the remote version if specified.
