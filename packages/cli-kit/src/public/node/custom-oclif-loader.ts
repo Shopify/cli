@@ -42,7 +42,7 @@ export class ShopifyConfig extends Config {
       // Let OCLIF load all commands first, then manually replace bundled hydrogen
       // commands with external ones after loading completes.
       const externalHydrogenPlugin = Array.from(this.plugins.values()).find(
-        (p) => p.name === '@shopify/cli-hydrogen' && !p.isRoot,
+        (plugin) => plugin.name === '@shopify/cli-hydrogen' && !plugin.isRoot,
       )
 
       if (externalHydrogenPlugin) {
