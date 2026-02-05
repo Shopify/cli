@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable jsdoc/require-throws */
 /* eslint-disable no-restricted-imports */
@@ -6,9 +5,7 @@
 import {outputDebug} from './output.js'
 import {exec, spawn} from 'child_process'
 
-interface ProcessTree {
-  [key: string]: string[]
-}
+type ProcessTree = Record<string, string[]>
 
 type AfterKillCallback = (error?: Error) => void
 

@@ -2,6 +2,7 @@ import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
+import {outputContent, outputDebug, outputToken} from './output.js'
 import {
   recordTiming as storageRecordTiming,
   recordError as storageRecordError,
@@ -10,7 +11,6 @@ import {
   compileData as storageCompileData,
   RuntimeData,
 } from '../../private/node/analytics/storage.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
@@ -18,6 +18,7 @@ import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {reportingRateLimit} from '../../private/node/constants.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {requestIdsCollection} from '../../private/node/request-ids.js'
+
 import {Interfaces} from '@oclif/core'
 
 export type CommandExitMode =

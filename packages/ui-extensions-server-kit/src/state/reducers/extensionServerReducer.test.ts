@@ -103,7 +103,7 @@ describe('extensionServerReducer()', () => {
     const action = createRefreshAction([{uuid: extension.uuid}])
 
     const state1 = extensionServerReducer(previousState, action)
-    // eslint-disable-next-line node/no-unsupported-features/node-builtins
+
     const url1 = new URL(state1.extensions[0].assets.main.url)
     const timestamp1 = url1.searchParams.get('lastUpdated') ?? ''
 
@@ -113,7 +113,7 @@ describe('extensionServerReducer()', () => {
     await new Promise((resolve) => setTimeout(resolve, 1))
 
     const state2 = extensionServerReducer(state1, action)
-    // eslint-disable-next-line node/no-unsupported-features/node-builtins
+
     const url2 = new URL(state2.extensions[0].assets.main.url)
     const timestamp2 = url2.searchParams.get('lastUpdated') ?? ''
 

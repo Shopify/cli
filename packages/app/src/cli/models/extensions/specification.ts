@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
@@ -159,8 +158,9 @@ type ForbiddenFields =
 /**
  * Partial ExtensionSpec type used when creating a new ExtensionSpec, the only mandatory field is the identifier
  */
-interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType>
-  extends Partial<Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>> {
+interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseConfigType> extends Partial<
+  Omit<ExtensionSpecification<TConfiguration>, ForbiddenFields>
+> {
   identifier: string
   appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
   schema?: ZodSchemaType<TConfiguration>
@@ -378,7 +378,7 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
       result[key] = defaultAppConfigReverseTransform(innerSchema, content)
     } else {
       if (content[key] !== undefined) result[key] = content[key]
-      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+
       delete content[key]
     }
     return result

@@ -1,18 +1,26 @@
-type ThrottledFunction<T extends (...args: any) => any> = (...args: Parameters<T>) => ReturnType<T>
+type ThrottledFunction<T extends (...args: unknown[]) => unknown> = (...args: Parameters<T>) => ReturnType<T>
 
 interface ThrottleOptions {
   leading?: boolean
   trailing?: boolean
 }
 
-export function throttle<T extends (...args: any) => any>(
+/**
+ *
+ * @param func
+ * @param wait
+ * @param root0
+ * @param root0.leading
+ * @param root0.trailing
+ */
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number,
   {leading = true, trailing = true}: ThrottleOptions = {},
 ): ThrottledFunction<T> {
   let lastArgs: Parameters<T> | null
   let result: ReturnType<T>
-  let context: any
+  let context: unknown
   let timeout: ReturnType<typeof setTimeout> | null = null
   let previous = 0
 
@@ -20,13 +28,13 @@ export function throttle<T extends (...args: any) => any>(
     previous = leading === false ? 0 : Date.now()
     timeout = null
     if (lastArgs) {
-      result = func.apply(context, lastArgs)
+      result = func.apply(context, lastArgs) as ReturnType<T>
     }
     context = null
     lastArgs = null
   }
 
-  return function (this: any, ...args: Parameters<T>): ReturnType<T> {
+  return function (this: unknown, ...args: Parameters<T>): ReturnType<T> {
     const now = Date.now()
     if (!previous && leading === false) previous = now
 
@@ -41,7 +49,7 @@ export function throttle<T extends (...args: any) => any>(
       }
       previous = now
       if (lastArgs) {
-        result = func.apply(context, lastArgs)
+        result = func.apply(context, lastArgs) as ReturnType<T>
       }
       context = null
       lastArgs = null

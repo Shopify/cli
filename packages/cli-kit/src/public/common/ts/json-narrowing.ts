@@ -6,7 +6,7 @@ import {BugError} from '../../node/error.js'
  * @param unknownBlob - The unknown object to validate.
  * @throws BugError - Thrown if the unknownBlob is not a string map.
  */
-export function assertStringMap(unknownBlob: unknown): asserts unknownBlob is {[key: string]: string} {
+export function assertStringMap(unknownBlob: unknown): asserts unknownBlob is Record<string, string> {
   if (typeof unknownBlob !== 'object' || unknownBlob === null) {
     throw new BugError('Expected an object.')
   }

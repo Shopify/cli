@@ -2,6 +2,7 @@ import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import {shouldDisplayColors} from '../../../../public/node/output.js'
 import React from 'react'
+
 import {Box, Text} from 'ink'
 
 const loadingBarChar = '▀'

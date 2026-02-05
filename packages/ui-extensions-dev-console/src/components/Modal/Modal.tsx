@@ -1,10 +1,9 @@
-import {Dialog, Header, Backdrop} from './components'
 import styles from './Modal.module.scss'
-
+import {Dialog, Header, Backdrop} from './components'
+import {ModalContainerId} from '@/foundation/ModalContainer'
 import {TransitionGroup} from 'react-transition-group'
 import React, {useState} from 'react'
 import {createPortal} from 'react-dom'
-import {ModalContainerId} from '@/foundation/ModalContainer'
 
 export interface ModalProps {
   /** Whether the modal is open or not */

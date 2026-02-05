@@ -146,7 +146,7 @@ function outputUpgradeMessage(currentVersion: string, newestVersion: string): vo
 
 async function installJsonDependencies(
   depsEnv: DependencyType,
-  deps: {[key: string]: string},
+  deps: Record<string, string>,
   directory: string,
 ): Promise<void> {
   const packagesToUpdate = [await cliDependency(), ...(await oclifPlugins())]

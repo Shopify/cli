@@ -4,6 +4,7 @@ import {unstyled, TokenizedString} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {Stdout} from '../../ui.js'
 import React from 'react'
+
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {useStdout} from 'ink'
 

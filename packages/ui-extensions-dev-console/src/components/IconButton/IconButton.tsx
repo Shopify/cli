@@ -1,7 +1,7 @@
 import * as styles from './IconButton.module.scss'
-import React from 'react'
 import {Icon, IconProps} from '@/components/Icon'
 import {classNames} from '@/utilities/css'
+import React from 'react'
 
 interface IconButtonProps extends React.HTMLProps<HTMLButtonElement>, IconProps {
   type: 'button' | 'submit' | 'reset' | undefined

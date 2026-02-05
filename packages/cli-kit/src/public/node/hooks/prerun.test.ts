@@ -2,6 +2,7 @@ import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
 import {checkForCachedNewVersion, packageManagerFromUserAgent} from '../node-package-manager.js'
 import {cacheClear} from '../../../private/node/conf-store.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
+
 import {describe, expect, test, vi, afterEach, beforeEach} from 'vitest'
 
 vi.mock('../node-package-manager')

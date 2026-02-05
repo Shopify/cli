@@ -1,4 +1,4 @@
-import {captureOutput} from '../node/system.js'
+import {captureOutput} from './system.js'
 import which from 'which'
 import {satisfies} from 'semver'
 /**

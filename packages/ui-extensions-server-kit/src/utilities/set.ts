@@ -1,9 +1,13 @@
 /**
  * Deep sets an object in a type-safe way
  */
-export function set<TObject, TValue>(obj: TObject, pathFn: (o: TObject) => TValue, value: TValue) {
+export function set<TObject extends object, TValue>(
+  obj: TObject,
+  pathFn: (o: TObject) => TValue,
+  value: TValue,
+): TObject {
   const path: string[] = []
-  const proxy: any = new Proxy(
+  const proxy: unknown = new Proxy(
     {},
     {
       get: (_, prop: string) => {
@@ -12,11 +16,12 @@ export function set<TObject, TValue>(obj: TObject, pathFn: (o: TObject) => TValu
       },
     },
   )
-  pathFn(proxy)
+  pathFn(proxy as TObject)
 
-  const newObj: TObject = {...obj}
+  const newObj = {...obj}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let current: any = newObj
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const lastKey = path.pop()!
 
   for (const key of path) {

@@ -175,9 +175,8 @@ async function convertStoreToTransferDisabled(
       shopId: store.shopId,
     },
   }
-  const result: ConvertDevToTransferDisabledSchema = await developerPlatformClient.convertToTransferDisabledStore(
-    variables,
-  )
+  const result: ConvertDevToTransferDisabledSchema =
+    await developerPlatformClient.convertToTransferDisabledStore(variables)
   if (!result.convertDevToTestStore.convertedToTestStore) {
     const errors = result.convertDevToTestStore.userErrors.map((error) => error.message).join(', ')
     throw new BugError(

@@ -1,12 +1,12 @@
-import * as styles from './PreviewLink.module.scss'
 import en from './translations/en.json'
+import * as styles from './PreviewLink.module.scss'
 import {useNavigate} from '../../hooks/useNavigate.js'
+import {IconButton} from '@/components/IconButton'
+import {isEmbedded} from '@/utilities/embedded'
 import React from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ClipboardIcon} from '@shopify/polaris-icons'
 import {toast} from 'react-toastify'
-import {IconButton} from '@/components/IconButton'
-import {isEmbedded} from '@/utilities/embedded'
 
 interface Props {
   rootUrl: string

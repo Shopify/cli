@@ -1,6 +1,7 @@
 import {Notifier} from './notifier.js'
 import {vi, describe, expect, test} from 'vitest'
 import {outputWarn} from '@shopify/cli-kit/node/output'
+
 import fs from 'fs/promises'
 
 vi.mock('fs/promises')

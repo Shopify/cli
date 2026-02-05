@@ -1,5 +1,5 @@
-import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
+import {upgrade} from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, vi, test} from 'vitest'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'

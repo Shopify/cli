@@ -6,12 +6,14 @@ import {hotReloadScriptId} from './hot-reload/server.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
+
 import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
@@ -211,7 +213,7 @@ describe('setupDevServer', () => {
     const html = String.raw
     const decoder = new TextDecoder()
 
-    const createH3Event = (options: {url: string; headers?: {[key: string]: string}}) => {
+    const createH3Event = (options: {url: string; headers?: Record<string, string>}) => {
       const req = new IncomingMessage(new Socket())
       req.url = options.url
       if (options.headers) req.headers = options.headers
@@ -221,7 +223,7 @@ describe('setupDevServer', () => {
 
     const dispatchEvent = async (
       url: string,
-      headers?: {[key: string]: string},
+      headers?: Record<string, string>,
     ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
       const event = createH3Event({url, headers})
       const {res} = event.node

@@ -14,6 +14,7 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
+
 import {Writable} from 'stream'
 
 interface PullOptions {

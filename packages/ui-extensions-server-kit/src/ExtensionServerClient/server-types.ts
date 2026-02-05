@@ -1,7 +1,8 @@
 import {Surface} from './types.js'
-import {ExtensionPayload, ExtensionPoint} from '../types'
-import {FlattenedLocalization, Localization} from '../i18n'
+import {ExtensionPayload, ExtensionPoint, App} from '../types'
+import {FlattenedLocalization, LocalesOptions, Localization} from '../i18n'
 
+// Re-export and augment the global ExtensionServer namespace
 export namespace ExtensionServer {
   export interface UIExtension extends ExtensionPayload {
     extensionPoints: ExtensionPoint[]
@@ -29,24 +30,33 @@ export namespace ExtensionServer {
       protocols?: string | string[]
     }
     surface?: Surface
-    locales?: any
+    locales?: LocalesOptions
   }
 
   export interface ServerEvents {
     event: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any
   }
 
-  export interface InboundEvents {
-    [key: string]: any
+  export interface InboundEvents extends DispatchEvents {
+    dispatch: {type: keyof DispatchEvents; payload: DispatchEvents[keyof DispatchEvents]}
+    connected: {extensions: ExtensionPayload[]; app?: App; store: string}
+    update: {extensions?: ExtensionPayload[]; app?: App}
   }
 
   export interface OutboundPersistEvents {
-    [key: string]: any
+    update: {
+      extensions?: ExtensionPayload[]
+      app?: App
+    }
   }
 
   export interface DispatchEvents {
-    [key: string]: any
+    refresh: {uuid: string}[]
+    focus: {uuid: string}[]
+    unfocus: void
+    navigate: {url: string}
   }
 
   export type EmitArgs<TEvent extends keyof DispatchEvents> = undefined extends DispatchEvents[TEvent]

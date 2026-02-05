@@ -4,6 +4,7 @@ import {AppInfo} from '../world/index.js'
 import * as path from 'pathe'
 import {When, Then} from '@cucumber/cucumber'
 import fs from 'fs-extra'
+
 import {strict as assert} from 'assert'
 
 When(
@@ -102,7 +103,7 @@ interface GenerateExtensionArgs {
   type: string
   directory: string
   extraArgs: string[]
-  env: {[key: string]: string}
+  env: Record<string, string>
 }
 async function generateExtension({name, type, directory, extraArgs, env}: GenerateExtensionArgs) {
   try {
