@@ -1,5 +1,9 @@
 ├─ app
 │  ├─ build
+│  ├─ bulk
+│  │  ├─ cancel
+│  │  ├─ execute
+│  │  └─ status
 │  ├─ config
 │  │  ├─ link
 │  │  ├─ pull
@@ -10,6 +14,7 @@
 │  ├─ env
 │  │  ├─ pull
 │  │  └─ show
+│  ├─ execute
 │  ├─ function
 │  │  ├─ build
 │  │  ├─ info
