@@ -1,6 +1,6 @@
 import {captureOutput} from '../node/system.js'
 import which from 'which'
-import {satisfies} from 'semver'
+import {satisfies, SemVer} from 'semver'
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -52,4 +52,19 @@ export async function globalCLIVersion(): Promise<string | undefined> {
  */
 export function isPreReleaseVersion(version: string): boolean {
   return version.startsWith('0.0.0')
+}
+
+/**
+ * Checks if there is a major version change between two versions.
+ * Pre-release versions (0.0.0-*) are treated as not having a major version change.
+ *
+ * @param currentVersion - The current version.
+ * @param newerVersion - The newer version to compare against.
+ * @returns True if there is a major version change.
+ */
+export function isMajorVersionChange(currentVersion: string, newerVersion: string): boolean {
+  if (isPreReleaseVersion(currentVersion) || isPreReleaseVersion(newerVersion)) return false
+  const currentSemVer = new SemVer(currentVersion)
+  const newerSemVer = new SemVer(newerVersion)
+  return currentSemVer.major !== newerSemVer.major
 }

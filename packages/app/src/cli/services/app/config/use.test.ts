@@ -19,6 +19,9 @@ vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context.js')
+vi.mock('@shopify/cli-kit/node/is-global', () => ({
+  currentProcessIsGlobal: () => false,
+}))
 
 describe('use', () => {
   test('clears currentConfiguration when reset is true', async () => {
@@ -31,6 +34,7 @@ describe('use', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
       }
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
+      writeFileSync(joinPath(tmp, 'shopify.app.toml'), '')
 
       // When
       await use(options)

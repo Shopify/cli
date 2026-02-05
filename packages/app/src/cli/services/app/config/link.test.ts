@@ -37,6 +37,9 @@ vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')
 vi.mock('../select-app.js')
+vi.mock('@shopify/cli-kit/node/is-global', () => ({
+  currentProcessIsGlobal: () => false,
+}))
 
 const DEFAULT_REMOTE_CONFIGURATION = {
   name: 'app1',
