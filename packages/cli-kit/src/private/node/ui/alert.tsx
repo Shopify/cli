@@ -2,9 +2,10 @@ import {Alert, AlertProps} from './components/Alert.js'
 import {renderOnce} from '../ui.js'
 import {LogLevel} from '../../../public/node/output.js'
 import React from 'react'
+
 import {RenderOptions} from 'ink'
 
-const typeToLogLevel: {[key in AlertProps['type']]: LogLevel} = {
+const typeToLogLevel: Record<AlertProps['type'], LogLevel> = {
   info: 'info',
   warning: 'warn',
   success: 'info',

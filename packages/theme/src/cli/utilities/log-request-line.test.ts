@@ -2,6 +2,7 @@ import {shouldLog} from './log-request-line.js'
 import {createEvent} from 'h3'
 import {describe, test, expect} from 'vitest'
 import {IncomingMessage, ServerResponse} from 'node:http'
+
 import {Socket} from 'node:net'
 
 function createH3Event(method = 'GET', path = '/', headers = {}) {

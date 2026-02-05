@@ -1,6 +1,6 @@
-import {themeComponent} from '../utilities/theme-ui.js'
-import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {findOrSelectTheme, findThemeById} from '../utilities/theme-selector.js'
+import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {themeComponent} from '../utilities/theme-ui.js'
 import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {outputResult} from '@shopify/cli-kit/node/output'

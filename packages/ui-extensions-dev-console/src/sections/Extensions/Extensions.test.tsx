@@ -1,11 +1,11 @@
-import {Extensions} from './Extensions.js'
-
 import {AppHomeRow, ExtensionRow} from './components'
+
+import {Extensions} from './Extensions.js'
+import {DefaultProviders} from 'tests/DefaultProviders'
 import React from 'react'
 import {ExtensionServerClient} from '@shopify/ui-extensions-server-kit'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
-import {DefaultProviders} from 'tests/DefaultProviders'
 
 vi.mock('./components', () => ({
   ExtensionRow: () => null,

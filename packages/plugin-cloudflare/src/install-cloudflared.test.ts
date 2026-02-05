@@ -3,6 +3,7 @@ import * as fsActions from '@shopify/cli-kit/node/fs'
 import * as http from '@shopify/cli-kit/node/http'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import util from 'util'
+
 import {WriteStream} from 'fs'
 // eslint-disable-next-line no-restricted-imports
 import * as childProcess from 'child_process'

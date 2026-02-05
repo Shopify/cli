@@ -7,10 +7,14 @@ import {uploadTheme} from '../theme-uploader.js'
 import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
 import {promiseWithResolvers} from '../../polyfills/promiseWithResolvers.js'
+
 import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+
 import {createServer} from 'node:http'
+
 import type {Checksum, Theme} from '@shopify/cli-kit/node/themes/types'
+
 import type {DevServerContext} from './types.js'
 
 export function setupDevServer(theme: Theme, ctx: DevServerContext) {

@@ -1,6 +1,6 @@
 import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
-import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
+import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'

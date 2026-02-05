@@ -1,12 +1,12 @@
 import {AppHomeRow} from '.'
 import en from './translations/en.json'
 import {PreviewLink, QRCodeModal} from '..'
-import React from 'react'
-
 import {DefaultProviders} from 'tests/DefaultProviders'
 import {mockI18n} from 'tests/mock-i18n'
-import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {Button} from '@/components'
+import React from 'react'
+
+import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 
 vi.mock('..', () => ({
   NotApplicable: () => null,

@@ -3,8 +3,10 @@ import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/util
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
+
 import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
+
 import {homedir} from 'os'
 
 /**

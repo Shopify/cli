@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-import {buildCookies} from './storefront-renderer.js'
 import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {buildCookies} from './storefront-renderer.js'
 import {logRequestLine} from '../log-request-line.js'
+
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
@@ -292,7 +292,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
  * Filters headers to forward to SFR.
  */
 export function getProxyStorefrontHeaders(event: H3Event) {
-  const proxyRequestHeaders = getRequestHeaders(event) as {[key: string]: string}
+  const proxyRequestHeaders = getRequestHeaders(event) as Record<string, string>
 
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
@@ -334,7 +334,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  const baseHeaders: {[key: string]: string} = {
+  const baseHeaders: Record<string, string> = {
     ...headers,
     ...defaultHeaders(),
     referer: url.origin,

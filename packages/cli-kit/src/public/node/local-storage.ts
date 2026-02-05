@@ -9,7 +9,7 @@ import Config from 'conf'
  * for accessing the local storage.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export class LocalStorage<T extends {[key: string]: any}> {
+export class LocalStorage<T extends Record<string, any>> {
   private readonly config: Config<T>
 
   constructor(options: {projectName?: string; cwd?: string}) {

@@ -5,6 +5,7 @@ import {exec} from './system.js'
 import {describe, expect, test} from 'vitest'
 import StreamZip from 'node-stream-zip'
 import brotli from 'brotli'
+
 import fs from 'fs'
 
 describe('zip', () => {
@@ -154,7 +155,7 @@ async function createFiles(structure: string[], directory: string) {
 
 async function readArchiveFiles(zipPath: string) {
   await expect(fileExists(zipPath)).resolves.toBeTruthy()
-  // eslint-disable-next-line @babel/new-cap
+  // eslint-disable-next-line new-cap
   const archive = new StreamZip.async({file: zipPath})
   const archiveEntries = Object.keys(await archive.entries())
   await archive.close()

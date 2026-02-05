@@ -27,12 +27,11 @@ import {
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 // to replace TVariable type when there graphql query has no variables
-export type Exact<T extends {[key: string]: unknown}> = {[K in keyof T]: T[K]}
+export type Exact<T extends Record<string, unknown>> = {[K in keyof T]: T[K]}
 
-export interface GraphQLVariables {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  [key: string]: any
-}
+// Using a more permissive type to allow generated GraphQL variable interfaces
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GraphQLVariables = Record<string, any>
 
 export type GraphQLResponse<T> = Awaited<ReturnType<typeof rawRequest<T>>>
 
@@ -57,7 +56,7 @@ interface GraphQLRequestBaseOptions<TResult> {
   api: string
   url: string
   token?: string
-  addedHeaders?: {[header: string]: string}
+  addedHeaders?: Record<string, string>
   responseOptions?: GraphQLResponseOptions<TResult>
   cacheOptions?: CacheOptions
   preferredBehaviour?: RequestModeInput
@@ -77,7 +76,7 @@ export type GraphQLRequestOptions<T> = GraphQLRequestBaseOptions<T> & {
 }
 
 export type GraphQLRequestDocOptions<TResult, TVariables> = GraphQLRequestBaseOptions<TResult> & {
-  query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<{[key: string]: never}>>
+  query: TypedDocumentNode<TResult, TVariables> | TypedDocumentNode<TResult, Exact<Record<string, never>>>
   variables?: TVariables
   unauthorizedHandler?: UnauthorizedHandler
   autoRateLimitRestore?: boolean
@@ -109,7 +108,7 @@ async function createGraphQLClient({
 }: {
   url: string
   token: string | undefined
-  addedHeaders?: {[header: string]: string}
+  addedHeaders?: Record<string, string>
 }) {
   const headers = {
     ...addedHeaders,

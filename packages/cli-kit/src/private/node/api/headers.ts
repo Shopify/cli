@@ -31,12 +31,11 @@ export class GraphQLClientError extends RequestClientError {
  * @param headers - HTTP headers.
  * @returns A sanitized version of the headers as a string.
  */
-export function sanitizedHeadersOutput(headers: {[key: string]: string}): string {
-  const sanitized: {[key: string]: string} = {}
+export function sanitizedHeadersOutput(headers: Record<string, string>): string {
+  const sanitized: Record<string, string> = {}
   const keywords = ['token', 'authorization', 'subject_token']
   Object.keys(headers).forEach((header) => {
     if (keywords.find((keyword) => header.toLocaleLowerCase().includes(keyword)) === undefined) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       sanitized[header] = headers[header]!
     }
   })
@@ -47,10 +46,10 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
     .join('\n')
 }
 
-export function buildHeaders(token?: string): {[key: string]: string} {
+export function buildHeaders(token?: string): Record<string, string> {
   const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
 
-  const headers: {[header: string]: string} = {
+  const headers: Record<string, string> = {
     'User-Agent': userAgent,
     'Keep-Alive': 'timeout=30',
     // 'Sec-CH-UA': secCHUA, This header requires the Git sha.

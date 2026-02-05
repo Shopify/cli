@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {CreateAppQuery, CreateAppQuerySchema, CreateAppQueryVariables} from '../../api/graphql/create_app.js'
 import {
   AppVersion,
@@ -14,7 +13,7 @@ import {
   AppLogsResponse,
   createUnauthorizedHandler,
 } from '../developer-platform-client.js'
-import {fetchCurrentAccountInformation} from '../../../cli/services/context/partner-account-info.js'
+import {fetchCurrentAccountInformation} from '../../services/context/partner-account-info.js'
 import {
   MinimalAppIdentifiers,
   MinimalOrganizationApp,

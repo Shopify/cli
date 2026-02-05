@@ -6,7 +6,7 @@ import {
   UnauthorizedHandler,
 } from './graphql.js'
 import {AdminSession} from '../session.js'
-import {outputContent, outputToken} from '../../../public/node/output.js'
+import {outputContent, outputToken} from '../output.js'
 import {AbortError, BugError} from '../error.js'
 import {
   restRequestBody,
@@ -17,11 +17,11 @@ import {
 import {isNetworkError} from '../../../private/node/api.js'
 import {RequestModeInput, shopifyFetch} from '../http.js'
 import {PublicApiVersions} from '../../../cli/api/graphql/admin/generated/public_api_versions.js'
-
 import {themeKitAccessDomain} from '../../../private/node/constants.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import {DevServerCore} from '../vendor/dev_server/index.js'
 import {ClientError, Variables} from 'graphql-request'
+
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
 const LatestApiVersionByFQDN = new Map<string, string>()
@@ -108,7 +108,7 @@ export async function adminRequestDoc<TResult, TVariables extends Variables>(
   return result
 }
 
-function themeAccessHeaders(session: AdminSession): {[header: string]: string} {
+function themeAccessHeaders(session: AdminSession): Record<string, string> {
   return isThemeAccessSession(session)
     ? {'X-Shopify-Shop': session.storeFqdn, 'X-Shopify-Access-Token': session.token}
     : {}
@@ -126,7 +126,7 @@ async function fetchLatestSupportedApiVersion(
   preferredBehaviour?: RequestModeInput,
 ): Promise<string> {
   const apiVersions = await supportedApiVersions(session, preferredBehaviour)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const latest = apiVersions.reverse()[0]!
   LatestApiVersionByFQDN.set(session.storeFqdn, latest)
   return latest
@@ -248,7 +248,7 @@ export async function restRequest<T>(
   path: string,
   session: AdminSession,
   requestBody?: T,
-  searchParams: {[name: string]: string} = {},
+  searchParams: Record<string, string> = {},
   apiVersion = 'unstable',
 ): Promise<RestResponse> {
   const url = restRequestUrl(session, apiVersion, path, searchParams)
@@ -289,5 +289,5 @@ export interface RestResponse {
   /**
    * HTTP response headers.
    */
-  headers: {[key: string]: string[]}
+  headers: Record<string, string[]>
 }

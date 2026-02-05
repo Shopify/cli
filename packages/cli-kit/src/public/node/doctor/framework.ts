@@ -7,17 +7,17 @@ import type {DoctorContext, TestResult, AssertionResult} from './types.js'
  * Result from running a CLI command.
  */
 interface CommandResult {
-  /** The full command that was run */
+  /** The full command that was run. */
   command: string
-  /** Exit code (0 = success) */
+  /** Exit code (0 = success). */
   exitCode: number
-  /** Standard output */
+  /** Standard output. */
   stdout: string
-  /** Standard error */
+  /** Standard error. */
   stderr: string
-  /** Combined output (stdout + stderr) */
+  /** Combined output (stdout + stderr). */
   output: string
-  /** Whether the command succeeded (exitCode === 0) */
+  /** Whether the command succeeded (exitCode === 0). */
   success: boolean
 }
 
@@ -25,14 +25,16 @@ interface CommandResult {
  * A registered test with its name and function.
  */
 interface RegisteredTest {
+  /** The test name. */
   name: string
+  /** The async test function. */
   fn: () => Promise<void>
 }
 
 /**
  * Base class for doctor test suites.
  *
- * Write tests using the test() method:.
+ * Write tests using the test() method.
  *
  * ```typescript
  * export default class MyTests extends DoctorSuite {
@@ -63,6 +65,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
    * Run the entire test suite.
    *
    * @param context - The doctor context for this suite run.
+   * @returns The list of test results.
    */
   async runSuite(context: TContext): Promise<TestResult[]> {
     this.context = context
@@ -123,11 +126,14 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
   // Command execution
   // ============================================
 
+  /* eslint-disable tsdoc/syntax -- jsdoc/require-param expects dotted names for destructured options; tsdoc disallows dots */
   /**
    * Run a CLI command and return the result.
    *
    * @param command - The CLI command to run.
-   * @param options - Optional cwd and env overrides.
+   * @param options - Optional overrides.
+   * @param options.cwd - Working directory for the command.
+   * @param options.env - Environment variables for the command.
    * @example
    * const result = await this.run('shopify theme init my-theme')
    * const result = await this.run('shopify theme push --json')
@@ -154,7 +160,9 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
    * Returns only success/failure.
    *
    * @param command - The CLI command to run.
-   * @param options - Optional cwd and env overrides.
+   * @param options - Optional overrides.
+   * @param options.cwd - Working directory for the command.
+   * @param options.env - Environment variables for the command.
    */
   protected async runInteractive(
     command: string,
@@ -179,6 +187,7 @@ export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext
       success: exitCode === 0,
     }
   }
+  /* eslint-enable tsdoc/syntax */
 
   // ============================================
   // Assertions

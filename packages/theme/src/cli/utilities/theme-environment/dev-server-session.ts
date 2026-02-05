@@ -1,6 +1,6 @@
-import {buildBaseStorefrontUrl} from './storefront-renderer.js'
-import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {DevServerSession} from './types.js'
+import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
+import {buildBaseStorefrontUrl} from './storefront-renderer.js'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -94,7 +94,7 @@ export async function getStorefrontSessionCookiesWithVerification(
   adminSession: AdminSession,
   storefrontToken: string,
   storefrontPassword?: string,
-): Promise<{[key: string]: string}> {
+): Promise<Record<string, string>> {
   try {
     return await getStorefrontSessionCookies(storeUrl, adminSession.storeFqdn, themeId, storefrontPassword, {
       'X-Shopify-Shop': adminSession.storeFqdn,

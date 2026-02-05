@@ -15,7 +15,7 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
     writeFile: vi.fn(),
     symlink: vi.fn(),
     inTemporaryDirectory: vi.fn(async (callback) => {
-      // eslint-disable-next-line node/no-callback-literal
+      // eslint-disable-next-line n/no-callback-literal
       return callback('/tmp')
     }),
   }

@@ -15,11 +15,12 @@ import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {addPublicMetadata} from './metadata.js'
 import {sendErrorToBugsnag} from './error-handler.js'
+import {hashString} from './crypto.js'
 import * as store from '../../private/node/analytics/storage.js'
 import {startAnalytics} from '../../private/node/analytics.js'
-import {hashString} from '../../public/node/crypto.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
 vi.mock('./context/local.js')

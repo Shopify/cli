@@ -7,6 +7,7 @@ import {
   setStorefrontPassword,
 } from '../../services/local-storage.js'
 import {ensureThemeStore} from '../theme-store.js'
+
 import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
 import {describe, beforeEach, vi, test, expect} from 'vitest'
 

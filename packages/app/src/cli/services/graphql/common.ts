@@ -78,7 +78,6 @@ export async function resolveApiVersion(options: ResolveApiVersionOptions): Prom
       supportedVersions.push(minimumDefaultVersion)
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return supportedVersions.sort().reverse()[0]!
   }
 

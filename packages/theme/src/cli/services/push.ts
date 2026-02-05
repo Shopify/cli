@@ -26,6 +26,7 @@ import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
 import {recordError, recordTiming} from '@shopify/cli-kit/node/analytics'
+
 import {Writable} from 'stream'
 
 interface PushOptions {
@@ -299,7 +300,7 @@ function handleJsonOutput(theme: Theme, session: AdminSession, results: Map<stri
     output.theme.warning = message
 
     // Add errors from results
-    const errors: {[key: string]: string[]} = {}
+    const errors: Record<string, string[]> = {}
     for (const [key, result] of results.entries()) {
       if (!result.success && result.errors?.asset) {
         errors[key] = result.errors.asset

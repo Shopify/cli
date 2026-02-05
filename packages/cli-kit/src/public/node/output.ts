@@ -21,8 +21,11 @@ import {
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
+
 import stripAnsi from 'strip-ansi'
+
 import {Writable} from 'stream'
+
 import type {Change} from 'diff'
 
 export type Logger = Writable | ((message: string, logLevel?: LogLevel) => void)
@@ -148,7 +151,7 @@ export function outputContent(
     if (i >= keys.length) {
       return
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     const token = keys[i]!
 
     if (typeof token === 'string') {
@@ -224,8 +227,8 @@ function shouldOutput(logLevel: LogLevel): boolean {
   return messageLogLevelValue >= currentLogLevelValue
 }
 
-// eslint-disable-next-line import/no-mutable-exports
-export let collectedLogs: {[key: string]: string[]} = {}
+// eslint-disable-next-line import-x/no-mutable-exports
+export let collectedLogs: Record<string, string[]> = {}
 
 /**
  * This is only used during UnitTesting.

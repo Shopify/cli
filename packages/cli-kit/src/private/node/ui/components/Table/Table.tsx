@@ -1,5 +1,5 @@
-import ScalarDict from './ScalarDict.js'
 import {Row} from './Row.js'
+import ScalarDict from './ScalarDict.js'
 import {unstyled} from '../../../../../public/node/output.js'
 import React from 'react'
 import {Box} from 'ink'
@@ -14,7 +14,6 @@ export interface TableProps<T extends ScalarDict> {
   columns: TableColumn<T>
 }
 
-// eslint-disable-next-line react/function-component-definition
 function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: TableProps<T>) {
   const columns = Object.entries(columnsConfiguration).map(([key, {header, color}]) => {
     const headerWidth = String(header || key).length

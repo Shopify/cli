@@ -1,7 +1,8 @@
+import {captureOutput} from './system.js'
 import {localCLIVersion, globalCLIVersion, isPreReleaseVersion} from './version.js'
-import {inTemporaryDirectory} from '../node/fs.js'
-import {captureOutput} from '../node/system.js'
+import {inTemporaryDirectory} from './fs.js'
 import {describe, expect, test, vi} from 'vitest'
+
 import which from 'which'
 
 vi.mock('../node/system.js')

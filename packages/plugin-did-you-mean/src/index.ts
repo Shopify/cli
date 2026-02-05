@@ -1,8 +1,7 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {isAutocorrectEnabled} from './services/conf.js'
+import AutocorrectOn from './commands/config/autocorrect/on.js'
 import AutocorrectOff from './commands/config/autocorrect/off.js'
 import AutocorrectStatus from './commands/config/autocorrect/status.js'
-import AutocorrectOn from './commands/config/autocorrect/on.js'
+import {isAutocorrectEnabled} from './services/conf.js'
 import {Hook} from '@oclif/core'
 import {bigram} from 'n-gram'
 import {renderConfirmationPrompt, renderFatalError, renderInfo} from '@shopify/cli-kit/node/ui'
@@ -14,7 +13,7 @@ function sanitizeCmd(cmd: string): string {
 }
 
 function relativeScore(commandBigrams: string[], userCommandBigrams: string[]): number {
-  const map: {[key: string]: number} = {}
+  const map: Record<string, number> = {}
   commandBigrams.forEach((elem) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     map[elem] = map[elem] ? map[elem]! + 1 : 1

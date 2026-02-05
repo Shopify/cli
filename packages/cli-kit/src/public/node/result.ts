@@ -78,7 +78,7 @@ export class Ok<TValue, TError> {
 }
 
 export class Err<TValue, TError> {
-  // eslint-disable-next-line node/handle-callback-err
+  // eslint-disable-next-line n/handle-callback-err
   constructor(readonly error: TError) {}
 
   /**

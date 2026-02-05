@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {applicationId} from './identity.js'
 import {ApplicationToken, IdentityToken, Session, validateCachedIdentityTokenStructure} from './schema.js'
+
+import {applicationId} from './identity.js'
 import {sessionConstants} from '../constants.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {OAuthApplications} from '../session.js'

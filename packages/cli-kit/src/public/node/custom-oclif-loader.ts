@@ -32,7 +32,7 @@ export class ShopifyConfig extends Config {
 
     if (isDevelopment()) {
       // @ts-expect-error: This is a private method that we are overriding. OCLIF doesn't provide a way to extend it.
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       this.determinePriority = this.customPriority
     }
   }

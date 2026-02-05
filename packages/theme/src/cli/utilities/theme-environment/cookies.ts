@@ -1,5 +1,5 @@
 export function parseCookies(cookies: string) {
-  const cookiesRecord: {[key: string]: string} = {}
+  const cookiesRecord: Record<string, string> = {}
 
   cookies.split(';').forEach((cookie) => {
     const parts = cookie.match(/(.*?)=(.*)$/) ?? []
@@ -15,7 +15,7 @@ export function parseCookies(cookies: string) {
   return cookiesRecord
 }
 
-export function serializeCookies(cookies: {[key: string]: string}) {
+export function serializeCookies(cookies: Record<string, string>) {
   return Object.entries(cookies)
     .map(([key, value]) => `${key}=${value}`)
     .join('; ')

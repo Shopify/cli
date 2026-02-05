@@ -33,15 +33,11 @@ export class TunnelError extends ExtendableError {
 export interface HookReturnPerTunnelPlugin {
   tunnel_start: {
     options: {port: number; provider: string}
-    pluginReturns: {
-      [key: string]: Result<TunnelClient, TunnelError>
-    }
+    pluginReturns: Record<string, Result<TunnelClient, TunnelError>>
   }
   tunnel_provider: {
-    options: {[key: string]: never}
-    pluginReturns: {
-      [pluginName: string]: {name: string}
-    }
+    options: Record<string, never>
+    pluginReturns: Record<string, {name: string}>
   }
 }
 

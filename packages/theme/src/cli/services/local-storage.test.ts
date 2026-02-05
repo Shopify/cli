@@ -84,7 +84,7 @@ describe('local-storage', () => {
         const storage = new LocalStorage<ThemeLocalStorageSchema>({cwd})
         setThemeStore('storage-store.myshopify.com', storage)
 
-        const results: {[key: string]: string | undefined} = {}
+        const results: Record<string, string | undefined> = {}
 
         await Promise.all([
           useThemeStoreContext('store1.myshopify.com', async () => {

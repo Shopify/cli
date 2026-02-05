@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-invalid-void-type */
-/* eslint-disable @typescript-eslint/no-empty-interface */
 import type {LocalesOptions} from '../i18n'
 
 declare global {
