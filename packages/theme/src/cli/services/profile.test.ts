@@ -2,7 +2,7 @@ import {profile} from './profile.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {vi, describe, expect, beforeEach, test} from 'vitest'
+import {vi, describe, expect, beforeEach, afterEach, test} from 'vitest'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from 'fs/promises'
@@ -120,5 +120,35 @@ describe('profile', () => {
         'You must authenticate manually by not passing the --password flag.',
       ),
     )
+  })
+
+  describe('WSL path conversion', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs()
+    })
+
+    test('converts paths to WSL format when WSL_DISTRO_NAME is set', async () => {
+      // Given
+      vi.stubEnv('WSL_DISTRO_NAME', 'Ubuntu')
+      vi.mocked(openURL).mockResolvedValue(true)
+
+      // When
+      await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
+
+      // Then
+      expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^file:\/\/\/\/wsl\$\/Ubuntu.*\.html$/))
+    })
+
+    test('does not convert paths when WSL_DISTRO_NAME is not set', async () => {
+      // Given
+      vi.stubEnv('WSL_DISTRO_NAME', '')
+      vi.mocked(openURL).mockResolvedValue(true)
+
+      // When
+      await profile(mockAdminSession, themeId, urlPath, false, undefined, undefined)
+
+      // Then
+      expect(openURL).toHaveBeenCalledWith(expect.stringMatching(/^file:\/\/.*\.html$/))
+    })
   })
 })
