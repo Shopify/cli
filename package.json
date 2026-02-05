@@ -57,7 +57,7 @@
     "bugsnag-build-reporter": "^2.0.0",
     "commander": "^9.4.0",
     "esbuild": "0.27.2",
-    "eslint": "^8.48.0",
+    "eslint": "^9.26.0",
     "execa": "^7.2.0",
     "fast-glob": "3.3.3",
     "find-up": "^6.3.0",
