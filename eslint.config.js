@@ -8,7 +8,7 @@ const config = [
 
   // Global ignores
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.d.ts'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**', '**/*.d.ts', '**/*.cjs'],
   },
 
   // NX module boundaries

@@ -1122,9 +1122,8 @@ describe('ImportExtensionsIfNeeded', () => {
         } as any),
     })
 
-    const identifiersModule = await vi.importActual<typeof import('./context/identifiers.js')>(
-      './context/identifiers.js',
-    )
+    const identifiersModule =
+      await vi.importActual<typeof import('./context/identifiers.js')>('./context/identifiers.js')
 
     // When/Then
     await expect(

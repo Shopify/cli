@@ -2,6 +2,7 @@ import {hookStart} from './tunnel.js'
 import install from './install-cloudflared.js'
 import {describe, vi, expect, test, beforeAll} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
+
 import {Writable} from 'stream'
 
 const port = 1234

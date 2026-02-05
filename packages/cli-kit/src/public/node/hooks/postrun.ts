@@ -1,8 +1,9 @@
 import {postrun as deprecationsHook} from './deprecations.js'
 import {reportAnalyticsEvent} from '../analytics.js'
-import {outputDebug} from '../../../public/node/output.js'
+import {outputDebug} from '../output.js'
 import BaseCommand from '../base-command.js'
-import * as metadata from '../../../public/node/metadata.js'
+import * as metadata from '../metadata.js'
+
 import {Command, Hook} from '@oclif/core'
 
 let postRunHookCompleted = false

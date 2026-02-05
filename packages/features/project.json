@@ -20,14 +20,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"**/*.ts\"",
+        "command": "pnpm eslint steps lib world",
         "cwd": "packages/features"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint '**/*.ts' --fix",
+        "command": "pnpm eslint steps lib world --fix",
         "cwd": "packages/features"
       }
     },

@@ -84,7 +84,7 @@ export class BMap<TKey, TValue> extends Map<TKey, TValue> {
     super.clear()
   }
 
-  toObject(): {[key: string]: TValue} {
+  toObject(): Record<string, TValue> {
     return Object.fromEntries(this)
   }
 

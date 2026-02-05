@@ -34,14 +34,14 @@ export function getExtensionPointRedirectUrl(
     case 'checkout':
       // This can never be null because we always generate it
       // whenever there is an extension point targeting Checkout
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       rawUrl.pathname = options.checkoutCartUrl!
       rawUrl.searchParams.append('dev', `${options.url}/extensions`)
       break
     case 'post_purchase':
       // This can never be null because we always generate it
       // whenever there is an extension point targeting Post Purchase
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       rawUrl.pathname = options.checkoutCartUrl!
 
       rawUrl.searchParams.set(

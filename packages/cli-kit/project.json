@@ -65,14 +65,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
+        "command": "pnpm eslint src",
         "cwd": "packages/cli-kit"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
+        "command": "pnpm eslint src --fix",
         "cwd": "packages/cli-kit"
       }
     },

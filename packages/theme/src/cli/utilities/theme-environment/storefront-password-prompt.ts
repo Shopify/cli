@@ -7,6 +7,7 @@ import {
 } from '../../services/local-storage.js'
 import {ensureThemeStore} from '../theme-store.js'
 import {renderTextPrompt, TokenItem} from '@shopify/cli-kit/node/ui'
+
 import {storePasswordPage} from '@shopify/cli-kit/node/themes/urls'
 
 export async function ensureValidPassword(password: string | undefined, store: string) {

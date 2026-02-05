@@ -145,7 +145,6 @@ export function setupGraphiQLServer({
       throw err
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const apiVersion = apiVersions.sort().reverse()[0]!
 
     function decodeQueryString(input: string | undefined) {

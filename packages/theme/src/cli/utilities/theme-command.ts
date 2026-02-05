@@ -1,6 +1,7 @@
 import {ensureThemeStore} from './theme-store.js'
 import {configurationFileName} from '../constants.js'
 import {useThemeStoreContext} from '../services/local-storage.js'
+
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
@@ -20,11 +21,10 @@ import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/met
 import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+
 import type {Writable} from 'stream'
 
-interface FlagValues {
-  [key: string]: boolean | string | string[] | number | undefined
-}
+type FlagValues = Record<string, boolean | string | string[] | number | undefined>
 interface ValidEnvironment {
   environment: EnvironmentName
   flags: FlagValues

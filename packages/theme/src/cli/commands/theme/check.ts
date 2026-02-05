@@ -1,4 +1,4 @@
-import {themeFlags} from '../../flags.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {
   formatOffensesJson,
   formatSummary,
@@ -12,7 +12,7 @@ import {
   handleExit,
   type FailLevel,
 } from '../../services/check.js'
-import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
+import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
@@ -97,7 +97,7 @@ export default class Check extends ThemeCommand {
     const environment = flags.environment?.[0]
     // To support backwards compatibility for legacy configs
     const isLegacyConfig = flags.config?.startsWith(':') && LegacyIdentifiers.has(flags.config.slice(1))
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     const config = isLegacyConfig ? LegacyIdentifiers.get(flags.config!.slice(1)) : flags.config
 
     if (flags.init) {

@@ -1,6 +1,6 @@
-import {relativePath, joinPath, dirname} from './path.js'
+import {outputDebug, outputContent, outputToken} from './output.js'
 import {glob, removeFile} from './fs.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {relativePath, joinPath, dirname} from './path.js'
 import archiver from 'archiver'
 import {createWriteStream, readFileSync, writeFileSync} from 'fs'
 import {readFile} from 'fs/promises'

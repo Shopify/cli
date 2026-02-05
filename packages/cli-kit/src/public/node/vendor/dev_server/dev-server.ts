@@ -1,7 +1,7 @@
-import fs from 'node:fs'
-
 import {createServer as createServer2024} from './dev-server-2024.js'
 import {createServer as createServer2016} from './dev-server-2016.js'
+import fs from 'node:fs'
+
 import type {DevServer as DevServerType, DevServerCore as DevServerCoreType, HostOptions} from './types.js'
 
 export {isDevServerEnvironment} from './env.js'

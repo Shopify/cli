@@ -1,5 +1,5 @@
-import {downloadTheme} from './theme-downloader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
+import {downloadTheme} from './theme-downloader.js'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {test, describe, expect, vi} from 'vitest'

@@ -64,7 +64,7 @@ export function formatErrorMessage(error: unknown, category: ErrorCategory): str
   return formatter(message)
 }
 
-const ERROR_FORMATTERS: {[key in ErrorCategory]: (message: string) => string} = {
+const ERROR_FORMATTERS: Record<ErrorCategory, (message: string) => string> = {
   [ErrorCategory.Network]: formatNetworkError,
   [ErrorCategory.Authentication]: formatGenericError,
   [ErrorCategory.FileSystem]: formatGenericError,

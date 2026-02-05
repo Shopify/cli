@@ -1,11 +1,12 @@
-import {InfoMessage, InfoMessageProps} from './InfoMessage.js'
 import {InfoTable, InfoTableProps} from './InfoTable.js'
+import {InfoMessage, InfoMessageProps} from './InfoMessage.js'
 import {InlineToken, LinkToken, TokenItem, TokenizedText} from '../TokenizedText.js'
 import {messageWithPunctuation} from '../../utilities.js'
 import {AbortSignal} from '../../../../../public/node/abort.js'
 import useAbortSignal from '../../hooks/use-abort-signal.js'
 import {PromptState} from '../../hooks/use-prompt.js'
 import React, {ReactElement, cloneElement, useCallback, useLayoutEffect, useState} from 'react'
+
 import {Box, measureElement, Text, useStdout, DOMElement} from 'ink'
 import figures from 'figures'
 

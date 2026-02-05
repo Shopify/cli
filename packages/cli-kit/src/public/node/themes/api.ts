@@ -1,6 +1,6 @@
-import {composeThemeGid, parseGid, DEVELOPMENT_THEME_ROLE} from './utils.js'
-import {buildTheme} from './factories.js'
 import {Result, Checksum, Key, Theme, ThemeAsset, Operation} from './types.js'
+import {buildTheme} from './factories.js'
+import {composeThemeGid, parseGid, DEVELOPMENT_THEME_ROLE} from './utils.js'
 import {ThemeUpdate} from '../../../cli/api/graphql/admin/generated/theme_update.js'
 import {ThemeDelete} from '../../../cli/api/graphql/admin/generated/theme_delete.js'
 import {ThemeDuplicate} from '../../../cli/api/graphql/admin/generated/theme_duplicate.js'
@@ -374,7 +374,7 @@ export async function fetchChecksums(id: number, session: AdminSession): Promise
 
 export async function themeUpdate(id: number, params: ThemeParams, session: AdminSession): Promise<Theme | undefined> {
   const name = params.name
-  const input: {[key: string]: string} = {}
+  const input: Record<string, string> = {}
   if (name) {
     input.name = name
   }

@@ -27,12 +27,11 @@ import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
-interface ProxyServerProcess
-  extends BaseProcess<{
-    port: number
-    rules: {[key: string]: string}
-    localhostCert?: LocalhostCert
-  }> {
+interface ProxyServerProcess extends BaseProcess<{
+  port: number
+  rules: {[key: string]: string}
+  localhostCert?: LocalhostCert
+}> {
   type: 'proxy-server'
 }
 

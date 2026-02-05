@@ -2,6 +2,7 @@ import {DangerousConfirmationPrompt} from './DangerousConfirmationPrompt.js'
 import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
+
 import {describe, expect, test, vi} from 'vitest'
 
 const ENTER = '\r'
