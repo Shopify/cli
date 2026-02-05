@@ -14,6 +14,7 @@ import type {DevServerContext} from './types.js'
 export const VANITY_CDN_PREFIX = '/cdn/'
 export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
+const API_COLLECT_PATH = '/api/collect'
 const CART_PATTERN = /^\/cart\//
 const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
 const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
@@ -28,7 +29,7 @@ const IGNORED_ENDPOINTS = [
   '/web-pixels@',
   '/wpm',
   '/services/',
-  '/api/collect',
+  API_COLLECT_PATH,
   // Cloudflare's turnstile challenge #6416
   '/cdn-cgi/challenge-platform',
 ]
@@ -124,6 +125,11 @@ function getStoreFqdnForRegEx(ctx: DevServerContext) {
  */
 export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   let content = originalContent
+
+  // -- The beacon endpoint is patched in injectCdnProxy to be proxied and ignored locally
+  const beaconEndpointREStr = `(data-shs-beacon-endpoint=["'])https://${getStoreFqdnForRegEx(ctx)}${API_COLLECT_PATH}`
+  const beaconEndpointRE = new RegExp(beaconEndpointREStr, 'g')
+  content = content.replace(beaconEndpointRE, `$1${API_COLLECT_PATH}`)
 
   // -- Redirect all usages to the vanity CDN to the local server:
   const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${VANITY_CDN_PREFIX}`, 'g')
