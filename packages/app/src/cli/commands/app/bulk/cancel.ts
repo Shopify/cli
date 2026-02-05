@@ -12,8 +12,6 @@ export default class BulkCancel extends AppLinkedCommand {
 
   static description = 'Cancels a running bulk operation by ID.'
 
-  static hidden = true
-
   static flags = {
     ...globalFlags,
     ...appFlags,

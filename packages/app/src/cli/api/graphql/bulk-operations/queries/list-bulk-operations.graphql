@@ -1,5 +1,5 @@
-query ListBulkOperations($query: String, $first: Int!, $sortKey: BulkOperationsSortKeys!, $reverse: Boolean!) {
-  bulkOperations(first: $first, query: $query, sortKey: $sortKey, reverse: $reverse) {
+query ListBulkOperations($query: String, $first: Int!, $sortKey: BulkOperationsSortKeys!) {
+  bulkOperations(first: $first, query: $query, sortKey: $sortKey) {
     nodes {
       id
       status

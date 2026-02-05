@@ -7,9 +7,11 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 export default class Execute extends AppLinkedCommand {
   static summary = 'Execute GraphQL queries and mutations.'
 
-  static hidden = true
+  static descriptionWithMarkdown = `Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.
 
-  static description = 'Executes an Admin API GraphQL query or mutation on the specified dev store.'
+  For operations that process large amounts of data, use [\`bulk execute\`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,

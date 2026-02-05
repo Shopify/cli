@@ -13,17 +13,20 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 export default class BulkStatus extends AppLinkedCommand {
   static summary = 'Check the status of bulk operations.'
 
-  static description =
-    'Check the status of a specific bulk operation by ID, or list all bulk operations in the last 7 days.'
+  static descriptionWithMarkdown = `Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.
 
-  static hidden = true
+  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).
+
+  Use [\`bulk execute\`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.`
+
+  static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
     ...appFlags,
     id: Flags.string({
       description:
-        'The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations in the last 7 days.',
+        'The bulk operation ID (numeric ID or full GID). If not provided, lists all bulk operations belonging to this app on this store in the last 7 days.',
       env: 'SHOPIFY_FLAG_ID',
     }),
     store: Flags.string({

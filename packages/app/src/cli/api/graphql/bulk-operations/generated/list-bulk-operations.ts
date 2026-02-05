@@ -7,7 +7,6 @@ export type ListBulkOperationsQueryVariables = Types.Exact<{
   query?: Types.InputMaybe<Types.Scalars['String']['input']>
   first: Types.Scalars['Int']['input']
   sortKey: Types.BulkOperationsSortKeys
-  reverse: Types.Scalars['Boolean']['input']
 }>
 
 export type ListBulkOperationsQuery = {
@@ -48,11 +47,6 @@ export const ListBulkOperations = {
           variable: {kind: 'Variable', name: {kind: 'Name', value: 'sortKey'}},
           type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'BulkOperationsSortKeys'}}},
         },
-        {
-          kind: 'VariableDefinition',
-          variable: {kind: 'Variable', name: {kind: 'Name', value: 'reverse'}},
-          type: {kind: 'NonNullType', type: {kind: 'NamedType', name: {kind: 'Name', value: 'Boolean'}}},
-        },
       ],
       selectionSet: {
         kind: 'SelectionSet',
@@ -75,11 +69,6 @@ export const ListBulkOperations = {
                 kind: 'Argument',
                 name: {kind: 'Name', value: 'sortKey'},
                 value: {kind: 'Variable', name: {kind: 'Name', value: 'sortKey'}},
-              },
-              {
-                kind: 'Argument',
-                name: {kind: 'Name', value: 'reverse'},
-                value: {kind: 'Variable', name: {kind: 'Name', value: 'reverse'}},
               },
             ],
             selectionSet: {

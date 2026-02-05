@@ -140,7 +140,7 @@ describe('cancelBulkOperation', () => {
     await cancelBulkOperation({organization: mockOrganization, storeFqdn, operationId, remoteApp: mockRemoteApp})
 
     expect(renderError).toHaveBeenCalledWith({
-      headline: 'Bulk operation cancellation errors.',
+      headline: 'Failed to cancel bulk operation.',
       body: 'id: Operation not found',
     })
   })
