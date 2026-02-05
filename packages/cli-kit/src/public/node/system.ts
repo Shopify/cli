@@ -254,3 +254,38 @@ export async function readStdinString(): Promise<string | undefined> {
   }
   return data.trim()
 }
+
+/**
+ * Get the WSL distribution name from the environment.
+ * In WSL, the WSL_DISTRO_NAME environment variable contains the distribution name.
+ *
+ * @returns The WSL distribution name, or undefined if not in WSL or not available.
+ */
+export function getWslDistroName(): string | undefined {
+  return process.env.WSL_DISTRO_NAME
+}
+
+/**
+ * Convert a Unix path to a WSL-compatible file URL that can be opened from Windows.
+ * In WSL, file paths need to be converted to the format: file://wsl.localhost/<distro>/path
+ *
+ * @param unixPath - The Unix-style path to convert (e.g., /tmp/file.html or /home/user/file.js)
+ * @returns A file URL that works when opened from Windows in WSL environments.
+ *
+ * @example
+ * // In WSL with Ubuntu distro:
+ * // Input: /tmp/speedscope-123.html
+ * // Output: file://wsl.localhost/Ubuntu/tmp/speedscope-123.html
+ */
+export async function convertToWslFileUrl(unixPath: string): Promise<string> {
+  const inWsl = await isWsl()
+  const distroName = getWslDistroName()
+
+  if (inWsl && distroName) {
+    // Convert to WSL localhost format for Windows to access
+    return `file://wsl.localhost/${distroName}${unixPath}`
+  }
+
+  // Not in WSL, return standard file URL
+  return `file://${unixPath}`
+}

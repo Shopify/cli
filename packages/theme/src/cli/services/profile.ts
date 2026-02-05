@@ -3,7 +3,7 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {resolveAssetPath} from '../utilities/asset-path.js'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, convertToWslFileUrl} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
@@ -57,8 +57,8 @@ export async function profile(
 
 async function openProfile(profileJson: string) {
   // Adapted from https://github.com/jlfwong/speedscope/blob/146477a8508a6d2da697cb0ea0a426ba81b3e8dc/bin/cli.js#L63
-  let urlToOpen = await resolveAssetPath('speedscope', 'index.html')
-  outputDebug(`[Theme Profile] Resolved URL to open: ${urlToOpen}`)
+  const speedscopePath = await resolveAssetPath('speedscope', 'index.html')
+  outputDebug(`[Theme Profile] Resolved speedscope path: ${speedscopePath}`)
 
   const filename = 'liquid-profile'
   const sourceBase64 = Buffer.from(profileJson).toString('base64')
@@ -69,7 +69,18 @@ async function openProfile(profileJson: string) {
   outputDebug(`[Theme Profile] writing JS file to: ${jsPath}`)
   await writeFile(jsPath, jsSource)
   outputDebug(`[Theme Profile] JS file created successfully: ${jsPath}`)
-  urlToOpen += `#localProfilePath=${jsPath}`
+
+  // Convert paths to WSL-compatible file URLs if running in WSL
+  // This is needed because Windows browsers can't access WSL paths directly
+  // They need the wsl.localhost/<distro>/ prefix (see issue #5414)
+  const speedscopeUrl = await convertToWslFileUrl(speedscopePath)
+  const jsFileUrl = await convertToWslFileUrl(jsPath)
+  outputDebug(`[Theme Profile] Converted speedscope URL: ${speedscopeUrl}`)
+  outputDebug(`[Theme Profile] Converted JS file URL: ${jsFileUrl}`)
+
+  // Build the URL with the localProfilePath parameter
+  // In WSL, both the main URL and the localProfilePath need to use WSL-compatible paths
+  let urlToOpen = `${speedscopeUrl}#localProfilePath=${jsFileUrl}`
 
   // For some silly reason, the OS X open command ignores any query parameters or hash parameters
   // passed as part of the URL. To get around this weird issue, we'll create a local HTML file
@@ -79,7 +90,8 @@ async function openProfile(profileJson: string) {
   await writeFile(htmlPath, `<script>window.location=${JSON.stringify(urlToOpen)}</script>`)
   outputDebug(`[Theme Profile] HTML file created successfully: ${htmlPath}`)
 
-  urlToOpen = `file://${htmlPath}`
+  // Convert the HTML file path to a WSL-compatible URL as well
+  urlToOpen = await convertToWslFileUrl(htmlPath)
   outputDebug(`[Theme Profile] Opening URL: ${urlToOpen}`)
   const opened = await openURL(urlToOpen)
   outputDebug(`[Theme Profile] URL opened successfully: ${opened}`)

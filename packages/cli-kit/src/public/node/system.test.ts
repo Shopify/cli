@@ -1,6 +1,6 @@
 import * as system from './system.js'
 import {execa} from 'execa'
-import {describe, expect, test, vi} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
 import * as fs from 'fs'
@@ -111,5 +111,124 @@ describe('readStdinString', () => {
 
     // Then
     expect(got).toBe('hello world')
+  })
+})
+
+describe('getWslDistroName', () => {
+  test('returns the WSL_DISTRO_NAME environment variable when set', () => {
+    // Given
+    const originalEnv = process.env.WSL_DISTRO_NAME
+    process.env.WSL_DISTRO_NAME = 'Ubuntu'
+
+    // When
+    const got = system.getWslDistroName()
+
+    // Then
+    expect(got).toBe('Ubuntu')
+
+    // Cleanup
+    process.env.WSL_DISTRO_NAME = originalEnv
+  })
+
+  test('returns undefined when WSL_DISTRO_NAME is not set', () => {
+    // Given
+    const originalEnv = process.env.WSL_DISTRO_NAME
+    delete process.env.WSL_DISTRO_NAME
+
+    // When
+    const got = system.getWslDistroName()
+
+    // Then
+    expect(got).toBeUndefined()
+
+    // Cleanup
+    process.env.WSL_DISTRO_NAME = originalEnv
+  })
+})
+
+describe('convertToWslFileUrl', () => {
+  afterEach(() => {
+    vi.resetModules()
+  })
+
+  test('converts path to WSL file URL when in WSL environment', async () => {
+    // Given
+    const originalEnv = process.env.WSL_DISTRO_NAME
+    process.env.WSL_DISTRO_NAME = 'Ubuntu'
+
+    // Reset modules and mock is-wsl module
+    vi.resetModules()
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // Re-import to get fresh module with mocked dependency
+    const {convertToWslFileUrl} = await import('./system.js')
+
+    // When
+    const got = await convertToWslFileUrl('/tmp/test-file.html')
+
+    // Then
+    expect(got).toBe('file://wsl.localhost/Ubuntu/tmp/test-file.html')
+
+    // Cleanup
+    process.env.WSL_DISTRO_NAME = originalEnv
+  })
+
+  test('converts home directory path to WSL file URL', async () => {
+    // Given
+    const originalEnv = process.env.WSL_DISTRO_NAME
+    process.env.WSL_DISTRO_NAME = 'Ubuntu-22.04'
+
+    // Reset modules and mock is-wsl module
+    vi.resetModules()
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // Re-import to get fresh module with mocked dependency
+    const {convertToWslFileUrl} = await import('./system.js')
+
+    // When
+    const got = await convertToWslFileUrl('/home/user/.nvm/versions/node/v20/lib/file.js')
+
+    // Then
+    expect(got).toBe('file://wsl.localhost/Ubuntu-22.04/home/user/.nvm/versions/node/v20/lib/file.js')
+
+    // Cleanup
+    process.env.WSL_DISTRO_NAME = originalEnv
+  })
+
+  test('returns standard file URL when not in WSL', async () => {
+    // Given
+    vi.resetModules()
+    vi.doMock('is-wsl', () => ({default: false}))
+
+    // Re-import to get fresh module with mocked dependency
+    const {convertToWslFileUrl} = await import('./system.js')
+
+    // When
+    const got = await convertToWslFileUrl('/tmp/test-file.html')
+
+    // Then
+    expect(got).toBe('file:///tmp/test-file.html')
+  })
+
+  test('returns standard file URL when WSL_DISTRO_NAME is not set', async () => {
+    // Given
+    const originalEnv = process.env.WSL_DISTRO_NAME
+    delete process.env.WSL_DISTRO_NAME
+
+    // Reset modules and mock is-wsl to return true, but distro name is not set
+    vi.resetModules()
+    vi.doMock('is-wsl', () => ({default: true}))
+
+    // Re-import to get fresh module with mocked dependency
+    const {convertToWslFileUrl} = await import('./system.js')
+
+    // When
+    const got = await convertToWslFileUrl('/tmp/test-file.html')
+
+    // Then
+    expect(got).toBe('file:///tmp/test-file.html')
+
+    // Cleanup
+    process.env.WSL_DISTRO_NAME = originalEnv
   })
 })
