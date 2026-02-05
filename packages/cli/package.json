@@ -50,56 +50,6 @@
     "vitest": "vitest",
     "type-check": "nx type-check"
   },
-  "eslintConfig": {
-    "extends": [
-      "../../.eslintrc.cjs"
-    ],
-    "overrides": [
-      {
-        "files": [
-          "**/bin/*.js"
-        ],
-        "parser": "espree",
-        "extends": [
-          "plugin:@typescript-eslint/disable-type-checked"
-        ],
-        "rules": {
-          "@typescript-eslint/naming-convention": "off",
-          "@typescript-eslint/no-floating-promises": "off",
-          "@typescript-eslint/no-misused-promises": "off",
-          "@typescript-eslint/no-unnecessary-type-assertion": "off",
-          "@typescript-eslint/switch-exhaustiveness-check": "off",
-          "import/first": "off",
-          "import/no-unresolved": "off",
-          "node/shebang": "off",
-          "@shopify/cli/specific-imports-in-bootstrap-code": [
-            "error",
-            {
-              "static": [
-                "../dist/index.js"
-              ]
-            }
-          ],
-          "@typescript-eslint/consistent-type-assertions": "off"
-        }
-      },
-      {
-        "files": [
-          "src/index.ts"
-        ],
-        "rules": {
-          "@shopify/cli/specific-imports-in-bootstrap-code": [
-            "error",
-            {
-              "static": [
-                "@shopify/cli-kit/node/cli"
-              ]
-            }
-          ]
-        }
-      }
-    ]
-  },
   "dependencies": {
     "@ast-grep/napi": "0.33.0",
     "esbuild": "0.27.2",
@@ -116,10 +66,8 @@
     "@shopify/theme": "3.90.0",
     "@shopify/cli-hydrogen": "11.1.5",
     "@types/global-agent": "3.0.0",
-    "@typescript-eslint/eslint-plugin": "7.13.1",
     "@vitest/coverage-istanbul": "^3.1.4",
-    "esbuild-plugin-copy": "^2.1.1",
-    "espree": "9.6.1"
+    "esbuild-plugin-copy": "^2.1.1"
   },
   "engines": {
     "node": ">=20.10.0"
