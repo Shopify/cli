@@ -470,7 +470,6 @@ describe('themeDuplicate', () => {
         session,
         variables: {id: `gid://shopify/OnlineStoreTheme/${id}`, name},
         preferredBehaviour: expectedApiOptions,
-        version: '2025-10',
         responseOptions: {
           onResponse: expect.any(Function),
         },
