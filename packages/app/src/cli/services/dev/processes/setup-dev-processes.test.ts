@@ -176,7 +176,7 @@ describe('setup-dev-processes', () => {
     })
 
     // Dev console is NOT shown by default (only shown for 1P devs)
-    expect(res.previewUrl).toBe('https://admin.shopify.com/store/store/apps/api-key')
+    expect(res.previewUrl).toBe('https://admin.shopify.com/store/store/apps/api-key?dev-console=show')
     expect(res.processes[0]).toMatchObject({
       type: 'web',
       prefix: 'web-backend-frontend',
@@ -206,7 +206,7 @@ describe('setup-dev-processes', () => {
         apiKey: 'api-key',
         apiSecret: 'api-secret',
         port: expect.any(Number),
-        appUrl: 'https://admin.shopify.com/store/store/apps/api-key',
+        appUrl: 'https://admin.shopify.com/store/store/apps/api-key?dev-console=show',
         key: 'somekey',
         storeFqdn: 'store.myshopify.io',
       },
