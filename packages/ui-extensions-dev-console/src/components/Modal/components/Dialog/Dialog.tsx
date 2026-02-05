@@ -1,9 +1,8 @@
 import styles from './Dialog.module.scss'
-
-import React, {useRef, SetStateAction, Dispatch, useLayoutEffect, useCallback} from 'react'
-import {CSSTransition} from 'react-transition-group'
 import {focusFirstFocusableNode} from '@/utilities/focus'
 import {classNames} from '@/utilities/css'
+import React, {useRef, SetStateAction, Dispatch, useLayoutEffect, useCallback} from 'react'
+import {CSSTransition} from 'react-transition-group'
 
 enum Key {
   Escape = 27,

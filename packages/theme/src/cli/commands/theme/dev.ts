@@ -11,6 +11,7 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
+
 import type {ErrorOverlayMode, LiveReload} from '../../utilities/theme-environment/types.js'
 
 type DevFlags = InferredFlags<typeof Dev.flags>

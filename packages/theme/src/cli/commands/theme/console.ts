@@ -1,6 +1,6 @@
-import {themeFlags} from '../../flags.js'
-import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {ensureReplEnv, initializeRepl} from '../../services/console.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
+import {themeFlags} from '../../flags.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Flags} from '@oclif/core'

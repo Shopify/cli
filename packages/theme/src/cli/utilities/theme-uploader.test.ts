@@ -1,3 +1,5 @@
+import {renderTasksToStdErr} from './theme-ui.js'
+import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {
   MAX_BATCH_BYTESIZE,
   MAX_BATCH_FILE_COUNT,
@@ -6,8 +8,6 @@ import {
   uploadTheme,
   updateUploadErrors,
 } from './theme-uploader.js'
-import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {renderTasksToStdErr} from './theme-ui.js'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'

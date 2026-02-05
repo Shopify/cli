@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable tsdoc/syntax */
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
 import {outputContent, outputDebug, outputToken, TokenizedString} from './output.js'
@@ -31,6 +30,7 @@ import {AutocompletePromptProps, AutocompletePrompt} from '../../private/node/ui
 import {InfoTableSection} from '../../private/node/ui/components/Prompts/InfoTable.js'
 import {InfoMessageProps} from '../../private/node/ui/components/Prompts/InfoMessage.js'
 import {SingleTask} from '../../private/node/ui/components/SingleTask.js'
+
 import React from 'react'
 import {Key as InkKey, RenderOptions} from 'ink'
 
@@ -235,7 +235,7 @@ interface RenderFatalErrorOptions {
  * [1] https://partners.shopify.com/signup
  *
  */
-// eslint-disable-next-line max-params
+
 export function renderFatalError(error: Fatal, {renderOptions}: RenderFatalErrorOptions = {}) {
   return renderOnce(<FatalError error={error} />, {logLevel: 'error', renderOptions})
 }
@@ -276,7 +276,7 @@ export interface RenderSelectPromptOptions<T> extends Omit<SelectPromptProps<T>,
  *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
-// eslint-disable-next-line max-params
+
 export async function renderSelectPrompt<T>(
   {renderOptions, isConfirmationPrompt, ...props}: RenderSelectPromptOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -301,8 +301,10 @@ export async function renderSelectPrompt<T>(
   })
 }
 
-export interface RenderConfirmationPromptOptions
-  extends Pick<SelectPromptProps<boolean>, 'message' | 'infoTable' | 'infoMessage' | 'abortSignal'> {
+export interface RenderConfirmationPromptOptions extends Pick<
+  SelectPromptProps<boolean>,
+  'message' | 'infoTable' | 'infoMessage' | 'abortSignal'
+> {
   confirmationMessage?: string
   cancellationMessage?: string
   renderOptions?: RenderOptions
@@ -363,8 +365,10 @@ export async function renderConfirmationPrompt({
   })
 }
 
-export interface RenderAutocompleteOptions<T>
-  extends PartialBy<Omit<AutocompletePromptProps<T>, 'onSubmit'>, 'search'> {
+export interface RenderAutocompleteOptions<T> extends PartialBy<
+  Omit<AutocompletePromptProps<T>, 'onSubmit'>,
+  'search'
+> {
   renderOptions?: RenderOptions
 }
 
@@ -406,7 +410,7 @@ export interface RenderAutocompleteOptions<T>
  *    Press ↑↓ arrows to select, enter to confirm.
  *
  */
-// eslint-disable-next-line max-params
+
 export async function renderAutocompletePrompt<T>(
   {renderOptions, ...props}: RenderAutocompleteOptions<T>,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -471,12 +475,11 @@ interface RenderTasksOptions {
  * ▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
  * Installing dependencies ...
  */
-// eslint-disable-next-line max-params
+
 export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
 ) {
-  // eslint-disable-next-line max-params
   return new Promise<TContext>((resolve, reject) => {
     render(<Tasks tasks={tasks} onComplete={resolve} noProgressBar={noProgressBar} />, {
       ...renderOptions,
@@ -511,7 +514,6 @@ export async function renderSingleTask<T>({
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
-  // eslint-disable-next-line max-params
   return new Promise<T>((resolve, reject) => {
     render(<SingleTask title={title} task={task} onComplete={resolve} onAbort={onAbort} />, {
       ...renderOptions,
@@ -532,7 +534,7 @@ export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-// eslint-disable-next-line max-params
+
 export async function renderTextPrompt(
   {renderOptions, ...props}: RenderTextPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -584,7 +586,7 @@ export interface RenderDangerousConfirmationPromptOptions extends Omit<Dangerous
  *    ▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔
  *
  */
-// eslint-disable-next-line max-params
+
 export async function renderDangerousConfirmationPrompt(
   {renderOptions, ...props}: RenderDangerousConfirmationPromptOptions,
   uiDebugOptions: UIDebugOptions = defaultUIDebugOptions,
@@ -610,12 +612,11 @@ export async function renderDangerousConfirmationPrompt(
 }
 
 /** Waits for any key to be pressed except Ctrl+C which will terminate the process. */
-// eslint-disable-next-line max-params
+
 export const keypress = async (stdin = process.stdin, uiDebugOptions: UIDebugOptions = defaultUIDebugOptions) => {
   throwInNonTTY({message: 'Press any key'}, uiDebugOptions)
 
   return runWithTimer('cmd_all_timing_prompts_ms')(() => {
-    // eslint-disable-next-line max-params
     return new Promise((resolve, reject) => {
       const handler = (buffer: Buffer) => {
         stdin.setRawMode(false)
@@ -654,7 +655,6 @@ interface ThrowInNonTTYOptions {
   stdin?: NodeJS.ReadStream
 }
 
-// eslint-disable-next-line max-params
 function throwInNonTTY({message, stdin = undefined}: ThrowInNonTTYOptions, uiDebugOptions: UIDebugOptions) {
   if (isTTY({stdin, uiDebugOptions})) return
 

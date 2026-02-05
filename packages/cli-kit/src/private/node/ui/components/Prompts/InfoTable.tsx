@@ -16,11 +16,7 @@ export interface InfoTableSection {
 }
 
 export interface InfoTableProps {
-  table:
-    | {
-        [header: string]: Items
-      }
-    | InfoTableSection[]
+  table: Record<string, Items> | InfoTableSection[]
 }
 
 const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
@@ -28,7 +24,7 @@ const InfoTable: FunctionComponent<InfoTableProps> = ({table}) => {
     ? table
     : Object.keys(table).map((header) => ({
         header,
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         items: table[header]!,
         color: undefined,
         helperText: undefined,

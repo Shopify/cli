@@ -2,6 +2,7 @@ import {LoadingBar} from './LoadingBar.js'
 import {handleCtrlC} from '../../ui.js'
 import {TokenizedString} from '../../../../public/node/output.js'
 import React, {useEffect, useState} from 'react'
+
 import {useApp, useInput, useStdin} from 'ink'
 
 interface SingleTaskProps<T> {

@@ -6,7 +6,7 @@ type Translation = string | {[key: string]: Translation}
 
 export interface Localization {
   defaultLocale: string
-  translations: {[key: string]: {[key: string]: Translation}}
+  translations: Record<string, Record<string, Translation>>
   lastUpdated: number
 }
 
@@ -63,9 +63,7 @@ interface TranslationDictionary {
  * }
  * ```
  */
-interface ExtensionTranslationMap {
-  [key: string]: string
-}
+type ExtensionTranslationMap = Record<string, string>
 
 export const TRANSLATED_KEYS = ['localization', 'name', 'description']
 /**
@@ -105,7 +103,6 @@ function traverseDictionary(
     }
 
     if (typeof value === 'string') {
-      // eslint-disable-next-line node/callback-return
       callback(translationKey, value)
     } else {
       traverseDictionary(value, callback, translationKey)

@@ -14,9 +14,7 @@ import type {List, ValueIteratee} from 'lodash'
 export function groupBy<T>(
   collection: ArrayLike<T> | null | undefined,
   iteratee?: ValueIteratee<T>,
-): {
-  [index: string]: T[]
-} {
+): Record<string, T[]> {
   return lodashGroupBy(collection, iteratee)
 }
 

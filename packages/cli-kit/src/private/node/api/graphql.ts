@@ -2,6 +2,7 @@ import {GraphQLClientError, sanitizedHeadersOutput} from './headers.js'
 import {sanitizeURL} from './urls.js'
 import {stringifyMessage, outputContent, outputToken, outputDebug} from '../../../public/node/output.js'
 import {AbortError} from '../../../public/node/error.js'
+
 import {ClientError, Variables} from 'graphql-request'
 
 export function debugLogRequestInfo(
@@ -9,7 +10,7 @@ export function debugLogRequestInfo(
   query: string,
   url: string,
   variables?: Variables,
-  headers: {[key: string]: string} = {},
+  headers: Record<string, string> = {},
 ) {
   outputDebug(outputContent`Sending ${outputToken.json(api)} GraphQL request:
   ${outputToken.raw(query.toString().trim())}

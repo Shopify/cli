@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // Install script for cloudflared, derived from https://github.com/JacobLinCool/node-cloudflared
 import {basename, dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -20,25 +19,25 @@ import {execSync, execFileSync} from 'child_process'
 export const CURRENT_CLOUDFLARE_VERSION = '2024.8.2'
 const CLOUDFLARE_REPO = `https://github.com/cloudflare/cloudflared/releases/download/${CURRENT_CLOUDFLARE_VERSION}/`
 
-const LINUX_URL: {[key: string]: string} = {
+const LINUX_URL: Record<string, string> = {
   arm64: 'cloudflared-linux-arm64',
   arm: 'cloudflared-linux-arm',
   x64: 'cloudflared-linux-amd64',
   ia32: 'cloudflared-linux-386',
 }
 
-const MACOS_URL: {[key: string]: string} = {
+const MACOS_URL: Record<string, string> = {
   arm64: 'cloudflared-darwin-arm64.tgz',
   x64: 'cloudflared-darwin-amd64.tgz',
 }
 
-const WINDOWS_URL: {[key: string]: string} = {
+const WINDOWS_URL: Record<string, string> = {
   x64: 'cloudflared-windows-amd64.exe',
   ia32: 'cloudflared-windows-386.exe',
   arm64: 'cloudflared-windows-amd64.exe',
 }
 
-const URL: {[key: string]: {[key: string]: string}} = {
+const URL: Record<string, Record<string, string>> = {
   linux: LINUX_URL,
   darwin: MACOS_URL,
   win32: WINDOWS_URL,

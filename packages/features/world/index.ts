@@ -24,7 +24,7 @@ export interface ExtensionConfiguration {
 
 export class World {
   public temporaryDirectory: string
-  public temporaryEnv: {[key: string]: string} | undefined
+  public temporaryEnv: Record<string, string> | undefined
   public appDirectory: string | undefined
 
   constructor({temporaryDirectory}: WorldConstructorParams) {

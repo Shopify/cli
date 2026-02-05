@@ -1,6 +1,6 @@
-import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
-import {themeFlags} from '../../flags.js'
 import {open} from '../../services/open.js'
+import {themeFlags} from '../../flags.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {AdminSession} from '@shopify/cli-kit/node/session'

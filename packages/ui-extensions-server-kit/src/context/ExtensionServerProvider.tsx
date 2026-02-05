@@ -11,6 +11,7 @@ import {ExtensionServerClient} from '../ExtensionServerClient'
 import {ExtensionServer} from '../ExtensionServerClient/server-types.js'
 import {useIsomorphicLayoutEffect} from '../hooks/useIsomorphicLayoutEffect'
 import {useExtensionServerState} from '../hooks/useExtensionServerState'
+
 import React, {useCallback, useMemo, useState} from 'react'
 
 import type {ExtensionServerProviderProps} from './types'

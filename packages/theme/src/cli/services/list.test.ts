@@ -1,5 +1,5 @@
-import {list} from './list.js'
 import {getDevelopmentTheme} from './local-storage.js'
+import {list} from './list.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {renderInfo} from '@shopify/cli-kit/node/ui'

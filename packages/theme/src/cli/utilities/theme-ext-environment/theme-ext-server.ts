@@ -7,8 +7,11 @@ import {getHotReloadHandler, triggerHotReload} from '../theme-environment/hot-re
 import {emptyThemeFileSystem} from '../theme-fs-empty.js'
 import {initializeDevServerSession} from '../theme-environment/dev-server-session.js'
 import {createApp, toNodeListener} from 'h3'
+
 import {AdminSession} from '@shopify/cli-kit/node/session'
+
 import {createServer} from 'node:http'
+
 import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
 
 interface DevelopmentServerInstance {
@@ -114,7 +117,7 @@ export async function setupInMemoryTemplateWatcher(theme: Theme, ctx: DevServerC
 }
 
 export function getExtensionInMemoryTemplates(ctx: DevServerContext) {
-  const replaceExtTemplates: {[key: string]: string} = {}
+  const replaceExtTemplates: Record<string, string> = {}
   const fileSystem = ctx.localThemeExtensionFileSystem
 
   for (const key of fileSystem.unsyncedFileKeys) {

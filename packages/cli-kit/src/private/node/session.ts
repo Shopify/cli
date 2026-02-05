@@ -234,7 +234,6 @@ ${outputToken.json(applications)}
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       newSession = await refreshTokens(currentSession!, applications)
     } catch (error) {
       if (error instanceof InvalidGrantError) {

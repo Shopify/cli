@@ -1,5 +1,5 @@
-import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
+import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeUpdate} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'

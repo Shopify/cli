@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-invalid-void-type */
-/* eslint-disable @shopify/strict-component-boundaries */
 import {FlattenedLocalization, Localization} from './i18n'
 import './ExtensionServerClient/types'
 import type {Surface} from './ExtensionServerClient/types'
@@ -94,7 +92,7 @@ export interface ExtensionPoint {
   localization?: FlattenedLocalization | Localization | null
   name: string
   description?: string
-  assets?: {[name: string]: Asset}
+  assets?: Record<string, Asset>
 }
 
 type ExtensionPoints = string[] | ExtensionPoint[] | null
@@ -119,7 +117,7 @@ interface Capabilities {
 export interface ExtensionPayload {
   type: string
   externalType: string
-  assets: {[name: string]: Asset}
+  assets: Record<string, Asset>
   development: {
     hidden: boolean
     status: Status
@@ -154,7 +152,7 @@ export interface ExtensionPayload {
       name?: string
       description?: string
       required?: boolean
-      validations?: any[]
+      validations?: unknown[]
     }[]
   }
 }

@@ -32,7 +32,7 @@ function hashFileSync(filePath, algorithm = 'sha256') {
 }
 
 function checkKnownFailuresIfShouldFail(context) {
-  const filePath = context.getFilename()
+  const filePath = context.filename || context.getFilename()
   const relativePath = path.relative(path.resolve(__dirname, '../../../../../../..'), filePath)
   const fileHash = hashFileSync(filePath)
   const shouldFail = !knownFailures[relativePath] || knownFailures[relativePath] !== fileHash
@@ -59,10 +59,11 @@ function checkTemplateElement(context, node) {
   }
 
   // don't fail if this is inside a TaggedTemplateExpression with gql tag name
-  const parents = context.getAncestors()
+  const sourceCode = context.sourceCode || context.getSourceCode()
+  const parents = sourceCode.getAncestors(node)
   parents.pop()
   const parent = parents.pop()
-  if (parent.type === 'TaggedTemplateExpression' && parent.tag.name === 'gql') {
+  if (parent && parent.type === 'TaggedTemplateExpression' && parent.tag && parent.tag.name === 'gql') {
     return
   }
 

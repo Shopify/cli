@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {Identifiers} from './identifiers.js'
@@ -374,8 +373,7 @@ type AppConstructor<
 export class App<
   TConfig extends AppConfiguration = AppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
-> implements AppInterface<TConfig, TModuleSpec>
-{
+> implements AppInterface<TConfig, TModuleSpec> {
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string

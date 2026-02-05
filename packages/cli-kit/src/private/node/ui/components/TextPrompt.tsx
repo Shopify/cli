@@ -1,5 +1,5 @@
-import {TextInput} from './TextInput.js'
 import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
+import {TextInput} from './TextInput.js'
 import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
@@ -7,6 +7,7 @@ import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
+
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 

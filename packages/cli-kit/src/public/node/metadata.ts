@@ -61,7 +61,7 @@ export type SensitiveSchema<T> = T extends RuntimeMetadataManager<infer _TPublic
  */
 export function createRuntimeMetadataContainer<
   TPublic extends AnyJson,
-  TSensitive extends AnyJson = {[key: string]: never},
+  TSensitive extends AnyJson = Record<string, never>,
 >(defaultPublicMetadata: Partial<TPublic> = {}): RuntimeMetadataManager<TPublic, TSensitive> {
   const raw: {sensitive: Partial<TSensitive>; public: Partial<TPublic>} = {
     sensitive: {},
@@ -142,7 +142,7 @@ export function createRuntimeMetadataContainer<
 
           // The top of the stack is the total time for all nested timers
           const wallClockDuration = Math.max(end - start, 0)
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
           const childDurations = durationStack.pop()!
           const duration = Math.max(wallClockDuration - childDurations, 0)
 

@@ -5,11 +5,12 @@ import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import {useExitOnCtrlC} from '../hooks/use-exit-on-ctrl-c.js'
 import {TokenizedString} from '../../../../public/node/output.js'
+
 import React, {useRef, useState} from 'react'
 
 export interface Task<TContext = unknown> {
   title: string | TokenizedString
-  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+
   task: (ctx: TContext, task: Task<TContext>) => Promise<void | Task<TContext>[]>
   retry?: number
   retryCount?: number
@@ -58,7 +59,6 @@ async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
 
 const noop = () => {}
 
-// eslint-disable-next-line react/function-component-definition
 function Tasks<TContext>({
   tasks,
   silent = isUnitTest(),
@@ -67,7 +67,6 @@ function Tasks<TContext>({
   noColor,
   noProgressBar = false,
 }: React.PropsWithChildren<TasksProps<TContext>>) {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const [currentTask, setCurrentTask] = useState<Task<TContext>>(tasks[0]!)
   const [state, setState] = useState<TasksState>(TasksState.Loading)
   const ctx = useRef<TContext>({} as TContext)

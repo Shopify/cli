@@ -14,6 +14,7 @@ import {mockAndCaptureOutput} from './testing/output.js'
 import {TokenizedString} from './output.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import supportsHyperlinks from 'supports-hyperlinks'
+
 import {Writable} from 'stream'
 
 vi.mock('supports-hyperlinks')

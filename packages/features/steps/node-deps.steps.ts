@@ -9,10 +9,10 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 interface PackageJson {
-  dependencies?: {[key: string]: string}
-  devDependencies?: {[key: string]: string}
-  peerDependencies?: {[key: string]: string}
-  resolutions?: {[key: string]: string}
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  resolutions?: Record<string, string>
 }
 
 async function parsePackageJson(path: string): Promise<PackageJson> {
@@ -22,7 +22,6 @@ async function parsePackageJson(path: string): Promise<PackageJson> {
 When(/I look at the package.json files in all packages/, async function () {
   this.packageJsonMap = {}
   for (const packageJson of glob.sync(`${__dirname}/../../*/package.json`)) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const packageName = path.dirname(packageJson).split('/').pop()!
     // eslint-disable-next-line no-await-in-loop
     this.packageJsonMap[packageName] = await parsePackageJson(packageJson)

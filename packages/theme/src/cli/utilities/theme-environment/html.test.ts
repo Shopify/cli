@@ -5,6 +5,7 @@ import {emptyThemeExtFileSystem, emptyThemeFileSystem} from '../theme-fs-empty.j
 import {createEvent} from 'h3'
 import {describe, expect, test, vi} from 'vitest'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
+
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 

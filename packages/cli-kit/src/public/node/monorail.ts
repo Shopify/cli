@@ -1,6 +1,6 @@
 import {fetch} from './http.js'
+import {outputDebug, outputContent, outputToken} from './output.js'
 import {JsonMap} from '../../private/common/json.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import {DeepRequired} from '../common/ts/deep-required.js'
 
 export {DeepRequired}

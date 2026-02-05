@@ -3,6 +3,7 @@ import {exec} from '../lib/system.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as path from 'pathe'
 import fs from 'fs-extra'
+
 import {strict as assert} from 'assert'
 
 interface ExtensionConfiguration {

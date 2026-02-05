@@ -1,5 +1,6 @@
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from './schemas.js'
+import {FunctionConfigType} from './specifications/function.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -13,7 +14,6 @@ import {
   testSingleWebhookSubscriptionExtension,
   placeholderAppConfiguration,
 } from '../app/app.test-data.js'
-import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions, buildUIExtension} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {joinPath} from '@shopify/cli-kit/node/path'

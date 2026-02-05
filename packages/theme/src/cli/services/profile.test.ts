@@ -5,6 +5,7 @@ import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
+
 import {readFile} from 'fs/promises'
 
 vi.mock('@shopify/cli-kit/node/session')

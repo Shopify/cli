@@ -1,5 +1,5 @@
-import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
+import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'

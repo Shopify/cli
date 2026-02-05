@@ -1,8 +1,9 @@
 import {ExtensionServerClient} from './ExtensionServerClient'
 import {DeepPartial} from '../types'
 import {mockApp} from '../testing'
-import {beforeEach, expect, test, vi, describe} from 'vitest'
+
 import {Localization} from 'i18n.js'
+import {beforeEach, expect, test, vi, describe} from 'vitest'
 
 // Mock React's act function because jest-websocket-mock tries to use it
 vi.mock('react-dom/test-utils', () => ({
@@ -51,7 +52,7 @@ class MockWebSocket implements Partial<WebSocket> {
   onmessage: ((ev: MessageEvent) => any) | null = null
   onclose: ((ev: CloseEvent) => any) | null = null
   server: MockWebSocketServer
-  private eventListeners: {[key: string]: Set<EventListener>} = {
+  private eventListeners: Record<string, Set<EventListener>> = {
     open: new Set(),
     message: new Set(),
     close: new Set(),
@@ -1032,7 +1033,7 @@ describe('ExtensionServerClient', () => {
       mockSocketServer.connect(mockSocket)
 
       // Persist data
-      const extensionData = {extensions: [{uuid: '123'}]}
+      const extensionData = {extensions: [{uuid: '123'}]} as any
       client.persist('update', extensionData)
 
       // Verify the correct message was sent
@@ -1092,7 +1093,7 @@ describe('ExtensionServerClient', () => {
             extensionPoints: [{localization: {}, name: 'いらっしゃいませ!', description: '拡張子の説明'}],
           },
         ],
-      }
+      } as any
 
       // Persist the data
       client.persist('update', extensionData)
@@ -1125,7 +1126,7 @@ describe('ExtensionServerClient', () => {
       // Create data with localization fields
       const extensionData = {
         extensions: [{uuid: '123', type: 'ui_extension', localization: {}, extensionPoints: [{localization: {}}]}],
-      }
+      } as any
 
       // Persist the data
       client.persist('update', extensionData)

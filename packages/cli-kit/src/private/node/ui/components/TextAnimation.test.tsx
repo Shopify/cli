@@ -1,6 +1,6 @@
 import {TextAnimation} from './TextAnimation.js'
-import {render} from '../../testing/ui.js'
 import {Stdout} from '../../ui.js'
+import {render} from '../../testing/ui.js'
 import React from 'react'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {useStdout} from 'ink'

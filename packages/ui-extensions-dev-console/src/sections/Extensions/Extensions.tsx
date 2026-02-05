@@ -5,10 +5,11 @@ import en from './translations/en.json'
 import {useExtensions} from './hooks/useExtensions'
 import {useExtensionServerOptions} from './hooks/useExtensionServerOptions'
 import {useApp} from './hooks/useApp'
-import {useI18n} from '@shopify/react-i18n'
-import React from 'react'
+
 import {isEmbedded} from '@/utilities/embedded'
 import {isAppPreview} from '@/utilities/app-preview'
+import React from 'react'
+import {useI18n} from '@shopify/react-i18n'
 
 export function Extensions() {
   const [i18n] = useI18n({

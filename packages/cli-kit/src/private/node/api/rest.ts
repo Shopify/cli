@@ -13,7 +13,7 @@ export function restRequestUrl(
   session: AdminSession,
   apiVersion: string,
   path: string,
-  searchParams: {[name: string]: string} = {},
+  searchParams: Record<string, string> = {},
 ) {
   const url = new URL(
     isThemeAccessSession(session)

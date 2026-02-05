@@ -2,8 +2,9 @@ import * as admin from './admin.js'
 import {graphqlRequest, graphqlRequestDoc} from './graphql.js'
 import {AdminSession} from '../session.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
-import * as http from '../../../public/node/http.js'
+import * as http from '../http.js'
 import {defaultThemeKitAccessDomain} from '../../../private/node/constants.js'
+
 import {test, vi, expect, describe} from 'vitest'
 
 vi.mock('./graphql.js')

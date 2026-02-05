@@ -4,6 +4,7 @@ import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
+
 import React, {ReactElement, useCallback, useEffect} from 'react'
 import {useApp} from 'ink'
 
@@ -18,7 +19,6 @@ export interface SelectPromptProps<T> {
   groupOrder?: string[]
 }
 
-// eslint-disable-next-line react/function-component-definition
 function SelectPrompt<T>({
   message,
   choices,

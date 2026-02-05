@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import {EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX} from './theme-environment/proxy.js'
 import {timestampDateFormat} from '../constants.js'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {H3Event} from 'h3'
 import {extname} from '@shopify/cli-kit/node/path'
+
 import type {DevServerContext} from './theme-environment/types.js'
 
 const CHARACTER_TRUNCATION_LIMIT = 80

@@ -22,7 +22,7 @@ export async function sendUninstallWebhookToAppServer(
   const apiVersions = await requestApiVersions(options.developerPlatformClient, options.organizationId)
   const variables: SendSampleWebhookVariables = {
     topic: 'app/uninstalled',
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     api_version: apiVersions[1]!,
     address: options.address,
     delivery_method: DELIVERY_METHOD.LOCALHOST,

@@ -1,7 +1,8 @@
-export function isUIExtension(extension: any): extension is ExtensionServer.UIExtension {
+export function isUIExtension(extension: unknown): extension is ExtensionServer.UIExtension {
+  const ext = extension as ExtensionServer.UIExtension
   return (
-    extension.type === 'ui_extension' &&
-    Array.isArray(extension.extensionPoints) &&
-    extension.extensionPoints.every((extensionPoint: any) => typeof extensionPoint === 'object')
+    ext.type === 'ui_extension' &&
+    Array.isArray(ext.extensionPoints) &&
+    ext.extensionPoints.every((extensionPoint: unknown) => typeof extensionPoint === 'object')
   )
 }

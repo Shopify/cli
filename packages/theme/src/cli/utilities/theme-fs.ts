@@ -12,8 +12,10 @@ import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
+
 import EventEmitter from 'node:events'
 import {fileURLToPath} from 'node:url'
+
 import type {
   ThemeFileSystem,
   ThemeFileSystemOptions,

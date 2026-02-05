@@ -229,7 +229,7 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,

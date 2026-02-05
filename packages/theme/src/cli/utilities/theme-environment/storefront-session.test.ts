@@ -343,7 +343,7 @@ describe('Storefront API', () => {
   function response(mock: {
     status: number
     url?: string
-    headers?: {[key: string]: string}
+    headers?: Record<string, string>
     text?: () => Promise<string>
   }) {
     const setCookieHeader = (mock.headers ?? {})['set-cookie'] ?? ''

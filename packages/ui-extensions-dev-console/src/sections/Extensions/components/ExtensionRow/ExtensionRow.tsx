@@ -1,13 +1,12 @@
-import * as styles from './ExtensionRow.module.scss'
-import en from './translations/en.json'
-
 import {PreviewLinks} from './components'
+import en from './translations/en.json'
+import * as styles from './ExtensionRow.module.scss'
 import {QRCodeModal, Row, Status} from '..'
 import {useExtension} from '../../hooks/useExtension'
+import {Button} from '@/components/Button'
 import React, {useState} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload, ExtensionPoint, isUIExtension} from '@shopify/ui-extensions-server-kit'
-import {Button} from '@/components/Button'
 
 interface Props {
   uuid: ExtensionPayload['uuid']

@@ -14,6 +14,7 @@ import {shopifyFetch} from '../../../public/node/http.js'
 import {identityFqdn} from '../../../public/node/context/fqdn.js'
 import {getLastSeenUserIdAfterAuth, getLastSeenAuthMethod} from '../session.js'
 import {AbortError} from '../../../public/node/error.js'
+
 import {describe, test, expect, vi, afterAll, beforeEach} from 'vitest'
 import {Response} from 'node-fetch'
 
@@ -271,7 +272,6 @@ describe.each(tokenExchangeMethods)(
       // Given
       let capturedUrl = ''
       vi.mocked(shopifyFetch).mockImplementation(async (url, options) => {
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
         capturedUrl = url.toString()
         return Promise.resolve(
           new Response(
