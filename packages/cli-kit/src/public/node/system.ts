@@ -203,6 +203,24 @@ export async function isWsl(): Promise<boolean> {
 }
 
 /**
+ * Convert a WSL Linux path to a Windows path using wslpath.
+ * This is useful when opening files in Windows browsers from WSL.
+ *
+ * @param linuxPath - The Linux path to convert (e.g., /tmp/file.html).
+ * @returns A promise that resolves with the Windows path.
+ */
+export async function convertWslPath(linuxPath: string): Promise<string> {
+  try {
+    const windowsPath = await captureOutput('wslpath', ['-w', linuxPath])
+    return windowsPath.trim()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(`Failed to convert WSL path using wslpath: ${error}. Falling back to original Linux path: ${linuxPath}`)
+    return linuxPath
+  }
+}
+
+/**
  * Check if stdin has piped data available.
  * This distinguishes between actual piped input (e.g., `echo "query" | cmd`)
  * and non-TTY environments without input (e.g., CI).

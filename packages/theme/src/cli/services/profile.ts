@@ -3,7 +3,7 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {resolveAssetPath} from '../utilities/asset-path.js'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, isWsl, convertWslPath} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
@@ -69,7 +69,20 @@ async function openProfile(profileJson: string) {
   outputDebug(`[Theme Profile] writing JS file to: ${jsPath}`)
   await writeFile(jsPath, jsSource)
   outputDebug(`[Theme Profile] JS file created successfully: ${jsPath}`)
-  urlToOpen += `#localProfilePath=${jsPath}`
+
+  // In WSL, we need to convert Linux paths to Windows paths for the browser to access them.
+  const wsl = await isWsl()
+  if (wsl) {
+    const windowsSpeedscopePath = await convertWslPath(urlToOpen)
+    outputDebug(`[Theme Profile] Converted WSL speedscope path: ${urlToOpen} -> ${windowsSpeedscopePath}`)
+    urlToOpen = windowsSpeedscopePath
+
+    const windowsJsPath = await convertWslPath(jsPath)
+    outputDebug(`[Theme Profile] Converted WSL JS path: ${jsPath} -> ${windowsJsPath}`)
+    urlToOpen += `#localProfilePath=${windowsJsPath}`
+  } else {
+    urlToOpen += `#localProfilePath=${jsPath}`
+  }
 
   // For some silly reason, the OS X open command ignores any query parameters or hash parameters
   // passed as part of the URL. To get around this weird issue, we'll create a local HTML file
@@ -79,7 +92,13 @@ async function openProfile(profileJson: string) {
   await writeFile(htmlPath, `<script>window.location=${JSON.stringify(urlToOpen)}</script>`)
   outputDebug(`[Theme Profile] HTML file created successfully: ${htmlPath}`)
 
-  urlToOpen = `file://${htmlPath}`
+  let pathToOpen = htmlPath
+  if (wsl) {
+    pathToOpen = await convertWslPath(htmlPath)
+    outputDebug(`[Theme Profile] Converted WSL HTML path: ${htmlPath} -> ${pathToOpen}`)
+  }
+
+  urlToOpen = `file://${pathToOpen}`
   outputDebug(`[Theme Profile] Opening URL: ${urlToOpen}`)
   const opened = await openURL(urlToOpen)
   outputDebug(`[Theme Profile] URL opened successfully: ${opened}`)
