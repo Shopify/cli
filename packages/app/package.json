@@ -65,7 +65,7 @@
     "esbuild": "0.27.2",
     "express": "4.21.2",
     "graphql-request": "6.1.0",
-    "h3": "0.7.21",
+    "h3": "1.15.5",
     "http-proxy-node16": "1.0.6",
     "ignore": "6.0.2",
     "json-schema-to-typescript": "15.0.4",
