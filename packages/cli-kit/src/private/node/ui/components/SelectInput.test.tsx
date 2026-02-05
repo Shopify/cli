@@ -8,6 +8,7 @@ import {
 } from '../../testing/ui.js'
 import {platformAndArch} from '../../../../public/node/os.js'
 import {describe, expect, test, vi} from 'vitest'
+
 import React from 'react'
 
 const ARROW_UP = '\u001B[A'

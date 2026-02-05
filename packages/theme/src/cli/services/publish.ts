@@ -1,5 +1,5 @@
-import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
+import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themePublish} from '@shopify/cli-kit/node/themes/api'
 import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'

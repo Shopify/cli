@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
 import {dirname} from './path.js'
 import {createFileWriteStream, fileExistsSync, mkdirSync, unlinkFileSync} from './fs.js'
 import {runWithTimer} from './metadata.js'
 import {maxRequestTimeForNetworkCallsMs, skipNetworkLevelRetry} from './environment.js'
-import {httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
+import {outputContent, outputDebug, outputToken} from './output.js'
 import {sanitizeURL} from '../../private/node/api/urls.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
+import {httpsAgent, sanitizedHeadersOutput} from '../../private/node/api/headers.js'
 import {NetworkRetryBehaviour, simpleRequestWithDebugLog} from '../../private/node/api.js'
 import {DEFAULT_MAX_TIME_MS} from '../../private/node/sleep-with-backoff.js'
+
 import FormData from 'form-data'
 import nodeFetch, {RequestInfo, RequestInit, Response} from 'node-fetch'
 
@@ -120,7 +120,7 @@ async function innerFetch({url, behaviour, init, logRequest, useHttpsAgent}: Fet
   if (logRequest) {
     outputDebug(outputContent`Sending ${init?.method ?? 'GET'} request to URL ${sanitizeURL(url.toString())}
 With request headers:
-${sanitizedHeadersOutput((init?.headers ?? {}) as {[header: string]: string})}
+${sanitizedHeadersOutput((init?.headers ?? {}) as Record<string, string>)}
 `)
   }
 

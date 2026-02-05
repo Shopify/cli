@@ -2,6 +2,7 @@ import {buildHeaders, sanitizedHeadersOutput, GraphQLClientError} from './header
 import {CLI_KIT_VERSION} from '../../../public/common/version.js'
 import {randomUUID} from '../../../public/node/crypto.js'
 import {firstPartyDev, isUnitTest} from '../../../public/node/context/local.js'
+
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 
 vi.mock('../../../public/node/crypto.js')

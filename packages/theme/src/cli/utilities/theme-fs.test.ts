@@ -19,6 +19,7 @@ import {renderError} from '@shopify/cli-kit/node/ui'
 import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {AdminSession} from '@shopify/cli-kit/node/session'
+
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 

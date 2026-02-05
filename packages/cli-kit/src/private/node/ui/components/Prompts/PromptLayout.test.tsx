@@ -1,6 +1,6 @@
 import {PromptLayout} from './PromptLayout.js'
-import {render} from '../../../testing/ui.js'
 import {PromptState} from '../../hooks/use-prompt.js'
+import {render} from '../../../testing/ui.js'
 import {describe, expect, test} from 'vitest'
 import React from 'react'
 import {Box, Text} from 'ink'

@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
 /* eslint-disable no-console */
-import {Surface} from './types.js'
 import {ExtensionServer} from './server-types.js'
+import {Surface} from './types.js'
 import {
   FlattenedLocalization,
   Localization,
@@ -21,12 +20,16 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
   protected EVENT_THAT_WILL_MUTATE_THE_SERVER = ['update']
 
-  protected listeners: {[key: string]: Set<any>} = {}
-  protected connectionListeners: {close: Set<any>; open: Set<any>} = {close: new Set(), open: new Set()}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  protected listeners: Record<string, Set<(payload: any) => void>> = {}
+  protected connectionListeners: {close: Set<(event: Event) => void>; open: Set<(event: Event) => void>} = {
+    close: new Set(),
+    open: new Set(),
+  }
 
   protected connected = false
 
-  private uiExtensionsByUuid: {[key: string]: ExtensionServer.UIExtension} = {}
+  private uiExtensionsByUuid: Record<string, ExtensionServer.UIExtension> = {}
 
   constructor(options: DeepPartial<ExtensionServer.Options> = {}) {
     this.id = (Math.random() + 1).toString(36).substring(7)
@@ -47,7 +50,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     const optionsChanged = JSON.stringify(newOptions) !== JSON.stringify(this.options)
 
     if (optionsChanged) {
-      this.options = newOptions
+      this.options = newOptions as ExtensionServer.Options
       this.setupConnection(true)
     }
 
@@ -102,14 +105,17 @@ export class ExtensionServerClient implements ExtensionServer.Client {
        * }
        * ```
        */
-      data.extensions?.forEach((extension: any) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(data as any).extensions?.forEach((extension: ExtensionPayload) => {
         TRANSLATED_KEYS.forEach((key) => {
           if (isUIExtension(extension)) {
             extension.extensionPoints?.forEach((extensionPoint) => {
-              delete extensionPoint[key as keyof ExtensionPoint]
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              delete (extensionPoint as any)[key]
             })
           }
-          delete extension[key as keyof ExtensionPayload]
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          delete (extension as any)[key]
         })
       })
       return this.connection?.send(JSON.stringify({event, data}))
@@ -119,7 +125,8 @@ export class ExtensionServerClient implements ExtensionServer.Client {
   }
 
   public emit<TEvent extends keyof ExtensionServer.DispatchEvents>(...args: ExtensionServer.EmitArgs<TEvent>): void {
-    const [event, data] = args
+    const event = args[0]
+    const data = args.length > 1 ? args[1] : undefined
 
     if (this.EVENT_THAT_WILL_MUTATE_THE_SERVER.includes(event as string)) {
       return console.warn(
@@ -156,19 +163,20 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     this.connection?.addEventListener('message', (message) => {
       try {
         const {event, data} = JSON.parse(message.data) as ExtensionServer.ServerEvents
+        const typedData = data
 
         if (event === 'dispatch') {
-          const {type, payload} = data
+          const {type, payload} = typedData as {type: string; payload: unknown}
           this.listeners[type]?.forEach((listener) => listener(payload))
           return
         }
 
-        const filteredExtensions = data.extensions
-          ? filterExtensionsBySurface(data.extensions, this.options.surface)
-          : data.extensions
+        const filteredExtensions = typedData.extensions
+          ? filterExtensionsBySurface(typedData.extensions, this.options.surface)
+          : typedData.extensions
 
         this.listeners[event]?.forEach((listener) => {
-          listener({...data, extensions: this._getLocalizedExtensions(filteredExtensions)})
+          listener({...typedData, extensions: this._getLocalizedExtensions(filteredExtensions)})
         })
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
@@ -213,9 +221,9 @@ export class ExtensionServerClient implements ExtensionServer.Client {
 
       const localization = shouldUpdateTranslations
         ? getFlattenedLocalization(extension.localization, this.options.locales)
-        : this.uiExtensionsByUuid[extension.uuid]?.localization ?? extension.localization
+        : (this.uiExtensionsByUuid[extension.uuid]?.localization ?? extension.localization)
 
-      const parsedTranslation: {[key: string]: string} =
+      const parsedTranslation: Record<string, string> =
         localization && isFlattenedTranslations(localization) ? JSON.parse(localization.translations) : localization
 
       const localizedExtension = {
@@ -260,7 +268,7 @@ export class ExtensionServerClient implements ExtensionServer.Client {
     })
   }
 
-  private _getLocalizedValue(translations: {[x: string]: string}, value: string): string {
+  private _getLocalizedValue(translations: Record<string, string>, value: string): string {
     const translationKey = value.replace('t:', '')
     return translations[translationKey] || value
   }
@@ -295,7 +303,7 @@ function filterExtensionsBySurface(extensions: ExtensionPayload[], surface: Surf
     }
 
     if (Array.isArray(extension.extensionPoints)) {
-      const extensionPoints: (string | {surface: Surface; [key: string]: any})[] = extension.extensionPoints
+      const extensionPoints = extension.extensionPoints as (string | {surface: Surface; [key: string]: unknown})[]
       const extensionPointMatchingSurface = extensionPoints.filter((extensionPoint) => {
         if (typeof extensionPoint === 'string') {
           return false

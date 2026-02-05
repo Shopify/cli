@@ -1,5 +1,4 @@
 import fs from 'node:fs'
-import path from 'node:path'
 
 const HOSTS_FILE = '/etc/hosts'
 
@@ -38,6 +37,10 @@ function loadHostsFile() {
   }
 }
 
+/**
+ *
+ * @param hostname
+ */
 export function getIpFromHosts(hostname: string) {
   loadHostsFile()
 
@@ -49,7 +52,9 @@ export function getIpFromHosts(hostname: string) {
   throw new Error(`No IP found for hostname: ${hostname}`)
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+/**
+ *
+ */
 export function TEST_ClearCache() {
   hostToIpCache = {}
   lastModifiedTime = 0

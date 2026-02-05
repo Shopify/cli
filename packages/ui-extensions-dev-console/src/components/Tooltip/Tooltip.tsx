@@ -1,7 +1,7 @@
 import styles from './Tooltip.module.css'
 import {TooltipPopover} from './TooltipPopover'
-import React, {useRef, useState} from 'react'
 import {classNames} from '@/utilities/css'
+import React, {useRef, useState} from 'react'
 
 interface TooltipProps {
   children: JSX.Element | string

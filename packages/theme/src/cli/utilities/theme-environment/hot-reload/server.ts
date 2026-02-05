@@ -19,7 +19,9 @@ import {extname, joinPath} from '@shopify/cli-kit/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
+
 import EventEmitter from 'node:events'
+
 import type {
   HotReloadEvent,
   HotReloadFileEvent,
@@ -27,6 +29,7 @@ import type {
   HotReloadFullEvent,
 } from '@shopify/theme-hot-reload'
 import type {Theme, ThemeAsset, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
+
 import type {DevServerContext} from '../types.js'
 
 // --- Section tag content cache ---
@@ -45,9 +48,7 @@ export const fileDetailsCache = new Map<string, FileDetailsEntry>()
 
 /** Store existing section names and types read from JSON files in the project */
 const sectionNamesByFile = new Map<string, [string, string][]>()
-interface SectionGroup {
-  [key: string]: {type: string}
-}
+type SectionGroup = Record<string, {type: string}>
 
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null, true)
@@ -74,7 +75,7 @@ function needsTemplateUpdate(fileKey: string) {
  * If a route is passed, it will filter out the templates that are not related to the route.
  */
 export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string, locale?: string) {
-  const inMemoryTemplates: {[key: string]: string} = {}
+  const inMemoryTemplates: Record<string, string> = {}
 
   const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
@@ -242,7 +243,7 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
         return
       }
 
-      const replaceTemplates: {[key: string]: string} = {}
+      const replaceTemplates: Record<string, string> = {}
 
       if (sectionId) {
         const inMemoryTemplateFiles = ctx.localThemeFileSystem.unsyncedFileKeys

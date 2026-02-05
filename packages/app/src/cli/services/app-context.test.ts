@@ -424,7 +424,7 @@ describe('localAppContext', () => {
             },
             errors: undefined,
           }),
-          validate: async () => ({isErr: () => false, isOk: () => true} as any),
+          validate: async () => ({isErr: () => false, isOk: () => true}) as any,
           contributeToAppConfigurationSchema: (schema: any) => schema,
         } as any,
       ])

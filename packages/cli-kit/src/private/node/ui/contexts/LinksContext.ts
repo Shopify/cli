@@ -6,7 +6,7 @@ export interface Link {
 }
 
 export interface ContextValue {
-  links: React.RefObject<{[key: string]: Link}>
+  links: React.RefObject<Record<string, Link>>
   addLink: (label: string | undefined, url: string) => string
 }
 

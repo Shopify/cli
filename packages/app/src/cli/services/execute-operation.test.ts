@@ -343,9 +343,8 @@ describe('executeOperation', () => {
     const mutation = 'mutation { productUpdate(input: {}) { product { id } } }'
 
     // Import the real validateMutationStore to test end-to-end validation
-    const {validateMutationStore: realValidateMutationStore} = await vi.importActual<
-      typeof import('./graphql/common.js')
-    >('./graphql/common.js')
+    const {validateMutationStore: realValidateMutationStore} =
+      await vi.importActual<typeof import('./graphql/common.js')>('./graphql/common.js')
     vi.mocked(validateMutationStore).mockImplementation((query, store) => realValidateMutationStore(query, store))
 
     await expect(

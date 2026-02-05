@@ -13,11 +13,15 @@ import {fakeThemeFileSystem} from '../../theme-fs/theme-fs-mock-factory.js'
 import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
+
 import {createEvent} from 'h3'
 import * as output from '@shopify/cli-kit/node/output'
+
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
+
 import type {DevServerContext} from '../types.js'
+
 import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 
 vi.mock('../storefront-renderer.js')
@@ -464,7 +468,7 @@ describe('getUpdatedFileParts', () => {
 
 // -- Test utilities --
 
-function createH3Event(url: string, headers?: {[key: string]: string}) {
+function createH3Event(url: string, headers?: Record<string, string>) {
   const data: string[] = []
   const decoder = new TextDecoder()
 
@@ -515,7 +519,6 @@ function createTestContext(options?: {files?: [string, string][]}) {
         .catch(() => {})
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
     const handler = addEventListenerSpy.mock.calls.find(([eventName]) => eventName === event)?.[1]!
 
     handler({

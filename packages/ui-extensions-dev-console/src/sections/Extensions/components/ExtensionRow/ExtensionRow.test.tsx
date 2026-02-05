@@ -1,13 +1,13 @@
 import {ExtensionRow} from '.'
 import en from './translations/en.json'
 import {QRCodeModal} from '..'
-import React from 'react'
-
 import {DefaultProviders} from 'tests/DefaultProviders'
 import {mockI18n} from 'tests/mock-i18n'
+import {Button} from '@/components'
+import React from 'react'
+
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
-import {Button} from '@/components'
 
 vi.mock('./components', () => ({
   PreviewLinks: () => null,

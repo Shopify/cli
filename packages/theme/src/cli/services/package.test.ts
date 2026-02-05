@@ -189,7 +189,7 @@ async function createFiles(structure: string[], directory: string) {
 
 async function readArchiveFiles(zipPath: string) {
   await expect(fileExists(zipPath)).resolves.toBeTruthy()
-  // eslint-disable-next-line @babel/new-cap
+  // eslint-disable-next-line new-cap
   const archive = new StreamZip.async({file: zipPath})
   const entries = await archive.entries()
   const archiveEntries = Object.values(entries)

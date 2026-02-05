@@ -5,9 +5,7 @@ import {outputDebug, outputContent} from '../output.js'
 type HostThemeId = string
 type StoreFqdn = AdminSession['storeFqdn']
 
-interface HostThemeLocalStorageSchema {
-  [themeStore: StoreFqdn]: HostThemeId
-}
+type HostThemeLocalStorageSchema = Record<StoreFqdn, HostThemeId>
 
 let _hostThemeLocalStorageInstance: LocalStorage<HostThemeLocalStorageSchema> | undefined
 

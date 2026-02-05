@@ -1,6 +1,6 @@
-import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
-import {batchedRequests} from '../batching.js'
 import {renderThrownError} from '../errors.js'
+import {batchedRequests} from '../batching.js'
+import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
 import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'

@@ -6,6 +6,7 @@ import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {throttle} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
+
 import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
 import {Box, useApp} from 'ink'
 
@@ -30,7 +31,6 @@ export interface AutocompletePromptProps<T> {
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 
-// eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
   message,
   choices,
