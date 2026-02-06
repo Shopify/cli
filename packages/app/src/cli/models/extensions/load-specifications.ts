@@ -6,6 +6,7 @@ import appWebhooksSpec, {WebhooksSpecIdentifier} from './specifications/app_conf
 import appWebhookSubscriptionSpec, {
   WebhookSubscriptionSpecIdentifier,
 } from './specifications/app_config_webhook_subscription.js'
+import appEventsSpec, {EventsSpecIdentifier} from './specifications/app_config_events.js'
 import appBrandingSpec, {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
 import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
 import appPrivacyComplienceSpec, {
@@ -32,6 +33,7 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   AppAccessSpecIdentifier,
   WebhooksSpecIdentifier,
   WebhookSubscriptionSpecIdentifier,
+  EventsSpecIdentifier,
   PrivacyComplianceWebhooksSpecIdentifier,
   AppProxySpecIdentifier,
   PosSpecIdentifier,
@@ -58,6 +60,7 @@ function loadSpecifications() {
     appPrivacyComplienceSpec,
     appWebhooksSpec,
     appWebhookSubscriptionSpec,
+    appEventsSpec,
   ]
   const moduleSpecs = [
     checkoutPostPurchaseSpec,
