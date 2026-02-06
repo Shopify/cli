@@ -417,6 +417,8 @@ describe('TabPanel', () => {
     if (resizeHandler) {
       resizeHandler()
     }
+    // Wait for React 19 to process the batched state update from resize
+    await new Promise((resolve) => setTimeout(resolve, 0))
 
     const output = unstyled(renderInstance.lastFrame()!)
     // Action tabs should be hidden when content width >= terminal columns
