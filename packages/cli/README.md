@@ -710,12 +710,13 @@ FLAGS
 DESCRIPTION
   Generate a new app Extension.
 
-  Generates a new "app extension" (https://shopify.dev/docs/apps/app-extensions). For a list of app extensions that you
-  can generate using this command, refer to "Supported extensions"
-  (https://shopify.dev/docs/apps/structure/app-extensions/list).
+  Generates a new "app extension" (https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions
+  that you can generate using this command, refer to "Supported extensions"
+  (https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).
 
   Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure,
-  refer to "App structure" (https://shopify.dev/docs/apps/tools/cli/structure) and the documentation for your extension.
+  refer to "App structure" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for
+  your extension.
 ```
 
 ## `shopify app import-custom-data-definitions`
