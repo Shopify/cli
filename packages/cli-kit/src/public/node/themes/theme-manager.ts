@@ -1,4 +1,4 @@
-import {fetchTheme, themeCreate} from './api.js'
+import {fetchTheme, findDevelopmentThemeByName, themeCreate} from './api.js'
 import {Theme} from './types.js'
 import {DEVELOPMENT_THEME_ROLE, Role} from './utils.js'
 import {generateThemeName} from '../../../private/node/themes/generate-theme-name.js'
@@ -13,19 +13,25 @@ export abstract class ThemeManager {
 
   constructor(protected adminSession: AdminSession) {}
 
-  async findOrCreate(): Promise<Theme> {
-    let theme = await this.fetch()
+  async findOrCreate(name?: string, role?: Role): Promise<Theme> {
+    let theme = await this.fetch(name, role)
     if (!theme) {
-      theme = await this.create()
+      theme = await this.create(role, name)
     }
     return theme
   }
 
-  async fetch() {
-    if (!this.themeId) {
+  async fetch(name?: string, role?: Role) {
+    if (!this.themeId && !name) {
       return
     }
-    const theme = await fetchTheme(parseInt(this.themeId, 10), this.adminSession)
+
+    const theme =
+      name && role === DEVELOPMENT_THEME_ROLE
+        ? await findDevelopmentThemeByName(name, this.adminSession)
+        : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          await fetchTheme(parseInt(this.themeId!, 10), this.adminSession)
+
     if (!theme) {
       this.removeTheme()
     }
