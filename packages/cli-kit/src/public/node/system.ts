@@ -78,10 +78,20 @@ export async function exec(command: string, args: string[], options?: ExecOption
   }
 
   if (options?.stderr && options.stderr !== 'inherit') {
+    outputDebug(`[exec] Piping stderr for command: ${command}`)
     commandProcess.stderr?.pipe(options.stderr, {end: false})
+    // Add debug listener to track data flow
+    commandProcess.stderr?.on('data', (chunk) => {
+      outputDebug(`[exec] stderr data received (${chunk.length} bytes) for: ${command}`)
+    })
   }
   if (options?.stdout && options.stdout !== 'inherit') {
+    outputDebug(`[exec] Piping stdout for command: ${command}`)
     commandProcess.stdout?.pipe(options.stdout, {end: false})
+    // Add debug listener to track data flow
+    commandProcess.stdout?.on('data', (chunk) => {
+      outputDebug(`[exec] stdout data received (${chunk.length} bytes) for: ${command}`)
+    })
   }
   let aborted = false
   options?.signal?.addEventListener('abort', () => {
@@ -137,6 +147,9 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     windowsHide: false,
     detached: options?.background,
     cleanup: !options?.background,
+    // Disable buffering for stdout/stderr to ensure real-time streaming
+    // This helps address output swallowing issues on Ubuntu 24.04 (#6726)
+    buffer: false,
   })
   outputDebug(`Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
@@ -240,4 +253,39 @@ export async function readStdinString(): Promise<string | undefined> {
     data += String(chunk)
   }
   return data.trim()
+}
+
+/**
+ * Get the WSL distribution name from the environment.
+ * In WSL, the WSL_DISTRO_NAME environment variable contains the distribution name.
+ *
+ * @returns The WSL distribution name, or undefined if not in WSL or not available.
+ */
+export function getWslDistroName(): string | undefined {
+  return process.env.WSL_DISTRO_NAME
+}
+
+/**
+ * Convert a Unix path to a WSL-compatible file URL that can be opened from Windows.
+ * In WSL, file paths need to be converted to the format: file://wsl.localhost/<distro>/path
+ *
+ * @param unixPath - The Unix-style path to convert (e.g., /tmp/file.html or /home/user/file.js)
+ * @returns A file URL that works when opened from Windows in WSL environments.
+ *
+ * @example
+ * // In WSL with Ubuntu distro:
+ * // Input: /tmp/speedscope-123.html
+ * // Output: file://wsl.localhost/Ubuntu/tmp/speedscope-123.html
+ */
+export async function convertToWslFileUrl(unixPath: string): Promise<string> {
+  const inWsl = await isWsl()
+  const distroName = getWslDistroName()
+
+  if (inWsl && distroName) {
+    // Convert to WSL localhost format for Windows to access
+    return `file://wsl.localhost/${distroName}${unixPath}`
+  }
+
+  // Not in WSL, return standard file URL
+  return `file://${unixPath}`
 }

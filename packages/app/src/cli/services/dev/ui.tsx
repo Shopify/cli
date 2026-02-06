@@ -6,6 +6,7 @@ import {render} from '@shopify/cli-kit/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export async function renderDev({
   processes,
@@ -28,9 +29,19 @@ export async function renderDev({
   organizationName?: string
   configPath?: string
 }) {
-  if (!terminalSupportsPrompting()) {
+  const supportsPrompting = terminalSupportsPrompting()
+  const supportsDevSessions = app.developerPlatformClient.supportsDevSessions
+
+  outputDebug(`[renderDev] Terminal supports prompting: ${supportsPrompting}`)
+  outputDebug(`[renderDev] stdin.isTTY: ${process.stdin.isTTY}, stdout.isTTY: ${process.stdout.isTTY}`)
+  outputDebug(`[renderDev] Developer platform supports dev sessions: ${supportsDevSessions}`)
+  outputDebug(`[renderDev] Number of processes: ${processes.length}`)
+
+  if (!supportsPrompting) {
+    outputDebug(`[renderDev] Using NON-INTERACTIVE mode (piping to process.stdout/stderr directly)`)
     await renderDevNonInteractive({processes, app, abortController, developerPreview, shopFqdn})
-  } else if (app.developerPlatformClient.supportsDevSessions) {
+  } else if (supportsDevSessions) {
+    outputDebug(`[renderDev] Using DevSessionUI (interactive with dev sessions)`)
     return render(
       <DevSessionUI
         processes={processes}
@@ -50,6 +61,7 @@ export async function renderDev({
       },
     )
   } else {
+    outputDebug(`[renderDev] Using Dev component (interactive without dev sessions)`)
     return render(
       <Dev
         processes={processes}

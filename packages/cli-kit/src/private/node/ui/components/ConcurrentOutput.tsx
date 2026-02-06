@@ -1,4 +1,4 @@
-import {OutputProcess} from '../../../../public/node/output.js'
+import {OutputProcess, outputDebug} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
 import {Box, Static, Text, TextProps, useApp} from 'ink'
@@ -132,24 +132,40 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   const writableStream = useCallback(
     (process: OutputProcess, prefixes: string[]) => {
       return new Writable({
-        write(chunk, _encoding, next) {
-          const context = outputContextStore.getStore()
-          const prefix = context?.outputPrefix ?? process.prefix
-          const shouldStripAnsi = context?.stripAnsi ?? true
-          const log = chunk.toString('utf8').replace(/(\n)$/, '')
+        // Explicitly set options for cross-platform compatibility
+        // This addresses potential buffering issues on Ubuntu 24.04 (#6726)
+        decodeStrings: false,
+        defaultEncoding: 'utf8',
+        // Use a smaller high water mark to ensure data flows through quickly
+        highWaterMark: 16,
+        write(chunk, encoding, next) {
+          try {
+            const context = outputContextStore.getStore()
+            const prefix = context?.outputPrefix ?? process.prefix
+            const shouldStripAnsi = context?.stripAnsi ?? true
+            // Handle both Buffer and string chunks
+            const log = (typeof chunk === 'string' ? chunk : chunk.toString('utf8')).replace(/(\n)$/, '')
 
-          const index = addPrefix(prefix, prefixes)
+            outputDebug(`[ConcurrentOutput] Received chunk for prefix "${prefix}": ${log.substring(0, 100)}${log.length > 100 ? '...' : ''}`)
 
-          const lines = shouldStripAnsi ? stripAnsi(log).split(/\n/) : log.split(/\n/)
-          setProcessOutput((previousProcessOutput) => [
-            ...previousProcessOutput,
-            {
-              color: lineColor(index),
-              prefix,
-              lines,
-            },
-          ])
-          next()
+            const index = addPrefix(prefix, prefixes)
+
+            const lines = shouldStripAnsi ? stripAnsi(log).split(/\n/) : log.split(/\n/)
+            outputDebug(`[ConcurrentOutput] Processing ${lines.length} line(s) for prefix "${prefix}"`)
+
+            setProcessOutput((previousProcessOutput) => [
+              ...previousProcessOutput,
+              {
+                color: lineColor(index),
+                prefix,
+                lines,
+              },
+            ])
+            next()
+          } catch (error) {
+            outputDebug(`[ConcurrentOutput] Error processing chunk: ${error}`)
+            next(error as Error)
+          }
         },
       })
     },

@@ -350,4 +350,124 @@ describe('ConcurrentOutput', () => {
 
     expect(renderInstance.waitUntilExit().isFulfilled()).toBe(false)
   })
+
+  test('handles delayed/buffered writes correctly (simulates Ubuntu 24.04 issue #6726)', async () => {
+    // This test simulates the scenario where child process output may be
+    // delayed or buffered differently on certain Linux distributions.
+    // The issue manifests as hot reload working but terminal output being silent.
+
+    const processSync = new Synchronizer()
+    const receivedOutput: string[] = []
+
+    const delayedProcess = {
+      prefix: 'web',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        // Simulate delayed writes like a real dev server would produce
+        stdout.write('Starting server...\n')
+
+        // Small delay to simulate async server startup
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        stdout.write('Server listening on port 3000\n')
+
+        // Another delay to simulate file change detection
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        stdout.write('File changed: index.tsx\n')
+        stdout.write('Rebuilding...\n')
+
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        stdout.write('Build complete\n')
+
+        processSync.resolve()
+      },
+    }
+
+    // When
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[delayedProcess]}
+        abortSignal={new AbortController().signal}
+        keepRunningAfterProcessesResolve
+      />,
+    )
+
+    await processSync.promise
+    // Give time for all writes to be processed
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    // Then - verify all messages were captured
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('Starting server...')
+    expect(output).toContain('Server listening on port 3000')
+    expect(output).toContain('File changed: index.tsx')
+    expect(output).toContain('Rebuilding...')
+    expect(output).toContain('Build complete')
+  })
+
+  test('handles rapid consecutive writes without dropping output', async () => {
+    // Tests for potential race conditions in output handling
+    const processSync = new Synchronizer()
+    const messageCount = 100
+
+    const rapidWriteProcess = {
+      prefix: 'rapid',
+      action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+        // Rapidly write many messages without any delay
+        for (let i = 0; i < messageCount; i++) {
+          stdout.write(`message ${i}\n`)
+        }
+        processSync.resolve()
+      },
+    }
+
+    // When
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[rapidWriteProcess]}
+        abortSignal={new AbortController().signal}
+        keepRunningAfterProcessesResolve
+      />,
+    )
+
+    await processSync.promise
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Then - verify all messages were captured
+    const output = unstyled(renderInstance.lastFrame()!)
+    const lines = output.split('\n').filter((line) => line.includes('message'))
+    expect(lines.length).toBe(messageCount)
+  })
+
+  test('handles stderr output alongside stdout', async () => {
+    const processSync = new Synchronizer()
+
+    const mixedOutputProcess = {
+      prefix: 'mixed',
+      action: async (stdout: Writable, stderr: Writable, _signal: AbortSignal) => {
+        stdout.write('stdout: normal output\n')
+        stderr.write('stderr: error output\n')
+        stdout.write('stdout: more output\n')
+        stderr.write('stderr: warning\n')
+        processSync.resolve()
+      },
+    }
+
+    // When
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={[mixedOutputProcess]}
+        abortSignal={new AbortController().signal}
+        keepRunningAfterProcessesResolve
+      />,
+    )
+
+    await processSync.promise
+    await new Promise((resolve) => setTimeout(resolve, 50))
+
+    // Then - both stdout and stderr should be captured
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('stdout: normal output')
+    expect(output).toContain('stderr: error output')
+    expect(output).toContain('stdout: more output')
+    expect(output).toContain('stderr: warning')
+  })
 })

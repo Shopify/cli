@@ -1,14 +1,21 @@
 import {profile} from './profile.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL, convertToWslFileUrl} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {readFile} from 'fs/promises'
 
 vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/system', () => {
+  const openURLMock = vi.fn()
+  const convertToWslFileUrlMock = vi.fn((path: string) => Promise.resolve(`file://${path}`))
+  return {
+    openURL: openURLMock,
+    convertToWslFileUrl: convertToWslFileUrlMock,
+  }
+})
 vi.mock('@shopify/cli-kit/node/output')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
