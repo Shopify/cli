@@ -554,6 +554,110 @@ describe('pushUpdatesForDevSession', () => {
     expect(manifestModules2.length).toBe(2)
   })
 
+  test('displays SESSION_TAKEOVER warning from devSessionCreate response', async () => {
+    // Given
+    developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({
+      devSessionCreate: {
+        userErrors: [],
+        warnings: [{message: "You took over another user's session", code: 'SESSION_TAKEOVER'}],
+        devSession: {
+          websocketUrl: 'wss://test.dev/extensions',
+          updatedAt: '2024-01-01T00:00:00Z',
+          user: {id: 'user1', email: 'user1@test.com'},
+          app: {id: 'app1', key: 'key1'},
+        },
+      },
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Then
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining("⚠️  You took over another user's session"))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Ready'))
+  })
+
+  test('detects session takeover during update when user ID changes', async () => {
+    // Given - Create with initial session state
+    developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({
+      devSessionCreate: {
+        userErrors: [],
+        devSession: {
+          websocketUrl: 'wss://test.dev/extensions',
+          updatedAt: '2024-01-01T00:00:00Z',
+          user: {id: 'user1', email: 'user1@test.com'},
+          app: {id: 'app1', key: 'key1'},
+        },
+      },
+    })
+
+    // Update returns a different user (session takeover)
+    developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({
+      devSessionUpdate: {
+        userErrors: [],
+        devSession: {
+          websocketUrl: 'wss://test.dev/extensions',
+          updatedAt: '2024-01-01T00:01:00Z',
+          user: {id: 'user2', email: 'user2@test.com'},
+          app: {id: 'app1', key: 'key1'},
+        },
+      },
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Another developer'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('user2@test.com'))
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('taken over'))
+  })
+
+  test('does not detect session takeover when session state matches during update', async () => {
+    // Given - Create and update return the same user/websocket
+    developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({
+      devSessionCreate: {
+        userErrors: [],
+        devSession: {
+          websocketUrl: 'wss://test.dev/extensions',
+          updatedAt: '2024-01-01T00:00:00Z',
+          user: {id: 'user1', email: 'user1@test.com'},
+          app: {id: 'app1', key: 'key1'},
+        },
+      },
+    })
+
+    developerPlatformClient.devSessionUpdate = vi.fn().mockResolvedValue({
+      devSessionUpdate: {
+        userErrors: [],
+        devSession: {
+          websocketUrl: 'wss://test.dev/extensions',
+          updatedAt: '2024-01-01T00:01:00Z',
+          user: {id: 'user1', email: 'user1@test.com'},
+          app: {id: 'app1', key: 'key1'},
+        },
+      },
+    })
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, options)
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+    appWatcher.emit('all', {app, extensionEvents: [{type: 'updated', extension: await testWebhookExtensions()}]})
+    await flushPromises()
+
+    // Then - Should succeed normally without takeover error
+    expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
+    expect(stdout.write).not.toHaveBeenCalledWith(expect.stringContaining('Another developer'))
+    expect(stdout.write).not.toHaveBeenCalledWith(expect.stringContaining('taken over'))
+  })
+
   test('retries failed events along with newly received events', async () => {
     vi.mocked(getUploadURL).mockResolvedValue('https://gcs.url')
     vi.mocked(readdir).mockResolvedValue([])
