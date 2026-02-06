@@ -1,5 +1,5 @@
 import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../../utilities/theme-command.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {
   cloneRepoAndCheckoutLatestTag,
   cloneRepo,
@@ -56,6 +56,8 @@ export default class Init extends ThemeCommand {
       env: 'SHOPIFY_FLAG_LATEST',
     }),
   }
+
+  static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: InitFlags, _adminSession: AdminSession, _multiEnvironment: boolean, args: InitArgs) {
     const name = args.name || (await this.promptName(flags.path))

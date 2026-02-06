@@ -137,9 +137,6 @@ class TestThemeCommandWithoutStoreRequired extends ThemeCommand {
       env: 'SHOPIFY_FLAG_PATH',
       default: 'current/working/directory',
     }),
-    password: Flags.string({
-      env: 'SHOPIFY_FLAG_PASSWORD',
-    }),
     store: Flags.string({
       env: 'SHOPIFY_FLAG_STORE',
     }),
@@ -267,7 +264,7 @@ describe('ThemeCommand', () => {
       expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
     })
 
-    test('single environment provided with store - creates session when store is provided even if not required', async () => {
+    test('single environment provided with store - does not create session when command does not require auth', async () => {
       // Given
       const environmentConfig = {path: '/some/path', store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
@@ -279,9 +276,9 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
       expect(command.commandCalls).toHaveLength(1)
-      expect(command.commandCalls[0]?.session).toEqual(mockSession)
+      expect(command.commandCalls[0]?.session).toBeUndefined()
     })
 
     test('multiple environments provided - uses renderConcurrent for parallel execution', async () => {
