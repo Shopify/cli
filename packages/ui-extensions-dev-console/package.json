@@ -11,34 +11,6 @@
     "lint:fix": "nx lint:fix",
     "vitest": "vitest"
   },
-  "eslintConfig": {
-    "plugins": [
-      "react",
-      "jsx-a11y"
-    ],
-    "extends": [
-      "../../.eslintrc.cjs"
-    ],
-    "rules": {
-      "@typescript-eslint/no-explicit-any": "off",
-      "import/extensions": [
-        "error",
-        "never",
-        {
-          "ignorePackages": true
-        }
-      ],
-      "jsx-a11y/click-events-have-key-events": "error",
-      "react/jsx-no-constructed-context-values": "error",
-      "node/no-unsupported-features/node-builtins": [
-        "error",
-        {
-          "version": ">=10.0.0",
-          "ignores": []
-        }
-      ]
-    }
-  },
   "dependencies": {
     "@shopify/polaris-icons": "^8.0.0",
     "@shopify/react-i18n": "^6.1.0",
