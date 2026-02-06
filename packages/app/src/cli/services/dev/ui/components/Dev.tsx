@@ -274,6 +274,11 @@ const Dev: FunctionComponent<DevProps> = ({
           {error ? <Text color="red">{error}</Text> : null}
         </Box>
       ) : null}
+      {isAborted && isShuttingDownMessage ? (
+        <Box flexDirection="column">
+          <Text>{isShuttingDownMessage}</Text>
+        </Box>
+      ) : null}
     </>
   )
 }
