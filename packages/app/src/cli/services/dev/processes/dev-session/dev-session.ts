@@ -295,7 +295,7 @@ export class DevSession {
           manifest,
           inheritedModuleUids,
         }
-        return await this.devSessionUpdateWithRetry(payload)
+        return this.devSessionUpdateWithRetry(payload)
       } else {
         const payload: DevSessionCreateOptions = {
           shopFqdn: this.options.storeFqdn,
