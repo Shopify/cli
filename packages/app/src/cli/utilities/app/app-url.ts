@@ -10,7 +10,7 @@ export function buildAppURLForAdmin(storeFqdn: string, apiKey: string, adminDoma
   const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
   const storeName = normalizedFQDN.split('.')[0]
 
-  return `https://${adminDomain}/store/${storeName}/apps/${apiKey}`
+  return `https://${adminDomain}/store/${storeName}/apps/${apiKey}?dev-console=show`
 }
 
 export function buildAppURLForMobile(storeFqdn: string, apiKey: string) {
