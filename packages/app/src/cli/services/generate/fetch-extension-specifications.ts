@@ -38,6 +38,7 @@ export async function fetchSpecifications({
   const extensionSpecifications: FlattenedRemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
     .map((spec) => {
+      console.log('specification', spec.identifier)
       const newSpec = spec as FlattenedRemoteSpecification
       // WORKAROUND: The identifiers in the API are different for these extensions to the ones the CLI
       // has been using so far. This is a workaround to keep the CLI working until the API is updated.
@@ -78,7 +79,6 @@ async function mergeLocalAndRemoteSpecs(
 
     const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
       FlattenedRemoteSpecification
-
     // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
     let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
     switch (merged.uidStrategy) {
