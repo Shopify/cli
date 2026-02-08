@@ -113,3 +113,47 @@ describe('readStdinString', () => {
     expect(got).toBe('hello world')
   })
 })
+
+describe('convertWslPath', () => {
+  test('converts Linux path to Windows path successfully', async () => {
+    // Given
+    const linuxPath = '/tmp/speedscope-123.html'
+    const windowsPath = 'C:\\Users\\developer\\AppData\\Local\\Temp\\speedscope-123.html'
+    vi.mocked(which.sync).mockReturnValueOnce('/usr/bin/wslpath')
+    vi.mocked(execa).mockResolvedValueOnce({stdout: windowsPath + '\n'} as any)
+
+    // When
+    const result = await system.convertWslPath(linuxPath)
+
+    // Then
+    expect(result).toBe(windowsPath)
+    expect(execa).toHaveBeenCalledWith('wslpath', ['-w', linuxPath], expect.any(Object))
+  })
+
+  test('returns original path if wslpath command fails', async () => {
+    // Given
+    const linuxPath = '/tmp/speedscope-123.html'
+    vi.mocked(which.sync).mockReturnValueOnce('/usr/bin/wslpath')
+    vi.mocked(execa).mockRejectedValueOnce(new Error('wslpath not found'))
+
+    // When
+    const result = await system.convertWslPath(linuxPath)
+
+    // Then
+    expect(result).toBe(linuxPath)
+  })
+
+  test('trims whitespace from wslpath output', async () => {
+    // Given
+    const linuxPath = '/tmp/file.html'
+    const windowsPath = 'C:\\Temp\\file.html'
+    vi.mocked(which.sync).mockReturnValueOnce('/usr/bin/wslpath')
+    vi.mocked(execa).mockResolvedValueOnce({stdout: `  ${windowsPath}  \n`} as any)
+
+    // When
+    const result = await system.convertWslPath(linuxPath)
+
+    // Then
+    expect(result).toBe(windowsPath)
+  })
+})
