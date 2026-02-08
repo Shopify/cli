@@ -67,6 +67,7 @@ include_config_on_deploy = true
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_products"
+use_legacy_install_flow = true
 
 [auth]
 redirect_urls = [

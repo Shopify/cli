@@ -80,61 +80,6 @@ client_id="test-api-key"`
     })
   })
 
-  test('links app when it is not linked, and config file is cached', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      const content = ''
-      await writeAppConfig(tmp, content, 'shopify.app.stg.toml')
-      localStorage.setCachedAppInfo({
-        appId: 'test-api-key',
-        title: 'Test App',
-        directory: tmp,
-        orgId: 'test-org-id',
-        configFile: 'shopify.app.stg.toml',
-      })
-
-      // Given
-      vi.mocked(link).mockResolvedValue({
-        remoteApp: mockRemoteApp,
-        state: {
-          state: 'connected-app',
-          appDirectory: tmp,
-          configurationPath: `${tmp}/shopify.app.stg.toml`,
-          configSource: 'cached',
-          configurationFileName: 'shopify.app.stg.toml',
-          basicConfiguration: {
-            client_id: 'test-api-key',
-            path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
-          },
-        },
-        configuration: {
-          client_id: 'test-api-key',
-          name: 'test-app',
-          application_url: 'https://test-app.com',
-          path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
-          embedded: false,
-        },
-      })
-
-      // When
-      const result = await linkedAppContext({
-        directory: tmp,
-        forceRelink: false,
-        userProvidedConfigName: undefined,
-        clientId: undefined,
-      })
-
-      // Then
-      expect(result).toEqual({
-        app: expect.any(Object),
-        remoteApp: mockRemoteApp,
-        developerPlatformClient: expect.any(Object),
-        specifications: [],
-        organization: mockOrganization,
-      })
-      expect(link).toHaveBeenCalledWith({directory: tmp, apiKey: undefined, configName: 'shopify.app.stg.toml'})
-    })
-  })
-
   test('updates cached app info when remoteApp matches', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
@@ -209,11 +154,11 @@ client_id="test-api-key"`
       vi.mocked(link).mockResolvedValue({
         remoteApp: mockRemoteApp,
         state: {
-          state: 'connected-app',
           appDirectory: tmp,
           configurationPath: `${tmp}/shopify.app.toml`,
           configSource: 'cached',
           configurationFileName: 'shopify.app.toml',
+          isTemplateForm: false,
           basicConfiguration: {
             client_id: 'test-api-key',
             path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
@@ -329,6 +274,15 @@ describe('localAppContext', () => {
       // Given
       const content = `
         name = "test-app"
+        client_id = "test-client-id"
+        application_url = "https://example.com"
+        embedded = true
+
+        [auth]
+        redirect_urls = ["https://example.com/callback"]
+
+        [webhooks]
+        api_version = "2024-01"
       `
       await writeAppConfig(tmp, content)
 
@@ -359,6 +313,15 @@ describe('localAppContext', () => {
       // Given
       const content = `
         name = "test-app-custom"
+        client_id = "test-client-id"
+        application_url = "https://example.com"
+        embedded = true
+
+        [auth]
+        redirect_urls = ["https://example.com/callback"]
+
+        [webhooks]
+        api_version = "2024-01"
       `
       await writeAppConfig(tmp, content, 'shopify.app.custom.toml')
 
@@ -384,6 +347,15 @@ describe('localAppContext', () => {
       // Given
       const appContent = `
         name = "test-app"
+        client_id = "test-client-id"
+        application_url = "https://example.com"
+        embedded = true
+
+        [auth]
+        redirect_urls = ["https://example.com/callback"]
+
+        [webhooks]
+        api_version = "2024-01"
       `
       const extensionContent = `
         type = "ui_extension"
@@ -402,6 +374,7 @@ describe('localAppContext', () => {
       await writeFile(joinPath(srcDir, 'index.js'), '// Extension code')
 
       // Mock local specifications to include ui_extension with proper validation
+      // Also include app_access and webhooks specs that contribute auth and webhooks to schema
       vi.mocked(loadLocalExtensionsSpecifications).mockResolvedValue([
         {
           identifier: 'ui_extension',
@@ -427,6 +400,36 @@ describe('localAppContext', () => {
           validate: async () => ({isErr: () => false, isOk: () => true} as any),
           contributeToAppConfigurationSchema: (schema: any) => schema,
         } as any,
+        {
+          identifier: 'app_access',
+          experience: 'configuration',
+          uidStrategy: 'single',
+          appModuleFeatures: () => [],
+          parseConfigurationObject: (obj: any) => ({
+            state: 'ok',
+            data: obj,
+            errors: undefined,
+          }),
+          contributeToAppConfigurationSchema: (schema: any) => {
+            // Mock contribution of auth field
+            return schema
+          },
+        } as any,
+        {
+          identifier: 'webhooks',
+          experience: 'configuration',
+          uidStrategy: 'single',
+          appModuleFeatures: () => [],
+          parseConfigurationObject: (obj: any) => ({
+            state: 'ok',
+            data: obj,
+            errors: undefined,
+          }),
+          contributeToAppConfigurationSchema: (schema: any) => {
+            // Mock contribution of webhooks field
+            return schema
+          },
+        } as any,
       ])
 
       // When
@@ -435,8 +438,9 @@ describe('localAppContext', () => {
       })
 
       // Then
-      expect(result.allExtensions).toHaveLength(1)
-      expect(result.allExtensions[0]).toEqual(
+      const realExtensions = result.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
+      expect(realExtensions).toHaveLength(1)
+      expect(realExtensions[0]).toEqual(
         expect.objectContaining({
           configuration: expect.objectContaining({
             name: 'test-extension',

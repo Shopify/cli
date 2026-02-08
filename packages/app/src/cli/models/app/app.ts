@@ -3,7 +3,6 @@ import {AppErrors, isWebType} from './loader.js'
 import {ensurePathStartsWithSlash} from './validation/common.js'
 import {Identifiers} from './identifiers.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
-import {isType} from '../../utilities/types.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
@@ -11,10 +10,10 @@ import {EditorExtensionCollectionType} from '../extensions/specifications/editor
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
-import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
+import {WebhookSubscription} from '../extensions/specifications/types/app_config_webhook.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -28,7 +27,6 @@ import {
   writeFileSync,
 } from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
@@ -40,28 +38,6 @@ const ExtensionDirectoriesSchema = zod
   .optional()
   .transform(removeTrailingPathSeparator)
   .transform(fixSingleWildcards)
-
-/**
- * Schema for a freshly minted app template.
- */
-export const LegacyAppSchema = zod
-  .object({
-    client_id: zod.number().optional(),
-    name: zod.string().optional(),
-    scopes: zod
-      .string()
-      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
-      .default(''),
-    extension_directories: ExtensionDirectoriesSchema,
-    web_directories: zod.array(zod.string()).optional(),
-    webhooks: zod
-      .object({
-        api_version: zod.string({required_error: 'String is required'}),
-        subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
-      })
-      .optional(),
-  })
-  .strict()
 
 function removeTrailingPathSeparator(value: string[] | undefined) {
   // eslint-disable-next-line no-useless-escape
@@ -76,51 +52,22 @@ function fixSingleWildcards(value: string[] | undefined) {
 }
 
 /**
- * Schema for loading template config during app init.
- * Uses passthrough() to allow any extra keys from full-featured templates
- * (e.g., metafields, metaobjects, webhooks) without strict validation.
+ * Schema for a normal, linked app. Properties from modules are not validated.
  */
-export const TemplateConfigSchema = zod
+export const AppSchema = zod
   .object({
-    scopes: zod
-      .string()
-      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
-      .optional(),
-    access_scopes: zod
+    client_id: zod.string(),
+    build: zod
       .object({
-        scopes: zod.string().transform((scopes) => normalizeDelimitedString(scopes) ?? ''),
+        automatically_update_urls_on_dev: zod.boolean().optional(),
+        dev_store_url: zod.string().optional(),
+        include_config_on_deploy: zod.boolean().optional(),
       })
       .optional(),
+    extension_directories: ExtensionDirectoriesSchema,
     web_directories: zod.array(zod.string()).optional(),
   })
   .passthrough()
-
-export type TemplateConfig = zod.infer<typeof TemplateConfigSchema>
-
-export function getTemplateScopesArray(config: TemplateConfig): string[] {
-  const scopesString = config.scopes ?? config.access_scopes?.scopes ?? ''
-  if (scopesString.length === 0) return []
-  return scopesString
-    .split(',')
-    .map((scope) => scope.trim())
-    .sort()
-}
-
-/**
- * Schema for a normal, linked app. Properties from modules are not validated.
- */
-export const AppSchema = zod.object({
-  client_id: zod.string(),
-  build: zod
-    .object({
-      automatically_update_urls_on_dev: zod.boolean().optional(),
-      dev_store_url: zod.string().optional(),
-      include_config_on_deploy: zod.boolean().optional(),
-    })
-    .optional(),
-  extension_directories: ExtensionDirectoriesSchema,
-  web_directories: zod.array(zod.string()).optional(),
-})
 
 /**
  * Hidden configuration for an app. Stored inside ./shopify/project.json
@@ -131,11 +78,6 @@ export interface AppHiddenConfig {
   dev_store_url?: string
 }
 
-/**
- * Utility schema that matches freshly minted or normal, linked, apps.
- */
-export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
-
 // Types representing post-validated app configurations
 
 /**
@@ -143,9 +85,8 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  *
  * Try to avoid using this: generally you should be working with a more specific type.
  */
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-
-export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchema>
+export type AppConfiguration = zod.infer<typeof AppSchema> & {path: string}
+export type AppConfigurationWithoutPath = zod.infer<typeof AppSchema>
 
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
@@ -161,11 +102,6 @@ export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
  */
 export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppConfigurationUsedByCli
-
-/**
- * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
- */
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 
 /** Validation schema that produces a provided app configuration type */
 export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
@@ -185,34 +121,11 @@ export function getAppVersionedSchema(
 }
 
 /**
- * Check whether a shopify.app.toml schema is valid against the legacy schema definition.
- * @param item - the item to validate
- */
-export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
-  const {path, ...rest} = item
-  return isType(LegacyAppSchema, rest)
-}
-
-/**
- * Check whether a shopify.app.toml schema is valid against the current schema definition.
- * @param item - the item to validate
- */
-export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  const {path, ...rest} = item
-  return isType(AppSchema.nonstrict(), rest)
-}
-
-/**
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
 export function getAppScopes(config: AppConfiguration): string {
-  if (isLegacyAppSchema(config)) {
-    return config.scopes
-  } else if (isCurrentAppSchema(config)) {
-    return config.access_scopes?.scopes ?? ''
-  }
-  return ''
+  return (config as CurrentAppConfiguration).access_scopes?.scopes ?? ''
 }
 
 /**
@@ -225,9 +138,7 @@ export function getAppScopesArray(config: AppConfiguration) {
 }
 
 export function usesLegacyScopesBehavior(config: AppConfiguration) {
-  if (isLegacyAppSchema(config)) return true
-  if (isCurrentAppSchema(config)) return config.access_scopes?.use_legacy_install_flow ?? false
-  return false
+  return (config as CurrentAppConfiguration).access_scopes?.use_legacy_install_flow === true
 }
 
 export function appHiddenConfigPath(appDirectory: string) {
@@ -540,9 +451,8 @@ export class App<
     return Boolean(frontendConfig ?? backendConfig)
   }
 
-  get appIsEmbedded() {
-    if (isCurrentAppSchema(this.configuration)) return this.configuration.embedded
-    return this.appIsLaunchable()
+  get appIsEmbedded(): boolean {
+    return (this.configuration as CurrentAppConfiguration).embedded
   }
 
   creationDefaultOptions(): CreateAppOptions {
@@ -586,25 +496,24 @@ export class App<
   }
 
   get includeConfigOnDeploy() {
-    if (isLegacyAppSchema(this.configuration)) return false
     return this.configuration.build?.include_config_on_deploy
   }
 
   private patchAppConfiguration(devApplicationURLs: ApplicationURLs) {
-    if (!isCurrentAppSchema(this.configuration)) return
-
+    const config = this.configuration as CurrentAppConfiguration
     this.devApplicationURLs = devApplicationURLs
-    this.configuration.application_url = devApplicationURLs.applicationUrl
+    config.application_url = devApplicationURLs.applicationUrl
     if (devApplicationURLs.appProxy) {
-      this.configuration.app_proxy = {
+      config.app_proxy = {
         url: devApplicationURLs.appProxy.proxyUrl,
         subpath: devApplicationURLs.appProxy.proxySubPath,
         prefix: devApplicationURLs.appProxy.proxySubPathPrefix,
       }
     }
-    if (this.configuration.auth?.redirect_urls) {
-      this.configuration.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
+    if (config.auth?.redirect_urls) {
+      config.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
     }
+    this.configuration = config as TConfig
   }
 
   /**
@@ -614,13 +523,14 @@ export class App<
    * @throws When app-specific webhooks are used with legacy install flow
    */
   private validateWebhookLegacyFlowCompatibility(): void {
-    if (!isCurrentAppSchema(this.configuration)) return
+    // These fields might not exist on basic AppConfiguration but could be added by specifications
+    const config = this.configuration as CurrentAppConfiguration
 
     const hasAppSpecificWebhooks =
-      this.configuration.webhooks?.subscriptions?.some(
-        (subscription) => subscription.topics && subscription.topics.length > 0,
+      config.webhooks?.subscriptions?.some(
+        (subscription: WebhookSubscription) => subscription.topics && subscription.topics.length > 0,
       ) ?? false
-    const usesLegacyInstallFlow = this.configuration.access_scopes?.use_legacy_install_flow === true
+    const usesLegacyInstallFlow = config.access_scopes?.use_legacy_install_flow === true
 
     if (hasAppSpecificWebhooks && usesLegacyInstallFlow) {
       throw new AbortError(

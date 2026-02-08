@@ -7,6 +7,7 @@ import {
   testFunctionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
+import {AppConfiguration} from '../../../models/app/app.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
@@ -232,7 +233,11 @@ describe('file-watcher events', () => {
       const app = testAppLinked({
         allExtensions: [ext1, ext2, posExtension],
         directory: dir,
-        configuration: {path: joinPath(dir, '/shopify.app.toml'), scopes: ''},
+        configuration: {
+          path: joinPath(dir, '/shopify.app.toml'),
+          client_id: 'test-client-id',
+          access_scopes: {scopes: ''},
+        } as AppConfiguration,
       })
 
       // Add a custom gitignore file to the extension
