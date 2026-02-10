@@ -6,7 +6,7 @@ import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
-import {execa, ExecaChildProcess} from 'execa'
+import {execa, execaCommand, ExecaChildProcess} from 'execa'
 import which from 'which'
 import {delimiter} from 'pathe'
 import {fstatSync} from 'fs'
@@ -25,6 +25,14 @@ export interface ExecOptions {
   externalErrorHandler?: (error: unknown) => Promise<void>
   // Ignored on Windows
   background?: boolean
+}
+
+/**
+ * Options passed directly to execa.
+ */
+interface BuildExecOptions {
+  /** Whether to throw on non-zero exit codes (default: true). */
+  reject?: boolean
 }
 
 /**
@@ -55,6 +63,165 @@ export async function openURL(url: string): Promise<boolean> {
 export async function captureOutput(command: string, args: string[], options?: ExecOptions): Promise<string> {
   const result = await buildExec(command, args, options)
   return result.stdout
+}
+
+/**
+ * Result from running a command with captureOutputWithExitCode.
+ */
+export interface CaptureOutputResult {
+  /** Standard output. */
+  stdout: string
+  /** Standard error. */
+  stderr: string
+  /** Exit code (0 = success). */
+  exitCode: number
+}
+
+/**
+ * Runs a command asynchronously and returns stdout, stderr, and exit code.
+ * Unlike captureOutput, this function does NOT throw on non-zero exit codes.
+ *
+ * @param command - Command to be executed.
+ * @param args - Arguments to pass to the command.
+ * @param options - Optional settings for how to run the command.
+ * @returns A promise that resolves with stdout, stderr, and exitCode.
+ *
+ * @example
+ * ```typescript
+ * const result = await captureOutputWithExitCode('ls', ['-la'])
+ * if (result.exitCode !== 0) \{
+ *   console.error('Command failed:', result.stderr)
+ * \}
+ * ```
+ */
+export async function captureOutputWithExitCode(
+  command: string,
+  args: string[],
+  options?: ExecOptions,
+): Promise<CaptureOutputResult> {
+  const result = await buildExec(command, args, options, {reject: false})
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exitCode: result.exitCode ?? 0,
+  }
+}
+
+/**
+ * Parse a command string into an array of arguments, respecting quoted strings.
+ * Handles both single and double quotes, preserving spaces within quoted sections.
+ *
+ * @param command - The command string to parse (e.g., 'ls -la "my folder"').
+ * @returns An array of command parts with quotes removed.
+ *
+ * @example
+ * parseCommand('shopify theme push --theme "My Theme Name"') // ['shopify', 'theme', 'push', '--theme', 'My Theme Name']
+ */
+function parseCommand(command: string): string[] {
+  const result: string[] = []
+  let current = ''
+  let inQuote: string | null = null
+
+  for (const char of command) {
+    if (inQuote) {
+      if (char === inQuote) {
+        // End of quoted section
+        inQuote = null
+      } else {
+        current += char
+      }
+    } else if (char === '"' || char === "'") {
+      // Start of quoted section
+      inQuote = char
+    } else if (char === ' ' || char === '\t') {
+      // Whitespace outside quotes - end current token
+      if (current) {
+        result.push(current)
+        current = ''
+      }
+    } else {
+      current += char
+    }
+  }
+
+  // Don't forget the last token
+  if (current) {
+    result.push(current)
+  }
+
+  return result
+}
+
+/**
+ * Runs a command string asynchronously and returns stdout, stderr, and exit code.
+ * Parses the command string into command and arguments (handles quoted strings).
+ * Unlike captureOutput, this function does NOT throw on non-zero exit codes.
+ *
+ * @param command - Full command string to be executed (e.g., 'ls -la "my folder"').
+ * @param options - Optional settings for how to run the command.
+ * @returns A promise that resolves with stdout, stderr, and exitCode.
+ *
+ * @example
+ * ```typescript
+ * const result = await captureCommandWithExitCode('shopify theme push --theme "My Theme"')
+ * if (result.exitCode !== 0) {
+ *   console.error('Command failed:', result.stderr)
+ * }
+ * ```
+ */
+export async function captureCommandWithExitCode(command: string, options?: ExecOptions): Promise<CaptureOutputResult> {
+  const env = options?.env ?? process.env
+  if (shouldDisplayColors()) {
+    env.FORCE_COLOR = '1'
+  }
+  const executionCwd = options?.cwd ?? cwd()
+  const [cmd, ...args] = parseCommand(command)
+  if (!cmd) {
+    return {stdout: '', stderr: 'Empty command', exitCode: 1}
+  }
+  checkCommandSafety(cmd, {cwd: executionCwd})
+  const result = await execa(cmd, args, {
+    env,
+    cwd: executionCwd,
+    reject: false,
+  })
+  return {
+    stdout: result.stdout,
+    stderr: result.stderr,
+    exitCode: result.exitCode ?? 0,
+  }
+}
+
+/**
+ * Runs a command string asynchronously (parses command and arguments from the string).
+ *
+ * @param command - Full command string to be executed (e.g., 'ls -la "my folder"').
+ * @param options - Optional settings for how to run the command.
+ */
+export async function execCommand(command: string, options?: ExecOptions): Promise<void> {
+  const env = options?.env ?? process.env
+  if (shouldDisplayColors()) {
+    env.FORCE_COLOR = '1'
+  }
+  const executionCwd = options?.cwd ?? cwd()
+  try {
+    await execaCommand(command, {
+      env,
+      cwd: executionCwd,
+      stdin: options?.stdin,
+      stdout: options?.stdout === 'inherit' ? 'inherit' : undefined,
+      stderr: options?.stderr === 'inherit' ? 'inherit' : undefined,
+    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (processError: any) {
+    if (options?.externalErrorHandler) {
+      await options.externalErrorHandler(processError)
+    } else {
+      const abortError = new ExternalError(processError.message, command, [])
+      abortError.stack = processError.stack
+      throw abortError
+    }
+  }
 }
 
 /**
@@ -115,9 +282,15 @@ export async function exec(command: string, args: string[], options?: ExecOption
  * @param command - Command to be executed.
  * @param args - Arguments to pass to the command.
  * @param options - Optional settings for how to run the command.
+ * @param execaOptions - Options passed directly to execa.
  * @returns A promise for a result with stdout and stderr properties.
  */
-function buildExec(command: string, args: string[], options?: ExecOptions): ExecaChildProcess {
+function buildExec(
+  command: string,
+  args: string[],
+  options?: ExecOptions,
+  execaOptions?: BuildExecOptions,
+): ExecaChildProcess {
   const env = options?.env ?? process.env
   if (shouldDisplayColors()) {
     env.FORCE_COLOR = '1'
@@ -137,6 +310,7 @@ function buildExec(command: string, args: string[], options?: ExecOptions): Exec
     windowsHide: false,
     detached: options?.background,
     cleanup: !options?.background,
+    ...execaOptions,
   })
   outputDebug(`Running system process${options?.background ? ' in background' : ''}:
   · Command: ${command} ${args.join(' ')}
