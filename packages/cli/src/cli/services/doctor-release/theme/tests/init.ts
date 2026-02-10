@@ -1,11 +1,12 @@
-import {DoctorSuite} from '../../framework.js'
+import {DoctorSuite} from '@shopify/cli-kit/node/doctor/framework'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getRandomName} from '@shopify/cli-kit/common/string'
+import type {ThemeDoctorContext} from '../../context.js'
 
 /**
  * Tests for `shopify theme init` command
  */
-export default class ThemeInitTests extends DoctorSuite {
+export default class ThemeInitTests extends DoctorSuite<ThemeDoctorContext> {
   static description = 'Tests the theme init command creates a valid theme structure'
 
   private themeName = ''

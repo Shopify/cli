@@ -1,10 +1,10 @@
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {isAbsolutePath, joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {execCommand, captureCommandWithExitCode} from '@shopify/cli-kit/node/system'
+import {fileExists, readFile} from '../fs.js'
+import {isAbsolutePath, joinPath, relativePath} from '../path.js'
+import {execCommand, captureCommandWithExitCode} from '../system.js'
 import type {DoctorContext, TestResult, AssertionResult} from './types.js'
 
 /**
- * Result from running a CLI command
+ * Result from running a CLI command.
  */
 interface CommandResult {
   /** The full command that was run */
@@ -22,7 +22,7 @@ interface CommandResult {
 }
 
 /**
- * A registered test with its name and function
+ * A registered test with its name and function.
  */
 interface RegisteredTest {
   name: string
@@ -32,7 +32,7 @@ interface RegisteredTest {
 /**
  * Base class for doctor test suites.
  *
- * Write tests using the test() method:
+ * Write tests using the test() method:.
  *
  * ```typescript
  * export default class MyTests extends DoctorSuite {
@@ -52,17 +52,19 @@ interface RegisteredTest {
  * }
  * ```
  */
-export abstract class DoctorSuite {
+export abstract class DoctorSuite<TContext extends DoctorContext = DoctorContext> {
   static description = 'Doctor test suite'
 
-  protected context!: DoctorContext
+  protected context!: TContext
   private assertions: AssertionResult[] = []
   private registeredTests: RegisteredTest[] = []
 
   /**
-   * Run the entire test suite
+   * Run the entire test suite.
+   *
+   * @param context - The doctor context for this suite run.
    */
-  async runSuite(context: DoctorContext): Promise<TestResult[]> {
+  async runSuite(context: TContext): Promise<TestResult[]> {
     this.context = context
     this.registeredTests = []
     const results: TestResult[] = []
@@ -103,15 +105,15 @@ export abstract class DoctorSuite {
   /**
    * Register a test with a name and function.
    *
-   * @param name - The test name
-   * @param fn - The async test function
+   * @param name - The test name.
+   * @param fn - The async test function.
    */
   protected test(name: string, fn: () => Promise<void>): void {
     this.registeredTests.push({name, fn})
   }
 
   /**
-   * Override this method to register tests using this.test()
+   * Override this method to register tests using this.test().
    */
   protected tests(): void {
     // Subclasses override this to register tests
@@ -124,6 +126,8 @@ export abstract class DoctorSuite {
   /**
    * Run a CLI command and return the result.
    *
+   * @param command - The CLI command to run.
+   * @param options - Optional cwd and env overrides.
    * @example
    * const result = await this.run('shopify theme init my-theme')
    * const result = await this.run('shopify theme push --json')
@@ -140,7 +144,7 @@ export abstract class DoctorSuite {
       exitCode: result.exitCode,
       stdout: result.stdout,
       stderr: result.stderr,
-      output: result.stdout + result.stderr,
+      output: String(result.stdout) + String(result.stderr),
       success: result.exitCode === 0,
     }
   }
@@ -148,6 +152,9 @@ export abstract class DoctorSuite {
   /**
    * Run a command without capturing output (for interactive commands).
    * Returns only success/failure.
+   *
+   * @param command - The CLI command to run.
+   * @param options - Optional cwd and env overrides.
    */
   protected async runInteractive(
     command: string,
@@ -178,7 +185,10 @@ export abstract class DoctorSuite {
   // ============================================
 
   /**
-   * Assert that a command succeeded (exit code 0)
+   * Assert that a command succeeded (exit code 0).
+   *
+   * @param result - The command result to check.
+   * @param message - Optional custom assertion message.
    */
   protected assertSuccess(result: CommandResult, message?: string): void {
     this.assertions.push({
@@ -190,7 +200,11 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert that a command failed with an error matching the pattern
+   * Assert that a command failed with an error matching the pattern.
+   *
+   * @param result - The command result to check.
+   * @param pattern - Optional regex or string pattern to match against output.
+   * @param message - Optional custom assertion message.
    */
   protected assertError(result: CommandResult, pattern?: RegExp | string, message?: string): void {
     const failed = !result.success
@@ -223,7 +237,11 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert that a file exists and optionally matches content
+   * Assert that a file exists and optionally matches content.
+   *
+   * @param path - The file path to check.
+   * @param contentPattern - Optional regex or string to match file content.
+   * @param message - Optional custom assertion message.
    */
   protected async assertFile(path: string, contentPattern?: RegExp | string, message?: string): Promise<void> {
     const fullPath = isAbsolutePath(path) ? path : joinPath(this.context.workingDirectory, path)
@@ -261,7 +279,10 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert that a file does not exist
+   * Assert that a file does not exist.
+   *
+   * @param path - The file path to check.
+   * @param message - Optional custom assertion message.
    */
   protected async assertNoFile(path: string, message?: string): Promise<void> {
     const fullPath = isAbsolutePath(path) ? path : joinPath(this.context.workingDirectory, path)
@@ -276,7 +297,10 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert that a directory exists
+   * Assert that a directory exists.
+   *
+   * @param path - The directory path to check.
+   * @param message - Optional custom assertion message.
    */
   protected async assertDirectory(path: string, message?: string): Promise<void> {
     const fullPath = isAbsolutePath(path) ? path : joinPath(this.context.workingDirectory, path)
@@ -291,7 +315,11 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert that output contains a pattern
+   * Assert that output contains a pattern.
+   *
+   * @param result - The command result to check.
+   * @param pattern - Regex or string pattern to match against output.
+   * @param message - Optional custom assertion message.
    */
   protected assertOutput(result: CommandResult, pattern: RegExp | string, message?: string): void {
     const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern
@@ -305,7 +333,11 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert that output contains valid JSON and optionally validate it
+   * Assert that output contains valid JSON and optionally validate it.
+   *
+   * @param result - The command result to parse.
+   * @param validator - Optional function to validate the parsed JSON.
+   * @param message - Optional custom assertion message.
    */
   protected assertJson<T = unknown>(
     result: CommandResult,
@@ -344,7 +376,10 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert a boolean condition
+   * Assert a boolean condition.
+   *
+   * @param condition - The boolean condition to assert.
+   * @param message - The assertion description.
    */
   protected assert(condition: boolean, message: string): void {
     this.assertions.push({
@@ -356,7 +391,11 @@ export abstract class DoctorSuite {
   }
 
   /**
-   * Assert two values are equal
+   * Assert two values are equal.
+   *
+   * @param actual - The actual value.
+   * @param expected - The expected value.
+   * @param message - The assertion description.
    */
   protected assertEqual<T>(actual: T, expected: T, message: string): void {
     this.assertions.push({

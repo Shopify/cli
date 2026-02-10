@@ -2,8 +2,8 @@ import {DoctorSuite} from './framework.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import type {DoctorContext} from './types.js'
 
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('../fs.js')
+vi.mock('../system.js')
 
 /**
  * Creates a minimal DoctorContext for testing
@@ -11,7 +11,6 @@ vi.mock('@shopify/cli-kit/node/system')
 function createTestContext(overrides?: Partial<DoctorContext>): DoctorContext {
   return {
     workingDirectory: '/test/dir',
-    environment: 'test',
     data: {},
     ...overrides,
   }

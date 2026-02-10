@@ -3,7 +3,7 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
 
 export default class DoctorReleaseTheme extends Command {
   static description = 'Run all theme command doctor-release tests'
@@ -36,7 +36,7 @@ export default class DoctorReleaseTheme extends Command {
   }
 
   async run(): Promise<void> {
-    if (!firstPartyDev()) {
+    if (!canRunDoctorRelease()) {
       return
     }
 

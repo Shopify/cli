@@ -23,6 +23,7 @@ module.exports = {
         '**/public/node/cli.ts',
         '**/public/node/dot-env.ts',
         '**/public/node/error-handler.ts',
+        '**/public/node/doctor/**/*',
         '**/public/node/framework.ts',
         '**/public/node/fs.ts',
         '**/public/node/github.ts',

@@ -1,4 +1,5 @@
-import {DoctorSuite} from '../../framework.js'
+import {DoctorSuite} from '@shopify/cli-kit/node/doctor/framework'
+import type {ThemeDoctorContext} from '../../context.js'
 
 interface PushJsonOutput {
   theme: {
@@ -14,7 +15,7 @@ interface PushJsonOutput {
 /**
  * Tests for `shopify theme push` command
  */
-export default class ThemePushTests extends DoctorSuite {
+export default class ThemePushTests extends DoctorSuite<ThemeDoctorContext> {
   static description = 'Tests pushing a theme to the store creates an unpublished theme'
   static requiresStore = true
 

@@ -1,5 +1,5 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
 import {renderInfo} from '@shopify/cli-kit/node/ui'
 
 export default class DoctorRelease extends Command {
@@ -7,7 +7,7 @@ export default class DoctorRelease extends Command {
   static hidden = true
 
   async run(): Promise<void> {
-    if (!firstPartyDev()) {
+    if (!canRunDoctorRelease()) {
       return
     }
 

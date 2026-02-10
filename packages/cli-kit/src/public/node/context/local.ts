@@ -113,6 +113,16 @@ export function firstPartyDev(env = process.env): boolean {
 }
 
 /**
+ * Returns true if the CLI can run the "doctor-release" command.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if the CLI can run the "doctor-release" command.
+ */
+export function canRunDoctorRelease(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.doctor])
+}
+
+/**
  * Return gitpodURL if we are running in gitpod.
  * Https://www.gitpod.io/docs/environment-variables#default-environment-variables.
  *

@@ -1,12 +1,19 @@
 import ThemeInitTests from './tests/init.js'
 import ThemePushTests from './tests/push.js'
 import {createDoctorContext} from '../context.js'
-import {reportTestStart, reportTestResult, reportSuiteStart, reportSummary, initReporter} from '../reporter.js'
-import {DoctorSuite} from '../framework.js'
-import type {TestResult, ThemeDoctorOptions} from '../types.js'
+import {
+  reportTestStart,
+  reportTestResult,
+  reportSuiteStart,
+  reportSummary,
+  initReporter,
+} from '@shopify/cli-kit/node/doctor/reporter'
+import {DoctorSuite} from '@shopify/cli-kit/node/doctor/framework'
+import type {ThemeDoctorContext, ThemeDoctorOptions} from '../context.js'
+import type {TestResult} from '@shopify/cli-kit/node/doctor/types'
 
 // Test suites run in order. If a test relies on another, ensure that test runs after it's dependency.
-const themeSuites: (new () => DoctorSuite)[] = [ThemeInitTests, ThemePushTests]
+const themeSuites: (new () => DoctorSuite<ThemeDoctorContext>)[] = [ThemeInitTests, ThemePushTests]
 
 /**
  * Run all theme doctor tests.

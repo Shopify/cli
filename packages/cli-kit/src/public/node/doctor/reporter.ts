@@ -1,6 +1,6 @@
-import colors from '@shopify/cli-kit/node/colors'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import {relativizePath} from '@shopify/cli-kit/node/path'
+import colors from '../colors.js'
+import {outputInfo} from '../output.js'
+import {relativizePath} from '../path.js'
 import type {TestResult, AssertionResult} from './types.js'
 
 const log = (message: string) => outputInfo(message)
