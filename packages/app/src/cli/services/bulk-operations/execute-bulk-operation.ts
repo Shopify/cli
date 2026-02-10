@@ -13,7 +13,14 @@ import {
   isMutation,
 } from '../graphql/common.js'
 import {OrganizationApp, Organization, OrganizationStore} from '../../models/organization.js'
-import {renderSuccess, renderInfo, renderError, renderWarning, TokenItem} from '@shopify/cli-kit/node/ui'
+import {
+  renderSuccess,
+  renderInfo,
+  renderError,
+  renderWarning,
+  renderSingleTask,
+  TokenItem,
+} from '@shopify/cli-kit/node/ui'
 import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {AbortController} from '@shopify/cli-kit/node/abort'
@@ -61,12 +68,18 @@ export async function executeBulkOperation(input: ExecuteBulkOperationInput): Pr
     version: userSpecifiedVersion,
   } = input
 
-  const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
-
-  const version = await resolveApiVersion({
-    adminSession,
-    userSpecifiedVersion,
-    minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+  const {adminSession, version} = await renderSingleTask({
+    title: outputContent`Authenticating`,
+    task: async () => {
+      const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
+      const version = await resolveApiVersion({
+        adminSession,
+        userSpecifiedVersion,
+        minimumDefaultVersion: BULK_OPERATIONS_MIN_API_VERSION,
+      })
+      return {adminSession, version}
+    },
+    renderOptions: {stdout: process.stderr},
   })
 
   const variablesJsonl = await parseVariablesToJsonl(variables, variableFile)
