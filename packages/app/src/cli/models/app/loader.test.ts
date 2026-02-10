@@ -1736,6 +1736,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
       namespace = "my-namespace"
       key = "my-key"
 
+      [[cart_line_properties]]
+      key = "_use_vip_token"
+
       # extra fields not included in the schema should be ignored
       [[invalid_field]]
       namespace = "my-namespace"
@@ -1764,6 +1767,11 @@ redirect_urls = [ "https://example.com/api/auth" ]
           {
             namespace: 'my-namespace',
             key: 'my-key',
+          },
+        ],
+        cart_line_properties: [
+          {
+            key: '_use_vip_token',
           },
         ],
         input: {
