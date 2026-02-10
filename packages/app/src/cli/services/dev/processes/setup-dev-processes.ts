@@ -22,7 +22,7 @@ import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {firstPartyDev, skipLocalDevConsole} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -100,10 +100,11 @@ export async function setupDevProcesses({
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   // Decide on the appropriate preview URL for a session with these processes
-  // Use local dev console only for 1P developers (SHOPIFY_CLI_1P_DEV is enabled)
+  // Skip the dev console only when BOTH: SHOPIFY_CLI_1P_DEV is NOT enabled AND SHOPIFY_SKIP_LOCAL_DEV_CONSOLE is set
   const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
   const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
-  const useDevConsole = firstPartyDev() && anyPreviewableExtensions
+  const skipDevConsole = !firstPartyDev() && skipLocalDevConsole()
+  const useDevConsole = !skipDevConsole && anyPreviewableExtensions
   const previewURL = useDevConsole ? devConsoleURL : appPreviewUrl
 
   const graphiqlURL = shouldRenderGraphiQL

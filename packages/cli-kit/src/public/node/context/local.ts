@@ -113,6 +113,16 @@ export function firstPartyDev(env = process.env): boolean {
 }
 
 /**
+ * Returns true if the local dev console should be skipped.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if SHOPIFY_SKIP_LOCAL_DEV_CONSOLE is truthy.
+ */
+export function skipLocalDevConsole(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.skipLocalDevConsole])
+}
+
+/**
  * Return gitpodURL if we are running in gitpod.
  * Https://www.gitpod.io/docs/environment-variables#default-environment-variables.
  *
