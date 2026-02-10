@@ -49,7 +49,24 @@ const flowTemplateSpec = createExtensionSpecification({
   identifier: 'flow_template',
   schema: FlowTemplateExtensionSchema,
   appModuleFeatures: (_) => ['ui_preview'],
-  buildConfig: {mode: 'copy_files', filePatterns: ['*.flow', '*.json', '*.toml']},
+  buildConfig: {
+    mode: 'copy_files',
+    steps: [
+      {
+        id: 'copy-files',
+        displayName: 'Copy Files',
+        type: 'copy_files',
+        config: {
+          strategy: 'pattern',
+          definition: {
+            source: '.',
+            patterns: ['**/*.flow', '**/*.json', '**/*.toml'],
+          },
+        },
+      },
+    ],
+    stopOnError: true,
+  },
   deployConfig: async (config, extensionPath) => {
     return {
       template_handle: config.handle,

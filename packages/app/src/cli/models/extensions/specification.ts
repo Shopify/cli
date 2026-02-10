@@ -2,6 +2,7 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
+import {BuildStep} from '../../services/build/build-steps.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -54,9 +55,11 @@ export interface BuildAsset {
   static?: boolean
 }
 
-type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none' | 'hosted_app_home'}
-  | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
+interface BuildConfig {
+  mode: 'none' | 'ui' | 'theme' | 'function' | 'tax_calculation' | 'copy_files'
+  steps?: ReadonlyArray<BuildStep>
+  stopOnError?: boolean
+}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */

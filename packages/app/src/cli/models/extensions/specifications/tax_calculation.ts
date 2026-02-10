@@ -28,7 +28,11 @@ const spec = createExtensionSpecification({
   identifier: 'tax_calculation',
   schema: TaxCalculationsSchema,
   appModuleFeatures: (_) => [],
-  buildConfig: {mode: 'tax_calculation'},
+  buildConfig: {
+    mode: 'tax_calculation',
+    steps: [{id: 'create-tax-stub', displayName: 'Create Tax Stub', type: 'create_tax_stub', config: {}}],
+    stopOnError: true,
+  },
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.production_api_base_url,

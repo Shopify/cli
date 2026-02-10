@@ -14,14 +14,9 @@ import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {EventsSpecIdentifier} from './specifications/app_config_events.js'
 import {HostedAppHomeSpecIdentifier} from './specifications/app_config_hosted_app_home.js'
-import {
-  ExtensionBuildOptions,
-  buildFunctionExtension,
-  buildThemeExtension,
-  buildUIExtension,
-  bundleFunctionExtension,
-} from '../../services/build/extension.js'
-import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
+import {ExtensionBuildOptions, bundleFunctionExtension} from '../../services/build/extension.js'
+import {bundleThemeExtension} from '../../services/extensions/bundle.js'
+import {BuildContext, executeStep} from '../../services/build/build-steps.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -31,7 +26,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
-import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, moveFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
@@ -347,34 +342,25 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async build(options: ExtensionBuildOptions): Promise<void> {
-    const mode = this.specification.buildConfig.mode
+    const {buildConfig} = this.specification
 
-    switch (mode) {
-      case 'theme':
-        await buildThemeExtension(this, options)
-        return bundleThemeExtension(this, options)
-      case 'function':
-        return buildFunctionExtension(this, options)
-      case 'ui':
-        await buildUIExtension(this, options)
-        // Copy static assets after build completes
-        return this.copyStaticAssets()
-      case 'tax_calculation':
-        await touchFile(this.outputPath)
-        await writeFile(this.outputPath, '(()=>{})();')
-        break
-      case 'copy_files':
-        return copyFilesForExtension(
-          this,
-          options,
-          this.specification.buildConfig.filePatterns,
-          this.specification.buildConfig.ignoredFilePatterns,
-        )
-      case 'hosted_app_home':
-        await this.copyStaticAssets()
-        break
-      case 'none':
-        break
+    const context: BuildContext = {
+      extension: this,
+      options,
+      stepResults: new Map(),
+      signal: options.signal,
+    }
+
+    const {steps = [], stopOnError = true} = buildConfig
+
+    for (const step of steps) {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await executeStep(step, context)
+      context.stepResults.set(step.id, result)
+
+      if (!result.success && stopOnError && !step.continueOnError) {
+        throw new Error(`Build step "${step.displayName}" failed: ${result.error?.message}`)
+      }
     }
   }
 
