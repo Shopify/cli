@@ -2090,7 +2090,7 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(5)
+    expect(app.allExtensions).toHaveLength(6)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       expect.objectContaining({
@@ -2105,6 +2105,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
         webhooks: {
           api_version: '2023-07',
         },
+      }),
+      expect.objectContaining({
+        name: 'for-testing',
       }),
       expect.objectContaining({
         pos: {
@@ -2145,7 +2148,7 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp({remoteFlags: []})
 
     // Then
-    expect(app.allExtensions).toHaveLength(6)
+    expect(app.allExtensions).toHaveLength(7)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       {
@@ -2166,6 +2169,9 @@ redirect_urls = [ "https://example.com/api/auth" ]
             {topics: ['orders/delete'], uri: 'https://example.com'},
           ],
         },
+        name: 'for-testing-webhooks',
+      },
+      {
         name: 'for-testing-webhooks',
       },
       {
