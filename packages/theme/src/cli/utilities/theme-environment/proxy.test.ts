@@ -402,125 +402,115 @@ describe('dev proxy', () => {
       )
     })
 
-    describe('Authorization header behavior', () => {
-      const themeCtx = {
-        session: {
-          storeFqdn: 'my-store.myshopify.com',
-          storefrontToken: 'test-sfr-token',
-          storefrontPassword: '',
-          sessionCookies: {},
-        },
-        options: {host: 'localhost', port: '9292'},
-        localThemeFileSystem: {files: new Map()},
-        localThemeExtensionFileSystem: {files: new Map()},
-        type: 'theme',
-      } as unknown as DevServerContext
+    const themeCtx = {
+      session: {
+        storeFqdn: 'my-store.myshopify.com',
+        storefrontToken: 'test-sfr-token',
+        storefrontPassword: '',
+        sessionCookies: {},
+      },
+      options: {host: 'localhost', port: '9292'},
+      localThemeFileSystem: {files: new Map()},
+      localThemeExtensionFileSystem: {files: new Map()},
+      type: 'theme',
+    } as unknown as DevServerContext
 
-      const extensionCtx = {
-        ...themeCtx,
-        type: 'theme-extension',
-      } as unknown as DevServerContext
+    const extensionCtx = {
+      ...themeCtx,
+      type: 'theme-extension',
+    } as unknown as DevServerContext
 
-      let fetchMock: ReturnType<typeof vi.fn>
+    let fetchMock: ReturnType<typeof vi.fn>
 
-      afterEach(() => {
-        vi.unstubAllGlobals()
-      })
+    afterEach(() => {
+      vi.unstubAllGlobals()
+    })
 
-      function stubFetchAndProxy(method: string, path: string, context: DevServerContext) {
-        fetchMock = vi.fn().mockResolvedValue(new Response('ok'))
-        vi.stubGlobal('fetch', fetchMock)
-        const event = createH3Event(method, path)
-        return proxyStorefrontRequest(event, context)
-      }
+    function stubFetchAndProxy(method: string, path: string, context: DevServerContext) {
+      fetchMock = vi.fn().mockResolvedValue(new Response('ok'))
+      vi.stubGlobal('fetch', fetchMock)
+      const event = createH3Event(method, path)
+      return proxyStorefrontRequest(event, context)
+    }
 
-      function getAuthHeader(): string | undefined {
-        const headers = fetchMock.mock.calls[0]![1].headers as Record<string, string>
-        return headers.Authorization ?? headers.authorization
-      }
+    function getAuthHeader(): string | undefined {
+      const headers = fetchMock.mock.calls[0]![1].headers as {[key: string]: string}
+      return headers.Authorization ?? headers.authorization
+    }
 
-      describe('excludes Bearer token for session-cookie-auth paths', () => {
-        test('POST /cart/add.js', async () => {
-          await stubFetchAndProxy('POST', '/cart/add.js', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for POST /cart/add.js', async () => {
+      await stubFetchAndProxy('POST', '/cart/add.js', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('POST /cart/update.js', async () => {
-          await stubFetchAndProxy('POST', '/cart/update.js', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for POST /cart/update.js', async () => {
+      await stubFetchAndProxy('POST', '/cart/update.js', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('GET /cart.js', async () => {
-          await stubFetchAndProxy('GET', '/cart.js', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for GET /cart.js', async () => {
+      await stubFetchAndProxy('GET', '/cart.js', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('GET /cart.json', async () => {
-          await stubFetchAndProxy('GET', '/cart.json', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for GET /cart.json', async () => {
+      await stubFetchAndProxy('GET', '/cart.json', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('POST /cart (bare)', async () => {
-          await stubFetchAndProxy('POST', '/cart', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for POST /cart (bare)', async () => {
+      await stubFetchAndProxy('POST', '/cart', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('POST /cart/change.js', async () => {
-          await stubFetchAndProxy('POST', '/cart/change.js', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for POST /cart/change.js', async () => {
+      await stubFetchAndProxy('POST', '/cart/change.js', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('GET /checkouts/abc123', async () => {
-          await stubFetchAndProxy('GET', '/checkouts/abc123', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for GET /checkouts/abc123', async () => {
+      await stubFetchAndProxy('GET', '/checkouts/abc123', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('GET /account/logout', async () => {
-          await stubFetchAndProxy('GET', '/account/logout', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
-      })
+    test('excludes Bearer token for GET /account/logout', async () => {
+      await stubFetchAndProxy('GET', '/account/logout', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-      describe('excludes Bearer token when path has query strings', () => {
-        test('GET /cart.js?sections=header', async () => {
-          await stubFetchAndProxy('GET', '/cart.js?sections=header', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for GET /cart.js?sections=header (query string)', async () => {
+      await stubFetchAndProxy('GET', '/cart.js?sections=header', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('POST /cart/add.js?sections=main-cart-items', async () => {
-          await stubFetchAndProxy('POST', '/cart/add.js?sections=main-cart-items', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
+    test('excludes Bearer token for POST /cart/add.js?sections=main-cart-items (query string)', async () => {
+      await stubFetchAndProxy('POST', '/cart/add.js?sections=main-cart-items', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-        test('GET /account?foo=bar', async () => {
-          await stubFetchAndProxy('GET', '/account?foo=bar', themeCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
-      })
+    test('excludes Bearer token for GET /account?foo=bar (query string with $ anchor)', async () => {
+      await stubFetchAndProxy('GET', '/account?foo=bar', themeCtx)
+      expect(getAuthHeader()).toBeUndefined()
+    })
 
-      describe('includes Bearer token for CDN and asset paths', () => {
-        test('GET /cdn/shop/t/10/assets/theme.css', async () => {
-          await stubFetchAndProxy('GET', '/cdn/shop/t/10/assets/theme.css', themeCtx)
-          expect(getAuthHeader()).toBe('Bearer test-sfr-token')
-        })
+    test('includes Bearer token for GET /cdn/shop/t/10/assets/theme.css', async () => {
+      await stubFetchAndProxy('GET', '/cdn/shop/t/10/assets/theme.css', themeCtx)
+      expect(getAuthHeader()).toBe('Bearer test-sfr-token')
+    })
 
-        test('GET /some-path.js', async () => {
-          await stubFetchAndProxy('GET', '/some-path.js', themeCtx)
-          expect(getAuthHeader()).toBe('Bearer test-sfr-token')
-        })
+    test('includes Bearer token for GET /some-path.js', async () => {
+      await stubFetchAndProxy('GET', '/some-path.js', themeCtx)
+      expect(getAuthHeader()).toBe('Bearer test-sfr-token')
+    })
 
-        test('GET /checkouts/internal/something (negative lookahead boundary)', async () => {
-          await stubFetchAndProxy('GET', '/checkouts/internal/something', themeCtx)
-          expect(getAuthHeader()).toBe('Bearer test-sfr-token')
-        })
-      })
+    test('includes Bearer token for GET /checkouts/internal/something (negative lookahead)', async () => {
+      await stubFetchAndProxy('GET', '/checkouts/internal/something', themeCtx)
+      expect(getAuthHeader()).toBe('Bearer test-sfr-token')
+    })
 
-      describe('excludes Bearer token for theme-extension context', () => {
-        test('GET /cdn/shop/t/10/assets/theme.css with theme-extension type', async () => {
-          await stubFetchAndProxy('GET', '/cdn/shop/t/10/assets/theme.css', extensionCtx)
-          expect(getAuthHeader()).toBeUndefined()
-        })
-      })
+    test('excludes Bearer token for theme-extension context', async () => {
+      await stubFetchAndProxy('GET', '/cdn/shop/t/10/assets/theme.css', extensionCtx)
+      expect(getAuthHeader()).toBeUndefined()
     })
   })
 })
