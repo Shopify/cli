@@ -6,13 +6,6 @@ export function buildAppURLForWeb(storeFqdn: string, apiKey: string) {
   return `https://${adminUrl}/admin/oauth/redirect_from_cli?client_id=${apiKey}`
 }
 
-export function buildAppURLForAdmin(storeFqdn: string, apiKey: string, adminDomain: string) {
-  const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
-  const storeName = normalizedFQDN.split('.')[0]
-
-  return `https://${adminDomain}/store/${storeName}/apps/${apiKey}`
-}
-
 export function buildAppURLForMobile(storeFqdn: string, apiKey: string) {
   const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
   const adminUrl = storeAdminUrl(normalizedFQDN)
