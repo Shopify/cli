@@ -64,7 +64,7 @@
     "@shopify/plugin-cloudflare": "3.91.0",
     "@shopify/plugin-did-you-mean": "3.91.0",
     "@shopify/theme": "3.91.0",
-    "@shopify/cli-hydrogen": "11.1.5",
+    "@shopify/cli-hydrogen": "11.1.8",
     "@types/global-agent": "3.0.0",
     "@vitest/coverage-istanbul": "^3.1.4",
     "esbuild-plugin-copy": "^2.1.1"
