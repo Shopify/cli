@@ -21,6 +21,7 @@ import {
   bundleFunctionExtension,
 } from '../../services/build/extension.js'
 import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
+import {executeBuildSteps} from '../../services/build/build-steps.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
@@ -368,9 +369,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           this.specification.buildConfig.filePatterns,
           this.specification.buildConfig.ignoredFilePatterns,
         )
-      case 'hosted_app_home':
-        await this.copyStaticAssets()
-        break
+      case 'build_steps':
+        return executeBuildSteps(this, this.specification.buildConfig.stepsConfig, options)
       case 'none':
         break
     }
