@@ -4,6 +4,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {Flags} from '@oclif/core'
 import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
 import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
+import {renderConfirmationPrompt, RenderConfirmationPromptOptions} from '@shopify/cli-kit/node/ui'
 
 export default class DoctorReleaseTheme extends Command {
   static description = 'Run all theme command doctor-release tests'
@@ -39,7 +40,16 @@ export default class DoctorReleaseTheme extends Command {
     if (!canRunDoctorRelease()) {
       return
     }
+    const promptOptions: RenderConfirmationPromptOptions = {
+      message: `This will run automated theme commands against your shop. It will modify remote themes. Please confirm before running.`,
+      confirmationMessage: 'Yes I understand',
+      cancellationMessage: 'No, cancel the command',
+    }
+    const confirmed = await renderConfirmationPrompt(promptOptions)
 
+    if (!confirmed) {
+      return
+    }
     const {flags} = await this.parse(DoctorReleaseTheme)
 
     const results = await runThemeDoctor({
