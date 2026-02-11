@@ -134,7 +134,8 @@ export class SidekickClient {
         if (line.startsWith('event:')) {
           eventType = line.slice(6).trim()
         } else if (line.startsWith('data:')) {
-          dataLines.push(line.slice(5).trim())
+          const value = line.slice(5)
+          dataLines.push(value.startsWith(' ') ? value.slice(1) : value)
         } else if (line === '') {
           if (dataLines.length > 0) {
             const event: SSEEvent = {
@@ -157,7 +158,8 @@ export class SidekickClient {
         if (line.startsWith('event:')) {
           eventType = line.slice(6).trim()
         } else if (line.startsWith('data:')) {
-          dataLines.push(line.slice(5).trim())
+          const value = line.slice(5)
+          dataLines.push(value.startsWith(' ') ? value.slice(1) : value)
         }
       }
       if (dataLines.length > 0) {
