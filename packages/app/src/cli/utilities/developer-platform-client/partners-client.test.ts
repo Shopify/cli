@@ -1,11 +1,11 @@
 import {PartnersClient} from './partners-client.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
-import {AppInterface, WebType} from '../../models/app/app.js'
+import {AppInterface, AppConfiguration, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
   testPartnersUserSession,
   testApp,
-  testAppWithLegacyConfig,
+  testAppWithConfig,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {appNamePrompt} from '../../prompts/dev.js'
@@ -23,7 +23,12 @@ beforeEach(() => {
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
-  configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
+  configuration: {
+    path: '/shopify.app.toml',
+    client_id: 'test-client-id',
+    access_scopes: {scopes: 'read_products'},
+    extension_directories: ['extensions/*'],
+  } as AppConfiguration,
   webs: [
     {
       directory: '',
@@ -82,7 +87,7 @@ describe('createApp', () => {
   test('sends request to create app with launchable defaults and returns it', async () => {
     // Given
     const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
-    const localApp = testAppWithLegacyConfig({config: {scopes: 'write_products'}})
+    const localApp = testAppWithConfig({config: {access_scopes: {scopes: 'write_products'}}})
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {

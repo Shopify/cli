@@ -1,14 +1,9 @@
 import {
   AppSchema,
   CurrentAppConfiguration,
-  LegacyAppConfiguration,
-  TemplateConfigSchema,
   getAppScopes,
   getAppScopesArray,
-  getTemplateScopesArray,
   getUIExtensionRendererVersion,
-  isCurrentAppSchema,
-  isLegacyAppSchema,
   validateExtensionsHandlesInCollection,
   validateFunctionExtensionsWithUiHandle,
 } from './app.js'
@@ -63,69 +58,32 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   },
 }
 
-const CORRECT_LEGACY_APP_SCHEMA: LegacyAppConfiguration = {
-  path: '',
-  extension_directories: [],
-  web_directories: [],
-  scopes: 'write_products',
-}
-
 describe('app schema validation', () => {
-  describe('legacy schema validator', () => {
-    test('checks whether legacy app schema is valid -- pass', () => {
-      expect(isLegacyAppSchema(CORRECT_LEGACY_APP_SCHEMA)).toBe(true)
-    })
-    test('checks whether legacy app schema is valid -- fail', () => {
-      const config = {
-        ...CORRECT_LEGACY_APP_SCHEMA,
-        some_other_key: 'i am not valid, i will fail',
-      }
-      expect(isLegacyAppSchema(config)).toBe(false)
-    })
+  test('extension_directories should be transformed to double asterisks', () => {
+    const config = {
+      ...CORRECT_CURRENT_APP_SCHEMA,
+      extension_directories: ['extensions/*'],
+    }
+    const parsed = AppSchema.parse(config)
+    expect(parsed.extension_directories).toEqual(['extensions/**'])
   })
 
-  describe('current schema validator', () => {
-    test('checks whether current app schema is valid -- pass', () => {
-      expect(isCurrentAppSchema(CORRECT_CURRENT_APP_SCHEMA)).toBe(true)
-    })
-    test('checks whether current app schema is valid -- fail', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
-      }
+  test('extension_directories is not transformed if it ends with double asterisks', () => {
+    const config = {
+      ...CORRECT_CURRENT_APP_SCHEMA,
+      extension_directories: ['extensions/**'],
+    }
+    const parsed = AppSchema.parse(config)
+    expect(parsed.extension_directories).toEqual(['extensions/**'])
+  })
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      delete config.client_id
-
-      expect(isCurrentAppSchema(config)).toBe(false)
-    })
-
-    test('extension_directories should be transformed to double asterisks', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
-        extension_directories: ['extensions/*'],
-      }
-      const parsed = AppSchema.parse(config)
-      expect(parsed.extension_directories).toEqual(['extensions/**'])
-    })
-
-    test('extension_directories is not transformed if it ends with double asterisks', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
-        extension_directories: ['extensions/**'],
-      }
-      const parsed = AppSchema.parse(config)
-      expect(parsed.extension_directories).toEqual(['extensions/**'])
-    })
-
-    test('extension_directories is not transformed if it doesnt end with a wildcard', () => {
-      const config = {
-        ...CORRECT_CURRENT_APP_SCHEMA,
-        extension_directories: ['extensions'],
-      }
-      const parsed = AppSchema.parse(config)
-      expect(parsed.extension_directories).toEqual(['extensions'])
-    })
+  test('extension_directories is not transformed if it doesnt end with a wildcard', () => {
+    const config = {
+      ...CORRECT_CURRENT_APP_SCHEMA,
+      extension_directories: ['extensions'],
+    }
+    const parsed = AppSchema.parse(config)
+    expect(parsed.extension_directories).toEqual(['extensions'])
   })
 })
 
@@ -212,114 +170,16 @@ describe('getUIExtensionRendererVersion', () => {
 })
 
 describe('getAppScopes', () => {
-  test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes,read_products'}
-    expect(getAppScopes(config)).toEqual('read_themes,read_products')
-  })
-
-  test('returns the access_scopes.scopes key when schema is current', () => {
+  test('returns the access_scopes.scopes key', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes,read_themes'}}
     expect(getAppScopes(config)).toEqual('read_themes,read_themes')
   })
 })
 
 describe('getAppScopesArray', () => {
-  test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes, read_order ,write_products'}
-    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
-  })
-
-  test('returns the access_scopes.scopes key when schema is current', () => {
+  test('returns the access_scopes.scopes key', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
-  })
-})
-
-describe('TemplateConfigSchema', () => {
-  test('parses config with legacy scopes format', () => {
-    const config = {scopes: 'read_products,write_products'}
-    const result = TemplateConfigSchema.parse(config)
-    expect(result.scopes).toEqual('read_products,write_products')
-  })
-
-  test('parses config with access_scopes format', () => {
-    const config = {access_scopes: {scopes: 'read_products,write_products'}}
-    const result = TemplateConfigSchema.parse(config)
-    expect(result.access_scopes?.scopes).toEqual('read_products,write_products')
-  })
-
-  test('preserves extra keys like metafields via passthrough', () => {
-    const config = {
-      scopes: 'write_products',
-      product: {
-        metafields: {
-          app: {
-            demo_info: {
-              type: 'single_line_text_field',
-              name: 'Demo Source Info',
-            },
-          },
-        },
-      },
-      webhooks: {
-        api_version: '2025-07',
-        subscriptions: [{uri: '/webhooks', topics: ['app/uninstalled']}],
-      },
-    }
-    const result = TemplateConfigSchema.parse(config)
-    expect(result.product).toEqual(config.product)
-    expect(result.webhooks).toEqual(config.webhooks)
-  })
-
-  test('parses empty config', () => {
-    const config = {}
-    const result = TemplateConfigSchema.parse(config)
-    expect(result).toEqual({})
-  })
-})
-
-describe('getTemplateScopesArray', () => {
-  test('returns scopes from legacy format', () => {
-    const config = {scopes: 'read_themes,write_products'}
-    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
-  })
-
-  test('returns scopes from access_scopes format', () => {
-    const config = {access_scopes: {scopes: 'read_themes,write_products'}}
-    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
-  })
-
-  test('trims whitespace from scopes and sorts', () => {
-    const config = {scopes: ' write_products , read_themes '}
-    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
-  })
-
-  test('includes empty strings from consecutive commas (caller should handle)', () => {
-    const config = {scopes: 'read_themes,write_products'}
-    expect(getTemplateScopesArray(config)).toEqual(['read_themes', 'write_products'])
-  })
-
-  test('returns empty array when no scopes defined', () => {
-    const config = {}
-    expect(getTemplateScopesArray(config)).toEqual([])
-  })
-
-  test('returns empty array when scopes is empty string', () => {
-    const config = {scopes: ''}
-    expect(getTemplateScopesArray(config)).toEqual([])
-  })
-
-  test('returns empty array when access_scopes.scopes is empty', () => {
-    const config = {access_scopes: {scopes: ''}}
-    expect(getTemplateScopesArray(config)).toEqual([])
-  })
-
-  test('prefers legacy scopes over access_scopes when both present', () => {
-    const config = {
-      scopes: 'read_themes',
-      access_scopes: {scopes: 'write_products'},
-    }
-    expect(getTemplateScopesArray(config)).toEqual(['read_themes'])
   })
 })
 
@@ -413,18 +273,6 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
       },
     }
     const app = testApp({configuration})
-
-    // When/Then
-    await expect(app.preDeployValidation()).resolves.not.toThrow()
-  })
-
-  test('does not throw an error for legacy schema apps', async () => {
-    // Given
-    const configuration: LegacyAppConfiguration = {
-      ...CORRECT_LEGACY_APP_SCHEMA,
-      scopes: 'read_orders',
-    }
-    const app = testApp(configuration, 'legacy')
 
     // When/Then
     await expect(app.preDeployValidation()).resolves.not.toThrow()
