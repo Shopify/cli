@@ -18,6 +18,7 @@ import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
+import SidekickCommands from '@shopify/sidekick'
 import {COMMANDS as HydrogenCommands, HOOKS as HydrogenHooks} from '@shopify/cli-hydrogen'
 import {commands as AppCommands} from '@shopify/app'
 import {commands as PluginCommandsCommands} from '@oclif/plugin-commands'
@@ -101,6 +102,12 @@ themeCommands.forEach((command) => {
   ;(ThemeCommands[command] as any).customPluginName = '@shopify/theme'
 })
 
+const sidekickCommands = Object.keys(SidekickCommands) as (keyof typeof SidekickCommands)[]
+sidekickCommands.forEach((command) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(SidekickCommands[command] as any).customPluginName = '@shopify/sidekick'
+})
+
 const hydrogenCommands = Object.keys(HydrogenCommands) as (keyof typeof HydrogenCommands)[]
 hydrogenCommands.forEach((command) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,6 +136,7 @@ pluginPluginsCommands.forEach((command) => {
 export const COMMANDS: any = {
   ...AppCommands,
   ...ThemeCommands,
+  ...SidekickCommands,
   ...PluginPluginsCommands,
   ...DidYouMeanCommands,
   ...PluginCommandsCommands,

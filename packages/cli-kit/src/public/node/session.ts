@@ -15,6 +15,7 @@ import {
   BusinessPlatformScope,
   EnsureAuthenticatedAdditionalOptions,
   PartnersAPIScope,
+  SidekickAPIScope,
   StorefrontRendererScope,
   ensureAuthenticated,
   setLastSeenAuthMethod,
@@ -26,6 +27,14 @@ import {isThemeAccessSession} from '../../private/node/api/rest.js'
  * Session Object to access the Admin API, includes the token and the store FQDN.
  */
 export interface AdminSession {
+  token: string
+  storeFqdn: string
+}
+
+/**
+ * Session Object to access the Sidekick API, includes the token and the store FQDN.
+ */
+export interface SidekickSession {
   token: string
   storeFqdn: string
 }
@@ -272,6 +281,33 @@ ${outputToken.json(scopes)}
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
   return tokens.businessPlatform
+}
+
+/**
+ * Ensure that we have a valid Sidekick session for the given store.
+ *
+ * @param store - Store fqdn to request auth for.
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param options - Optional extra options to use.
+ * @returns The access token for the Sidekick API.
+ */
+export async function ensureAuthenticatedSidekick(
+  store: string,
+  scopes: SidekickAPIScope[] = [],
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<SidekickSession> {
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Sidekick API with the following scopes for the store ${outputToken.raw(
+    store,
+  )}:
+${outputToken.json(scopes)}
+`)
+  const tokens = await ensureAuthenticated({sidekickApi: {scopes, storeFqdn: store}}, process.env, {
+    ...options,
+  })
+  if (!tokens.sidekick) {
+    throw new BugError('No sidekick token found after ensuring authenticated')
+  }
+  return tokens.sidekick
 }
 
 /**

@@ -93,6 +93,17 @@ interface BusinessPlatformAPIOAuthOptions {
 }
 
 /**
+ * A scope supported by the Sidekick API.
+ */
+export type SidekickAPIScope = 'sidekick-message' | 'graphql'
+interface SidekickAPIOAuthOptions {
+  /** Store to request permissions for. */
+  storeFqdn: string
+  /** List of scopes to request permissions for. */
+  scopes: SidekickAPIScope[]
+}
+
+/**
  * It represents the authentication requirements and
  * is the input necessary to trigger the authentication
  * flow.
@@ -103,6 +114,7 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
   businessPlatformApi?: BusinessPlatformAPIOAuthOptions
   appManagementApi?: AppManagementAPIOauthOptions
+  sidekickApi?: SidekickAPIOAuthOptions
 }
 
 export interface OAuthSession {
@@ -111,6 +123,7 @@ export interface OAuthSession {
   storefront?: string
   businessPlatform?: string
   appManagement?: string
+  sidekick?: {token: string; storeFqdn: string}
   userId: string
 }
 
@@ -399,6 +412,14 @@ async function tokensFor(applications: OAuthApplications, session: Session): Pro
     tokens.appManagement = session.applications[appId]?.accessToken
   }
 
+  if (applications.sidekickApi) {
+    const appId = applicationId('sidekick')
+    const token = session.applications[appId]?.accessToken
+    if (token) {
+      tokens.sidekick = {token, storeFqdn: applications.sidekickApi.storeFqdn}
+    }
+  }
+
   return tokens
 }
 
@@ -415,7 +436,8 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const storefront = apps.storefrontRendererApi?.scopes ?? []
   const businessPlatform = apps.businessPlatformApi?.scopes ?? []
   const appManagement = apps.appManagementApi?.scopes ?? []
-  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
+  const sidekick = apps.sidekickApi ? ['sidekick-message', 'graphql', ...(apps.sidekickApi.scopes ?? [])] : []
+  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement, ...sidekick]
   return allDefaultScopes(requestedScopes)
 }
 
@@ -426,17 +448,13 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
  * @returns An object containing the scopes for each application.
  */
 function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
-  const adminScope = apps.adminApi?.scopes ?? []
-  const partnerScope = apps.partnersApi?.scopes ?? []
-  const storefrontScopes = apps.storefrontRendererApi?.scopes ?? []
-  const businessPlatformScopes = apps.businessPlatformApi?.scopes ?? []
-  const appManagementScopes = apps.appManagementApi?.scopes ?? []
   return {
-    admin: apiScopes('admin', adminScope),
-    partners: apiScopes('partners', partnerScope),
-    storefront: apiScopes('storefront-renderer', storefrontScopes),
-    businessPlatform: apiScopes('business-platform', businessPlatformScopes),
-    appManagement: apiScopes('app-management', appManagementScopes),
+    admin: apps.adminApi ? apiScopes('admin', apps.adminApi.scopes) : [],
+    partners: apps.partnersApi ? apiScopes('partners', apps.partnersApi.scopes) : [],
+    storefront: apps.storefrontRendererApi ? apiScopes('storefront-renderer', apps.storefrontRendererApi.scopes) : [],
+    businessPlatform: apps.businessPlatformApi ? apiScopes('business-platform', apps.businessPlatformApi.scopes) : [],
+    appManagement: apps.appManagementApi ? apiScopes('app-management', apps.appManagementApi.scopes) : [],
+    sidekick: apps.sidekickApi ? apiScopes('sidekick', apps.sidekickApi.scopes) : [],
   }
 }
 

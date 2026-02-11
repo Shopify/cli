@@ -20,6 +20,7 @@ export interface ExchangeScopes {
   storefront: string[]
   businessPlatform: string[]
   appManagement: string[]
+  sidekick: string[]
 }
 
 /**
@@ -35,12 +36,13 @@ export async function exchangeAccessForApplicationTokens(
 ): Promise<{[x: string]: ApplicationToken}> {
   const token = identityToken.accessToken
 
-  const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
-    requestAppToken('partners', token, scopes.partners),
-    requestAppToken('storefront-renderer', token, scopes.storefront),
-    requestAppToken('business-platform', token, scopes.businessPlatform),
+  const [partners, storefront, businessPlatform, admin, appManagement, sidekick] = await Promise.all([
+    scopes.partners.length > 0 ? requestAppToken('partners', token, scopes.partners) : {},
+    scopes.storefront.length > 0 ? requestAppToken('storefront-renderer', token, scopes.storefront) : {},
+    scopes.businessPlatform.length > 0 ? requestAppToken('business-platform', token, scopes.businessPlatform) : {},
     store ? requestAppToken('admin', token, scopes.admin, store) : {},
-    requestAppToken('app-management', token, scopes.appManagement),
+    scopes.appManagement.length > 0 ? requestAppToken('app-management', token, scopes.appManagement) : {},
+    scopes.sidekick.length > 0 ? requestAppToken('sidekick', token, scopes.sidekick) : {},
   ])
 
   return {
@@ -49,6 +51,7 @@ export async function exchangeAccessForApplicationTokens(
     ...businessPlatform,
     ...admin,
     ...appManagement,
+    ...sidekick,
   }
 }
 

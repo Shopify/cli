@@ -55,7 +55,7 @@ afterAll(() => {
 })
 
 describe('exchange identity token for application tokens', () => {
-  const scopes = {admin: [], partners: [], storefront: [], businessPlatform: [], appManagement: []}
+  const scopes = {admin: [], partners: [], storefront: [], businessPlatform: [], appManagement: [], sidekick: []}
 
   test('returns tokens for all APIs if a store is passed', async () => {
     // Given

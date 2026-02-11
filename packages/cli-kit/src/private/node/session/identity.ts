@@ -63,6 +63,12 @@ export function applicationId(api: API): string {
         return 'e92482cebb9bfb9fb5a0199cc770fde3de6c8d16b798ee73e36c9d815e070e52'
       }
     }
+    case 'sidekick': {
+      // TODO: Verify production client ID for sidekick-server
+      // Development ID confirmed from sidekick-server/config/initializers/identity_client.rb
+      // Production ID needs to be looked up from Identity application registry
+      return 'b73c2b50-c106-4a2e-8ce3-1755946bf50d'
+    }
     default:
       throw new BugError(`Application id for API of type: ${api}`)
   }

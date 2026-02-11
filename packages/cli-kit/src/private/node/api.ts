@@ -7,7 +7,7 @@ import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
 import {performance} from 'perf_hooks'
 
-export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management'
+export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management' | 'sidekick'
 
 export const allAPIs: API[] = ['admin', 'storefront-renderer', 'partners', 'business-platform', 'app-management']
 

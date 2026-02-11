@@ -38,6 +38,8 @@ export function tokenExchangeScopes(api: API): string[] {
       return [scopeTransform('app-management')]
     case 'business-platform':
       return [scopeTransform('destinations')]
+    case 'sidekick':
+      return [scopeTransform('sidekick-message'), scopeTransform('graphql')]
     default:
       throw new BugError(`API not supported for token exchange: ${api}`)
   }
@@ -55,6 +57,8 @@ function defaultApiScopes(api: API): string[] {
       return ['destinations', 'store-management', 'on-demand-user-access']
     case 'app-management':
       return ['app-management']
+    case 'sidekick':
+      return ['sidekick-message', 'graphql']
     default:
       throw new BugError(`Unknown API: ${api}`)
   }
@@ -80,6 +84,8 @@ function scopeTransform(scope: string): string {
       return 'https://api.shopify.com/auth/organization.on-demand-user-access'
     case 'app-management':
       return 'https://api.shopify.com/auth/organization.apps.manage'
+    case 'sidekick-message':
+      return 'https://api.shopify.com/auth/sidekick.message'
     default:
       return scope
   }
