@@ -1,5 +1,19 @@
 # @shopify/app
 
+## 3.90.1
+
+### Patch Changes
+
+- fab497a: Release bulk operations CLI commands:
+
+  - `app execute`
+  - `app bulk execute`
+  - `app bulk status`
+  - `app bulk cancel`
+  - @shopify/cli-kit@3.90.1
+  - @shopify/theme@3.90.1
+  - @shopify/plugin-cloudflare@3.90.1
+
 ## 3.90.0
 
 ### Minor Changes
