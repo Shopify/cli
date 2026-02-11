@@ -19,7 +19,7 @@ async function createPR() {
 
   const files = {}
   for (const fileName of fileNames) {
-    files[`db/data/docs/templated_apis/shopify_cli/${fileName}`] = (await readFile(path.join(generatedDirectory, fileName))).toString()
+    files[`areas/platforms/shopify-dev/db/data/docs/templated_apis/shopify_cli/${fileName}`] = (await readFile(path.join(generatedDirectory, fileName))).toString()
   }
 
   await withOctokit("shopify", async (octokit) => {
