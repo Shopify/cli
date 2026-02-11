@@ -14,6 +14,7 @@ import {joinPath, dirname} from './path.js'
 import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {addPublicMetadata} from './metadata.js'
+import {sendErrorToBugsnag} from './error-handler.js'
 import * as store from '../../private/node/analytics/storage.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
@@ -29,6 +30,7 @@ vi.mock('../../public/node/crypto.js')
 vi.mock('../../version.js')
 vi.mock('./monorail.js')
 vi.mock('./cli.js')
+vi.mock('./error-handler.js')
 
 describe('event tracking', () => {
   const currentDate = new Date(Date.UTC(2022, 1, 1, 10, 0, 0))
@@ -253,6 +255,36 @@ describe('event tracking', () => {
 
       // Then
       expect(outputMock.debug()).toMatch('Failed to report usage analytics: Boom!')
+    })
+  })
+
+  test('reports telemetry failures to Bugsnag', async () => {
+    await inProjectWithFile('package.json', async (args) => {
+      // Given
+      const commandContent = {command: 'dev', topic: 'app'}
+      const telemetryError = new Error('OTLP endpoint unavailable')
+      vi.mocked(os.platformAndArch).mockImplementationOnce(() => {
+        throw telemetryError
+      })
+      vi.mocked(sendErrorToBugsnag).mockResolvedValue({
+        error: telemetryError,
+        reported: true,
+        unhandled: false,
+      })
+      const outputMock = mockAndCaptureOutput()
+      await startAnalytics({commandContent, args})
+
+      // When
+      const config = {
+        runHook: vi.fn().mockResolvedValue({successes: [], failures: []}),
+        plugins: [],
+      } as any
+      await reportAnalyticsEvent({config, exitMode: 'ok'})
+
+      // Then
+      expect(sendErrorToBugsnag).toHaveBeenCalledOnce()
+      expect(sendErrorToBugsnag).toHaveBeenCalledWith(telemetryError, 'expected_error')
+      expect(outputMock.debug()).toMatch('Failed to report usage analytics: OTLP endpoint unavailable')
     })
   })
 
