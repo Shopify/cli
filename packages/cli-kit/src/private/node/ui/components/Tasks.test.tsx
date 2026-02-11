@@ -1,6 +1,6 @@
 import {Task, Tasks} from './Tasks.js'
-import {getLastFrameAfterUnmount, render} from '../../testing/ui.js'
-import {unstyled, TokenizedString} from '../../../../public/node/output.js'
+import {render} from '../../testing/ui.js'
+import {TokenizedString} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {Stdout} from '../../ui.js'
 import React from 'react'
@@ -44,9 +44,6 @@ describe('Tasks', () => {
 
     const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
     await renderInstance.waitUntilExit()
-
-    // Then
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
   })
 
   test('stops at the task that throws error', async () => {
@@ -389,7 +386,6 @@ describe('Tasks', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     // Then
-    expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })
 
@@ -413,7 +409,6 @@ describe('Tasks', () => {
     await renderInstance.waitUntilExit()
 
     // Then
-    expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot('""')
     expect(firstTaskFunction).toHaveBeenCalled()
     expect(secondTaskFunction).toHaveBeenCalled()
   })

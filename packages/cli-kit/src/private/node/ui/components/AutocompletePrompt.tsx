@@ -140,6 +140,12 @@ function AutocompletePrompt<T>({
               value={searchTerm}
               onChange={(term) => {
                 setSearchTerm(term)
+                // Update ref immediately so that the debounceSearch's .then()
+                // callback sees the current term. With React 19's automatic
+                // batching, the render (which normally updates the ref) is
+                // deferred, so without this the ref would be stale when the
+                // search Promise resolves.
+                searchTermRef.current = term
 
                 if (term.length > 0) {
                   debounceSearch(term)

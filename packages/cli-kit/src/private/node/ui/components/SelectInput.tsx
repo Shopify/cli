@@ -2,17 +2,12 @@ import {Scrollbar} from './Scrollbar.js'
 import {useSelectState} from '../hooks/use-select-state.js'
 import useLayout from '../hooks/use-layout.js'
 import {handleCtrlC} from '../../ui.js'
-import React, {useCallback, forwardRef, useEffect} from 'react'
+import React, {useCallback, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
 import sortBy from 'lodash/sortBy.js'
 
-declare module 'react' {
-  function forwardRef<T, P>(
-    render: (props: P, ref: React.Ref<T>) => React.ReactElement | null,
-  ): (props: P & React.RefAttributes<T>) => React.ReactElement | null
-}
 export interface SelectInputProps<T> {
   items: Item<T>[]
   initialItems?: Item<T>[]
@@ -28,7 +23,8 @@ export interface SelectInputProps<T> {
   morePagesMessage?: string
   availableLines?: number
   onSubmit?: (item: Item<T>) => void
-  inputFixedAreaRef?: React.RefObject<DOMElement>
+  inputFixedAreaRef?: React.Ref<DOMElement>
+  ref?: React.Ref<DOMElement>
   groupOrder?: string[]
 }
 
@@ -133,27 +129,25 @@ function Item<T>({
 const MAX_AVAILABLE_LINES = 25
 
 // eslint-disable-next-line react/function-component-definition
-function SelectInputInner<T>(
-  {
-    items: rawItems,
-    initialItems = rawItems,
-    onChange,
-    enableShortcuts = true,
-    focus = true,
-    emptyMessage = 'No items to select.',
-    defaultValue,
-    highlightedTerm,
-    loading = false,
-    errorMessage,
-    hasMorePages = false,
-    morePagesMessage,
-    availableLines = MAX_AVAILABLE_LINES,
-    onSubmit,
-    inputFixedAreaRef,
-    groupOrder,
-  }: SelectInputProps<T>,
-  ref: React.ForwardedRef<DOMElement>,
-): React.ReactElement | null {
+function SelectInput<T>({
+  items: rawItems,
+  initialItems = rawItems,
+  onChange,
+  enableShortcuts = true,
+  focus = true,
+  emptyMessage = 'No items to select.',
+  defaultValue,
+  highlightedTerm,
+  loading = false,
+  errorMessage,
+  hasMorePages = false,
+  morePagesMessage,
+  availableLines = MAX_AVAILABLE_LINES,
+  onSubmit,
+  inputFixedAreaRef,
+  ref,
+  groupOrder,
+}: SelectInputProps<T>): React.ReactElement | null {
   let noItems = false
 
   if (rawItems.length === 0) {
@@ -325,4 +319,4 @@ function SelectInputInner<T>(
   }
 }
 
-export const SelectInput = forwardRef(SelectInputInner)
+export {SelectInput}

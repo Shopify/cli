@@ -50,7 +50,14 @@ export class Stdout extends EventEmitter {
 
   write = (frame: string) => {
     this.frames.push(frame)
-    this._lastFrame = frame
+    // Ink writes `this.lastOutput + '\n'` to stdout during unmount when
+    // running in a CI environment (detected via `is-in-ci`).  In debug
+    // mode (which tests use), `lastOutput` is never updated, so the write
+    // is just '\n', clobbering the last real rendered frame.  Skip it so
+    // that `lastFrame()` keeps returning the final rendered content.
+    if (frame !== '\n') {
+      this._lastFrame = frame
+    }
   }
 
   lastFrame = () => {

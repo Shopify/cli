@@ -222,6 +222,8 @@ describe('usePollAppLogs', () => {
 
     // Wait for the async polling function to execute
     await waitForMockCalls(mockedPollAppLogs, 1)
+    // Flush React 19 batched state updates so hook.lastResult reflects the new state
+    await vi.advanceTimersByTimeAsync(0)
 
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
@@ -455,6 +457,8 @@ describe('usePollAppLogs', () => {
     expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), POLLING_ERROR_RETRY_INTERVAL_MS)
 
     await vi.advanceTimersToNextTimerAsync()
+    // Flush React 19 batched state updates
+    await vi.advanceTimersByTimeAsync(0)
     expect(hook.lastResult?.appLogOutputs).toHaveLength(6)
     expect(hook.lastResult?.errors).toHaveLength(0)
     expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), POLLING_INTERVAL_MS)
@@ -485,10 +489,16 @@ describe('usePollAppLogs', () => {
 
     // initial poll with errors
     await vi.advanceTimersByTimeAsync(0)
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
+    // Flush React 19 batched state updates so hook.lastResult reflects the new state
+    await vi.advanceTimersByTimeAsync(0)
     expect(hook.lastResult?.errors).toHaveLength(2)
 
     // second poll with no errors
     await vi.advanceTimersToNextTimerAsync()
+    // Flush React 19 batched state updates
+    await vi.advanceTimersByTimeAsync(0)
     expect(hook.lastResult?.errors).toHaveLength(0)
   })
 

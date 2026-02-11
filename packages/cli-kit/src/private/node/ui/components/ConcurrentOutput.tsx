@@ -178,12 +178,14 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           }),
         )
         if (!keepRunningAfterProcessesResolve) {
-          unmountInk()
+          // Defer unmount so React 19 can flush batched setProcessOutput
+          // state updates before the component tree is torn down.
+          setImmediate(() => unmountInk())
         }
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: unknown) {
         if (!keepRunningAfterProcessesResolve) {
-          unmountInk(error as Error | undefined)
+          setImmediate(() => unmountInk(error as Error | undefined))
         }
       }
     }

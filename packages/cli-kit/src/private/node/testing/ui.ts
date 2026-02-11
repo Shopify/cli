@@ -1,4 +1,3 @@
-import {isTruthy} from '../../../public/node/context/utilities.js'
 import {Stdout} from '../ui.js'
 import {ReactElement} from 'react'
 import {render as inkRender} from 'ink'
@@ -100,32 +99,27 @@ export function waitForInputsToBeReady() {
 /**
  * Wait for the last frame to change to anything.
  */
-export function waitForChange(func: () => void, getChangingValue: () => string | number | undefined) {
-  return new Promise<void>((resolve) => {
-    const initialValue = getChangingValue()
+export async function waitForChange(func: () => void, getChangingValue: () => string | number | undefined) {
+  const initialValue = getChangingValue()
 
-    func()
+  func()
 
-    const interval = setInterval(() => {
-      if (getChangingValue() !== initialValue) {
-        clearInterval(interval)
-        resolve()
-      }
-    }, 10)
-  })
+  while (getChangingValue() === initialValue) {
+    // Yield via setImmediate so React 19's scheduler (which also uses
+    // setImmediate in Node.js) can flush batched renders, then yield
+    // via setTimeout(0) to let any follow-up microtasks settle.
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => setImmediate(() => setTimeout(resolve, 0)))
+  }
 }
 
-export function waitFor(func: () => void, condition: () => boolean) {
-  return new Promise<void>((resolve) => {
-    func()
+export async function waitFor(func: () => void, condition: () => boolean) {
+  func()
 
-    const interval = setInterval(() => {
-      if (condition()) {
-        clearInterval(interval)
-        resolve()
-      }
-    }, 10)
-  })
+  while (!condition()) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((resolve) => setImmediate(() => setTimeout(resolve, 0)))
+  }
 }
 
 /**
@@ -186,10 +180,11 @@ export async function sendInputAndWaitForContent(
 
 /** Function that is useful when you want to check the last frame of a component that unmounted.
  *
- * The reason this function exists is that in CI Ink will clear the last frame on unmount.
+ * With Ink 6 / React 19, the output is no longer cleared on unmount,
+ * so lastFrame() consistently returns the last rendered content.
  */
 export function getLastFrameAfterUnmount(renderInstance: ReturnType<typeof render>) {
-  return isTruthy(process.env.CI) ? renderInstance.frames[renderInstance.frames.length - 2] : renderInstance.lastFrame()
+  return renderInstance.lastFrame()
 }
 
 type TrackedPromise<T> = Promise<T> & {
