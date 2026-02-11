@@ -77,7 +77,7 @@ export default class Init extends AppLinkedCommand {
 
     // Force user authentication before prompting.
     let developerPlatformClient = selectDeveloperPlatformClient()
-    await developerPlatformClient.session()
+    await developerPlatformClient.accountInfo()
 
     const promptAnswers = await initPrompt({
       template: flags.template,

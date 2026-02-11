@@ -1,6 +1,6 @@
 import {promptSessionSelect} from './session-prompt.js'
 import {renderSelectPrompt} from './ui.js'
-import {ensureAuthenticatedUser} from './session.js'
+import {getToken, getUserId} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import {setCurrentSessionId} from '../../private/node/conf-store.js'
 import * as sessionStore from '../../private/node/session/store.js'
@@ -44,7 +44,8 @@ const mockSessions: Sessions = {
 describe('promptSessionSelect', () => {
   beforeEach(() => {
     vi.mocked(identityFqdn).mockResolvedValue('identity.fqdn.com')
-    vi.mocked(ensureAuthenticatedUser).mockResolvedValue({userId: 'new-user-id'})
+    vi.mocked(getToken).mockResolvedValue('token')
+    vi.mocked(getUserId).mockResolvedValue('new-user-id')
     vi.mocked(sessionStore.getSessionAlias).mockResolvedValue('new-alias')
     vi.mocked(sessionStore.findSessionByAlias).mockResolvedValue(undefined)
   })
@@ -58,7 +59,7 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(getToken).toHaveBeenCalledWith('partners', {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('new-alias')
   })
@@ -73,7 +74,7 @@ describe('promptSessionSelect', () => {
 
     // Then
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(getToken).toHaveBeenCalledWith('partners', {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('custom-alias')
   })
@@ -145,7 +146,7 @@ describe('promptSessionSelect', () => {
     const result = await promptSessionSelect()
 
     // Then
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(getToken).toHaveBeenCalledWith('partners', {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('new-alias')
   })
@@ -160,7 +161,7 @@ describe('promptSessionSelect', () => {
     const result = await promptSessionSelect('work-alias')
 
     // Then
-    expect(ensureAuthenticatedUser).toHaveBeenCalledWith({}, {forceNewSession: true})
+    expect(getToken).toHaveBeenCalledWith('partners', {forceNewSession: true})
     expect(sessionStore.getSessionAlias).toHaveBeenCalledWith('new-user-id')
     expect(result).toEqual('custom-alias')
   })
@@ -190,7 +191,7 @@ describe('promptSessionSelect', () => {
     expect(sessionStore.findSessionByAlias).toHaveBeenCalledWith('Work Account')
     expect(setCurrentSessionId).toHaveBeenCalledWith('user1')
     expect(renderSelectPrompt).not.toHaveBeenCalled()
-    expect(ensureAuthenticatedUser).not.toHaveBeenCalled()
+    expect(getToken).not.toHaveBeenCalled()
     expect(result).toEqual('Work Account')
   })
 

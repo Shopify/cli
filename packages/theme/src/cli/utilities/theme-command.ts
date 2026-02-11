@@ -4,7 +4,7 @@ import {useThemeStoreContext} from '../services/local-storage.js'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {Input} from '@oclif/core/interfaces'
 import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {
   renderWarning,
@@ -326,7 +326,9 @@ export default abstract class ThemeCommand extends Command {
   private async createSession(flags: FlagValues) {
     const store = flags.store as string
     const password = flags.password as string
-    const session = await ensureAuthenticatedThemes(ensureThemeStore({store}), password)
+    const storeFqdn = ensureThemeStore({store})
+    const token = await getToken('admin', {storeFqdn, password})
+    const session: AdminSession = {token, storeFqdn}
 
     return session
   }

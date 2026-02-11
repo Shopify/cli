@@ -4,7 +4,7 @@ import {DevServerSession} from './types.js'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
 
 // 30 minutes in miliseconds.
@@ -68,11 +68,18 @@ export async function fetchDevServerSession(
 ): Promise<DevServerSession> {
   const baseUrl = buildBaseStorefrontUrl(adminSession)
 
-  const session = await ensureAuthenticatedThemes(adminSession.storeFqdn, adminPassword, [], {
+  const adminToken = await getToken('admin', {
+    storeFqdn: adminSession.storeFqdn,
+    password: adminPassword,
     forceRefresh: false,
     noPrompt: true,
   })
-  const storefrontToken = await ensureAuthenticatedStorefront([], adminPassword, {forceRefresh: false, noPrompt: true})
+  const session: AdminSession = {token: adminToken, storeFqdn: adminSession.storeFqdn}
+  const storefrontToken = await getToken('storefront-renderer', {
+    password: adminPassword,
+    forceRefresh: false,
+    noPrompt: true,
+  })
   const sessionCookies = await getStorefrontSessionCookiesWithVerification(
     baseUrl,
     themeId,

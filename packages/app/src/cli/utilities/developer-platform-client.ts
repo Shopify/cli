@@ -57,7 +57,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
-import {Session} from '@shopify/cli-kit/node/session'
+import {AccountInfo, getToken, type ApiAudience} from '@shopify/cli-kit/node/session'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
@@ -236,14 +236,13 @@ export interface DeveloperPlatformClient {
   readonly organizationSource: OrganizationSource
   readonly bundleFormat: 'zip' | 'br'
   readonly supportsDashboardManagedExtensions: boolean
-  session: () => Promise<Session>
   /**
    * This is an unsafe method that should only be used when the session is expired.
    * It is not safe to use this method in other contexts as it may lead to race conditions.
    * Use only if you know what you are doing.
    */
   unsafeRefreshToken: () => Promise<string>
-  accountInfo: () => Promise<Session['accountInfo']>
+  accountInfo: () => Promise<AccountInfo>
   appFromIdentifiers: (apiKey: string) => Promise<OrganizationApp | undefined>
   organizations: () => Promise<Organization[]>
   orgFromId: (orgId: string) => Promise<Organization | undefined>
@@ -308,17 +307,12 @@ const inProgressRefreshes = new WeakMap<DeveloperPlatformClient, Promise<string>
 
 /**
  * Creates an unauthorized handler for a developer platform client that will refresh the token
- * and return the appropriate token based on the token type.
- * If the tokenType is 'businessPlatform', the handler will return the business platform token.
- * Otherwise, it will return the default token (App Management API or Partners API).
+ * and return the appropriate token for the given audience.
  * @param client - The developer platform client.
- * @param tokenType - The type of token to return ('default' or 'businessPlatform')
+ * @param audience - The API audience to obtain a fresh token for.
  * @returns The unauthorized handler.
  */
-export function createUnauthorizedHandler(
-  client: DeveloperPlatformClient,
-  tokenType: 'default' | 'businessPlatform' = 'default',
-): UnauthorizedHandler {
+export function createUnauthorizedHandler(client: DeveloperPlatformClient, audience: ApiAudience): UnauthorizedHandler {
   return {
     type: 'token_refresh',
     handler: async () => {
@@ -335,9 +329,7 @@ export function createUnauthorizedHandler(
         }
       }
 
-      // After refresh, get the appropriate token based on the request type
-      const session = await client.session()
-      const token = tokenType === 'businessPlatform' ? session.businessPlatformToken : session.token
+      const token = await getToken(audience)
       return {token}
     },
   }

@@ -5,7 +5,7 @@ import {
   fetchDevServerSession,
 } from './dev-server-session.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
-import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {getToken} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -88,23 +88,21 @@ describe('verifyRequiredFilesExist', () => {
 
 describe('dev server session', async () => {
   describe('fetchDevServerSession', async () => {
-    test('calls ensureAuthenticatedThemes with noPrompt: true', async () => {
+    test('calls getToken with noPrompt: true', async () => {
       // Given
-      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getToken).mockResolvedValueOnce('token_1').mockResolvedValueOnce('storefront_token')
       vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
         _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
         storefront_digest: 'digest_value',
-      })
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
-        token: 'token_1',
-        storeFqdn,
       })
 
       // When
       await fetchDevServerSession(themeId, adminSession, 'admin-password')
 
       // Then
-      expect(ensureAuthenticatedThemes).toHaveBeenCalledWith(storeFqdn, 'admin-password', [], {
+      expect(getToken).toHaveBeenCalledWith('admin', {
+        storeFqdn,
+        password: 'admin-password',
         forceRefresh: false,
         noPrompt: true,
       })
@@ -114,14 +112,10 @@ describe('dev server session', async () => {
   describe('initializeDevServerSession', async () => {
     test('returns a session', async () => {
       // Given
-      vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront_token')
+      vi.mocked(getToken).mockResolvedValueOnce('token_1').mockResolvedValueOnce('storefront_token')
       vi.mocked(getStorefrontSessionCookies).mockResolvedValue({
         _shopify_essential: ':AABBCCDDEEFFGGHH==123:',
         storefront_digest: 'digest_value',
-      })
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({
-        token: 'token_1',
-        storeFqdn,
       })
 
       // When
@@ -145,14 +139,10 @@ describe('dev server session', async () => {
     test('returns a refreshable session', async () => {
       // Given
       for (const index of [1, 2, 3]) {
-        vi.mocked(ensureAuthenticatedStorefront).mockResolvedValueOnce(`storefront_token_${index}`)
+        vi.mocked(getToken).mockResolvedValueOnce(`token_${index}`).mockResolvedValueOnce(`storefront_token_${index}`)
         vi.mocked(getStorefrontSessionCookies).mockResolvedValueOnce({
           _shopify_essential: `:AABBCCDDEEFFGGHH==${index}:`,
           storefront_digest: `digest_value_${index}`,
-        })
-        vi.mocked(ensureAuthenticatedThemes).mockResolvedValueOnce({
-          token: `token_${index}`,
-          storeFqdn,
         })
       }
 

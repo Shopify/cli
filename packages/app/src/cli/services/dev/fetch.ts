@@ -1,6 +1,5 @@
 import {Organization, OrganizationStore} from '../../models/organization.js'
 import {FindAppPreviewModeSchema} from '../../api/graphql/find_app_preview_mode.js'
-import {fetchCurrentAccountInformation} from '../context/partner-account-info.js'
 import {
   DeveloperPlatformClient,
   Store,
@@ -87,9 +86,7 @@ export async function fetchOrganizations(): Promise<Organization[]> {
 
   if (organizations.length === 0) {
     const developerPlatformClient = selectDeveloperPlatformClient()
-    const session = await developerPlatformClient.session()
-    const accountInfo = await fetchCurrentAccountInformation(developerPlatformClient, session.userId)
-    throw new NoOrgError(accountInfo)
+    throw new NoOrgError(await developerPlatformClient.accountInfo())
   }
   return organizations
 }
@@ -107,7 +104,7 @@ export async function fetchOrgFromId(
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<Organization> {
   const org = await developerPlatformClient.orgFromId(id)
-  if (!org) throw new NoOrgError((await developerPlatformClient.session()).accountInfo, id)
+  if (!org) throw new NoOrgError(await developerPlatformClient.accountInfo(), id)
   return org
 }
 

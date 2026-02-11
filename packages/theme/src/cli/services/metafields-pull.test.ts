@@ -3,7 +3,7 @@ import {metafieldsPull} from './metafields-pull.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {describe, test, vi, beforeEach, expect, afterEach} from 'vitest'
@@ -36,7 +36,7 @@ describe('metafields-pull', () => {
       setThemeStore(themeStore)
       return themeStore
     })
-    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue({token: '', storeFqdn: ''})
+    vi.mocked(getToken).mockResolvedValue('')
     vi.mocked(ensureDirectoryConfirmed).mockResolvedValue(true)
     vi.mocked(hasRequiredThemeDirectories).mockResolvedValue(true)
   })

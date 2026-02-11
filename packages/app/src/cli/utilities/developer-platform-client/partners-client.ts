@@ -160,7 +160,7 @@ import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {generateFetchAppLogUrl, partnersRequest, partnersRequestDoc} from '@shopify/cli-kit/node/api/partners'
 import {CacheOptions, GraphQLVariables, UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
-import {ensureAuthenticatedPartners, Session} from '@shopify/cli-kit/node/session'
+import {AccountInfo, getToken, getUserId} from '@shopify/cli-kit/node/session'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
@@ -214,9 +214,9 @@ interface OrgAndAppsResponse {
 export class PartnersClient implements DeveloperPlatformClient {
   private static instance: PartnersClient | undefined
 
-  static getInstance(session?: Session): PartnersClient {
+  static getInstance(accountInfo?: AccountInfo): PartnersClient {
     if (!PartnersClient.instance) {
-      PartnersClient.instance = new PartnersClient(session)
+      PartnersClient.instance = new PartnersClient(accountInfo)
     }
     return PartnersClient.instance
   }
@@ -233,28 +233,10 @@ export class PartnersClient implements DeveloperPlatformClient {
   public readonly organizationSource = OrganizationSource.Partners
   public readonly bundleFormat = 'zip'
   public readonly supportsDashboardManagedExtensions = true
-  private _session: Session | undefined
+  private _accountInfo: AccountInfo | undefined
 
-  private constructor(session?: Session) {
-    this._session = session
-  }
-
-  async session(): Promise<Session> {
-    if (!this._session) {
-      if (isUnitTest()) {
-        throw new Error('PartnersClient.session() should not be invoked dynamically in a unit test')
-      }
-      const {token, userId} = await ensureAuthenticatedPartners()
-      this._session = {
-        token,
-        businessPlatformToken: '',
-        accountInfo: {type: 'UnknownAccount'},
-        userId,
-      }
-      const accountInfo = await fetchCurrentAccountInformation(this, userId)
-      this._session = {token, businessPlatformToken: '', accountInfo, userId}
-    }
-    return this._session
+  private constructor(accountInfo?: AccountInfo) {
+    this._accountInfo = accountInfo
   }
 
   async request<T>(
@@ -281,20 +263,22 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async token(): Promise<string> {
-    return (await this.session()).token
+    return getToken('partners')
   }
 
   async unsafeRefreshToken(): Promise<string> {
-    const {token} = await ensureAuthenticatedPartners([], process.env, {noPrompt: true, forceRefresh: true})
-    const session = await this.session()
-    if (token) {
-      session.token = token
-    }
-    return session.token
+    return getToken('partners', {noPrompt: true, forceRefresh: true})
   }
 
-  async accountInfo(): Promise<Session['accountInfo']> {
-    return (await this.session()).accountInfo
+  async accountInfo(): Promise<AccountInfo> {
+    if (!this._accountInfo) {
+      if (isUnitTest()) {
+        throw new Error('PartnersClient.accountInfo() should not be invoked dynamically in a unit test')
+      }
+      const userId = await getUserId()
+      this._accountInfo = await fetchCurrentAccountInformation(this, userId)
+    }
+    return this._accountInfo
   }
 
   async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
@@ -687,8 +671,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     const result: FindOrganizationQuerySchema = await this.request(FindOrganizationQuery, params)
     const org = result.organizations.nodes[0]
     if (!org) {
-      const partnersSession = await this.session()
-      throw new NoOrgError(partnersSession.accountInfo, orgId)
+      throw new NoOrgError(await this.accountInfo(), orgId)
     }
     const parsedOrg = {id: org.id, businessName: org.businessName, source: this.organizationSource}
     const appsWithOrg = org.apps.nodes.map((app) => ({...app, organizationId: org.id}))
@@ -696,7 +679,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   private createUnauthorizedHandler(): UnauthorizedHandler {
-    return createUnauthorizedHandler(this)
+    return createUnauthorizedHandler(this, 'partners')
   }
 }
 

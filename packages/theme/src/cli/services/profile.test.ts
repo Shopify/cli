@@ -1,6 +1,6 @@
 import {profile} from './profile.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
-import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {getToken} from '@shopify/cli-kit/node/session'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -25,7 +25,7 @@ describe('profile', () => {
   const urlPath = '/products/test'
 
   beforeEach(() => {
-    vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue(mockToken)
+    vi.mocked(getToken).mockResolvedValue(mockToken)
     vi.mocked(render).mockResolvedValue(
       new Response(JSON.stringify(mockProfileData), {
         status: 200,
@@ -42,10 +42,10 @@ describe('profile', () => {
 
     // Then
     expect(render).toHaveBeenCalledWith(
-      {
+      expect.objectContaining({
         sessionCookies: undefined,
         storefrontToken: mockToken,
-      },
+      }),
       {
         method: 'GET',
         path: urlPath,

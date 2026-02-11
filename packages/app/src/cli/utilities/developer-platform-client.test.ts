@@ -1,30 +1,31 @@
 import {createUnauthorizedHandler, DeveloperPlatformClient} from './developer-platform-client.js'
-import {describe, expect, test, vi} from 'vitest'
+import {getToken} from '@shopify/cli-kit/node/session'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
+
+vi.mock('@shopify/cli-kit/node/session', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/session')>()
+  return {...original, getToken: vi.fn()}
+})
 
 describe('createUnauthorizedHandler', () => {
   const mockAppManagementToken = 'mock-app-management-token'
   const mockBusinessPlatformToken = 'mock-business-platform-token'
   const createMockClient = () => {
-    let tokenRefreshPromise: Promise<string> | undefined
     return {
-      getCurrentlyRefreshingToken: () => tokenRefreshPromise,
-      setCurrentlyRefreshingToken: (promise: Promise<string>) => {
-        tokenRefreshPromise = promise
-      },
-      clearCurrentlyRefreshingToken: () => {
-        tokenRefreshPromise = undefined
-      },
       unsafeRefreshToken: vi.fn().mockResolvedValue(mockAppManagementToken),
-      session: vi.fn().mockResolvedValue({
-        token: mockAppManagementToken,
-        businessPlatformToken: mockBusinessPlatformToken,
-      }),
     } as unknown as DeveloperPlatformClient
   }
 
-  test('refreshes token on first attempt and returns appManagement token by default', async () => {
+  beforeEach(() => {
+    vi.mocked(getToken).mockImplementation(async (audience) => {
+      if (audience === 'business-platform') return mockBusinessPlatformToken
+      return mockAppManagementToken
+    })
+  })
+
+  test('refreshes token on first attempt and returns token for the given audience', async () => {
     const mockClient = createMockClient()
-    const handler = createUnauthorizedHandler(mockClient)
+    const handler = createUnauthorizedHandler(mockClient, 'app-management')
 
     const result = await handler.handler()
 
@@ -34,7 +35,7 @@ describe('createUnauthorizedHandler', () => {
 
   test('reuses existing token refresh when one is in progress', async () => {
     const mockClient = createMockClient()
-    const handler = createUnauthorizedHandler(mockClient)
+    const handler = createUnauthorizedHandler(mockClient, 'app-management')
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     handler.handler()
@@ -48,7 +49,7 @@ describe('createUnauthorizedHandler', () => {
     const mockClient = createMockClient()
     const error = new Error('Token refresh failed')
     mockClient.unsafeRefreshToken = vi.fn().mockRejectedValue(error)
-    const handler = createUnauthorizedHandler(mockClient)
+    const handler = createUnauthorizedHandler(mockClient, 'app-management')
 
     await expect(handler.handler()).rejects.toThrow(error)
     await expect(handler.handler()).rejects.toThrow(error)
@@ -57,9 +58,9 @@ describe('createUnauthorizedHandler', () => {
     expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(2)
   })
 
-  test('returns businessPlatform token when tokenType is businessPlatform', async () => {
+  test('returns business-platform token when audience is business-platform', async () => {
     const mockClient = createMockClient()
-    const handler = createUnauthorizedHandler(mockClient, 'businessPlatform')
+    const handler = createUnauthorizedHandler(mockClient, 'business-platform')
 
     const result = await handler.handler()
 
@@ -67,9 +68,9 @@ describe('createUnauthorizedHandler', () => {
     expect(mockClient.unsafeRefreshToken).toHaveBeenCalledTimes(1)
   })
 
-  test('returns default token when tokenType is default', async () => {
+  test('returns app-management token when audience is app-management', async () => {
     const mockClient = createMockClient()
-    const handler = createUnauthorizedHandler(mockClient, 'default')
+    const handler = createUnauthorizedHandler(mockClient, 'app-management')
 
     const result = await handler.handler()
 

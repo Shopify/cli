@@ -1,8 +1,8 @@
 import {fetchOrganizations, fetchStore, NoOrgError} from './fetch.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
-  testPartnersServiceSession,
-  testPartnersUserSession,
+  testPartnersServiceAccountInfo,
+  testPartnersUserAccountInfo,
   testDeveloperPlatformClient,
 } from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
@@ -139,7 +139,7 @@ describe('NoOrgError', () => {
   test('renders correctly for user account', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError(testPartnersUserSession.accountInfo, '3')
+    const subject = new NoOrgError(testPartnersUserAccountInfo, '3')
 
     // When
     renderFatalError(subject)
@@ -173,7 +173,7 @@ describe('NoOrgError', () => {
   test('renders correctly for service account', () => {
     // Given
     const mockOutput = mockAndCaptureOutput()
-    const subject = new NoOrgError(testPartnersServiceSession.accountInfo, '3')
+    const subject = new NoOrgError(testPartnersServiceAccountInfo, '3')
 
     // When
     renderFatalError(subject)

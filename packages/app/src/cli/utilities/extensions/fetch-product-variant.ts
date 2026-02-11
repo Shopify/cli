@@ -1,6 +1,6 @@
 import {FindProductVariantQuery, FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
-import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -11,7 +11,8 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
  * @returns variantID if exists
  */
 export async function fetchProductVariant(store: string) {
-  const adminSession = await ensureAuthenticatedAdmin(store)
+  const token = await getToken('admin', {storeFqdn: store})
+  const adminSession: AdminSession = {token, storeFqdn: store}
   const result: FindProductVariantSchema = await adminRequest(FindProductVariantQuery, adminSession)
   const products = result.products.edges
   if (products.length === 0) {

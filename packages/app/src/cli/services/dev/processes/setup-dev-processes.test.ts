@@ -30,7 +30,7 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
-import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {getToken} from '@shopify/cli-kit/node/session'
 import {Config} from '@oclif/core'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
@@ -63,11 +63,7 @@ beforeEach(() => {
   })
 
   // mocked for theme app extensions
-  vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue({
-    storeFqdn: 'store.myshopify.io',
-    token: 'admin-token',
-  })
-  vi.mocked(ensureAuthenticatedStorefront).mockResolvedValue('storefront-token')
+  vi.mocked(getToken).mockResolvedValue('admin-token')
   vi.mocked(getEnvironmentVariables).mockReturnValue({})
   vi.mocked(isStorefrontPasswordProtected).mockResolvedValue(false)
   vi.mocked(fetchTheme).mockResolvedValue({

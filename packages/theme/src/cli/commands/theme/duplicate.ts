@@ -4,7 +4,7 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {duplicate} from '../../services/duplicate.js'
 import {Flags} from '@oclif/core'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 
 export default class Duplicate extends ThemeCommand {
   static summary = 'Duplicates a theme from your theme library.'
@@ -70,7 +70,8 @@ Sample JSON output:
   async run(): Promise<void> {
     const {flags} = await this.parse(Duplicate)
     const store = ensureThemeStore(flags)
-    const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+    const token = await getToken('admin', {storeFqdn: store, password: flags.password})
+    const adminSession: AdminSession = {token, storeFqdn: store}
 
     await duplicate(adminSession, flags.theme, flags)
   }

@@ -4,7 +4,7 @@ import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -47,10 +47,11 @@ export async function setupPreviewThemeAppExtensionsProcess(
   const themeExtensionDirectory = themeExtension.directory
   const themeExtensionPort = options.themeExtensionPort ?? 9293
 
-  const [adminSession, appUrl] = await Promise.all([
-    ensureAuthenticatedAdmin(options.storeFqdn),
+  const [adminToken, appUrl] = await Promise.all([
+    getToken('admin', {storeFqdn: options.storeFqdn}),
     buildAppUrl(remoteApp),
   ])
+  const adminSession: AdminSession = {token: adminToken, storeFqdn: options.storeFqdn}
 
   const storeFqdn = adminSession.storeFqdn
   const storefrontPassword = (await isStorefrontPasswordProtected(adminSession))

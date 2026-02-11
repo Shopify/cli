@@ -2,7 +2,7 @@ import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -62,7 +62,8 @@ export async function metafieldsPull(flags: MetafieldsPullFlags): Promise<void> 
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
   const store = ensureThemeStore({store: flags.store})
-  const adminSession = await ensureAuthenticatedThemes(store, flags.password)
+  const token = await getToken('admin', {storeFqdn: store, password: flags.password})
+  const adminSession: AdminSession = {token, storeFqdn: store}
 
   await executeMetafieldsPull(adminSession, {
     path: flags.path ?? cwd(),

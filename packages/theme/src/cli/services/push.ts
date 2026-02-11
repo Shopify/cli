@@ -9,7 +9,7 @@ import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {ensureListingExists} from '../utilities/theme-listing.js'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
 import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -129,8 +129,12 @@ export async function push(
   const environment = flags.environment?.[0]
 
   // when push is used programmatically, we don't have an admin session, so need to create one
-  const session =
-    adminSession ?? (await ensureAuthenticatedThemes(ensureThemeStore({store: flags.store}), flags.password))
+  let session = adminSession
+  if (!session) {
+    const storeFqdn = ensureThemeStore({store: flags.store})
+    const token = await getToken('admin', {storeFqdn, password: flags.password})
+    session = {token, storeFqdn}
+  }
 
   if (flags.strict) {
     const outputType = flags.json ? 'json' : 'text'

@@ -2,7 +2,7 @@ import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -172,7 +172,7 @@ describe('ThemeCommand', () => {
       storeFqdn: 'test-store.myshopify.com',
     }
     vi.mocked(ensureThemeStore).mockReturnValue('test-store.myshopify.com')
-    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
+    vi.mocked(getToken).mockResolvedValue('test-token')
     vi.mocked(fileExistsSync).mockReturnValue(true)
   })
 
@@ -185,7 +185,7 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(ensureAuthenticatedThemes).toHaveBeenCalledOnce()
+      expect(getToken).toHaveBeenCalledOnce()
       expect(loadEnvironment).not.toHaveBeenCalled()
       expect(renderConcurrent).not.toHaveBeenCalled()
       expect(command.commandCalls).toHaveLength(1)
@@ -213,7 +213,7 @@ describe('ThemeCommand', () => {
       expect(loadEnvironment).toHaveBeenCalledWith('development', 'shopify.theme.toml', {
         from: 'current/working/directory',
       })
-      expect(ensureAuthenticatedThemes).toHaveBeenCalledTimes(1)
+      expect(getToken).toHaveBeenCalledTimes(1)
       expect(renderConcurrent).not.toHaveBeenCalled()
       expect(command.commandCalls).toHaveLength(1)
       expect(command.commandCalls[0]).toMatchObject({
@@ -261,7 +261,7 @@ describe('ThemeCommand', () => {
         session: undefined,
         multiEnvironment: false,
       })
-      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(getToken).not.toHaveBeenCalled()
     })
 
     test('single environment provided with store - does not create session when command does not require auth', async () => {
@@ -276,7 +276,7 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(getToken).not.toHaveBeenCalled()
       expect(command.commandCalls).toHaveLength(1)
       expect(command.commandCalls[0]?.session).toBeUndefined()
     })
@@ -286,7 +286,7 @@ describe('ThemeCommand', () => {
       vi.mocked(loadEnvironment)
         .mockResolvedValueOnce({store: 'store1.myshopify.com', development: true})
         .mockResolvedValueOnce({store: 'store2.myshopify.com', theme: 'staging'})
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
+      vi.mocked(getToken).mockResolvedValue('test-token')
 
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
@@ -332,7 +332,7 @@ describe('ThemeCommand', () => {
       // Given
       const environmentConfig = {store: 'store.myshopify.com'}
       vi.mocked(loadEnvironment).mockResolvedValue(environmentConfig)
-      vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(mockSession)
+      vi.mocked(getToken).mockResolvedValue('test-token')
 
       vi.mocked(renderConcurrent).mockResolvedValue(undefined)
 
@@ -803,7 +803,7 @@ describe('ThemeCommand', () => {
       await command.run()
 
       // Then
-      expect(ensureAuthenticatedThemes).not.toHaveBeenCalled()
+      expect(getToken).not.toHaveBeenCalled()
     })
   })
 })

@@ -9,7 +9,7 @@ import {downloadTheme} from '../utilities/theme-downloader.js'
 import {themeComponent, ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
 import {mkTmpDir, rmdir} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {getToken} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
@@ -27,7 +27,7 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/git')
 
-const adminSession = {token: '', storeFqdn: ''}
+const adminSession = {token: '', storeFqdn: 'example.myshopify.com'}
 const path = '/my-theme'
 const defaultFlags: PullFlags = {
   path,
@@ -50,7 +50,7 @@ describe('pull', () => {
       setThemeStore(themeStore)
       return themeStore
     })
-    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+    vi.mocked(getToken).mockResolvedValue('')
     vi.mocked(mountThemeFileSystem).mockReturnValue(localThemeFileSystem)
     vi.mocked(fetchChecksums).mockResolvedValue([])
     vi.mocked(themeComponent).mockReturnValue([])

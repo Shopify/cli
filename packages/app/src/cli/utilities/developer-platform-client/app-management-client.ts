@@ -143,7 +143,7 @@ import {
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
+import {AccountInfo, getToken, getUserId, type ApiAudience} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
@@ -190,9 +190,9 @@ export interface GatedExtensionTemplate extends ExtensionTemplate {
 export class AppManagementClient implements DeveloperPlatformClient {
   private static instance: AppManagementClient | undefined
 
-  static getInstance(session?: Session): AppManagementClient {
+  static getInstance(accountInfo?: AccountInfo): AppManagementClient {
     if (!AppManagementClient.instance) {
-      AppManagementClient.instance = new AppManagementClient(session)
+      AppManagementClient.instance = new AppManagementClient(accountInfo)
     }
     return AppManagementClient.instance
   }
@@ -209,10 +209,10 @@ export class AppManagementClient implements DeveloperPlatformClient {
   public readonly organizationSource = OrganizationSource.BusinessPlatform
   public readonly bundleFormat = 'br'
   public readonly supportsDashboardManagedExtensions = false
-  private _session: Session | undefined
+  private _accountInfo: AccountInfo | undefined
 
-  private constructor(session?: Session) {
-    this._session = session
+  private constructor(accountInfo?: AccountInfo) {
+    this._accountInfo = accountInfo
   }
 
   async subscribeToAppLogs(
@@ -274,16 +274,28 @@ export class AppManagementClient implements DeveloperPlatformClient {
     }
   }
 
-  async session(): Promise<Session> {
-    if (!this._session) {
+  async token(): Promise<string> {
+    return getToken('app-management')
+  }
+
+  async businessPlatformToken(): Promise<string> {
+    return getToken('business-platform')
+  }
+
+  async unsafeRefreshToken(): Promise<string> {
+    await getToken('business-platform', {noPrompt: true, forceRefresh: true})
+    return getToken('app-management', {noPrompt: true, forceRefresh: true})
+  }
+
+  async accountInfo(): Promise<AccountInfo> {
+    if (!this._accountInfo) {
       if (isUnitTest()) {
-        throw new Error('AppManagementClient.session() should not be invoked dynamically in a unit test')
+        throw new Error('AppManagementClient.accountInfo() should not be invoked dynamically in a unit test')
       }
 
-      const tokenResult = await ensureAuthenticatedAppManagementAndBusinessPlatform()
-      const {appManagementToken, businessPlatformToken, userId} = tokenResult
+      const businessPlatformToken = await this.businessPlatformToken()
+      const userId = await getUserId()
 
-      // This one can't use the shared businessPlatformRequest because the token is not globally available yet.
       const userInfoResult = await businessPlatformRequestDoc({
         query: UserInfo,
         cacheOptions: {
@@ -291,7 +303,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           cacheExtraKey: userId,
         },
         token: businessPlatformToken,
-        unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
+        unauthorizedHandler: this.createUnauthorizedHandler('business-platform'),
       })
 
       if (getPartnersToken() && userInfoResult.currentUserAccount) {
@@ -303,58 +315,22 @@ export class AppManagementClient implements DeveloperPlatformClient {
           throw new BugError('Multiple organizations found for the CLI token')
         }
 
-        this._session = {
-          token: appManagementToken,
-          businessPlatformToken,
-          accountInfo: {
-            type: 'ServiceAccount',
-            orgName: organizations[0]?.name ?? 'Unknown organization',
-          },
-          userId,
+        this._accountInfo = {
+          type: 'ServiceAccount',
+          orgName: organizations[0]?.name ?? 'Unknown organization',
         }
       } else if (userInfoResult.currentUserAccount) {
-        this._session = {
-          token: appManagementToken,
-          businessPlatformToken,
-          accountInfo: {
-            type: 'UserAccount',
-            email: userInfoResult.currentUserAccount.email,
-          },
-          userId,
+        this._accountInfo = {
+          type: 'UserAccount',
+          email: userInfoResult.currentUserAccount.email,
         }
       } else {
-        this._session = {
-          token: appManagementToken,
-          businessPlatformToken,
-          accountInfo: {
-            type: 'UnknownAccount',
-          },
-          userId,
+        this._accountInfo = {
+          type: 'UnknownAccount',
         }
       }
     }
-    return this._session
-  }
-
-  async token(): Promise<string> {
-    return (await this.session()).token
-  }
-
-  async businessPlatformToken(): Promise<string> {
-    return (await this.session()).businessPlatformToken
-  }
-
-  async unsafeRefreshToken(): Promise<string> {
-    const result = await ensureAuthenticatedAppManagementAndBusinessPlatform({noPrompt: true, forceRefresh: true})
-    const session = await this.session()
-    session.token = result.appManagementToken
-    session.businessPlatformToken = result.businessPlatformToken
-
-    return session.token
-  }
-
-  async accountInfo(): Promise<Session['accountInfo']> {
-    return (await this.session()).accountInfo
+    return this._accountInfo
   }
 
   async appFromIdentifiers(apiKey: string): Promise<OrganizationApp | undefined> {
@@ -879,7 +855,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       token: await this.businessPlatformToken(),
       organizationId: String(numberFromGid(orgId)),
       variables,
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('business-platform'),
     })
     const provisionResult = fullResult.organizationUserProvisionShopAccess
     if (!provisionResult.success) {
@@ -1085,7 +1061,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       token: await this.businessPlatformToken(),
       organizationId,
       variables,
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('business-platform'),
     })
     const result: {[flag: (typeof allBetaFlags)[number]]: boolean} = {}
     allBetaFlags.forEach((flag) => {
@@ -1107,7 +1083,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       token: await this.businessPlatformToken(),
       organizationId,
       variables,
-      unauthorizedHandler: this.createUnauthorizedHandler(),
+      unauthorizedHandler: this.createUnauthorizedHandler('business-platform'),
     })
     const result: {[flag: (typeof allExpFlags)[number]]: boolean} = {}
     const enabledFlags = flagsResult.organization?.enabledFlags ?? []
@@ -1143,7 +1119,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return businessPlatformRequestDoc({
       ...options,
       token: await this.businessPlatformToken(),
-      unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
+      unauthorizedHandler: this.createUnauthorizedHandler('business-platform'),
     })
   }
 
@@ -1153,7 +1129,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     return businessPlatformOrganizationsRequestDoc({
       ...options,
       token: await this.businessPlatformToken(),
-      unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
+      unauthorizedHandler: this.createUnauthorizedHandler('business-platform'),
     })
   }
 
@@ -1177,8 +1153,8 @@ export class AppManagementClient implements DeveloperPlatformClient {
     })
   }
 
-  private createUnauthorizedHandler(tokenType: 'default' | 'businessPlatform' = 'default'): UnauthorizedHandler {
-    return createUnauthorizedHandler(this, tokenType)
+  private createUnauthorizedHandler(audience: ApiAudience = 'app-management'): UnauthorizedHandler {
+    return createUnauthorizedHandler(this, audience)
   }
 }
 

@@ -3,7 +3,7 @@ import {CreateAppQuery} from '../../api/graphql/create_app.js'
 import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
-  testPartnersUserSession,
+  testPartnersUserAccountInfo,
   testApp,
   testAppWithLegacyConfig,
   testOrganizationApp,
@@ -11,14 +11,20 @@ import {
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
 import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {getToken} from '@shopify/cli-kit/node/session'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
 vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/node/session', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/session')>()
+  return {...original, getToken: vi.fn()}
+})
 
 beforeEach(() => {
   // Reset the singleton instance before each test
   PartnersClient.resetInstance()
+  vi.mocked(getToken).mockResolvedValue('token')
 })
 
 const LOCAL_APP: AppInterface = testApp({
@@ -81,7 +87,7 @@ const FETCH_ORG_RESPONSE_VALUE = {
 describe('createApp', () => {
   test('sends request to create app with launchable defaults and returns it', async () => {
     // Given
-    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserAccountInfo)
     const localApp = testAppWithLegacyConfig({config: {scopes: 'write_products'}})
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
@@ -115,7 +121,7 @@ describe('createApp', () => {
 
   test('creates an app with non-launchable defaults', async () => {
     // Given
-    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserAccountInfo)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
@@ -147,7 +153,7 @@ describe('createApp', () => {
 
   test('throws error if requests has a user error', async () => {
     // Given
-    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserAccountInfo)
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({
       appCreate: {app: {}, userErrors: [{message: 'some-error'}]},
@@ -164,7 +170,7 @@ describe('createApp', () => {
 describe('fetchApp', async () => {
   test('returns fetched apps', async () => {
     // Given
-    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserAccountInfo)
     vi.mocked(partnersRequest).mockResolvedValue(FETCH_ORG_RESPONSE_VALUE)
     const partnerMarkedOrg = {...ORG1, source: 'Partners'}
 
@@ -181,7 +187,7 @@ describe('fetchApp', async () => {
 
   test('throws if there are no organizations', async () => {
     // Given
-    const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
+    const partnersClient = PartnersClient.getInstance(testPartnersUserAccountInfo)
     vi.mocked(partnersRequest).mockResolvedValue({organizations: {nodes: []}})
 
     // When

@@ -9,7 +9,7 @@ import {mountThemeFileSystem} from '../utilities/theme-fs.js'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
 import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {getToken} from '@shopify/cli-kit/node/session'
 import {
   DEVELOPMENT_THEME_ROLE,
   LIVE_THEME_ROLE,
@@ -44,7 +44,7 @@ const defaultFlags: PullFlags = {
   ignore: [],
   force: false,
 }
-const adminSession = {token: '', storeFqdn: ''}
+const adminSession = {token: '', storeFqdn: 'example.myshopify.com'}
 
 describe('push', () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe('push', () => {
       renderThemeSyncProgress: () => Promise.resolve(),
     })
     vi.mocked(ensureThemeStore).mockReturnValue('example.myshopify.com')
-    vi.mocked(ensureAuthenticatedThemes).mockResolvedValue(adminSession)
+    vi.mocked(getToken).mockResolvedValue('')
     vi.mocked(outputResult).mockReturnValue()
   })
 
@@ -108,9 +108,9 @@ describe('push', () => {
           id: 1,
           name: 'Theme',
           role: 'development',
-          shop: '',
-          editor_url: 'https:///admin/themes/1/editor',
-          preview_url: 'https://?preview_theme_id=1',
+          shop: 'example.myshopify.com',
+          editor_url: 'https://example.myshopify.com/admin/themes/1/editor',
+          preview_url: 'https://example.myshopify.com?preview_theme_id=1',
           warning: "The theme 'Theme' was pushed with errors",
           errors: {
             'assets/theme.css': ['Invalid CSS syntax at line 42'],

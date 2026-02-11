@@ -1,5 +1,5 @@
 import {renderSelectPrompt} from './ui.js'
-import {ensureAuthenticatedUser} from './session.js'
+import {getToken, getUserId} from './session.js'
 import {identityFqdn} from './context/fqdn.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {setCurrentSessionId} from '../../private/node/conf-store.js'
@@ -41,9 +41,10 @@ function buildSessionChoices(sessions: Sessions, fqdn: string): SessionChoice[] 
  * @returns The alias of the authenticated user.
  */
 async function handleNewLogin(): Promise<string> {
-  const result = await ensureAuthenticatedUser({}, {forceNewSession: true})
-  const alias = await sessionStore.getSessionAlias(result.userId)
-  return alias ?? result.userId
+  await getToken('partners', {forceNewSession: true})
+  const userId = await getUserId()
+  const alias = await sessionStore.getSessionAlias(userId)
+  return alias ?? userId
 }
 
 /**

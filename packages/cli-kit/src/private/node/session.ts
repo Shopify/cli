@@ -3,7 +3,6 @@ import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {
   exchangeAccessForApplicationTokens,
-  exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
@@ -46,7 +45,7 @@ async function fetchEmail(businessPlatformToken: string | undefined): Promise<st
 /**
  * A scope supported by the Shopify Admin API.
  */
-export type AdminAPIScope = 'graphql' | 'themes' | 'collaborator'
+type AdminAPIScope = 'graphql' | 'themes' | 'collaborator'
 
 /**
  * It represents the options to authenticate against the Shopify Admin API.
@@ -62,7 +61,7 @@ interface AdminAPIOAuthOptions {
 /**
  * A scope supported by the Partners API.
  */
-export type PartnersAPIScope = 'cli'
+type PartnersAPIScope = 'cli'
 interface PartnersAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: PartnersAPIScope[]
@@ -71,7 +70,7 @@ interface PartnersAPIOAuthOptions {
 /**
  * A scope supported by the Developer Platform API.
  */
-export type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage'
+type AppManagementAPIScope = 'https://api.shopify.com/auth/organization.apps.manage'
 interface AppManagementAPIOauthOptions {
   /** List of scopes to request permissions for. */
   scopes: AppManagementAPIScope[]
@@ -80,13 +79,13 @@ interface AppManagementAPIOauthOptions {
 /**
  * A scope supported by the Storefront Renderer API.
  */
-export type StorefrontRendererScope = 'devtools'
+type StorefrontRendererScope = 'devtools'
 interface StorefrontRendererAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: StorefrontRendererScope[]
 }
 
-export type BusinessPlatformScope = 'destinations'
+type BusinessPlatformScope = 'destinations'
 interface BusinessPlatformAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: BusinessPlatformScope[]
@@ -114,7 +113,7 @@ export interface OAuthSession {
   userId: string
 }
 
-type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'custom_app_token' | 'none'
+export type AuthMethod = 'partners_token' | 'device_auth' | 'theme_access_token' | 'custom_app_token' | 'none'
 
 let userId: undefined | string
 let authMethod: AuthMethod = 'none'
@@ -177,7 +176,7 @@ export function setLastSeenAuthMethod(method: AuthMethod) {
   authMethod = method
 }
 
-export interface EnsureAuthenticatedAdditionalOptions {
+interface EnsureAuthenticatedAdditionalOptions {
   noPrompt?: boolean
   forceRefresh?: boolean
   forceNewSession?: boolean
@@ -264,13 +263,7 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  // Overwrite partners token if using a custom CLI Token
-  const envToken = getPartnersToken()
-  if (envToken && applications.partnersApi) {
-    tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
-  }
-
-  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
+  setLastSeenAuthMethod('device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }

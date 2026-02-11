@@ -7,7 +7,7 @@ import {
   testThemeExtensions,
 } from '../../../models/app/app.test-data.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
@@ -31,7 +31,7 @@ describe('setupPreviewThemeAppExtensionsProcess', () => {
   const mockAdminSession = {storeFqdn: 'test.myshopify.com'} as any as AdminSession
 
   beforeEach(() => {
-    vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(mockAdminSession)
+    vi.mocked(getToken).mockResolvedValue('mock-admin-token')
     vi.mocked(partnersFqdn).mockResolvedValue('partners.shopify.com')
     vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
   })

@@ -7,7 +7,7 @@ import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AdminSession, getToken} from '@shopify/cli-kit/node/session'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {glob} from '@shopify/cli-kit/node/fs'
@@ -109,8 +109,12 @@ export async function pull(
   configureCLIEnvironment({verbose: flags.verbose, noColor: flags.noColor})
 
   // when pull is used programmatically, we don't have an admin session, so need to create one
-  const adminSession =
-    session ?? (await ensureAuthenticatedThemes(ensureThemeStore({store: flags.store}), flags.password))
+  let adminSession = session
+  if (!adminSession) {
+    const storeFqdn = ensureThemeStore({store: flags.store})
+    const token = await getToken('admin', {storeFqdn, password: flags.password})
+    adminSession = {token, storeFqdn}
+  }
 
   const developmentThemeManager = new DevelopmentThemeManager(adminSession)
   const developmentTheme = await (flags.development ? developmentThemeManager.find() : developmentThemeManager.fetch())

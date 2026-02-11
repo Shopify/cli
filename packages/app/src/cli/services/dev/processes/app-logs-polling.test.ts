@@ -34,7 +34,6 @@ describe('app-logs-polling', () => {
     test('returns process metadata', async () => {
       // Given
       const developerPlatformClient = testDeveloperPlatformClient()
-      const session = await developerPlatformClient.session()
       const localApp = testAppWithConfig()
       const appWatcher = new AppEventWatcher(localApp)
 

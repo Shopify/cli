@@ -79,7 +79,7 @@ import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_ap
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
-import {Session} from '@shopify/cli-kit/node/session'
+import {AccountInfo} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -1227,14 +1227,9 @@ export const testRemoteExtensionTemplates: ExtensionTemplate[] = [
   themeAppExtensionTemplate,
 ]
 
-export const testPartnersUserSession: Session = {
-  token: 'token',
-  businessPlatformToken: 'businessPlatformToken',
-  accountInfo: {
-    type: 'UserAccount',
-    email: 'partner@shopify.com',
-  },
-  userId: '1234-5678',
+export const testPartnersUserAccountInfo: AccountInfo = {
+  type: 'UserAccount',
+  email: 'partner@shopify.com',
 }
 
 const emptyAppExtensionRegistrations: AllAppExtensionRegistrationsQuerySchema = {
@@ -1429,9 +1424,8 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
     organizationSource: OrganizationSource.BusinessPlatform,
     bundleFormat: 'zip',
     supportsDashboardManagedExtensions: true,
-    session: () => Promise.resolve(testPartnersUserSession),
-    unsafeRefreshToken: () => Promise.resolve(testPartnersUserSession.token),
-    accountInfo: () => Promise.resolve(testPartnersUserSession.accountInfo),
+    unsafeRefreshToken: () => Promise.resolve('token'),
+    accountInfo: () => Promise.resolve(testPartnersUserAccountInfo),
     appFromIdentifiers: (_apiKey: string) => Promise.resolve(testOrganizationApp()),
     organizations: () => Promise.resolve(organizationsResponse),
     orgFromId: (_organizationId: string) => Promise.resolve(testOrganization()),
@@ -1524,14 +1518,9 @@ export function testDeveloperPlatformClient(stubs: Partial<DeveloperPlatformClie
   return retVal as DeveloperPlatformClient
 }
 
-export const testPartnersServiceSession: Session = {
-  token: 'partnersToken',
-  businessPlatformToken: 'businessPlatformToken',
-  accountInfo: {
-    type: 'ServiceAccount',
-    orgName: 'organization',
-  },
-  userId: '1234-5678',
+export const testPartnersServiceAccountInfo: AccountInfo = {
+  type: 'ServiceAccount',
+  orgName: 'organization',
 }
 
 export async function buildVersionedAppSchema() {
