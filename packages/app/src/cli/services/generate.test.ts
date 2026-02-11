@@ -38,6 +38,9 @@ vi.mock('../prompts/generate/extension.js')
 vi.mock('../services/generate/extension.js')
 vi.mock('../services/context.js')
 vi.mock('./local-storage.js')
+vi.mock('@shopify/cli-kit/node/is-global', () => ({
+  currentProcessIsGlobal: () => false,
+}))
 
 afterEach(() => {
   mockAndCaptureOutput().clear()
