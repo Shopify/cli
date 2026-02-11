@@ -14,10 +14,10 @@ import {joinPath, dirname} from './path.js'
 import {publishMonorailEvent} from './monorail.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import {addPublicMetadata} from './metadata.js'
+import {cliVersion} from './version.js'
 import * as store from '../../private/node/analytics/storage.js'
 import {startAnalytics} from '../../private/node/analytics.js'
 import {hashString} from '../../public/node/crypto.js'
-import {CLI_KIT_VERSION} from '../common/version.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {test, expect, describe, vi, beforeEach, afterEach, MockedFunction} from 'vitest'
 
@@ -85,7 +85,7 @@ describe('event tracking', () => {
       } as any
       await reportAnalyticsEvent({config, exitMode: 'ok'})
       // Then
-      const version = CLI_KIT_VERSION
+      const version = cliVersion()
       const expectedPayloadPublic = {
         command: commandContent.command,
         cmd_all_alias_used: commandContent.alias,
@@ -136,7 +136,7 @@ describe('event tracking', () => {
       await reportAnalyticsEvent({config, errorMessage: 'Permission denied', exitMode: 'unexpected_error'})
 
       // Then
-      const version = CLI_KIT_VERSION
+      const version = cliVersion()
       const expectedPayloadPublic = {
         command: commandContent.command,
         time_start: 1643709599900,

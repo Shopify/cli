@@ -1,7 +1,7 @@
 import {PackageManager, installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {moduleDirectory, normalizePath} from '@shopify/cli-kit/node/path'
 import {findPathUp} from '@shopify/cli-kit/node/fs'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 import {platform} from 'os'
 
 interface UpdateCLIDependenciesOptions {
@@ -20,7 +20,7 @@ export async function updateCLIDependencies({
   if (useGlobalCLI) {
     delete packageJSON.dependencies['@shopify/cli']
   } else {
-    packageJSON.dependencies['@shopify/cli'] = CLI_KIT_VERSION
+    packageJSON.dependencies['@shopify/cli'] = cliVersion()
   }
 
   delete packageJSON.dependencies['@shopify/app']

@@ -8,7 +8,7 @@ import {inTemporaryDirectory} from '../fs.js'
 import {LocalStorage} from '../local-storage.js'
 import {ConfSchema, GraphQLRequestKey} from '../../../private/node/conf-store.js'
 import {nonRandomUUID} from '../crypto.js'
-import {CLI_KIT_VERSION} from '../../common/version.js'
+import {cliVersion} from '../version.js'
 import * as system from '../system.js'
 import {test, vi, describe, expect, beforeEach, beforeAll, afterAll, afterEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
@@ -174,7 +174,7 @@ describe('graphqlRequest', () => {
       }
     `)
 
-    expect(userAgent).toMatch(new RegExp(`Shopify CLI; v=${CLI_KIT_VERSION}`))
+    expect(userAgent).toMatch(new RegExp(`Shopify CLI; v=${cliVersion()}`))
   })
 
   test('Logs the request ids to metadata and requestIdCollection', async () => {
@@ -639,10 +639,10 @@ describe('graphqlRequest with caching', () => {
       await expect(seventhRes).resolves.toEqual({MutationName: {example: 'new-value'}})
       expect(requestCount).toBe(6)
 
-      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${CLI_KIT_VERSION}-extra`
-      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-extra`
-      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-other-extra`
-      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${CLI_KIT_VERSION}-`
+      const firstKey: GraphQLRequestKey = `q-${mutationHash}-${firstVariablesHash}-${cliVersion()}-extra`
+      const withOtherVariablesKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${cliVersion()}-extra`
+      const withOtherExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${cliVersion()}-other-extra`
+      const noExtraKey: GraphQLRequestKey = `q-${mutationHash}-${otherVariablesHash}-${cliVersion()}-`
 
       expect(cacheStore.get('cache')![firstKey]).toEqual({
         value: '{"MutationName":{"example":"variables"}}',

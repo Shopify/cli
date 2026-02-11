@@ -10,11 +10,11 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
+import {cliVersion} from './version.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
 import {outputDebug, outputInfo} from '../../public/node/output.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
-import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {settings, Interfaces} from '@oclif/core'
@@ -294,7 +294,7 @@ function initializeBugsnag() {
     appType: 'node',
     apiKey: bugsnagApiKey,
     logger: null,
-    appVersion: CLI_KIT_VERSION,
+    appVersion: cliVersion(),
     autoTrackSessions: false,
     autoDetectErrors: false,
     enabledReleaseStages: ['production'],

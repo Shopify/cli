@@ -1,8 +1,7 @@
 import {jsonOutputEnabled} from './environment.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {renderInfo} from './ui.js'
-import {globalCLIVersion, localCLIVersion} from './version.js'
-import {CLI_KIT_VERSION} from '../common/version.js'
+import {cliVersion, globalCLIVersion, localCLIVersion} from './version.js'
 import {runAtMinimumInterval} from '../../private/node/conf-store.js'
 
 /**
@@ -24,12 +23,12 @@ export async function showMultipleCLIWarningIfNeeded(
 
     // If running globally, use the current CLI version, otherwise fetch the global CLI version
     // Exit early if we can't get the global version
-    const globalVersion = isGlobal ? CLI_KIT_VERSION : await globalCLIVersion()
+    const globalVersion = isGlobal ? cliVersion() : await globalCLIVersion()
     if (!globalVersion) return
 
     // If running globally, fetch the local version from npm list, otherwise use current CLI version
     // Exit early if we can't get the local version
-    const localVersion = isGlobal ? await localCLIVersion(directory) : CLI_KIT_VERSION
+    const localVersion = isGlobal ? await localCLIVersion(directory) : cliVersion()
     if (!localVersion) return
 
     const currentInstallation = isGlobal ? 'global installation' : 'local dependency'

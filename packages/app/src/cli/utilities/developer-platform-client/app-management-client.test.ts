@@ -33,7 +33,7 @@ import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {
   businessPlatformOrganizationsRequest,
@@ -69,7 +69,7 @@ const templateDisallowedByMinimumCliVersion: GatedExtensionTemplate = {
   ...testRemoteExtensionTemplates[2]!,
   organizationBetaFlags: ['allowedFlag'],
   // minimum CLI version is higher than the current CLI version
-  minimumCliVersion: `1${CLI_KIT_VERSION}`,
+  minimumCliVersion: `1${cliVersion()}`,
 }
 const templateDisallowedByDeprecatedFromCliVersion: GatedExtensionTemplate = {
   ...testRemoteExtensionTemplates[2]!,

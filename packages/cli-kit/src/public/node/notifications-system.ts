@@ -8,7 +8,7 @@ import {isTruthy} from './context/utilities.js'
 import {exec} from './system.js'
 import {jsonOutputEnabled} from './environment.js'
 import {fetch} from './http.js'
-import {CLI_KIT_VERSION} from '../common/version.js'
+import {cliVersion} from './version.js'
 import {NotificationKey, NotificationsKey, cacheRetrieve, cacheStore} from '../../private/node/conf-store.js'
 
 const URL = 'https://cdn.shopify.com/static/cli/notifications.json'
@@ -211,7 +211,7 @@ export function filterNotifications(
   commandId: string,
   currentSurfaces?: string[],
   today: Date = new Date(new Date().setUTCHours(0, 0, 0, 0)),
-  currentVersion: string = CLI_KIT_VERSION,
+  currentVersion: string = cliVersion(),
 ): Notification[] {
   return notifications
     .filter((notification) => filterByVersion(notification, currentVersion))

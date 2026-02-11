@@ -7,7 +7,7 @@ import {platform} from 'os'
 
 vi.mock('os')
 vi.mock('@shopify/cli-kit/node/node-package-manager')
-vi.mock('@shopify/cli-kit/common/version', () => ({CLI_KIT_VERSION: '1.2.3'}))
+vi.mock('@shopify/cli-kit/node/version', () => ({cliVersion: () => '1.2.3'}))
 
 describe('updateCLIDependencies', () => {
   test('updates @shopify/cli and deletes @shopify/app if not using global CLI', async () => {

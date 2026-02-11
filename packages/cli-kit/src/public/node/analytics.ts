@@ -2,6 +2,7 @@ import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
+import {cliVersion} from './version.js'
 import {
   recordTiming as storageRecordTiming,
   recordError as storageRecordError,
@@ -12,7 +13,6 @@ import {
 } from '../../private/node/analytics/storage.js'
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 import {getEnvironmentData, getSensitiveEnvironmentData} from '../../private/node/analytics.js'
-import {CLI_KIT_VERSION} from '../common/version.js'
 import {recordMetrics} from '../../private/node/otel-metrics.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {reportingRateLimit} from '../../private/node/constants.js'
@@ -152,7 +152,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
       time_end: currentTime,
       total_time: wallClockElapsed,
       success: exitMode === 'ok' && errorMessage === undefined,
-      cli_version: CLI_KIT_VERSION,
+      cli_version: cliVersion(),
       ruby_version: '',
       node_version: process.version.replace('v', ''),
       is_employee: await isShopify(),

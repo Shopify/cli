@@ -2,8 +2,7 @@ import {clearCache} from '../cli.js'
 import {currentProcessIsGlobal} from '../is-global.js'
 import {showMultipleCLIWarningIfNeeded} from '../multiple-installation-warning.js'
 import {mockAndCaptureOutput} from '../testing/output.js'
-import {globalCLIVersion, localCLIVersion} from '../version.js'
-import {CLI_KIT_VERSION} from '../../common/version.js'
+import {cliVersion, globalCLIVersion, localCLIVersion} from '../version.js'
 import {describe, beforeEach, test, vi, expect} from 'vitest'
 
 vi.mock('../version.js')
@@ -12,12 +11,13 @@ vi.mock('../is-global.js')
 describe('showMultipleCLIWarningIfNeeded', () => {
   beforeEach(() => {
     clearCache()
+    vi.mocked(cliVersion).mockReturnValue('3.80.0')
   })
 
   test('shows warning if using global CLI but app has local dependency', async () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(globalCLIVersion).mockResolvedValue(cliVersion())
     vi.mocked(localCLIVersion).mockResolvedValue('3.70.0')
     const mockOutput = mockAndCaptureOutput()
 
@@ -30,7 +30,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
         │                                                                              │
         │  Two Shopify CLI installations found – using global installation             │
         │                                                                              │
-        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were       │
+        │  A global installation (v${cliVersion()}) and a local dependency (v3.70.0) were       │
         │  detected.                                                                   │
         │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
         │  your package.json, unless you want to use different versions across         │
@@ -50,11 +50,11 @@ describe('showMultipleCLIWarningIfNeeded', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
     vi.mocked(globalCLIVersion).mockResolvedValue('3.70.0')
-    vi.mocked(localCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(localCLIVersion).mockResolvedValue(cliVersion())
     const mockOutput = mockAndCaptureOutput()
 
     // When
-    await showMultipleCLIWarningIfNeeded('path', {'@shopify/cli': CLI_KIT_VERSION})
+    await showMultipleCLIWarningIfNeeded('path', {'@shopify/cli': cliVersion()})
 
     // Then
     expect(mockOutput.info()).toMatchInlineSnapshot(`
@@ -62,7 +62,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
         │                                                                              │
         │  Two Shopify CLI installations found – using local dependency                │
         │                                                                              │
-        │  A global installation (v3.70.0) and a local dependency (v${CLI_KIT_VERSION}) were       │
+        │  A global installation (v3.70.0) and a local dependency (v${cliVersion()}) were       │
         │  detected.                                                                   │
         │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
         │  your package.json, unless you want to use different versions across         │
@@ -81,7 +81,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
   test('does not show two consecutive warnings', async () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(globalCLIVersion).mockResolvedValue(cliVersion())
     vi.mocked(localCLIVersion).mockResolvedValue('3.70.0')
     const mockOutput = mockAndCaptureOutput()
 
@@ -95,7 +95,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
         │                                                                              │
         │  Two Shopify CLI installations found – using global installation             │
         │                                                                              │
-        │  A global installation (v${CLI_KIT_VERSION}) and a local dependency (v3.70.0) were       │
+        │  A global installation (v${cliVersion()}) and a local dependency (v3.70.0) were       │
         │  detected.                                                                   │
         │  We recommend removing the @shopify/cli and @shopify/app dependencies from   │
         │  your package.json, unless you want to use different versions across         │
@@ -113,7 +113,7 @@ describe('showMultipleCLIWarningIfNeeded', () => {
   test('does not show a warning if there is no local dependency', async () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-    vi.mocked(globalCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(globalCLIVersion).mockResolvedValue(cliVersion())
     vi.mocked(localCLIVersion).mockResolvedValue(undefined)
     const mockOutput = mockAndCaptureOutput()
 
@@ -129,11 +129,11 @@ describe('showMultipleCLIWarningIfNeeded', () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
     vi.mocked(globalCLIVersion).mockResolvedValue(undefined)
-    vi.mocked(localCLIVersion).mockResolvedValue(CLI_KIT_VERSION)
+    vi.mocked(localCLIVersion).mockResolvedValue(cliVersion())
     const mockOutput = mockAndCaptureOutput()
 
     // When
-    await showMultipleCLIWarningIfNeeded('path', {'@shopify/cli': CLI_KIT_VERSION})
+    await showMultipleCLIWarningIfNeeded('path', {'@shopify/cli': cliVersion()})
 
     // Then
     expect(mockOutput.warn()).toBe('')

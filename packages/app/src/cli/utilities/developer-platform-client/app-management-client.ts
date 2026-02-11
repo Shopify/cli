@@ -161,7 +161,7 @@ import {
   businessPlatformRequestDoc,
   BusinessPlatformRequestOptions,
 } from '@shopify/cli-kit/node/api/business-platform'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion, isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -169,7 +169,6 @@ import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
 import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
 import {Variables} from 'graphql-request'
 import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
@@ -1318,7 +1317,7 @@ export async function allowedTemplates(
   templates: GatedExtensionTemplate[],
   betaFlagsFetcher: (betaFlags: string[]) => Promise<{[key: string]: boolean}>,
   expFlagsFetcher: (expFlags: string[]) => Promise<{[key: string]: boolean}>,
-  version: string = CLI_KIT_VERSION,
+  version: string = cliVersion(),
 ): Promise<GatedExtensionTemplate[]> {
   // Extract both types of flags from templates
   const allBetaFlags = Array.from(new Set(templates.map((ext) => ext.organizationBetaFlags ?? []).flat()))

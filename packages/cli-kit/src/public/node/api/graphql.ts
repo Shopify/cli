@@ -13,7 +13,7 @@ import {
 } from '../../../private/node/conf-store.js'
 import {LocalStorage} from '../local-storage.js'
 import {abortSignalFromRequestBehaviour, RequestBehaviour, requestMode, RequestModeInput} from '../http.js'
-import {CLI_KIT_VERSION} from '../../common/version.js'
+import {cliVersion} from '../version.js'
 import {sleep} from '../system.js'
 import {outputContent, outputDebug} from '../output.js'
 import {
@@ -255,7 +255,7 @@ async function performGraphQLRequest<TResult>(options: PerformGraphQLRequestOpti
   // The cache key is a combination of the hashed query and variables, with an optional extra key provided by the user.
   const queryHash = nonRandomUUID(queryAsString)
   const variablesHash = nonRandomUUID(JSON.stringify(variables ?? {}))
-  const cacheKey: GraphQLRequestKey = `q-${queryHash}-${variablesHash}-${CLI_KIT_VERSION}-${cacheExtraKey ?? ''}`
+  const cacheKey: GraphQLRequestKey = `q-${queryHash}-${variablesHash}-${cliVersion()}-${cacheExtraKey ?? ''}`
 
   const result = await cacheRetrieveOrRepopulate(
     cacheKey,

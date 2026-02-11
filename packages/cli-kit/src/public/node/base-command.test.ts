@@ -572,13 +572,15 @@ describe('removeDuplicatedPlugins', () => {
         this.config.plugins = new Map(initialPlugins)
       }
 
-      const result = await super.init()
-
-      // Capture the plugins after init (which calls removeDuplicatedPlugins)
-      // eslint-disable-next-line require-atomic-updates
-      capturedPlugins = new Map(this.config.plugins)
-
-      return result
+      try {
+        const result = await super.init()
+        return result
+      } finally {
+        // Capture the plugins after init (which calls removeDuplicatedPlugins).
+        // Use finally to ensure capture even if super.init() throws.
+        // eslint-disable-next-line require-atomic-updates
+        capturedPlugins = new Map(this.config.plugins)
+      }
     }
   }
 
@@ -591,9 +593,10 @@ describe('removeDuplicatedPlugins', () => {
   test('removes @shopify/app plugin when present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given - set up plugins to be injected
-      const mockPlugin1 = {name: '@shopify/app', version: '1.0.0'} as any
-      const mockPlugin2 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
-      const mockPlugin3 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+      // root is required because registerCleanBugsnagErrorsFromWithinPlugins calls realpath(plugin.root)
+      const mockPlugin1 = {name: '@shopify/app', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin2 = {name: '@shopify/plugin-ngrok', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin3 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0', root: tmpDir} as any
 
       capturedPlugins = new Map([
         ['@shopify/app', mockPlugin1],
@@ -620,9 +623,9 @@ describe('removeDuplicatedPlugins', () => {
   test('removes @shopify/plugin-cloudflare plugin when present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given - set up plugins to be injected
-      const mockPlugin1 = {name: '@shopify/plugin-cloudflare', version: '1.0.0'} as any
-      const mockPlugin2 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
-      const mockPlugin3 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+      const mockPlugin1 = {name: '@shopify/plugin-cloudflare', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin2 = {name: '@shopify/plugin-ngrok', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin3 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0', root: tmpDir} as any
 
       capturedPlugins = new Map([
         ['@shopify/plugin-cloudflare', mockPlugin1],
@@ -649,10 +652,10 @@ describe('removeDuplicatedPlugins', () => {
   test('removes both @shopify/app and @shopify/plugin-cloudflare plugins when present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given - set up plugins to be injected
-      const mockPlugin1 = {name: '@shopify/app', version: '1.0.0'} as any
-      const mockPlugin2 = {name: '@shopify/plugin-cloudflare', version: '1.0.0'} as any
-      const mockPlugin3 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
-      const mockPlugin4 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
+      const mockPlugin1 = {name: '@shopify/app', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin2 = {name: '@shopify/plugin-cloudflare', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin3 = {name: '@shopify/plugin-ngrok', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin4 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0', root: tmpDir} as any
 
       capturedPlugins = new Map([
         ['@shopify/app', mockPlugin1],
@@ -681,9 +684,9 @@ describe('removeDuplicatedPlugins', () => {
   test('does not remove any plugins when bundled plugins are not present', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given - set up plugins (none are bundled plugins)
-      const mockPlugin1 = {name: '@shopify/plugin-ngrok', version: '1.0.0'} as any
-      const mockPlugin2 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0'} as any
-      const mockPlugin3 = {name: 'some-other-plugin', version: '1.0.0'} as any
+      const mockPlugin1 = {name: '@shopify/plugin-ngrok', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin2 = {name: '@shopify/plugin-did-you-mean', version: '1.0.0', root: tmpDir} as any
+      const mockPlugin3 = {name: 'some-other-plugin', version: '1.0.0', root: tmpDir} as any
 
       capturedPlugins = new Map([
         ['@shopify/plugin-ngrok', mockPlugin1],
@@ -728,13 +731,13 @@ describe('removeDuplicatedPlugins', () => {
         name: '@shopify/app',
         version: '1.0.0',
         type: 'core',
-        root: '/path/to/app',
+        root: tmpDir,
       } as any
       const mockPluginTheme = {
         name: '@shopify/plugin-ngrok',
         version: '2.0.0',
         type: 'user',
-        root: '/path/to/theme',
+        root: tmpDir,
       } as any
 
       capturedPlugins = new Map([
@@ -752,7 +755,7 @@ describe('removeDuplicatedPlugins', () => {
       expect(remainingPlugin).toEqual(mockPluginTheme)
       expect(remainingPlugin.version).toBe('2.0.0')
       expect(remainingPlugin.type).toBe('user')
-      expect(remainingPlugin.root).toBe('/path/to/theme')
+      expect(remainingPlugin.root).toBe(tmpDir)
 
       // Verify warning was shown
       expect(outputMock.output()).toMatch(/Unsupported plugins detected.*@shopify\/app/s)

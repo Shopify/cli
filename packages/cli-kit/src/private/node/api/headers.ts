@@ -1,4 +1,4 @@
-import {CLI_KIT_VERSION} from '../../../public/common/version.js'
+import {cliVersion} from '../../../public/node/version.js'
 import {firstPartyDev} from '../../../public/node/context/local.js'
 import {AbortError} from '../../../public/node/error.js'
 import https from 'https'
@@ -48,7 +48,7 @@ export function sanitizedHeadersOutput(headers: {[key: string]: string}): string
 }
 
 export function buildHeaders(token?: string): {[key: string]: string} {
-  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+  const userAgent = `Shopify CLI; v=${cliVersion()}`
 
   const headers: {[header: string]: string} = {
     'User-Agent': userAgent,
