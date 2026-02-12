@@ -25,6 +25,7 @@ export class TerminalSession {
   private readonly permissionOptions: PermissionOptions
   private readonly stdinContent: string | undefined
   private readonly workingDirectory: string | undefined
+  private isFirstPrompt = true
 
   constructor(options: TerminalSessionOptions) {
     this.client = new SidekickClient({
@@ -86,36 +87,46 @@ export class TerminalSession {
   }
 
   private buildPrompt(prompt: string): string {
-    const cliContextLines = [
-      '<cli_context>',
-      'You are running inside the Shopify CLI terminal, not the admin web UI.',
-      'The user is a developer interacting with you from their local machine.',
-      'You have access to execute_shell_command to run commands on their system.',
-      'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
-      '</cli_context>',
-    ]
+    const parts: string[] = []
 
-    if (this.workingDirectory) {
-      cliContextLines.splice(
-        3,
-        0,
-        `The working directory is ${this.workingDirectory}. Use it as the default path for file operations unless the user specifies otherwise.`,
-      )
+    if (this.isFirstPrompt) {
+      const introLines = [
+        '<cli_context>',
+        'You are running inside the Shopify CLI terminal, not the admin web UI.',
+        'The user is a developer interacting with you from their local machine.',
+        'You have access to execute_shell_command to run commands on their system.',
+        'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
+      ]
+
+      if (this.workingDirectory) {
+        introLines.push(
+          `The working directory is ${this.workingDirectory}. Use it as the default path for file operations unless the user specifies otherwise.`,
+        )
+      }
+
+      const toolsXML = this.mcpManager.formatToolsAsXML()
+      if (toolsXML) {
+        introLines.push(
+          '',
+          toolsXML,
+          '',
+          'You can call these tools using execute_mcp_tool with tool_name set to "serverName_toolName" (e.g., "filesystem_read_file") and the appropriate arguments. Prefer these tools over execute_shell_command for file operations.',
+        )
+      }
+
+      introLines.push('</cli_context>')
+      parts.push(introLines.join('\n'))
+
+      this.isFirstPrompt = false
     }
 
-    const cliContext = cliContextLines.join('\n')
+    parts.push(prompt)
 
-    let fullPrompt = `${cliContext}\n\n${prompt}`
     if (this.stdinContent) {
-      fullPrompt = `${fullPrompt}\n\n<user_provided_data>\n${this.stdinContent}\n</user_provided_data>`
+      parts.push(`<user_provided_data>\n${this.stdinContent}\n</user_provided_data>`)
     }
 
-    const toolsXML = this.mcpManager.formatToolsAsXML()
-    if (toolsXML) {
-      fullPrompt = `${fullPrompt}\n\n${toolsXML}\n\nYou can call these tools using execute_mcp_tool with tool_name set to "serverName_toolName" (e.g., "filesystem_read_file") and the appropriate arguments. Prefer these tools over execute_shell_command for file operations.`
-    }
-
-    return fullPrompt
+    return parts.join('\n\n')
   }
 
   private async sendAndProcess(prompt: string): Promise<void> {
