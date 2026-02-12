@@ -1,4 +1,4 @@
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
 
 export async function searchService(query?: string) {
   const searchParams = new URLSearchParams()

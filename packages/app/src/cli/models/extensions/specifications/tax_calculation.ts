@@ -1,6 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const CartLinePropertySchema = zod.object({
   key: zod.string(),

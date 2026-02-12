@@ -142,37 +142,37 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {getPartnersToken} from '@shopify/cli-kit/node/environment'
-import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/node/http'
+import {getPartnersToken} from '@shopify/cli-kit/shared/node/environment'
+import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/identity/session'
+import {isUnitTest} from '@shopify/cli-kit/shared/node/context/local'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
+import {fetch, shopifyFetch, Response} from '@shopify/cli-kit/shared/node/http'
 import {
   appManagementRequestDoc,
   appManagementAppLogsUrl,
   appManagementHeaders,
   AppManagementRequestOptions,
-} from '@shopify/cli-kit/node/api/app-management'
-import {appDevRequestDoc, AppDevRequestOptions} from '@shopify/cli-kit/node/api/app-dev'
+} from '@shopify/cli-kit/app-management/api'
+import {appDevRequestDoc, AppDevRequestOptions} from '@shopify/cli-kit/app-dev/api'
 import {
   businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
   BusinessPlatformOrganizationsRequestOptions,
   businessPlatformRequestDoc,
   BusinessPlatformRequestOptions,
-} from '@shopify/cli-kit/node/api/business-platform'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {TokenItem} from '@shopify/cli-kit/node/ui'
-import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/node/api/functions'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {isPreReleaseVersion} from '@shopify/cli-kit/node/version'
-import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
+} from '@shopify/cli-kit/business-platform/api'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/shared/common/version'
+import {versionSatisfies} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {developerDashboardFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
+import {TokenItem} from '@shopify/cli-kit/shared/node/ui'
+import {functionsRequestDoc, FunctionsRequestOptions} from '@shopify/cli-kit/functions/api'
+import {fileExists, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {JsonMapType} from '@shopify/cli-kit/shared/node/toml'
+import {isPreReleaseVersion} from '@shopify/cli-kit/shared/node/version'
+import {UnauthorizedHandler} from '@shopify/cli-kit/shared/node/api/graphql'
 import {Variables} from 'graphql-request'
-import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/node/api/webhooks'
+import {webhooksRequestDoc, WebhooksRequestOptions} from '@shopify/cli-kit/webhooks/api'
 
 const TEMPLATE_JSON_URL = 'https://cdn.shopify.com/static/cli/extensions/templates.json'
 

@@ -5,14 +5,14 @@ import {
   validateMutationStore,
 } from './graphql/common.js'
 import {OrganizationApp, Organization, OrganizationStore} from '../models/organization.js'
-import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/shared/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
 import {ClientError} from 'graphql-request'
 import {parse} from 'graphql'
-import {writeFile, readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {writeFile, readFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
 
 interface ExecuteOperationInput {
   organization: Organization

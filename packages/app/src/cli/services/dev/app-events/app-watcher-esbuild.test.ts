@@ -3,8 +3,8 @@ import {AppEvent, EventType} from './app-event-watcher.js'
 import {testAppLinked, testUIExtension} from '../../../models/app/app.test-data.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {describe, expect, test, vi} from 'vitest'
-import * as fs from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import * as fs from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('@luckycatfactory/esbuild-graphql-loader', () => ({
   default: {

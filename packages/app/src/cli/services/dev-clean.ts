@@ -1,7 +1,7 @@
 import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 interface DevCleanOptions {
   appContextResult: LoadedAppContextOutput

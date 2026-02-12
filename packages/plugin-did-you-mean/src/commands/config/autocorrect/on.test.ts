@@ -2,7 +2,7 @@ import AutocorrectOn from './on.js'
 import {setAutocorrect} from '../../../services/conf.js'
 import {Config} from '@oclif/core'
 import {describe, expect, vi, test} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 vi.mock('../../../services/conf.js')
 

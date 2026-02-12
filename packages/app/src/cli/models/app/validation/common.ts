@@ -1,4 +1,4 @@
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export function validateUrl(zodType: zod.ZodString, {httpsOnly = false, message = 'Invalid URL'} = {}) {
   return zodType

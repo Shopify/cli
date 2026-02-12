@@ -1,7 +1,7 @@
 import {AppHiddenConfig} from '../../models/app/app.js'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
-import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {deepMergeObjects} from '@shopify/cli-kit/shared/common/object'
+import {readFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 import {updateTomlValues} from '@shopify/toml-patch'
 
 export interface PatchTomlOptions {

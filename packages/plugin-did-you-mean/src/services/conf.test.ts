@@ -1,7 +1,7 @@
 import {ConfigSchema, isAutocorrectEnabled, setAutocorrect} from './conf.js'
 import {describe, expect, test} from 'vitest'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
+import {inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
 
 describe('did-you-mean config', async () => {
   test('isAutocorrectEnabled returns false if no cached value exists', async () => {

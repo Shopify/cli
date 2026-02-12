@@ -1,4 +1,4 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export function validateMessage(message: string | undefined) {
   if (typeof message === 'undefined') return

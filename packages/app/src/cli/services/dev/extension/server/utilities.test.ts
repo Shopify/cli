@@ -4,8 +4,8 @@ import {ExtensionInstance} from '../../../../models/extensions/extension-instanc
 import {ExtensionsPayloadStoreOptions} from '../payload/store.js'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 describe('getRedirectURL()', () => {
   test('returns a URL with a URL param', async () => {

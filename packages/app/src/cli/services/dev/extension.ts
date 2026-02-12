@@ -9,9 +9,9 @@ import {
 import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {DotEnvFile} from '@shopify/cli-kit/shared/node/dot-env'
 import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {

@@ -1,5 +1,5 @@
 import WebhookTrigger from '../app/webhook/trigger.js'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 export default class WebhookTriggerDeprecated extends WebhookTrigger {
   static hidden = true

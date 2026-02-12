@@ -1,6 +1,6 @@
-import {renderConcurrent, renderSingleTask, renderTasks} from '@shopify/cli-kit/node/ui'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
+import {renderConcurrent, renderSingleTask, renderTasks} from '@shopify/cli-kit/shared/node/ui'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
+import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/shared/node/output'
 import {Writable} from 'stream'
 
 export async function asyncTasks() {

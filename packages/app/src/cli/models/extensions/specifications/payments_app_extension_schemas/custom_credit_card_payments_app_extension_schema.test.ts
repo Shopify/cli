@@ -6,7 +6,7 @@ import {
 } from './custom_credit_card_payments_app_extension_schema.js'
 import {buildCheckoutPaymentMethodFields} from './payments_app_extension_test_helper.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const config: CustomCreditCardPaymentsAppExtensionConfigType = {
   name: 'Custom CreditCard extension',

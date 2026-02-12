@@ -1,9 +1,9 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
-import {themeUpdate} from '@shopify/cli-kit/node/themes/api'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {promptThemeName} from '@shopify/cli-kit/node/themes/utils'
+import {themeUpdate} from '@shopify/cli-kit/themes/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {promptThemeName} from '@shopify/cli-kit/themes/utils'
 
 export interface RenameOptions {
   name?: string

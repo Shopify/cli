@@ -1,5 +1,5 @@
-import {findPathUp} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {findPathUp} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
 import {fileURLToPath} from 'node:url'
 
 export async function resolveAssetPath(...subpaths: string[]) {

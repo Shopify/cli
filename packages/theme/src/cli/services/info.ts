@@ -1,12 +1,12 @@
 import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
-import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
+import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/themes/urls'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/shared/node/ui'
+import {recordEvent} from '@shopify/cli-kit/shared/node/analytics'
 
 interface ThemeInfo {
   theme: {

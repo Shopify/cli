@@ -1,11 +1,11 @@
 import {buildBaseStorefrontUrl} from './storefront-renderer.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {DevServerSession} from './types.js'
-import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
+import {fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {AdminSession, ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {recordError, recordEvent} from '@shopify/cli-kit/shared/node/analytics'
 
 // 30 minutes in miliseconds.
 const SESSION_TIMEOUT_IN_MS = 30 * 60 * 1000

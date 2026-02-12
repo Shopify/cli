@@ -79,9 +79,9 @@ import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_ap
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
-import {Session} from '@shopify/cli-kit/node/session'
+import {Session} from '@shopify/cli-kit/identity/session'
 import {vi} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',

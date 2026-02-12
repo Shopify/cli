@@ -1,15 +1,15 @@
 import {open} from './open.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {Theme} from '@shopify/cli-kit/themes/types'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
-import {openURL} from '@shopify/cli-kit/node/system'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/system', () => {
+vi.mock('@shopify/cli-kit/shared/node/system', () => {
   return {openURL: vi.fn()}
 })
-vi.mock('@shopify/cli-kit/node/ui', () => {
+vi.mock('@shopify/cli-kit/shared/node/ui', () => {
   return {renderInfo: vi.fn()}
 })
 vi.mock('../utilities/development-theme-manager.js')

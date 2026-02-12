@@ -10,12 +10,12 @@ import {OrganizationApp, Organization, OrganizationSource} from '../../models/or
 import {ListBulkOperationsQuery} from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
 import {resolveApiVersion} from '../graphql/common.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/identity/session'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/admin/api')
 vi.mock('../graphql/common.js', async () => {
   const actual = await vi.importActual('../graphql/common.js')
   return {

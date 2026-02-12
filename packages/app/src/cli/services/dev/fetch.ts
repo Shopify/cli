@@ -7,9 +7,9 @@ import {
   allDeveloperPlatformClients,
   selectDeveloperPlatformClient,
 } from '../../utilities/developer-platform-client.js'
-import {AccountInfo, isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AccountInfo, isServiceAccount, isUserAccount} from '@shopify/cli-kit/identity/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 export class NoOrgError extends AbortError {
   constructor(partnersAccount: AccountInfo, organizationId?: string) {

@@ -5,9 +5,9 @@ import AutocorrectStatus from './commands/config/autocorrect/status.js'
 import AutocorrectOn from './commands/config/autocorrect/on.js'
 import {Hook} from '@oclif/core'
 import {bigram} from 'n-gram'
-import {renderConfirmationPrompt, renderFatalError, renderInfo} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {renderConfirmationPrompt, renderFatalError, renderInfo} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 function sanitizeCmd(cmd: string): string {
   return cmd.replace(/:/g, ' ')

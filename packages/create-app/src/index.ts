@@ -1,5 +1,5 @@
 import {commands} from '@shopify/app'
-import {runCreateCLI} from '@shopify/cli-kit/node/cli'
+import {runCreateCLI} from '@shopify/cli-kit/shared/node/cli'
 
 async function runCreateAppCLI(development: boolean) {
   await runCreateCLI({

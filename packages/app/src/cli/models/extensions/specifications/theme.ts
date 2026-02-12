@@ -2,10 +2,10 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {themeExtensionFiles} from '../../../utilities/extensions/theme.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {fileSize} from '@shopify/cli-kit/node/fs'
-import {dirname, relativePath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {fileSize} from '@shopify/cli-kit/shared/node/fs'
+import {dirname, relativePath} from '@shopify/cli-kit/shared/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 const themeSpec = createExtensionSpecification({
   identifier: 'theme',

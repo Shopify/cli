@@ -5,7 +5,7 @@ import {
   CARD_PRESENT_TARGET,
 } from './card_present_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const config: CardPresentPaymentsAppExtensionConfigType = {
   name: 'test extension',

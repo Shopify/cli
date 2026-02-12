@@ -7,13 +7,13 @@ import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/th
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {downloadTheme} from '../utilities/theme-downloader.js'
 import {themeComponent, ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
-import {mkTmpDir, rmdir} from '@shopify/cli-kit/node/fs'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
+import {mkTmpDir, rmdir} from '@shopify/cli-kit/shared/node/fs'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {fetchChecksums} from '@shopify/cli-kit/themes/api'
+import {insideGitDirectory, isClean} from '@shopify/cli-kit/shared/node/git'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
 import {fileURLToPath} from 'node:url'
 
 vi.mock('../utilities/theme-selector.js')
@@ -21,11 +21,11 @@ vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-fs.js')
 vi.mock('../utilities/theme-downloader.js')
 vi.mock('../utilities/theme-ui.js')
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/git')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/git')
 
 const adminSession = {token: '', storeFqdn: ''}
 const path = '/my-theme'

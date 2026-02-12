@@ -8,13 +8,13 @@ import {pollAppLogs} from '../../app-logs/dev/poll-app-logs.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import * as appLogsUtils from '../../app-logs/utils.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {mkdir} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
+import {mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 import {describe, expect, vi, Mock, beforeEach, test} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('../../app-logs/dev/poll-app-logs.js')
 
 const SHOP_IDS = [1, 2]

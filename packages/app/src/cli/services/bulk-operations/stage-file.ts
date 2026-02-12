@@ -3,12 +3,12 @@ import {
   StagedUploadsCreateMutation,
   StagedUploadsCreateMutationVariables,
 } from '../../api/graphql/bulk-operations/generated/staged-uploads-create.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {renderSingleTask} from '@shopify/cli-kit/shared/node/ui'
 
 interface StageFileOptions {
   adminSession: AdminSession

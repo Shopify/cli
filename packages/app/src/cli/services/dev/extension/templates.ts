@@ -1,7 +1,7 @@
-import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
-import {joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
-import {readFile, glob, findPathUp} from '@shopify/cli-kit/node/fs'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {renderLiquidTemplate} from '@shopify/cli-kit/shared/node/liquid'
+import {joinPath, moduleDirectory} from '@shopify/cli-kit/shared/node/path'
+import {readFile, glob, findPathUp} from '@shopify/cli-kit/shared/node/fs'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
 
 interface GetHTMLOptions {
   extensionSurface?: string

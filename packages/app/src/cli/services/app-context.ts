@@ -11,7 +11,7 @@ import {getAppConfigurationState, loadAppUsingConfigurationState, loadApp} from 
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import metadata from '../metadata.js'
-import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {tryParseInt} from '@shopify/cli-kit/shared/common/string'
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface

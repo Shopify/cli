@@ -1,11 +1,11 @@
 import {downloadTheme} from './theme-downloader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
-import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {Checksum, ThemeAsset} from '@shopify/cli-kit/themes/types'
 import {test, describe, expect, vi} from 'vitest'
 
 vi.mock('./theme-fs.js')
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/themes/api')
 
 describe('theme-downloader', () => {
   describe('downloadTheme', () => {

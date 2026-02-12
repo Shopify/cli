@@ -10,8 +10,8 @@ import {
   V1_TRAMPOLINE_VERSION,
   V2_TRAMPOLINE_VERSION,
 } from './binaries.js'
-import {fetch, Response} from '@shopify/cli-kit/node/http'
-import {fileExists, removeFile} from '@shopify/cli-kit/node/fs'
+import {fetch, Response} from '@shopify/cli-kit/shared/node/http'
+import {fileExists, removeFile} from '@shopify/cli-kit/shared/node/fs'
 import {describe, expect, test, vi} from 'vitest'
 import {gzipSync} from 'zlib'
 
@@ -21,8 +21,8 @@ const functionRunner = functionRunnerBinary()
 
 const oldJavy = javyBinary('6.0.0')
 
-vi.mock('@shopify/cli-kit/node/http', async () => {
-  const actualImports = await vi.importActual('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/shared/node/http', async () => {
+  const actualImports = await vi.importActual('@shopify/cli-kit/shared/node/http')
   return {
     ...actualImports,
     fetch: vi.fn(),

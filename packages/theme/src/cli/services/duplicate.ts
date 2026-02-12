@@ -1,13 +1,13 @@
 import {themeComponent} from '../utilities/theme-ui.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {findOrSelectTheme, findThemeById} from '../utilities/theme-selector.js'
-import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
-import {themeDuplicate, ThemeDuplicateResult} from '@shopify/cli-kit/node/themes/api'
-import {isCI} from '@shopify/cli-kit/node/system'
+import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {themePreviewUrl} from '@shopify/cli-kit/themes/urls'
+import {themeDuplicate, ThemeDuplicateResult} from '@shopify/cli-kit/themes/api'
+import {isCI} from '@shopify/cli-kit/shared/node/system'
 
 interface DuplicateFlags {
   /** Password generated from the Theme Access app. */

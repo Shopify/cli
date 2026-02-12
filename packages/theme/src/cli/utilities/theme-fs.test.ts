@@ -10,28 +10,28 @@ import {
 } from './theme-fs.js'
 import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
-import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
-import * as fsKit from '@shopify/cli-kit/node/fs'
+import {removeFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import * as fsKit from '@shopify/cli-kit/shared/node/fs'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import chokidar from 'chokidar'
-import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {renderError} from '@shopify/cli-kit/node/ui'
-import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/node/themes/types'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {renderError} from '@shopify/cli-kit/shared/node/ui'
+import {Operation, type Checksum, type ThemeAsset} from '@shopify/cli-kit/themes/types'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import EventEmitter from 'events'
 import {fileURLToPath} from 'node:url'
 
-vi.mock('@shopify/cli-kit/node/fs', async (realImport) => {
-  const realModule = await realImport<typeof import('@shopify/cli-kit/node/fs')>()
+vi.mock('@shopify/cli-kit/shared/node/fs', async (realImport) => {
+  const realModule = await realImport<typeof import('@shopify/cli-kit/shared/node/fs')>()
   const mockModule = {removeFile: vi.fn(), writeFile: vi.fn()}
 
   return {...realModule, ...mockModule}
 })
 vi.mock('./asset-ignore.js')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('./theme-environment/hot-reload/server.js')
 
 beforeEach(async () => {

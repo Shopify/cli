@@ -2,8 +2,8 @@ import {addUidToTomlsIfNecessary} from './add-uid-to-extension-toml.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testDeveloperPlatformClient, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, test, expect} from 'vitest'
-import {writeFile, readFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {writeFile, readFile, inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('addUidToTomlsIfNecessary', () => {
   test('skips if platform does not support atomic deployments', async () => {

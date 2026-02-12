@@ -1,4 +1,4 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export function throwUidMappingError() {
   const message = ['Your app has extensions which need to be assigned', {command: 'uid'}, 'identifiers.']

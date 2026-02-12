@@ -2,9 +2,9 @@ import {linkedAppContext, LoadedAppContextOutput} from '../services/app-context.
 import {storeContext} from '../services/store-context.js'
 import {validateSingleOperation} from '../services/graphql/common.js'
 import {OrganizationStore} from '../models/organization.js'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
+import {readFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 interface AppStoreContextFlags {
   path: string

@@ -11,17 +11,17 @@ import {
   testOrganizationStore,
 } from '../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputInfo, outputResult} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {describe, test, vi, expect, beforeEach} from 'vitest'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 
 vi.mock('./dev/fetch.js')
 vi.mock('./app-logs/logs-command/ui.js')
 vi.mock('./app-logs/logs-command/render-json-logs.js')
 vi.mock('./app-logs/utils.js')
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/output')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 const app = testAppLinked()
 const remoteApp = testOrganizationApp()

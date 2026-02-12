@@ -1,5 +1,5 @@
 import {BaseSchema} from '../../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const BaseFieldSchema = zod.object({
   ui_type: zod.string(),

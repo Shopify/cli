@@ -1,5 +1,5 @@
 import React, {useState, useRef, useLayoutEffect} from 'react'
-import {Box, Text, useInput, useStdin, useStdout, measureElement} from '@shopify/cli-kit/node/ink'
+import {Box, Text, useInput, useStdin, useStdout, measureElement} from '@shopify/cli-kit/shared/node/ink'
 
 export interface Tab {
   label: string

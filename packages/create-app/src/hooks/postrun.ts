@@ -1,1 +1,1 @@
-export {hook as default} from '@shopify/cli-kit/node/hooks/postrun'
+export {hook as default} from '@shopify/cli-kit/shared/node/hooks/postrun'

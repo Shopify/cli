@@ -1,8 +1,8 @@
 import {evaluate, SessionItem} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/shared/node/output'
 import {createInterface, Interface} from 'readline'
 
 export const DELIMITER_WARNING =

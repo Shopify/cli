@@ -2,8 +2,8 @@ import {
   BulkOperationRunQuery,
   BulkOperationRunQueryMutation,
 } from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 interface BulkOperationRunQueryOptions {
   adminSession: AdminSession

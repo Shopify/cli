@@ -3,9 +3,9 @@ import {themeFlags} from '../../flags.js'
 import ThemeCommand from '../../utilities/theme-command.js'
 import {list} from '../../services/list.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 type ListFlags = OutputFlags<typeof List.flags>
 

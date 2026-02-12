@@ -6,10 +6,10 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
 
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {AbortController} from '@shopify/cli-kit/node/abort'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {readFile} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
 
 import {existsSync, readdirSync} from 'fs'
 

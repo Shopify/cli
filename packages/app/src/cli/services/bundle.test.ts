@@ -1,11 +1,11 @@
 import {writeManifestToBundle, compressBundle} from './bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {describe, test, expect, vi} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
-import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {inTemporaryDirectory, mkdir, writeFile, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {brotliCompress, zip} from '@shopify/cli-kit/shared/node/archiver'
 
-vi.mock('@shopify/cli-kit/node/archiver', () => {
+vi.mock('@shopify/cli-kit/shared/node/archiver', () => {
   return {
     brotliCompress: vi.fn(),
     zip: vi.fn(),

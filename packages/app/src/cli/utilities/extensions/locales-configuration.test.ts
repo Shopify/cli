@@ -1,7 +1,7 @@
 import {loadLocalesConfig} from './locales-configuration.js'
 import {describe, expect, test} from 'vitest'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('loadLocalesConfig', () => {
   test('Works if all locales are correct', async () => {

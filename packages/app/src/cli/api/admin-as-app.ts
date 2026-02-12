@@ -1,6 +1,6 @@
-import {graphqlRequestDoc} from '@shopify/cli-kit/node/api/graphql'
-import {adminUrl} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {graphqlRequestDoc} from '@shopify/cli-kit/shared/node/api/graphql'
+import {adminUrl} from '@shopify/cli-kit/admin/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 

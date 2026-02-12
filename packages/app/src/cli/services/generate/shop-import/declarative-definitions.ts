@@ -19,14 +19,14 @@ import {
   MetaobjectStorefrontAccess,
 } from '../../../api/graphql/admin/generated/types.js'
 import {CurrentAppConfiguration} from '../../../models/app/app.js'
-import {BugError} from '@shopify/cli-kit/node/error'
-import {AdminSession, ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
+import {AdminSession, ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/identity/session'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/shared/node/output'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
 import {updateTomlValues} from '@shopify/toml-patch'
-import {renderInfo, renderSingleTask, renderTasks} from '@shopify/cli-kit/node/ui'
-import {isEmpty} from '@shopify/cli-kit/common/object'
+import {renderInfo, renderSingleTask, renderTasks} from '@shopify/cli-kit/shared/node/ui'
+import {isEmpty} from '@shopify/cli-kit/shared/common/object'
 
 interface ImportDeclarativeDefinitionsOptions {
   remoteApp: OrganizationApp

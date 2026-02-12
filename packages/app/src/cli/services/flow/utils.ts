@@ -1,5 +1,5 @@
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {glob, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {glob, readFile} from '@shopify/cli-kit/shared/node/fs'
 
 /**
  * Loads the schema from the partner defined file.

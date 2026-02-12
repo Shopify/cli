@@ -1,7 +1,7 @@
 import {isPredefinedTemplate, templates, visibleTemplates} from '../../prompts/init/init.js'
-import {safeParseURL} from '@shopify/cli-kit/common/url'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {safeParseURL} from '@shopify/cli-kit/shared/common/url'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 export function validateTemplateValue(template: string | undefined) {
   if (!template) {

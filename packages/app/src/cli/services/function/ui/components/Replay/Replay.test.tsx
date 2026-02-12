@@ -5,11 +5,11 @@ import {testFunctionExtension, testAppLinked} from '../../../../../models/app/ap
 import {ExtensionInstance} from '../../../../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../../../../models/extensions/specifications/function.js'
 import {FunctionRunData} from '../../../replay.js'
-import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
 import React from 'react'
 import {beforeAll, describe, expect, test, vi} from 'vitest'
-import {unstyled} from '@shopify/cli-kit/node/output'
-import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
+import {unstyled} from '@shopify/cli-kit/shared/node/output'
+import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/shared/node/testing/ui'
 
 vi.mock('./hooks/useFunctionWatcher.js')
 

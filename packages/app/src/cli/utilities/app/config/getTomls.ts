@@ -3,8 +3,8 @@ import {
   isValidFormatAppConfigurationFileName,
   loadConfigurationFileContent,
 } from '../../../models/app/loader.js'
-import {isDirectory} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {isDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {readdirSync} from 'fs'
 
 export async function getTomls(appDirectory?: string): Promise<{[clientId: string]: AppConfigurationFileName}> {

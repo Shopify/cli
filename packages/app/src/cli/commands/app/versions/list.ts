@@ -2,7 +2,7 @@ import {appFlags} from '../../../flags.js'
 import versionList from '../../../services/versions-list.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
 
 export default class VersionsList extends AppLinkedCommand {
   static summary = 'List deployed versions of your app.'

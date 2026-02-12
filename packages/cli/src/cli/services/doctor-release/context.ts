@@ -1,5 +1,5 @@
-import {cwd} from '@shopify/cli-kit/node/path'
-import type {DoctorContext} from '@shopify/cli-kit/node/doctor/types'
+import {cwd} from '@shopify/cli-kit/shared/node/path'
+import type {DoctorContext} from '@shopify/cli-kit/shared/node/doctor/types'
 
 export interface ThemeDoctorContext extends DoctorContext {
   // Environment name from shopify.theme.toml (required)

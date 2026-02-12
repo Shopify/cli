@@ -3,9 +3,9 @@ import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
-import * as file from '@shopify/cli-kit/node/fs'
-import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
-import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
+import * as file from '@shopify/cli-kit/shared/node/fs'
+import {resolvePath, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {unstyled, stringifyMessage} from '@shopify/cli-kit/shared/node/output'
 
 const ORG1: Organization = {
   id: '1',

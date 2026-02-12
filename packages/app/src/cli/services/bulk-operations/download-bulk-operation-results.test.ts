@@ -1,8 +1,8 @@
 import {downloadBulkOperationResults} from './download-bulk-operation-results.js'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
 import {describe, test, expect, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/shared/node/http')
 
 describe('downloadBulkOperationResults', () => {
   test('returns text content when fetch is successful', async () => {

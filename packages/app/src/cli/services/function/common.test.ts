@@ -13,15 +13,15 @@ import {generateSchemaService} from '../generate-schema.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {linkedAppContext} from '../app-context.js'
 import {describe, vi, expect, beforeEach, test} from 'vitest'
-import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/ui'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
-import {fileExists} from '@shopify/cli-kit/node/fs'
+import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/shared/node/ui'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {isTerminalInteractive} from '@shopify/cli-kit/shared/node/context/local'
+import {fileExists} from '@shopify/cli-kit/shared/node/fs'
 
 vi.mock('../app-context.js')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 vi.mock('../generate-schema.js')
 
 let app: AppLinkedInterface

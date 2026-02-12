@@ -3,10 +3,10 @@ import {evaluate} from './evaluator.js'
 import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {describe, expect, test, vi} from 'vitest'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
 import {createInterface} from 'readline'
 
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('./evaluator.js')
 vi.mock('./presenter.js')
 

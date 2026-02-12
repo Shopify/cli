@@ -16,7 +16,7 @@ import {DeveloperPlatformClient} from '../../../../../../utilities/developer-pla
 import {ErrorResponse, SuccessResponse, AppLogOutput, PollFilters, AppLogPayload} from '../../../../types.js'
 import {pollAppLogs} from '../../../poll-app-logs.js'
 import {useState, Dispatch, SetStateAction, useRef, useCallback} from 'react'
-import {formatLocalDate} from '@shopify/cli-kit/common/string'
+import {formatLocalDate} from '@shopify/cli-kit/shared/common/string'
 
 interface UsePollAppLogsOptions {
   initialJwt: string

@@ -1,6 +1,6 @@
 import {DELIVERY_METHOD, isAddressAllowedForDeliveryMethod} from '../../services/webhook/trigger-flags.js'
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {stringifyMessage} from '@shopify/cli-kit/node/output'
+import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {stringifyMessage} from '@shopify/cli-kit/shared/node/output'
 
 export async function topicPrompt(availableTopics: string[]): Promise<string> {
   const choicesList = availableTopics.map((topic) => ({label: topic, value: topic}))

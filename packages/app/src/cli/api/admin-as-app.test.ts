@@ -1,10 +1,10 @@
 import {adminAsAppRequestDoc} from './admin-as-app.js'
-import {graphqlRequestDoc} from '@shopify/cli-kit/node/api/graphql'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {graphqlRequestDoc} from '@shopify/cli-kit/shared/node/api/graphql'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 
-vi.mock('@shopify/cli-kit/node/api/graphql')
+vi.mock('@shopify/cli-kit/shared/node/api/graphql')
 
 describe('adminAsAppRequestDoc', () => {
   const mockSession: AdminSession = {

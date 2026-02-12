@@ -1,11 +1,11 @@
 import {FAILED_TO_CREATE_THEME_MESSAGE, UPDATER_TIMEOUT, waitForThemeToBeProcessed} from './host-theme-watcher.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {fetchTheme} from '@shopify/cli-kit/themes/api'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 describe('HostThemeWatcher', () => {
   const themeId = 12345

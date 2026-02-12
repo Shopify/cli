@@ -4,18 +4,18 @@ import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
-import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {basename, relativePath} from '@shopify/cli-kit/node/path'
+import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/identity/session'
+import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
+import {basename, relativePath} from '@shopify/cli-kit/shared/node/path'
 import {
   OutputMessage,
   formatPackageManagerCommand,
   outputContent,
   shouldDisplayColors,
   stringifyMessage,
-} from '@shopify/cli-kit/node/output'
-import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+} from '@shopify/cli-kit/shared/node/output'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/shared/node/ui'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/shared/common/version'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {

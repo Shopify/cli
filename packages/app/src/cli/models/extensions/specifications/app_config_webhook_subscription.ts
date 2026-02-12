@@ -3,7 +3,7 @@ import {prependApplicationUrl} from './validation/url_prepender.js'
 import {WebhookSubscription} from './types/app_config_webhook.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export const WebhookSubscriptionSpecIdentifier = 'webhook_subscription'
 

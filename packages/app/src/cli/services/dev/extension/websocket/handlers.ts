@@ -7,8 +7,8 @@ import {
   SetupWebSocketConnectionOptions,
 } from './models.js'
 import {RawData, WebSocket, WebSocketServer} from 'ws'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/shared/node/ui/components'
 import {IncomingMessage} from 'http'
 import {Duplex} from 'stream'
 

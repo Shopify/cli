@@ -6,7 +6,7 @@ import {
 } from './base_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
 import {extensionUuidToHandle} from '../transform/extension_uuid_to_handle.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export type RedeemablePaymentsAppExtensionConfigType = zod.infer<typeof RedeemablePaymentsAppExtensionSchema>
 

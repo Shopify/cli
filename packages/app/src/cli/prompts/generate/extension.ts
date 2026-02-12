@@ -1,11 +1,11 @@
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 export interface GenerateExtensionPromptOptions {
   name?: string

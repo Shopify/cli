@@ -1,5 +1,5 @@
 import {staticService} from '../../services/kitchen-sink/static.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import Command from '@shopify/cli-kit/shared/node/base-command'
 
 /**
  * This command is used to output all the banner UI components of the CLI.

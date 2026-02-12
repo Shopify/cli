@@ -1,7 +1,7 @@
-import Command from '@shopify/cli-kit/node/base-command'
-import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {promptSessionSelect} from '@shopify/cli-kit/identity/session-prompt'
 import {Flags} from '@oclif/core'
-import {outputCompleted} from '@shopify/cli-kit/node/output'
+import {outputCompleted} from '@shopify/cli-kit/shared/node/output'
 
 export default class Login extends Command {
   static description = 'Logs you in to your Shopify account.'

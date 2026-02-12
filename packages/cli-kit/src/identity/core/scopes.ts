@@ -1,0 +1,86 @@
+import {allAPIs, API} from '../../shared/node/internal/api.js'
+import {BugError} from '../../shared/node/error.js'
+
+/**
+ * Generate a flat array with all the default scopes for all the APIs plus
+ * any custom scope defined by the user.
+ * @param extraScopes - custom user-defined scopes
+ * @returns Array of scopes
+ */
+export function allDefaultScopes(extraScopes: string[] = []): string[] {
+  let scopes = allAPIs.map((api) => defaultApiScopes(api)).flat()
+  scopes = ['openid', ...scopes, ...extraScopes].map(scopeTransform)
+  return Array.from(new Set(scopes))
+}
+
+/**
+ * Generate a flat array with the default scopes for the given API plus
+ * any custom scope defined by the user
+ * @param api - API to get the scopes for
+ * @param extraScopes - custom user-defined scopes
+ * @returns Array of scopes
+ */
+export function apiScopes(api: API, extraScopes: string[] = []): string[] {
+  const scopes = [...defaultApiScopes(api), ...extraScopes.map(scopeTransform)].map(scopeTransform)
+  return Array.from(new Set(scopes))
+}
+
+/**
+ * Returns specific scopes required for token exchange with the given API.
+ * @param api - API to get the scopes for
+ * @returns Array of transformed scopes
+ */
+export function tokenExchangeScopes(api: API): string[] {
+  switch (api) {
+    case 'partners':
+      return [scopeTransform('cli')]
+    case 'app-management':
+      return [scopeTransform('app-management')]
+    case 'business-platform':
+      return [scopeTransform('destinations')]
+    default:
+      throw new BugError(`API not supported for token exchange: ${api}`)
+  }
+}
+
+function defaultApiScopes(api: API): string[] {
+  switch (api) {
+    case 'admin':
+      return ['graphql', 'themes', 'collaborator']
+    case 'storefront-renderer':
+      return ['devtools']
+    case 'partners':
+      return ['cli']
+    case 'business-platform':
+      return ['destinations', 'store-management', 'on-demand-user-access']
+    case 'app-management':
+      return ['app-management']
+    default:
+      throw new BugError(`Unknown API: ${api}`)
+  }
+}
+
+function scopeTransform(scope: string): string {
+  switch (scope) {
+    case 'graphql':
+      return 'https://api.shopify.com/auth/shop.admin.graphql'
+    case 'themes':
+      return 'https://api.shopify.com/auth/shop.admin.themes'
+    case 'collaborator':
+      return 'https://api.shopify.com/auth/partners.collaborator-relationships.readonly'
+    case 'cli':
+      return 'https://api.shopify.com/auth/partners.app.cli.access'
+    case 'devtools':
+      return 'https://api.shopify.com/auth/shop.storefront-renderer.devtools'
+    case 'destinations':
+      return 'https://api.shopify.com/auth/destinations.readonly'
+    case 'store-management':
+      return 'https://api.shopify.com/auth/organization.store-management'
+    case 'on-demand-user-access':
+      return 'https://api.shopify.com/auth/organization.on-demand-user-access'
+    case 'app-management':
+      return 'https://api.shopify.com/auth/organization.apps.manage'
+    default:
+      return scope
+  }
+}

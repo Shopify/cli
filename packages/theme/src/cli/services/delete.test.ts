@@ -1,12 +1,12 @@
 import {themesDelete} from './delete.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
-import {themeDelete} from '@shopify/cli-kit/node/themes/api'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {themeDelete} from '@shopify/cli-kit/themes/api'
+import {Theme} from '@shopify/cli-kit/themes/types'
 import {test, describe, expect, vi} from 'vitest'
-import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/development-theme-manager.js', () => {
   const DevelopmentThemeManager = vi.fn()

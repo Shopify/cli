@@ -1,8 +1,8 @@
 import {writeAppConfigurationFile} from './write-app-configuration-file.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema} from '../../models/app/app.test-data.js'
 import {CurrentAppConfiguration} from '../../models/app/app.js'
-import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {describe, expect, test} from 'vitest'
 
 const FULL_CONFIGURATION = {

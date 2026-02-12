@@ -1,11 +1,11 @@
 import {getDotEnvFileName} from './loader.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {patchEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {constantize} from '@shopify/cli-kit/common/string'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {deepCompare} from '@shopify/cli-kit/common/object'
+import {patchEnvFile} from '@shopify/cli-kit/shared/node/dot-env'
+import {constantize} from '@shopify/cli-kit/shared/common/string'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {fileExists, readFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {deepCompare} from '@shopify/cli-kit/shared/common/object'
 import type {AppInterface} from './app.js'
 
 export interface IdentifiersExtensions {

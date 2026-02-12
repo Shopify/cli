@@ -1,5 +1,5 @@
 import {applyIgnoreFilters} from '../asset-ignore.js'
-import type {ThemeAsset, ThemeFileSystem, ThemeFileSystemOptions} from '@shopify/cli-kit/node/themes/types'
+import type {ThemeAsset, ThemeFileSystem, ThemeFileSystemOptions} from '@shopify/cli-kit/themes/types'
 
 export function fakeThemeFileSystem(
   root: string,

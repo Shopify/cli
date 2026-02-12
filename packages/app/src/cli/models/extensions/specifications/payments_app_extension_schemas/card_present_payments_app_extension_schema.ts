@@ -2,7 +2,7 @@ import {
   BasePaymentsAppExtensionSchema,
   BasePaymentsAppExtensionDeployConfigType,
 } from './base_payments_app_extension_schema.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export type CardPresentPaymentsAppExtensionConfigType = zod.infer<typeof CardPresentPaymentsAppExtensionSchema>
 

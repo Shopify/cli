@@ -1,4 +1,4 @@
-import {normalizeStoreFqdn, storeAdminUrl} from '@shopify/cli-kit/node/context/fqdn'
+import {normalizeStoreFqdn, storeAdminUrl} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 export function buildAppURLForWeb(storeFqdn: string, apiKey: string) {
   const normalizedFQDN = normalizeStoreFqdn(storeFqdn)

@@ -1,6 +1,6 @@
 import {ExtensionCreateSchema, ExtensionCreateVariables} from '../../api/graphql/extension_create.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export interface ExtensionRegistration {
   id: string

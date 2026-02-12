@@ -1,6 +1,6 @@
 import install, {CURRENT_CLOUDFLARE_VERSION, versionIsGreaterThan} from './install-cloudflared.js'
-import * as fsActions from '@shopify/cli-kit/node/fs'
-import * as http from '@shopify/cli-kit/node/http'
+import * as fsActions from '@shopify/cli-kit/shared/node/fs'
+import * as http from '@shopify/cli-kit/shared/node/http'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import util from 'util'
 import {WriteStream} from 'fs'

@@ -9,15 +9,15 @@ import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {err, ok} from '@shopify/cli-kit/node/result'
+import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/shared/node/ui'
+import {err, ok} from '@shopify/cli-kit/shared/node/result'
 
 vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../../context.js')
 
 describe('use', () => {

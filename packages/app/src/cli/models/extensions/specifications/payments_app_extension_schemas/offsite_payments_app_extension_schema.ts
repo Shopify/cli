@@ -7,7 +7,7 @@ import {
   MultipleCaptureSchema,
   SupportedBuyerContextsSchema,
 } from './base_payments_app_extension_schema.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export type OffsitePaymentsAppExtensionConfigType = zod.infer<typeof OffsitePaymentsAppExtensionSchema>
 

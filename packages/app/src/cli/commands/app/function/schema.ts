@@ -4,7 +4,7 @@ import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 
 export default class FetchSchema extends AppLinkedCommand {
   static summary = 'Fetch the latest GraphQL schema for a function.'

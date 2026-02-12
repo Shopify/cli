@@ -7,8 +7,8 @@ import {AppReleaseSchema} from '../api/graphql/app_release.js'
 import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {OrganizationApp} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/node/ui'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {renderError, renderSuccess, renderTasks, TokenItem} from '@shopify/cli-kit/shared/node/ui'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 interface ReleaseOptions {
   /** The app to be built and uploaded */

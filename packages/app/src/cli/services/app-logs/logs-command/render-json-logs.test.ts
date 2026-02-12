@@ -2,9 +2,9 @@ import {renderJsonLogs} from './render-json-logs.js'
 import {pollAppLogs} from './poll-app-logs.js'
 import {handleFetchAppLogsError} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
-import {outputInfo, outputResult} from '@shopify/cli-kit/node/output'
+import {outputInfo, outputResult} from '@shopify/cli-kit/shared/node/output'
 import {describe, expect, vi, test, beforeEach, afterEach} from 'vitest'
-import {formatLocalDate} from '@shopify/cli-kit/common/string'
+import {formatLocalDate} from '@shopify/cli-kit/shared/common/string'
 
 vi.mock('./poll-app-logs')
 vi.mock('../utils', async (importOriginal) => {
@@ -15,7 +15,7 @@ vi.mock('../utils', async (importOriginal) => {
     handleFetchAppLogsError: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 describe('renderJsonLogs', () => {
   beforeEach(() => {

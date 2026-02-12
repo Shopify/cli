@@ -1,12 +1,12 @@
 import {waitForThemeToBeProcessed} from './host-theme-watcher.js'
 import {HostThemeManager, DEFAULT_THEME_ZIP, FALLBACK_THEME_ZIP} from './host-theme-manager.js'
-import {themeCreate} from '@shopify/cli-kit/node/themes/api'
+import {themeCreate} from '@shopify/cli-kit/themes/api'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {ThemeManager} from '@shopify/cli-kit/themes/theme-manager'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('./host-theme-watcher.js')
 
 describe('HostThemeManager', () => {

@@ -1,9 +1,9 @@
 import {TabPanel, Tab} from './TabPanel.js'
-import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
+import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/shared/node/testing/ui'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {unstyled} from '@shopify/cli-kit/node/output'
-import {Text} from '@shopify/cli-kit/node/ink'
+import {unstyled} from '@shopify/cli-kit/shared/node/output'
+import {Text} from '@shopify/cli-kit/shared/node/ink'
 
 const mocks = vi.hoisted(() => {
   return {
@@ -23,8 +23,8 @@ const mocks = vi.hoisted(() => {
   }
 })
 
-vi.mock('@shopify/cli-kit/node/ink', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ink')
+vi.mock('@shopify/cli-kit/shared/node/ink', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/ink')
   return {
     ...actual,
     useStdin: mocks.useStdin,

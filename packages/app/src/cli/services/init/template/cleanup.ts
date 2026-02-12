@@ -1,6 +1,6 @@
-import {rmdir, glob, fileExistsSync, unlinkFile} from '@shopify/cli-kit/node/fs'
-import {Lockfile, lockfilesByManager, PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {rmdir, glob, fileExistsSync, unlinkFile} from '@shopify/cli-kit/shared/node/fs'
+import {Lockfile, lockfilesByManager, PackageManager} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 export default async function cleanup(webOutputDirectory: string, packageManager: PackageManager) {
   const gitPaths = await glob(

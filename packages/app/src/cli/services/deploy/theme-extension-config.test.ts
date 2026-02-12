@@ -1,8 +1,8 @@
 import {themeExtensionConfig} from './theme-extension-config.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
 import {describe, expect, test} from 'vitest'
 
 describe('themeExtensionConfig', () => {

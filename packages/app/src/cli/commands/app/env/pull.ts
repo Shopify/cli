@@ -4,9 +4,9 @@ import {pullEnv} from '../../../services/app/env/pull.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 export default class EnvPull extends AppLinkedCommand {
   static summary = 'Pull app and extensions environment variables.'

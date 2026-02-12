@@ -12,13 +12,13 @@ import {
   ListBulkOperationsQuery,
   ListBulkOperationsQueryVariables,
 } from '../../api/graphql/bulk-operations/generated/list-bulk-operations.js'
-import {renderInfo, renderSuccess, renderError, renderTable} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/node/output'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {timeAgo, formatDate} from '@shopify/cli-kit/common/string'
-import {BugError} from '@shopify/cli-kit/node/error'
-import colors from '@shopify/cli-kit/node/colors'
+import {renderInfo, renderSuccess, renderError, renderTable} from '@shopify/cli-kit/shared/node/ui'
+import {outputContent, outputToken, outputNewline} from '@shopify/cli-kit/shared/node/output'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/identity/session'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {timeAgo, formatDate} from '@shopify/cli-kit/shared/common/string'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
+import colors from '@shopify/cli-kit/shared/node/colors'
 
 export function normalizeBulkOperationId(id: string): string {
   // If already a GID, return as-is

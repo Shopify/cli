@@ -1,6 +1,6 @@
 import {configurationFileNames} from '../constants.js'
 import {AppInterface} from '../models/app/app.js'
-import BaseCommand from '@shopify/cli-kit/node/base-command'
+import BaseCommand from '@shopify/cli-kit/shared/node/base-command'
 
 interface AppCommandOutput {
   app: AppInterface

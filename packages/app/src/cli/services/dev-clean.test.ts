@@ -1,10 +1,10 @@
 import {devClean} from './dev-clean.js'
 import {LoadedAppContextOutput} from './app-context.js'
 import {testDeveloperPlatformClient, testOrganizationStore} from '../models/app/app.test-data.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 const shopDomain = 'test-store.myshopify.com'
 const mockStore = testOrganizationStore({shopDomain})

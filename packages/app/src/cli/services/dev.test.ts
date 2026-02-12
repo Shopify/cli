@@ -1,10 +1,10 @@
 import {warnIfScopesDifferBeforeDev, blockIfMigrationIncomplete} from './dev.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 vi.mock('./dev/fetch.js')
-vi.mock('@shopify/cli-kit/node/tcp')
+vi.mock('@shopify/cli-kit/shared/node/tcp')
 vi.mock('../utilities/mkcert.js')
 
 describe('warnIfScopesDifferBeforeDev', () => {

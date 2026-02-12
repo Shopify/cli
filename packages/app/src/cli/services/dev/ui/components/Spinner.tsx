@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {Text} from '@shopify/cli-kit/node/ink'
+import {Text} from '@shopify/cli-kit/shared/node/ink'
 
 const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏']
 

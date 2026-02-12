@@ -5,11 +5,11 @@ import {ExtensionInstance} from '../../../../../../models/extensions/extension-i
 import {FunctionRunFromRunner, ReplayLog} from '../types.js'
 import {runFunction} from '../../../../runner.js'
 import {AppEventWatcher, EventType} from '../../../../../dev/app-events/app-event-watcher.js'
-import {AbortController} from '@shopify/cli-kit/node/abort'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
 import {useEffect, useState} from 'react'
-import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {treeKill} from '@shopify/cli-kit/node/tree-kill'
+import {useAbortSignal} from '@shopify/cli-kit/shared/node/ui/hooks'
+import {isUnitTest} from '@shopify/cli-kit/shared/node/context/local'
+import {treeKill} from '@shopify/cli-kit/shared/node/tree-kill'
 import {Writable} from 'stream'
 
 interface WatchFunctionForReplayOptions {

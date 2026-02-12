@@ -2,15 +2,15 @@ import {fetchCurrentAccountInformation} from './partner-account-info.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {getCurrentAccountInfo} from '../../api/graphql/current_account_info.js'
 import {clearCachedAccountInfo, getCachedAccountInfo, setCachedAccountInfo} from '../../utilities/app-conf-store.js'
-import {AccountInfo} from '@shopify/cli-kit/node/session'
+import {AccountInfo} from '@shopify/cli-kit/identity/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session')
 vi.mock('../../api/graphql/current_account_info.js')
-vi.mock('@shopify/cli-kit/node/environment')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/environment')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 const userId = '1234-5678'
 const accountInfo: AccountInfo = {

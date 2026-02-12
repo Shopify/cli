@@ -3,12 +3,12 @@ import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
-import colors from '@shopify/cli-kit/node/colors'
-import {outputContent, outputInfo, outputResult, outputToken, unstyled} from '@shopify/cli-kit/node/output'
-import {formatDate} from '@shopify/cli-kit/common/string'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {basename} from '@shopify/cli-kit/node/path'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import colors from '@shopify/cli-kit/shared/node/colors'
+import {outputContent, outputInfo, outputResult, outputToken, unstyled} from '@shopify/cli-kit/shared/node/output'
+import {formatDate} from '@shopify/cli-kit/shared/common/string'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {basename} from '@shopify/cli-kit/shared/node/path'
+import {renderTable} from '@shopify/cli-kit/shared/node/ui'
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type AppVersionLine = {

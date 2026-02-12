@@ -2,7 +2,7 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import link, {LinkOptions} from '../../../services/app/config/link.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 
 export default class ConfigLink extends AppLinkedCommand {
   static summary = 'Fetch your app configuration from the Developer Dashboard.'

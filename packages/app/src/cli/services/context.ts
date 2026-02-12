@@ -25,12 +25,12 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
-import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
-import {tryParseInt} from '@shopify/cli-kit/common/string'
-import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {basename, sniffForJson} from '@shopify/cli-kit/node/path'
+import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/identity/session'
+import {tryParseInt} from '@shopify/cli-kit/shared/common/string'
+import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {basename, sniffForJson} from '@shopify/cli-kit/shared/node/path'
 
 export const InvalidApiKeyErrorMessage = (apiKey: string) => {
   return {

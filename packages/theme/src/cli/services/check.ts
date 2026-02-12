@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/shared/node/output'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 import {
   Severity,
   applyFixToString,

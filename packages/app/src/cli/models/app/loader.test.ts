@@ -31,29 +31,29 @@ import {
   pnpmLockfile,
   PackageJson,
   pnpmWorkspaceFile,
-} from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {zod} from '@shopify/cli-kit/node/schema'
-import colors from '@shopify/cli-kit/node/colors'
-import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {captureOutput} from '@shopify/cli-kit/node/system'
+} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/shared/node/path'
+import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
+import colors from '@shopify/cli-kit/shared/node/colors'
+import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/shared/node/multiple-installation-warning'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {captureOutput} from '@shopify/cli-kit/shared/node/system'
 
 vi.mock('../../services/local-storage.js')
 // Mock captureOutput to prevent executing `npm prefix` inside getPackageManager
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('../../services/app/config/use.js')
-vi.mock('@shopify/cli-kit/node/is-global')
-vi.mock('@shopify/cli-kit/node/node-package-manager', async () => ({
-  ...((await vi.importActual('@shopify/cli-kit/node/node-package-manager')) as any),
+vi.mock('@shopify/cli-kit/shared/node/is-global')
+vi.mock('@shopify/cli-kit/shared/node/node-package-manager', async () => ({
+  ...((await vi.importActual('@shopify/cli-kit/shared/node/node-package-manager')) as any),
   localCLIVersion: vi.fn(),
   globalCLIVersion: vi.fn(),
 }))
-vi.mock('@shopify/cli-kit/node/version')
-vi.mock('@shopify/cli-kit/node/multiple-installation-warning')
+vi.mock('@shopify/cli-kit/shared/node/version')
+vi.mock('@shopify/cli-kit/shared/node/multiple-installation-warning')
 
 describe('load', () => {
   let specifications: ExtensionSpecification[] = []

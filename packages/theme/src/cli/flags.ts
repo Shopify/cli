@@ -1,8 +1,8 @@
 import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {renderError} from '@shopify/cli-kit/node/ui'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
+import {resolvePath, cwd} from '@shopify/cli-kit/shared/node/path'
+import {fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {renderError} from '@shopify/cli-kit/shared/node/ui'
 
 /**
  * An object that contains the flags that

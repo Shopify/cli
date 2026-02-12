@@ -6,17 +6,17 @@ import {
   sendInputAndWait,
   waitForContent,
   waitForInputsToBeReady,
-} from '@shopify/cli-kit/node/testing/ui'
-import {AbortController} from '@shopify/cli-kit/node/abort'
+} from '@shopify/cli-kit/shared/node/testing/ui'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
 import React from 'react'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {unstyled} from '@shopify/cli-kit/node/output'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {unstyled} from '@shopify/cli-kit/shared/node/output'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/tree-kill')
+vi.mock('@shopify/cli-kit/shared/node/system')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/tree-kill')
 
 const mocks = vi.hoisted(() => {
   return {
@@ -26,8 +26,8 @@ const mocks = vi.hoisted(() => {
   }
 })
 
-vi.mock('@shopify/cli-kit/node/ink', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ink')
+vi.mock('@shopify/cli-kit/shared/node/ink', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/ink')
   return {
     ...actual,
     useStdin: mocks.useStdin,

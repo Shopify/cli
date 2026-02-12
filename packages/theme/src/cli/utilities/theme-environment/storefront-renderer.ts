@@ -2,10 +2,10 @@ import {parseCookies, serializeCookies} from './cookies.js'
 import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
 import {DevServerSession, DevServerRenderContext} from './types.js'
 import {createFetchError} from '../errors.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
-import {recordError} from '@shopify/cli-kit/node/analytics'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {getThemeKitAccessDomain} from '@shopify/cli-kit/shared/node/context/local'
+import {recordError} from '@shopify/cli-kit/shared/node/analytics'
 
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)

@@ -9,23 +9,23 @@ import {configureCLIEnvironment} from '../utilities/cli-config.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {ensureListingExists} from '../utilities/theme-listing.js'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/node/themes/api'
-import {Result, Theme} from '@shopify/cli-kit/node/themes/types'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {themeCreate, fetchChecksums, themePublish} from '@shopify/cli-kit/themes/api'
+import {Result, Theme} from '@shopify/cli-kit/themes/types'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderError,
   renderSuccess,
   renderWarning,
-} from '@shopify/cli-kit/node/ui'
-import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {AbortError} from '@shopify/cli-kit/node/error'
+} from '@shopify/cli-kit/shared/node/ui'
+import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/themes/urls'
+import {cwd, resolvePath} from '@shopify/cli-kit/shared/node/path'
+import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {Severity} from '@shopify/theme-check-node'
-import {recordError, recordTiming} from '@shopify/cli-kit/node/analytics'
+import {recordError, recordTiming} from '@shopify/cli-kit/shared/node/analytics'
 import {Writable} from 'stream'
 
 interface PushOptions {

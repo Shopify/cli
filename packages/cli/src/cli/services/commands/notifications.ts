@@ -1,15 +1,15 @@
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/shared/common/version'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
+import {writeFile} from '@shopify/cli-kit/shared/node/fs'
 import {
   Notifications,
   Notification,
   stringifyFilters,
   getNotifications,
   fetchNotifications,
-} from '@shopify/cli-kit/node/notifications-system'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import {renderSelectPrompt, renderTextPrompt, renderSuccess, renderTable, TableColumn} from '@shopify/cli-kit/node/ui'
+} from '@shopify/cli-kit/shared/node/notifications-system'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
+import {renderSelectPrompt, renderTextPrompt, renderSuccess, renderTable, TableColumn} from '@shopify/cli-kit/shared/node/ui'
 
 export async function generate() {
   const today = new Date()

@@ -5,14 +5,14 @@ import {
   fetchDevServerSession,
 } from './dev-server-session.js'
 import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
-import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
+import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('./storefront-session.js')
 
 const storeFqdn = 'my-shop.myshopify.com'

@@ -4,13 +4,13 @@ import {
   DEVELOPMENT_THEME_NOT_FOUND,
 } from './development-theme-manager.js'
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/local-storage.js'
-import {themeCreate, fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {themeCreate, fetchTheme} from '@shopify/cli-kit/themes/api'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('../services/local-storage.js')
 
 describe('DevelopmentThemeManager', () => {

@@ -10,8 +10,8 @@ import {
   renderConfirmationPrompt,
   renderDangerousConfirmationPrompt,
   isTTY,
-} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
+} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 interface DeployOrReleaseConfirmationPromptOptions {
   extensionIdentifiersBreakdown: ExtensionIdentifiersBreakdown

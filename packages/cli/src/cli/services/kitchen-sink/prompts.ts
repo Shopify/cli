@@ -4,8 +4,8 @@ import {
   renderSelectPrompt,
   renderTextPrompt,
   renderDangerousConfirmationPrompt,
-} from '@shopify/cli-kit/node/ui'
-import figures from '@shopify/cli-kit/node/figures'
+} from '@shopify/cli-kit/shared/node/ui'
+import figures from '@shopify/cli-kit/shared/node/figures'
 
 export async function prompts() {
   // renderSelectPrompt

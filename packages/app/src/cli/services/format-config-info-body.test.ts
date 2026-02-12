@@ -1,6 +1,6 @@
 import {formatConfigInfoBody} from './format-config-info-body.js'
 import {describe, test, expect} from 'vitest'
-import {Token} from '@shopify/cli-kit/node/ui'
+import {Token} from '@shopify/cli-kit/shared/node/ui'
 
 describe('formatConfigInfoBody', () => {
   test('shows the app name', () => {

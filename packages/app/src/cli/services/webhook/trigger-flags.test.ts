@@ -4,7 +4,7 @@ import {
   isAddressAllowedForDeliveryMethod,
   validateAddressMethod,
 } from './trigger-flags.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {describe, expect, vi, test} from 'vitest'
 
 const eventbridgeAddress = 'arn:aws:events:us-east-1::event-source/aws.partner/shopify.com/3737297/source'

@@ -5,8 +5,8 @@ import {checkFolderIsValidApp} from '../../../models/app/loader.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 export default class AppGenerateExtension extends AppLinkedCommand {
   static summary = 'Generate a new app Extension.'

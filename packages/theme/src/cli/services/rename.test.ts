@@ -1,12 +1,12 @@
 import {RenameOptions, renameTheme} from './rename.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {Theme} from '@shopify/cli-kit/themes/types'
 import {test, describe, expect, vi} from 'vitest'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {themeUpdate} from '@shopify/cli-kit/node/themes/api'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {themeUpdate} from '@shopify/cli-kit/themes/api'
 
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('../utilities/theme-selector.js', () => {
   return {findOrSelectTheme: vi.fn()}
 })

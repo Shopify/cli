@@ -20,11 +20,11 @@ import {
   renderWarning,
   renderSingleTask,
   TokenItem,
-} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-import {readFile, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
+} from '@shopify/cli-kit/shared/node/ui'
+import {outputContent, outputToken, outputResult} from '@shopify/cli-kit/shared/node/output'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
+import {readFile, writeFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
 
 interface ExecuteBulkOperationInput {
   organization: Organization

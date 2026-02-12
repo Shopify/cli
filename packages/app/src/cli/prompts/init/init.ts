@@ -1,5 +1,5 @@
-import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/shared/node/is-global'
+import {renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
 
 export interface InitOptions {
   template?: string

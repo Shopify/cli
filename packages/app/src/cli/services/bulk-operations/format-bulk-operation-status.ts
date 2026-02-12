@@ -1,7 +1,7 @@
 import {extractBulkOperationId} from './bulk-operation-status.js'
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
-import {renderError, TokenItem} from '@shopify/cli-kit/node/ui'
+import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/shared/node/output'
+import {renderError, TokenItem} from '@shopify/cli-kit/shared/node/ui'
 
 export function formatBulkOperationStatus(
   operation: NonNullable<GetBulkOperationByIdQuery['bulkOperation']>,

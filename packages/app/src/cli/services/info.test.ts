@@ -12,13 +12,13 @@ import {
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {OutputMessage, TokenizedString, stringifyMessage, unstyled} from '@shopify/cli-kit/shared/node/output'
+import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/shared/node/ui'
 
 vi.mock('../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/shared/node/node-package-manager')
 vi.mock('../utilities/developer-platform-client.js')
 
 const APP = testOrganizationApp()

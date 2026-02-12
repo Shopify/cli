@@ -2,11 +2,11 @@
 import {AppManifest} from '../models/app/app.js'
 import {AssetUrlSchema, DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../models/organization.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {brotliCompress, zip} from '@shopify/cli-kit/node/archiver'
-import {formData, fetch} from '@shopify/cli-kit/node/http'
-import {readFileSync} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {brotliCompress, zip} from '@shopify/cli-kit/shared/node/archiver'
+import {formData, fetch} from '@shopify/cli-kit/shared/node/http'
+import {readFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {writeFile} from 'fs/promises'
 
 export async function writeManifestToBundle(appManifest: AppManifest, bundlePath: string) {

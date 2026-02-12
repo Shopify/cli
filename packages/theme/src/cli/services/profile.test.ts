@@ -1,15 +1,15 @@
 import {profile} from './profile.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
-import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {ensureAuthenticatedStorefront} from '@shopify/cli-kit/identity/session'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
 import {vi, describe, expect, beforeEach, test} from 'vitest'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {readFile} from 'fs/promises'
 
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/shared/node/system')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')
 vi.mock('../utilities/theme-environment/storefront-renderer.js')

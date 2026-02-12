@@ -10,7 +10,7 @@ import {
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {loadApp} from '../../models/app/loader.js'
-import {outputSuccess, outputWarn} from '@shopify/cli-kit/node/output'
+import {outputSuccess, outputWarn} from '@shopify/cli-kit/shared/node/output'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 const samplePayload = '{ "sampleField": "SampleValue" }'
@@ -26,8 +26,8 @@ const anEventBridgeAddress = 'arn:aws:events:us-east-3::event-source/aws.partner
 const anOrganizationId = 'anOrganizationId'
 
 vi.mock('@shopify/cli-kit')
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/output')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../../prompts/webhook/options-prompt.js')
 vi.mock('./request-sample.js')
 vi.mock('./request-api-versions.js')

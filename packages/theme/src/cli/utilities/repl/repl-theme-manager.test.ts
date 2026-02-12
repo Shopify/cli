@@ -1,11 +1,11 @@
 import {REPLThemeManager} from './repl-theme-manager.js'
 import {setREPLTheme, removeREPLTheme, getREPLTheme, getDevelopmentTheme} from '../../services/local-storage.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {bulkUploadThemeAssets, themeCreate, fetchTheme} from '@shopify/cli-kit/node/themes/api'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {bulkUploadThemeAssets, themeCreate, fetchTheme} from '@shopify/cli-kit/themes/api'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('../../services/local-storage')
 
 describe('REPLThemeManager', () => {

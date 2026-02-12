@@ -7,10 +7,10 @@ import {
   reportSuiteStart,
   reportSummary,
   initReporter,
-} from '@shopify/cli-kit/node/doctor/reporter'
-import {DoctorSuite} from '@shopify/cli-kit/node/doctor/framework'
+} from '@shopify/cli-kit/shared/node/doctor/reporter'
+import {DoctorSuite} from '@shopify/cli-kit/shared/node/doctor/framework'
 import type {ThemeDoctorContext, ThemeDoctorOptions} from '../context.js'
-import type {TestResult} from '@shopify/cli-kit/node/doctor/types'
+import type {TestResult} from '@shopify/cli-kit/shared/node/doctor/types'
 
 // Test suites run in order. If a test relies on another, ensure that test runs after it's dependency.
 const themeSuites: (new () => DoctorSuite<ThemeDoctorContext>)[] = [ThemeInitTests, ThemePushTests]

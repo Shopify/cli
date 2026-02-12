@@ -2,7 +2,7 @@ import {appFlags, bulkOperationFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {executeBulkOperation} from '../../../services/bulk-operations/execute-bulk-operation.js'
 import {prepareExecuteContext} from '../../../utilities/execute-command-helpers.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 
 export default class BulkExecute extends AppLinkedCommand {
   static summary = 'Execute bulk operations.'

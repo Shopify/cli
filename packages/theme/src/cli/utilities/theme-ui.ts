@@ -1,7 +1,7 @@
-import {recordEvent} from '@shopify/cli-kit/node/analytics'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/node/ui'
+import {recordEvent} from '@shopify/cli-kit/shared/node/analytics'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {LIVE_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {Task, renderConfirmationPrompt, renderError, renderTasks, renderWarning} from '@shopify/cli-kit/shared/node/ui'
 import {Writable} from 'stream'
 
 export function themeComponent(theme: Theme) {

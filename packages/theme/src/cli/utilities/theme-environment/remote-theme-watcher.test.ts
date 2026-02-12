@@ -2,13 +2,13 @@ import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {reconcileAndPollThemeEditorChanges} from './remote-theme-watcher.js'
 import {pollThemeEditorChanges} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
-import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {ThemeAsset} from '@shopify/cli-kit/node/themes/types'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {fetchChecksums} from '@shopify/cli-kit/themes/api'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
+import {ThemeAsset} from '@shopify/cli-kit/themes/types'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('./theme-reconciliation.js')
 vi.mock('./theme-polling.js')
 vi.mock('../theme-fs.js')

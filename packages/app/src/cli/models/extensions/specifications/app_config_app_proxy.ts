@@ -8,7 +8,7 @@ import {
 } from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const AppProxySchema = BaseSchemaWithoutHandle.extend({
   app_proxy: zod

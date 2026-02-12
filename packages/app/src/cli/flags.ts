@@ -1,6 +1,6 @@
 import {Flags} from '@oclif/core'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {resolvePath, cwd} from '@shopify/cli-kit/shared/node/path'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 /**
  * An object that contains the flags that

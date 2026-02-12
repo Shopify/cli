@@ -6,8 +6,8 @@ import metadata from '../../metadata.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {addPublicMetadata} from '@shopify/cli-kit/shared/node/metadata'
 
 export default class Deploy extends AppLinkedCommand {
   static summary = 'Deploy your Shopify app.'

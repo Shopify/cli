@@ -24,19 +24,47 @@
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
-    "./*": {
-      "node": "./dist/public/*.js",
-      "types": "./dist/public/*.d.ts"
+    "./identity/*": {
+      "node": "./dist/identity/*.js",
+      "types": "./dist/identity/*.d.ts"
     },
-    "./assets/*": "./assets/*",
-    "./testing/*": {
-      "node": "./dist/testing/*.js",
-      "types": "./dist/testing/*.d.ts"
+    "./admin/*": {
+      "node": "./dist/admin/*.js",
+      "types": "./dist/admin/*.d.ts"
     },
-    "./typing/*": {
-      "node": "./dist/typing/*.js",
-      "types": "./dist/typing/*.d.ts"
-    }
+    "./partners/*": {
+      "node": "./dist/partners/*.js",
+      "types": "./dist/partners/*.d.ts"
+    },
+    "./app-management/*": {
+      "node": "./dist/app-management/*.js",
+      "types": "./dist/app-management/*.d.ts"
+    },
+    "./app-dev/*": {
+      "node": "./dist/app-dev/*.js",
+      "types": "./dist/app-dev/*.d.ts"
+    },
+    "./business-platform/*": {
+      "node": "./dist/business-platform/*.js",
+      "types": "./dist/business-platform/*.d.ts"
+    },
+    "./functions/*": {
+      "node": "./dist/functions/*.js",
+      "types": "./dist/functions/*.d.ts"
+    },
+    "./themes/*": {
+      "node": "./dist/themes/*.js",
+      "types": "./dist/themes/*.d.ts"
+    },
+    "./webhooks/*": {
+      "node": "./dist/webhooks/*.js",
+      "types": "./dist/webhooks/*.d.ts"
+    },
+    "./shared/*": {
+      "node": "./dist/shared/*.js",
+      "types": "./dist/shared/*.d.ts"
+    },
+    "./assets/*": "./assets/*"
   },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -61,13 +89,13 @@
       "../../.eslintrc.cjs"
     ],
     "ignorePatterns": [
-      "**/vendor/otel-js/**/*.ts",
-      "**/vendor/dev_server/**/*.ts"
+      "**/shared/vendor/otel-js/**/*.ts",
+      "**/shared/vendor/dev_server/**/*.ts"
     ],
     "overrides": [
       {
         "files": [
-          "**/node/cli.ts"
+          "**/shared/node/cli.ts"
         ],
         "rules": {
           "@shopify/cli/specific-imports-in-bootstrap-code": [
@@ -76,7 +104,6 @@
               "dynamic": [
                 "./node-package-manager.js",
                 "./error-handler.js",
-                "../../public/node/context/local.js",
                 "./context/local.js",
                 "./custom-oclif-loader.js",
                 "@oclif/core",
@@ -87,8 +114,8 @@
               "static": [
                 "@oclif/core",
                 "./context/utilities.js",
-                "../../private/node/conf-store.js",
-                "../../private/node/constants.js",
+                "./internal/conf-store.js",
+                "./internal/constants.js",
                 "url",
                 "./cli-launcher.js"
               ]

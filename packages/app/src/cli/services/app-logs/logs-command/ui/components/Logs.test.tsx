@@ -11,9 +11,9 @@ import {
 } from '../../../types.js'
 import {testDeveloperPlatformClient} from '../../../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
-import {render} from '@shopify/cli-kit/node/testing/ui'
+import {render} from '@shopify/cli-kit/shared/node/testing/ui'
 import React from 'react'
-import {unstyled} from '@shopify/cli-kit/node/output'
+import {unstyled} from '@shopify/cli-kit/shared/node/output'
 
 vi.mock('./hooks/usePollAppLogs.js')
 

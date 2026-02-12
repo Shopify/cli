@@ -3,7 +3,7 @@ import {replay} from '../../../services/function/replay.js'
 import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
 import {Flags} from '@oclif/core'
 
 export default class FunctionReplay extends AppLinkedCommand {

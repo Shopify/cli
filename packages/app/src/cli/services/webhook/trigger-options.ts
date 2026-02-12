@@ -11,7 +11,7 @@ import {WebhookTriggerInput} from './trigger.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {renderCurrentlyUsedConfigInfo} from '../context.js'
-import {basename} from '@shopify/cli-kit/node/path'
+import {basename} from '@shopify/cli-kit/shared/node/path'
 
 interface AppCredentials {
   clientSecret: string

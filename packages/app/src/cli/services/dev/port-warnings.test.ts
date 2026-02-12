@@ -1,5 +1,5 @@
 import {PortDetail, renderPortWarnings} from './port-warnings.js'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 import {describe, expect, test} from 'vitest'
 
 describe('renderPortWarnings()', () => {

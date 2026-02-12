@@ -1,5 +1,5 @@
-import {AccountInfo} from '@shopify/cli-kit/node/session'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
+import {AccountInfo} from '@shopify/cli-kit/identity/session'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
 
 // max age is 72 hours (3 days)
 const MAX_AGE_FOR_ACCOUNT_INFO_STATUS_MS = 3 * 24 * 60 * 60 * 1000

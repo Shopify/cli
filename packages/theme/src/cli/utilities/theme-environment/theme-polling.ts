@@ -1,12 +1,12 @@
 import {MAX_GRAPHQL_THEME_FILES, timestampDateFormat} from '../../constants.js'
 import {batchedRequests} from '../batching.js'
 import {renderThrownError} from '../errors.js'
-import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/themes/types'
+import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {outputDebug, outputInfo, outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {renderFatalError} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 const POLLING_INTERVAL = 3000
 class PollingError extends Error {}

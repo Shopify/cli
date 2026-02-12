@@ -5,12 +5,12 @@ import {
   renderConfirmationPrompt,
   renderSelectPrompt,
   renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
-import {fileExists, glob} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
-import {slugify} from '@shopify/cli-kit/common/string'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import colors from '@shopify/cli-kit/node/colors'
+} from '@shopify/cli-kit/shared/node/ui'
+import {fileExists, glob} from '@shopify/cli-kit/shared/node/fs'
+import {basename, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
+import {err, ok, Result} from '@shopify/cli-kit/shared/node/result'
+import colors from '@shopify/cli-kit/shared/node/colors'
 
 export async function selectConfigName(directory: string, defaultName = ''): Promise<AppConfigurationFileName> {
   const namePromptOptions = buildTextPromptOptions(defaultName)

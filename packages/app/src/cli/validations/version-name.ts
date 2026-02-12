@@ -1,4 +1,4 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export function validateVersion(version: string | undefined) {
   if (typeof version === 'undefined') return

@@ -1,6 +1,6 @@
 import {createConfigExtensionSpecification, TransformationConfig} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const PosConfigurationSchema = BaseSchemaWithoutHandle.extend({
   pos: zod

@@ -3,7 +3,7 @@ import {OffsitePaymentsAppExtensionConfigType} from './payments_app_extension_sc
 import {placeholderAppConfiguration, testPaymentsAppExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/shared/node/fs'
 import {beforeEach, describe, expect, test} from 'vitest'
 
 describe('PaymentsAppExtension', () => {

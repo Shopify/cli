@@ -1,5 +1,5 @@
 import {Args, Flags, loadHelpClass} from '@oclif/core'
-import Command from '@shopify/cli-kit/node/base-command'
+import Command from '@shopify/cli-kit/shared/node/base-command'
 
 export default class HelpCommand extends Command {
   static args = {

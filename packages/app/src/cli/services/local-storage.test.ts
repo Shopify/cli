@@ -6,8 +6,8 @@ import {
   setCachedAppInfo,
 } from './local-storage.js'
 import {describe, expect, test} from 'vitest'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
+import {inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
 
 const APP1 = {appId: 'app1', storeFqdn: 'store1', orgId: 'org1', directory: '/app1'}
 const APP2 = {appId: 'app2', storeFqdn: 'store2', orgId: 'org2', directory: '/app2'}

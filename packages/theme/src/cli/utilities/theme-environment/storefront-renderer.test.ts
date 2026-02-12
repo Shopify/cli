@@ -2,7 +2,7 @@ import {render} from './storefront-renderer.js'
 import {DevServerRenderContext, DevServerSession} from './types.js'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session')
 vi.stubGlobal('fetch', vi.fn())
 
 const session: DevServerSession = {

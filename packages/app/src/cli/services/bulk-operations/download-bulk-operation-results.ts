@@ -1,5 +1,5 @@
-import {fetch} from '@shopify/cli-kit/node/http'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export async function downloadBulkOperationResults(url: string): Promise<string> {
   const response = await fetch(url)

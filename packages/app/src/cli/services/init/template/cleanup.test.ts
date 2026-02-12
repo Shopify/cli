@@ -1,8 +1,8 @@
 import cleanup from './cleanup.js'
 import {describe, expect, test} from 'vitest'
-import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {inTemporaryDirectory, mkdir, writeFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {PackageManager} from '@shopify/cli-kit/shared/node/node-package-manager'
 
 describe('cleanup', () => {
   async function mockProjectFolder(tmpDir: string) {

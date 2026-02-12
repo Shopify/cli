@@ -2,12 +2,12 @@ import {deploymentErrorsToCustomSections, uploadExtensionsBundle} from './upload
 import {testApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {AppDeploySchema, AppDeployVariables} from '../../api/graphql/app_deploy.js'
 import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {formData} from '@shopify/cli-kit/node/http'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {formData} from '@shopify/cli-kit/shared/node/http'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/crypto')
+vi.mock('@shopify/cli-kit/shared/node/http')
+vi.mock('@shopify/cli-kit/shared/node/crypto')
 
 const app = testApp()
 const appManifest = await app.manifest(undefined)

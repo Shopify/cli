@@ -3,7 +3,7 @@ import {BaseSchemaWithHandle, FieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {validateFieldShape, validateTriggerSchemaPresence} from '../../../services/flow/validation.js'
 import {serializeFields} from '../../../services/flow/serialize-fields.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export const FlowTriggerSettingsSchema = FieldSchema.extend({
   key: zod

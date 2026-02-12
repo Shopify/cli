@@ -1,7 +1,7 @@
 import {transformToEventsConfig, transformFromEventsConfig} from './transform/app_config_events.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export const EventsSpecIdentifier = 'events'
 

@@ -11,7 +11,7 @@ import {
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, beforeEach} from 'vitest'
-import {AlertCustomSection} from '@shopify/cli-kit/node/ui'
+import {AlertCustomSection} from '@shopify/cli-kit/shared/node/ui'
 
 describe('functionInfo', () => {
   let ourFunction: ExtensionInstance

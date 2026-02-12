@@ -1,4 +1,4 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export const DELIVERY_METHOD = {
   LOCALHOST: 'localhost',

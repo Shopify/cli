@@ -6,12 +6,12 @@ import {MAX_EXTENSION_HANDLE_LENGTH} from '../models/extensions/schemas.js'
 import {OrganizationApp} from '../models/organization.js'
 import {allMigrationChoices, getMigrationChoices} from '../prompts/import-extensions.js'
 import {configurationFileNames, blocks} from '../constants.js'
-import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
-import {removeFile, writeFile, fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {slugify, hyphenate} from '@shopify/cli-kit/common/string'
-import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {basename, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {removeFile, writeFile, fileExists, mkdir, touchFile} from '@shopify/cli-kit/shared/node/fs'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {slugify, hyphenate} from '@shopify/cli-kit/shared/common/string'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 export const allExtensionTypes = allMigrationChoices.flatMap((choice) => choice.extensionTypes)
 

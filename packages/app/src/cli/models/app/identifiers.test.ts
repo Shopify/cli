@@ -1,9 +1,9 @@
 import {updateAppIdentifiers, getAppIdentifiers} from './identifiers.js'
 import {testApp, testAppWithConfig, testDeveloperPlatformClient, testUIExtension} from './app.test-data.js'
 import {describe, expect, test} from 'vitest'
-import {readAndParseDotEnv} from '@shopify/cli-kit/node/dot-env'
-import {fileExists, inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {readAndParseDotEnv} from '@shopify/cli-kit/shared/node/dot-env'
+import {fileExists, inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('updateAppIdentifiers', () => {
   test('persists the ids that are not env variables when deploying, creating a new file', async () => {

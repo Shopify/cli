@@ -1,13 +1,13 @@
 import {stageFile} from './stage-file.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {readFile, fileSize} from '@shopify/cli-kit/node/fs'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {readFile, fileSize} from '@shopify/cli-kit/shared/node/fs'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/admin')
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/admin/api')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/shared/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/http')
 
 describe('stageFile', () => {
   const mockSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}

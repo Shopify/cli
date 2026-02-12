@@ -3,18 +3,18 @@ import {duplicate} from './duplicate.js'
 import {findThemeById, findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
-import {themeDuplicate} from '@shopify/cli-kit/node/themes/api'
-import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {isCI} from '@shopify/cli-kit/node/system'
+import {themeDuplicate} from '@shopify/cli-kit/themes/api'
+import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {isCI} from '@shopify/cli-kit/shared/node/system'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
-vi.mock('@shopify/cli-kit/node/system')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/system')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('../utilities/theme-selector.js')
 vi.mock('../utilities/theme-ui.js')
 vi.mock('../utilities/cli-config.js')

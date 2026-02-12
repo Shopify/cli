@@ -4,15 +4,15 @@ import {buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/shared/node/system'
 import lockfile from 'proper-lockfile'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('../function/build.js')
 vi.mock('proper-lockfile')
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 
 describe('buildFunctionExtension', () => {
   let extension: ExtensionInstance<FunctionConfigType>

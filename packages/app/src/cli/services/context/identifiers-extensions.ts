@@ -22,9 +22,9 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {SingleWebhookSubscriptionType} from '../../models/extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
-import {outputCompleted} from '@shopify/cli-kit/node/output'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {groupBy} from '@shopify/cli-kit/common/collection'
+import {outputCompleted} from '@shopify/cli-kit/shared/node/output'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
+import {groupBy} from '@shopify/cli-kit/shared/common/collection'
 
 interface AppWithExtensions {
   extensionRegistrations: RemoteSource[]

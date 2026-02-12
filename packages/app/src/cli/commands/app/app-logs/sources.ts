@@ -2,7 +2,7 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {sources} from '../../../services/app-logs/sources.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 
 export default class Sources extends AppLinkedCommand {
   static summary = 'Print out a list of sources that may be used with the logs command.'

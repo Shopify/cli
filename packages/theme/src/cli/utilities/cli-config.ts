@@ -1,5 +1,5 @@
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import colors from '@shopify/cli-kit/node/colors'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import colors from '@shopify/cli-kit/shared/node/colors'
 
 interface CLIConfigOptions {
   verbose?: boolean

@@ -1,10 +1,10 @@
 import {sourcesForApp} from './utils.js'
 import {sources} from './sources.js'
 import {testApp} from '../../models/app/app.test-data.js'
-import {outputResult, formatSection} from '@shopify/cli-kit/node/output'
+import {outputResult, formatSection} from '@shopify/cli-kit/shared/node/output'
 import {describe, test, vi, expect} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('./utils.js')
 
 describe('sources', () => {

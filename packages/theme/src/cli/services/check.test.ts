@@ -7,9 +7,9 @@ import {
   renderOffensesText,
   sortOffenses,
 } from './check.js'
-import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {outputInfo, outputSuccess} from '@shopify/cli-kit/shared/node/output'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 import {
   Severity,
   SourceCodeType,
@@ -20,13 +20,13 @@ import {
 } from '@shopify/theme-check-node'
 import {Mock, beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/fs', async () => ({
+vi.mock('@shopify/cli-kit/shared/node/fs', async () => ({
   fileExists: vi.fn(),
   writeFile: vi.fn(),
   readFileSync: vi.fn(),
 }))
 
-vi.mock('@shopify/cli-kit/node/output', async () => ({
+vi.mock('@shopify/cli-kit/shared/node/output', async () => ({
   outputInfo: vi.fn(),
   outputSuccess: vi.fn(),
 }))
@@ -39,7 +39,7 @@ vi.mock('@shopify/theme-check-node', async () => {
   }
 })
 
-vi.mock('@shopify/cli-kit/node/ui', async () => ({
+vi.mock('@shopify/cli-kit/shared/node/ui', async () => ({
   renderInfo: vi.fn(),
 }))
 

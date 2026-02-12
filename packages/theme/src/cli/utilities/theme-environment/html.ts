@@ -6,11 +6,11 @@ import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-
 import {logRequestLine} from '../log-request-line.js'
 import {extractFetchErrorInfo} from '../errors.js'
 import {defineEventHandler, getCookie, type H3Event, type EventHandler} from 'h3'
-import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {recordEvent} from '@shopify/cli-kit/node/analytics'
-import type {Theme} from '@shopify/cli-kit/node/themes/types'
+import {renderError, renderFatalError} from '@shopify/cli-kit/shared/node/ui'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {recordEvent} from '@shopify/cli-kit/shared/node/analytics'
+import type {Theme} from '@shopify/cli-kit/themes/types'
 import type {DevServerContext} from './types.js'
 
 /** Tracks the number of consecutive theme ID mismatch redirects */

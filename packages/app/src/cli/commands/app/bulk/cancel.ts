@@ -4,8 +4,8 @@ import {prepareAppStoreContext} from '../../../utilities/execute-command-helpers
 import {cancelBulkOperation} from '../../../services/bulk-operations/cancel-bulk-operation.js'
 import {normalizeBulkOperationId} from '../../../services/bulk-operations/bulk-operation-status.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 export default class BulkCancel extends AppLinkedCommand {
   static summary = 'Cancel a bulk operation.'

@@ -1,7 +1,7 @@
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {BaseSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 interface IncludeSchema {
   handle: string

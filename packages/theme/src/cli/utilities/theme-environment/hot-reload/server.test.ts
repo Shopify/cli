@@ -14,11 +14,11 @@ import {render} from '../storefront-renderer.js'
 import {emptyThemeExtFileSystem} from '../../theme-fs-empty.js'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {createEvent} from 'h3'
-import * as output from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/shared/node/output'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 import type {DevServerContext} from '../types.js'
-import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeFSEventName, ThemeAsset} from '@shopify/cli-kit/themes/types'
 
 vi.mock('../storefront-renderer.js')
 vi.spyOn(output, 'outputDebug')

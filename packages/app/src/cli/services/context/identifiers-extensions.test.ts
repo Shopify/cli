@@ -32,8 +32,8 @@ import {getModulesToMigrate} from '../dev/migrate-app-module.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {beforeEach, describe, expect, vi, test, beforeAll} from 'vitest'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {setPathValue} from '@shopify/cli-kit/common/object'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
+import {setPathValue} from '@shopify/cli-kit/shared/common/object'
 
 interface Registration {
   uuid: string
@@ -169,7 +169,7 @@ async function createExtensionResult(registration: Registration): Promise<Extens
   }
 }
 
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session')
 
 vi.mock('./prompts', async () => {
   const prompts: any = await vi.importActual('./prompts')

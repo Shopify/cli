@@ -8,12 +8,12 @@ import {deployOrReleaseConfirmationPrompt} from '../prompts/deploy-release.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {OrganizationApp} from '../models/organization.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {renderError, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/shared/node/ui'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 vi.mock('./context.js')
 vi.mock('../models/app/identifiers.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../api/graphql/app_release.js')
 vi.mock('./context/breakdown-extensions.js')
 vi.mock('../prompts/deploy-release.js')

@@ -3,9 +3,9 @@ import {Format, info} from '../../services/info.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 
 export default class AppInfo extends AppLinkedCommand {
   static summary = 'Print basic information about your app and extensions.'

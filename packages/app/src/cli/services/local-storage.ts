@@ -1,7 +1,7 @@
 import {AppConfigurationFileName} from '../models/app/loader.js'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {normalizePath} from '@shopify/cli-kit/node/path'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
+import {outputDebug, outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {normalizePath} from '@shopify/cli-kit/shared/node/path'
 
 export interface CachedAppInfo {
   directory: string

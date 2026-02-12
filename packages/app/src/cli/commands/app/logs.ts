@@ -5,8 +5,8 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-link
 import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
 
 export default class Logs extends AppLinkedCommand {
   static summary = 'Stream detailed logs for your Shopify app.'

@@ -1,6 +1,6 @@
-import {writeFile, fileExists} from '@shopify/cli-kit/node/fs'
-import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {writeFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
+import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/shared/node/hidden-folder'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 const HIDDEN_CONFIG_PATH = 'project.json'
 /**

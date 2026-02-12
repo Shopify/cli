@@ -21,9 +21,9 @@ import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
 import {throwUidMappingError} from '../../prompts/uid-mapping-error.js'
-import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {deepCompare, deepDifference} from '@shopify/cli-kit/shared/common/object'
+import {encodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export interface ConfigExtensionIdentifiersBreakdown {
   existingFieldNames: string[]

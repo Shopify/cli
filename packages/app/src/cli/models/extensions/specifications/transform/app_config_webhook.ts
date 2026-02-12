@@ -1,5 +1,5 @@
 import {WebhooksConfig, WebhookSubscription} from '../types/app_config_webhook.js'
-import {deepCompare, getPathValue} from '@shopify/cli-kit/common/object'
+import {deepCompare, getPathValue} from '@shopify/cli-kit/shared/common/object'
 
 export function transformFromWebhookConfig(content: object) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig

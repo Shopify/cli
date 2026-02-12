@@ -3,9 +3,9 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-l
 import {appFlags} from '../../../flags.js'
 import {storeContext} from '../../../services/store-context.js'
 import {devClean} from '../../../services/dev-clean.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 export default class DevClean extends AppLinkedCommand {
   static summary = 'Cleans up the dev preview from the selected store.'

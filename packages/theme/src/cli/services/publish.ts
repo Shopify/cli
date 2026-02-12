@@ -1,10 +1,10 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
-import {themePublish} from '@shopify/cli-kit/node/themes/api'
-import {themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {themePublish} from '@shopify/cli-kit/themes/api'
+import {themePreviewUrl} from '@shopify/cli-kit/themes/urls'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {renderConfirmationPrompt, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 interface PublishServiceOptions {
   theme: string | undefined

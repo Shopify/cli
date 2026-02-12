@@ -2,7 +2,7 @@ import {Logs} from './ui/components/Logs.js'
 import {PollOptions, SubscribeOptions} from '../types.js'
 import {subscribeToAppLogs} from '../utils.js'
 import React from 'react'
-import {render} from '@shopify/cli-kit/node/ui'
+import {render} from '@shopify/cli-kit/shared/node/ui'
 
 export async function renderLogs({
   pollOptions,

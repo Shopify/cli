@@ -4,8 +4,8 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi} from 'vitest'
 import {context as esContext} from 'esbuild'
-import {glob, inTemporaryDirectory, mkdir, touchFileSync} from '@shopify/cli-kit/node/fs'
-import {basename, joinPath} from '@shopify/cli-kit/node/path'
+import {glob, inTemporaryDirectory, mkdir, touchFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {basename, joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')

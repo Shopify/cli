@@ -1,8 +1,8 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {fetchTheme} from '@shopify/cli-kit/themes/api'
+import {Theme} from '@shopify/cli-kit/themes/types'
 
 // 5 minutes
 export const UPDATER_TIMEOUT = 5 * 60 * 1000

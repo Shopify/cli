@@ -32,12 +32,12 @@ import {fetchSpecifications} from '../../generate/fetch-extension-specifications
 import {AppConfigurationUsedByCli} from '../../../models/extensions/specifications/types/app_config.js'
 import {getTomls} from '../../../utilities/app/config/getTomls.js'
 import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/common/object'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/shared/node/output'
+import {deepMergeObjects, isEmpty} from '@shopify/cli-kit/shared/common/object'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {PackageManager} from '@shopify/cli-kit/shared/node/node-package-manager'
 
 export interface LinkOptions {
   directory: string

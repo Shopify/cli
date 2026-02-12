@@ -1,5 +1,5 @@
-import {asHumanFriendlyArray} from '@shopify/cli-kit/common/array'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {asHumanFriendlyArray} from '@shopify/cli-kit/shared/common/array'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 export type PortDetail = (
   | {

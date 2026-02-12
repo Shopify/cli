@@ -4,8 +4,8 @@ import {LoadedAppContextOutput} from './app-context.js'
 import {OrganizationStore} from '../models/organization.js'
 import {Store} from '../utilities/developer-platform-client.js'
 import metadata from '../metadata.js'
-import {hashString} from '@shopify/cli-kit/node/crypto'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {hashString} from '@shopify/cli-kit/shared/node/crypto'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 /**
  * Input options for the `storeContext` function.

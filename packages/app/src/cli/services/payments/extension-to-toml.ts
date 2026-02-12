@@ -31,8 +31,8 @@ import {
   CARD_PRESENT_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/card_present_payments_app_extension_schema.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {encodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 function typeToContext(type: string) {
   switch (type) {

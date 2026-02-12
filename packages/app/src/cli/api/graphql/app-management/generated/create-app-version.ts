@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 import * as Types from './types.js'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {JsonMapType} from '@shopify/cli-kit/shared/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 

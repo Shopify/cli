@@ -7,9 +7,9 @@ import {
   buildExtensionBreakdownInfo,
 } from '../services/context/breakdown-extensions.js'
 import {MockInstance, beforeEach, describe, expect, test, vi} from 'vitest'
-import * as ui from '@shopify/cli-kit/node/ui'
+import * as ui from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
 
 beforeEach(() => {
   // Mock isTTY to return true so prompts are shown instead of errors in tests

@@ -1,6 +1,6 @@
-import Command from '@shopify/cli-kit/node/base-command'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {renderTable} from '@shopify/cli-kit/node/ui'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {renderTable} from '@shopify/cli-kit/shared/node/ui'
 import {Flags} from '@oclif/core'
 
 export default class CommandFlags extends Command {

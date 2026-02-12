@@ -1,6 +1,6 @@
 import {getProxyingWebServer} from './http-reverse-proxy.js'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
+import {getAvailableTCPPort} from '@shopify/cli-kit/shared/node/tcp'
 import {describe, test, expect} from 'vitest'
 import fetch from 'node-fetch'
 import WebSocket, {WebSocketServer} from 'ws'

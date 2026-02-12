@@ -72,7 +72,7 @@ export const aliases = (packagePath: string) => {
     {
       find: /@shopify\/cli-kit\/(.+)/,
       replacement: (importedModule: string) => {
-        return path.join(packagePath, `../cli-kit/src/public/${importedModule.replace('@shopify/cli-kit/', '')}`)
+        return path.join(packagePath, `../cli-kit/src/${importedModule.replace('@shopify/cli-kit/', '')}`)
       },
     },
     {find: '@shopify/cli-kit', replacement: path.join(packagePath, '../cli-kit/src/index')},

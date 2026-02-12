@@ -1,6 +1,6 @@
 import {isTextFile} from './theme-fs.js'
-import {Checksum} from '@shopify/cli-kit/node/themes/types'
-import {fileHash} from '@shopify/cli-kit/node/crypto'
+import {Checksum} from '@shopify/cli-kit/themes/types'
+import {fileHash} from '@shopify/cli-kit/shared/node/crypto'
 
 export function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
   if (!fileContent) {

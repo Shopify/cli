@@ -5,8 +5,8 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {getMigrationChoices, selectMigrationChoice} from '../../prompts/import-extensions.js'
 import {getExtensions} from '../../services/fetch-extensions.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
 
 export default class ImportExtensions extends AppLinkedCommand {
   static description = 'Import dashboard-managed extensions into your app.'

@@ -1,8 +1,8 @@
 import {presentValue} from './presenter.js'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/shared/node/output'
 import {describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 describe('presentValue', () => {
   const cantBePrintedMessage =

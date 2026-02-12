@@ -1,8 +1,8 @@
-import {renderSelectPrompt, renderWarning, renderTasks} from '@shopify/cli-kit/node/ui'
-import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {rmdir, fileExists, inTemporaryDirectory, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderSelectPrompt, renderWarning, renderTasks} from '@shopify/cli-kit/shared/node/ui'
+import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/shared/node/git'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {rmdir, fileExists, inTemporaryDirectory, readFile, writeFile, symlink} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export const SKELETON_THEME_URL = 'https://github.com/Shopify/skeleton-theme.git'
 const AI_INSTRUCTIONS_REPO_URL = 'https://github.com/Shopify/theme-liquid-docs.git'

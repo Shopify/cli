@@ -1,9 +1,9 @@
 import {batchedTasks, Task} from './batching.js'
 import {MAX_GRAPHQL_THEME_FILES} from '../constants.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/themes/types'
+import {renderTasks} from '@shopify/cli-kit/shared/node/ui'
 import {Writable} from 'stream'
 
 interface DownloadOptions {

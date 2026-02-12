@@ -1,11 +1,11 @@
 import {themeComponent, themesComponent, ensureDirectoryConfirmed, ensureLiveThemeConfirmed} from './theme-ui.js'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/shared/node/ui'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
-import {DEVELOPMENT_THEME_ROLE, LIVE_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {DEVELOPMENT_THEME_ROLE, LIVE_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 describe('themeComponent', () => {
   test('returns the ui for a theme', async () => {

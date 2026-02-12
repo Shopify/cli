@@ -2,9 +2,9 @@ import ThemeCommand from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {publish} from '../../services/publish.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {OutputFlags} from '@oclif/core/interfaces'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 type PublishFlags = OutputFlags<typeof Publish.flags>
 

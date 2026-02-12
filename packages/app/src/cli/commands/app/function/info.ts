@@ -4,9 +4,9 @@ import {functionInfo} from '../../../services/function/info.js'
 import {localAppContext} from '../../../services/app-context.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
-import {AlertCustomSection, renderInfo} from '@shopify/cli-kit/node/ui'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
+import {AlertCustomSection, renderInfo} from '@shopify/cli-kit/shared/node/ui'
 
 export default class FunctionInfo extends AppUnlinkedCommand {
   static summary = 'Print basic information about your function.'

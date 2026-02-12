@@ -1,6 +1,6 @@
 import {MarketingActivityExtensionSchema} from './marketing_activity_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 describe('MarketingActivityExtensionSchema', () => {
   const config = {

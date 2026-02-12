@@ -1,7 +1,7 @@
 import {themeFlags} from '../../../flags.js'
 import {metafieldsPull, MetafieldsPullFlags} from '../../../services/metafields-pull.js'
 import ThemeCommand, {RequiredFlags} from '../../../utilities/theme-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {Flags} from '@oclif/core'
 import {InferredFlags} from '@oclif/core/interfaces'
 

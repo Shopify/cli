@@ -4,8 +4,8 @@ import {getExtensionIds, LocalRemoteSource} from '../context/id-matching.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MigrateAppModuleSchema, MigrateAppModuleVariables} from '../../api/graphql/extension_migrate_app_module.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 /**
  * All ***ModulesMap define the migration mapping between local and remote extension types.

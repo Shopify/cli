@@ -1,8 +1,8 @@
 import {themeInfoJSON, fetchThemeInfo} from './info.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {themePreviewUrl, themeEditorUrl} from '@shopify/cli-kit/node/themes/urls'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {themePreviewUrl, themeEditorUrl} from '@shopify/cli-kit/themes/urls'
+import {Theme} from '@shopify/cli-kit/themes/types'
 import {describe, vi, test, expect} from 'vitest'
 
 vi.mock('../utilities/development-theme-manager.js')

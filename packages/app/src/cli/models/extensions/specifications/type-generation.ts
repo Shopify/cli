@@ -1,10 +1,10 @@
-import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/shared/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import ts from 'typescript'
 import {compile} from 'json-schema-to-typescript'
-import {pascalize} from '@shopify/cli-kit/common/string'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {pascalize} from '@shopify/cli-kit/shared/common/string'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)

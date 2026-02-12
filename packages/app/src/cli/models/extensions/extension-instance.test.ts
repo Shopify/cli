@@ -16,17 +16,17 @@ import {
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {ExtensionBuildOptions, buildUIExtension} from '../../services/build/extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {slugify} from '@shopify/cli-kit/common/string'
-import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
-import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {inTemporaryDirectory, readFile, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
+import {hashString, nonRandomUUID} from '@shopify/cli-kit/shared/node/crypto'
+import {extractImportPathsRecursively} from '@shopify/cli-kit/shared/node/import-extractor'
 import {Writable} from 'stream'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 
-vi.mock('@shopify/cli-kit/node/import-extractor')
+vi.mock('@shopify/cli-kit/shared/node/import-extractor')
 vi.mock('../../services/build/extension.js', async () => {
   const actual = await vi.importActual('../../services/build/extension.js')
   return {

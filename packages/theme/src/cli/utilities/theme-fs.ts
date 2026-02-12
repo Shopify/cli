@@ -5,13 +5,13 @@ import {createSyncingCatchError} from './errors.js'
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {getListingFilePath, updateSettingsDataForListing} from './theme-listing.js'
 import {DEFAULT_IGNORE_PATTERNS, timestampDateFormat} from '../constants.js'
-import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, relativePath} from '@shopify/cli-kit/node/path'
-import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/node/mimes'
-import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
-import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
+import {glob, readFile, ReadOptions, fileExists, mkdir, writeFile, removeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, basename, relativePath} from '@shopify/cli-kit/shared/node/path'
+import {lookupMimeType, setMimeTypes} from '@shopify/cli-kit/shared/node/mimes'
+import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from '@shopify/cli-kit/shared/node/output'
+import {buildThemeAsset} from '@shopify/cli-kit/themes/factories'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/themes/api'
 import EventEmitter from 'node:events'
 import {fileURLToPath} from 'node:url'
 import type {
@@ -21,7 +21,7 @@ import type {
   ThemeAsset,
   ThemeFSEventName,
   ThemeFSEventPayload,
-} from '@shopify/cli-kit/node/themes/types'
+} from '@shopify/cli-kit/themes/types'
 
 const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',

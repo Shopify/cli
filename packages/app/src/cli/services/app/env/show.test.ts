@@ -5,13 +5,13 @@ import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, test} from 'vitest'
-import * as file from '@shopify/cli-kit/node/fs'
-import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import * as file from '@shopify/cli-kit/shared/node/fs'
+import {stringifyMessage, unstyled} from '@shopify/cli-kit/shared/node/output'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('../../dev/fetch.js')
 vi.mock('../../../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/shared/node/node-package-manager')
 
 describe('env show', () => {
   test('outputs the new environment', async () => {

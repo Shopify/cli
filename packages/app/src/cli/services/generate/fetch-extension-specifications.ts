@@ -8,9 +8,9 @@ import {
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {HandleInvalidAdditionalProperties, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/shared/common/array'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {HandleInvalidAdditionalProperties, normaliseJsonSchema} from '@shopify/cli-kit/shared/node/json-schema'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient

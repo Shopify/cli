@@ -1,6 +1,6 @@
-import {zod} from '@shopify/cli-kit/node/schema'
-import {uniq} from '@shopify/cli-kit/common/array'
-import colors from '@shopify/cli-kit/node/colors'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
+import {uniq} from '@shopify/cli-kit/shared/common/array'
+import colors from '@shopify/cli-kit/shared/node/colors'
 import type {WebhooksConfig} from '../types/app_config_webhook.js'
 
 export function webhookValidator(schema: object, ctx: zod.RefinementCtx) {

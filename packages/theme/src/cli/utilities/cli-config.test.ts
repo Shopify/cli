@@ -1,6 +1,6 @@
 import {configureCLIEnvironment} from './cli-config.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import colors from '@shopify/cli-kit/node/colors'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import colors from '@shopify/cli-kit/shared/node/colors'
 import {describe, expect, beforeEach, afterAll, test} from 'vitest'
 
 describe('configureCLIEnvironment', () => {

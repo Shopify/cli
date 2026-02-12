@@ -4,7 +4,7 @@ import {WebhookSubscriptionUriValidation} from '../validation/common.js'
 import {SingleWebhookSubscriptionSchema} from '../app_config_webhook_subscription.js'
 import {mergeAllWebhooks} from '../transform/app_config_webhook.js'
 import {BaseSchemaWithoutHandle} from '../../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const WebhooksConfigSchema = zod.object({
   api_version: zod.string({required_error: 'String is required'}),

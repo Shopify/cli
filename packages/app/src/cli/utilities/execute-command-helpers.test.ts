@@ -2,13 +2,13 @@ import {prepareAppStoreContext, prepareExecuteContext} from './execute-command-h
 import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
 import {validateSingleOperation} from '../services/graphql/common.js'
-import {readFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {readFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
 vi.mock('../services/app-context.js')
 vi.mock('../services/store-context.js')
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('../services/graphql/common.js', () => ({
   validateSingleOperation: vi.fn(),
 }))

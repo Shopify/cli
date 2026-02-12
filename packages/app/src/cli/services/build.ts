@@ -2,8 +2,8 @@ import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {installJavy} from './function/build.js'
 import {AppInterface, Web} from '../models/app/app.js'
-import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
 import {Writable} from 'stream'
 
 interface BuildOptions {

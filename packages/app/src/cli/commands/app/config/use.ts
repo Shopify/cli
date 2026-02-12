@@ -4,7 +4,7 @@ import {localAppContext} from '../../../services/app-context.js'
 import use from '../../../services/app/config/use.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {Args} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 
 // This is one of the few commands where we don't need a
 // `--config` flag, because we're passing it as an argument.

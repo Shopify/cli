@@ -1,12 +1,12 @@
 import {packageTheme} from './package.js'
 import {describe, expect, vi, test} from 'vitest'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {mkdir, writeFile, inTemporaryDirectory, touchFile, fileExists} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {mkdir, writeFile, inTemporaryDirectory, touchFile, fileExists} from '@shopify/cli-kit/shared/node/fs'
 
 const StreamZip = require('node-stream-zip')
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 describe('packageTheme', () => {
   test('creates zip file from theme', async () => {

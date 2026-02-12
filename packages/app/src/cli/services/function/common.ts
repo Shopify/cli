@@ -3,12 +3,12 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {generateSchemaService} from '../generate-schema.js'
 import {linkedAppContext} from '../app-context.js'
-import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {resolvePath, cwd, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {Flags} from '@oclif/core'
-import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {fileExists} from '@shopify/cli-kit/node/fs'
+import {isTerminalInteractive} from '@shopify/cli-kit/shared/node/context/local'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/shared/node/ui'
+import {fileExists} from '@shopify/cli-kit/shared/node/fs'
 
 export const functionFlags = {
   path: Flags.string({

@@ -3,10 +3,10 @@ import {runFunction} from '../../../services/function/runner.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {localAppContext} from '../../../services/app-context.js'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
 import {Flags} from '@oclif/core'
-import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/node/ui'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {renderAutocompletePrompt, isTTY} from '@shopify/cli-kit/shared/node/ui'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 const DEFAULT_FUNCTION_EXPORT = '_start'
 

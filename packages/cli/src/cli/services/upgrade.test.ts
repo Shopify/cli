@@ -1,24 +1,24 @@
 import {upgrade} from './upgrade.js'
 import * as upgradeService from './upgrade.js'
 import {afterEach, beforeEach, describe, expect, vi, test} from 'vitest'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
-import * as nodePackageManager from '@shopify/cli-kit/node/node-package-manager'
-import {exec, captureOutput} from '@shopify/cli-kit/node/system'
-import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
+import * as nodePackageManager from '@shopify/cli-kit/shared/node/node-package-manager'
+import {exec, captureOutput} from '@shopify/cli-kit/shared/node/system'
+import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/shared/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 const oldCliVersion = '3.0.0'
 // just needs to be higher than oldCliVersion for these tests
 const currentCliVersion = '3.10.0'
 
-vi.mock('@shopify/cli-kit/node/os', async () => {
+vi.mock('@shopify/cli-kit/shared/node/os', async () => {
   return {
     platformAndArch: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 beforeEach(async () => {
   vi.mocked(platformAndArch).mockReturnValue({platform: 'windows', arch: 'amd64'})

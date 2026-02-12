@@ -1,12 +1,12 @@
 import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
-import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {type AdminSession} from '@shopify/cli-kit/node/session'
-import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
+import {shopifyFetch, Response} from '@shopify/cli-kit/shared/node/http'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {type AdminSession} from '@shopify/cli-kit/identity/session'
+import {passwordProtected} from '@shopify/cli-kit/themes/api'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {recordError, recordEvent} from '@shopify/cli-kit/shared/node/analytics'
 
 export class ShopifyEssentialError extends AbortError {}
 

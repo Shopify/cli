@@ -4,12 +4,12 @@ import {
   GetBulkOperationById,
   GetBulkOperationByIdQuery,
 } from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {renderSingleTask} from '@shopify/cli-kit/shared/node/ui'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
 
 const TERMINAL_STATUSES = ['COMPLETED', 'FAILED', 'CANCELED', 'EXPIRED']
 const INITIAL_POLL_INTERVAL_SECONDS = 1

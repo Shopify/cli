@@ -29,9 +29,9 @@ import {WebhooksConfig} from '../extensions/specifications/types/app_config_webh
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
   path: '',

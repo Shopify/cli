@@ -1,5 +1,5 @@
 import {Config} from '@oclif/core'
-import {getListOfTunnelPlugins} from '@shopify/cli-kit/node/plugins'
+import {getListOfTunnelPlugins} from '@shopify/cli-kit/shared/node/plugins'
 
 /**
  * Return the name of the tunnel provider used to send analytics. Returns 'localhost' or provider name if any of those

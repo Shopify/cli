@@ -14,22 +14,22 @@ import {
   testWebhookExtensions,
 } from '../../../../models/app/app.test-data.js'
 import {getUploadURL} from '../../../bundle.js'
-import {formData} from '@shopify/cli-kit/node/http'
+import {formData} from '@shopify/cli-kit/shared/node/http'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
-import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
-import {flushPromises} from '@shopify/cli-kit/node/promises'
-import * as outputContext from '@shopify/cli-kit/node/ui/components'
-import {readdir} from '@shopify/cli-kit/node/fs'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {AbortSignal, AbortController} from '@shopify/cli-kit/shared/node/abort'
+import {flushPromises} from '@shopify/cli-kit/shared/node/promises'
+import * as outputContext from '@shopify/cli-kit/shared/node/ui/components'
+import {readdir} from '@shopify/cli-kit/shared/node/fs'
+import {firstPartyDev} from '@shopify/cli-kit/shared/node/context/local'
 
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/archiver')
-vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/shared/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/archiver')
+vi.mock('@shopify/cli-kit/shared/node/http')
 vi.mock('../../../../utilities/app/app-url.js')
 vi.mock('node-fetch')
 vi.mock('../../../bundle.js')
-vi.mock('@shopify/cli-kit/node/context/local', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@shopify/cli-kit/node/context/local')>()
+vi.mock('@shopify/cli-kit/shared/node/context/local', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/shared/node/context/local')>()
   return {
     ...original,
     firstPartyDev: vi.fn().mockReturnValue(false),

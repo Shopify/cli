@@ -2,8 +2,8 @@ import {contextToTarget} from './utils.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {CurrentAppConfiguration} from '../../models/app/app.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {encodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 interface AdminLinkConfig {
   text: string

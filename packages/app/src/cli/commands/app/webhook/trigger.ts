@@ -5,7 +5,7 @@ import {appFlags} from '../../../flags.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {Flags} from '@oclif/core'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 export default class WebhookTrigger extends AppLinkedCommand {
   static summary = 'Trigger delivery of a sample webhook topic payload to a designated address.'

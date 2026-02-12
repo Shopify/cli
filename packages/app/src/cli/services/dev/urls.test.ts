@@ -18,11 +18,11 @@ import {setCachedAppInfo} from '../local-storage.js'
 import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {getAvailableTCPPort} from '@shopify/cli-kit/shared/node/tcp'
+import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/shared/node/context/local'
+import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/shared/node/system'
 
 vi.mock('../local-storage.js')
 vi.mock('../app/patch-app-configuration-file.js', () => {
@@ -30,11 +30,11 @@ vi.mock('../app/patch-app-configuration-file.js', () => {
     setManyAppConfigValues: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/tcp')
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/plugins')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/tcp')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/plugins')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 beforeEach(() => {
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)

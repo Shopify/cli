@@ -2,19 +2,19 @@ import ThemeCommand, {RequiredFlags} from './theme-command.js'
 import {ensureThemeStore} from './theme-store.js'
 import {describe, vi, expect, test, beforeEach} from 'vitest'
 import {Config, Flags} from '@oclif/core'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {loadEnvironment} from '@shopify/cli-kit/node/environments'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {resolvePath} from '@shopify/cli-kit/node/path'
-import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {loadEnvironment} from '@shopify/cli-kit/shared/node/environments'
+import {fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {resolvePath} from '@shopify/cli-kit/shared/node/path'
+import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/shared/node/ui'
 import type {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/environments')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/shared/node/environments')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('./theme-store.js')
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 
 const CommandConfig = new Config({root: __dirname})
 

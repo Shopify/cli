@@ -2,9 +2,9 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import pull from '../../../services/app/config/pull.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {basename} from '@shopify/cli-kit/node/path'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {basename} from '@shopify/cli-kit/shared/node/path'
 
 export default class ConfigPull extends AppLinkedCommand {
   static summary = 'Refresh an already-linked app configuration without prompts.'

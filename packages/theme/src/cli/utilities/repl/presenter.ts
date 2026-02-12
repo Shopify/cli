@@ -1,4 +1,4 @@
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 export function presentValue(value?: unknown) {
   if (hasJsonError(value)) {

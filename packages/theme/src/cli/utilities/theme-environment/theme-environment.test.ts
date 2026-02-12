@@ -6,16 +6,16 @@ import {hotReloadScriptId} from './hot-reload/server.js'
 import {uploadTheme} from '../theme-uploader.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
 import {emptyThemeExtFileSystem} from '../theme-fs-empty.js'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
 import {createEvent} from 'h3'
-import * as output from '@shopify/cli-kit/node/output'
-import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
+import * as output from '@shopify/cli-kit/shared/node/output'
+import {fetchChecksums} from '@shopify/cli-kit/themes/api'
 import {IncomingMessage, ServerResponse} from 'node:http'
 import {Socket} from 'node:net'
 
-vi.mock('@shopify/cli-kit/node/themes/api', () => ({fetchChecksums: vi.fn(() => Promise.resolve([]))}))
+vi.mock('@shopify/cli-kit/themes/api', () => ({fetchChecksums: vi.fn(() => Promise.resolve([]))}))
 vi.mock('./remote-theme-watcher.js')
 vi.mock('./storefront-renderer.js')
 vi.spyOn(output, 'outputDebug')

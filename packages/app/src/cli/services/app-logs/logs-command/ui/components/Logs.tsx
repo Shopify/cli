@@ -14,7 +14,7 @@ import {DeveloperPlatformClient} from '../../../../../utilities/developer-platfo
 
 import React, {FunctionComponent} from 'react'
 
-import {Box, Text} from '@shopify/cli-kit/node/ink'
+import {Box, Text} from '@shopify/cli-kit/shared/node/ink'
 
 interface LogsProps {
   resubscribeCallback: () => Promise<string>

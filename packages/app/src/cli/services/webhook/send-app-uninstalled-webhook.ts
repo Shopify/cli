@@ -3,8 +3,8 @@ import {getWebhookSample, SampleWebhook, SendSampleWebhookVariables} from './req
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {DELIVERY_METHOD} from './trigger-flags.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {FetchError} from '@shopify/cli-kit/node/http'
-import {sleep} from '@shopify/cli-kit/node/system'
+import {FetchError} from '@shopify/cli-kit/shared/node/http'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
 import {Writable} from 'stream'
 
 interface SendUninstallWebhookToAppServerOptions {

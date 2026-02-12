@@ -17,8 +17,8 @@ import {OrganizationApp} from '../models/organization.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {describe, expect, vi, afterEach, test, beforeEach} from 'vitest'
 
 vi.mock('../constants.js', async () => {

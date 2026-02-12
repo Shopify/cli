@@ -1,5 +1,5 @@
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {startServer} from '@shopify/theme-language-server-node'
 
 export default class LanguageServer extends ThemeCommand {

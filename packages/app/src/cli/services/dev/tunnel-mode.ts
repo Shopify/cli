@@ -1,6 +1,6 @@
 import {ports} from '../../constants.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {getAvailableTCPPort} from '@shopify/cli-kit/shared/node/tcp'
 
 export type TunnelMode = NoTunnel | AutoTunnel | CustomTunnel
 

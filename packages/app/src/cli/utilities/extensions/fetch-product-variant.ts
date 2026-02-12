@@ -1,9 +1,9 @@
 import {FindProductVariantQuery, FindProductVariantSchema} from '../../api/graphql/get_variant_id.js'
-import {adminRequest} from '@shopify/cli-kit/node/api/admin'
-import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {adminRequest} from '@shopify/cli-kit/admin/api'
+import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/identity/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 /**
  * Retrieve the first variant of the first product of the given store

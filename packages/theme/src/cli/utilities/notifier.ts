@@ -1,5 +1,5 @@
-import {recordError} from '@shopify/cli-kit/node/analytics'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {recordError} from '@shopify/cli-kit/shared/node/analytics'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/shared/node/output'
 import fs from 'fs/promises'
 
 // A valid NotifyPath can be:

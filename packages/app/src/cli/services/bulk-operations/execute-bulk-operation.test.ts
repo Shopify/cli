@@ -8,11 +8,11 @@ import {resolveApiVersion, createAdminSessionAsApp} from '../graphql/common.js'
 import {BulkOperationRunQueryMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-query.js'
 import {BulkOperationRunMutationMutation} from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
 import {OrganizationApp, OrganizationSource, OrganizationStore} from '../../models/organization.js'
-import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/node/ui'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {renderSuccess, renderWarning, renderError, renderInfo} from '@shopify/cli-kit/shared/node/ui'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/identity/session'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./run-query.js')
@@ -28,8 +28,8 @@ vi.mock('../graphql/common.js', async () => {
     validateMutationStore: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/ui')
   return {
     ...actual,
     renderSingleTask: vi.fn(async ({task}) => task()),
@@ -39,9 +39,9 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
     renderInfo: vi.fn(),
   }
 })
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/session', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/shared/node/fs')
+vi.mock('@shopify/cli-kit/identity/session', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/identity/session')
   return {
     ...actual,
     ensureAuthenticatedAdminAsApp: vi.fn(),
