@@ -19,9 +19,11 @@ const data: ReferenceEntityTemplateSchema = {
       title: 'upgrade',
     },
   },
-  definitions: [],
+  definitions: [
+  ],
   category: 'general commands',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

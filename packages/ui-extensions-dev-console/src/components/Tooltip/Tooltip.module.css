@@ -3,7 +3,7 @@
 }
 
 .Tooltip:hover {
-  cursor: help;
+   cursor: help;
 }
 
 .TooltipUnderline {

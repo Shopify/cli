@@ -19,10 +19,10 @@ on:
       delete_workflow_by_state_pattern:
         description: 'Remove workflow by state: active, deleted, disabled_fork, disabled_inactivity, disabled_manually'
         required: true
-        default: 'All'
+        default: "All"
         type: choice
         options:
-          - 'All'
+          - "All"
           - active
           - deleted
           - disabled_inactivity
@@ -30,10 +30,10 @@ on:
       delete_run_by_conclusion_pattern:
         description: 'Remove workflow by conclusion: action_required, cancelled, failure, skipped, success'
         required: true
-        default: 'All'
+        default: "All"
         type: choice
         options:
-          - 'All'
+          - "All"
           - action_required
           - cancelled
           - failure

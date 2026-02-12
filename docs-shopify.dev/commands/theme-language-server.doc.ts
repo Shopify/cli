@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme language-server` command:',
-      type: 'themelanguageserver',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme language-server` command:',
+    type: 'themelanguageserver',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

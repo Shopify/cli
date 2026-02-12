@@ -57,7 +57,7 @@ jobs:
         with:
           node-version: 24.12.0
       - name: Force snapshot changeset
-        run: 'mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md'
+        run: "mv .changeset/force-snapshot-build.md.ignore .changeset/force-snapshot-build.md"
       - name: Create snapshot version
         uses: Shopify/snapit@ee98df3a4a2b221fc3f06d56b9a6b60996613102 # registry-and-package-manager
         with:
@@ -73,7 +73,7 @@ jobs:
             > Use `which shopify` to find out which one you are running and uninstall it."
           comment_package_manager: 'npm'
           comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
-          build_script: 'pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests'
+          build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ''

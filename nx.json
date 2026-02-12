@@ -1,25 +1,41 @@
 {
   "targetDefaults": {
     "clean": {
-      "dependsOn": ["^clean"]
+      "dependsOn": [
+        "^clean"
+      ]
     },
     "build": {
-      "dependsOn": ["^build"],
-      "inputs": ["production", "^production"]
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "production",
+        "^production"
+      ]
     },
     "refresh-manifests": {
-      "dependsOn": ["build", "refresh-readme"]
+      "dependsOn": [
+        "build",
+        "refresh-readme"
+      ]
     },
     "refresh-readme": {
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     },
     "lint": {},
     "lint:fix": {},
     "type-check": {
-      "dependsOn": ["^build"]
+      "dependsOn": [
+        "^build"
+      ]
     },
     "bundle": {
-      "dependsOn": ["build"]
+      "dependsOn": [
+        "build"
+      ]
     }
   },
   "extends": "@nx/workspace/presets/npm.json",
@@ -49,9 +65,14 @@
   "defaultBase": "main",
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
   "namedInputs": {
-    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "default": [
+      "{projectRoot}/**/*",
+      "sharedGlobals"
+    ],
     "sharedGlobals": [],
-    "production": ["default"]
+    "production": [
+      "default"
+    ]
   },
   "tui": {
     "autoExit": true

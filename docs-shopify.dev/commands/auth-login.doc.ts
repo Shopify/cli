@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `auth login` command:',
-      type: 'authlogin',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `auth login` command:',
+    type: 'authlogin',
+  },
   ],
   category: 'general commands',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

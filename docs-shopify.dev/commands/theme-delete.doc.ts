@@ -24,14 +24,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme delete` command:',
-      type: 'themedelete',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme delete` command:',
+    type: 'themedelete',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

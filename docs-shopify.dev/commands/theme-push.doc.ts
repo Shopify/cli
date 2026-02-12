@@ -47,14 +47,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme push` command:',
-      type: 'themepush',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme push` command:',
+    type: 'themepush',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

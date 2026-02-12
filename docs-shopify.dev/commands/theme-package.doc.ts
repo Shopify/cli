@@ -26,14 +26,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme package` command:',
-      type: 'themepackage',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme package` command:',
+    type: 'themepackage',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

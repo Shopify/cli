@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `commands` command:',
-      type: 'commands',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `commands` command:',
+    type: 'commands',
+  },
   ],
   category: 'general commands',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

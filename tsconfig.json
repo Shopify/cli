@@ -1,15 +1,15 @@
 {
-  "extends": "./configurations/tsconfig.json",
-  "include": ["configurations/**/*"],
-  "references": [
-    {"path": "./packages/cli"},
-    {"path": "./packages/app"},
-    {"path": "./packages/theme"},
-    {"path": "./packages/cli-kit"},
-    {"path": "./packages/create-app"},
-    {"path": "./packages/ui-extensions-server-kit"},
-    {"path": "./packages/ui-extensions-test-utils"},
-    {"path": "./packages/plugin-cloudflare"},
-    {"path": "./packages/plugin-did-you-mean"}
-  ]
+    "extends": "./configurations/tsconfig.json",
+    "include": ["configurations/**/*"],
+    "references": [
+      {"path": "./packages/cli"},
+      {"path": "./packages/app"},
+      {"path": "./packages/theme"},
+      {"path": "./packages/cli-kit"},
+      {"path": "./packages/create-app"},
+      {"path": "./packages/ui-extensions-server-kit"},
+      {"path": "./packages/ui-extensions-test-utils"},
+      {"path": "./packages/plugin-cloudflare"},
+      {"path": "./packages/plugin-did-you-mean"}
+    ]
 }

@@ -13,7 +13,7 @@ export interface appinit {
   '--flavor <value>'?: string
 
   /**
-   *
+   * 
    * @environment SHOPIFY_FLAG_NAME
    */
   '-n, --name <value>'?: string
@@ -25,13 +25,13 @@ export interface appinit {
   '--no-color'?: ''
 
   /**
-   *
+   * 
    * @environment SHOPIFY_FLAG_PACKAGE_MANAGER
    */
   '-d, --package-manager <value>'?: string
 
   /**
-   *
+   * 
    * @environment SHOPIFY_FLAG_PATH
    */
   '-p, --path <value>'?: string

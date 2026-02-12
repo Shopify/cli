@@ -24,14 +24,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `hydrogen debug cpu` command:',
-      type: 'hydrogendebugcpu',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `hydrogen debug cpu` command:',
+    type: 'hydrogendebugcpu',
+  },
   ],
   category: 'hydrogen',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

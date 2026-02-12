@@ -1,129 +1,165 @@
 {
-  // Use IntelliSense to learn about possible attributes.
-  // Hover to view descriptions of existing attributes.
-  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-  "version": "0.2.0",
-  "configurations": [
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "shopify app {command}",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["shopify", "app", "${input:command}", "--path=${input:appDir}"],
-      "env": {
-        "DEBUG": "\"*\""
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app {command}",
+        "cwd": "${workspaceFolder}",
+        "console" : "integratedTerminal",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "${input:command}",
+          "--path=${input:appDir}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+        },
+        "skipFiles": [
+          "<node_internals>/**",
+        ],
       },
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "shopify theme {command}",
-      "cwd": "${workspaceFolder}",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["shopify", "theme", "${input:command}"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "shopify app build",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["shopify", "app", "build", "--path=${input:appDir}"],
-      "env": {
-        "DEBUG": "\"*\""
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify theme {command}",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "theme",
+          "${input:command}",
+        ],
       },
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "shopify app dev",
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["shopify", "app", "dev", "--no-update", "--path=${input:appDir}"],
-      "env": {
-        "DEBUG": "\"*\""
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app build",
+        "cwd": "${workspaceFolder}",
+        "console" : "integratedTerminal",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "build",
+          "--path=${input:appDir}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+        },
+        "skipFiles": [
+          "<node_internals>/**",
+        ],
       },
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "shopify app generate extension",
-      "console": "integratedTerminal",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "run",
-        "shopify",
-        "app",
-        "generate",
-        "extension",
-        "--path=${input:appDir}",
-        "--name=${input:extensionName}",
-        "--type=${input:extensionType}",
-        "--template=${input:extensionTemplate}"
-      ],
-      "env": {
-        "DEBUG": "\"*\""
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app dev",
+        "cwd": "${workspaceFolder}",
+        "console" : "integratedTerminal",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "shopify",
+          "app",
+          "dev",
+          "--no-update",
+          "--path=${input:appDir}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+        },
+        "skipFiles": [
+          "<node_internals>/**",
+        ],
       },
-      "skipFiles": ["<node_internals>/**"]
-    }
-  ],
-  "inputs": [
-    {
-      "id": "appDir",
-      "type": "promptString",
-      "description": "App Directory: ",
-      "default": "."
-    },
-    {
-      "id": "command",
-      "type": "promptString",
-      "description": "Command: "
-    },
-    {
-      "id": "extensionName",
-      "type": "promptString",
-      "description": "Extension Name: "
-    },
-    {
-      "id": "extensionType",
-      "type": "pickString",
-      "description": "Extension Type: ",
-      "options": [
-        "theme",
-        "product_subscription",
-        "checkout_ui_extension",
-        "checkout_post_purchase",
-        "web_pixel_extension",
-        "pos_ui_extension",
-        "product_discounts",
-        "order_discounts",
-        "shipping_discounts",
-        "payment_customization",
-        "shipping_rate_presenter",
-        "delivery_customization",
-        "order_routing_location_rule",
-        "cart_transform",
-        "tax_calculation",
-        "fulfillment_constraints",
-        "local_pickup_delivery_option_generator",
-        "pickup_point_delivery_option_generator",
-        "marketing_activity"
-      ],
-      "default": "checkout_ui_extension"
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "shopify app generate extension",
+        "console" : "integratedTerminal",
+        "runtimeExecutable": "pnpm",
+        "runtimeArgs": [
+          "run",
+          "shopify",
+          "app",
+          "generate",
+          "extension",
+          "--path=${input:appDir}",
+          "--name=${input:extensionName}",
+          "--type=${input:extensionType}",
+          "--template=${input:extensionTemplate}",
+        ],
+        "env": {
+          "DEBUG": "\"*\"",
+        },
+        "skipFiles": [
+          "<node_internals>/**"
+        ],
+      },
+    ],
+    "inputs": [
+      {
+        "id": "appDir",
+        "type": "promptString",
+        "description": "App Directory: ",
+        "default": ".",
+      },
+      {
+        "id": "command",
+        "type": "promptString",
+        "description": "Command: ",
+      },
+      {
+        "id": "extensionName",
+        "type": "promptString",
+        "description": "Extension Name: ",
+      },
+      {
+        "id": "extensionType",
+        "type": "pickString",
+        "description": "Extension Type: ",
+        "options": [
+          "theme",
+          "product_subscription",
+          "checkout_ui_extension",
+          "checkout_post_purchase",
+          "web_pixel_extension",
+          "pos_ui_extension",
+          "product_discounts",
+          "order_discounts",
+          "shipping_discounts",
+          "payment_customization",
+          "shipping_rate_presenter",
+          "delivery_customization",
+          "order_routing_location_rule",
+          "cart_transform",
+          "tax_calculation",
+          "fulfillment_constraints",
+          "local_pickup_delivery_option_generator",
+          "pickup_point_delivery_option_generator",
+          "marketing_activity"
+        ],
+        "default": "checkout_ui_extension",
     },
     {
       "id": "extensionTemplate",
       "type": "pickString",
       "description": "Extension Template: ",
-      "options": ["vanilla-js", "react", "typescript", "typescript-react", "wasm", "rust"],
-      "default": "react"
-    }
-  ]
+      "options": [
+        "vanilla-js",
+        "react",
+        "typescript",
+        "typescript-react",
+        "wasm",
+        "rust",
+      ],
+      "default": "react",
+    },
+  ],
 }

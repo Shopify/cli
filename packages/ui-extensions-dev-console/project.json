@@ -14,7 +14,7 @@
       }
     },
     "build": {
-      "inputs": ["production", "^production", "{projectRoot}/index.html"],
+      "inputs": ["production","^production", "{projectRoot}/index.html"],
       "outputs": ["{workspaceRoot}/packages/app/assets/dev-console"],
       "executor": "nx:run-commands",
       "options": {

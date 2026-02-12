@@ -18,7 +18,7 @@
     "noEmit": false,
     "jsx": "react",
     "paths": {
-      "@shopify/ui-extensions-test-utils": ["../../ui-extensions-test-utils/src"]
+      "@shopify/ui-extensions-test-utils": ["../../ui-extensions-test-utils/src"],
     },
     "outDir": "dist",
     "baseUrl": "src",

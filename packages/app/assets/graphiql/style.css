@@ -13,11 +13,7 @@ body {
   padding: 0;
 }
 
-button,
-input,
-optgroup,
-select,
-textarea {
+button, input, optgroup, select, textarea {
   font-family: inherit;
 }
 
@@ -31,7 +27,7 @@ p {
 }
 
 .body-success {
-  color: #f6f6f7;
+  color: #F6F6F7;
 }
 
 .body-error {
@@ -41,14 +37,14 @@ p {
 .app-success {
   width: 100vw;
   height: 100vh;
-  background-color: #054a49;
+  background-color: #054A49;
   display: flex;
 }
 
 .app-error {
   width: 100vw;
   height: 100vh;
-  background-color: #f6f6f7;
+  background-color: #F6F6F7;
   display: flex;
 }
 

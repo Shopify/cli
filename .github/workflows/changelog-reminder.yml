@@ -1,11 +1,11 @@
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths: ['packages/*/src/**']
+    types: [ opened, synchronize, reopened, ready_for_review ]
+    paths: [ 'packages/*/src/**' ]
 name: Changelog Reminder
 jobs:
   remind:
-    name: '[PR] Changelog Reminder'
+    name: "[PR] Changelog Reminder"
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository && !github.event.pull_request.draft }}
     steps:
@@ -19,3 +19,4 @@ jobs:
 
             > [!CAUTION]
             > DO NOT create changesets for features which you do not wish to be included in the public changelog of the next CLI release.
+

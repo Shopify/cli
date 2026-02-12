@@ -23,14 +23,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme rename` command:',
-      type: 'themerename',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme rename` command:',
+    type: 'themerename',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

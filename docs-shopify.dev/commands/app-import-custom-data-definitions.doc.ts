@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `app import-custom-data-definitions` command:',
-      type: 'appimportcustomdatadefinitions',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `app import-custom-data-definitions` command:',
+    type: 'appimportcustomdatadefinitions',
+  },
   ],
   category: 'app',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

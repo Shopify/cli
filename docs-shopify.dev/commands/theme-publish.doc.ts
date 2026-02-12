@@ -26,14 +26,15 @@ If you want to publish your local theme, then you need to run \`shopify theme pu
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme publish` command:',
-      type: 'themepublish',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme publish` command:',
+    type: 'themepublish',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

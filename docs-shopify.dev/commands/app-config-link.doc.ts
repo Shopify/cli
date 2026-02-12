@@ -23,14 +23,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `app config link` command:',
-      type: 'appconfiglink',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `app config link` command:',
+    type: 'appconfiglink',
+  },
   ],
   category: 'app',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

@@ -39,14 +39,15 @@ You can run this command only in a directory that matches the [default Shopify t
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme dev` command:',
-      type: 'themedev',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme dev` command:',
+    type: 'themedev',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

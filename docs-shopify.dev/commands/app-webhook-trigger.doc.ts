@@ -35,14 +35,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `app webhook trigger` command:',
-      type: 'appwebhooktrigger',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `app webhook trigger` command:',
+    type: 'appwebhooktrigger',
+  },
   ],
   category: 'app',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

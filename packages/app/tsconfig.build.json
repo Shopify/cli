@@ -1,5 +1,8 @@
 {
-  "extends": "./tsconfig.json",
-  "exclude": ["**/*.test.ts"],
-  "references": [{"path": "../cli-kit"}, {"path": "../theme"}]
+    "extends": "./tsconfig.json",
+    "exclude": ["**/*.test.ts"],
+    "references": [
+      {"path": "../cli-kit"},
+      {"path": "../theme"}
+    ]
 }

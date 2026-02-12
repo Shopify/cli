@@ -22,14 +22,15 @@ If the metafields file already exists, it will be overwritten.`,
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `theme metafields pull` command:',
-      type: 'thememetafieldspull',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `theme metafields pull` command:',
+    type: 'thememetafieldspull',
+  },
   ],
   category: 'theme',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

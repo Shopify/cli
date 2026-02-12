@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `app env show` command:',
-      type: 'appenvshow',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `app env show` command:',
+    type: 'appenvshow',
+  },
   ],
   category: 'app',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

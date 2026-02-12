@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `app bulk cancel` command:',
-      type: 'appbulkcancel',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `app bulk cancel` command:',
+    type: 'appbulkcancel',
+  },
   ],
   category: 'app',
-  related: [],
+  related: [
+  ],
 }
 
 export default data

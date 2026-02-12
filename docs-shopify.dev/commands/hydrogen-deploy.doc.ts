@@ -20,14 +20,15 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-    {
-      title: 'Flags',
-      description: 'The following flags are available for the `hydrogen deploy` command:',
-      type: 'hydrogendeploy',
-    },
+  {
+    title: 'Flags',
+    description: 'The following flags are available for the `hydrogen deploy` command:',
+    type: 'hydrogendeploy',
+  },
   ],
   category: 'hydrogen',
-  related: [],
+  related: [
+  ],
 }
 
 export default data
