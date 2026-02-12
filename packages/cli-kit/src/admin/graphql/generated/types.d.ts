@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax, @nx/enforce-module-boundaries  */
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
+/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries  */
+import {JsonMapType} from '@shopify/cli-kit/shared/node/toml'
 
 export type Maybe<T> = T | null
 export type InputMaybe<T> = Maybe<T>

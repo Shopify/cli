@@ -8,7 +8,7 @@ async function refreshDocumentation(): Promise<void> {
   const project = new Project({
     tsConfigFilePath: 'tsconfig.json',
   })
-  const sourceFile = project.getSourceFileOrThrow('src/public/node/ui.tsx')
+  const sourceFile = project.getSourceFileOrThrow('src/shared/node/ui.tsx')
   const renderFunctions = sourceFile.getFunctions().filter((func) => func.getNameOrThrow().startsWith('render'))
 
   validateMissingExamples(renderFunctions, validationErrors)

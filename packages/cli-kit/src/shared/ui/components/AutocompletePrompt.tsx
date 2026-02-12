@@ -30,7 +30,6 @@ export interface AutocompletePromptProps<T> {
 
 const MIN_NUMBER_OF_ITEMS_FOR_SEARCH = 5
 
-// eslint-disable-next-line react/function-component-definition
 function AutocompletePrompt<T>({
   message,
   choices,

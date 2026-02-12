@@ -140,7 +140,7 @@ export function waitForContent(
   return waitFor(
     () => func(),
 
-    () => renderInstance.lastFrame()!.includes(content),
+    () => (renderInstance.lastFrame() ?? '').includes(content),
   )
 }
 

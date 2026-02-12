@@ -58,7 +58,6 @@ async function runTask<TContext>(task: Task<TContext>, ctx: TContext) {
 
 const noop = () => {}
 
-// eslint-disable-next-line react/function-component-definition
 function Tasks<TContext>({
   tasks,
   silent = isUnitTest(),

@@ -82,7 +82,6 @@ abstract class BaseCommand extends Command {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   protected exitWithTimestampWhenEnvVariablePresent() {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
       outputResult(`

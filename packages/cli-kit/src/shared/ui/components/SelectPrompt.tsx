@@ -18,7 +18,6 @@ export interface SelectPromptProps<T> {
   groupOrder?: string[]
 }
 
-// eslint-disable-next-line react/function-component-definition
 function SelectPrompt<T>({
   message,
   choices,
