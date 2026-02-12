@@ -1,6 +1,7 @@
 import {TerminalSession} from '../../services/terminal.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
 import {isTTY} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedSidekick} from '@shopify/cli-kit/node/session'
 import {Flags, Args} from '@oclif/core'
@@ -29,6 +30,14 @@ export default class Sidekick extends Command {
       description: 'Auto-approve all tool operations',
       default: false,
       env: 'SHOPIFY_FLAG_YOLO',
+    }),
+    path: Flags.string({
+      char: 'p',
+      description: 'The path to use as working directory',
+      env: 'SHOPIFY_FLAG_PATH',
+      parse: async (input) => resolvePath(input),
+      default: async () => cwd(),
+      noCacheDefault: true,
     }),
   }
 
@@ -79,6 +88,7 @@ export default class Sidekick extends Command {
       yolo: flags.yolo,
       interactive,
       stdinContent,
+      workingDirectory: flags.path,
     })
 
     try {

@@ -15,6 +15,7 @@ export interface TerminalSessionOptions {
   yolo: boolean
   interactive: boolean
   stdinContent?: string
+  workingDirectory?: string
 }
 
 export class TerminalSession {
@@ -23,6 +24,7 @@ export class TerminalSession {
   private readonly format: OutputFormat
   private readonly permissionOptions: PermissionOptions
   private readonly stdinContent: string | undefined
+  private readonly workingDirectory: string | undefined
 
   constructor(options: TerminalSessionOptions) {
     this.client = new SidekickClient({
@@ -30,13 +32,14 @@ export class TerminalSession {
       token: options.token,
       storeHandle: options.storeHandle,
     })
-    this.mcpManager = new MCPManager()
+    this.mcpManager = new MCPManager({workingDirectory: options.workingDirectory})
     this.format = options.format
     this.permissionOptions = {
       yolo: options.yolo,
       interactive: options.interactive,
     }
     this.stdinContent = options.stdinContent
+    this.workingDirectory = options.workingDirectory
   }
 
   async initialize(): Promise<void> {
@@ -83,14 +86,24 @@ export class TerminalSession {
   }
 
   private buildPrompt(prompt: string): string {
-    const cliContext = [
+    const cliContextLines = [
       '<cli_context>',
       'You are running inside the Shopify CLI terminal, not the admin web UI.',
       'The user is a developer interacting with you from their local machine.',
       'You have access to execute_shell_command to run commands on their system.',
       'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
       '</cli_context>',
-    ].join('\n')
+    ]
+
+    if (this.workingDirectory) {
+      cliContextLines.splice(
+        3,
+        0,
+        `The working directory is ${this.workingDirectory}. Use it as the default path for file operations unless the user specifies otherwise.`,
+      )
+    }
+
+    const cliContext = cliContextLines.join('\n')
 
     let fullPrompt = `${cliContext}\n\n${prompt}`
     if (this.stdinContent) {
@@ -99,7 +112,7 @@ export class TerminalSession {
 
     const toolsXML = this.mcpManager.formatToolsAsXML()
     if (toolsXML) {
-      fullPrompt = `${fullPrompt}\n\n${toolsXML}`
+      fullPrompt = `${fullPrompt}\n\n${toolsXML}\n\nYou can call these tools using execute_mcp_tool with tool_name set to "serverName_toolName" (e.g., "filesystem_read_file") and the appropriate arguments. Prefer these tools over execute_shell_command for file operations.`
     }
 
     return fullPrompt
@@ -200,15 +213,24 @@ export class TerminalSession {
           name: mcpToolName,
           serverName: serverName ?? '',
           arguments: mcpArguments,
+          annotations: this.mcpManager.getToolAnnotations(serverName ?? '', toolName),
         }
 
         // eslint-disable-next-line no-await-in-loop
         const permission = await checkToolPermission(toolRequest, this.permissionOptions)
         if (permission === 'approved') {
+          renderText({subdued: `  ▸ ${mcpToolName}`})
           // eslint-disable-next-line no-await-in-loop
           result = await this.mcpManager.executeToolCall(serverName ?? '', toolName, mcpArguments)
+          const output = (result.result as string) ?? (result.error as string) ?? ''
+          if (output.trim()) {
+            renderText({subdued: formatShellOutput(output)})
+          }
         } else {
-          result = {error: 'The user chose not to allow this tool call. Do not speculate about why — just ask if they would like to try something else.'}
+          result = {
+            error:
+              "The user chose not to allow this tool call. Don't speculate about why — just ask if they would like to try something else.",
+          }
         }
       } else if (toolCall.name === 'execute_shell_command') {
         // Server sends command/reason/working_directory at the top level of the SSE event
@@ -226,7 +248,10 @@ export class TerminalSession {
             renderText({subdued: formatShellOutput(output)})
           }
         } else {
-          result = {error: 'The user chose not to allow this command. Do not speculate about why — just ask if they would like to try something else.'}
+          result = {
+            error:
+              "The user chose not to allow this command. Don't speculate about why — just ask if they would like to try something else.",
+          }
         }
       } else {
         result = {error: `Unknown client tool: ${toolCall.name}`}
@@ -247,8 +272,9 @@ export class TerminalSession {
       const {promisify} = await import('util')
       const execAsync = promisify(exec)
       const options: {cwd?: string} = {}
-      if (workingDirectory) {
-        options.cwd = workingDirectory
+      const resolvedWorkingDirectory = workingDirectory ?? this.workingDirectory
+      if (resolvedWorkingDirectory) {
+        options.cwd = resolvedWorkingDirectory
       }
       const {stdout, stderr} = await execAsync(command, options)
       return {output: stdout, stderr, exit_code: 0}

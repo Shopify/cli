@@ -59,9 +59,7 @@ export async function checkShellPermission(
   }
 
   if (options.interactive) {
-    const prompt = reason
-      ? ['Run ', {command}, '  ', {subdued: `Purpose: ${reason}`}]
-      : ['Run ', {command}]
+    const prompt = reason ? ['Run ', {command}, '  ', {subdued: `Purpose: ${reason}`}] : ['Run ', {command}]
     const confirmed = await renderConfirmationPrompt({
       message: prompt,
     })
