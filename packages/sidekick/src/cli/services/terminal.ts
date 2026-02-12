@@ -211,6 +211,11 @@ export class TerminalSession {
       // eslint-disable-next-line no-await-in-loop
       const results = await this.processToolCalls(toolCalls)
 
+      // null means the user denied a permission prompt — stop the turn
+      if (results === null) {
+        break
+      }
+
       if (results.length > 0) {
         outputNewline()
         // eslint-disable-next-line no-await-in-loop
@@ -221,7 +226,7 @@ export class TerminalSession {
     outputHandler.onEnd()
   }
 
-  private async processToolCalls(toolCalls: ClientToolCall[]): Promise<ToolCallResult[]> {
+  private async processToolCalls(toolCalls: ClientToolCall[]): Promise<ToolCallResult[] | null> {
     const results: ToolCallResult[] = []
 
     for (const toolCall of toolCalls) {
@@ -254,10 +259,7 @@ export class TerminalSession {
             renderText({subdued: formatShellOutput(output)})
           }
         } else {
-          result = {
-            error:
-              "The user chose not to allow this tool call. Don't speculate about why — just ask if they would like to try something else.",
-          }
+          return null
         }
       } else if (toolCall.name === 'execute_shell_command') {
         // Server sends command/reason/working_directory at the top level of the SSE event
@@ -275,10 +277,7 @@ export class TerminalSession {
             renderText({subdued: formatShellOutput(output)})
           }
         } else {
-          result = {
-            error:
-              "The user chose not to allow this command. Don't speculate about why — just ask if they would like to try something else.",
-          }
+          return null
         }
       } else {
         result = {error: `Unknown client tool: ${toolCall.name}`}
