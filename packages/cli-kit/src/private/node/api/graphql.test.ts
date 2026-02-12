@@ -1,4 +1,5 @@
 import {
+  buildObserveUrl,
   errorHandler,
   extractErrorMessages,
   extractGraphQLErrorMeta,
@@ -9,7 +10,7 @@ import {
 import {GraphQLClientError} from './headers.js'
 import {AbortError} from '../../../public/node/error.js'
 import {ClientError} from 'graphql-request'
-import {describe, test, expect} from 'vitest'
+import {describe, test, expect, afterEach} from 'vitest'
 
 describe('extractErrorMessages', () => {
   test('extracts messages from a standard GraphQL error array', () => {
@@ -209,14 +210,13 @@ describe('findCommonPathPrefix', () => {
 
 describe('stripDeploymentPrefix', () => {
   test('strips everything before "components/" in a Shopify monorepo path', () => {
-    const path = '/Users/mitch/world/trees/root/src/areas/core/shopify/components/apps/framework/app/services/pipeline.rb'
+    const path =
+      '/Users/mitch/world/trees/root/src/areas/core/shopify/components/apps/framework/app/services/pipeline.rb'
     expect(stripDeploymentPrefix(path)).toBe('components/apps/framework/app/services/pipeline.rb')
   })
 
   test('works with any deployment root before components/', () => {
-    expect(stripDeploymentPrefix('/app/src/areas/core/shopify/components/apps/file.rb')).toBe(
-      'components/apps/file.rb',
-    )
+    expect(stripDeploymentPrefix('/app/src/areas/core/shopify/components/apps/file.rb')).toBe('components/apps/file.rb')
     expect(stripDeploymentPrefix('/home/deploy/components/gems/my_gem/lib/file.rb')).toBe(
       'components/gems/my_gem/lib/file.rb',
     )
@@ -361,12 +361,32 @@ describe('errorHandler', () => {
       expect(result.nextSteps).toBeUndefined()
     })
 
-    test('includes a Request ID custom section', () => {
+    test('includes a Request ID custom section with link in production', () => {
+      const originalEnv = process.env.SHOPIFY_CLOUD_ENVIRONMENT
+      process.env.SHOPIFY_CLOUD_ENVIRONMENT = 'production'
       const result = handler(buildRealisticServerError()) as AbortError
 
       const requestIdSection = result.customSections?.find((sec) => sec.title === 'Request ID')
       expect(requestIdSection).toBeDefined()
       expect(JSON.stringify(requestIdSection!.body)).toContain('57c09886-d853-485a-85a2-a556229304c2')
+      expect(JSON.stringify(requestIdSection!.body)).toContain('observe.shopify.io')
+
+      if (originalEnv === undefined) {
+        delete process.env.SHOPIFY_CLOUD_ENVIRONMENT
+      } else {
+        process.env.SHOPIFY_CLOUD_ENVIRONMENT = originalEnv
+      }
+    })
+
+    test('includes a Request ID custom section with command in local development', () => {
+      delete process.env.SHOPIFY_CLOUD_ENVIRONMENT
+      const result = handler(buildRealisticServerError()) as AbortError
+
+      const requestIdSection = result.customSections?.find((sec) => sec.title === 'Request ID')
+      expect(requestIdSection).toBeDefined()
+      const body = JSON.stringify(requestIdSection!.body)
+      expect(body).toContain('57c09886-d853-485a-85a2-a556229304c2')
+      expect(body).toContain('Search logs: rg -u 57c09886-d853-485a-85a2-a556229304c2 path/to/shopify/log')
     })
 
     test('includes an Exception custom section with class and stripped source path', () => {
@@ -377,9 +397,7 @@ describe('errorHandler', () => {
       const body = JSON.stringify(exceptionSection!.body)
       expect(body).toContain('PublicMessageError')
       // Paths start from the "components/" structural boundary
-      expect(body).toContain(
-        'components/apps/framework/app/services/apps/operations/static_asset_pipeline.rb:37',
-      )
+      expect(body).toContain('components/apps/framework/app/services/apps/operations/static_asset_pipeline.rb:37')
       expect(body).not.toContain('/Users/mitch/world/trees/root/')
     })
 
@@ -393,9 +411,7 @@ describe('errorHandler', () => {
       expect(body).toContain('Kernel#throw')
       expect(body).toContain('StaticAssetPipeline.perform')
       // Paths start from the "components/" structural boundary
-      expect(body).toContain(
-        'components/apps/framework/app/services/apps/operations/static_asset_pipeline.rb:37',
-      )
+      expect(body).toContain('components/apps/framework/app/services/apps/operations/static_asset_pipeline.rb:37')
       expect(body).not.toContain('/Users/mitch/world/trees/root/')
     })
 
@@ -481,12 +497,20 @@ describe('errorHandler', () => {
     })
 
     test('enriches client errors with custom sections when extensions are present', () => {
+      const originalEnv = process.env.SHOPIFY_CLOUD_ENVIRONMENT
+      process.env.SHOPIFY_CLOUD_ENVIRONMENT = 'production'
       const errors = [{message: 'err', extensions: {request_id: 'client-req-id'}}]
       const result = handler(buildClientError(400, errors)) as GraphQLClientError
 
       const requestIdSection = result.customSections?.find((sec) => sec.title === 'Request ID')
       expect(requestIdSection).toBeDefined()
       expect(JSON.stringify(requestIdSection!.body)).toContain('client-req-id')
+
+      if (originalEnv === undefined) {
+        delete process.env.SHOPIFY_CLOUD_ENVIRONMENT
+      } else {
+        process.env.SHOPIFY_CLOUD_ENVIRONMENT = originalEnv
+      }
     })
 
     test('preserves the original errors array', () => {
@@ -500,5 +524,77 @@ describe('errorHandler', () => {
     const error = new Error('some other error')
     const result = handler(error)
     expect(result).toBe(error)
+  })
+})
+
+describe('buildObserveUrl', () => {
+  const originalEnv = process.env.SHOPIFY_CLOUD_ENVIRONMENT
+
+  afterEach(() => {
+    if (originalEnv === undefined) {
+      delete process.env.SHOPIFY_CLOUD_ENVIRONMENT
+    } else {
+      process.env.SHOPIFY_CLOUD_ENVIRONMENT = originalEnv
+    }
+  })
+
+  test('returns production URL when SHOPIFY_CLOUD_ENVIRONMENT is production', () => {
+    process.env.SHOPIFY_CLOUD_ENVIRONMENT = 'production'
+    expect(buildObserveUrl('abc-123')).toBe('https://observe.shopify.io/a/observe/investigate/query?request_id=abc-123')
+  })
+
+  test('returns undefined when SHOPIFY_CLOUD_ENVIRONMENT is not production', () => {
+    process.env.SHOPIFY_CLOUD_ENVIRONMENT = 'development'
+    expect(buildObserveUrl('abc-123')).toBeUndefined()
+  })
+
+  test('returns undefined when SHOPIFY_CLOUD_ENVIRONMENT is not set', () => {
+    delete process.env.SHOPIFY_CLOUD_ENVIRONMENT
+    expect(buildObserveUrl('xyz-456')).toBeUndefined()
+  })
+
+  test('properly encodes request ID in URL', () => {
+    process.env.SHOPIFY_CLOUD_ENVIRONMENT = 'production'
+    const requestId = '57c09886-d853-485a-85a2-a556229304c2'
+    const url = buildObserveUrl(requestId)
+    expect(url).toBe(`https://observe.shopify.io/a/observe/investigate/query?request_id=${requestId}`)
+  })
+})
+
+describe('errorHandler with multiple API types', () => {
+  test('works with Partners API errors', () => {
+    const handler = errorHandler('Partners')
+    const errors = [{message: 'Organization not found'}]
+    const result = handler(buildClientError(404, errors)) as GraphQLClientError
+
+    expect(result.message).toContain('Partners')
+    expect(result.message).toContain('Organization not found')
+  })
+
+  test('works with Admin API errors', () => {
+    const handler = errorHandler('Admin')
+    const errors = [{message: 'Shop not found'}]
+    const result = handler(buildClientError(404, errors)) as GraphQLClientError
+
+    expect(result.message).toContain('Admin')
+    expect(result.message).toContain('Shop not found')
+  })
+
+  test('works with generic API names', () => {
+    const handler = errorHandler('My Custom API')
+    const errors = [{message: 'Resource not found'}]
+    const result = handler(buildClientError(404, errors)) as GraphQLClientError
+
+    expect(result.message).toContain('My Custom API')
+    expect(result.message).toContain('Resource not found')
+  })
+
+  test('server error messages include API name', () => {
+    const handler = errorHandler('Partners')
+    const errors = [{message: 'Internal server error'}]
+    const result = handler(buildClientError(500, errors)) as AbortError
+
+    expect(result.message).toContain('Partners')
+    expect(result.message).toContain('500')
   })
 })

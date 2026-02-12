@@ -70,13 +70,13 @@ function sanitizeDeepVariables(value: unknown, sensitiveKeys: string[]): unknown
 // Maximum number of stack trace entries to show before truncating
 const MAX_STACK_ENTRIES = 8
 
-export interface ParsedStackEntry {
+interface ParsedStackEntry {
   method: string
   file: string
   line: string | undefined
 }
 
-export interface GraphQLErrorMeta {
+interface GraphQLErrorMeta {
   requestId: string | undefined
   exceptionClass: string | undefined
   sourceFile: string | undefined
@@ -89,7 +89,6 @@ export interface GraphQLErrorMeta {
  * Filters out empty strings and deduplicates messages.
  */
 export function extractErrorMessages(errors: unknown): string[] {
-  console.log('errors', errors)
   if (!Array.isArray(errors)) return []
   const seen = new Set<string>()
   return errors
@@ -268,11 +267,25 @@ function shortenRubyMethod(method: string): string {
 function formatStackEntry(entry: ParsedStackEntry): TokenItem<InlineToken> {
   const location = entry.line ? `${entry.file}:${entry.line}` : entry.file
   if (entry.method && entry.file) {
-    return [entry.method, '\n', {filePath: location}]
+    return [entry.method, ' at ', {filePath: location}]
   }
   if (entry.method) return entry.method
   if (entry.file) return {filePath: location}
   return '<unknown>'
+}
+
+/**
+ * Builds the Observe logs URL for a request ID.
+ * Returns the production Observe URL. For local development, returns undefined since logs
+ * are not sent to Observe and should be viewed in the terminal output instead.
+ */
+export function buildObserveUrl(requestId: string): string | undefined {
+  // When running locally (not in production), logs are not written to Observe.
+  // They can be found in the terminal output where the CLI command was executed.
+  if (process.env.SHOPIFY_CLOUD_ENVIRONMENT !== 'production') {
+    return undefined
+  }
+  return `https://observe.shopify.io/a/observe/investigate/query?request_id=${requestId}`
 }
 
 /**
@@ -282,12 +295,24 @@ function formatStackEntry(entry: ParsedStackEntry): TokenItem<InlineToken> {
 function buildErrorCustomSections(meta: GraphQLErrorMeta, resolvedRequestId: string | undefined): CustomSection[] {
   const sections: CustomSection[] = []
 
-  // Request ID — prominent, in info color for easy copy-paste
   if (resolvedRequestId) {
-    sections.push({
-      title: 'Request ID',
-      body: {info: resolvedRequestId},
-    })
+    const observeUrl = buildObserveUrl(resolvedRequestId)
+    if (observeUrl) {
+      sections.push({
+        title: 'Request ID',
+        body: {link: {label: resolvedRequestId, url: observeUrl}},
+      })
+    } else {
+      // Local development: Check if we're in the Shopify monorepo or using CLI externally
+      sections.push({
+        title: 'Request ID',
+        body: [
+          {subdued: resolvedRequestId},
+          '\n',
+          {subdued: `Search logs: rg -u ${resolvedRequestId} path/to/shopify/log`},
+        ],
+      })
+    }
   }
 
   // Exception class and source location
