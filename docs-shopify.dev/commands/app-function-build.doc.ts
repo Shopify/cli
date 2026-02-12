@@ -20,15 +20,14 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `app function build` command:',
-    type: 'appfunctionbuild',
-  },
+    {
+      title: 'Flags',
+      description: 'The following flags are available for the `app function build` command:',
+      type: 'appfunctionbuild',
+    },
   ],
   category: 'app',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

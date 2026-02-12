@@ -25,7 +25,9 @@ vi.mock('@shopify/cli-kit/shared/node/import-extractor', () => ({
 
 // Mock fs module for fileExistsSync
 vi.mock('@shopify/cli-kit/shared/node/fs', async () => {
-  const actual = await vi.importActual<typeof import('@shopify/cli-kit/shared/node/fs')>('@shopify/cli-kit/shared/node/fs')
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/shared/node/fs')>(
+    '@shopify/cli-kit/shared/node/fs',
+  )
   return {
     ...actual,
     fileExistsSync: vi.fn(),

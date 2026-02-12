@@ -32,7 +32,15 @@ import {
   PackageJson,
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/shared/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {
+  inTemporaryDirectory,
+  moveFile,
+  mkdir,
+  mkTmpDir,
+  rmdir,
+  writeFile,
+  readFile,
+} from '@shopify/cli-kit/shared/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/shared/node/path'
 import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'

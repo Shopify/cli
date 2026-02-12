@@ -7,8 +7,5 @@
     "rootDir": "src",
     "tsBuildInfoFile": "dist/tsconfig.tsbuildinfo"
   },
-  "references": [
-    {"path": "../cli-kit"},
-    {"path": "../plugin-did-you-mean"}
-  ]
+  "references": [{"path": "../cli-kit"}, {"path": "../plugin-did-you-mean"}]
 }

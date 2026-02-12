@@ -1,18 +1,18 @@
-name: "Run and save test coverage"
-description: "Runs unit tests in coverage mode, merges results across packages, and uploads for future comparisons"
+name: 'Run and save test coverage'
+description: 'Runs unit tests in coverage mode, merges results across packages, and uploads for future comparisons'
 inputs:
   branch-name:
     required: true
-    description: "Name of the branch being tested"
+    description: 'Name of the branch being tested'
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Unit tests with coverage
       run: pnpm vitest run --coverage --reporter json --outputFile ./coverage/report.json
       shell: bash
       env:
-        VITEST_MIN_THREADS: "1"
-        VITEST_MAX_THREADS: "4"
+        VITEST_MIN_THREADS: '1'
+        VITEST_MAX_THREADS: '4'
     - name: Convert coverage to Jest
       run: ./bin/save-coverage-file.js
       shell: bash
@@ -23,7 +23,7 @@ runs:
     - name: Clean ref name
       shell: bash
       env:
-        SAFE_REF_NAME: "${{ inputs.branch-name }}"
+        SAFE_REF_NAME: '${{ inputs.branch-name }}'
       run: |
         SAFE_REF_NAME="${SAFE_REF_NAME//[\/.]/}"
         echo "SAFE_REF_NAME=${SAFE_REF_NAME}" >> $GITHUB_ENV

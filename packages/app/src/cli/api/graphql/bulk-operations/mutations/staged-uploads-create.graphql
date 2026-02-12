@@ -14,4 +14,3 @@ mutation StagedUploadsCreate($input: [StagedUploadInput!]!) {
     }
   }
 }
-

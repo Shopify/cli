@@ -5,7 +5,7 @@ up:
       version: 24.1.0
       package_manager: pnpm@10.11.1
   - packages:
-    - jq
+      - jq
   - custom:
       name: 'Install PNPM dependencies'
       # we flip these two conditions to always run `pnpm install`

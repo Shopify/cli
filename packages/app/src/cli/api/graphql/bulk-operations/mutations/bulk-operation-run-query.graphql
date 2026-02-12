@@ -1,7 +1,5 @@
 mutation BulkOperationRunQuery($query: String!) {
-  bulkOperationRunQuery(
-    query: $query
-  ) {
+  bulkOperationRunQuery(query: $query) {
     bulkOperation {
       type
       completedAt
@@ -20,4 +18,3 @@ mutation BulkOperationRunQuery($query: String!) {
     }
   }
 }
-

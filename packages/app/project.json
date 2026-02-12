@@ -50,7 +50,7 @@
     "graphql-codegen:formatting": {
       "executor": "nx:run-commands",
       "dependsOn": ["graphql-codegen:postfix"],
-      "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
+      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",
@@ -82,31 +82,31 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/partners/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=partners"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=partners"],
         "cwd": "{workspaceRoot}"
       }
     },
     "graphql-codegen:generate:business-platform-destinations": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"],
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/business-platform-destinations/**/*.graphql"
+      ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=businessPlatformDestinations"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=businessPlatformDestinations"],
         "cwd": "{workspaceRoot}"
       }
     },
     "graphql-codegen:generate:business-platform-organizations": {
       "executor": "nx:run-commands",
-      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/business-platform-organizations/**/*.graphql"],
+      "inputs": [
+        "{workspaceRoot}/graphql.config.ts",
+        "{projectRoot}/src/cli/api/graphql/business-platform-organizations/**/*.graphql"
+      ],
       "outputs": ["{projectRoot}/src/cli/api/graphql/business-platform-organizations/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=businessPlatformOrganizations"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=businessPlatformOrganizations"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -115,9 +115,7 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-dev/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/app-dev/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=appDev"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=appDev"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -126,9 +124,7 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/webhooks/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/webhooks/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=webhooks"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=webhooks"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -137,9 +133,7 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/app-management/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/app-management/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=appManagement"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=appManagement"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -148,9 +142,7 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/functions/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/functions/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=functions"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=functions"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -159,9 +151,7 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/bulk-operations/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/bulk-operations/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=bulkOperations"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=bulkOperations"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -170,9 +160,7 @@
       "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"],
       "outputs": ["{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=adminAsApp"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=adminAsApp"],
         "cwd": "{workspaceRoot}"
       }
     },
@@ -189,7 +177,7 @@
         "graphql-codegen:generate:bulk-operations",
         "graphql-codegen:generate:admin-as-app"
       ],
-      "inputs": [{ "dependentTasksOutputFiles": "**/*.ts" }],
+      "inputs": [{"dependentTasksOutputFiles": "**/*.ts"}],
       "outputs": [
         "{projectRoot}/src/cli/api/graphql/partners/generated/**/*.ts",
         "{projectRoot}/src/cli/api/graphql/business-platform-destinations/generated/**/*.ts",

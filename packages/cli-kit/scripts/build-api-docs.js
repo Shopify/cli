@@ -8,8 +8,9 @@ const __dirname = path.dirname(__filename)
 
 async function main() {
   const cliKitRoot = path.join(__dirname, '..')
-  const entryPoints = (await glob('src/public/**/*.(ts|tsx)', {cwd: cliKitRoot}))
-    .filter((file) => !file.endsWith('.test.ts') && !file.endsWith('.test.tsx'))
+  const entryPoints = (await glob('src/public/**/*.(ts|tsx)', {cwd: cliKitRoot})).filter(
+    (file) => !file.endsWith('.test.ts') && !file.endsWith('.test.tsx'),
+  )
 
   const app = await TypeDocApp.bootstrapWithPlugins({
     excludeExternals: true,

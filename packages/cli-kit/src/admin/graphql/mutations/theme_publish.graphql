@@ -5,7 +5,7 @@ mutation themePublish($id: ID!) {
       name
       role
     }
-    userErrors{
+    userErrors {
       field
       message
     }

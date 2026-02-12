@@ -1,6 +1,6 @@
 mutation ProvisionShopAccess($input: OrganizationUserProvisionShopAccessInput!) {
   organizationUserProvisionShopAccess(organizationUserProvisionShopAccessInput: $input) {
-    success,
+    success
     userErrors {
       message
     }

@@ -10,10 +10,8 @@ on:
     - cron: '31 3 * * *' # randomly chosen time of day
   workflow_dispatch:
 
-
 jobs:
   stale:
-
     runs-on: ubuntu-latest
     permissions:
       issues: write

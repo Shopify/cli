@@ -22,15 +22,14 @@ If no theme is specified, then you're prompted to select the theme to pull from 
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `theme pull` command:',
-    type: 'themepull',
-  },
+    {
+      title: 'Flags',
+      description: 'The following flags are available for the `theme pull` command:',
+      type: 'themepull',
+    },
   ],
   category: 'theme',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

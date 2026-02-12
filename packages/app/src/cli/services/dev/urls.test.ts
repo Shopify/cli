@@ -20,7 +20,12 @@ import {AppLinkedInterface} from '../../models/app/app.js'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/shared/node/tcp'
-import {codespacePortForwardingDomain, codespaceURL, gitpodURL, isUnitTest} from '@shopify/cli-kit/shared/node/context/local'
+import {
+  codespacePortForwardingDomain,
+  codespaceURL,
+  gitpodURL,
+  isUnitTest,
+} from '@shopify/cli-kit/shared/node/context/local'
 import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/shared/node/system'
 

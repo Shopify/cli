@@ -24,11 +24,9 @@ const data: ReferenceEntityTemplateSchema = {
       title: 'config autocorrect status',
     },
   },
-  definitions: [
-  ],
+  definitions: [],
   category: 'general commands',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

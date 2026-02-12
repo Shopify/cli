@@ -3,16 +3,18 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "__comment": "//All versions must be fixed, we read cli-kit version and assume all other packages have the same one//",
-  "fixed": [[
-    "@shopify/cli",
-    "@shopify/app",
-    "@shopify/create-app",
-    "@shopify/cli-kit",
-    "@shopify/theme",
-    "@shopify/ui-extensions-dev-console-app",
-    "@shopify/plugin-cloudflare",
-    "@shopify/plugin-did-you-mean"
-  ]],
+  "fixed": [
+    [
+      "@shopify/cli",
+      "@shopify/app",
+      "@shopify/create-app",
+      "@shopify/cli-kit",
+      "@shopify/theme",
+      "@shopify/ui-extensions-dev-console-app",
+      "@shopify/plugin-cloudflare",
+      "@shopify/plugin-did-you-mean"
+    ]
+  ],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

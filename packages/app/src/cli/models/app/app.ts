@@ -18,7 +18,11 @@ import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configurati
 import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/shared/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/shared/node/dot-env'
-import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {
+  getDependencies,
+  PackageManager,
+  readAndParsePackageJson,
+} from '@shopify/cli-kit/shared/node/node-package-manager'
 import {
   fileExistsSync,
   fileRealPath,

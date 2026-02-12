@@ -10,10 +10,7 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
   const basePath = graphqlBasePath(name, project)
   return {
     schema: `${basePath}/${schemaName}`,
-    documents: [
-      `${basePath}/queries/**/*.graphql`,
-      `${basePath}/mutations/**/*.graphql`,
-    ],
+    documents: [`${basePath}/queries/**/*.graphql`, `${basePath}/mutations/**/*.graphql`],
     extensions: {
       codegen: {
         generates: {

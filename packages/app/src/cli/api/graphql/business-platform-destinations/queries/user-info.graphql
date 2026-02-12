@@ -2,7 +2,7 @@ query UserInfo {
   currentUserAccount {
     uuid
     email
-    organizations(first: 2){
+    organizations(first: 2) {
       nodes {
         name
       }

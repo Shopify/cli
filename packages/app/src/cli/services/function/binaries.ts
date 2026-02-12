@@ -1,5 +1,12 @@
 import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
-import {chmod, createFileWriteStream, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/shared/node/fs'
+import {
+  chmod,
+  createFileWriteStream,
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+} from '@shopify/cli-kit/shared/node/fs'
 import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/shared/common/retry'
 import {fetch} from '@shopify/cli-kit/shared/node/http'

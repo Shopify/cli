@@ -15,7 +15,7 @@ query AppVersions($appId: ID!) {
           createdBy
           metadata {
             message
-              versionTag
+            versionTag
           }
         }
       }

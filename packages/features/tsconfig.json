@@ -6,7 +6,5 @@
     "outDir": "dist",
     "types": ["node", "vitest/importMeta"]
   },
-  "references": [
-    {"path": "../cli-kit"}
-  ]
+  "references": [{"path": "../cli-kit"}]
 }

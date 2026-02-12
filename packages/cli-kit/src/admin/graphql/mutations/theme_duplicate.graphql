@@ -1,4 +1,4 @@
- mutation themeDuplicate($id: ID!, $name: String) {
+mutation themeDuplicate($id: ID!, $name: String) {
   themeDuplicate(id: $id, name: $name) {
     newTheme {
       id

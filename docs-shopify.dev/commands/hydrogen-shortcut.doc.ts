@@ -37,11 +37,9 @@ const data: ReferenceEntityTemplateSchema = {
       title: 'hydrogen shortcut',
     },
   },
-  definitions: [
-  ],
+  definitions: [],
   category: 'hydrogen',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

@@ -20,4 +20,3 @@ mutation BulkOperationCancel($id: ID!) {
     }
   }
 }
-

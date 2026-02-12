@@ -1,4 +1,3 @@
-
 query getTheme($id: ID!) {
   theme(id: $id) {
     id

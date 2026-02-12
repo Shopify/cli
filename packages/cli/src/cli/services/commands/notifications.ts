@@ -9,7 +9,13 @@ import {
   fetchNotifications,
 } from '@shopify/cli-kit/shared/node/notifications-system'
 import {outputInfo} from '@shopify/cli-kit/shared/node/output'
-import {renderSelectPrompt, renderTextPrompt, renderSuccess, renderTable, TableColumn} from '@shopify/cli-kit/shared/node/ui'
+import {
+  renderSelectPrompt,
+  renderTextPrompt,
+  renderSuccess,
+  renderTable,
+  TableColumn,
+} from '@shopify/cli-kit/shared/node/ui'
 
 export async function generate() {
   const today = new Date()

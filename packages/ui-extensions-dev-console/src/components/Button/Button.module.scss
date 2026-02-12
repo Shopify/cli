@@ -3,7 +3,7 @@
 
   padding: 0.3rem 0.8rem;
 
-  display:flex;
+  display: flex;
   gap: 0.6rem;
 
   line-height: 2rem;
@@ -28,8 +28,7 @@
     background: var(--dc-color-grey-600);
   }
 
-  &[aria-pressed=true] {
+  &[aria-pressed='true'] {
     background-color: var(--dc-color-blue-500);
   }
 }
-

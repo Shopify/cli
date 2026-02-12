@@ -22,15 +22,14 @@ This command reuses the existing linked app and organization and skips all inter
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `app config pull` command:',
-    type: 'appconfigpull',
-  },
+    {
+      title: 'Flags',
+      description: 'The following flags are available for the `app config pull` command:',
+      type: 'appconfigpull',
+    },
   ],
   category: 'app',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

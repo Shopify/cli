@@ -19,11 +19,9 @@ const data: ReferenceEntityTemplateSchema = {
       title: 'auth logout',
     },
   },
-  definitions: [
-  ],
+  definitions: [],
   category: 'general commands',
-  related: [
-  ],
+  related: [],
 }
 
 export default data

@@ -1,49 +1,49 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
+  - package-ecosystem: 'npm'
     versioning-strategy: increase
     directories:
-      - "/"
-      - "packages/*"
+      - '/'
+      - 'packages/*'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     labels:
-      - "dependencies"
+      - 'dependencies'
     open-pull-requests-limit: 100
     pull-request-branch-name:
-      separator: "-"
+      separator: '-'
     ignore:
-      - dependency-name: "fs-extra"
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'fs-extra'
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     groups:
       oclif:
         patterns:
-          - "oclif"
-          - "@oclif/*"
+          - 'oclif'
+          - '@oclif/*'
       nx:
         patterns:
-          - "nx"
-          - "@nx/*"
+          - 'nx'
+          - '@nx/*'
       esbuild:
         patterns:
-          - "esbuild"
+          - 'esbuild'
       babel:
         patterns:
-          - "@babel/*"
+          - '@babel/*'
       typescript:
         patterns:
-          - "typescript"
+          - 'typescript'
       minor_versions:
-        dependency-type: "production"
+        dependency-type: 'production'
         update-types:
           - 'minor'
           - 'patch'
         exclude-patterns:
-          - "ink"
-          - "react"
+          - 'ink'
+          - 'react'
       development_dependencies:
-        dependency-type: "development"
+        dependency-type: 'development'
         update-types:
           - 'minor'
           - 'patch'

@@ -20,15 +20,14 @@ const data: ReferenceEntityTemplateSchema = {
     },
   },
   definitions: [
-  {
-    title: 'Flags',
-    description: 'The following flags are available for the `hydrogen customer-account-push` command:',
-    type: 'hydrogencustomeraccountpush',
-  },
+    {
+      title: 'Flags',
+      description: 'The following flags are available for the `hydrogen customer-account-push` command:',
+      type: 'hydrogencustomeraccountpush',
+    },
   ],
   category: 'hydrogen',
-  related: [
-  ],
+  related: [],
 }
 
 export default data
