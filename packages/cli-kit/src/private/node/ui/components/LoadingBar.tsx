@@ -1,6 +1,7 @@
 import {TextAnimation} from './TextAnimation.js'
 import useLayout from '../hooks/use-layout.js'
 import {shouldDisplayColors} from '../../../../public/node/output.js'
+import {ciPlatform} from '../../../../public/node/context/local.js'
 import React from 'react'
 import {Box, Text} from 'ink'
 
@@ -15,6 +16,7 @@ interface LoadingBarProps {
 
 const LoadingBar = ({title, noColor, noProgressBar}: React.PropsWithChildren<LoadingBarProps>) => {
   const {twoThirds} = useLayout()
+  const showProgressBar = !noProgressBar && !ciPlatform().isCI
   let loadingBar = new Array(twoThirds).fill(loadingBarChar).join('')
   if (noColor ?? !shouldDisplayColors()) {
     loadingBar = hillString.repeat(Math.ceil(twoThirds / hillString.length))
@@ -22,7 +24,7 @@ const LoadingBar = ({title, noColor, noProgressBar}: React.PropsWithChildren<Loa
 
   return (
     <Box flexDirection="column">
-      {!noProgressBar && <TextAnimation text={loadingBar} maxWidth={twoThirds} />}
+      {showProgressBar && <TextAnimation text={loadingBar} maxWidth={twoThirds} />}
       <Text>{title} ...</Text>
     </Box>
   )

@@ -1,6 +1,7 @@
 import {LoadingBar} from './LoadingBar.js'
 import {render} from '../../testing/ui.js'
 import {shouldDisplayColors, unstyled} from '../../../../public/node/output.js'
+import {ciPlatform} from '../../../../public/node/context/local.js'
 import useLayout from '../hooks/use-layout.js'
 import React from 'react'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -13,6 +14,13 @@ vi.mock('../../../../public/node/output.js', async () => {
     shouldDisplayColors: vi.fn(),
   }
 })
+vi.mock('../../../../public/node/context/local.js', async () => {
+  const original: any = await vi.importActual('../../../../public/node/context/local.js')
+  return {
+    ...original,
+    ciPlatform: vi.fn(),
+  }
+})
 
 beforeEach(() => {
   // Default terminal width
@@ -22,6 +30,7 @@ beforeEach(() => {
     fullWidth: 80,
   })
   vi.mocked(shouldDisplayColors).mockReturnValue(true)
+  vi.mocked(ciPlatform).mockReturnValue({isCI: false})
 })
 
 describe('LoadingBar', () => {
@@ -215,5 +224,17 @@ describe('LoadingBar', () => {
 
     // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`"task 1 ..."`)
+  })
+
+  test('hides progress bar in CI environments', async () => {
+    // Given
+    vi.mocked(ciPlatform).mockReturnValue({isCI: true, name: 'github', metadata: {}})
+    const title = 'Deploying app'
+
+    // When
+    const {lastFrame} = render(<LoadingBar title={title} />)
+
+    // Then
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`"Deploying app ..."`)
   })
 })
