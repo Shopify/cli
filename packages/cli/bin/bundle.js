@@ -6,7 +6,7 @@ import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-ki
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
 import {createRequire} from 'module'
 
 const require = createRequire(import.meta.url)

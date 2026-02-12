@@ -15,14 +15,14 @@ import {
   renderSingleTask,
   renderTextPrompt,
   renderWarning,
-} from '../../src/public/node/ui.js'
-import {outputContent, unstyled} from '../../src/public/node/output.js'
-import {AbortError, BugError} from '../../src/public/node/error.js'
-import {AbortSignal} from '../../src/public/node/abort.js'
-import {Stdout} from '../../src/private/node/ui.js'
-import {Stdin, waitFor} from '../../src/private/node/testing/ui.js'
+} from '../../src/shared/node/ui.js'
+import {outputContent, unstyled} from '../../src/shared/node/output.js'
+import {AbortError, BugError} from '../../src/shared/node/error.js'
+import {AbortSignal} from '../../src/shared/node/abort.js'
+import {Stdout} from '../../src/shared/ui/ui.js'
+import {Stdin, waitFor} from '../../src/shared/ui/testing.js'
 import {Writable} from 'node:stream'
-import { sleep } from '../../src/public/node/system.js'
+import { sleep } from '../../src/shared/node/system.js'
 
 interface Example {
   type: 'static' | 'async' | 'prompt'

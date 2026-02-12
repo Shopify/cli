@@ -23,7 +23,7 @@
         "{projectRoot}/src/**/*"
       ],
       "options": {
-        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "command": "pnpm tsc -b ./tsconfig.build.json && node scripts/generate-compat.mjs",
         "cwd": "packages/cli-kit"
       }
     },

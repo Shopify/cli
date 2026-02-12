@@ -64,7 +64,19 @@
       "node": "./dist/shared/*.js",
       "types": "./dist/shared/*.d.ts"
     },
-    "./assets/*": "./assets/*"
+    "./assets/*": "./assets/*",
+    "./node/*": {
+      "node": "./dist/compat/node/*.js",
+      "types": "./dist/compat/node/*.d.ts"
+    },
+    "./common/*": {
+      "node": "./dist/compat/common/*.js",
+      "types": "./dist/compat/common/*.d.ts"
+    },
+    "./testing/*": {
+      "node": "./dist/compat/testing/*.js",
+      "types": "./dist/compat/testing/*.d.ts"
+    }
   },
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

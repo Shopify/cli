@@ -1,5 +1,5 @@
 import {examples} from './documentation/examples.js'
-import {unstyled} from '../src/public/node/output.js'
+import {unstyled} from '../src/shared/node/output.js'
 import {FunctionDeclaration, JSDocTag, Project} from 'ts-morph'
 import difference from 'lodash/difference.js'
 
