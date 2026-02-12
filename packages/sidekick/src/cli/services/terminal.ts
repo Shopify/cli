@@ -304,11 +304,12 @@ export class TerminalSession {
       const {exec} = await import('child_process')
       const {promisify} = await import('util')
       const execAsync = promisify(exec)
-      const options: {cwd?: string} = {}
+      const options: {cwd?: string; env?: NodeJS.ProcessEnv} = {}
       const resolvedWorkingDirectory = workingDirectory ?? this.workingDirectory
       if (resolvedWorkingDirectory) {
         options.cwd = resolvedWorkingDirectory
       }
+      options.env = {...process.env, CI: 'true'}
       const {stdout, stderr} = await execAsync(command, options)
       return {output: stdout, stderr, exit_code: 0}
       // eslint-disable-next-line no-catch-all/no-catch-all
