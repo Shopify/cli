@@ -66,7 +66,7 @@ export class TerminalSession {
         }
 
         // eslint-disable-next-line no-await-in-loop
-        await this.sendAndProcess(prompt)
+        await this.sendAndProcess(this.buildPrompt(prompt))
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
         // User cancelled (Ctrl+C)
@@ -83,9 +83,18 @@ export class TerminalSession {
   }
 
   private buildPrompt(prompt: string): string {
-    let fullPrompt = prompt
+    const cliContext = [
+      '<cli_context>',
+      'You are running inside the Shopify CLI terminal, not the admin web UI.',
+      'The user is a developer interacting with you from their local machine.',
+      'You have access to execute_shell_command to run commands on their system.',
+      'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
+      '</cli_context>',
+    ].join('\n')
+
+    let fullPrompt = `${cliContext}\n\n${prompt}`
     if (this.stdinContent) {
-      fullPrompt = `${prompt}\n\n<user_provided_data>\n${this.stdinContent}\n</user_provided_data>`
+      fullPrompt = `${fullPrompt}\n\n<user_provided_data>\n${this.stdinContent}\n</user_provided_data>`
     }
 
     const toolsXML = this.mcpManager.formatToolsAsXML()
@@ -178,32 +187,37 @@ export class TerminalSession {
       let result: {[key: string]: unknown}
 
       if (toolCall.name === 'execute_mcp_tool') {
-        const mcpArgs = toolCall.arguments as {tool_name: string; arguments: {[key: string]: unknown}}
+        // Server sends tool_name and arguments at the top level of the SSE event
+        const rawData = toolCall as unknown as {tool_name?: string; arguments?: {[key: string]: unknown}}
+        const mcpToolName = rawData.tool_name ?? ''
+        const mcpArguments = rawData.arguments ?? {}
         // Extract server name from the MCP tool name (first segment before _)
-        const [serverName, ...toolNameParts] = (mcpArgs.tool_name ?? '').split('_')
+        const [serverName, ...toolNameParts] = mcpToolName.split('_')
         const toolName = toolNameParts.join('_')
 
         const toolRequest: ToolCallRequest = {
-          name: mcpArgs.tool_name ?? '',
+          name: mcpToolName,
           serverName: serverName ?? '',
-          arguments: mcpArgs.arguments ?? {},
+          arguments: mcpArguments,
         }
 
         // eslint-disable-next-line no-await-in-loop
         const permission = await checkToolPermission(toolRequest, this.permissionOptions)
         if (permission === 'approved') {
           // eslint-disable-next-line no-await-in-loop
-          result = await this.mcpManager.executeToolCall(serverName ?? '', toolName, mcpArgs.arguments ?? {})
+          result = await this.mcpManager.executeToolCall(serverName ?? '', toolName, mcpArguments)
         } else {
           result = {error: 'Tool call denied by user'}
         }
       } else if (toolCall.name === 'execute_shell_command') {
-        const shellArgs = toolCall.arguments as {command: string; working_directory?: string}
+        // Server sends command/working_directory at the top level of the SSE event
+        const rawData = toolCall as unknown as {command?: string; working_directory?: string}
+        const command = rawData.command ?? ''
         // eslint-disable-next-line no-await-in-loop
-        const permission = await checkShellPermission(shellArgs.command ?? '', this.permissionOptions)
+        const permission = await checkShellPermission(command, this.permissionOptions)
         if (permission === 'approved') {
           // eslint-disable-next-line no-await-in-loop
-          result = await this.executeShellCommand(shellArgs.command, shellArgs.working_directory)
+          result = await this.executeShellCommand(command, rawData.working_directory)
         } else {
           result = {error: 'Shell command denied by user'}
         }

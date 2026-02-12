@@ -61,6 +61,8 @@ export class SidekickClient {
     const body: {[key: string]: unknown} = {
       message: {
         content,
+        scenario: 'SidekickCLI',
+        features: ['merchant/cli'],
         ...(this.conversationId ? {conversation_id: this.conversationId} : {}),
       },
     }
@@ -74,6 +76,8 @@ export class SidekickClient {
       message: {
         conversation_id: this.conversationId,
         content: '',
+        scenario: 'SidekickCLI',
+        features: ['merchant/cli'],
         tool_call_results: toolResults.map((result) => ({
           tool_message_id: result.toolMessageId,
           result: result.result,
