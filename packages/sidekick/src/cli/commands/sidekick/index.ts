@@ -64,6 +64,7 @@ export default class Sidekick extends Command {
     // Auth logic: support dev mode via SIDEKICK_TOKEN, otherwise use OAuth
     let token: string
     let storeHandle: string
+    let refreshToken: (() => Promise<string>) | undefined
 
     const devToken = process.env.SIDEKICK_TOKEN
     if (devToken) {
@@ -75,9 +76,14 @@ export default class Sidekick extends Command {
       if (!flags.store) {
         this.error('The --store flag is required')
       }
-      const sidekickSession = await ensureAuthenticatedSidekick(flags.store)
+      const store = flags.store
+      const sidekickSession = await ensureAuthenticatedSidekick(store)
       token = sidekickSession.token
       storeHandle = sidekickSession.storeFqdn.replace(/\.(myshopify\.com|my\.shop\.dev)$/, '')
+      refreshToken = async () => {
+        const refreshed = await ensureAuthenticatedSidekick(store)
+        return refreshed.token
+      }
     }
 
     const session = new TerminalSession({
@@ -89,6 +95,7 @@ export default class Sidekick extends Command {
       interactive,
       stdinContent,
       workingDirectory: flags.path,
+      refreshToken,
     })
 
     try {

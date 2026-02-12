@@ -59,6 +59,12 @@ export async function validateSession(
     tokensAreExpired = tokensAreExpired || isTokenExpired(token)
   }
 
+  if (applications.sidekickApi) {
+    const appId = applicationId('sidekick')
+    const token = session.applications[appId]!
+    tokensAreExpired = tokensAreExpired || isTokenExpired(token)
+  }
+
   outputDebug(`- Token validation -> It's expired: ${tokensAreExpired}`)
 
   if (!validateCachedIdentityTokenStructure(session.identity)) {

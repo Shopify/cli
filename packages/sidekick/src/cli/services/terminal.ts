@@ -16,6 +16,7 @@ export interface TerminalSessionOptions {
   interactive: boolean
   stdinContent?: string
   workingDirectory?: string
+  refreshToken?: () => Promise<string>
 }
 
 export class TerminalSession {
@@ -32,6 +33,7 @@ export class TerminalSession {
       apiEndpoint: options.apiEndpoint,
       token: options.token,
       storeHandle: options.storeHandle,
+      refreshToken: options.refreshToken,
     })
     this.mcpManager = new MCPManager({workingDirectory: options.workingDirectory})
     this.format = options.format

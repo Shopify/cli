@@ -39,14 +39,16 @@ export interface SidekickClientOptions {
   token: string
   storeHandle: string
   conversationId?: string
+  refreshToken?: () => Promise<string>
 }
 
 export type SSEEventHandler = (event: SSEEvent) => void | Promise<void>
 
 export class SidekickClient {
   private readonly apiEndpoint: string
-  private readonly token: string
+  private token: string
   private readonly storeHandle: string
+  private readonly refreshToken?: () => Promise<string>
   private conversationId: string | undefined
   private abortController: AbortController | null = null
 
@@ -54,6 +56,7 @@ export class SidekickClient {
     this.apiEndpoint = options.apiEndpoint
     this.token = options.token
     this.storeHandle = options.storeHandle
+    this.refreshToken = options.refreshToken
     this.conversationId = options.conversationId
   }
 
@@ -99,18 +102,28 @@ export class SidekickClient {
   }
 
   private async postMessage(body: {[key: string]: unknown}): Promise<AsyncIterable<Uint8Array>> {
-    this.abortController = new AbortController()
+    const attempt = async () => {
+      this.abortController = new AbortController()
 
-    const response = await fetch(`${this.apiEndpoint}/api/store/${this.storeHandle}/messages`, {
-      method: 'POST',
-      headers: {
-        Accept: 'text/event-stream',
-        Authorization: `Bearer ${this.token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: this.abortController.signal,
-    })
+      return fetch(`${this.apiEndpoint}/api/store/${this.storeHandle}/messages`, {
+        method: 'POST',
+        headers: {
+          Accept: 'text/event-stream',
+          Authorization: `Bearer ${this.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
+        signal: this.abortController.signal,
+      })
+    }
+
+    let response = await attempt()
+
+    // On 401, try refreshing the token once and retry
+    if (response.status === 401 && this.refreshToken) {
+      this.token = await this.refreshToken()
+      response = await attempt()
+    }
 
     if (!response.ok) {
       throw new Error(`Sidekick API error: ${response.status} ${response.statusText}`)
