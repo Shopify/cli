@@ -3,6 +3,7 @@ import {validateSession} from './session/validate.js'
 import {allDefaultScopes, apiScopes} from './session/scopes.js'
 import {
   exchangeAccessForApplicationTokens,
+  exchangeCustomPartnerToken,
   ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
@@ -263,7 +264,13 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  setLastSeenAuthMethod('device_auth')
+  // Overwrite partners token if using a custom CLI Token
+  const envToken = getPartnersToken()
+  if (envToken && applications.partnersApi) {
+    tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
+  }
+
+  setLastSeenAuthMethod(envToken ? 'partners_token' : 'device_auth')
   setLastSeenUserIdAfterAuth(tokens.userId)
   return tokens
 }
