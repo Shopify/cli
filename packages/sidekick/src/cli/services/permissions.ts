@@ -49,14 +49,21 @@ export async function checkToolPermission(
   return 'denied'
 }
 
-export async function checkShellPermission(command: string, options: PermissionOptions): Promise<PermissionResult> {
+export async function checkShellPermission(
+  command: string,
+  reason: string | undefined,
+  options: PermissionOptions,
+): Promise<PermissionResult> {
   if (options.yolo) {
     return 'approved'
   }
 
   if (options.interactive) {
+    const prompt = reason
+      ? ['Run ', {command}, '  ', {subdued: `Purpose: ${reason}`}]
+      : ['Run ', {command}]
     const confirmed = await renderConfirmationPrompt({
-      message: `Allow shell command: ${command}?`,
+      message: prompt,
     })
     return confirmed ? 'approved' : 'denied'
   }

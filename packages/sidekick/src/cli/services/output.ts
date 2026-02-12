@@ -1,4 +1,4 @@
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputNewline, outputResult} from '@shopify/cli-kit/node/output'
 
 export type OutputFormat = 'text' | 'json' | 'csv' | 'md'
 
@@ -32,12 +32,20 @@ export function createOutputHandler(format: OutputFormat): OutputHandler {
   }
 
   // text and md: stream directly
+  let started = false
   return {
     onChunk(chunk: string) {
+      if (!started) {
+        outputNewline()
+        started = true
+      }
       process.stdout.write(chunk)
     },
     onEnd() {
-      process.stdout.write('\n')
+      if (started) {
+        outputNewline()
+      }
+      outputNewline()
     },
   }
 }

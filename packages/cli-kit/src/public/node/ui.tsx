@@ -14,6 +14,7 @@ import ScalarDict from '../../private/node/ui/components/Table/ScalarDict.js'
 import {Table, TableColumn, TableProps} from '../../private/node/ui/components/Table/Table.js'
 import {
   Token,
+  TokenizedText,
   tokenItemToString,
   InlineToken,
   LinkToken,
@@ -675,6 +676,10 @@ This usually happens when running a command non-interactively, for example in a 
     errorMessage,
     'To resolve this, specify the option in the command, or run the command in an interactive environment such as your local terminal.',
   )
+}
+
+export function renderText(text: TokenItem<InlineToken>) {
+  renderOnce(<TokenizedText item={text} />, {})
 }
 
 export type Key = InkKey

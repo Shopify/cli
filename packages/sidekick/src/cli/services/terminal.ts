@@ -2,8 +2,8 @@ import {SidekickClient, SSEEvent, ClientToolCall, ToolCallResult} from './sideki
 import {MCPManager} from './mcp-manager.js'
 import {createOutputHandler, OutputFormat} from './output.js'
 import {checkToolPermission, checkShellPermission, PermissionOptions, ToolCallRequest} from './permissions.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {outputDebug, outputNewline} from '@shopify/cli-kit/node/output'
+import {renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 const MAX_TOOL_CALL_ITERATIONS = 20
 
@@ -165,13 +165,14 @@ export class TerminalSession {
         break
       }
 
+      outputNewline()
       const toolCalls = [...pendingToolCalls]
       pendingToolCalls = []
       // eslint-disable-next-line no-await-in-loop
       const results = await this.processToolCalls(toolCalls)
 
       if (results.length > 0) {
-        // Send results back and continue processing
+        outputNewline()
         // eslint-disable-next-line no-await-in-loop
         await this.client.sendToolResults(results, handleEvent)
       }
@@ -207,19 +208,25 @@ export class TerminalSession {
           // eslint-disable-next-line no-await-in-loop
           result = await this.mcpManager.executeToolCall(serverName ?? '', toolName, mcpArguments)
         } else {
-          result = {error: 'Tool call denied by user'}
+          result = {error: 'The user chose not to allow this tool call. Do not speculate about why — just ask if they would like to try something else.'}
         }
       } else if (toolCall.name === 'execute_shell_command') {
-        // Server sends command/working_directory at the top level of the SSE event
-        const rawData = toolCall as unknown as {command?: string; working_directory?: string}
+        // Server sends command/reason/working_directory at the top level of the SSE event
+        const rawData = toolCall as unknown as {command?: string; reason?: string; working_directory?: string}
         const command = rawData.command ?? ''
+        const reason = rawData.reason
         // eslint-disable-next-line no-await-in-loop
-        const permission = await checkShellPermission(command, this.permissionOptions)
+        const permission = await checkShellPermission(command, reason, this.permissionOptions)
         if (permission === 'approved') {
           // eslint-disable-next-line no-await-in-loop
           result = await this.executeShellCommand(command, rawData.working_directory)
+          const output = (result.output as string) ?? ''
+          if (output.trim()) {
+            outputNewline()
+            renderText({subdued: formatShellOutput(output)})
+          }
         } else {
-          result = {error: 'Shell command denied by user'}
+          result = {error: 'The user chose not to allow this command. Do not speculate about why — just ask if they would like to try something else.'}
         }
       } else {
         result = {error: `Unknown client tool: ${toolCall.name}`}
@@ -251,4 +258,18 @@ export class TerminalSession {
       return {output: execError.stdout ?? '', stderr: execError.stderr ?? '', exit_code: execError.code ?? 1}
     }
   }
+}
+
+const MAX_OUTPUT_LINES = 20
+const INDENT = '  '
+
+function formatShellOutput(output: string): string {
+  const lines = output.trimEnd().split('\n')
+  const truncated = lines.length > MAX_OUTPUT_LINES
+  const visible = truncated ? lines.slice(0, MAX_OUTPUT_LINES) : lines
+  const indented = visible.map((line) => `${INDENT}${line}`).join('\n')
+  if (truncated) {
+    return `${indented}\n${INDENT}... (${lines.length - MAX_OUTPUT_LINES} more lines)`
+  }
+  return indented
 }
