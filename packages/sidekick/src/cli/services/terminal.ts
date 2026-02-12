@@ -50,8 +50,8 @@ export class TerminalSession {
   }
 
   async oneShot(prompt: string): Promise<void> {
-    const fullPrompt = this.buildPrompt(prompt)
-    await this.sendAndProcess(fullPrompt)
+    const {content, context} = this.buildMessage(prompt)
+    await this.sendAndProcess(content, context)
   }
 
   async interactive(): Promise<void> {
@@ -80,8 +80,9 @@ export class TerminalSession {
         process.on('SIGINT', abortHandler)
 
         try {
+          const {content, context} = this.buildMessage(prompt)
           // eslint-disable-next-line no-await-in-loop
-          await this.sendAndProcess(this.buildPrompt(prompt))
+          await this.sendAndProcess(content, context)
           // eslint-disable-next-line no-catch-all/no-catch-all
         } catch {
           if (!aborted) throw new Error('interrupted')
@@ -104,52 +105,54 @@ export class TerminalSession {
     })
   }
 
-  private buildPrompt(prompt: string): string {
-    const parts: string[] = []
-
-    if (this.isFirstPrompt) {
-      const introLines = [
-        '<cli_context>',
-        'You are running inside the Shopify CLI terminal, not the admin web UI.',
-        'The user is a developer interacting with you from their local machine.',
-        'You have access to execute_shell_command to run commands on their system.',
-        'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
-        '',
-        'MANDATORY RULE: Your FIRST action for ANY Shopify-related request MUST be to call fetch_help_documents. Do this BEFORE responding, BEFORE running shell commands, BEFORE doing anything else. This applies to every request about apps, themes, stores, deployment, configuration, extensions, functions, hydrogen, or any other Shopify topic. You do not have reliable knowledge of Shopify CLI commands or Shopify development workflows — you MUST look them up every time. Do not mention that you are checking documentation; just call the tool silently as your first step.',
-      ]
-
-      if (this.workingDirectory) {
-        introLines.push(
-          `The working directory is ${this.workingDirectory}. Use it as the default path for file operations unless the user specifies otherwise.`,
-        )
-      }
-
-      const toolsXML = this.mcpManager.formatToolsAsXML()
-      if (toolsXML) {
-        introLines.push(
-          '',
-          toolsXML,
-          '',
-          'You can call these tools using execute_mcp_tool with tool_name set to "serverName_toolName" (e.g., "filesystem_read_file") and the appropriate arguments. Prefer these tools over execute_shell_command for file operations.',
-        )
-      }
-
-      introLines.push('</cli_context>')
-      parts.push(introLines.join('\n'))
-
-      this.isFirstPrompt = false
-    }
-
-    parts.push(prompt)
+  private buildMessage(prompt: string): {content: string; context?: string} {
+    const parts: string[] = [prompt]
 
     if (this.stdinContent) {
       parts.push(`<user_provided_data>\n${this.stdinContent}\n</user_provided_data>`)
     }
 
-    return parts.join('\n\n')
+    let context: string | undefined
+    if (this.isFirstPrompt) {
+      context = this.buildContext()
+      this.isFirstPrompt = false
+    }
+
+    return {content: parts.join('\n\n'), context}
   }
 
-  private async sendAndProcess(prompt: string): Promise<void> {
+  private buildContext(): string {
+    const lines = [
+      '<cli_context>',
+      'You are running inside the Shopify CLI terminal, not the admin web UI.',
+      'The user is a developer interacting with you from their local machine.',
+      'You have access to execute_shell_command to run commands on their system.',
+      'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
+      '',
+      'MANDATORY RULE: Your FIRST action for ANY Shopify-related request MUST be to call fetch_help_documents. Do this BEFORE responding, BEFORE running shell commands, BEFORE doing anything else. This applies to every request about apps, themes, stores, deployment, configuration, extensions, functions, hydrogen, or any other Shopify topic. You do not have reliable knowledge of Shopify CLI commands or Shopify development workflows — you MUST look them up every time. Do not mention that you are checking documentation; just call the tool silently as your first step.',
+    ]
+
+    if (this.workingDirectory) {
+      lines.push(
+        `The working directory is ${this.workingDirectory}. Use it as the default path for file operations unless the user specifies otherwise.`,
+      )
+    }
+
+    const toolsXML = this.mcpManager.formatToolsAsXML()
+    if (toolsXML) {
+      lines.push(
+        '',
+        toolsXML,
+        '',
+        'You can call these tools using execute_mcp_tool with tool_name set to "serverName_toolName" (e.g., "filesystem_read_file") and the appropriate arguments. Prefer these tools over execute_shell_command for file operations.',
+      )
+    }
+
+    lines.push('</cli_context>')
+    return lines.join('\n')
+  }
+
+  private async sendAndProcess(prompt: string, context?: string): Promise<void> {
     const outputHandler = createOutputHandler(this.format)
     let pendingToolCalls: ClientToolCall[] = []
     let iterationCount = 0
@@ -197,7 +200,7 @@ export class TerminalSession {
       }
     }
 
-    await this.client.sendMessage(prompt, handleEvent)
+    await this.client.sendMessage(prompt, handleEvent, context)
 
     // Process any pending tool calls
     while (pendingToolCalls.length > 0) {

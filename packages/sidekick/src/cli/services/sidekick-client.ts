@@ -60,13 +60,14 @@ export class SidekickClient {
     this.conversationId = options.conversationId
   }
 
-  async sendMessage(content: string, onEvent: SSEEventHandler): Promise<void> {
+  async sendMessage(content: string, onEvent: SSEEventHandler, context?: string): Promise<void> {
     const body: {[key: string]: unknown} = {
       message: {
         content,
         scenario: 'SidekickCLI',
         features: ['merchant/cli'],
         ...(this.conversationId ? {conversation_id: this.conversationId} : {}),
+        ...(context ? {context: {launch: context}} : {}),
       },
     }
 
