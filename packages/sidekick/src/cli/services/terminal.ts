@@ -69,11 +69,27 @@ export class TerminalSession {
           break
         }
 
-        // eslint-disable-next-line no-await-in-loop
-        await this.sendAndProcess(this.buildPrompt(prompt))
+        // During streaming, Ctrl+C aborts the current turn instead of exiting
+        let aborted = false
+        const abortHandler = () => {
+          aborted = true
+          this.client.abort()
+        }
+        process.on('SIGINT', abortHandler)
+
+        try {
+          // eslint-disable-next-line no-await-in-loop
+          await this.sendAndProcess(this.buildPrompt(prompt))
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          if (!aborted) throw new Error('interrupted')
+          outputNewline()
+        } finally {
+          process.removeListener('SIGINT', abortHandler)
+        }
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch {
-        // User cancelled (Ctrl+C)
+        // User cancelled (Ctrl+C) during prompt input
         running = false
       }
     }
