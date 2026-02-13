@@ -1,6 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {profile} from '../../services/profile.js'
+import {runProfileAnalysis} from '../../utilities/profile-analysis.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
@@ -13,11 +14,18 @@ type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {
   static summary = 'Profile the Liquid rendering of a theme page.'
 
-  static usage = ['theme profile', 'theme profile --url /products/classic-leather-jacket']
+  static usage = [
+    'theme profile',
+    'theme profile --url /products/classic-leather-jacket',
+    'theme profile --analysis',
+    'theme profile --analysis --url /collections/all',
+  ]
 
   static descriptionWithMarkdown = `Profile the Shopify Liquid on a given page.
 
-  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.`
+  This command opens an interactive flame graph showing the time spent executing Liquid on the given page.
+
+  Use the \`--analysis\` flag to display a human-readable breakdown of Liquid rendering performance directly in the terminal instead of opening the flame graph viewer.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -38,6 +46,12 @@ export default class Profile extends ThemeCommand {
       description: 'The password for storefronts with password protection.',
       env: 'SHOPIFY_FLAG_STORE_PASSWORD',
     }),
+    analysis: Flags.boolean({
+      char: 'a',
+      description: 'Analyze the profile and display a summary of Liquid rendering performance in the terminal.',
+      env: 'SHOPIFY_FLAG_ANALYSIS',
+      default: false,
+    }),
     ...jsonFlag,
   }
 
@@ -53,6 +67,17 @@ export default class Profile extends ThemeCommand {
       filter = {filter: {live: true}}
     }
     const theme = await findOrSelectTheme(adminSession, filter)
+
+    if (flags.analysis) {
+      await runProfileAnalysis({
+        adminSession,
+        themeId: theme.id.toString(),
+        url: flags.url,
+        themeAccessPassword,
+        storefrontPassword: flags['store-password'],
+      })
+      return
+    }
 
     const tasks: Task[] = [
       {
