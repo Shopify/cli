@@ -1,11 +1,11 @@
 import {getLocalization, Localization} from './localization.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
-import * as output from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/shared/node/output'
 import {describe, expect, vi, test} from 'vitest'
-import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {mkdir, writeFile, inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 async function testGetLocalization(tmpDir: string, currentLocalization?: Localization) {
   const mockOptions = {} as unknown as ExtensionsPayloadStoreOptions

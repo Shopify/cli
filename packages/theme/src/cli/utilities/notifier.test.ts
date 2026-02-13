@@ -1,10 +1,10 @@
 import {Notifier} from './notifier.js'
 import {vi, describe, expect, test} from 'vitest'
-import {outputWarn} from '@shopify/cli-kit/node/output'
+import {outputWarn} from '@shopify/cli-kit/shared/node/output'
 import fs from 'fs/promises'
 
 vi.mock('fs/promises')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 describe('Notifier', () => {
   let notifier: Notifier

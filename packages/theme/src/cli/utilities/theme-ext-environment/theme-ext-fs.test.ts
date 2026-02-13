@@ -1,8 +1,8 @@
 import {mountThemeExtensionFileSystem} from './theme-ext-fs.js'
 import {test, describe, expect} from 'vitest'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
 import {fileURLToPath} from 'node:url'
-import type {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import type {Checksum, ThemeAsset} from '@shopify/cli-kit/themes/types'
 
 describe('theme-ext-fs', () => {
   const locationOfThisFile = dirname(fileURLToPath(import.meta.url))

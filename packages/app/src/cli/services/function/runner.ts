@@ -2,7 +2,7 @@ import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {validateShopifyFunctionPackageVersion} from './build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/shared/node/system'
 import {Readable, Writable} from 'stream'
 
 interface FunctionRunnerOptions {

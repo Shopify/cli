@@ -8,16 +8,16 @@ import {
   Stdin,
   waitForContent,
   waitForInputsToBeReady,
-} from '@shopify/cli-kit/node/testing/ui'
-import {AbortController, AbortSignal} from '@shopify/cli-kit/node/abort'
+} from '@shopify/cli-kit/shared/node/testing/ui'
+import {AbortController, AbortSignal} from '@shopify/cli-kit/shared/node/abort'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
-import {unstyled} from '@shopify/cli-kit/node/output'
-import {openURL, sleep} from '@shopify/cli-kit/node/system'
+import {unstyled} from '@shopify/cli-kit/shared/node/output'
+import {openURL, sleep} from '@shopify/cli-kit/shared/node/system'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/shared/node/system')
   return {
     ...actual,
     openURL: vi.fn(),

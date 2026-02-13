@@ -4,11 +4,11 @@ import {RemoteSource} from './identifiers.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {testDeveloperPlatformClient, testFunctionExtension, testUIExtension} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, beforeAll} from 'vitest'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
 
 vi.mock('../dev/fetch')
 vi.mock('../dev/create-extension')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',

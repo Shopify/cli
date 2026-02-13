@@ -1,6 +1,6 @@
-import {DoctorSuite} from '@shopify/cli-kit/node/doctor/framework'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {getRandomName} from '@shopify/cli-kit/common/string'
+import {DoctorSuite} from '@shopify/cli-kit/shared/node/doctor/framework'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {getRandomName} from '@shopify/cli-kit/shared/common/string'
 import type {ThemeDoctorContext} from '../../context.js'
 
 /**

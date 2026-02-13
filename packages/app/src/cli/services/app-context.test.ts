@@ -11,9 +11,9 @@ import metadata from '../metadata.js'
 import * as loader from '../models/app/loader.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/shared/node/path'
+import {tryParseInt} from '@shopify/cli-kit/shared/common/string'
 
 vi.mock('../models/app/validation/multi-cli-warning.js')
 vi.mock('./generate/fetch-extension-specifications.js')

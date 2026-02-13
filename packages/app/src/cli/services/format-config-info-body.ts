@@ -1,4 +1,4 @@
-import {Token, TokenItem} from '@shopify/cli-kit/node/ui'
+import {Token, TokenItem} from '@shopify/cli-kit/shared/node/ui'
 
 interface FormatConfigInfoBodyOptions {
   appName: string

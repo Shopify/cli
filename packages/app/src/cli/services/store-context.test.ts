@@ -12,9 +12,9 @@ import {
 import metadata from '../metadata.js'
 import {appHiddenConfigPath, AppLinkedInterface} from '../models/app/app.js'
 import {vi, describe, test, expect} from 'vitest'
-import {hashString} from '@shopify/cli-kit/node/crypto'
-import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {hashString} from '@shopify/cli-kit/shared/node/crypto'
+import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')

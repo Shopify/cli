@@ -3,17 +3,17 @@ import {metafieldsPull} from './metafields-pull.js'
 import {ensureThemeStore} from '../utilities/theme-store.js'
 import {hasRequiredThemeDirectories} from '../utilities/theme-fs.js'
 import {ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/node/themes/api'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {metafieldDefinitionsByOwnerType} from '@shopify/cli-kit/themes/api'
 import {describe, test, vi, beforeEach, expect, afterEach} from 'vitest'
-import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
+import {fileExists, inTemporaryDirectory, readFile} from '@shopify/cli-kit/shared/node/fs'
 
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-fs.js')
 vi.mock('../utilities/theme-ui.js')
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/themes/api')
 
 const metafieldDefinitionPath = (path: string) => `${path}/.shopify/metafields.json`
 

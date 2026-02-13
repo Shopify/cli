@@ -1,13 +1,13 @@
 import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
-import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {capitalize} from '@shopify/cli-kit/common/string'
-import {themeCreate} from '@shopify/cli-kit/node/themes/api'
-import {promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {renderAutocompletePrompt} from '@shopify/cli-kit/shared/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {capitalize} from '@shopify/cli-kit/shared/common/string'
+import {themeCreate} from '@shopify/cli-kit/themes/api'
+import {promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {Theme} from '@shopify/cli-kit/themes/types'
 
 /**
  * Options to find or select a theme.

@@ -1,11 +1,11 @@
 import {hookStart} from './tunnel.js'
 import install from './install-cloudflared.js'
 import {describe, vi, expect, test, beforeAll} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/shared/node/system'
 import {Writable} from 'stream'
 
 const port = 1234
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('./install-cloudflared.js')
 
 describe('hookStart', () => {

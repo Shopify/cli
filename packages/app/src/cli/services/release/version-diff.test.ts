@@ -3,8 +3,8 @@ import {testDeveloperPlatformClient, testOrganizationApp} from '../../models/app
 import {AppVersionWithContext} from '../../utilities/developer-platform-client.js'
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {describe, expect, test} from 'vitest'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 describe('versionDiffByVersion', () => {
   test('throws an abort silent error and display an error message when the version is not found', async () => {

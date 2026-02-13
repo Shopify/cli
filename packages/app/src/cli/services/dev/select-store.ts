@@ -9,11 +9,11 @@ import {
   ConvertDevToTransferDisabledStoreVariables,
 } from '../../api/graphql/convert_dev_to_transfer_disabled_store.js'
 import {ClientName, DeveloperPlatformClient, Paginateable} from '../../utilities/developer-platform-client.js'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {renderInfo, renderTasks} from '@shopify/cli-kit/node/ui'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
-import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/node/error'
-import {outputSuccess} from '@shopify/cli-kit/node/output'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {renderInfo, renderTasks} from '@shopify/cli-kit/shared/node/ui'
+import {firstPartyDev} from '@shopify/cli-kit/shared/node/context/local'
+import {AbortError, BugError, CancelExecution} from '@shopify/cli-kit/shared/node/error'
+import {outputSuccess} from '@shopify/cli-kit/shared/node/output'
 
 /**
  * Select store from list or

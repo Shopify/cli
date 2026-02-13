@@ -5,7 +5,7 @@ import {
   MigrateFlowExtensionVariables,
 } from '../../api/graphql/extension_migrate_flow_extension.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export async function migrateFlowExtensions(options: {
   extensionsToMigrate: LocalRemoteSource[]

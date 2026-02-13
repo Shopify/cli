@@ -3,8 +3,8 @@ import {devUIExtensions} from '../extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
-import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {DotEnvFile} from '@shopify/cli-kit/shared/node/dot-env'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 const MANIFEST_VERSION = '3'
 

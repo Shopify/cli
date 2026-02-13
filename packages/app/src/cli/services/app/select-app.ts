@@ -2,7 +2,7 @@ import {MinimalOrganizationApp} from '../../models/organization.js'
 import {Flag, AppModuleVersion, DeveloperPlatformClient, AppVersion} from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+import {deepMergeObjects} from '@shopify/cli-kit/shared/common/object'
 
 export function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
   if (!type) return

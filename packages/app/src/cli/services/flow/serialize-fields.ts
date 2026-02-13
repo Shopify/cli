@@ -7,8 +7,8 @@ import {
   triggerUiTypesMap,
 } from './constants.js'
 import {isSchemaTypeReference} from './validation.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {pascalize} from '@shopify/cli-kit/common/string'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {pascalize} from '@shopify/cli-kit/shared/common/string'
 
 const actionTypesToUiTypes = new Map<string, string>(actionUiTypesMap)
 const triggerTypesToUiTypes = new Map<string, string>(triggerUiTypesMap)

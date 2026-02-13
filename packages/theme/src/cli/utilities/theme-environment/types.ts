@@ -1,5 +1,5 @@
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/themes/types'
 
 /**
  * Defines an authentication session for the theme development server.

@@ -1,9 +1,9 @@
 import {AutoTunnel, CustomTunnel, getTunnelMode, NoTunnel} from './tunnel-mode.js'
 import {ports} from '../../constants.js'
-import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
+import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/shared/node/tcp'
 import {test, expect, describe, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/tcp')
+vi.mock('@shopify/cli-kit/shared/node/tcp')
 vi.mock('../../utilities/mkcert.js')
 
 describe('getTunnelMode() if tunnelUrl is defined', () => {

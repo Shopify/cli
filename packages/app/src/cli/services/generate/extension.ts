@@ -12,14 +12,14 @@ import {
   DependencyVersion,
   installNodeModules,
   readAndParsePackageJson,
-} from '@shopify/cli-kit/node/node-package-manager'
-import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
-import {downloadGitRepository} from '@shopify/cli-kit/node/git'
-import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativizePath} from '@shopify/cli-kit/node/path'
-import {slugify} from '@shopify/cli-kit/common/string'
-import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
+} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/shared/node/liquid'
+import {renderTasks} from '@shopify/cli-kit/shared/node/ui'
+import {downloadGitRepository} from '@shopify/cli-kit/shared/node/git'
+import {fileExists, inTemporaryDirectory, mkdir, moveFile, removeFile, glob} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, relativizePath} from '@shopify/cli-kit/shared/node/path'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
+import {nonRandomUUID} from '@shopify/cli-kit/shared/node/crypto'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface

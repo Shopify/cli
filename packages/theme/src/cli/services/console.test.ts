@@ -5,8 +5,8 @@ import {
 } from '../utilities/theme-environment/storefront-session.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 vi.mock('../utilities/theme-environment/storefront-password-prompt.js')
 vi.mock('../utilities/theme-environment/storefront-session.js')

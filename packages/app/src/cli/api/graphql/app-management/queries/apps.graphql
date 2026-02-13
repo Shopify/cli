@@ -6,9 +6,9 @@ query listApps($query: String) {
         key
         activeRelease {
           id
-            version {
-              name
-            }
+          version {
+            name
+          }
         }
       }
     }

@@ -1,6 +1,6 @@
 import {ConfigField, SerializedField, FlowPartnersExtensionTypes} from './types.js'
 import {PARTNERS_COMMERCE_OBJECTS, uiTypesMap} from './constants.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 const uiTypesToTypes = new Map<string, string>(uiTypesMap.map((typeMapping) => [typeMapping[1], typeMapping[0]]))
 

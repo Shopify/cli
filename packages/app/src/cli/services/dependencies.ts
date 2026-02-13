@@ -1,6 +1,6 @@
 import {AppInterface} from '../models/app/app.js'
-import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
-import {renderTasks} from '@shopify/cli-kit/node/ui'
+import {installNPMDependenciesRecursively} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {renderTasks} from '@shopify/cli-kit/shared/node/ui'
 
 /**
  * Given an app, it installs its NPM dependencies by traversing

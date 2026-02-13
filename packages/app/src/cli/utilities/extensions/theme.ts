@@ -1,6 +1,6 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {glob, createFileReadStream, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {glob, createFileReadStream, fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {createInterface} from 'readline'
 
 const ignoredFilePatterns = [

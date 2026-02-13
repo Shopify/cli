@@ -15,13 +15,13 @@ import {
 import {ExtensionTemplate} from '../models/app/template.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {groupBy} from '@shopify/cli-kit/common/collection'
+import {PackageManager} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {isShopify} from '@shopify/cli-kit/shared/node/context/local'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/shared/node/output'
+import {groupBy} from '@shopify/cli-kit/shared/common/collection'
 
 interface GenerateOptions {
   app: AppLinkedInterface

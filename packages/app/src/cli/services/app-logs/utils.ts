@@ -10,11 +10,11 @@ import {
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../models/app/app.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import camelcaseKeys from 'camelcase-keys'
-import {formatLocalDate} from '@shopify/cli-kit/common/string'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {formatLocalDate} from '@shopify/cli-kit/shared/common/string'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/shared/node/ui/components'
 import {Writable} from 'stream'
 
 export const POLLING_INTERVAL_MS = 450

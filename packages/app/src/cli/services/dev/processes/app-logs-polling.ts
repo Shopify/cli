@@ -6,8 +6,8 @@ import {subscribeToAppLogs} from '../../app-logs/utils.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {AppEventWatcher, AppEvent} from '../app-events/app-event-watcher.js'
 
-import {mkdir} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 function hasFunctionExtensions(app: AppLinkedInterface): boolean {
   return app.allExtensions.some((extension) => extension.isFunctionExtension)

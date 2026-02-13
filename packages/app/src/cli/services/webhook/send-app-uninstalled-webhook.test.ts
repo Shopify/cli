@@ -2,11 +2,11 @@ import {sendUninstallWebhookToAppServer} from './send-app-uninstalled-webhook.js
 import {triggerLocalWebhook} from './trigger-local-webhook.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {FetchError} from '@shopify/cli-kit/node/http'
+import {FetchError} from '@shopify/cli-kit/shared/node/http'
 import {Writable} from 'stream'
 
 vi.mock('./trigger-local-webhook.js')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 const address = 'http://localhost:3000/test/path'
 const storeFqdn = 'test-store.myshopify.io'

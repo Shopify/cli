@@ -15,11 +15,11 @@ import {fetchAppRemoteConfiguration} from '../select-app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {MinimalAppIdentifiers, OrganizationApp} from '../../../models/organization.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {setPathValue} from '@shopify/cli-kit/common/object'
+import {fileExistsSync, inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {setPathValue} from '@shopify/cli-kit/shared/common/object'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
@@ -33,7 +33,7 @@ vi.mock('../../../models/app/loader.js', async () => {
   }
 })
 vi.mock('../../local-storage')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../../context/partner-account-info.js')
 vi.mock('../../context.js')
 vi.mock('../select-app.js')

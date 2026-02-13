@@ -8,20 +8,20 @@ import {
 } from './common.js'
 import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from '../bulk-operations/constants.js'
-import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/identity/session'
+import {fetchApiVersions} from '@shopify/cli-kit/admin/api'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/session', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/identity/session')
   return {
     ...actual,
     ensureAuthenticatedAdminAsApp: vi.fn(),
   }
 })
 
-vi.mock('@shopify/cli-kit/node/api/admin', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/api/admin')
+vi.mock('@shopify/cli-kit/admin/api', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/admin/api')
   return {
     ...actual,
     fetchApiVersions: vi.fn(),

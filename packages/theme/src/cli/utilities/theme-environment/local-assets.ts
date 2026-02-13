@@ -1,10 +1,10 @@
 import {injectCdnProxy} from './proxy.js'
 import {parseServerEvent} from './server-utils.js'
 import {getLiquidTagContent} from './liquid-tag-content.js'
-import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
+import {lookupMimeType} from '@shopify/cli-kit/shared/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import type {Theme, ThemeAsset, VirtualFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import type {Theme, ThemeAsset, VirtualFileSystem} from '@shopify/cli-kit/themes/types'
 import type {DevServerContext} from './types.js'
 
 const tagContentCache = {

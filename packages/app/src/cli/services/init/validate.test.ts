@@ -1,6 +1,6 @@
 import {validateTemplateValue, validateFlavorValue} from './validate.js'
 import {describe, expect, test} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 describe('validateTemplateValue', () => {
   test('should not throw an error for undefined template', () => {

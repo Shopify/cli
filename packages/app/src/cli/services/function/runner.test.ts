@@ -2,10 +2,10 @@ import {runFunction} from './runner.js'
 import {functionRunnerBinary, downloadBinary} from './binaries.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system'
+import {exec} from '@shopify/cli-kit/shared/node/system'
 import {Readable, Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('./binaries.js', async (importOriginal) => {
   const original = await importOriginal<typeof import('./binaries.js')>()
   return {

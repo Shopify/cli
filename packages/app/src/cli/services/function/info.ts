@@ -1,6 +1,6 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {InlineToken, AlertCustomSection} from '@shopify/cli-kit/node/ui'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {InlineToken, AlertCustomSection} from '@shopify/cli-kit/shared/node/ui'
 
 type Format = 'json' | 'text'
 

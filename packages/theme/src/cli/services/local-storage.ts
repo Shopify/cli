@@ -1,6 +1,6 @@
-import {BugError} from '@shopify/cli-kit/node/error'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
+import {outputDebug, outputContent} from '@shopify/cli-kit/shared/node/output'
 import {AsyncLocalStorage} from 'node:async_hooks'
 
 type DevelopmentThemeId = string

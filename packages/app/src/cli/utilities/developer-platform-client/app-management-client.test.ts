@@ -33,22 +33,22 @@ import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
 import {ListOrganizations} from '../../api/graphql/business-platform-destinations/generated/organizations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/shared/common/version'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
 import {
   businessPlatformOrganizationsRequest,
   businessPlatformOrganizationsRequestDoc,
   businessPlatformRequestDoc,
-} from '@shopify/cli-kit/node/api/business-platform'
-import {appManagementRequestDoc} from '@shopify/cli-kit/node/api/app-management'
-import {BugError} from '@shopify/cli-kit/node/error'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {webhooksRequestDoc} from '@shopify/cli-kit/node/api/webhooks'
+} from '@shopify/cli-kit/business-platform/api'
+import {appManagementRequestDoc} from '@shopify/cli-kit/app-management/api'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
+import {webhooksRequestDoc} from '@shopify/cli-kit/webhooks/api'
 
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/api/business-platform')
-vi.mock('@shopify/cli-kit/node/api/app-management')
-vi.mock('@shopify/cli-kit/node/api/webhooks')
+vi.mock('@shopify/cli-kit/shared/node/http')
+vi.mock('@shopify/cli-kit/business-platform/api')
+vi.mock('@shopify/cli-kit/app-management/api')
+vi.mock('@shopify/cli-kit/webhooks/api')
 
 beforeEach(() => {
   // Reset the singleton instance before each test

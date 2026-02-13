@@ -1,10 +1,10 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {ensureReplEnv, initializeRepl} from '../../services/console.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import {Flags} from '@oclif/core'
-import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {recordEvent} from '@shopify/cli-kit/shared/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
 
 type ConsoleFlags = InferredFlags<typeof Console.flags>

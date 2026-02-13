@@ -5,7 +5,7 @@ import {collectAddressAndMethod, collectApiVersion, collectCredentials, collectT
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {OrganizationApp} from '../../models/organization.js'
-import {outputWarn, outputSuccess} from '@shopify/cli-kit/node/output'
+import {outputWarn, outputSuccess} from '@shopify/cli-kit/shared/node/output'
 
 export interface WebhookTriggerInput {
   app: AppLinkedInterface

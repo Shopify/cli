@@ -1,15 +1,15 @@
 import {reconcileJsonFiles} from './theme-reconciliation.js'
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
-import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {Checksum, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
+import {Checksum, ThemeAsset, ThemeFileSystem} from '@shopify/cli-kit/themes/types'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('./theme-fs.js')
 vi.mock('./theme-downloader.js')
 vi.mock('./theme-uploader.js')

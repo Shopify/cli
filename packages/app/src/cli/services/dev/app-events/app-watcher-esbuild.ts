@@ -3,11 +3,11 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {getESBuildOptions} from '../../extensions/bundle.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {BuildContext, context as esContext, StdinOptions} from 'esbuild'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
+import {copyFile} from '@shopify/cli-kit/shared/node/fs'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {isTruthy} from '@shopify/cli-kit/shared/node/context/utilities'
+import {getEnvironmentVariables} from '@shopify/cli-kit/shared/node/environment'
 
 export interface DevAppWatcherOptions {
   dotEnvVariables: {[key: string]: string}

@@ -4,10 +4,10 @@ import {profile} from '../../services/profile.js'
 import {findOrSelectTheme} from '../../utilities/theme-selector.js'
 import {renderTasksToStdErr} from '../../utilities/theme-ui.js'
 import {Flags} from '@oclif/core'
-import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
-import {Task} from '@shopify/cli-kit/node/ui'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/shared/node/cli'
+import {Task} from '@shopify/cli-kit/shared/node/ui'
 import {InferredFlags} from '@oclif/core/interfaces'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 type ProfileFlags = InferredFlags<typeof Profile.flags>
 export default class Profile extends ThemeCommand {

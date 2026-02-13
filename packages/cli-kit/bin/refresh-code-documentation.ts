@@ -1,5 +1,5 @@
 import {examples} from './documentation/examples.js'
-import {unstyled} from '../src/public/node/output.js'
+import {unstyled} from '../src/shared/node/output.js'
 import {FunctionDeclaration, JSDocTag, Project} from 'ts-morph'
 import difference from 'lodash/difference.js'
 
@@ -8,7 +8,7 @@ async function refreshDocumentation(): Promise<void> {
   const project = new Project({
     tsConfigFilePath: 'tsconfig.json',
   })
-  const sourceFile = project.getSourceFileOrThrow('src/public/node/ui.tsx')
+  const sourceFile = project.getSourceFileOrThrow('src/shared/node/ui.tsx')
   const renderFunctions = sourceFile.getFunctions().filter((func) => func.getNameOrThrow().startsWith('render'))
 
   validateMissingExamples(renderFunctions, validationErrors)

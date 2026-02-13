@@ -21,13 +21,13 @@ import {
 } from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {exec} from '@shopify/cli-kit/node/system'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
+import {exec} from '@shopify/cli-kit/shared/node/system'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/shared/node/fs'
 import {build as esBuild} from 'esbuild'
 
-vi.mock('@shopify/cli-kit/node/fs')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')

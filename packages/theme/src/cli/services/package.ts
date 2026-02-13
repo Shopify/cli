@@ -1,8 +1,8 @@
-import {zip} from '@shopify/cli-kit/node/archiver'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
-import {resolvePath, relativizePath} from '@shopify/cli-kit/node/path'
+import {zip} from '@shopify/cli-kit/shared/node/archiver'
+import {fileExists, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {resolvePath, relativizePath} from '@shopify/cli-kit/shared/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
 
 const themeFilesPattern = [

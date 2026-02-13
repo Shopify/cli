@@ -1,7 +1,7 @@
 import {render} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 export interface SessionItem {
   type: string

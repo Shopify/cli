@@ -1,8 +1,8 @@
 import {AppLogData} from '../types.js'
 import {toFormattedAppLogJson} from '../utils.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {mkdir, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
 import {Writable} from 'stream'
 
 interface AppLogFile {

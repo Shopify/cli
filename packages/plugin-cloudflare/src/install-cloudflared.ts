@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 // Install script for cloudflared, derived from https://github.com/JacobLinCool/node-cloudflared
-import {basename, dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {fetch} from '@shopify/cli-kit/node/http'
+import {basename, dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
 import {
   chmod,
   fileExistsSync,
@@ -10,7 +10,7 @@ import {
   renameFile,
   unlinkFileSync,
   createFileWriteStream,
-} from '@shopify/cli-kit/node/fs'
+} from '@shopify/cli-kit/shared/node/fs'
 import {fileURLToPath} from 'url'
 import util from 'util'
 import {pipeline} from 'stream'

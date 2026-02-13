@@ -2,11 +2,11 @@ import {evaluate, EvaluationConfig} from './evaluator.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 vi.mock('../theme-environment/storefront-renderer')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 describe('evaluate', () => {
   let mockConfig: EvaluationConfig

@@ -4,10 +4,10 @@ import {SchemaDefinitionByTargetQueryVariables} from '../api/graphql/functions/g
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../models/extensions/specifications/function.js'
 import {AppLinkedInterface} from '../models/app/app.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
-import {writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputInfo, outputResult} from '@shopify/cli-kit/shared/node/output'
+import {writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 interface GenerateSchemaOptions {
   app: AppLinkedInterface

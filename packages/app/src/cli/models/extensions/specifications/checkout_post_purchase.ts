@@ -1,6 +1,6 @@
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const dependency = '@shopify/post-purchase-ui-extensions'
 

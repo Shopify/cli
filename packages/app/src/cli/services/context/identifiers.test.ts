@@ -5,7 +5,7 @@ import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js
 import {testApp, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, test, vi} from 'vitest'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
 

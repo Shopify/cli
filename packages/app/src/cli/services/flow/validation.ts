@@ -1,7 +1,7 @@
 import {ConfigField, FlowExtensionTypes} from './types.js'
 import {SUPPORTED_COMMERCE_OBJECTS} from './constants.js'
 import {FlowTriggerSettingsSchema} from '../../models/extensions/specifications/flow_trigger.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 function fieldValidationErrorMessage(property: string, configField: ConfigField, handle: string, index: number) {
   const errorMessage = `'${property}' property must be a string for 'field[${index}]' ${JSON.stringify(

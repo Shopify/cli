@@ -13,8 +13,8 @@ import {
   getThemeStore,
   useThemeStoreContext,
 } from './local-storage.js'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
+import {inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
 import {describe, expect, test} from 'vitest'
 
 describe('local-storage', () => {

@@ -1,5 +1,5 @@
 import {createToolsTypeDefinition} from './type-generation.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {describe, expect, test} from 'vitest'
 
 describe('createToolsTypeDefinition', () => {

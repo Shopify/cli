@@ -1,9 +1,16 @@
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {chmod, createFileWriteStream, fileExists, inTemporaryDirectory, mkdir, moveFile} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {fetch} from '@shopify/cli-kit/node/http'
-import {versionSatisfies} from '@shopify/cli-kit/node/node-package-manager'
+import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
+import {
+  chmod,
+  createFileWriteStream,
+  fileExists,
+  inTemporaryDirectory,
+  mkdir,
+  moveFile,
+} from '@shopify/cli-kit/shared/node/fs'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/shared/common/retry'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
+import {versionSatisfies} from '@shopify/cli-kit/shared/node/node-package-manager'
 import {PipelineSource} from 'stream'
 import {pipeline} from 'stream/promises'
 import stream from 'node:stream/promises'

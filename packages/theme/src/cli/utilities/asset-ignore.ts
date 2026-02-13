@@ -1,8 +1,8 @@
-import {uniqBy} from '@shopify/cli-kit/common/array'
-import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/node/fs'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {uniqBy} from '@shopify/cli-kit/shared/common/array'
+import {fileExists, readFile, matchGlob as originalMatchGlob} from '@shopify/cli-kit/shared/node/fs'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
 const templatesRegex = /templates\/\*(\.(json|liquid))?$/

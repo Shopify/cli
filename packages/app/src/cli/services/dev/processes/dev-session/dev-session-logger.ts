@@ -1,8 +1,8 @@
 import {UserError} from './dev-session.js'
 import {AppEvent, EventType} from '../../app-events/app-event-watcher.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/node/output'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {outputToken, outputContent, outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/shared/node/ui/components'
 import {Writable} from 'stream'
 
 export class DevSessionLogger {

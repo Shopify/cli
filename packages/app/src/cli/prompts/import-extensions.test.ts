@@ -1,10 +1,10 @@
 import {getMigrationChoices, selectMigrationChoice, allMigrationChoices, MigrationChoice} from './import-extensions.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi} from 'vitest'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 describe('allMigrationChoices', () => {
   test('contains all expected migration choices', () => {

@@ -1,10 +1,10 @@
 import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {reduceWebhooks} from '../../models/extensions/specifications/transform/app_config_webhook.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
-import {zod} from '@shopify/cli-kit/node/schema'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {writeFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {JsonMapType, encodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 // toml does not support comments and there aren't currently any good/maintained libs for this,
 // so for now, we manually add comments

@@ -1,10 +1,10 @@
 import {BaseSchemaWithHandle} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {zod} from '@shopify/cli-kit/node/schema'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {glob} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {glob} from '@shopify/cli-kit/shared/node/fs'
 import fs from 'fs'
 
 const VALID_CATEGORIES = [

@@ -1,12 +1,12 @@
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
 import {batchedRequests} from '../batching.js'
 import {MAX_GRAPHQL_THEME_FILES} from '../../constants.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/node/ui'
-import {recordEvent} from '@shopify/cli-kit/node/analytics'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {Checksum, ThemeFileSystem, ThemeAsset, Theme} from '@shopify/cli-kit/themes/types'
+import {renderInfo, renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {recordEvent} from '@shopify/cli-kit/shared/node/analytics'
 
 type ReconciliationStrategy = typeof LOCAL_STRATEGY | typeof REMOTE_STRATEGY | undefined
 

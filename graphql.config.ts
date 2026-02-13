@@ -1,20 +1,26 @@
+function graphqlBasePath(name: string, project: string): string {
+  if (project === 'cli-kit') {
+    // cli-kit uses domain-based structure: src/admin/graphql/
+    return `./packages/cli-kit/src/admin/graphql`
+  }
+  return `./packages/${project}/src/cli/api/graphql/${name}`
+}
+
 function projectFactory(name: string, schemaName: string, project: string = 'app') {
+  const basePath = graphqlBasePath(name, project)
   return {
-    schema: `./packages/${project}/src/cli/api/graphql/${name}/${schemaName}`,
-    documents: [
-      `./packages/${project}/src/cli/api/graphql/${name}/queries/**/*.graphql`,
-      `./packages/${project}/src/cli/api/graphql/${name}/mutations/**/*.graphql`,
-    ],
+    schema: `${basePath}/${schemaName}`,
+    documents: [`${basePath}/queries/**/*.graphql`, `${basePath}/mutations/**/*.graphql`],
     extensions: {
       codegen: {
         generates: {
-          [`./packages/${project}/src/cli/api/graphql/${name}/generated/types.d.ts`]: {
+          [`${basePath}/generated/types.d.ts`]: {
             plugins: [
               {'graphql-codegen-typescript-operation-types': {enumsAsTypes: true, useTypeImports: true}},
               {
                 add: {
                   content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries  */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-explicit-any, tsdoc/syntax, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries  */\nimport {JsonMapType} from '@shopify/cli-kit/shared/node/toml'",
                 },
               },
             ],
@@ -29,13 +35,13 @@ function projectFactory(name: string, schemaName: string, project: string = 'app
               },
             },
           },
-          [`./packages/${project}/src/cli/api/graphql/${name}/generated/`]: {
+          [`${basePath}/generated/`]: {
             preset: 'near-operation-file',
             plugins: [
               {
                 add: {
                   content:
-                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries */\nimport {JsonMapType} from '@shopify/cli-kit/node/toml'",
+                    "/* eslint-disable @typescript-eslint/consistent-type-definitions, @typescript-eslint/naming-convention, @typescript-eslint/ban-types, @typescript-eslint/no-duplicate-type-constituents, @typescript-eslint/no-redundant-type-constituents, @nx/enforce-module-boundaries */\nimport {JsonMapType} from '@shopify/cli-kit/shared/node/toml'",
                 },
               },
               {

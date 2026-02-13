@@ -4,8 +4,8 @@ import {
   unsetAppConfigValue,
   setManyAppConfigValues,
 } from './patch-app-configuration-file.js'
-import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {readFile, writeFileSync, inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import {describe, expect, test} from 'vitest'
 
 const defaultToml = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration

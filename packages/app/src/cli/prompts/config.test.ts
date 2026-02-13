@@ -1,12 +1,12 @@
 import {selectConfigFile, selectConfigName, validate} from './config.js'
 
 import {describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {err, ok} from '@shopify/cli-kit/node/result'
+import {inTemporaryDirectory, writeFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {renderConfirmationPrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {err, ok} from '@shopify/cli-kit/shared/node/result'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 describe('selectConfigName', () => {
   test('returns the chosen file name when the file does not exist', async () => {

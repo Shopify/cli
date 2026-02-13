@@ -1,8 +1,8 @@
 import {getOrCreateAppConfigHiddenPath} from './hidden-app-config.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import * as fs from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import * as fs from '@shopify/cli-kit/shared/node/fs'
 import {describe, expect, test, vi} from 'vitest'
-import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/node/hidden-folder'
+import {getOrCreateHiddenShopifyFolder} from '@shopify/cli-kit/shared/node/hidden-folder'
 
 describe('getOrCreateAppConfigHiddenPath', () => {
   test("creates hidden config file with empty JSON object if it doesn't exist", async () => {

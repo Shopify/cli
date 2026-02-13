@@ -1,12 +1,12 @@
 import {cloneRepoAndCheckoutLatestTag, cloneRepo, createAIInstructions, createAIInstructionFiles} from './init.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/node/git'
-import {rmdir, fileExists, readFile, writeFile, symlink} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {downloadGitRepository, removeGitRemote} from '@shopify/cli-kit/shared/node/git'
+import {rmdir, fileExists, readFile, writeFile, symlink} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
-vi.mock('@shopify/cli-kit/node/git')
-vi.mock('@shopify/cli-kit/node/fs', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/git')
+vi.mock('@shopify/cli-kit/shared/node/fs', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/fs')
   return {
     ...actual,
     fileExists: vi.fn(),
@@ -20,10 +20,10 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
     }),
   }
 })
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/path')
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/http')
+vi.mock('@shopify/cli-kit/shared/node/path')
+vi.mock('@shopify/cli-kit/shared/node/ui', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/ui')
   return {
     ...actual,
     renderSelectPrompt: vi.fn(),

@@ -1,7 +1,7 @@
 import {getListingFilePath, updateSettingsDataForListing, ensureListingExists} from './theme-listing.js'
 import {test, describe, expect} from 'vitest'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('theme-listing', () => {
   describe('getListingFilePath', () => {

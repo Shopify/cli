@@ -8,9 +8,9 @@ import {ExtensionInstance} from '../../../models/extensions/extension-instance.j
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
 import {BuildAsset} from '../../../models/extensions/specification.js'
 import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
-import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/shared/node/fs'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/shared/node/ui/components'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
 
 export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, 'appWatcher'> & {
   currentDevelopmentPayload?: Partial<UIExtensionPayload['development']>

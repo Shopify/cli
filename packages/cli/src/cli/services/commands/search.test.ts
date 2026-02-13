@@ -1,8 +1,8 @@
 import {searchService} from './search.js'
 import {describe, expect, test, vi} from 'vitest'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 describe('searchService', () => {
   test('the right URL is open in the system when a query is passed', async () => {

@@ -35,12 +35,12 @@ import {
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
+import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/identity/session'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {renderConfirmationPrompt, renderInfo, renderTasks, renderWarning, Task} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {getPackageManager} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {renderConfirmationPrompt, renderInfo, renderTasks, renderWarning, Task} from '@shopify/cli-kit/shared/node/ui'
 
 const APP1: OrganizationApp = testOrganizationApp({
   id: '1',
@@ -133,12 +133,12 @@ vi.mock('../prompts/dev')
 vi.mock('../models/app/identifiers')
 vi.mock('./context/identifiers')
 vi.mock('../models/app/loader.js')
-vi.mock('@shopify/cli-kit/node/node-package-manager.js')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/node-package-manager.js')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('./deploy/mode.js')
 vi.mock('./app/config/link.js')
 vi.mock('./context/partner-account-info.js')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session')
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/select-app.js')
 vi.mock('../utilities/developer-platform-client.js')

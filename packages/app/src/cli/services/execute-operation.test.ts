@@ -1,18 +1,18 @@
 import {executeOperation} from './execute-operation.js'
 import {createAdminSessionAsApp, resolveApiVersion, validateMutationStore} from './graphql/common.js'
 import {OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
-import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/shared/node/ui'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
 import {ClientError} from 'graphql-request'
-import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {inTemporaryDirectory, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./graphql/common.js')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/api/admin')
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/admin/api')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 
 describe('executeOperation', () => {
   const mockOrganization = {

@@ -9,14 +9,14 @@ import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompt
 import {searchForAppsByNameFactory} from '../../services/dev/prompt-helpers.js'
 import {isValidName} from '../../models/app/validation/common.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {resolvePath, cwd} from '@shopify/cli-kit/shared/node/path'
+import {addPublicMetadata} from '@shopify/cli-kit/shared/node/metadata'
 
-import {installGlobalShopifyCLI} from '@shopify/cli-kit/node/is-global'
-import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {installGlobalShopifyCLI} from '@shopify/cli-kit/shared/node/is-global'
+import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/shared/node/fs'
+import {inferPackageManager} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export default class Init extends AppLinkedCommand {
   static summary?: string | undefined = 'Create a new app project'

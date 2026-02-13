@@ -1,14 +1,14 @@
 import {fetchStoreThemes, publicFetchStoreThemes} from './fetch.js'
-import {fetchThemes} from '@shopify/cli-kit/node/themes/api'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {fetchThemes} from '@shopify/cli-kit/themes/api'
+import {Theme} from '@shopify/cli-kit/themes/types'
 import {test, vi, describe, expect} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
 
 const session = {token: 'token', storeFqdn: 'my-shop.myshopify.com'}
 
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/identity/session')
 
 // This function serves as a wrapper around fetchStoreThemes
 // which allows library users to pass a password to authenticate with the Theme API.

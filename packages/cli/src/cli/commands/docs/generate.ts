@@ -1,8 +1,8 @@
-import Command from '@shopify/cli-kit/node/base-command'
+import Command from '@shopify/cli-kit/shared/node/base-command'
 import {Command as oclifCommand} from '@oclif/core'
-import {mkdir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {cwd, joinPath} from '@shopify/cli-kit/node/path'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {mkdir, rmdir, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {cwd, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
 
 const docsPath = joinPath(cwd(), '/docs-shopify.dev/commands')
 

@@ -5,7 +5,7 @@ import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
-import {compact, getPathValue} from '@shopify/cli-kit/common/object'
+import {compact, getPathValue} from '@shopify/cli-kit/shared/common/object'
 
 const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
   forward: transformToPrivacyComplianceWebhooksModule,

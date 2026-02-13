@@ -1,7 +1,7 @@
 import {useSelfAdjustingInterval} from './useSelfAdjustingInterval.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import React from 'react'
-import {render} from '@shopify/cli-kit/node/testing/ui'
+import {render} from '@shopify/cli-kit/shared/node/testing/ui'
 
 function renderHook<THookResult>(renderHookCallback: () => THookResult) {
   const result: {

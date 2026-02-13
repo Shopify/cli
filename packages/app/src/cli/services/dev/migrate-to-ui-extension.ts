@@ -5,7 +5,7 @@ import {
 import {RemoteSource} from '../context/identifiers.js'
 import {LocalRemoteSource} from '../context/id-matching.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export async function migrateExtensionsToUIExtension(options: {
   extensionsToMigrate: LocalRemoteSource[]

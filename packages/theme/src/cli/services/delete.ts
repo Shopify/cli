@@ -2,18 +2,18 @@ import {removeDevelopmentTheme} from './local-storage.js'
 import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {themeDelete} from '@shopify/cli-kit/node/themes/api'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {themeDelete} from '@shopify/cli-kit/themes/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import {
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderSuccess,
   InlineToken,
   LinkToken,
-} from '@shopify/cli-kit/node/ui'
-import {pluralize} from '@shopify/cli-kit/common/string'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {isDevelopmentTheme} from '@shopify/cli-kit/node/themes/utils'
+} from '@shopify/cli-kit/shared/node/ui'
+import {pluralize} from '@shopify/cli-kit/shared/common/string'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {isDevelopmentTheme} from '@shopify/cli-kit/themes/utils'
 
 interface DeleteOptions {
   selectTheme: boolean

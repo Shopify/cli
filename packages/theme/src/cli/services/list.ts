@@ -1,10 +1,10 @@
 import {getDevelopmentTheme} from './local-storage.js'
 import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
-import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {InlineToken, renderInfo} from '@shopify/cli-kit/shared/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {getHostTheme} from '@shopify/cli-kit/themes/conf'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
 
 interface Options {
   role?: Role

@@ -1,25 +1,25 @@
 import {ensureThemeStore} from './theme-store.js'
 import {configurationFileName} from '../constants.js'
 import {useThemeStoreContext} from '../services/local-storage.js'
-import {hashString} from '@shopify/cli-kit/node/crypto'
+import {hashString} from '@shopify/cli-kit/shared/node/crypto'
 import {Input} from '@oclif/core/interfaces'
-import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/node/base-command'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {loadEnvironment} from '@shopify/cli-kit/node/environments'
+import Command, {ArgOutput, FlagOutput, noDefaultsOptions} from '@shopify/cli-kit/shared/node/base-command'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {loadEnvironment} from '@shopify/cli-kit/shared/node/environments'
 import {
   renderWarning,
   renderConcurrent,
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderError,
-} from '@shopify/cli-kit/node/ui'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {recordEvent, compileData} from '@shopify/cli-kit/node/analytics'
-import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/node/metadata'
-import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/node/path'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+} from '@shopify/cli-kit/shared/node/ui'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {recordEvent, compileData} from '@shopify/cli-kit/shared/node/analytics'
+import {addPublicMetadata, addSensitiveMetadata} from '@shopify/cli-kit/shared/node/metadata'
+import {cwd, joinPath, resolvePath} from '@shopify/cli-kit/shared/node/path'
+import {fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 import type {Writable} from 'stream'
 
 interface FlagValues {

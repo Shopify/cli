@@ -17,14 +17,14 @@ import {
 } from '../../../api/graphql/admin/generated/metafield_definitions.js'
 import {adminAsAppRequestDoc} from '../../../api/admin-as-app.js'
 import {describe, expect, test, vi} from 'vitest'
-import * as output from '@shopify/cli-kit/node/output'
-import {stringifyMessage} from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/shared/node/output'
+import {stringifyMessage} from '@shopify/cli-kit/shared/node/output'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
-import {AdminSession, ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/node/session'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AdminSession, ensureAuthenticatedAdminAsApp} from '@shopify/cli-kit/identity/session'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 vi.mock('../../../api/admin-as-app.js')
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session')
 
 const defaultMetaobjectFragment = {
   name: 'test',

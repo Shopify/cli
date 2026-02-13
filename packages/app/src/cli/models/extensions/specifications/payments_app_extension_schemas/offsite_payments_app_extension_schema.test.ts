@@ -4,7 +4,7 @@ import {
   offsitePaymentsAppExtensionDeployConfig,
 } from './offsite_payments_app_extension_schema.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const config: OffsitePaymentsAppExtensionConfigType = {
   name: 'test extension',

@@ -3,8 +3,8 @@ import {buildGraphqlTypes} from '../../../services/function/build.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {localAppContext} from '../../../services/app-context.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
 
 export default class FunctionTypegen extends AppUnlinkedCommand {
   static summary = 'Generate GraphQL types for a JavaScript function.'

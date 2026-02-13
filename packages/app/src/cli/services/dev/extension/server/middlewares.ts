@@ -3,10 +3,10 @@ import {GetExtensionsMiddlewareOptions} from './models.js'
 import {getUIExtensionPayload} from '../payload.js'
 import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
-import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
+import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/shared/node/fs'
 import {IncomingMessage, ServerResponse, sendRedirect, send} from 'h3'
-import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/shared/node/path'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 export function corsMiddleware(_request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
   response.setHeader('Access-Control-Allow-Origin', '*')

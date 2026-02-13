@@ -8,13 +8,13 @@ import {
 } from './theme-uploader.js'
 import {fakeThemeFileSystem} from './theme-fs/theme-fs-mock-factory.js'
 import {renderTasksToStdErr} from './theme-ui.js'
-import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/node/themes/types'
+import {bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cli-kit/themes/api'
+import {Result, Checksum, Key, ThemeAsset, Operation} from '@shopify/cli-kit/themes/types'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('./theme-ui.js')
 
 beforeEach(() => {

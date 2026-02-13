@@ -4,12 +4,12 @@ import {testAppLinked, testDeveloperPlatformClient, testUIExtension} from '../mo
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {fileExistsSync, inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
-import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {fileExistsSync, inTemporaryDirectory, mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('./context.js')
 vi.mock('./fetch-extensions.js')
 vi.mock('./context/partner-account-info.js')

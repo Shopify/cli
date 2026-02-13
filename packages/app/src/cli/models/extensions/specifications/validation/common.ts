@@ -1,4 +1,4 @@
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const httpsRegex = /^(https:\/\/)/
 // example PubSub URI - pubsub://{project}:{topic}

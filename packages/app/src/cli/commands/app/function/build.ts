@@ -3,8 +3,8 @@ import {buildFunctionExtension} from '../../../services/build/extension.js'
 import {appFlags} from '../../../flags.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../../utilities/app-unlinked-command.js'
 import {localAppContext} from '../../../services/app-context.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {renderSuccess} from '@shopify/cli-kit/shared/node/ui'
 
 export default class FunctionBuild extends AppUnlinkedCommand {
   static summary = 'Compile a function to wasm.'

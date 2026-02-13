@@ -3,8 +3,8 @@ import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
-import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
+import {deepMergeObjects} from '@shopify/cli-kit/shared/common/object'
+import {outputDebug, outputContent} from '@shopify/cli-kit/shared/node/output'
 import {EventEmitter} from 'events'
 
 export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {

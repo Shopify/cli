@@ -1,12 +1,12 @@
 import {globFlags, themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {pull} from '../../services/pull.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {Flags} from '@oclif/core'
-import {recordTiming} from '@shopify/cli-kit/node/analytics'
+import {recordTiming} from '@shopify/cli-kit/shared/node/analytics'
 import {InferredFlags} from '@oclif/core/interfaces'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {ArgOutput} from '@shopify/cli-kit/node/base-command'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {ArgOutput} from '@shopify/cli-kit/shared/node/base-command'
 import {Writable} from 'stream'
 
 type PullFlags = InferredFlags<typeof Pull.flags>

@@ -5,7 +5,7 @@ import {
 } from './format-bulk-operation-status.js'
 import {GetBulkOperationByIdQuery} from '../../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
 import {describe, test, expect, afterEach} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 type BulkOperation = NonNullable<GetBulkOperationByIdQuery['bulkOperation']>
 

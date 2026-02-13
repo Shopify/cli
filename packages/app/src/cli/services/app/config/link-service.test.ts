@@ -4,13 +4,13 @@ import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../u
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/dev.js')
 vi.mock('../../local-storage')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../../dev/fetch.js')
 vi.mock('../../../utilities/developer-platform-client.js')
 vi.mock('../../../models/app/validation/multi-cli-warning.js')

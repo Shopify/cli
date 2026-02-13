@@ -8,13 +8,13 @@ import {
   promptAIInstruction,
 } from '../../services/init.js'
 import {Args, Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/shared/node/fs'
+import {renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/shared/node/system'
 import {InferredArgs, InferredFlags} from '@oclif/core/interfaces'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 type InitFlags = InferredFlags<typeof Init.flags>
 type InitArgs = InferredArgs<typeof Init.args>

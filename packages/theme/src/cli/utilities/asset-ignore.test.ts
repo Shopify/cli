@@ -1,10 +1,10 @@
 import {applyIgnoreFilters, getPatternsFromShopifyIgnore} from './asset-ignore.js'
-import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/node/fs'
+import {ReadOptions, fileExists, readFile} from '@shopify/cli-kit/shared/node/fs'
 import {test, describe, beforeEach, vi, expect} from 'vitest'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/fs', async () => {
-  const originalFs: any = await vi.importActual('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs', async () => {
+  const originalFs: any = await vi.importActual('@shopify/cli-kit/shared/node/fs')
   return {
     ...originalFs,
     matchGlob: originalFs.matchGlob,
@@ -13,11 +13,11 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
   }
 })
 
-vi.mock('@shopify/cli-kit/node/ui', () => ({
+vi.mock('@shopify/cli-kit/shared/node/ui', () => ({
   renderWarning: vi.fn(),
 }))
 
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 
 describe('asset-ignore', () => {
   const checksums = [

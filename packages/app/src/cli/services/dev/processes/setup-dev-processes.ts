@@ -20,12 +20,12 @@ import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {reloadApp} from '../../../models/app/loader.js'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
-import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {getAvailableTCPPort} from '@shopify/cli-kit/shared/node/tcp'
+import {isTruthy} from '@shopify/cli-kit/shared/node/context/utilities'
+import {firstPartyDev} from '@shopify/cli-kit/shared/node/context/local'
+import {getEnvironmentVariables} from '@shopify/cli-kit/shared/node/environment'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
+import {adminFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 interface ProxyServerProcess
   extends BaseProcess<{

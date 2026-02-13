@@ -57,12 +57,12 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
-import {Session} from '@shopify/cli-kit/node/session'
-import {TokenItem} from '@shopify/cli-kit/node/ui'
-import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
-import {UnauthorizedHandler} from '@shopify/cli-kit/node/api/graphql'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
+import {Session} from '@shopify/cli-kit/identity/session'
+import {TokenItem} from '@shopify/cli-kit/shared/node/ui'
+import {blockPartnersAccess} from '@shopify/cli-kit/shared/node/environment'
+import {UnauthorizedHandler} from '@shopify/cli-kit/shared/node/api/graphql'
+import {JsonMapType} from '@shopify/cli-kit/shared/node/toml'
+import {firstPartyDev} from '@shopify/cli-kit/shared/node/context/local'
 
 export type {Store} from '../api/graphql/business-platform-organizations/generated/types.js'
 

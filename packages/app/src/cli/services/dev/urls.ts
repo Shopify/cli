@@ -6,14 +6,14 @@ import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/
 import {prependApplicationUrl} from '../../models/extensions/specifications/validation/url_prepender.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
 import {Config} from '@oclif/core'
-import {isValidURL} from '@shopify/cli-kit/common/url'
-import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/node/context/local'
-import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
-import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
-import {TunnelClient} from '@shopify/cli-kit/node/plugins/tunnel'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {isValidURL} from '@shopify/cli-kit/shared/common/url'
+import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/shared/node/context/local'
+import {fanoutHooks} from '@shopify/cli-kit/shared/node/plugins'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/shared/node/system'
+import {TunnelClient} from '@shopify/cli-kit/shared/node/plugins/tunnel'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 interface AppProxy {
   proxyUrl: string

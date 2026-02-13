@@ -10,8 +10,8 @@ import {
   renderAutocompletePrompt,
   renderConfirmationPrompt,
   renderTextPrompt,
-} from '@shopify/cli-kit/node/ui'
-import {outputCompleted} from '@shopify/cli-kit/node/output'
+} from '@shopify/cli-kit/shared/node/ui'
+import {outputCompleted} from '@shopify/cli-kit/shared/node/output'
 
 export async function selectOrganizationPrompt(organizations: Organization[]): Promise<Organization> {
   if (organizations.length === 1) {

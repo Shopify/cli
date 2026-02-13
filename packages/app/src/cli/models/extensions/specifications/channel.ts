@@ -1,5 +1,5 @@
 import {createContractBasedModuleSpecification} from '../specification.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 const SUBDIRECTORY_NAME = 'specifications'
 const FILE_EXTENSIONS = ['json', 'toml', 'yaml', 'yml', 'svg']

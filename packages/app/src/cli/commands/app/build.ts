@@ -3,8 +3,8 @@ import build from '../../services/build.js'
 import {localAppContext} from '../../services/app-context.js'
 import AppUnlinkedCommand, {AppUnlinkedCommandOutput} from '../../utilities/app-unlinked-command.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {addPublicMetadata} from '@shopify/cli-kit/shared/node/metadata'
 
 export default class Build extends AppUnlinkedCommand {
   static summary = 'Build the app, including extensions.'

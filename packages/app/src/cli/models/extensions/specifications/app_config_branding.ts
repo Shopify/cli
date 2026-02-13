@@ -1,6 +1,6 @@
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const BrandingSchema = BaseSchemaWithoutHandle.extend({
   name: zod.string({required_error: 'String is required'}).max(30, {message: 'String must be less than 30 characters'}),

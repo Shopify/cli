@@ -1,10 +1,10 @@
 import {ExtensionAssetBuildStatus} from './payload/models.js'
 import {GetUIExtensionPayloadOptions} from './payload.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {readFile, glob} from '@shopify/cli-kit/node/fs'
-import {ExtendableError} from '@shopify/cli-kit/node/error'
-import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {readFile, glob} from '@shopify/cli-kit/shared/node/fs'
+import {ExtendableError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/shared/node/output'
 
 type Locale = string
 

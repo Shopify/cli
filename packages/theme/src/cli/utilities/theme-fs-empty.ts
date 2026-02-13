@@ -1,4 +1,4 @@
-import {ThemeAsset, ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'
+import {ThemeAsset, ThemeExtensionFileSystem, ThemeFileSystem} from '@shopify/cli-kit/themes/types'
 
 export function emptyThemeFileSystem(): ThemeFileSystem {
   return emptyFileSystem()

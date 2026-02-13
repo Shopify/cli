@@ -1,8 +1,8 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
-import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {normalizeDelimitedString} from '@shopify/cli-kit/shared/common/string'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const AppAccessSchema = BaseSchemaWithoutHandle.extend({
   access: zod

@@ -7,12 +7,12 @@ import {
   getPackageManager,
   PackageJson,
   usesWorkspaces,
-} from '@shopify/cli-kit/node/node-package-manager'
-import {exec} from '@shopify/cli-kit/node/system'
-import {dirname, joinPath, moduleDirectory} from '@shopify/cli-kit/node/path'
-import {findPathUp, glob} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputInfo, outputSuccess, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
+} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {exec} from '@shopify/cli-kit/shared/node/system'
+import {dirname, joinPath, moduleDirectory} from '@shopify/cli-kit/shared/node/path'
+import {findPathUp, glob} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputInfo, outputSuccess, outputToken, outputWarn} from '@shopify/cli-kit/shared/node/output'
 
 type HomebrewPackageName = 'shopify-cli' | 'shopify-cli@3'
 

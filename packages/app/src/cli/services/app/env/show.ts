@@ -1,7 +1,7 @@
 import {AppInterface, getAppScopes} from '../../../models/app/app.js'
 import {Organization, OrganizationApp} from '../../../models/organization.js'
 import {logMetadataForLoadedContext} from '../../context.js'
-import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {OutputMessage, outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 type Format = 'json' | 'text'
 

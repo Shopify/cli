@@ -1,5 +1,5 @@
 import Dev from './dev.js'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 export default class Serve extends Dev {
   static hidden = true

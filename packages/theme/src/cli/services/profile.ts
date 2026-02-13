@@ -3,12 +3,12 @@ import {ensureValidPassword} from '../utilities/theme-environment/storefront-pas
 import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
 import {render} from '../utilities/theme-environment/storefront-renderer.js'
 import {resolveAssetPath} from '../utilities/asset-path.js'
-import {openURL} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {writeFile, tempDirectory} from '@shopify/cli-kit/node/fs'
-import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {writeFile, tempDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {outputResult, outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export async function profile(
   adminSession: AdminSession,

@@ -2,13 +2,13 @@ import {cancelBulkOperation} from './cancel-bulk-operation.js'
 import {createAdminSessionAsApp, formatOperationInfo} from '../graphql/common.js'
 import {OrganizationApp, Organization, OrganizationSource} from '../../models/organization.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 vi.mock('../graphql/common.js')
-vi.mock('@shopify/cli-kit/node/api/admin')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/admin/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 describe('cancelBulkOperation', () => {
   const mockOrganization: Organization = {

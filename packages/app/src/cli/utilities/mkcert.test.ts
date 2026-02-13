@@ -1,25 +1,25 @@
 import {generateCertificate} from './mkcert.js'
 import {generateCertificatePrompt} from '../prompts/dev.js'
-import * as fs from '@shopify/cli-kit/node/fs'
-import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import * as fs from '@shopify/cli-kit/shared/node/fs'
+import {mkdir, writeFile} from '@shopify/cli-kit/shared/node/fs'
 import {describe, vi, expect, beforeEach, afterEach, MockInstance} from 'vitest'
-import {exec, isWsl} from '@shopify/cli-kit/node/system'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {exec, isWsl} from '@shopify/cli-kit/shared/node/system'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 import which from 'which'
-import {downloadGitHubRelease} from '@shopify/cli-kit/node/github'
-import {testWithTempDir} from '@shopify/cli-kit/node/testing/test-with-temp-dir'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fetch, Response} from '@shopify/cli-kit/node/http'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {keypress, renderWarning} from '@shopify/cli-kit/node/ui'
+import {downloadGitHubRelease} from '@shopify/cli-kit/shared/node/github'
+import {testWithTempDir} from '@shopify/cli-kit/shared/node/testing/test-with-temp-dir'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {fetch, Response} from '@shopify/cli-kit/shared/node/http'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {keypress, renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('which')
-vi.mock('@shopify/cli-kit/node/github')
+vi.mock('@shopify/cli-kit/shared/node/github')
 vi.mock('../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/http')
+vi.mock('@shopify/cli-kit/shared/node/ui', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/ui')
   return {
     ...actual,
     renderWarning: vi.fn(),

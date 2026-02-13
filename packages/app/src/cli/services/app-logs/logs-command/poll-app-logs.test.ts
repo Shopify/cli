@@ -2,10 +2,10 @@ import {pollAppLogs} from './poll-app-logs.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {describe, test, vi, expect} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/context/fqdn')
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/output')
+vi.mock('@shopify/cli-kit/shared/node/context/fqdn')
+vi.mock('@shopify/cli-kit/shared/node/http')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../utils.js')
 
 const MOCKED_JWT_TOKEN = 'mockedJwtToken'

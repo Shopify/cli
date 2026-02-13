@@ -7,8 +7,8 @@ import {
   normalizeBulkOperationId,
 } from '../../../services/bulk-operations/bulk-operation-status.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 export default class BulkStatus extends AppLinkedCommand {
   static summary = 'Check the status of bulk operations.'

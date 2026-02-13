@@ -1,5 +1,5 @@
-import Command from '@shopify/cli-kit/node/base-command'
-import {clearCache} from '@shopify/cli-kit/node/cli'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {clearCache} from '@shopify/cli-kit/shared/node/cli'
 
 export default class ClearCache extends Command {
   static description = 'Clear the CLI cache, used to store some API responses and handle notifications status'

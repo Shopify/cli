@@ -4,8 +4,8 @@ import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import * as appModel from '../../../models/app/app.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, touchFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('getUIExtensionPayload', () => {
   beforeEach(() => {

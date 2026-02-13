@@ -1,8 +1,8 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {decodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {readFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {getPathValue} from '@shopify/cli-kit/shared/common/object'
 
 export async function addUidToTomlsIfNecessary(
   extensions: ExtensionInstance[],

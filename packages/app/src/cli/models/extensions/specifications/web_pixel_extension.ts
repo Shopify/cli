@@ -1,8 +1,8 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {zod} from '@shopify/cli-kit/node/schema'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileSize} from '@shopify/cli-kit/node/fs'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {fileSize} from '@shopify/cli-kit/shared/node/fs'
 
 const kilobytes = 1024
 const BUNDLE_SIZE_LIMIT_KB = 128

@@ -1,4 +1,4 @@
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
 import {
   renderError,
   renderFatalError,
@@ -6,7 +6,7 @@ import {
   renderSuccess,
   renderTable,
   renderWarning,
-} from '@shopify/cli-kit/node/ui'
+} from '@shopify/cli-kit/shared/node/ui'
 
 export async function staticService() {
   // Banners

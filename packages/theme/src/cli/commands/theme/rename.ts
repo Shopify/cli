@@ -2,8 +2,8 @@ import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {themeFlags} from '../../flags.js'
 import {RenameOptions, renameTheme} from '../../services/rename.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 export default class Rename extends ThemeCommand {
   static summary = 'Renames an existing theme.'

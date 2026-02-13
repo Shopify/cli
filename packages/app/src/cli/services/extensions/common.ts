@@ -2,10 +2,10 @@ import {AppInterface} from '../../models/app/app.js'
 import {blocks, configurationFileNames} from '../../constants.js'
 import {ExtensionFlavor} from '../../models/app/template.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {hyphenate} from '@shopify/cli-kit/common/string'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {fileExists, mkdir, touchFile} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {hyphenate} from '@shopify/cli-kit/shared/common/string'
 
 export async function ensureDownloadedExtensionFlavorExists(
   extensionFlavor: ExtensionFlavor | undefined,

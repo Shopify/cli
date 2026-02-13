@@ -5,7 +5,7 @@ import {Identifiers} from '../../models/app/identifiers.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {deployOrReleaseConfirmationPrompt} from '../../prompts/deploy-release.js'
 import {AppVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 export type PartnersAppForIdentifierMatching = MinimalOrganizationApp
 

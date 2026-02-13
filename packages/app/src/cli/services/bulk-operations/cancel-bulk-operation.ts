@@ -6,9 +6,9 @@ import {
 } from '../../api/graphql/bulk-operations/generated/bulk-operation-cancel.js'
 import {formatOperationInfo, createAdminSessionAsApp} from '../graphql/common.js'
 import {OrganizationApp, Organization} from '../../models/organization.js'
-import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {renderInfo, renderError, renderSuccess, renderWarning} from '@shopify/cli-kit/shared/node/ui'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
 
 const API_VERSION = '2026-01'
 

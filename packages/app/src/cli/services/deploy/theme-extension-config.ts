@@ -1,7 +1,7 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {relativePath, dirname} from '@shopify/cli-kit/node/path'
+import {readFile} from '@shopify/cli-kit/shared/node/fs'
+import {relativePath, dirname} from '@shopify/cli-kit/shared/node/path'
 
 interface ThemeExtensionConfig {
   theme_extension: {

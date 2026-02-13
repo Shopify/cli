@@ -2,8 +2,8 @@ import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} f
 import {AppInterface} from '../../models/app/app.js'
 import {ExtensionFlavor} from '../../models/app/template.js'
 import {describe, expect, test} from 'vitest'
-import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {inTemporaryDirectory, mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('ensureDownloadedExtensionFlavorExists()', () => {
   test('it returns the full path if it exists', async () => {

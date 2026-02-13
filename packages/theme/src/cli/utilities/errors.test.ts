@@ -6,11 +6,11 @@ import {
   extractFetchErrorInfo,
 } from './errors.js'
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {renderError, renderFatalError} from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/output')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 describe('errors', () => {
   describe('renderThrownError', () => {

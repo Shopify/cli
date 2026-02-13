@@ -7,9 +7,9 @@ import {getHotReloadHandler, triggerHotReload} from '../theme-environment/hot-re
 import {emptyThemeFileSystem} from '../theme-fs-empty.js'
 import {initializeDevServerSession} from '../theme-environment/dev-server-session.js'
 import {createApp, toNodeListener} from 'h3'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 import {createServer} from 'node:http'
-import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeFSEventPayload} from '@shopify/cli-kit/themes/types'
 
 interface DevelopmentServerInstance {
   close: () => Promise<void>

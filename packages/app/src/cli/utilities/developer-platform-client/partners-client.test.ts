@@ -10,11 +10,11 @@ import {
 } from '../../models/app/app.test-data.js'
 import {appNamePrompt} from '../../prompts/dev.js'
 import {FindOrganizationQuery} from '../../api/graphql/find_org.js'
-import {partnersRequest} from '@shopify/cli-kit/node/api/partners'
+import {partnersRequest} from '@shopify/cli-kit/partners/api'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
 
 vi.mock('../../prompts/dev.js')
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/partners/api')
 
 beforeEach(() => {
   // Reset the singleton instance before each test

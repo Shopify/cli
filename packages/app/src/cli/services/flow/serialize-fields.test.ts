@@ -1,7 +1,7 @@
 import {ConfigField} from './types.js'
 import {serializeConfigField, serializeCommerceObjectField} from './serialize-fields.js'
 import {describe, expect, test} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 describe('serializeConfigField', () => {
   test('should serialize a field for a flow action', () => {

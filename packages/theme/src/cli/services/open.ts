@@ -1,10 +1,10 @@
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
-import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
-import {openURL} from '@shopify/cli-kit/node/system'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/themes/urls'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 export async function open(
   adminSession: AdminSession,

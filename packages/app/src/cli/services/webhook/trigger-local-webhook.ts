@@ -1,4 +1,4 @@
-import {fetch} from '@shopify/cli-kit/node/http'
+import {fetch} from '@shopify/cli-kit/shared/node/http'
 
 /**
  * Sends a POST request to a local endpoint with a webhook payload

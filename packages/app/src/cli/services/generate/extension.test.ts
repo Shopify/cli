@@ -19,21 +19,21 @@ import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-sp
 import {AppLinkedInterface} from '../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {describe, expect, vi, test} from 'vitest'
-import * as output from '@shopify/cli-kit/node/output'
+import * as output from '@shopify/cli-kit/shared/node/output'
 import {
   installNodeModules,
   addNPMDependenciesIfNeeded,
   addResolutionOrOverride,
-} from '@shopify/cli-kit/node/node-package-manager'
-import * as template from '@shopify/cli-kit/node/liquid'
-import * as file from '@shopify/cli-kit/node/fs'
-import * as git from '@shopify/cli-kit/node/git'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {slugify} from '@shopify/cli-kit/common/string'
+} from '@shopify/cli-kit/shared/node/node-package-manager'
+import * as template from '@shopify/cli-kit/shared/node/liquid'
+import * as file from '@shopify/cli-kit/shared/node/fs'
+import * as git from '@shopify/cli-kit/shared/node/git'
+import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 vi.mock('../../models/app/validation/multi-cli-warning.js')
-vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+vi.mock('@shopify/cli-kit/shared/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/shared/node/node-package-manager')
   return {
     ...actual,
     addNPMDependenciesIfNeeded: vi.fn(),
@@ -42,8 +42,8 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
   }
 })
 
-vi.mock('@shopify/cli-kit/node/system', async () => {
-  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/shared/node/system')
   return {
     ...actual,
     exec: vi.fn().mockResolvedValue({stdout: '', stderr: ''}),

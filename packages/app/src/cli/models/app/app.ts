@@ -15,10 +15,14 @@ import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
-import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {ZodObjectOf, zod} from '@shopify/cli-kit/shared/node/schema'
+import {DotEnvFile} from '@shopify/cli-kit/shared/node/dot-env'
+import {
+  getDependencies,
+  PackageManager,
+  readAndParsePackageJson,
+} from '@shopify/cli-kit/shared/node/node-package-manager'
 import {
   fileExistsSync,
   fileRealPath,
@@ -26,12 +30,12 @@ import {
   readFileSync,
   removeFileSync,
   writeFileSync,
-} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
-import {deepMergeObjects} from '@shopify/cli-kit/common/object'
+} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {normalizeDelimitedString} from '@shopify/cli-kit/shared/common/string'
+import {JsonMapType} from '@shopify/cli-kit/shared/node/toml'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/shared/common/array'
+import {deepMergeObjects} from '@shopify/cli-kit/shared/common/object'
 
 // Schemas for loading app configuration
 

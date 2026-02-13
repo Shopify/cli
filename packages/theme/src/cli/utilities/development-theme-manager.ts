@@ -1,8 +1,8 @@
 import {getDevelopmentTheme, setDevelopmentTheme, removeDevelopmentTheme} from '../services/local-storage.js'
-import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {ThemeManager} from '@shopify/cli-kit/themes/theme-manager'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {Theme} from '@shopify/cli-kit/themes/types'
 
 export const DEVELOPMENT_THEME_NOT_FOUND = (themeId: string) =>
   `Development theme #${themeId} could not be found. Please create a new development theme.`

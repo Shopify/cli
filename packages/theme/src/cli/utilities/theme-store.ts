@@ -1,8 +1,8 @@
 import {themeFlags} from '../flags.js'
 import {getThemeStore, setThemeStore} from '../services/local-storage.js'
-import {recordError} from '@shopify/cli-kit/node/analytics'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {recordError} from '@shopify/cli-kit/shared/node/analytics'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/shared/node/output'
 
 export function ensureThemeStore(flags: {store: string | undefined}): string {
   const store = flags.store ?? getThemeStore()

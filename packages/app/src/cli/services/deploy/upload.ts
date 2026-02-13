@@ -4,9 +4,9 @@ import {AppDeploySchema, AppModuleSettings} from '../../api/graphql/app_deploy.j
 import {AppDeployOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {getUploadURL, uploadToGCS} from '../bundle.js'
 import {AppManifest} from '../../models/app/app.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/node/ui'
-import {partition} from '@shopify/cli-kit/common/collection'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {AlertCustomSection, ListToken, TokenItem} from '@shopify/cli-kit/shared/node/ui'
+import {partition} from '@shopify/cli-kit/shared/common/collection'
 
 interface UploadExtensionsBundleOptions {
   appManifest: AppManifest

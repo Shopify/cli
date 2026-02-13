@@ -5,8 +5,8 @@ import {buildTomlObject as buildMarketingActivityTomlObject} from '../services/m
 import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../services/subscription_link/extension-to-toml.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {CurrentAppConfiguration} from '../models/app/app.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {renderSelectPrompt} from '@shopify/cli-kit/shared/node/ui'
 
 export interface MigrationChoice {
   label: string

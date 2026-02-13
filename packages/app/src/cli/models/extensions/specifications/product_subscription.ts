@@ -1,7 +1,7 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {BugError} from '@shopify/cli-kit/node/error'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
 
 const dependency = '@shopify/admin-ui-extensions'
 

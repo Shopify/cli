@@ -1,4 +1,4 @@
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
 
 import {Writable} from 'node:stream'
 

@@ -1,19 +1,19 @@
 import {openURLSafely, renderLinks, createKeypressHandler} from './dev.js'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
-import {renderSuccess, renderWarning} from '@shopify/cli-kit/node/ui'
-import {openURL} from '@shopify/cli-kit/node/system'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
+import {renderSuccess, renderWarning} from '@shopify/cli-kit/shared/node/ui'
+import {openURL} from '@shopify/cli-kit/shared/node/system'
 
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/colors', () => ({
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/colors', () => ({
   default: {
     bold: (str: string) => str,
     cyan: (str: string) => str,
     gray: (str: string) => str,
   },
 }))
-vi.mock('@shopify/cli-kit/node/system', () => ({
+vi.mock('@shopify/cli-kit/shared/node/system', () => ({
   openURL: vi.fn(),
 }))
 

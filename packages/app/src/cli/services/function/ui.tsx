@@ -1,5 +1,5 @@
 import {Replay, ReplayProps} from './ui/components/Replay/Replay.js'
-import {render} from '@shopify/cli-kit/node/ui'
+import {render} from '@shopify/cli-kit/shared/node/ui'
 import React from 'react'
 
 export async function renderReplay({selectedRun, abortController, app, extension}: ReplayProps) {

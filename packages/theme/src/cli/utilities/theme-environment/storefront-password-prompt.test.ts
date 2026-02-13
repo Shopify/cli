@@ -7,10 +7,10 @@ import {
   setStorefrontPassword,
 } from '../../services/local-storage.js'
 import {ensureThemeStore} from '../theme-store.js'
-import {renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
 import {describe, beforeEach, vi, test, expect} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../theme-environment/storefront-session.js')
 vi.mock('../../services/local-storage.js')
 vi.mock('../theme-store.js')

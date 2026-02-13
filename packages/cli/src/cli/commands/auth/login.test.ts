@@ -1,9 +1,9 @@
 import Login from './login.js'
 import {describe, expect, vi, test} from 'vitest'
-import {promptSessionSelect} from '@shopify/cli-kit/node/session-prompt'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {promptSessionSelect} from '@shopify/cli-kit/identity/session-prompt'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/session-prompt')
+vi.mock('@shopify/cli-kit/identity/session-prompt')
 
 describe('Login command', () => {
   test('runs login without alias flag', async () => {

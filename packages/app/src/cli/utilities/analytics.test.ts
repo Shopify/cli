@@ -1,8 +1,8 @@
 import {getAnalyticsTunnelType} from './analytics.js'
 import {test, expect, describe, vi} from 'vitest'
-import {getListOfTunnelPlugins} from '@shopify/cli-kit/node/plugins'
+import {getListOfTunnelPlugins} from '@shopify/cli-kit/shared/node/plugins'
 
-vi.mock('@shopify/cli-kit/node/plugins')
+vi.mock('@shopify/cli-kit/shared/node/plugins')
 
 describe('getAnalyticsTunnelType', () => {
   test('return a provider in case tunnelUrl contains its name', async () => {

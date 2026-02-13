@@ -5,8 +5,8 @@ import {WebhookTriggerInput} from './trigger.js'
 import {addressPrompt, apiVersionPrompt, deliveryMethodPrompt, topicPrompt} from '../../prompts/webhook/trigger.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
 import {describe, expect, vi, test, afterEach} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 vi.mock('../../prompts/webhook/trigger.js')
 vi.mock('./request-api-versions.js')

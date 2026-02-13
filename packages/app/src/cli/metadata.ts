@@ -1,6 +1,6 @@
-import {MonorailEventPublic, MonorailEventSensitive} from '@shopify/cli-kit/node/monorail'
-import {createRuntimeMetadataContainer} from '@shopify/cli-kit/node/metadata'
-import type {PickByPrefix} from '@shopify/cli-kit/common/ts/pick-by-prefix'
+import {MonorailEventPublic, MonorailEventSensitive} from '@shopify/cli-kit/shared/node/monorail'
+import {createRuntimeMetadataContainer} from '@shopify/cli-kit/shared/node/metadata'
+import type {PickByPrefix} from '@shopify/cli-kit/shared/common/ts/pick-by-prefix'
 
 type CmdFieldsFromMonorail = PickByPrefix<MonorailEventPublic, 'cmd_extensions_' | 'cmd_app_'> &
   PickByPrefix<MonorailEventPublic, 'cmd_shared_'> &

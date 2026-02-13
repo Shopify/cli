@@ -1,4 +1,4 @@
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {getPathValue} from '@shopify/cli-kit/shared/common/object'
 
 /**
  * Transforms the events config from local to remote format.

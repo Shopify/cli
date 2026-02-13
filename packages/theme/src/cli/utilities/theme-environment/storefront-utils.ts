@@ -1,5 +1,5 @@
 import {DevServerRenderContext} from './types.js'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/shared/common/version'
 
 export function storefrontReplaceTemplatesParams(context: DevServerRenderContext): URLSearchParams {
   /**

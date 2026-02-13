@@ -1,6 +1,6 @@
 import spec from './app_config_privacy_compliance_webhooks.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
-import {isEmpty} from '@shopify/cli-kit/common/object'
+import {isEmpty} from '@shopify/cli-kit/shared/common/object'
 import {describe, expect, test} from 'vitest'
 
 describe('privacy_compliance_webhooks', () => {

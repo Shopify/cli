@@ -1,6 +1,6 @@
 import {validateUrl, validateRelativeUrl} from './common.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 describe('validateUrl', () => {
   test('accepts valid HTTPS URLs', () => {

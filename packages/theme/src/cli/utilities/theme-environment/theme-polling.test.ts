@@ -1,12 +1,12 @@
 import {PollingOptions, pollRemoteJsonChanges, deleteRemovedAssets} from './theme-polling.js'
 import {fakeThemeFileSystem} from '../theme-fs/theme-fs-mock-factory.js'
-import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {fetchChecksums, fetchThemeAssets} from '@shopify/cli-kit/themes/api'
+import {Checksum, ThemeAsset} from '@shopify/cli-kit/themes/types'
 import {describe, expect, test, vi, afterEach} from 'vitest'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
-import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
+import {DEVELOPMENT_THEME_ROLE} from '@shopify/cli-kit/themes/utils'
 
-vi.mock('@shopify/cli-kit/node/themes/api')
+vi.mock('@shopify/cli-kit/themes/api')
 vi.mock('../theme-fs.js')
 
 describe('pollRemoteJsonChanges', async () => {

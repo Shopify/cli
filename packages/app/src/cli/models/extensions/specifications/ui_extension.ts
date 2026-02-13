@@ -12,11 +12,11 @@ import {loadLocalesConfig} from '../../../utilities/extensions/locales-configura
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {formatContent} from '../../../utilities/file-formatter.js'
-import {err, ok, Result} from '@shopify/cli-kit/node/result'
-import {copyFile, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
-import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {err, ok, Result} from '@shopify/cli-kit/shared/node/result'
+import {copyFile, fileExists, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, basename, dirname} from '@shopify/cli-kit/shared/node/path'
+import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/shared/node/output'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const dependency = '@shopify/checkout-ui-extensions'
 

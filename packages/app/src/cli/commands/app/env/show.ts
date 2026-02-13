@@ -2,8 +2,8 @@ import {appFlags} from '../../../flags.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {showEnv} from '../../../services/app/env/show.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
 
 export default class EnvShow extends AppLinkedCommand {
   static summary = 'Display app and extensions environment variables.'

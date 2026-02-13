@@ -1,17 +1,17 @@
 import {readThemeFile} from '../theme-fs.js'
 import {calculateChecksum} from '../asset-checksum.js'
 import {DEFAULT_IGNORE_PATTERNS} from '../../constants.js'
-import {glob} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+import {glob} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, relativePath} from '@shopify/cli-kit/shared/node/path'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {buildThemeAsset} from '@shopify/cli-kit/themes/factories'
 import EventEmitter from 'node:events'
 import type {
   ThemeAsset,
   ThemeExtensionFileSystem,
   ThemeFSEventName,
   ThemeFSEventPayload,
-} from '@shopify/cli-kit/node/themes/types'
+} from '@shopify/cli-kit/themes/types'
 
 const THEME_EXT_DIRECTORY_PATTERNS = [
   'assets/**/*.*',

@@ -1,7 +1,7 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {recordError} from '@shopify/cli-kit/node/analytics'
-import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {recordError} from '@shopify/cli-kit/shared/node/analytics'
+import {renderError, renderFatalError} from '@shopify/cli-kit/shared/node/ui'
 import {createError as createH3Error, type H3Error} from 'h3'
 
 /**

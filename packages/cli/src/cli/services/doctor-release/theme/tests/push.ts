@@ -1,4 +1,4 @@
-import {DoctorSuite} from '@shopify/cli-kit/node/doctor/framework'
+import {DoctorSuite} from '@shopify/cli-kit/shared/node/doctor/framework'
 import type {ThemeDoctorContext} from '../../context.js'
 
 interface PushJsonOutput {

@@ -1,12 +1,12 @@
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {AppLogData, AppLogPayload, FunctionRunLog} from '../types.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {writeFile} from '@shopify/cli-kit/shared/node/fs'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import camelcaseKeys from 'camelcase-keys'
-import {formatLocalDate} from '@shopify/cli-kit/common/string'
+import {formatLocalDate} from '@shopify/cli-kit/shared/common/string'
 
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 
 const APP_LOG: AppLogData = {
   shop_id: 1,

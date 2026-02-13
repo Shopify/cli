@@ -6,9 +6,9 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {storeContext} from '../../services/store-context.js'
 import {getTunnelMode} from '../../services/dev/tunnel-mode.js'
 import {Flags} from '@oclif/core'
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {addPublicMetadata} from '@shopify/cli-kit/shared/node/metadata'
 
 export default class Dev extends AppLinkedCommand {
   static summary = 'Run the app.'

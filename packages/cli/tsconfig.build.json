@@ -1,8 +1,5 @@
 {
   "extends": "./tsconfig.json",
   "exclude": ["**/*.test.ts"],
-  "references": [
-    {"path": "../cli-kit"},
-    {"path": "../plugin-did-you-mean"}
-  ]
+  "references": [{"path": "../cli-kit"}, {"path": "../plugin-did-you-mean"}]
 }

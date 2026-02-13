@@ -12,13 +12,13 @@ import {
   PackageManager,
   UnknownPackageManagerError,
   writePackageJSON,
-} from '@shopify/cli-kit/node/node-package-manager'
-import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/node/ui'
-import {parseGitHubRepositoryReference} from '@shopify/cli-kit/node/github'
-import {hyphenate} from '@shopify/cli-kit/common/string'
-import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/node/liquid'
-import {isShopify} from '@shopify/cli-kit/node/context/local'
-import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/node/git'
+} from '@shopify/cli-kit/shared/node/node-package-manager'
+import {renderInfo, renderSuccess, renderTasks, Task} from '@shopify/cli-kit/shared/node/ui'
+import {parseGitHubRepositoryReference} from '@shopify/cli-kit/shared/node/github'
+import {hyphenate} from '@shopify/cli-kit/shared/common/string'
+import {recursiveLiquidTemplateCopy} from '@shopify/cli-kit/shared/node/liquid'
+import {isShopify} from '@shopify/cli-kit/shared/node/context/local'
+import {downloadGitRepository, initializeGitRepository} from '@shopify/cli-kit/shared/node/git'
 import {
   appendFile,
   fileExists,
@@ -28,12 +28,12 @@ import {
   moveFile,
   readFile,
   writeFile,
-} from '@shopify/cli-kit/node/fs'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {username} from '@shopify/cli-kit/node/os'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
+} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/shared/node/path'
+import {username} from '@shopify/cli-kit/shared/node/os'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/shared/node/output'
+import {LocalStorage} from '@shopify/cli-kit/shared/node/local-storage'
 
 interface InitOptions {
   name: string

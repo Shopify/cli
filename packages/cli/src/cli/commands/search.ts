@@ -1,5 +1,5 @@
 import {searchService} from '../services/commands/search.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import Command from '@shopify/cli-kit/shared/node/base-command'
 import {Args} from '@oclif/core'
 
 export default class Search extends Command {

@@ -3,7 +3,7 @@ import {CustomCreditCardPaymentsAppExtensionDeployConfigType} from '../payments_
 import {CustomOnsitePaymentsAppExtensionDeployConfigType} from '../payments_app_extension_schemas/custom_onsite_payments_app_extension_schema.js'
 import {RedeemablePaymentsAppExtensionDeployConfigType} from '../payments_app_extension_schemas/redeemable_payments_app_extension_schema.js'
 import {ExtensionRegistration} from '../../../../api/graphql/all_app_extension_registrations.js'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 type Config =
   | CreditCardPaymentsAppExtensionDeployConfigType

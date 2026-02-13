@@ -1,8 +1,8 @@
 import {OrganizationApp, OrganizationStore} from '../../models/organization.js'
-import {ensureAuthenticatedAdminAsApp, AdminSession} from '@shopify/cli-kit/node/session'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {ensureAuthenticatedAdminAsApp, AdminSession} from '@shopify/cli-kit/identity/session'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {fetchApiVersions} from '@shopify/cli-kit/admin/api'
 import {parse} from 'graphql'
 
 /**

@@ -1,8 +1,8 @@
 import {AppVersionsDiffSchema} from '../../api/graphql/app_versions_diff.js'
 import {AppVersionWithContext, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
-import {renderError} from '@shopify/cli-kit/node/ui'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+import {renderError} from '@shopify/cli-kit/shared/node/ui'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 export async function versionDiffByVersion(
   app: MinimalOrganizationApp,

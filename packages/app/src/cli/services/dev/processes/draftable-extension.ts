@@ -7,8 +7,8 @@ import {getAppIdentifiers} from '../../../models/app/identifiers.js'
 import {installJavy} from '../../function/build.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEvent, AppEventWatcher, EventType} from '../app-events/app-event-watcher.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {useConcurrentOutputContext} from '@shopify/cli-kit/shared/node/ui/components'
 
 interface DraftableExtensionOptions {
   extensions: ExtensionInstance[]

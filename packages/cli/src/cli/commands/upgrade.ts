@@ -1,6 +1,6 @@
-import {cliInstallCommand} from '@shopify/cli-kit/node/upgrade'
-import Command from '@shopify/cli-kit/node/base-command'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {cliInstallCommand} from '@shopify/cli-kit/shared/node/upgrade'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 
 export default class Upgrade extends Command {
   static summary = 'Shows details on how to upgrade Shopify CLI.'

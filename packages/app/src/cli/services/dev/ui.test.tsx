@@ -4,11 +4,11 @@ import {DevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
+import {terminalSupportsPrompting} from '@shopify/cli-kit/shared/node/system'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/system')
 vi.mock('./ui/components/Dev.js')
 vi.mock('../context.js')
 vi.mock('./ui/components/DevSessionUI.js')

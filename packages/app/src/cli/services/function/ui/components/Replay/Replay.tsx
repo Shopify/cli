@@ -6,12 +6,12 @@ import {FunctionConfigType} from '../../../../../models/extensions/specification
 import {AppLinkedInterface} from '../../../../../models/app/app.js'
 import {prettyPrintJsonIfPossible} from '../../../../app-logs/utils.js'
 import {AppEventWatcher} from '../../../../dev/app-events/app-event-watcher.js'
-import figures from '@shopify/cli-kit/node/figures'
-import {AbortController} from '@shopify/cli-kit/node/abort'
+import figures from '@shopify/cli-kit/shared/node/figures'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
 import React, {FunctionComponent} from 'react'
-import {Box, Text, Static, useInput, useStdin} from '@shopify/cli-kit/node/ink'
-import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
-import {handleCtrlC} from '@shopify/cli-kit/node/ui'
+import {Box, Text, Static, useInput, useStdin} from '@shopify/cli-kit/shared/node/ink'
+import {useAbortSignal} from '@shopify/cli-kit/shared/node/ui/hooks'
+import {handleCtrlC} from '@shopify/cli-kit/shared/node/ui'
 
 export interface ReplayProps {
   selectedRun: FunctionRunData

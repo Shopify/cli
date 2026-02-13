@@ -4,8 +4,8 @@ import {AppInterface, AppManifest} from '../../models/app/app.js'
 import * as bundle from '../bundle.js'
 import * as functionBuild from '../function/build.js'
 import {describe, expect, test, vi} from 'vitest'
-import * as file from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import * as file from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('../function/build.js')
 

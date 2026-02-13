@@ -1,12 +1,12 @@
 import {generateSchemaService} from './generate-schema.js'
 import {testAppLinked, testDeveloperPlatformClient, testFunctionExtension} from '../models/app/app.test-data.js'
 import {describe, expect, vi, test} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {inTemporaryDirectory, readFile, mkdir} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import * as output from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {inTemporaryDirectory, readFile, mkdir} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import * as output from '@shopify/cli-kit/shared/node/output'
 
-vi.mock('@shopify/cli-kit/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
 vi.mock('../../../models/app/loader.ts')
 vi.mock('../models/app/identifiers.js', async () => {
   const identifiers: any = await vi.importActual('../models/app/identifiers.js')

@@ -1,7 +1,7 @@
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {encodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 export interface SubscriptionLinkDashboardConfig {
   pattern: string

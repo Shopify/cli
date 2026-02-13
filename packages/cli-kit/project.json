@@ -3,9 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/cli-kit/src",
   "projectType": "library",
-  "tags": [
-    "scope:foundation"
-  ],
+  "tags": ["scope:foundation"],
   "targets": {
     "clean": {
       "executor": "nx:run-commands",
@@ -16,22 +14,16 @@
     },
     "build": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{workspaceRoot}/dist"
-      ],
-      "inputs": [
-        "{projectRoot}/src/**/*"
-      ],
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*"],
       "options": {
-        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "command": "pnpm tsc -b ./tsconfig.build.json && node scripts/generate-compat.mjs",
         "cwd": "packages/cli-kit"
       }
     },
     "build-api-docs": {
       "executor": "nx:run-commands",
-      "outputs": [
-        "{workspaceRoot}/docs"
-      ],
+      "outputs": ["{workspaceRoot}/docs"],
       "options": {
         "command": "node ./scripts/build-api-docs.js",
         "cwd": "packages/cli-kit"
@@ -39,9 +31,7 @@
     },
     "open-api-docs": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "build-api-docs"
-      ],
+      "dependsOn": ["build-api-docs"],
       "options": {
         "command": "open ../../docs/api/cli-kit/index.html",
         "cwd": "packages/cli-kit"
@@ -77,62 +67,43 @@
     },
     "graphql-codegen": {
       "executor": "nx:noop",
-      "dependsOn": [
-        "graphql-codegen:formatting"
-      ]
+      "dependsOn": ["graphql-codegen:formatting"]
     },
     "graphql-codegen:formatting": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "graphql-codegen:postfix"
-      ],
+      "dependsOn": ["graphql-codegen:postfix"],
       "inputs": [
         {
           "dependentTasksOutputFiles": "**/*.ts"
         }
       ],
-      "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
-      ],
+      "outputs": ["{projectRoot}/src/admin/graphql/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm eslint 'src/cli/api/graphql/admin/generated/**/*.{ts,tsx}' --fix"
-        ],
+        "commands": ["pnpm eslint 'src/admin/graphql/generated/**/*.{ts,tsx}' --fix"],
         "cwd": "packages/cli-kit"
       }
     },
     "graphql-codegen:generate:admin": {
       "executor": "nx:run-commands",
-      "inputs": [
-        "{workspaceRoot}/graphql.config.ts",
-        "{projectRoot}/src/cli/api/graphql/admin/**/*.graphql"
-      ],
-      "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
-      ],
+      "inputs": ["{workspaceRoot}/graphql.config.ts", "{projectRoot}/src/admin/graphql/**/*.graphql"],
+      "outputs": ["{projectRoot}/src/admin/graphql/generated/**/*.ts"],
       "options": {
-        "commands": [
-          "pnpm exec graphql-codegen --project=admin"
-        ],
+        "commands": ["pnpm exec graphql-codegen --project=admin"],
         "cwd": "{workspaceRoot}"
       }
     },
     "graphql-codegen:postfix": {
       "executor": "nx:run-commands",
-      "dependsOn": [
-        "graphql-codegen:generate:admin"
-      ],
+      "dependsOn": ["graphql-codegen:generate:admin"],
       "inputs": [
         {
           "dependentTasksOutputFiles": "**/*.ts"
         }
       ],
-      "outputs": [
-        "{projectRoot}/src/cli/api/graphql/admin/generated/**/*.ts"
-      ],
+      "outputs": ["{projectRoot}/src/admin/graphql/generated/**/*.ts"],
       "options": {
         "commands": [
-          "find ./packages/cli-kit/src/cli/api/graphql/admin/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
+          "find ./packages/cli-kit/src/admin/graphql/generated/ -type f -name '*.ts' -exec sh -c 'sed -i \"\" \"s|import \\* as Types from '\\''./types'\\'';|import \\* as Types from '\\''./types.js'\\'';|g; s|export const \\([A-Za-z0-9_]*\\)Document =|export const \\1 =|g\" \"$0\"' {} \\;"
         ],
         "cwd": "{workspaceRoot}"
       }

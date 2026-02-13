@@ -5,15 +5,15 @@ import {
   ShopifyEssentialError,
 } from './storefront-session.js'
 import {describe, expect, test, vi} from 'vitest'
-import {shopifyFetch} from '@shopify/cli-kit/node/http'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {passwordProtected} from '@shopify/cli-kit/node/themes/api'
-import {type AdminSession} from '@shopify/cli-kit/node/session'
-import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
+import {shopifyFetch} from '@shopify/cli-kit/shared/node/http'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {passwordProtected} from '@shopify/cli-kit/themes/api'
+import {type AdminSession} from '@shopify/cli-kit/identity/session'
+import {getThemeKitAccessDomain} from '@shopify/cli-kit/shared/node/context/local'
 
-vi.mock('@shopify/cli-kit/node/http')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/shared/node/http')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/system')
 
 describe('Storefront API', () => {
   describe('isStorefrontPasswordProtected', () => {

@@ -1,4 +1,4 @@
-import {hyphenate} from '@shopify/cli-kit/common/string'
+import {hyphenate} from '@shopify/cli-kit/shared/common/string'
 
 export const contextToTarget = (context: string) => {
   const splitContext = context.split('#')

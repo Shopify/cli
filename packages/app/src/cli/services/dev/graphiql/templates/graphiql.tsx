@@ -1,4 +1,4 @@
-import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
 import React from 'react'
 import {renderToStaticMarkup} from 'react-dom/server'
 import {AppProvider, Badge, Banner, BlockStack, Box, Grid, InlineStack, Link, Select, Text} from '@shopify/polaris'

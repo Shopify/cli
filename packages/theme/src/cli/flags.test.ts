@@ -1,9 +1,9 @@
 import {themeFlags} from './flags.js'
 import {describe, expect, test} from 'vitest'
-import Command from '@shopify/cli-kit/node/base-command'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
-import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {inTemporaryDirectory} from '@shopify/cli-kit/shared/node/fs'
+import {cwd, resolvePath} from '@shopify/cli-kit/shared/node/path'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 class MockCommand extends Command {
   static flags = {

@@ -3,9 +3,9 @@ import {REPLThemeManager} from '../utilities/repl/repl-theme-manager.js'
 import {ensureValidPassword} from '../utilities/theme-environment/storefront-password-prompt.js'
 import {replLoop} from '../utilities/repl/repl.js'
 import {initializeDevServerSession} from '../utilities/theme-environment/dev-server-session.js'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export async function ensureReplEnv(adminSession: AdminSession, storePasswordFlag?: string) {
   const themeId = await findOrCreateReplTheme(adminSession)

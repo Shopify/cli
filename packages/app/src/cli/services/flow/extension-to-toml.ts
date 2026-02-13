@@ -2,8 +2,8 @@ import {configFromSerializedFields} from './serialize-partners-fields.js'
 import {FlowPartnersExtensionTypes} from './types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
-import {slugify} from '@shopify/cli-kit/common/string'
+import {encodeToml} from '@shopify/cli-kit/shared/node/toml'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
 
 // Used for importing flow_action_definition and flow_trigger_definition migrating them to flow_action and flow_trigger
 interface FlowConfig {

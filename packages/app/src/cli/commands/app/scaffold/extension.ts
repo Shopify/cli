@@ -1,6 +1,6 @@
 import {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import AppGenerateExtension from '../generate/extension.js'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+import {renderWarning} from '@shopify/cli-kit/shared/node/ui'
 
 class AppScaffoldExtension extends AppGenerateExtension {
   static description = 'Scaffold an Extension.'

@@ -1,8 +1,8 @@
 import {getDependencyVersion} from '../../app/app.js'
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
-import {BugError} from '@shopify/cli-kit/node/error'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const dependency = '@shopify/retail-ui-extensions'
 

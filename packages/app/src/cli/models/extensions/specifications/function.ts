@@ -1,12 +1,12 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {zod} from '@shopify/cli-kit/node/schema'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent} from '@shopify/cli-kit/node/output'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {fileExists, readFile} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputContent} from '@shopify/cli-kit/shared/node/output'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
 
 interface UI {
   app_bridge?: {

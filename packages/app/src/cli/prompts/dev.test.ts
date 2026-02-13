@@ -13,10 +13,10 @@ import {getTomls} from '../utilities/app/config/getTomls.js'
 import {searchForAppsByNameFactory} from '../services/dev/prompt-helpers.js'
 import {ApplicationURLs} from '../services/dev/urls.js'
 import {describe, expect, vi, test, beforeEach} from 'vitest'
-import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {renderAutocompletePrompt, renderConfirmationPrompt, renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../utilities/app/config/getTomls')
 
 const ORG1: Organization = {

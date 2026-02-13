@@ -24,7 +24,7 @@ import {versionDiffByVersion} from '../release/version-diff.js'
 import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {describe, vi, test, beforeAll, expect} from 'vitest'
-import {setPathValue} from '@shopify/cli-kit/common/object'
+import {setPathValue} from '@shopify/cli-kit/shared/common/object'
 
 const REGISTRATION_A: RemoteSource = {
   uuid: 'UUID_A',
@@ -319,7 +319,7 @@ let EXTENSION_A_2: ExtensionInstance
 let DASH_MIGRATED_EXTENSION_A: ExtensionInstance
 let uiExtensions: ExtensionInstance[]
 
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('@shopify/cli-kit/identity/session')
 vi.mock('../dev/fetch')
 vi.mock('./identifiers-extensions')
 vi.mock('../release/version-diff')

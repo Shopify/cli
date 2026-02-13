@@ -1,6 +1,6 @@
 import {AppInterface} from '../../models/app/app.js'
 import {sourcesForApp} from '../../services/app-logs/utils.js'
-import {formatSection, outputResult} from '@shopify/cli-kit/node/output'
+import {formatSection, outputResult} from '@shopify/cli-kit/shared/node/output'
 
 export function sources(app: AppInterface) {
   const sources = sourcesForApp(app)

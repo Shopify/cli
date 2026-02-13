@@ -14,11 +14,11 @@ import {
   sendError,
   type EventHandler,
 } from 'h3'
-import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
-import {extname, joinPath} from '@shopify/cli-kit/node/path'
+import {renderError, renderInfo, renderWarning} from '@shopify/cli-kit/shared/node/ui'
+import {extname, joinPath} from '@shopify/cli-kit/shared/node/path'
 import {parseJSON} from '@shopify/theme-check-node'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {recordError, recordEvent} from '@shopify/cli-kit/node/analytics'
+import {readFile} from '@shopify/cli-kit/shared/node/fs'
+import {recordError, recordEvent} from '@shopify/cli-kit/shared/node/analytics'
 import EventEmitter from 'node:events'
 import type {
   HotReloadEvent,
@@ -26,7 +26,7 @@ import type {
   HotReloadOpenEvent,
   HotReloadFullEvent,
 } from '@shopify/theme-hot-reload'
-import type {Theme, ThemeAsset, ThemeFSEventPayload} from '@shopify/cli-kit/node/themes/types'
+import type {Theme, ThemeAsset, ThemeFSEventPayload} from '@shopify/cli-kit/themes/types'
 import type {DevServerContext} from '../types.js'
 
 // --- Section tag content cache ---

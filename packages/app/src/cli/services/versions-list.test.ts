@@ -5,7 +5,7 @@ import {Organization, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppVersionsQuerySchema} from '../api/graphql/get_versions_list.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 vi.mock('../models/app/identifiers.js')
 vi.mock('./context.js')

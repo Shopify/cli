@@ -30,23 +30,23 @@ import {DeveloperPlatformClient} from '../../../utilities/developer-platform-cli
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import * as loader from '../../../models/app/loader.js'
 import {describe, test, expect, beforeEach, vi} from 'vitest'
-import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/node/session'
+import {ensureAuthenticatedAdmin, ensureAuthenticatedStorefront} from '@shopify/cli-kit/identity/session'
 import {Config} from '@oclif/core'
-import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
+import {getEnvironmentVariables} from '@shopify/cli-kit/shared/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
-import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
-import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {fetchTheme} from '@shopify/cli-kit/themes/api'
+import {firstPartyDev} from '@shopify/cli-kit/shared/node/context/local'
+import {adminFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 vi.mock('../../context/identifiers.js')
-vi.mock('@shopify/cli-kit/node/session.js')
+vi.mock('@shopify/cli-kit/identity/session.js')
 vi.mock('../fetch.js')
-vi.mock('@shopify/cli-kit/node/environment')
+vi.mock('@shopify/cli-kit/shared/node/environment')
 vi.mock('@shopify/theme')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/context/fqdn', async (importOriginal) => {
-  const original = await importOriginal<typeof import('@shopify/cli-kit/node/context/fqdn')>()
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/context/fqdn', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/shared/node/context/fqdn')>()
   return {
     ...original,
     adminFqdn: vi.fn(),

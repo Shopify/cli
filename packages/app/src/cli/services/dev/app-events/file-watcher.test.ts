@@ -7,25 +7,27 @@ import {
   testFunctionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
-import {flushPromises} from '@shopify/cli-kit/node/promises'
+import {flushPromises} from '@shopify/cli-kit/shared/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {inTemporaryDirectory, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
-import {sleep} from '@shopify/cli-kit/node/system'
-import {extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
+import {inTemporaryDirectory, mkdir, writeFile, fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath, normalizePath} from '@shopify/cli-kit/shared/node/path'
+import {sleep} from '@shopify/cli-kit/shared/node/system'
+import {extractImportPathsRecursively} from '@shopify/cli-kit/shared/node/import-extractor'
 
 // Mock the import extractor - will be configured per test
-vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
+vi.mock('@shopify/cli-kit/shared/node/import-extractor', () => ({
   extractImportPaths: vi.fn(() => []),
   extractImportPathsRecursively: vi.fn(() => []),
   extractJSImports: vi.fn(() => []),
 }))
 
 // Mock fs module for fileExistsSync
-vi.mock('@shopify/cli-kit/node/fs', async () => {
-  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs', async () => {
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/shared/node/fs')>(
+    '@shopify/cli-kit/shared/node/fs',
+  )
   return {
     ...actual,
     fileExistsSync: vi.fn(),
@@ -33,8 +35,8 @@ vi.mock('@shopify/cli-kit/node/fs', async () => {
 })
 
 // Mock resolvePath to handle path resolution in tests
-vi.mock('@shopify/cli-kit/node/path', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/path')
+vi.mock('@shopify/cli-kit/shared/node/path', async () => {
+  const actual = await vi.importActual('@shopify/cli-kit/shared/node/path')
   return {
     ...actual,
     resolvePath: vi.fn((path: string) => {

@@ -2,12 +2,12 @@ import {RemoteSource, LocalSource} from './identifiers.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
-import {groupBy, partition} from '@shopify/cli-kit/common/collection'
-import {uniqBy, difference} from '@shopify/cli-kit/common/array'
-import {pickBy} from '@shopify/cli-kit/common/object'
-import {slugify} from '@shopify/cli-kit/common/string'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import colors from '@shopify/cli-kit/node/colors'
+import {groupBy, partition} from '@shopify/cli-kit/shared/common/collection'
+import {uniqBy, difference} from '@shopify/cli-kit/shared/common/array'
+import {pickBy} from '@shopify/cli-kit/shared/common/object'
+import {slugify} from '@shopify/cli-kit/shared/common/string'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
+import colors from '@shopify/cli-kit/shared/node/colors'
 
 export interface LocalRemoteSource {
   local: LocalSource

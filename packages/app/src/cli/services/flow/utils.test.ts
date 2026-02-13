@@ -1,7 +1,7 @@
 import {loadSchemaFromPath} from './utils.js'
 import {describe, expect, test} from 'vitest'
-import {readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
+import {readFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
 
 describe('loadSchemaFromPath', () => {
   test('loading schema from valid file path should return file contents', async () => {

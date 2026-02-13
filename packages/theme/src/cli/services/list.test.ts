@@ -1,15 +1,15 @@
 import {list} from './list.js'
 import {getDevelopmentTheme} from './local-storage.js'
 import {fetchStoreThemes} from '../utilities/theme-selector/fetch.js'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 import {describe, expect, vi, test} from 'vitest'
-import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
+import {getHostTheme} from '@shopify/cli-kit/themes/conf'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
 
 vi.mock('../utilities/theme-selector/fetch.js')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/themes/conf')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/themes/conf')
 vi.mock('./local-storage.js')
 
 const session = {

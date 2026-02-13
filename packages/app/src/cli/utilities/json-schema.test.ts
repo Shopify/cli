@@ -1,6 +1,6 @@
 import {unifiedConfigurationParserFactory} from './json-schema.js'
 import {describe, test, expect} from 'vitest'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
 
 describe('unifiedConfigurationParserFactory', () => {
   const mockParseConfigurationObject = (config: any) => {

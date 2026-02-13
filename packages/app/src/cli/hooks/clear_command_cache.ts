@@ -1,5 +1,5 @@
 import {clearCachedCommandInfo} from '../services/local-storage.js'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
 import {Hook} from '@oclif/core'
 
 const init: Hook<'init'> = async (_options) => {

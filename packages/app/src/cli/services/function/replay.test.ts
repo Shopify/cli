@@ -5,22 +5,22 @@ import {testAppLinked, testFunctionExtension} from '../../models/app/app.test-da
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {selectFunctionRunPrompt} from '../../prompts/function/replay.js'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {readFile} from '@shopify/cli-kit/node/fs'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
+import {readFile} from '@shopify/cli-kit/shared/node/fs'
 import {describe, expect, beforeAll, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputInfo} from '@shopify/cli-kit/node/output'
-import {getLogsDir} from '@shopify/cli-kit/node/logs'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
+import {getLogsDir} from '@shopify/cli-kit/shared/node/logs'
 
 import {existsSync, readdirSync} from 'fs'
 
 vi.mock('fs')
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 vi.mock('../generate-schema.js')
 vi.mock('../../prompts/function/replay.js')
 vi.mock('../dev/extension/bundler.js')
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/output')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('./ui.js')
 vi.mock('./runner.js')
 

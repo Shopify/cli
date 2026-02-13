@@ -15,9 +15,9 @@ import {UIExtensionPayload} from '../payload/models.js'
 import {testUIExtension} from '../../../../models/app/app.test-data.js'
 import {AppEventWatcher} from '../../app-events/app-event-watcher.js'
 import {describe, expect, vi, test} from 'vitest'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
 import * as h3 from 'h3'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
 
 vi.mock('h3', async () => {
   const actual: any = await vi.importActual('h3')

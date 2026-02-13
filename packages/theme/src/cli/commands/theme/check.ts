@@ -14,15 +14,15 @@ import {
 } from '../../services/check.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {outputResult, outputDebug} from '@shopify/cli-kit/node/output'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {outputResult, outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {renderInfo, renderSuccess} from '@shopify/cli-kit/shared/node/ui'
 import {themeCheckRun, LegacyIdentifiers} from '@shopify/theme-check-node'
-import {findPathUp} from '@shopify/cli-kit/node/fs'
-import {moduleDirectory, joinPath} from '@shopify/cli-kit/node/path'
-import {getPackageVersion} from '@shopify/cli-kit/node/node-package-manager'
+import {findPathUp} from '@shopify/cli-kit/shared/node/fs'
+import {moduleDirectory, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {getPackageVersion} from '@shopify/cli-kit/shared/node/node-package-manager'
 import {InferredFlags} from '@oclif/core/interfaces'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 type CheckFlags = InferredFlags<typeof Check.flags>
 export default class Check extends ThemeCommand {

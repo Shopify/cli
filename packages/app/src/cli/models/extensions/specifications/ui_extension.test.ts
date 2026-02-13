@@ -4,12 +4,12 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {AssetIdentifier} from '../specification.js'
-import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {err, ok} from '@shopify/cli-kit/node/result'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {inTemporaryDirectory, touchFile, writeFile, mkdir, fileExistsSync} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {err, ok} from '@shopify/cli-kit/shared/node/result'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 import {describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 describe('ui_extension', async () => {
   interface GetUIExtensionProps {

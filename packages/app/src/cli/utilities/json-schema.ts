@@ -1,14 +1,14 @@
 import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {BaseConfigType} from '../models/extensions/schemas.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
-import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
+import {ParseConfigurationResult} from '@shopify/cli-kit/shared/node/schema'
 import {
   HandleInvalidAdditionalProperties,
   jsonSchemaValidate,
   normaliseJsonSchema,
-} from '@shopify/cli-kit/node/json-schema'
-import {isEmpty} from '@shopify/cli-kit/common/object'
-import {JsonMapType} from '@shopify/cli-kit/node/toml'
+} from '@shopify/cli-kit/shared/node/json-schema'
+import {isEmpty} from '@shopify/cli-kit/shared/common/object'
+import {JsonMapType} from '@shopify/cli-kit/shared/node/toml'
 
 /**
  * The base properties that are added to all JSON Schema contracts.

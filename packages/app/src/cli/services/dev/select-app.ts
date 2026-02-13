@@ -4,8 +4,8 @@ import {Organization, MinimalOrganizationApp, OrganizationApp} from '../../model
 import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-storage.js'
 import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationFileName} from '../../models/app/loader.js'
-import {BugError} from '@shopify/cli-kit/node/error'
-import {outputInfo, outputDebug} from '@shopify/cli-kit/node/output'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
+import {outputInfo, outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 const MAX_PROMPT_RETRIES = 2
 

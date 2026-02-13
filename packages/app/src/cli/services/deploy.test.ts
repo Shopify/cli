@@ -31,10 +31,10 @@ import {
   Task,
   renderConfirmationPrompt,
   isTTY,
-} from '@shopify/cli-kit/node/ui'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
-import {AbortSilentError} from '@shopify/cli-kit/node/error'
+} from '@shopify/cli-kit/shared/node/ui'
+import {formatPackageManagerCommand} from '@shopify/cli-kit/shared/node/output'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
+import {AbortSilentError} from '@shopify/cli-kit/shared/node/error'
 
 const versionTag = 'unique-version-tag'
 const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
@@ -52,9 +52,9 @@ vi.mock('./deploy/upload.js')
 vi.mock('./deploy/bundle.js')
 vi.mock('./dev/fetch.js')
 vi.mock('../models/app/identifiers.js')
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/ui')
-vi.mock('@shopify/cli-kit/node/crypto')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/crypto')
 vi.mock('../validators/extensions.js')
 vi.mock('./context/prompts')
 vi.mock('./import-extensions.js')

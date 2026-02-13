@@ -3,14 +3,14 @@ import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-m
 import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
-import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/node/ui'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/identity/session'
+import {fetchTheme} from '@shopify/cli-kit/themes/api'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {renderInfo, renderTasks, Task} from '@shopify/cli-kit/shared/node/ui'
 import {initializeDevelopmentExtensionServer, ensureValidPassword, isStorefrontPasswordProtected} from '@shopify/theme'
-import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 interface ThemeAppExtensionServerOptions {
   theme: Theme

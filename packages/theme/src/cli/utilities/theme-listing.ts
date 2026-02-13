@@ -1,7 +1,7 @@
-import {fileExists, readFile, glob} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {capitalizeWords} from '@shopify/cli-kit/common/string'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {fileExists, readFile, glob} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {capitalizeWords} from '@shopify/cli-kit/shared/common/string'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {parseJSON} from '@shopify/theme-check-node'
 
 function isListingFile(fileKey: string): boolean {

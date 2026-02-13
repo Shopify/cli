@@ -1,7 +1,7 @@
 import {themeFlags} from '../../flags.js'
 import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
 import {packageTheme} from '../../services/package.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {InferredFlags} from '@oclif/core/interfaces'
 
 type PackageFlags = InferredFlags<typeof Package.flags>

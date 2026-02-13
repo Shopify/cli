@@ -1,6 +1,6 @@
-import {readFileSync} from '@shopify/cli-kit/node/fs'
-import {itemToString} from '@shopify/cli-kit/node/output'
-import {TokenItem} from '@shopify/cli-kit/node/ui'
+import {readFileSync} from '@shopify/cli-kit/shared/node/fs'
+import {itemToString} from '@shopify/cli-kit/shared/node/output'
+import {TokenItem} from '@shopify/cli-kit/shared/node/ui'
 import {Severity, type Offense, check, path as pathUtils} from '@shopify/theme-check-node'
 
 /**

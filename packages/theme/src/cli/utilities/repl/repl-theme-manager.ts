@@ -1,10 +1,10 @@
 import {getREPLTheme, setREPLTheme, removeREPLTheme} from '../../services/local-storage.js'
-import {ThemeManager} from '@shopify/cli-kit/node/themes/theme-manager'
-import {AdminSession} from '@shopify/cli-kit/node/session'
-import {DEVELOPMENT_THEME_ROLE, Role} from '@shopify/cli-kit/node/themes/utils'
-import {bulkUploadThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {ThemeManager} from '@shopify/cli-kit/themes/theme-manager'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
+import {DEVELOPMENT_THEME_ROLE, Role} from '@shopify/cli-kit/themes/utils'
+import {bulkUploadThemeAssets} from '@shopify/cli-kit/themes/api'
+import {Theme} from '@shopify/cli-kit/themes/types'
+import {CLI_KIT_VERSION} from '@shopify/cli-kit/shared/common/version'
 
 export class REPLThemeManager extends ThemeManager {
   protected context = 'REPL'

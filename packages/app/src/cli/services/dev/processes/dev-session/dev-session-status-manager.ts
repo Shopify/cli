@@ -1,4 +1,4 @@
-import {deepCompare} from '@shopify/cli-kit/common/object'
+import {deepCompare} from '@shopify/cli-kit/shared/common/object'
 import {EventEmitter} from 'events'
 
 export type DevSessionStatusMessageType = 'error' | 'success' | 'loading'

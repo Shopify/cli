@@ -6,10 +6,10 @@ import {
   writeCommandFlagInterface,
   writeCommandUsageExampleFile,
 } from './generate.js'
-import {writeFile} from '@shopify/cli-kit/node/fs'
+import {writeFile} from '@shopify/cli-kit/shared/node/fs'
 import {describe, test, vi, expect} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/fs')
+vi.mock('@shopify/cli-kit/shared/node/fs')
 
 const testCommand: CommandWithMarkdown = {
   aliases: [],

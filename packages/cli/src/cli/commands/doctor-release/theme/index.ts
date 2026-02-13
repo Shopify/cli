@@ -1,9 +1,9 @@
 import {runThemeDoctor} from '../../../services/doctor-release/theme/runner.js'
-import Command from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
 import {Flags} from '@oclif/core'
-import {resolvePath, cwd} from '@shopify/cli-kit/node/path'
-import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
+import {resolvePath, cwd} from '@shopify/cli-kit/shared/node/path'
+import {canRunDoctorRelease} from '@shopify/cli-kit/shared/node/context/local'
 
 export default class DoctorReleaseTheme extends Command {
   static description = 'Run all theme command doctor-release tests'

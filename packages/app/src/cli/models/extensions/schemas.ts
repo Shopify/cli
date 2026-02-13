@@ -1,4 +1,4 @@
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export const MAX_EXTENSION_HANDLE_LENGTH = 50
 export const MAX_UID_LENGTH = 250

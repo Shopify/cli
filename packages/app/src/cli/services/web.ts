@@ -1,6 +1,6 @@
 import {Web, WebConfigurationCommands} from '../models/app/app.js'
-import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {exec} from '@shopify/cli-kit/node/system'
+import {AbortSignal} from '@shopify/cli-kit/shared/node/abort'
+import {exec} from '@shopify/cli-kit/shared/node/system'
 import {Writable} from 'stream'
 
 interface WebOptions {

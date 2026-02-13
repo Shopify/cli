@@ -1,6 +1,6 @@
 import {PollOptions, AppLogData, PollResponse, PollFilters} from '../types.js'
 import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 interface PollAppLogsOptions {
   pollOptions: PollOptions

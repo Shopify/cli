@@ -4,11 +4,11 @@ import {testApp, testRemoteExtensionTemplates} from '../../models/app/app.test-d
 import {ExtensionTemplate} from '../../models/app/template.js'
 import {ExtensionFlavorValue} from '../../services/generate/extension.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
-import {isShopify, isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/node/ui'
+import {isShopify, isUnitTest} from '@shopify/cli-kit/shared/node/context/local'
+import {renderAutocompletePrompt, renderSelectPrompt, renderTextPrompt} from '@shopify/cli-kit/shared/node/ui'
 
-vi.mock('@shopify/cli-kit/node/context/local')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/shared/node/context/local')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 
 beforeEach(() => {
   vi.mocked(isShopify).mockResolvedValue(true)

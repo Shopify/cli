@@ -1,7 +1,7 @@
 import {CurrentAccountInfoQuery} from './partners/generated/current-account-info.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AccountInfo} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AccountInfo} from '@shopify/cli-kit/identity/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 
 export type CurrentAccountInfoSchema = CurrentAccountInfoQuery
 

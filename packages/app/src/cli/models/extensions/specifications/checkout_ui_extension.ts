@@ -1,7 +1,7 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const dependency = '@shopify/checkout-ui-extensions'
 

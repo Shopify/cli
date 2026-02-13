@@ -1,7 +1,7 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const AppHomeSchema = BaseSchemaWithoutHandle.extend({
   application_url: validateUrl(zod.string({required_error: 'Valid URL is required'})),

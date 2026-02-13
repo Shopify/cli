@@ -1,7 +1,7 @@
-import {fetchThemes} from '@shopify/cli-kit/node/themes/api'
-import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {fetchThemes} from '@shopify/cli-kit/themes/api'
+import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {Theme} from '@shopify/cli-kit/themes/types'
 
 export type Role = 'live' | 'development' | 'unpublished'
 export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']

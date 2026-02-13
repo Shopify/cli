@@ -16,7 +16,7 @@ import {
   NetworkAccessResponseFromCacheLog,
 } from '../../../../types.js'
 import {testDeveloperPlatformClient} from '../../../../../../models/app/app.test-data.js'
-import {render} from '@shopify/cli-kit/node/testing/ui'
+import {render} from '@shopify/cli-kit/shared/node/testing/ui'
 import {test, describe, vi, beforeEach, afterEach, expect} from 'vitest'
 import React from 'react'
 

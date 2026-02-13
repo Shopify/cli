@@ -1,6 +1,6 @@
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {glob} from '@shopify/cli-kit/node/fs'
-import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {joinPath, basename} from '@shopify/cli-kit/shared/node/path'
+import {glob} from '@shopify/cli-kit/shared/node/fs'
+import {AbortError, BugError} from '@shopify/cli-kit/shared/node/error'
 import fs from 'fs'
 
 export async function loadLocalesConfig(extensionPath: string, extensionIdentifier: string) {

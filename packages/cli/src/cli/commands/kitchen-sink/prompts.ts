@@ -1,5 +1,5 @@
 import {prompts} from '../../services/kitchen-sink/prompts.js'
-import Command from '@shopify/cli-kit/node/base-command'
+import Command from '@shopify/cli-kit/shared/node/base-command'
 
 /**
  * This command is used to output all the UI prompt components of the CLI.

@@ -7,8 +7,8 @@ import {AppConfigurationFileName} from '../../../models/app/loader.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
 import {Flag} from '../../../utilities/developer-platform-client.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {basename} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {basename} from '@shopify/cli-kit/shared/node/path'
 
 interface PullOptions {
   directory: string

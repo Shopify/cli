@@ -4,8 +4,8 @@ import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-link
 import {linkedAppContext} from '../../services/app-context.js'
 import {getAppConfigurationState} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
-import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
+import {globalFlags} from '@shopify/cli-kit/shared/node/cli'
+import {addPublicMetadata} from '@shopify/cli-kit/shared/node/metadata'
 
 export default class Release extends AppLinkedCommand {
   static summary = 'Release an app version.'

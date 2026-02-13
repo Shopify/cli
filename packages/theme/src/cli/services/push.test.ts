@@ -6,32 +6,32 @@ import {ensureThemeStore} from '../utilities/theme-store.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {runThemeCheck} from '../commands/theme/check.js'
 import {mountThemeFileSystem} from '../utilities/theme-fs.js'
-import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
+import {buildTheme} from '@shopify/cli-kit/themes/factories'
 import {test, describe, vi, expect, beforeEach} from 'vitest'
-import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/node/themes/api'
-import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
+import {themeCreate, fetchTheme, themePublish} from '@shopify/cli-kit/themes/api'
+import {ensureAuthenticatedThemes} from '@shopify/cli-kit/identity/session'
 import {
   DEVELOPMENT_THEME_ROLE,
   LIVE_THEME_ROLE,
   UNPUBLISHED_THEME_ROLE,
   promptThemeName,
-} from '@shopify/cli-kit/node/themes/utils'
-import {renderConfirmationPrompt, renderError} from '@shopify/cli-kit/node/ui'
-import {AbortError} from '@shopify/cli-kit/node/error'
+} from '@shopify/cli-kit/themes/utils'
+import {renderConfirmationPrompt, renderError} from '@shopify/cli-kit/shared/node/ui'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {Severity, SourceCodeType} from '@shopify/theme-check-node'
-import {outputResult} from '@shopify/cli-kit/node/output'
+import {outputResult} from '@shopify/cli-kit/shared/node/output'
 
 vi.mock('../utilities/theme-uploader.js')
 vi.mock('../utilities/theme-store.js')
 vi.mock('../utilities/theme-selector.js')
 vi.mock('./local-storage.js')
 vi.mock('../utilities/theme-listing.js')
-vi.mock('@shopify/cli-kit/node/themes/utils')
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ui')
+vi.mock('@shopify/cli-kit/themes/utils')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/ui')
 vi.mock('../commands/theme/check.js')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('../utilities/theme-fs.js')
 
 const path = '/my-theme'

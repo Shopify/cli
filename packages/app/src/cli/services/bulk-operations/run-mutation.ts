@@ -4,8 +4,8 @@ import {
   BulkOperationRunMutationMutation,
   BulkOperationRunMutationMutationVariables,
 } from '../../api/graphql/bulk-operations/generated/bulk-operation-run-mutation.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
-import {AdminSession} from '@shopify/cli-kit/node/session'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
+import {AdminSession} from '@shopify/cli-kit/identity/session'
 
 interface BulkOperationRunMutationOptions {
   adminSession: AdminSession

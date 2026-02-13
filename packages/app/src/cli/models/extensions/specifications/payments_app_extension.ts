@@ -35,7 +35,7 @@ import {
   cardPresentPaymentsAppExtensionDeployConfig,
 } from './payments_app_extension_schemas/card_present_payments_app_extension_schema.js'
 import {createExtensionSpecification} from '../specification.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 const PaymentsAppExtensionSchema = zod.union([
   OffsitePaymentsAppExtensionSchema,

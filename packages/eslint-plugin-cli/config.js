@@ -86,19 +86,19 @@ module.exports = {
         paths: [
           {
             name: 'path',
-            message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
+            message: "Please use: import { joinPath } from '@shopify/cli-kit/shared/node/path'",
           },
           {
             name: 'node:path',
-            message: "Please use: import { joinPath } from '@shopify/cli-kit/node/path'",
+            message: "Please use: import { joinPath } from '@shopify/cli-kit/shared/node/path'",
           },
           {
             name: 'child_process',
-            message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
+            message: "Please use: import { exec } from '@shopify/cli-kit/shared/node/system'",
           },
           {
             name: 'node:child_process',
-            message: "Please use: import { exec } from '@shopify/cli-kit/node/system'",
+            message: "Please use: import { exec } from '@shopify/cli-kit/shared/node/system'",
           },
         ],
       },
@@ -188,7 +188,7 @@ module.exports = {
       {
         name: 'fetch',
         message:
-          'Please use our alternative fetch implementation in @shopify/cli-kit/node/http instead of Node.js built-in fetch. Built-in fetch does not support HTTP proxies.',
+          'Please use our alternative fetch implementation in @shopify/cli-kit/shared/node/http instead of Node.js built-in fetch. Built-in fetch does not support HTTP proxies.',
       },
     ],
   },

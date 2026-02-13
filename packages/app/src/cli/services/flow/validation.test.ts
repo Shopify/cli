@@ -1,7 +1,7 @@
 import {validateFieldShape, validateCustomConfigurationPageConfig, validateReturnTypeConfig} from './validation.js'
 import {ConfigField} from './types.js'
 import {describe, expect, test} from 'vitest'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 describe('validateFieldShape', () => {
   test('should return true when non-commerce object field has valid shape and is flow action', () => {

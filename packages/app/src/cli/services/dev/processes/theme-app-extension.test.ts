@@ -7,21 +7,21 @@ import {
   testThemeExtensions,
 } from '../../../models/app/app.test-data.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
-import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
-import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {Theme} from '@shopify/cli-kit/node/themes/types'
+import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/identity/session'
+import {fetchTheme} from '@shopify/cli-kit/themes/api'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {Theme} from '@shopify/cli-kit/themes/types'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
-import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
+import {partnersFqdn, adminFqdn} from '@shopify/cli-kit/shared/node/context/fqdn'
 
 vi.mock('../../../utilities/extensions/theme/host-theme-manager')
-vi.mock('@shopify/cli-kit/node/output')
-vi.mock('@shopify/cli-kit/node/session')
-vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/context/fqdn')
-vi.mock('@shopify/cli-kit/node/ui', async (realImport) => {
-  const realModule = await realImport<typeof import('@shopify/cli-kit/node/ui')>()
+vi.mock('@shopify/cli-kit/shared/node/output')
+vi.mock('@shopify/cli-kit/identity/session')
+vi.mock('@shopify/cli-kit/themes/api')
+vi.mock('@shopify/cli-kit/shared/node/context/fqdn')
+vi.mock('@shopify/cli-kit/shared/node/ui', async (realImport) => {
+  const realModule = await realImport<typeof import('@shopify/cli-kit/shared/node/ui')>()
   const mockModule = {renderInfo: vi.fn()}
 
   return {...realModule, ...mockModule}

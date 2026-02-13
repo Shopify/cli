@@ -1,7 +1,7 @@
 import {autocorrectStatus} from '../../../services/constants.js'
 import {isAutocorrectEnabled} from '../../../services/conf.js'
-import Command from '@shopify/cli-kit/node/base-command'
-import {renderInfo} from '@shopify/cli-kit/node/ui'
+import Command from '@shopify/cli-kit/shared/node/base-command'
+import {renderInfo} from '@shopify/cli-kit/shared/node/ui'
 
 export default class AutocorrectStatus extends Command {
   static summary = 'Check whether autocorrect is enabled or disabled. On by default.'

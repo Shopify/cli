@@ -10,15 +10,15 @@ import {
 import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
-import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {outputInfo} from '@shopify/cli-kit/shared/node/output'
 import {describe, expect, vi, test} from 'vitest'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {randomUUID} from '@shopify/cli-kit/node/crypto'
+import {dirname, joinPath} from '@shopify/cli-kit/shared/node/path'
+import {platformAndArch} from '@shopify/cli-kit/shared/node/os'
+import {randomUUID} from '@shopify/cli-kit/shared/node/crypto'
 
-vi.mock('@shopify/cli-kit/node/crypto')
-vi.mock('@shopify/cli-kit/node/output')
+vi.mock('@shopify/cli-kit/shared/node/crypto')
+vi.mock('@shopify/cli-kit/shared/node/output')
 vi.mock('../../models/app/loader.js', async () => {
   const actual: any = await vi.importActual('../../models/app/loader.js')
   return {

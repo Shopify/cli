@@ -6,14 +6,14 @@ import {
   TunnelStartReturn,
   TunnelStatusType,
   TunnelClient,
-} from '@shopify/cli-kit/node/plugins/tunnel'
-import {err, ok} from '@shopify/cli-kit/node/result'
-import {exec, sleep} from '@shopify/cli-kit/node/system'
-import {AbortController} from '@shopify/cli-kit/node/abort'
-import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
-import {isUnitTest} from '@shopify/cli-kit/node/context/local'
-import {BugError} from '@shopify/cli-kit/node/error'
+} from '@shopify/cli-kit/shared/node/plugins/tunnel'
+import {err, ok} from '@shopify/cli-kit/shared/node/result'
+import {exec, sleep} from '@shopify/cli-kit/shared/node/system'
+import {AbortController} from '@shopify/cli-kit/shared/node/abort'
+import {joinPath, dirname} from '@shopify/cli-kit/shared/node/path'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
+import {isUnitTest} from '@shopify/cli-kit/shared/node/context/local'
+import {BugError} from '@shopify/cli-kit/shared/node/error'
 import {Writable} from 'stream'
 import {fileURLToPath} from 'url'
 

@@ -9,10 +9,10 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {PartnersClient} from '../../utilities/developer-platform-client/partners-client.js'
 import {AppManagementClient} from '../../utilities/developer-platform-client/app-management-client.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
-import {renderFatalError} from '@shopify/cli-kit/node/ui'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {blockPartnersAccess} from '@shopify/cli-kit/node/environment'
+import {renderFatalError} from '@shopify/cli-kit/shared/node/ui'
+import {mockAndCaptureOutput} from '@shopify/cli-kit/shared/node/testing/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {blockPartnersAccess} from '@shopify/cli-kit/shared/node/environment'
 
 const ORG1: Organization = {
   id: '1',
@@ -34,10 +34,10 @@ const STORE1: OrganizationStore = {
   provisionable: true,
 }
 
-vi.mock('@shopify/cli-kit/node/api/partners')
+vi.mock('@shopify/cli-kit/partners/api')
 vi.mock('../../utilities/developer-platform-client/partners-client.js')
 vi.mock('../../utilities/developer-platform-client/app-management-client.js')
-vi.mock('@shopify/cli-kit/node/environment')
+vi.mock('@shopify/cli-kit/shared/node/environment')
 
 afterEach(() => {
   mockAndCaptureOutput().clear()

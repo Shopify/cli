@@ -1,9 +1,9 @@
 import {runBulkOperationMutation} from './run-mutation.js'
 import {stageFile} from './stage-file.js'
-import {adminRequestDoc} from '@shopify/cli-kit/node/api/admin'
+import {adminRequestDoc} from '@shopify/cli-kit/admin/api'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/api/admin')
+vi.mock('@shopify/cli-kit/admin/api')
 vi.mock('./stage-file.js')
 
 describe('runBulkOperationMutation', () => {

@@ -1,11 +1,11 @@
 import {FunctionConfigType} from './function.js'
 import {placeholderAppConfiguration, testFunctionExtension} from '../../app/app.test-data.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/shared/node/fs'
+import {joinPath} from '@shopify/cli-kit/shared/node/path'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
 import {beforeEach, describe, expect, test} from 'vitest'
-import {getPathValue} from '@shopify/cli-kit/common/object'
+import {getPathValue} from '@shopify/cli-kit/shared/common/object'
 
 describe('functionConfiguration', () => {
   let extension: ExtensionInstance<FunctionConfigType>

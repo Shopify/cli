@@ -4,9 +4,9 @@ import {appDiff} from './app-diffing.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {reloadApp} from '../../../models/app/loader.js'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/shared/node/error'
+import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/shared/node/hrtime'
+import {outputDebug} from '@shopify/cli-kit/shared/node/output'
 
 /**
  * Transforms an array of WatcherEvents from the file system into a processed AppEvent.

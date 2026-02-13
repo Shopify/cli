@@ -1,5 +1,5 @@
 import {WebhookSubscriptionUriValidation, removeTrailingSlash} from '../validation/common.js'
-import {zod} from '@shopify/cli-kit/node/schema'
+import {zod} from '@shopify/cli-kit/shared/node/schema'
 
 export enum ComplianceTopic {
   CustomersRedact = 'customers/redact',
