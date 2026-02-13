@@ -638,6 +638,32 @@ describe('setupDevServer', () => {
       `)
     })
 
+    test('serves compiled_assets scripts with correct content-length when content contains multi-byte characters', async () => {
+      const snippetFile = {
+        key: 'snippets/multibyte-snippet.liquid',
+        checksum: 'multibyte1',
+        value: `
+          <div class="snippet">
+            {% javascript %}
+              // ...not full cart — derive count from response
+              console.log("Hey, hey, heeeey!")
+            {% endjavascript %}
+          </div>`,
+      }
+
+      localThemeFileSystem.files.set(snippetFile.key, snippetFile)
+
+      const {res, body} = await dispatchEvent('/cdn/somepath/compiled_assets/snippet-scripts.js')
+
+      const bodyString = body.toString()
+      const bodyByteLength = Buffer.byteLength(bodyString)
+
+      // The dash (—) is 3 bytes in UTF-8 but only 1 character.
+      // content-length must reflect the byte length, not the character count.
+      expect(bodyByteLength).toBeGreaterThan(bodyString.length)
+      expect(res.getHeader('content-length')).toBe(bodyByteLength)
+    })
+
     test('forwards unknown compiled_assets requests to SFR', async () => {
       const fetchStub = vi.fn(async () => new Response())
       vi.stubGlobal('fetch', fetchStub)
