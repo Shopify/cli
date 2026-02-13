@@ -136,7 +136,6 @@ export class BaseOtelService implements OtelService {
           instrument.add(finalValue, finalLabels)
         }
         // We flush metrics after every record - we do not await as we fire & forget.
-        // Catch any export errors to prevent unhandled rejections from crashing the CLI
         void this.meterProvider.forceFlush({}).catch(() => {})
       }
       record(firstValue, firstLabels)
