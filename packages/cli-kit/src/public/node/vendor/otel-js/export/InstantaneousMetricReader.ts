@@ -41,13 +41,12 @@ export class InstantaneousMetricReader extends MetricReader {
       diag.error('PeriodicExportingMetricReader: metrics collection errors', ...errors)
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this._exporter.export(resourceMetrics, (result) => {
-        if (result.code === ExportResultCode.SUCCESS) {
-          resolve()
-        } else {
-          reject(result.error ?? new Error(`InstantaneousMetricReader: metrics export failed (error ${result.error})`))
+        if (result.code !== ExportResultCode.SUCCESS) {
+          diag.error('InstantaneousMetricReader: metrics export failed', result.error)
         }
+        resolve()
       })
     })
   }
