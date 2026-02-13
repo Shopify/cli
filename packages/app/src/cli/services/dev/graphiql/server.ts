@@ -4,7 +4,7 @@ import {filterCustomHeaders} from './utilities.js'
 import express from 'express'
 import bodyParser from 'body-parser'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
@@ -195,7 +195,7 @@ export function setupGraphiQLServer({
           Accept: 'application/json',
           'Content-Type': 'application/json',
           'X-Shopify-Access-Token': await token(),
-          'User-Agent': `ShopifyCLIGraphiQL/${CLI_KIT_VERSION}`,
+          'User-Agent': `ShopifyCLIGraphiQL/${cliVersion()}`,
         }
 
         return fetch(graphqlUrl, {

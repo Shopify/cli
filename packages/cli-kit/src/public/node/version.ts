@@ -1,6 +1,38 @@
+import {findPathUpSync} from './fs.js'
+import {moduleDirectory} from './path.js'
 import {captureOutput} from '../node/system.js'
 import which from 'which'
-import {satisfies} from 'semver'
+import {satisfies, SemVer} from 'semver'
+import {readFileSync} from 'node:fs'
+
+let _cliVersion: string | undefined
+
+/**
+ * Returns the current CLI version, read from the nearest package.json.
+ * The result is cached after the first call.
+ *
+ * This is a lazy function (rather than a top-level constant) because `findPathUpSync`
+ * depends on npm packages that may not yet be initialized during ESM module evaluation
+ * when circular imports are involved. Deferring the call to runtime avoids that issue.
+ *
+ * In unbundled (dev) mode this finds cli-kit's own package.json.
+ * In bundled (global install) mode this finds the CLI's package.json, which shares the same version.
+ *
+ * @returns The CLI version string.
+ */
+export function cliVersion(): string {
+  if (_cliVersion === undefined) {
+    const packageJsonPath = findPathUpSync('package.json', {cwd: moduleDirectory(import.meta.url), type: 'file'})
+    if (packageJsonPath) {
+      const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+      if (pkg.name.startsWith('@shopify/cli') && pkg.version) {
+        _cliVersion = pkg.version
+      }
+    }
+    _cliVersion ??= '0.0.0'
+  }
+  return _cliVersion
+}
 /**
  * Returns the version of the local dependency of the CLI if it's installed in the provided directory.
  *
@@ -52,4 +84,18 @@ export async function globalCLIVersion(): Promise<string | undefined> {
  */
 export function isPreReleaseVersion(version: string): boolean {
   return version.startsWith('0.0.0')
+}
+
+/**
+ * Checks if the version is a major version change.
+ *
+ * @param currentVersion - The current version.
+ * @param newerVersion - The newer version.
+ * @returns True if the version is a major version change.
+ */
+export function isMajorVersionChange(currentVersion: string, newerVersion: string): boolean {
+  if (isPreReleaseVersion(currentVersion) || isPreReleaseVersion(newerVersion)) return false
+  const currentSemVer = new SemVer(currentVersion)
+  const newerSemVer = new SemVer(newerVersion)
+  return currentSemVer.major !== newerSemVer.major
 }

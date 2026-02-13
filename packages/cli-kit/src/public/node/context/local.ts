@@ -292,4 +292,14 @@ export function opentelemetryDomain(env = process.env): string {
   return isSet(domain) ? domain : 'https://otlp-http-production-cli.shopifysvc.com'
 }
 
+/**
+ * Returns true if the CLIshould not automatically upgrade.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if the CLI should not automatically upgrade.
+ */
+export function noAutoUpgrade(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.noAutoUpgrade])
+}
+
 export type CIMetadata = Metadata

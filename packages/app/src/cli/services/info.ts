@@ -15,7 +15,7 @@ import {
   stringifyMessage,
 } from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 
 export type Format = 'json' | 'text'
 export interface InfoOptions {
@@ -265,7 +265,7 @@ class AppInfo {
   async systemInfoSection(): Promise<AlertCustomSection> {
     const {platform, arch} = platformAndArch()
     return this.tableSection('Tooling and System', [
-      ['Shopify CLI', CLI_KIT_VERSION],
+      ['Shopify CLI', cliVersion()],
       ['Package manager', this.app.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL ?? 'unknown'],

@@ -1,5 +1,5 @@
 import {buildHeaders, sanitizedHeadersOutput, GraphQLClientError} from './headers.js'
-import {CLI_KIT_VERSION} from '../../../public/common/version.js'
+import {cliVersion} from '../../../public/node/version.js'
 import {randomUUID} from '../../../public/node/crypto.js'
 import {firstPartyDev, isUnitTest} from '../../../public/node/context/local.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
@@ -21,7 +21,7 @@ describe('common API methods', () => {
     const headers = buildHeaders('my-token')
 
     // Then
-    const version = CLI_KIT_VERSION
+    const version = cliVersion()
     expect(headers).toEqual({
       'Content-Type': 'application/json',
       'Keep-Alive': 'timeout=30',
@@ -41,7 +41,7 @@ describe('common API methods', () => {
     const headers = buildHeaders('my-token')
 
     // Then
-    const version = CLI_KIT_VERSION
+    const version = cliVersion()
     expect(headers).toEqual({
       'Content-Type': 'application/json',
       'Keep-Alive': 'timeout=30',
@@ -63,7 +63,7 @@ describe('common API methods', () => {
       const headers = buildHeaders(token)
 
       // Then
-      const version = CLI_KIT_VERSION
+      const version = cliVersion()
       expect(headers).toEqual({
         'Content-Type': 'application/json',
         'Keep-Alive': 'timeout=30',

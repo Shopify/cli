@@ -164,7 +164,7 @@ import {ensureAuthenticatedPartners, Session} from '@shopify/cli-kit/node/sessio
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {TokenItem} from '@shopify/cli-kit/node/ui'
 import {RequestModeInput, Response, shopifyFetch} from '@shopify/cli-kit/node/http'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 
 // this is a temporary solution for editions to support https://vault.shopify.io/gsd/projects/31406
 // read more here: https://vault.shopify.io/gsd/projects/31406
@@ -702,7 +702,7 @@ export class PartnersClient implements DeveloperPlatformClient {
 
 const fetchAppLogs = async ({jwtToken, cursor, filters}: AppLogsOptions): Promise<Response> => {
   const url = await generateFetchAppLogUrl(cursor, filters)
-  const userAgent = `Shopify CLI; v=${CLI_KIT_VERSION}`
+  const userAgent = `Shopify CLI; v=${cliVersion()}`
   const headers = {
     Authorization: `Bearer ${jwtToken}`,
     'User-Agent': userAgent,

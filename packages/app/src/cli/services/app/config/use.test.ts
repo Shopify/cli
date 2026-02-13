@@ -43,7 +43,7 @@ describe('use', () => {
         headline: 'Cleared current configuration.',
         body: [
           'In order to set a new current configuration, please run',
-          {command: 'npm run shopify app config use CONFIG_NAME'},
+          {command: 'shopify app config use CONFIG_NAME'},
           {char: '.'},
         ],
       })

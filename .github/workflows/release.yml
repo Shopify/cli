@@ -66,7 +66,7 @@ jobs:
           comment_suffix: "
             > [!CAUTION]
 
-            > After installing, validate the version by running just `shopify` in your terminal.
+            > After installing, validate the version by running `shopify version` in your terminal.
 
             > If the versions don't match, you might have multiple global instances installed.
 

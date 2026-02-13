@@ -1,4 +1,4 @@
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {
@@ -44,12 +44,12 @@ export async function generate() {
   })
   const minVersion = await renderTextPrompt({
     message: 'Minimum CLI version (optional)',
-    initialAnswer: CLI_KIT_VERSION,
+    initialAnswer: cliVersion(),
     allowEmpty: true,
   })
   const maxVersion = await renderTextPrompt({
     message: 'Maximum CLI version (optional)',
-    initialAnswer: CLI_KIT_VERSION,
+    initialAnswer: cliVersion(),
     allowEmpty: true,
   })
   const minDate = await renderTextPrompt({

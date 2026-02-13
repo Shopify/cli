@@ -1,5 +1,5 @@
 import {DevServerRenderContext} from './types.js'
-import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
+import {cliVersion} from '@shopify/cli-kit/node/version'
 
 export function storefrontReplaceTemplatesParams(context: DevServerRenderContext): URLSearchParams {
   /**
@@ -23,7 +23,7 @@ export function storefrontReplaceTemplatesParams(context: DevServerRenderContext
 
 export function defaultHeaders() {
   return {
-    'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+    'User-Agent': `Shopify CLI; v=${cliVersion()}`,
   }
 }
 
