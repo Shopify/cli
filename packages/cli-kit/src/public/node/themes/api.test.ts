@@ -4,6 +4,7 @@ import {
   themeDuplicate,
   fetchTheme,
   fetchThemes,
+  findDevelopmentThemeByName,
   ThemeParams,
   themeUpdate,
   themePublish,
@@ -24,6 +25,7 @@ import {ThemeFilesUpsert} from '../../../cli/api/graphql/admin/generated/theme_f
 import {ThemeFilesDelete} from '../../../cli/api/graphql/admin/generated/theme_files_delete.js'
 import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
+import {FindDevelopmentThemeByName} from '../../../cli/api/graphql/admin/generated/find_development_theme_by_name.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
 import {test, vi, expect, describe, beforeEach} from 'vitest'
@@ -85,6 +87,68 @@ describe('fetchTheme', () => {
       responseOptions: {handleErrors: false},
       preferredBehaviour: expectedApiOptions,
     })
+  })
+})
+
+describe('findDevelopmentThemeByName', () => {
+  test('returns a development theme with a specific name', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themes: {
+        nodes: [{id: 'gid://shopify/OnlineStoreTheme/1', name: 'PR-123', role: 'DEVELOPMENT', processing: false}],
+      },
+    })
+
+    // When
+    const theme = await findDevelopmentThemeByName('PR-123', session)
+
+    // Then
+    expect(adminRequestDoc).toHaveBeenCalledWith({
+      query: FindDevelopmentThemeByName,
+      session,
+      variables: {name: 'PR-123'},
+      responseOptions: {handleErrors: false},
+      preferredBehaviour: expectedApiOptions,
+    })
+
+    expect(theme).not.toBeNull()
+    expect(theme!.id).toEqual(1)
+    expect(theme!.name).toEqual('PR-123')
+    expect(theme!.processing).toBeFalsy()
+  })
+
+  test('returns undefined when a theme is not found', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themes: {
+        nodes: [],
+      },
+    })
+
+    const theme = await findDevelopmentThemeByName('PR-123', session)
+
+    expect(theme).toBeUndefined()
+  })
+
+  test('aborts if there is more than one development theme with the same name', async () => {
+    vi.mocked(adminRequestDoc).mockResolvedValue({
+      themes: {
+        nodes: [
+          {id: 'gid://shopify/OnlineStoreTheme/1', name: 'PR-123', role: 'DEVELOPMENT', processing: true},
+          {id: 'gid://shopify/OnlineStoreTheme/2', name: 'PR-123', role: 'DEVELOPMENT', processing: true},
+        ],
+      },
+    })
+
+    await expect(findDevelopmentThemeByName('PR-123', session)).rejects.toThrow(AbortError)
+  })
+
+  test('returns undefined when the query errors', async () => {
+    const errorResponse = {
+      status: 200,
+      errors: [{message: 'Theme not found'} as any],
+    }
+    vi.mocked(adminRequestDoc).mockRejectedValue(new ClientError(errorResponse, {query: ''}))
+
+    await expect(findDevelopmentThemeByName('PR-123', session)).rejects.toThrow()
   })
 })
 
