@@ -21,6 +21,12 @@ export function throttle<T extends (...args: any) => any>(
     timeout = null
     if (lastArgs) {
       result = func.apply(context, lastArgs)
+      // If the throttled function returns a promise, swallow rejections to
+      // prevent unhandled promise rejections (the caller already .catch()'d
+      // the leading-edge invocation and has no reference to trailing calls).
+      if (result && typeof (result as any).catch === 'function') {
+        (result as any).catch(() => {})
+      }
     }
     context = null
     lastArgs = null
