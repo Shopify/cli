@@ -39,13 +39,13 @@ describe('init', () => {
 
   test('it renders branches for templates that have them', async () => {
     const answers = {
-      template: 'https://github.com/Shopify/shopify-app-template-react-router#javascript',
+      template: 'https://github.com/Shopify/shopify-app-template-react-router#javascript-cli',
     }
     const options: InitOptions = {}
 
     // Given
     vi.mocked(renderSelectPrompt).mockResolvedValueOnce('reactRouter')
-    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('javascript')
+    vi.mocked(renderSelectPrompt).mockResolvedValueOnce('javascript-cli')
 
     // When
     const got = await init(options)
@@ -61,8 +61,8 @@ describe('init', () => {
     })
     expect(renderSelectPrompt).toHaveBeenCalledWith({
       choices: [
-        {label: 'JavaScript', value: 'javascript'},
-        {label: 'TypeScript', value: 'main'},
+        {label: 'JavaScript', value: 'javascript-cli'},
+        {label: 'TypeScript', value: 'main-cli'},
       ],
       message: 'For your React Router template, which language do you want?',
     })
