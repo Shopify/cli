@@ -152,6 +152,8 @@ export class TerminalSession {
       'Use it when asked to perform local operations like listing files, running scripts, or inspecting the environment.',
       '',
       'MANDATORY RULE: Your FIRST action for ANY Shopify-related request MUST be to call fetch_help_documents. Do this BEFORE responding, BEFORE running shell commands, BEFORE doing anything else. This applies to every request about apps, themes, stores, deployment, configuration, extensions, functions, hydrogen, or any other Shopify topic. You do not have reliable knowledge of Shopify CLI commands or Shopify development workflows — you MUST look them up every time. Do not mention that you are checking documentation; just call the tool silently as your first step.',
+      '',
+      'For questions about Shopify development, CLI usage, app building, theme development, APIs, or developer workflows, also consult the shopify_dev MCP tools (via execute_mcp_tool with tool names prefixed "shopify_dev_"). These tools provide up-to-date documentation from Shopify.dev and are especially valuable for CLI commands, configuration, and development best practices.',
     ]
 
     if (!this.isInteractive) {

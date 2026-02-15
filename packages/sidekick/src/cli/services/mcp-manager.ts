@@ -91,7 +91,8 @@ export class MCPManager {
   async initialize(): Promise<void> {
     const configs = await this.loadConfig()
 
-    // Auto-register the bundled filesystem server when a working directory is set
+    // Auto-register bundled servers
+    configs.set('shopify_dev', {command: 'npx', args: ['-y', '@shopify/dev-mcp@latest']})
     if (this.workingDirectory) {
       configs.set('filesystem', this.buildFilesystemServerConfig(this.workingDirectory))
     }
