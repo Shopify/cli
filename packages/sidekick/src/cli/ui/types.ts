@@ -34,6 +34,7 @@ export interface ActiveTurn {
 
 // Tool call structures
 export interface ToolCallInfo {
+  id?: string;
   name: string;
   description: string;
   startTime: number;

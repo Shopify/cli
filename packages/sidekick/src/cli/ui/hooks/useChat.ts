@@ -20,7 +20,7 @@ export interface UseChatReturn {
   connected: boolean;
   addUserMessage: (content: string) => void;
   addAssistantChunk: (chunk: string) => void;
-  startToolCall: (name: string, description: string) => void;
+  startToolCall: (id: string, name: string, description: string) => void;
   completeToolCall: (result: string) => void;
   failToolCall: (error: string) => void;
   requestPermission: (request: PermissionInfo) => void;
@@ -52,10 +52,24 @@ export function useChat(options: UseChatOptions): UseChatReturn {
   const addAssistantChunk = useCallback((chunk: string) => {
     setActiveTurn((prev: ActiveTurn | null) => {
       if (!prev) return null;
+      // Auto-complete any active tool call when text resumes (server-side tools)
+      let segments = prev.completedSegments;
+      let activeToolCall = prev.activeToolCall;
+      if (activeToolCall) {
+        const completedTool: ToolCallResult = {
+          ...activeToolCall,
+          status: "done",
+          duration: Date.now() - activeToolCall.startTime,
+        };
+        segments = [...segments, {type: "tool_call", toolCall: completedTool}];
+        activeToolCall = undefined;
+      }
       return {
         ...prev,
         phase: "streaming",
         chunks: [...prev.chunks, chunk],
+        completedSegments: segments,
+        activeToolCall,
       };
     });
   }, []);
@@ -70,16 +84,30 @@ export function useChat(options: UseChatOptions): UseChatReturn {
     });
   }, []);
 
-  const startToolCall = useCallback((name: string, description: string) => {
+  const startToolCall = useCallback((id: string, name: string, description: string) => {
     setActiveTurn((prev: ActiveTurn | null) => {
       if (!prev) return null;
+      // If the same tool call is already active (by ID), just restore the phase
+      if (id && prev.activeToolCall?.id === id) {
+        return {...prev, phase: "tool_call"};
+      }
       // Flush accumulated chunks into a text segment before the tool call
       const segments: TurnSegment[] = [...prev.completedSegments];
+      // Auto-complete any previous active tool call
+      if (prev.activeToolCall) {
+        const completedTool: ToolCallResult = {
+          ...prev.activeToolCall,
+          status: "done",
+          duration: Date.now() - prev.activeToolCall.startTime,
+        };
+        segments.push({type: "tool_call", toolCall: completedTool});
+      }
       const text = prev.chunks.join("");
       if (text) {
         segments.push({type: "text", content: text});
       }
       const toolCall: ToolCallInfo = {
+        id,
         name,
         description,
         startTime: Date.now(),

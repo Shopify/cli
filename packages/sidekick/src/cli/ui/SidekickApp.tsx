@@ -37,7 +37,7 @@ export function SidekickApp({session, storeName}: SidekickAppProps) {
         chat.addAssistantChunk(chunk);
       },
       onToolCallStart: (toolCall) => {
-        chat.startToolCall(toolCall.name, toolCall.name);
+        chat.startToolCall(toolCall.id, toolCall.name, toolCall.name);
       },
       onToolCallEnd: (_toolCallId: string, result: string, error?: string) => {
         if (error) {

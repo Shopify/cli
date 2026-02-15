@@ -198,6 +198,24 @@ export class TerminalSession {
           }
           break
         }
+        case 'tool_call_start': {
+          if (callbacks) {
+            try {
+              const data = JSON.parse(event.data) as {name?: string; id?: string}
+              callbacks.onToolCallStart({
+                id: data.id ?? '',
+                toolCallId: data.id ?? '',
+                type: 'tool_call',
+                name: data.name ?? 'Processing...',
+                arguments: {},
+              })
+              // eslint-disable-next-line no-catch-all/no-catch-all
+            } catch {
+              outputDebug(`Failed to parse tool_call_start: ${event.data}`)
+            }
+          }
+          break
+        }
         case 'client_tool_call': {
           try {
             const toolCall = JSON.parse(event.data) as ClientToolCall
