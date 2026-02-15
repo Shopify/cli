@@ -39,6 +39,7 @@ export class TerminalSession {
   public readonly mcpManager: MCPManager
   private readonly format: OutputFormat
   private readonly permissionOptions: PermissionOptions
+  private readonly isInteractive: boolean
   private readonly stdinContent: string | undefined
   private readonly workingDirectory: string | undefined
   private isFirstPrompt = true
@@ -56,6 +57,7 @@ export class TerminalSession {
       yolo: options.yolo,
       interactive: options.interactive,
     }
+    this.isInteractive = options.interactive
     this.stdinContent = options.stdinContent
     this.workingDirectory = options.workingDirectory
   }
@@ -151,6 +153,13 @@ export class TerminalSession {
       '',
       'MANDATORY RULE: Your FIRST action for ANY Shopify-related request MUST be to call fetch_help_documents. Do this BEFORE responding, BEFORE running shell commands, BEFORE doing anything else. This applies to every request about apps, themes, stores, deployment, configuration, extensions, functions, hydrogen, or any other Shopify topic. You do not have reliable knowledge of Shopify CLI commands or Shopify development workflows — you MUST look them up every time. Do not mention that you are checking documentation; just call the tool silently as your first step.',
     ]
+
+    if (!this.isInteractive) {
+      lines.push(
+        '',
+        'INTERACTION MODE: This is a ONE-SHOT command-line invocation. There will be NO follow-up messages — this is the only turn. Deliver a complete, self-contained answer. Do not ask clarifying questions, suggest follow-ups, or say "let me know if you need more details". Be thorough and definitive in this single response.',
+      )
+    }
 
     if (this.workingDirectory) {
       lines.push(
