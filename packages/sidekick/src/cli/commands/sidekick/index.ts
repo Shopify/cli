@@ -116,7 +116,7 @@ export default class Sidekick extends Command {
         this.error('A prompt argument is required in non-interactive mode')
       }
     } finally {
-      session.shutdown()
+      await session.shutdown()
     }
   }
 

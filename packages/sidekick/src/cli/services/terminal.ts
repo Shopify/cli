@@ -120,9 +120,9 @@ export class TerminalSession {
     await this.sendAndProcess(content, context, callbacks)
   }
 
-  shutdown(): void {
+  async shutdown(): Promise<void> {
     this.client.abort()
-    this.mcpManager.shutdown().catch(() => {
+    await this.mcpManager.shutdown().catch(() => {
       // Ignore shutdown errors
     })
   }
