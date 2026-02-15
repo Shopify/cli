@@ -1,10 +1,12 @@
 import {TerminalSession} from '../../services/terminal.js'
+import {SidekickApp} from '../../ui/SidekickApp.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import {isTTY} from '@shopify/cli-kit/node/ui'
+import {isTTY, render} from '@shopify/cli-kit/node/ui'
 import {ensureAuthenticatedSidekick} from '@shopify/cli-kit/node/session'
 import {Flags, Args} from '@oclif/core'
+import React from 'react'
 
 const DEFAULT_API_ENDPOINT =
   process.env.SHOPIFY_SERVICE_ENV === 'local' ? 'https://sidekick-server.shop.dev' : 'https://sidekick.shopify.com'
@@ -104,7 +106,12 @@ export default class Sidekick extends Command {
       if (args.prompt) {
         await session.oneShot(args.prompt)
       } else if (interactive) {
-        await session.interactive()
+        await render(
+          React.createElement(SidekickApp, {
+            session,
+            storeName: storeHandle,
+          }),
+        )
       } else {
         this.error('A prompt argument is required in non-interactive mode')
       }

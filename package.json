@@ -96,6 +96,11 @@
     "printWidth": 120
   },
   "version": "0.0.0",
+  "pnpm": {
+    "overrides": {
+      "graphql": "16.10.0"
+    }
+  },
   "resolutions": {
     "@types/react": "18.3.12",
     "vite": "6.4.1",

@@ -68,3 +68,25 @@ export async function checkShellPermission(
 
   return 'denied'
 }
+
+export async function checkGraphqlMutationPermission(
+  query: string,
+  description: string | undefined,
+  options: PermissionOptions,
+): Promise<PermissionResult> {
+  if (options.yolo) {
+    return 'approved'
+  }
+
+  if (options.interactive) {
+    const prompt = description
+      ? ['Execute GraphQL mutation  ', {subdued: `Purpose: ${description}`}, '\n', {subdued: query}]
+      : ['Execute GraphQL mutation\n', {subdued: query}]
+    const confirmed = await renderConfirmationPrompt({
+      message: prompt,
+    })
+    return confirmed ? 'approved' : 'denied'
+  }
+
+  return 'denied'
+}

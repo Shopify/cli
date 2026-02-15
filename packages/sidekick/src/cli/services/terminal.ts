@@ -1,11 +1,26 @@
 import {SidekickClient, SSEEvent, ClientToolCall, ToolCallResult} from './sidekick-client.js'
 import {MCPManager} from './mcp-manager.js'
 import {createOutputHandler, OutputFormat} from './output.js'
-import {checkToolPermission, checkShellPermission, PermissionOptions, ToolCallRequest} from './permissions.js'
+import {checkToolPermission, checkShellPermission, checkGraphqlMutationPermission, PermissionOptions, ToolCallRequest, PermissionResult} from './permissions.js'
 import {outputDebug, outputNewline} from '@shopify/cli-kit/node/output'
 import {renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 const MAX_TOOL_CALL_ITERATIONS = 20
+
+export interface PermissionRequest {
+  type: 'mutation' | 'shell' | 'mcp_tool'
+  description: string
+  detail: string
+}
+
+export interface SessionCallbacks {
+  onChunk: (chunk: string) => void
+  onToolCallStart: (toolCall: ClientToolCall) => void
+  onToolCallEnd: (toolCallId: string, result: string, error?: string) => void
+  onPermissionRequest: (request: PermissionRequest) => Promise<boolean>
+  onError: (type: string, message: string) => void
+  onEnd: () => void
+}
 
 export interface TerminalSessionOptions {
   apiEndpoint: string
@@ -20,8 +35,8 @@ export interface TerminalSessionOptions {
 }
 
 export class TerminalSession {
-  private readonly client: SidekickClient
-  private readonly mcpManager: MCPManager
+  public readonly client: SidekickClient
+  public readonly mcpManager: MCPManager
   private readonly format: OutputFormat
   private readonly permissionOptions: PermissionOptions
   private readonly stdinContent: string | undefined
@@ -98,6 +113,11 @@ export class TerminalSession {
     }
   }
 
+  async sendWithCallbacks(prompt: string, callbacks: SessionCallbacks): Promise<void> {
+    const {content, context} = this.buildMessage(prompt)
+    await this.sendAndProcess(content, context, callbacks)
+  }
+
   shutdown(): void {
     this.client.abort()
     this.mcpManager.shutdown().catch(() => {
@@ -152,15 +172,19 @@ export class TerminalSession {
     return lines.join('\n')
   }
 
-  private async sendAndProcess(prompt: string, context?: string): Promise<void> {
-    const outputHandler = createOutputHandler(this.format)
+  private async sendAndProcess(prompt: string, context?: string, callbacks?: SessionCallbacks): Promise<void> {
+    const outputHandler = callbacks ? null : createOutputHandler(this.format)
     let pendingToolCalls: ClientToolCall[] = []
     let iterationCount = 0
 
     const handleEvent = async (event: SSEEvent): Promise<void> => {
       switch (event.type) {
         case 'message': {
-          outputHandler.onChunk(event.data)
+          if (callbacks) {
+            callbacks.onChunk(event.data)
+          } else {
+            outputHandler?.onChunk(event.data)
+          }
           break
         }
         case 'client_tool_call': {
@@ -192,7 +216,11 @@ export class TerminalSession {
         case 'llm_content_error': {
           const errorMsg = event.data
           outputDebug(`Sidekick error (${event.type}): ${errorMsg}`)
-          process.stderr.write(`Error: ${errorMsg}\n`)
+          if (callbacks) {
+            callbacks.onError(event.type, errorMsg)
+          } else {
+            process.stderr.write(`Error: ${errorMsg}\n`)
+          }
           break
         }
         default:
@@ -212,11 +240,13 @@ export class TerminalSession {
         break
       }
 
-      outputNewline()
+      if (!callbacks) {
+        outputNewline()
+      }
       const toolCalls = [...pendingToolCalls]
       pendingToolCalls = []
       // eslint-disable-next-line no-await-in-loop
-      const results = await this.processToolCalls(toolCalls)
+      const results = await this.processToolCalls(toolCalls, callbacks)
 
       // null means the user denied a permission prompt — stop the turn
       if (results === null) {
@@ -224,16 +254,22 @@ export class TerminalSession {
       }
 
       if (results.length > 0) {
-        outputNewline()
+        if (!callbacks) {
+          outputNewline()
+        }
         // eslint-disable-next-line no-await-in-loop
         await this.client.sendToolResults(results, handleEvent)
       }
     }
 
-    outputHandler.onEnd()
+    if (callbacks) {
+      callbacks.onEnd()
+    } else {
+      outputHandler?.onEnd()
+    }
   }
 
-  private async processToolCalls(toolCalls: ClientToolCall[]): Promise<ToolCallResult[] | null> {
+  private async processToolCalls(toolCalls: ClientToolCall[], callbacks?: SessionCallbacks): Promise<ToolCallResult[] | null> {
     const results: ToolCallResult[] = []
 
     for (const toolCall of toolCalls) {
@@ -255,14 +291,36 @@ export class TerminalSession {
           annotations: this.mcpManager.getToolAnnotations(serverName ?? '', toolName),
         }
 
-        // eslint-disable-next-line no-await-in-loop
-        const permission = await checkToolPermission(toolRequest, this.permissionOptions)
+        let permission: PermissionResult
+        if (toolRequest.annotations?.readOnlyHint === true || this.permissionOptions.yolo) {
+          permission = 'approved'
+        } else if (callbacks) {
+          const permissionRequest: PermissionRequest = {
+            type: 'mcp_tool',
+            description: `Execute tool "${mcpToolName}" from server "${serverName}"`,
+            detail: JSON.stringify(mcpArguments, null, 2),
+          }
+          // eslint-disable-next-line no-await-in-loop
+          const approved = await callbacks.onPermissionRequest(permissionRequest)
+          permission = approved ? 'approved' : 'denied'
+        } else {
+          // eslint-disable-next-line no-await-in-loop
+          permission = await checkToolPermission(toolRequest, this.permissionOptions)
+        }
+
         if (permission === 'approved') {
-          renderText({subdued: `  ▸ ${mcpToolName}`})
+          if (callbacks) {
+            callbacks.onToolCallStart(toolCall)
+          } else {
+            renderText({subdued: `  ▸ ${mcpToolName}`})
+          }
           // eslint-disable-next-line no-await-in-loop
           result = await this.mcpManager.executeToolCall(serverName ?? '', toolName, mcpArguments)
           const output = (result.result as string) ?? (result.error as string) ?? ''
-          if (output.trim()) {
+          const errorMsg = result.error as string | undefined
+          if (callbacks) {
+            callbacks.onToolCallEnd(toolCall.id, output, errorMsg)
+          } else if (output.trim()) {
             renderText({subdued: formatShellOutput(output)})
           }
         } else {
@@ -273,16 +331,69 @@ export class TerminalSession {
         const rawData = toolCall as unknown as {command?: string; reason?: string; working_directory?: string}
         const command = rawData.command ?? ''
         const reason = rawData.reason
-        // eslint-disable-next-line no-await-in-loop
-        const permission = await checkShellPermission(command, reason, this.permissionOptions)
+
+        let permission: PermissionResult
+        if (this.permissionOptions.yolo) {
+          permission = 'approved'
+        } else if (callbacks) {
+          const permissionRequest: PermissionRequest = {
+            type: 'shell',
+            description: reason ?? `Execute shell command`,
+            detail: command,
+          }
+          // eslint-disable-next-line no-await-in-loop
+          const approved = await callbacks.onPermissionRequest(permissionRequest)
+          permission = approved ? 'approved' : 'denied'
+        } else {
+          // eslint-disable-next-line no-await-in-loop
+          permission = await checkShellPermission(command, reason, this.permissionOptions)
+        }
+
         if (permission === 'approved') {
+          if (callbacks) {
+            callbacks.onToolCallStart(toolCall)
+          }
           // eslint-disable-next-line no-await-in-loop
           result = await this.executeShellCommand(command, rawData.working_directory)
           const output = (result.output as string) ?? ''
-          if (output.trim()) {
+          if (callbacks) {
+            callbacks.onToolCallEnd(toolCall.id, output)
+          } else if (output.trim()) {
             outputNewline()
             renderText({subdued: formatShellOutput(output)})
           }
+        } else {
+          return null
+        }
+      } else if (toolCall.name === 'confirm_graphql_mutation') {
+        // Server sends query/variables/description at the top level of the SSE event
+        const rawData = toolCall as unknown as {query?: string; variables?: {[key: string]: unknown}; description?: string}
+        const query = rawData.query ?? ''
+        const description = rawData.description
+
+        let permission: PermissionResult
+        if (this.permissionOptions.yolo) {
+          permission = 'approved'
+        } else if (callbacks) {
+          const permissionRequest: PermissionRequest = {
+            type: 'mutation',
+            description: description ?? 'Execute GraphQL mutation',
+            detail: query,
+          }
+          // eslint-disable-next-line no-await-in-loop
+          const approved = await callbacks.onPermissionRequest(permissionRequest)
+          permission = approved ? 'approved' : 'denied'
+        } else {
+          // eslint-disable-next-line no-await-in-loop
+          permission = await checkGraphqlMutationPermission(query, description, this.permissionOptions)
+        }
+
+        if (permission === 'approved') {
+          if (callbacks) {
+            callbacks.onToolCallStart(toolCall)
+            callbacks.onToolCallEnd(toolCall.id, JSON.stringify({confirmed: true}))
+          }
+          result = {confirmed: true}
         } else {
           return null
         }
