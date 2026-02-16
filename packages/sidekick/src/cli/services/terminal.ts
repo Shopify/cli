@@ -6,6 +6,7 @@ import {outputDebug, outputNewline} from '@shopify/cli-kit/node/output'
 import {renderText, renderTextPrompt} from '@shopify/cli-kit/node/ui'
 
 const MAX_TOOL_CALL_ITERATIONS = 20
+const MAX_TOOL_RESULT_CHARS = 100_000
 
 export interface PermissionRequest {
   type: 'mutation' | 'shell' | 'mcp_tool'
@@ -432,7 +433,7 @@ export class TerminalSession {
 
       results.push({
         toolMessageId: toolCall.id,
-        result,
+        result: truncateToolResult(result),
       })
     }
 
@@ -462,6 +463,18 @@ export class TerminalSession {
 
 const MAX_OUTPUT_LINES = 20
 const INDENT = '  '
+
+function truncateToolResult(result: {[key: string]: unknown}): {[key: string]: unknown} {
+  const truncated: {[key: string]: unknown} = {}
+  for (const [key, value] of Object.entries(result)) {
+    if (typeof value === 'string' && value.length > MAX_TOOL_RESULT_CHARS) {
+      truncated[key] = `${value.slice(0, MAX_TOOL_RESULT_CHARS)}\n\n[Truncated: output exceeded ${MAX_TOOL_RESULT_CHARS} characters]`
+    } else {
+      truncated[key] = value
+    }
+  }
+  return truncated
+}
 
 function formatShellOutput(output: string): string {
   const lines = output.trimEnd().split('\n')
