@@ -14,7 +14,7 @@ This documents how to run the `shopify sidekick` CLI command against a local dev
 
 ### 1. Identity (OAuth token exchange)
 
-Identity needs to know that `shopify-cli-development` can exchange tokens for `sidekick-server-development`.
+The CLI authenticates by exchanging an Identity token for a sidekick-server token. Identity needs to be configured to allow this exchange.
 
 ```bash
 cd ~/src/github.com/Shopify/identity
@@ -22,15 +22,32 @@ git checkout ac/sidekick-cli-oauth
 dev up && dev s
 ```
 
-After `dev up` seeds the database, the config changes should take effect. If not (or if the branch can't be pushed due to repo rules), apply manually via Rails console:
+After `dev up` seeds the database, you need to manually create a `TokenExchangeConfiguration` record because `db:seed` may not create it automatically. In a separate terminal:
 
 ```bash
 dev console
 ```
 
-In the console:
-1. Add `shopify-cli-development` as an allowed token exchange source for `sidekick-server-development`
-2. Ensure `https://api.shopify.com/auth/sidekick.message` is in the `shopify-development` OAuth app's scopes
+```ruby
+# Find the relevant OAuth applications
+cli = OAuthApplication.find_by(name: 'shopify-cli-development')
+sidekick = OAuthApplication.find_by(name: 'sidekick-server-development')
+provider = OAuthProvider.find_by(name: 'merchant')
+
+# Allow CLI to exchange tokens for sidekick-server
+TokenExchangeConfiguration.find_or_create_by!(
+  oauth_application: cli,
+  target_oauth_application: sidekick,
+  oauth_provider: provider
+)
+```
+
+Verify it worked:
+
+```ruby
+cli.token_exchange_targets.include?(sidekick)
+# => true
+```
 
 ### 2. Sidekick Server
 
@@ -150,7 +167,15 @@ Identity (ac/sidekick-cli-oauth)
 ## Troubleshooting
 
 - **"The --store flag is required"**: You're in OAuth mode (no `SIDEKICK_TOKEN` env var) and didn't pass `--store`
-- **401 from sidekick API**: Token exchange not working. Check identity has the CLI in its allowed exchange list
-- **"I don't have access to MCP tools"**: The `buildContext()` in terminal.ts may have been modified. Ensure it includes the MCP tools XML block and tool descriptions
-- **Tools not showing visual progress**: The `tool_call_start` SSE event must be emitted by the server for the ToolCallCard UI to appear
-- **Stuck on auth issues**: If OAuth errors persist after fixing config, run `pnpm shopify auth logout` to clear cached tokens and try again
+- **`invalid_target` error**: Identity can't find the token exchange configuration. Re-run the Rails console steps in Step 1 above.
+- **`invalid_request` error**: The identity token doesn't include sidekick scopes. Run `pnpm shopify auth logout` and re-authenticate to get a fresh token with the correct scopes.
+- **401 from sidekick API**: Sidekick-server doesn't recognize the CLI as an authorized client. Ensure `development.yml` includes `"shopify-cli-development"` in `identity_authorization.authorized_clients` and restart the server.
+- **"I don't have access to MCP tools"**: The `buildContext()` in terminal.ts may have been modified. Ensure it includes the MCP tools XML block and tool descriptions.
+- **Tools not showing visual progress**: The `tool_call_start` SSE event must be emitted by the server for the ToolCallCard UI to appear.
+- **Stuck on auth issues**: If OAuth errors persist after fixing config, run `pnpm shopify auth logout` to clear cached tokens and try again.
+
+## Production TODO
+
+- [ ] Look up production sidekick-server client ID from Identity application registry and add to `identity.ts`
+- [ ] Set up production `TokenExchangeConfiguration` (or equivalent deployment config)
+- [ ] Verify production identity has the `sidekick.message` scope available for CLI exchange
