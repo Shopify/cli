@@ -67,7 +67,7 @@ git checkout ac/sidekick-cli
 export SHOPIFY_SERVICE_ENV=local
 export SHOPIFY_CLI_NEVER_USE_PARTNERS_API=1
 
-pnpm shopify:run sidekick --store <your-store>.my.shop.dev
+pnpm shopify sidekick --store <your-store>.my.shop.dev
 ```
 
 - `SHOPIFY_SERVICE_ENV=local` points identity to local `identity.shop.dev` and sidekick API to `sidekick-server.shop.dev`
@@ -82,7 +82,7 @@ If you have a JWT token from sidekick-server's playground or internal tools:
 export SIDEKICK_TOKEN=<your-jwt-token>
 export SIDEKICK_API_ENDPOINT=https://sidekick-server.shop.dev
 
-pnpm shopify:run sidekick "hello"
+pnpm shopify sidekick "hello"
 ```
 
 #### CLI Flags
@@ -101,13 +101,13 @@ pnpm shopify:run sidekick "hello"
 
 ```bash
 # Interactive mode
-pnpm shopify:run sidekick --store mystore.my.shop.dev
+pnpm shopify sidekick --store mystore.my.shop.dev
 
 # One-shot mode
-pnpm shopify:run sidekick --store mystore.my.shop.dev "list my products"
+pnpm shopify sidekick --store mystore.my.shop.dev "list my products"
 
 # One-shot with piped input
-echo "some context" | pnpm shopify:run sidekick --store mystore.my.shop.dev "analyze this"
+echo "some context" | pnpm shopify sidekick --store mystore.my.shop.dev "analyze this"
 ```
 
 ## Architecture Overview
