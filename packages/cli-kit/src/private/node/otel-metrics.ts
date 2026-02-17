@@ -5,7 +5,7 @@ import {
   DefaultOtelServiceOptions,
 } from '../../public/node/vendor/otel-js/service/DefaultOtelService/DefaultOtelService.js'
 import {isUnitTest, opentelemetryDomain} from '../../public/node/context/local.js'
-import {ValueType} from '@opentelemetry/api'
+import {ValueType, diag} from '@opentelemetry/api'
 
 type MetricRecorder =
   | 'console'
@@ -150,6 +150,9 @@ function globalOtelService(options: CreateMetricRecorderOptions): OtelService {
       env: undefined,
       otelEndpoint: `${opentelemetryDomain()}/v1/metrics`,
     })
+    // Suppress OTEL diagnostic output — internal export errors (e.g. retryable failures)
+    // should never appear in user-facing CLI output.
+    diag.disable()
   }
   return _otelService
 }
