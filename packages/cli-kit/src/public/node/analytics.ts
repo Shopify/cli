@@ -2,6 +2,7 @@ import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
+import {sendErrorToBugsnag} from './error-handler.js'
 import {
   recordTiming as storageRecordTiming,
   recordError as storageRecordError,
@@ -105,6 +106,7 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       message = message.concat(`: ${error.message}`)
     }
     outputDebug(message)
+    await sendErrorToBugsnag(error, 'expected_error')
   }
 }
 
