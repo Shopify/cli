@@ -63,7 +63,16 @@ This branch provides:
 - **CLI-specific prompt**: Strips UI-specific instructions (SKL, navigation, forms) and adds CLI-appropriate instructions
 - **Identity authorization**: `shopify-cli-development` in the authorized clients list
 
-### 3. Shopify Core (backend services for GraphQL)
+### 3. Support Core (help documents)
+
+```bash
+cd ~/src/github.com/Shopify/support-core
+dev up && dev s
+```
+
+No branch needed — just run it on `main`. Sidekick-server connects to support-core's MCP endpoint to power the `fetch_help_documents` tool.
+
+### 4. Shopify Core (backend services for GraphQL)
 
 ```bash
 devx rig up apps-platform
@@ -71,7 +80,7 @@ devx rig up apps-platform
 
 This provides the admin GraphQL API that sidekick-server calls when executing mutations/queries on behalf of the merchant.
 
-### 4. CLI
+### 5. CLI
 
 ```bash
 cd ~/src/github.com/Shopify/cli
