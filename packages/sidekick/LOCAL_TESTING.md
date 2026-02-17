@@ -153,3 +153,4 @@ Identity (ac/sidekick-cli-oauth)
 - **401 from sidekick API**: Token exchange not working. Check identity has the CLI in its allowed exchange list
 - **"I don't have access to MCP tools"**: The `buildContext()` in terminal.ts may have been modified. Ensure it includes the MCP tools XML block and tool descriptions
 - **Tools not showing visual progress**: The `tool_call_start` SSE event must be emitted by the server for the ToolCallCard UI to appear
+- **Stuck on auth issues**: If OAuth errors persist after fixing config, run `pnpm shopify auth logout` to clear cached tokens and try again
