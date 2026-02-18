@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.91.0
+
+### Patch Changes
+
+- 5e13c83: Add --listing flag to theme dev, push, and share commands
+
 ## 3.90.0
 
 ## 3.89.0
