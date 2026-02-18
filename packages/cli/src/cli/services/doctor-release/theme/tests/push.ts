@@ -29,7 +29,7 @@ export default class ThemePushTests extends DoctorSuite<ThemeDoctorContext> {
 
       // Build command
       const themeName = this.context.themeName ?? 'doctor-theme'
-      let cmd = `shopify theme push --unpublished --json --path ${this.context.themePath} -t ${themeName}`
+      let cmd = `${this.context.cliCommand} theme push --unpublished --json --path ${this.context.themePath} -t ${themeName}`
 
       if (this.context.environment) {
         cmd += ` -e ${this.context.environment}`

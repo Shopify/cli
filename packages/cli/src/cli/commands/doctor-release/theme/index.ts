@@ -8,6 +8,7 @@ import {canRunDoctorRelease} from '@shopify/cli-kit/node/context/local'
 export default class DoctorReleaseTheme extends Command {
   static description = 'Run all theme command doctor-release tests'
   static hidden = true
+  static handle = 'doctor-release:theme'
 
   static flags = {
     ...globalFlags,
@@ -42,12 +43,15 @@ export default class DoctorReleaseTheme extends Command {
 
     const {flags} = await this.parse(DoctorReleaseTheme)
 
-    const results = await runThemeDoctor({
-      path: flags.path,
-      environment: flags.environment,
-      store: flags.store,
-      password: flags.password,
-    })
+    const results = await runThemeDoctor(
+      {
+        path: flags.path,
+        environment: flags.environment,
+        store: flags.store,
+        password: flags.password,
+      },
+      DoctorReleaseTheme.handle,
+    )
 
     // Exit with error code if any tests failed
     const failed = results.some((result) => result.status === 'failed')

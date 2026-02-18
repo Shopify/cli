@@ -5,6 +5,7 @@ import {renderInfo} from '@shopify/cli-kit/node/ui'
 export default class DoctorRelease extends Command {
   static description = 'Run CLI doctor-release tests'
   static hidden = true
+  static handle = 'doctor-release'
 
   async run(): Promise<void> {
     if (!canRunDoctorRelease()) {
