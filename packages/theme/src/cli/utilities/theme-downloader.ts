@@ -2,7 +2,7 @@ import {batchedTasks, Task} from './batching.js'
 import {MAX_GRAPHQL_THEME_FILES} from '../constants.js'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
-import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
+import {ThemeFileSystem, Theme, Checksum} from '@shopify/cli-kit/node/themes/types'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
@@ -90,8 +90,5 @@ async function downloadFiles(theme: Theme, fileSystem: ThemeFileSystem, filename
   const assets = await fetchThemeAssets(theme.id, filenames, session)
   if (!assets) return
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  assets.forEach(async (asset: ThemeAsset) => {
-    await fileSystem.write(asset)
-  })
+  await Promise.all(assets.map((asset) => fileSystem.write(asset)))
 }
