@@ -5,9 +5,7 @@ import * as metadata from './metadata.js'
 import {renderWarning} from './ui.js'
 import {JsonMap} from '../../private/common/json.js'
 
-export interface Environments {
-  [name: string]: JsonMap
-}
+export type Environments = Record<string, JsonMap>
 
 interface LoadEnvironmentOptions {
   from?: string

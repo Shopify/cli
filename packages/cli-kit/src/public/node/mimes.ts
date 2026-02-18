@@ -16,7 +16,7 @@ export function lookupMimeType(fileName: string): string {
  *
  * @param newTypes - Object of key-values where key is extension and value is mime type.
  */
-export function setMimeTypes(newTypes: {[key: string]: string}): void {
+export function setMimeTypes(newTypes: Record<string, string>): void {
   Object.entries(newTypes).forEach(([extension, mimeType]) => {
     mimes[extension] = mimeType
   })

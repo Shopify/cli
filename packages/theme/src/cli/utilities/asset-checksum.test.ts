@@ -2,6 +2,7 @@ import {calculateChecksum, rejectGeneratedStaticAssets} from './asset-checksum.j
 import {readThemeFile} from './theme-fs.js'
 import {describe, expect, test} from 'vitest'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
+
 import {fileURLToPath} from 'node:url'
 
 describe('asset-checksum', () => {

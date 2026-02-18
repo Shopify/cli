@@ -3,6 +3,7 @@ import {render} from '../../testing/ui.js'
 import {shouldDisplayColors, unstyled} from '../../../../public/node/output.js'
 import useLayout from '../hooks/use-layout.js'
 import React from 'react'
+
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../hooks/use-layout.js')

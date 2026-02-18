@@ -35,7 +35,7 @@ export interface DevServerSession extends AdminSession {
    *                         crucial for determining the theme used during
    *                         rendering.
    */
-  sessionCookies: {[key: string]: string}
+  sessionCookies: Record<string, string>
 
   /**
    * Refreshes the current session, ensuring any tokens and session cookies
@@ -182,15 +182,15 @@ export interface DevServerRenderContext {
   /**
    * Headers to be used in the rendering request.
    */
-  headers: {[key: string]: string}
+  headers: Record<string, string>
 
   /**
    * Custom content to be replaced in the theme during rendering.
    */
-  replaceTemplates?: {[key: string]: string}
+  replaceTemplates?: Record<string, string>
 
   /**
    * Custom content to be replaced during rendering.
    */
-  replaceExtensionTemplates?: {[key: string]: string}
+  replaceExtensionTemplates?: Record<string, string>
 }

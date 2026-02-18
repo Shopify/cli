@@ -1,13 +1,15 @@
 /* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code, @nx/enforce-module-boundaries */
-import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
-import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
-import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
-import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-kit.js'
+import {createRequire} from 'module'
+
 import {build as esBuild} from 'esbuild'
 import {copy} from 'esbuild-plugin-copy'
 import glob from 'fast-glob'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {createRequire} from 'module'
+
+import ShopifyStacktraceyPlugin from '../../../bin/bundling/esbuild-plugin-stacktracey.js'
+import ShopifyVSCodePlugin from '../../../bin/bundling/esbuild-plugin-vscode.js'
+import GraphiQLImportsPlugin from '../../../bin/bundling/esbuild-plugin-graphiql-imports.js'
+import CliKitDedupPlugin from '../../../bin/bundling/esbuild-plugin-dedup-cli-kit.js'
 
 const require = createRequire(import.meta.url)
 

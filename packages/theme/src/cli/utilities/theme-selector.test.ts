@@ -1,5 +1,5 @@
-import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {findOrSelectTheme, findThemeById, findThemes, newThemeOption} from './theme-selector.js'
+import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {test, describe, vi, expect} from 'vitest'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'

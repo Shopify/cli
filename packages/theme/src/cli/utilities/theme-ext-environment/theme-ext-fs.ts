@@ -5,7 +5,9 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {sleep} from '@shopify/cli-kit/node/system'
 import {buildThemeAsset} from '@shopify/cli-kit/node/themes/factories'
+
 import EventEmitter from 'node:events'
+
 import type {
   ThemeAsset,
   ThemeExtensionFileSystem,
@@ -50,7 +52,6 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
     const fileKey = relativePath(root, filePath)
 
     const contentPromise = read(fileKey).then(() => {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const file = files.get(fileKey)!
 
       unsyncedFileKeys.add(file.key)

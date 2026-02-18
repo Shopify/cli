@@ -1,7 +1,6 @@
 import * as styles from './Row.module.scss'
-
-import React from 'react'
 import {classNames} from '@/utilities/css'
+import React from 'react'
 
 interface Props extends React.HTMLProps<HTMLTableRowElement> {
   children: React.ReactNode

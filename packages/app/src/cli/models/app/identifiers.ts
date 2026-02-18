@@ -65,7 +65,6 @@ export async function updateAppIdentifiers(
   Object.keys(identifiers.extensions).forEach((identifier) => {
     const envVariable = `SHOPIFY_${constantize(identifier)}_ID`
     if (!systemEnvironment[envVariable]) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       updatedVariables[envVariable] = identifiers.extensions[identifier]!
     }
   })
@@ -110,7 +109,6 @@ export function getAppIdentifiers(
   const extensionsIdentifiers: {[key: string]: string} = {}
   const processExtension = (extension: ExtensionInstance) => {
     if (Object.keys(envVariables).includes(extension.idEnvironmentVariableName)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsIdentifiers[extension.localIdentifier] = envVariables[extension.idEnvironmentVariableName]!
     }
   }

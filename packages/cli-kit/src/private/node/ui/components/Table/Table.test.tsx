@@ -17,7 +17,7 @@ describe('Table', async () => {
       },
     ]
     const color = 'grey'
-    const columns: TableColumn<{[key in 'name' | 'role' | 'id']: string}> = {
+    const columns: TableColumn<Record<'name' | 'role' | 'id', string>> = {
       name: {},
       role: {
         color,

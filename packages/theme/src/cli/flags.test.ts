@@ -10,7 +10,7 @@ class MockCommand extends Command {
     ...themeFlags,
   }
 
-  async run(): Promise<{[flag: string]: unknown}> {
+  async run(): Promise<Record<string, unknown>> {
     const {flags} = await this.parse(MockCommand)
     return flags
   }

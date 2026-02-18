@@ -1,6 +1,6 @@
-import {themeFlags} from '../../flags.js'
-import {fetchThemeInfo, fetchDevInfo, formatThemeInfo} from '../../services/info.js'
 import ThemeCommand from '../../utilities/theme-command.js'
+import {fetchThemeInfo, fetchDevInfo, formatThemeInfo} from '../../services/info.js'
+import {themeFlags} from '../../flags.js'
 import {Flags} from '@oclif/core'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'

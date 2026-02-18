@@ -27,6 +27,7 @@ import {joinPath, normalizePath} from './path.js'
 import {takeRandomFromArray} from '../common/array.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import FastGlob from 'fast-glob'
+
 import * as os from 'os'
 
 vi.mock('../common/array.js')

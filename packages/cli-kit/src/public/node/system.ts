@@ -5,16 +5,17 @@ import {treeKill} from './tree-kill.js'
 import {isTruthy} from './context/utilities.js'
 import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
-import {shouldDisplayColors, outputDebug} from '../../public/node/output.js'
+import {shouldDisplayColors, outputDebug} from './output.js'
 import {execa, execaCommand, ExecaChildProcess} from 'execa'
 import which from 'which'
 import {delimiter} from 'pathe'
+
 import {fstatSync} from 'fs'
 import type {Writable, Readable} from 'stream'
 
 export interface ExecOptions {
   cwd?: string
-  env?: {[key: string]: string | undefined}
+  env?: Record<string, string | undefined>
   stdin?: Readable | 'inherit'
   stdout?: Writable | 'inherit'
   stderr?: Writable | 'inherit'

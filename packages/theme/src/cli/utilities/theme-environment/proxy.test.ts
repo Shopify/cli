@@ -8,7 +8,9 @@ import {
 import {describe, test, expect, vi, afterEach} from 'vitest'
 import {createEvent} from 'h3'
 import {IncomingMessage, ServerResponse} from 'node:http'
+
 import {Socket} from 'node:net'
+
 import type {DevServerContext} from './types.js'
 
 function createH3Event(method = 'GET', path = '/', headers = {}) {

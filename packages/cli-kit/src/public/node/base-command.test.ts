@@ -17,7 +17,7 @@ beforeEach(() => {
   vi.unstubAllEnvs()
 })
 
-let testResult: {[flag: string]: unknown} = {}
+let testResult: Record<string, unknown> = {}
 let testError: Error | undefined
 
 class MockCommand extends Command {

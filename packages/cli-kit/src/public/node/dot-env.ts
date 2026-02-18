@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import {outputDebug, outputContent, outputToken} from './output.js'
 import {AbortError} from './error.js'
 import {fileExists, readFile, writeFile} from './fs.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
 import {parse} from 'dotenv'
 
 /**
@@ -15,7 +14,7 @@ export interface DotEnvFile {
   /**
    * Variables of the .env file.
    */
-  variables: {[name: string]: string}
+  variables: Record<string, string>
 }
 
 /**
@@ -53,10 +52,7 @@ export async function writeDotEnv(file: DotEnvFile): Promise<void> {
  * @param envFileContent - .env file contents.
  * @param updatedValues - object containing new env variables values.
  */
-export function patchEnvFile(
-  envFileContent: string | null,
-  updatedValues: {[key: string]: string | undefined},
-): string {
+export function patchEnvFile(envFileContent: string | null, updatedValues: Record<string, string | undefined>): string {
   const outputLines: string[] = []
   const envFileLines = envFileContent === null ? [] : envFileContent.split('\n')
 

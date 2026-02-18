@@ -7,6 +7,7 @@ import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {InferredFlags} from '@oclif/core/interfaces'
 import {ArgOutput} from '@shopify/cli-kit/node/base-command'
+
 import {Writable} from 'stream'
 
 type PushFlags = InferredFlags<typeof Push.flags>

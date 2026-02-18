@@ -10,7 +10,7 @@ import {
   isAbsolute,
 } from 'pathe'
 import {fileURLToPath} from 'url'
-// eslint-disable-next-line node/prefer-global/url
+// eslint-disable-next-line n/prefer-global/url
 import type {URL} from 'url'
 
 /**

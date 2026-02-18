@@ -1,16 +1,17 @@
-import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
-import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
-import {render} from './storefront-renderer.js'
 import {getErrorPage} from './hot-reload/error-page.js'
-import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
-import {logRequestLine} from '../log-request-line.js'
+import {render} from './storefront-renderer.js'
+import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
+import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
 import {extractFetchErrorInfo} from '../errors.js'
+import {logRequestLine} from '../log-request-line.js'
+import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
 import {defineEventHandler, getCookie, type H3Event, type EventHandler} from 'h3'
 import {renderError, renderFatalError} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import type {Theme} from '@shopify/cli-kit/node/themes/types'
+
 import type {DevServerContext} from './types.js'
 
 /** Tracks the number of consecutive theme ID mismatch redirects */

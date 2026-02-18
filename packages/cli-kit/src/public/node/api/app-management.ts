@@ -1,10 +1,11 @@
-import {CacheOptions, GraphQLResponse, UnauthorizedHandler, graphqlRequestDoc} from './graphql.js'
 import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
+import {CacheOptions, GraphQLResponse, UnauthorizedHandler, graphqlRequestDoc} from './graphql.js'
 import {appManagementFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {buildHeaders} from '../../../private/node/api/headers.js'
 import {RequestModeInput} from '../http.js'
 import Bottleneck from 'bottleneck'
+
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 import {Variables} from 'graphql-request'
 
@@ -28,7 +29,7 @@ async function setupRequest(token: string) {
   }
 }
 
-export const appManagementHeaders = (token: string): {[key: string]: string} => {
+export const appManagementHeaders = (token: string): Record<string, string> => {
   return buildHeaders(token)
 }
 

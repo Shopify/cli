@@ -4,6 +4,7 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {ThemeFileSystem, Theme, Checksum, ThemeAsset} from '@shopify/cli-kit/node/themes/types'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
+
 import {Writable} from 'stream'
 
 interface DownloadOptions {

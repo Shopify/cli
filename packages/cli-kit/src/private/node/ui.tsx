@@ -2,8 +2,10 @@ import {output} from './output.js'
 import {Logger, LogLevel} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {treeKill} from '../../public/node/tree-kill.js'
+
 import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
+
 import {EventEmitter} from 'events'
 
 interface RenderOnceOptions {

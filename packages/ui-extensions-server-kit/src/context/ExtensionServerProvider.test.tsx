@@ -1,9 +1,12 @@
 import {ExtensionServerProvider} from './ExtensionServerProvider'
-import {mockApp, mockExtension} from '../testing'
 import {useExtensionServerContext} from '../hooks'
 import {createConnectedAction} from '../state'
-import {renderHook, withProviders} from '@shopify/ui-extensions-test-utils'
+import {mockApp, mockExtension} from '../testing'
 import {beforeEach, afterEach, expect} from 'vitest'
+import {renderHook, withProviders} from '@shopify/ui-extensions-test-utils'
+
+// Cast provider to any to avoid type conflicts between required props and ProviderComponent
+const TestProvider = ExtensionServerProvider as Parameters<typeof withProviders>[0]
 
 // Create a custom mock WebSocket implementation to avoid using jest-websocket-mock
 class MockWebSocketServer {
@@ -45,7 +48,7 @@ class MockWebSocket implements Partial<WebSocket> {
   onmessage: ((ev: MessageEvent) => any) | null = null
   onclose: ((ev: CloseEvent) => any) | null = null
   server: MockWebSocketServer
-  private eventListeners: {[key: string]: Set<EventListener>} = {
+  private eventListeners: Record<string, Set<EventListener>> = {
     open: new Set(),
     message: new Set(),
     close: new Set(),
@@ -142,7 +145,7 @@ describe('ExtensionServerProvider tests', () => {
     test('creates a new ExtensionServerClient instance', async () => {
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
 
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       expect(wrapper.result.client).toBeDefined()
     })
@@ -150,7 +153,7 @@ describe('ExtensionServerProvider tests', () => {
     test('does not start a new connection if an empty url is passed', async () => {
       const options = {connection: {}}
 
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       expect(wrapper.result.client.connection).toBeUndefined()
     })
@@ -160,7 +163,7 @@ describe('ExtensionServerProvider tests', () => {
     test('starts a new connection by calling connect', async () => {
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
 
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {
         options: {
           connection: {url: ''},
         },
@@ -181,7 +184,7 @@ describe('ExtensionServerProvider tests', () => {
       const app = mockApp()
       const extension = mockExtension()
       const payload = {app, extensions: [extension], store: 'test-store.com'}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       wrapper.act(({dispatch}) => {
         dispatch({type: 'connected', payload})
@@ -201,7 +204,7 @@ describe('ExtensionServerProvider tests', () => {
       const extension = mockExtension()
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       // Since we can't be sure the socket connection works properly in the test environment
       // Initialize data through the dispatch action instead
@@ -223,7 +226,7 @@ describe('ExtensionServerProvider tests', () => {
       const update = {...extension, version: 'v2'}
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       // Initialize state with connected data
       wrapper.act(({dispatch}) => {
@@ -248,7 +251,7 @@ describe('ExtensionServerProvider tests', () => {
       const extension = mockExtension()
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       // Initialize state with connected data
       wrapper.act(({dispatch}) => {
@@ -272,7 +275,7 @@ describe('ExtensionServerProvider tests', () => {
       }
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       // Initialize state with connected data
       wrapper.act(({dispatch}) => {
@@ -309,7 +312,7 @@ describe('ExtensionServerProvider tests', () => {
 
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(ExtensionServerProvider), {options})
+      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
       // Initialize state with connected data
       wrapper.act(({dispatch}) => {

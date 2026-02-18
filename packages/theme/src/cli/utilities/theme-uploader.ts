@@ -9,6 +9,7 @@ import {AssetParams, bulkUploadThemeAssets, deleteThemeAssets} from '@shopify/cl
 import {Task} from '@shopify/cli-kit/node/ui'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
+
 import {Writable} from 'stream'
 
 interface UploadOptions {
@@ -378,7 +379,7 @@ function calculateLocalChecksums(localThemeFileSystem: ThemeFileSystem): Checksu
   localThemeFileSystem.files.forEach((file, key) => {
     // Text files: use UTF-8 byte count
     // Binary files: use base64 length
-    const size = file.value ? Buffer.byteLength(file.value, 'utf8') : file.attachment?.length ?? 0
+    const size = file.value ? Buffer.byteLength(file.value, 'utf8') : (file.attachment?.length ?? 0)
 
     checksums.push({
       key,

@@ -6,7 +6,7 @@ import type {BaseOtelServiceOptions} from '../BaseOtelService/BaseOtelService.js
 
 export interface DefaultOtelServiceOptions extends BaseOtelServiceOptions {
   /**
-   * What environment is being deployed (production, staging)
+   * What environment is being deployed (production, staging).
    */
   env?: string
   /**
@@ -25,6 +25,17 @@ export interface DefaultOtelServiceOptions extends BaseOtelServiceOptions {
 export class DefaultOtelService extends BaseOtelService {
   /**
    * Bootstraps an Otel exporter which can send Otel metrics to a dedicated Shopify supported collector endpoint.
+   *
+   * @param root0
+   * @param root0.throttleLimit
+   * @param root0.env
+   * @param root0.serviceName
+   * @param root0.prefixMetric
+   * @param root0.metrics
+   * @param root0.onRecord
+   * @param root0.meterProvider
+   * @param root0.useXhr
+   * @param root0.otelEndpoint
    */
   constructor({
     throttleLimit = 5000,

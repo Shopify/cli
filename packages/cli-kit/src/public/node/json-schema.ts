@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import {ParseConfigurationResult} from './schema.js'
 import {randomUUID} from './crypto.js'
+import {ParseConfigurationResult} from './schema.js'
 import {getPathValue} from '../common/object.js'
+
 import {capitalize} from '../common/string.js'
 import {Ajv, ErrorObject, SchemaObject, ValidateFunction} from 'ajv'
 import $RefParser from '@apidevtools/json-schema-ref-parser'
@@ -9,7 +9,7 @@ import cloneDeep from 'lodash/cloneDeep.js'
 
 export type HandleInvalidAdditionalProperties = 'strip' | 'fail'
 
-type AjvError = ErrorObject<string, {[key: string]: unknown}>
+type AjvError = ErrorObject<string, Record<string, unknown>>
 
 /**
  * Normalises a JSON Schema by standardising it's internal implementation.
@@ -90,7 +90,7 @@ export function jsonSchemaValidate(
     Object.keys(subjectToModify).forEach((key) => {
       if (!topLevelSchemaProperties.includes(key)) {
         // this isn't actually dynamic, because key came from Object.keys
-        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+
         delete subjectToModify[key as keyof typeof subjectToModify]
       }
     })

@@ -149,7 +149,7 @@ const frameworks: Framework[] = [
  * @returns The name of the framework used or 'unknown' otherwise
  */
 export async function resolveFramework(rootDirectory: string): Promise<string> {
-  const fwConfigFiles: {[key: string]: string | undefined} = {}
+  const fwConfigFiles: Record<string, string | undefined> = {}
 
   const matchedFramework = frameworks.find(
     (framework) =>
@@ -172,17 +172,16 @@ export async function resolveFramework(rootDirectory: string): Promise<string> {
   return matchedFramework ? matchedFramework.name : 'unknown'
 }
 
-function matchDetector(detector: FrameworkDetectionPattern, fwConfigFiles: {[key: string]: string | undefined} = {}) {
+function matchDetector(detector: FrameworkDetectionPattern, fwConfigFiles: Record<string, string | undefined> = {}) {
   if (!fwConfigFiles[detector.path]) return false
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return !detector.matchContent || new RegExp(detector.matchContent).test(fwConfigFiles[detector.path]!)
 }
 
 function loadFwConfigFile(
   rootPath: string,
   fwConfigFileName: string,
-  fwConfigFiles: {[key: string]: string | undefined} = {},
+  fwConfigFiles: Record<string, string | undefined> = {},
 ) {
   if (fwConfigFiles[fwConfigFileName]) {
     return fwConfigFiles

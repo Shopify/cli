@@ -1,4 +1,10 @@
 import {fetchExtensionTemplates} from './generate/fetch-template-specifications.js'
+import {
+  GenerateExtensionTemplateOptions,
+  GeneratedExtension,
+  generateExtensionTemplate,
+  ExtensionFlavorValue,
+} from './generate/extension.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import generateExtensionPrompts, {
@@ -6,12 +12,6 @@ import generateExtensionPrompts, {
   GenerateExtensionPromptOutput,
 } from '../prompts/generate/extension.js'
 import metadata from '../metadata.js'
-import {
-  GenerateExtensionTemplateOptions,
-  GeneratedExtension,
-  generateExtensionTemplate,
-  ExtensionFlavorValue,
-} from '../services/generate/extension.js'
 import {ExtensionTemplate} from '../models/app/template.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
@@ -159,7 +159,6 @@ function formatSuccessfulRunMessage(
   }
 
   if (extensionTemplate.type !== 'function') {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
       {command: formatPackageManagerCommand(depndencyManager, 'shopify app dev')},
@@ -167,7 +166,6 @@ function formatSuccessfulRunMessage(
   }
 
   if (extensionTemplate.supportLinks[0]) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     options.reference!.push([
       'For more details, see the',
       {link: {label: 'docs', url: extensionTemplate.supportLinks[0]}},

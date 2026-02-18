@@ -281,7 +281,7 @@ describe('setPathValue', () => {
     // Should NOT create a nested structure
     expect(getPathValue(result, ['key1.with.dots'])).toEqual('value')
     // Should be accessible as a top-level property
-    expect((result as {[key: string]: string})['key1.with.dots']).toEqual('value')
+    expect((result as Record<string, string>)['key1.with.dots']).toEqual('value')
   })
 
   test('set nested property under a key that contains dots', () => {

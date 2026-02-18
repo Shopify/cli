@@ -1,10 +1,10 @@
-import * as styles from './PreviewLinks.module.scss'
 import en from './translations/en.json'
+import * as styles from './PreviewLinks.module.scss'
 import {NotApplicable, PreviewLink} from '../../..'
+import {classNames} from '@/utilities/css'
 import React from 'react'
 import {ExtensionPayload} from '@shopify/ui-extensions-server-kit'
 import {useI18n} from '@shopify/react-i18n'
-import {classNames} from '@/utilities/css'
 
 interface Props {
   extension: ExtensionPayload

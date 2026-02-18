@@ -1,6 +1,6 @@
 import {evaluate, EvaluationConfig} from './evaluator.js'
-import {DevServerSession} from '../theme-environment/types.js'
 import {render} from '../theme-environment/storefront-renderer.js'
+import {DevServerSession} from '../theme-environment/types.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {outputContent, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -219,7 +219,7 @@ function createMockResponse({
 }: {
   status: number
   text: string
-  headers?: {[key: string]: string}
+  headers?: Record<string, string>
 }) {
   return {
     status,

@@ -3,8 +3,10 @@ import {sanitizeURL} from './api/urls.js'
 import {sleepWithBackoffUntil} from './sleep-with-backoff.js'
 import {outputDebug} from '../../public/node/output.js'
 import {recordRetry} from '../../public/node/analytics.js'
+
 import {Headers} from 'form-data'
 import {ClientError} from 'graphql-request'
+
 import {performance} from 'perf_hooks'
 
 export type API = 'admin' | 'storefront-renderer' | 'partners' | 'business-platform' | 'app-management'
@@ -169,7 +171,7 @@ async function makeVerboseRequest<T extends {headers: Headers; status: number}>(
 ): Promise<VerboseResponse<T>> {
   const t0 = performance.now()
   let duration = 0
-  const responseHeaders: {[key: string]: string} = {}
+  const responseHeaders: Record<string, string> = {}
   const sanitizedUrl = sanitizeURL(requestOptions.url)
   let response: T = {} as T
   try {

@@ -1,11 +1,11 @@
-import React from 'react'
-import {I18nContext, I18nManager} from '@shopify/react-i18n'
-import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
 import {Layout} from '@/foundation/Layout'
 import {Routes} from '@/foundation/Routes'
 import {Toast} from '@/foundation/Toast'
 import {Theme} from '@/foundation/Theme'
 import {ModalContainer} from '@/foundation/ModalContainer'
+import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
+import {I18nContext, I18nManager} from '@shopify/react-i18n'
+import React from 'react'
 
 function getConnectionUrl() {
   if (import.meta.env.VITE_CONNECTION_URL) {

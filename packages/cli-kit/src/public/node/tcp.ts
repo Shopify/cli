@@ -1,6 +1,6 @@
 import {sleep} from './system.js'
 import {AbortError} from './error.js'
-import {outputDebug, outputContent, outputToken} from '../../public/node/output.js'
+import {outputDebug, outputContent, outputToken} from './output.js'
 import * as port from 'get-port-please'
 
 interface GetTCPPortOptions {

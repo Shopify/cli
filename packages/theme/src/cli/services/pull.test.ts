@@ -7,6 +7,7 @@ import {hasRequiredThemeDirectories, mountThemeFileSystem} from '../utilities/th
 import {fakeThemeFileSystem} from '../utilities/theme-fs/theme-fs-mock-factory.js'
 import {downloadTheme} from '../utilities/theme-downloader.js'
 import {themeComponent, ensureDirectoryConfirmed} from '../utilities/theme-ui.js'
+
 import {mkTmpDir, rmdir} from '@shopify/cli-kit/node/fs'
 import {buildTheme} from '@shopify/cli-kit/node/themes/factories'
 import {ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
@@ -14,6 +15,7 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+
 import {fileURLToPath} from 'node:url'
 
 vi.mock('../utilities/theme-selector.js')

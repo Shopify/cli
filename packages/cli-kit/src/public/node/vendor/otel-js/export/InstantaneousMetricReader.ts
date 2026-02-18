@@ -1,9 +1,8 @@
-import type {PushMetricExporter} from '@opentelemetry/sdk-metrics'
+import {throttle} from '../utils/throttle.js'
 import {MetricReader} from '@opentelemetry/sdk-metrics'
 import {ExportResultCode} from '@opentelemetry/core'
 import {diag} from '@opentelemetry/api'
-
-import {throttle} from '../utils/throttle.js'
+import type {PushMetricExporter} from '@opentelemetry/sdk-metrics'
 
 export interface InstantaneousMetricReaderOptions {
   /**
@@ -27,11 +26,7 @@ export class InstantaneousMetricReader extends MetricReader {
     })
     this._exporter = exporter
 
-    this.onForceFlush = throttle(
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      this.onForceFlush,
-      throttleLimit,
-    )
+    this.onForceFlush = throttle(this.onForceFlush, throttleLimit)
   }
 
   protected async onForceFlush(): Promise<void> {

@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-base-to-string */
+import {outputContent, outputToken, outputDebug} from './output.js'
 import {hasGit, isTerminalInteractive} from './context/local.js'
 import {
   appendFileSync,
@@ -13,8 +13,8 @@ import {
 import {AbortError} from './error.js'
 import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
+
 import ignore from 'ignore'
 
 /**
@@ -46,9 +46,7 @@ export async function checkIfIgnoredInGitRepository(directory: string, files: st
   return withGit({directory}, (repo) => repo.checkIgnore(files))
 }
 
-export interface GitIgnoreTemplate {
-  [section: string]: string[]
-}
+export type GitIgnoreTemplate = Record<string, string[]>
 /**
  * Create a .gitignore file in the given directory.
  *
@@ -190,7 +188,7 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     try {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       await git(simpleGitOptions).clone(repository!, destination, options)
 
       if (latestTag) {

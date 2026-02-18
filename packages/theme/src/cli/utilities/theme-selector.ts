@@ -1,5 +1,5 @@
-import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from './theme-selector/filter.js'
+import {fetchStoreThemes} from './theme-selector/fetch.js'
 import {getDevelopmentTheme} from '../services/local-storage.js'
 import {renderAutocompletePrompt} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -40,7 +40,6 @@ export async function findOrSelectTheme(session: AdminSession, options: FindOrSe
   const store = session.storeFqdn
 
   if (filter.any()) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return filterThemes(store, themes, filter)[0]!
   }
 

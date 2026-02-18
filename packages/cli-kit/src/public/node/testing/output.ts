@@ -1,4 +1,4 @@
-import {collectedLogs, clearCollectedLogs} from '../../../public/node/output.js'
+import {collectedLogs, clearCollectedLogs} from '../output.js'
 
 interface OutputMock {
   output: () => string

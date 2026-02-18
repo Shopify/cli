@@ -1,7 +1,8 @@
 import {AlertCustomSection, renderFatalError} from './ui.js'
-import {OutputMessage, stringifyMessage, TokenizedString} from '../../public/node/output.js'
-import {normalizePath} from '../../public/node/path.js'
+import {normalizePath} from './path.js'
+import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
+
 import {Errors} from '@oclif/core'
 
 export {ExtendableError} from 'ts-error'

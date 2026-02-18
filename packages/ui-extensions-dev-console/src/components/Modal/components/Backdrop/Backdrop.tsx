@@ -18,7 +18,7 @@ export function Backdrop({onClick, setClosing}: Props) {
 
   return (
     <>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
+      {/* The backdrop is intentionally click-only without keyboard interaction */}
       <div className={styles.Backdrop} onClick={onClick} onMouseDown={handleMouseDown} onMouseUp={handleMouseUp} />
     </>
   )

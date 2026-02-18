@@ -2,8 +2,10 @@ import {ConcurrentOutput, useConcurrentOutputContext} from './ConcurrentOutput.j
 import {render} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
+
 import React from 'react'
 import {describe, expect, test} from 'vitest'
+
 import {Writable} from 'stream'
 
 /**
@@ -104,7 +106,6 @@ describe('ConcurrentOutput', () => {
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
           useConcurrentOutputContext({stripAnsi: false}, () => {
             stdout.write(output)
           })
@@ -131,7 +132,6 @@ describe('ConcurrentOutput', () => {
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
-          // eslint-disable-next-line react-hooks/rules-of-hooks
           useConcurrentOutputContext({outputPrefix: extensionName}, () => {
             stdout.write('foo bar')
           })
