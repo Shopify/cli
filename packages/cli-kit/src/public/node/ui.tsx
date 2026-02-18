@@ -100,7 +100,10 @@ export type RenderAlertOptions = Omit<AlertOptions, 'type'>
  * │                                                          │
  * ╰──────────────────────────────────────────────────────────╯
  * [1] https://shopify.dev
- * [2] https://www.google.com
+ * [2] https://www.google.com/search?q=jh56t9l34kpo35tw8s28hn7s
+ * 9s2xvzla01d8cn6j7yq&rlz=1C1GCEU_enUS832US832&oq=jh56t9l34kpo
+ * 35tw8s28hn7s9s2xvzla01d8cn6j7yq&aqs=chrome.0.35i39l2j0l4j46j
+ * 69i60.2711j0j7&sourceid=chrome&ie=UTF-8
  * [3] https://shopify.com
  *
  */
