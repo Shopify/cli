@@ -34,6 +34,7 @@ import AppLinkedCommand from './utilities/app-linked-command.js'
 import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
+import ExtensionAnalyzeBundle from './commands/app/extension/analyze-bundle.js'
 import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
 
 /**
@@ -56,6 +57,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
   'app:config:pull': ConfigPull,
+  'app:extension:analyze-bundle': ExtensionAnalyzeBundle,
   'app:env:pull': EnvPull,
   'app:env:show': EnvShow,
   'app:execute': Execute,

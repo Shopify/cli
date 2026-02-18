@@ -179,6 +179,96 @@ describe('bundleExtension()', () => {
     expect(plugins).not.toContain('shopify:deduplicate-react')
   })
 
+  test('passes metafile: true to esbuild options when metafile is set', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const stdout: any = {write: vi.fn()}
+    const stderr: any = {write: vi.fn()}
+    const esbuildRebuild = vi.fn(esbuildResultFixture)
+
+    vi.mocked(esContext).mockResolvedValue({
+      rebuild: esbuildRebuild,
+      watch: vi.fn(),
+      dispose: vi.fn(),
+      cancel: vi.fn(),
+      serve: vi.fn(),
+    })
+
+    // When
+    await bundleExtension({
+      env: {},
+      outputPath: extension.outputPath,
+      minify: true,
+      environment: 'production',
+      stdin: {
+        contents: 'console.log("test")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
+      stdout,
+      stderr,
+      metafile: true,
+    })
+
+    // Then
+    const call = vi.mocked(esContext).mock.calls[0]!
+    const options = call[0]
+    expect(options.metafile).toBe(true)
+  })
+
+  test('returns metafile from bundleExtension when available', async () => {
+    // Given
+    const extension = await testUIExtension()
+    const stdout: any = {write: vi.fn()}
+    const stderr: any = {write: vi.fn()}
+    const expectedMetafile = {
+      inputs: {'src/index.ts': {bytes: 100, imports: []}},
+      outputs: {
+        'dist/index.js': {
+          bytes: 80,
+          inputs: {'src/index.ts': {bytesInOutput: 80}},
+          imports: [],
+          exports: [],
+          entryPoint: 'src/index.ts',
+        },
+      },
+    }
+    const esbuildRebuild = vi.fn(async () => ({
+      errors: [],
+      warnings: [],
+      outputFiles: [],
+      metafile: expectedMetafile,
+      mangleCache: {},
+    }))
+
+    vi.mocked(esContext).mockResolvedValue({
+      rebuild: esbuildRebuild,
+      watch: vi.fn(),
+      dispose: vi.fn(),
+      cancel: vi.fn(),
+      serve: vi.fn(),
+    })
+
+    // When
+    const result = await bundleExtension({
+      env: {},
+      outputPath: extension.outputPath,
+      minify: true,
+      environment: 'production',
+      stdin: {
+        contents: 'console.log("test")',
+        resolveDir: 'mock/resolve/dir',
+        loader: 'tsx',
+      },
+      stdout,
+      stderr,
+      metafile: true,
+    })
+
+    // Then
+    expect(result).toEqual(expectedMetafile)
+  })
+
   async function esbuildResultFixture() {
     return {
       errors: [

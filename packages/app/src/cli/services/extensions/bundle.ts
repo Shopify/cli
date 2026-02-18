@@ -11,7 +11,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
-import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
+import type {Metafile, StdinOptions, build as esBuild, Plugin} from 'esbuild'
 
 interface BundleOptions {
   minify: boolean
@@ -46,6 +46,11 @@ interface BundleOptions {
    * Whether or not to log messages to the console.
    */
   logLevel?: 'silent' | 'error'
+
+  /**
+   * Whether to generate an esbuild metafile for bundle analysis.
+   */
+  metafile?: boolean
 }
 
 /**
@@ -53,12 +58,16 @@ interface BundleOptions {
  * @param options - ESBuild options
  * @param processEnv - Environment variables for the running process (not those from .env)
  */
-export async function bundleExtension(options: BundleOptions, processEnv = process.env) {
+export async function bundleExtension(
+  options: BundleOptions,
+  processEnv = process.env,
+): Promise<Metafile | undefined> {
   const esbuildOptions = getESBuildOptions(options, processEnv)
   const context = await esContext(esbuildOptions)
   const result = await context.rebuild()
   onResult(result, options)
   await context.dispose()
+  return result.metafile
 }
 
 export async function bundleThemeExtension(
@@ -153,6 +162,9 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
   if (options.sourceMaps) {
     esbuildOptions.sourcemap = true
     esbuildOptions.sourceRoot = `${options.stdin.resolveDir}/src`
+  }
+  if (options.metafile) {
+    esbuildOptions.metafile = true
   }
   return esbuildOptions
 }

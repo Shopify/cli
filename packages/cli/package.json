@@ -159,6 +159,9 @@
       "app:env": {
         "description": "Manage environment variables."
       },
+      "app:extension": {
+        "description": "Manage app extensions."
+      },
       "app:function": {
         "description": "Manage Shopify Functions."
       },
