@@ -1,0 +1,542 @@
+import {executeIncludeAssetsStep} from './include_assets_step.js'
+import {ClientStep, BuildContext} from '../client-steps.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
+import {describe, expect, test, vi, beforeEach} from 'vitest'
+import * as fs from '@shopify/cli-kit/node/fs'
+
+vi.mock('@shopify/cli-kit/node/fs')
+
+describe('executeIncludeAssetsStep', () => {
+  let mockExtension: ExtensionInstance
+  let mockContext: BuildContext
+  let mockStdout: any
+  let mockStderr: any
+
+  beforeEach(() => {
+    mockStdout = {write: vi.fn()}
+    mockStderr = {write: vi.fn()}
+    mockExtension = {
+      directory: '/test/extension',
+      outputPath: '/test/output/extension.js',
+    } as ExtensionInstance
+
+    mockContext = {
+      extension: mockExtension,
+      options: {
+        stdout: mockStdout,
+        stderr: mockStderr,
+        app: {} as any,
+        environment: 'production',
+      },
+      stepResults: new Map(),
+    }
+  })
+
+  describe('static entries', () => {
+    test('copies directory contents to output root when no destination (preserveStructure defaults false)', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'assets/logo.png'])
+
+      const step: ClientStep = {
+        id: 'copy-dist',
+        name: 'Copy Dist',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'dist'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output')
+      expect(result.filesCopied).toBe(2)
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied contents of dist to output root'))
+    })
+
+    test('preserves directory name when preserveStructure is true', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'assets/logo.png'])
+
+      const step: ClientStep = {
+        id: 'copy-dist',
+        name: 'Copy Dist',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'dist', preserveStructure: true}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — directory is placed under its own name, not merged into output root
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output/dist')
+      expect(result.filesCopied).toBe(2)
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied dist to dist'))
+    })
+
+    test('throws when source directory does not exist', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: ClientStep = {
+        id: 'copy-dist',
+        name: 'Copy Dist',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'dist'}],
+        },
+      }
+
+      // When/Then
+      await expect(executeIncludeAssetsStep(step, mockContext)).rejects.toThrow('Source does not exist')
+    })
+
+    test('copies file to explicit destination path', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-icon',
+        name: 'Copy Icon',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'src/icon.png', destination: 'assets/icon.png'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/icon.png', '/test/output/assets/icon.png')
+      expect(result.filesCopied).toBe(1)
+      expect(mockStdout.write).toHaveBeenCalledWith('Copied src/icon.png to assets/icon.png\n')
+    })
+
+    test('throws when source file does not exist (with destination)', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: ClientStep = {
+        id: 'copy-icon',
+        name: 'Copy Icon',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'src/missing.png', destination: 'assets/missing.png'}],
+        },
+      }
+
+      // When/Then
+      await expect(executeIncludeAssetsStep(step, mockContext)).rejects.toThrow('Source does not exist')
+    })
+
+    test('handles multiple static entries in inclusions', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html'])
+
+      const step: ClientStep = {
+        id: 'copy-mixed',
+        name: 'Copy Mixed',
+        type: 'include_assets',
+        config: {
+          inclusions: [
+            {type: 'static', source: 'dist'},
+            {type: 'static', source: 'src/icon.png', destination: 'assets/icon.png'},
+          ],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output')
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/icon.png', '/test/output/assets/icon.png')
+      expect(result.filesCopied).toBe(2)
+    })
+  })
+
+  describe('configKey entries', () => {
+    test('copies directory contents for resolved configKey', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {static_root: 'public'},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
+
+      const step: ClientStep = {
+        id: 'copy-static',
+        name: 'Copy Static',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', configKey: 'static_root'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output')
+      expect(result.filesCopied).toBe(2)
+    })
+
+    test('preserves directory name for configKey when preserveStructure is true', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {static_root: 'public'},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
+
+      const step: ClientStep = {
+        id: 'copy-static',
+        name: 'Copy Static',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', configKey: 'static_root', preserveStructure: true}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — directory is placed under its own name
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output/public')
+      expect(result.filesCopied).toBe(2)
+    })
+
+    test('skips silently when configKey is absent from config', async () => {
+      // Given — configuration has no static_root
+      const contextWithoutConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {},
+        } as unknown as ExtensionInstance,
+      }
+
+      const step: ClientStep = {
+        id: 'copy-static',
+        name: 'Copy Static',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', configKey: 'static_root'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, contextWithoutConfig)
+
+      // Then — no error, no copies
+      expect(result.filesCopied).toBe(0)
+      expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("No value for configKey 'static_root'"))
+    })
+
+    test('skips path that does not exist on disk but logs a warning', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {static_root: 'nonexistent'},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: ClientStep = {
+        id: 'copy-static',
+        name: 'Copy Static',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', configKey: 'static_root'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — no error, logged warning
+      expect(result.filesCopied).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith(
+        expect.stringContaining("Warning: path 'nonexistent' does not exist"),
+      )
+    })
+
+    test('resolves array config value and copies each path', async () => {
+      // Given — static_root is an array
+      const contextWithArrayConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {static_root: ['public', 'assets']},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['file.html'])
+
+      const step: ClientStep = {
+        id: 'copy-static',
+        name: 'Copy Static',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'configKey', configKey: 'static_root'}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithArrayConfig)
+
+      // Then — both paths copied
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output')
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/assets', '/test/output')
+    })
+
+    test('handles mixed configKey and source entries in inclusions', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {static_root: 'public'},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['index.html'])
+
+      const step: ClientStep = {
+        id: 'copy-mixed',
+        name: 'Copy Mixed',
+        type: 'include_assets',
+        config: {
+          inclusions: [
+            {type: 'configKey', configKey: 'static_root'},
+            {type: 'static', source: 'src/icon.png', destination: 'assets/icon.png'},
+          ],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output')
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/icon.png', '/test/output/assets/icon.png')
+      expect(result.filesCopied).toBe(2)
+    })
+  })
+
+  describe('pattern entries', () => {
+    test('copies files matching include patterns', async () => {
+      // Given
+      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/logo.png', '/test/extension/public/style.css'])
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-public',
+        name: 'Copy Public',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'pattern', baseDir: 'public', include: ['**/*']}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(result.filesCopied).toBe(2)
+      expect(fs.copyFile).toHaveBeenCalledTimes(2)
+    })
+
+    test('uses extension directory as source when source is omitted', async () => {
+      // Given
+      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/index.js', '/test/extension/manifest.json'])
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-root',
+        name: 'Copy Root',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'pattern', include: ['*.js', '*.json']}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — glob is called with extension.directory as cwd
+      expect(fs.glob).toHaveBeenCalledWith(expect.any(Array), expect.objectContaining({cwd: '/test/extension'}))
+    })
+
+    test('respects ignore patterns', async () => {
+      // Given
+      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/style.css'])
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-public',
+        name: 'Copy Public',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'pattern', baseDir: 'public', ignore: ['**/*.png']}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.glob).toHaveBeenCalledWith(expect.any(Array), expect.objectContaining({ignore: ['**/*.png']}))
+    })
+
+    test('copies to destination subdirectory when specified', async () => {
+      // Given
+      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/logo.png'])
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-public',
+        name: 'Copy Public',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'pattern', baseDir: 'public', destination: 'static'}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.glob).toHaveBeenCalledWith(expect.any(Array), expect.objectContaining({cwd: '/test/extension/public'}))
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/public/logo.png', '/test/output/static/logo.png')
+    })
+
+    test('flattens files when preserveStructure is false', async () => {
+      // Given
+      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/src/components/Button.tsx'])
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-source',
+        name: 'Copy Source',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'pattern', baseDir: 'src', preserveStructure: false}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — filename only, no subdirectory
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/components/Button.tsx', '/test/output/Button.tsx')
+    })
+
+    test('returns zero and warns when no files match', async () => {
+      // Given
+      vi.mocked(fs.glob).mockResolvedValue([])
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: ClientStep = {
+        id: 'copy-public',
+        name: 'Copy Public',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'pattern', baseDir: 'public'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(result.filesCopied).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('No files matched patterns'))
+    })
+  })
+
+  describe('mixed inclusions', () => {
+    test('executes all entry types in parallel and aggregates filesCopied count', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {theme_root: 'theme'},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+      // glob: first call for pattern entry, second for configKey dir listing
+      vi.mocked(fs.glob)
+        .mockResolvedValueOnce(['/test/extension/assets/logo.png', '/test/extension/assets/icon.svg'])
+        .mockResolvedValueOnce(['index.html', 'style.css'])
+
+      const step: ClientStep = {
+        id: 'include-all',
+        name: 'Include All',
+        type: 'include_assets',
+        config: {
+          inclusions: [
+            {type: 'pattern', baseDir: 'assets', include: ['**/*.png', '**/*.svg']},
+            {type: 'configKey', configKey: 'theme_root'},
+            {type: 'static', source: 'src/manifest.json', destination: 'manifest.json'},
+          ],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then
+      // 5 = 2 pattern + 2 configKey dir contents + 1 explicit file
+      expect(result.filesCopied).toBe(5)
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/manifest.json', '/test/output/manifest.json')
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/theme', '/test/output')
+    })
+  })
+})

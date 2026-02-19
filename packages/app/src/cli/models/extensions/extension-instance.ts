@@ -370,8 +370,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return copyFilesForExtension(
           this,
           options,
-          this.specification.buildConfig.filePatterns,
-          this.specification.buildConfig.ignoredFilePatterns,
+          this.specification.buildConfig.filePatterns ?? [],
+          this.specification.buildConfig.ignoredFilePatterns ?? [],
         )
       case 'hosted_app_home':
         await this.copyStaticAssets()
