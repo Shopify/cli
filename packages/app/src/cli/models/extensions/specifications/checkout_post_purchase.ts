@@ -19,6 +19,15 @@ const checkoutPostPurchaseSpec = createExtensionSpecification({
   buildConfig: {mode: 'ui'},
   getOutputFileName: (extension: ExtensionInstance<CheckoutPostPurchaseConfigType>) => `${extension.handle}.js`,
   getOutputRelativePath: (_extension: ExtensionInstance<CheckoutPostPurchaseConfigType>) => 'dist',
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields ?? []}
   },

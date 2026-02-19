@@ -36,6 +36,15 @@ const webPixelSpec = createExtensionSpecification({
   buildConfig: {mode: 'ui'},
   getOutputFileName: (extension: ExtensionInstance<WebPixelConfigType>) => `${extension.handle}.js`,
   getOutputRelativePath: (_extension: ExtensionInstance<WebPixelConfigType>) => 'dist',
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtime_context,
