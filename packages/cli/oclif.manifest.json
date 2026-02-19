@@ -1867,8 +1867,8 @@
       "args": {
       },
       "customPluginName": "@shopify/app",
-      "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
-      "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function written in JavaScript.",
+      "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
+      "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -1938,7 +1938,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Generate GraphQL types for a JavaScript function."
+      "summary": "Generate GraphQL types for a function."
     },
     "app:generate:extension": {
       "aliases": [

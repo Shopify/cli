@@ -1,6 +1,6 @@
 import {buildFunctionExtension} from './extension.js'
 import {testFunctionExtension} from '../../models/app/app.test-data.js'
-import {buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
+import {buildGraphqlTypes, buildJSFunction, runWasmOpt, runTrampoline} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
@@ -252,6 +252,128 @@ describe('buildFunctionExtension', () => {
     expect(releaseLock).toHaveBeenCalled()
     // wasm_opt should not be called when build config is undefined
     expect(runWasmOpt).not.toHaveBeenCalled()
+  })
+
+  test('runs typegen_command before build for non-JS function', async () => {
+    // Given
+    const configWithTypegen = {
+      name: 'MyFunction',
+      type: 'product_discounts',
+      description: '',
+      build: {
+        command: 'make build',
+        path: 'dist/index.wasm',
+        wasm_opt: true,
+        typegen_command: 'npx shopify-function-codegen --schema schema.graphql',
+      },
+      configuration_ui: true,
+      api_version: '2022-07',
+      metafields: [],
+    }
+    extension = await testFunctionExtension({config: configWithTypegen})
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(buildGraphqlTypes).toHaveBeenCalledWith(extension, {
+      stdout,
+      stderr,
+      signal,
+      app,
+      environment: 'production',
+    })
+    expect(exec).toHaveBeenCalledWith('make', ['build'], {
+      stdout,
+      stderr,
+      cwd: extension.directory,
+      signal,
+    })
+  })
+
+  test('runs typegen_command before build for JS function with custom build command', async () => {
+    // Given
+    const configWithTypegen = {
+      name: 'MyFunction',
+      type: 'product_discounts',
+      description: '',
+      build: {
+        command: 'make build',
+        path: 'dist/index.wasm',
+        wasm_opt: true,
+        typegen_command: 'custom-typegen --output types.ts',
+      },
+      configuration_ui: true,
+      api_version: '2022-07',
+      metafields: [],
+    }
+    extension = await testFunctionExtension({config: configWithTypegen, entryPath: 'src/index.js'})
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(buildGraphqlTypes).toHaveBeenCalledWith(extension, {
+      stdout,
+      stderr,
+      signal,
+      app,
+      environment: 'production',
+    })
+    expect(exec).toHaveBeenCalledWith('make', ['build'], {
+      stdout,
+      stderr,
+      cwd: extension.directory,
+      signal,
+    })
+  })
+
+  test('does not run typegen when typegen_command is not set', async () => {
+    // Given
+    const configWithoutTypegen = {
+      name: 'MyFunction',
+      type: 'product_discounts',
+      description: '',
+      build: {
+        command: 'make build',
+        path: 'dist/index.wasm',
+        wasm_opt: true,
+      },
+      configuration_ui: true,
+      api_version: '2022-07',
+      metafields: [],
+    }
+    extension = await testFunctionExtension({config: configWithoutTypegen})
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(buildGraphqlTypes).not.toHaveBeenCalled()
   })
 
   test('handles function with build config but undefined path', async () => {
