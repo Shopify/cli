@@ -8,6 +8,7 @@ This documents how to run the `shopify sidekick` CLI command against a local dev
 |------|--------|-------------|
 | `Shopify/cli` | `ac/sidekick-cli` | CLI sidekick command with Ink UI, MCP tools, client-side tool execution |
 | `Shopify/sidekick-server` | `ac/sidekick-cli-oauth` | `SidekickCLI` scenario, `merchant/cli` features, client-side tool definitions |
+| `shop/world` | `ac/sidekick-cli-oauth` | Write scopes for sidekick service app + `sidekick.message` scope on CLI OAuth app |
 | `Shopify/identity` | `ac/sidekick-cli-oauth` | Token exchange config allowing CLI to get sidekick-server tokens |
 
 ## Step-by-Step Setup
@@ -72,13 +73,17 @@ dev up && dev s
 
 No branch needed — just run it on `main`. Sidekick-server connects to support-core's MCP endpoint to power the `fetch_help_documents` tool.
 
-### 4. Shopify Core (backend services for GraphQL)
+### 4. World (service app scopes + identity seeds)
 
 ```bash
+cd ~/world/trees/root/src
+git checkout ac/sidekick-cli-oauth
 devx rig up apps-platform
 ```
 
-This provides the admin GraphQL API that sidekick-server calls when executing mutations/queries on behalf of the merchant.
+This branch adds write scopes to the sidekick service app (so it can execute GraphQL mutations on behalf of merchants) and adds the `sidekick.message` scope to the `shopify-cli-development` OAuth app in the identity seeds.
+
+The `devx rig up apps-platform` also provides the admin GraphQL API that sidekick-server calls when executing mutations/queries.
 
 ### 5. CLI
 
