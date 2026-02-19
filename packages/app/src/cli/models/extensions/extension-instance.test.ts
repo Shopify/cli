@@ -32,7 +32,6 @@ vi.mock('../../services/build/extension.js', async () => {
   return {
     ...actual,
     buildUIExtension: vi.fn(),
-    buildThemeExtension: vi.fn(),
     buildFunctionExtension: vi.fn(),
   }
 })
@@ -148,8 +147,16 @@ describe('build', async () => {
       // Given
       const extensionInstance = await testTaxCalculationExtension(tmpDir)
       const options: ExtensionBuildOptions = {
-        stdout: new Writable(),
-        stderr: new Writable(),
+        stdout: new Writable({
+          write(chunk, enc, cb) {
+            cb()
+          },
+        }),
+        stderr: new Writable({
+          write(chunk, enc, cb) {
+            cb()
+          },
+        }),
         app: testApp(),
         environment: 'production',
       }

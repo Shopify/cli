@@ -8,7 +8,20 @@ const channelSpecificationSpec = createContractBasedModuleSpecification({
   identifier: 'channel_config',
   buildConfig: {
     mode: 'copy_files',
-    filePatterns: FILE_EXTENSIONS.map((ext) => joinPath(SUBDIRECTORY_NAME, '**', `*.${ext}`)),
+    steps: [
+      {
+        id: 'copy-files',
+        displayName: 'Copy Files',
+        type: 'copy_files',
+        config: {
+          strategy: 'pattern',
+          definition: {
+            source: '.',
+            patterns: FILE_EXTENSIONS.map((ext) => joinPath(SUBDIRECTORY_NAME, '**', `*.${ext}`)),
+          },
+        },
+      },
+    ],
   },
   appModuleFeatures: () => [],
 })
