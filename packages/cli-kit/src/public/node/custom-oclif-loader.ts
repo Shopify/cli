@@ -48,7 +48,7 @@ export class ShopifyConfig extends Config {
 
     if (!externalHydrogenPlugin) return
 
-    if (typeof (this as {[key: string]: unknown})._commands === 'undefined') {
+    if (typeof (this as unknown as {[key: string]: unknown})._commands === 'undefined') {
       throw new Error('ShopifyConfig: oclif internals changed. _commands is no longer available.')
     }
 
