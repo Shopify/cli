@@ -306,6 +306,34 @@ describe('functionConfiguration', () => {
     })
   })
 
+  test('accepts configuration with typegen_command in build section', async () => {
+    // Given
+    const configWithTypegen = {
+      name: 'function',
+      type: 'function',
+      metafields: [],
+      description: 'my function',
+      build: {
+        command: 'zig build -Doptimize=ReleaseSmall',
+        path: 'dist/index.wasm',
+        wasm_opt: true,
+        typegen_command: 'npx shopify-function-codegen --schema schema.graphql',
+      },
+      configuration_ui: false,
+      api_version: '2022-07',
+    }
+
+    // When
+    const extension = await testFunctionExtension({
+      dir: '/function',
+      config: configWithTypegen as FunctionConfigType,
+    })
+
+    // Then
+    expect(extension.configuration.build?.typegen_command).toBe('npx shopify-function-codegen --schema schema.graphql')
+    expect(extension.typegenCommand).toBe('npx shopify-function-codegen --schema schema.graphql')
+  })
+
   test('accepts configuration without build section', async () => {
     // Given
     const configWithoutBuild = {
