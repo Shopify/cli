@@ -1,8 +1,9 @@
 import {executeIncludeAssetsStep} from './include_assets_step.js'
-import {LifecycleStep, BuildContext} from '../client-steps.js'
+import {LifecycleStep, BuildContext, StepResult} from '../client-steps.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import * as fs from '@shopify/cli-kit/node/fs'
+import type {BuildManifestStepOutput} from './build-manifest-step.js'
 
 vi.mock('@shopify/cli-kit/node/fs')
 
@@ -601,6 +602,170 @@ describe('executeIncludeAssetsStep', () => {
       expect(result.filesCopied).toBe(5)
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/manifest.json', '/test/output/manifest.json')
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/theme', '/test/output')
+    })
+  })
+
+  describe('manifest_result strategy', () => {
+    function makeManifestResult(output: BuildManifestStepOutput): StepResult {
+      return {id: 'build-manifest', success: true, duration: 0, output}
+    }
+
+    const step: LifecycleStep = {
+      id: 'copy-static',
+      name: 'Copy Static Assets',
+      type: 'include_assets',
+      config: {inclusions: [{type: 'manifest_result', stepId: 'build-manifest'}]},
+    }
+
+    test('copies static assets from a single-mode manifest', async () => {
+      // Given
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const output: BuildManifestStepOutput = {
+        outputFile: '/test/output/build-manifest.json',
+        assets: {
+          main: {filepath: 'handle.js', module: 'src/index.ts'},
+          tools: {filepath: 'handle-tools-tools.js', module: 'src/tools.js', static: true},
+        },
+      }
+      mockContext.stepResults.set('build-manifest', makeManifestResult(output))
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — only the static asset is copied
+      expect(fs.copyFile).toHaveBeenCalledTimes(1)
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/tools.js', '/test/output/handle-tools-tools.js')
+      expect(result.filesCopied).toBe(1)
+      expect(mockStdout.write).toHaveBeenCalledWith('Copied 1 static asset(s) from build manifest\n')
+    })
+
+    test('copies static assets across all targets in a forEach-mode manifest', async () => {
+      // Given
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const output: BuildManifestStepOutput = {
+        outputFile: '/test/output/build-manifest.json',
+        manifests: [
+          {
+            target: 'purchase.checkout.block.render',
+            build_manifest: {
+              assets: {
+                main: {filepath: 'handle-0.js', module: 'src/checkout.ts'},
+                tools: {filepath: 'handle-0-tools-tools.js', module: 'src/tools.js', static: true},
+              },
+            },
+          },
+          {
+            target: 'purchase.checkout.cart-line-item.render',
+            build_manifest: {
+              assets: {
+                main: {filepath: 'handle-1.js', module: 'src/cart.ts'},
+              },
+            },
+          },
+        ],
+      }
+      mockContext.stepResults.set('build-manifest', makeManifestResult(output))
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — one static asset across both targets
+      expect(fs.copyFile).toHaveBeenCalledTimes(1)
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/tools.js', '/test/output/handle-0-tools-tools.js')
+      expect(result.filesCopied).toBe(1)
+    })
+
+    test('skips assets without a module field', async () => {
+      // Given
+      const output: BuildManifestStepOutput = {
+        outputFile: '/test/output/build-manifest.json',
+        assets: {
+          // no module — already in place
+          icon: {filepath: 'icon.png', static: true},
+        },
+      }
+      mockContext.stepResults.set('build-manifest', makeManifestResult(output))
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — nothing copied, no error
+      expect(fs.copyFile).not.toHaveBeenCalled()
+      // counted but skipped in copy
+      expect(result.filesCopied).toBe(1)
+    })
+
+    test('returns zero and logs when there are no static assets', async () => {
+      // Given
+      const output: BuildManifestStepOutput = {
+        outputFile: '/test/output/build-manifest.json',
+        assets: {
+          main: {filepath: 'handle.js', module: 'src/index.ts'},
+        },
+      }
+      mockContext.stepResults.set('build-manifest', makeManifestResult(output))
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(result.filesCopied).toBe(0)
+      expect(fs.copyFile).not.toHaveBeenCalled()
+      expect(mockStdout.write).toHaveBeenCalledWith('No static assets found in build manifest\n')
+    })
+
+    test('supports a custom stepId via definition config', async () => {
+      // Given
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const customStep: LifecycleStep = {
+        id: 'copy-static',
+        name: 'Copy Static Assets',
+        type: 'include_assets',
+        config: {inclusions: [{type: 'manifest_result', stepId: 'custom-manifest-step'}]},
+      }
+      const output: BuildManifestStepOutput = {
+        outputFile: '/test/output/build-manifest.json',
+        assets: {
+          tools: {filepath: 'tools.js', module: 'src/tools.js', static: true},
+        },
+      }
+      mockContext.stepResults.set('custom-manifest-step', makeManifestResult(output))
+
+      // When
+      const result = await executeIncludeAssetsStep(customStep, mockContext)
+
+      // Then
+      expect(result.filesCopied).toBe(1)
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/tools.js', '/test/output/tools.js')
+    })
+
+    test('throws when the referenced step is not in stepResults', async () => {
+      // Given — stepResults is empty
+
+      // When/Then
+      await expect(executeIncludeAssetsStep(step, mockContext)).rejects.toThrow(
+        "Step 'build-manifest' not found in step results",
+      )
+    })
+
+    test('throws when the referenced step failed', async () => {
+      // Given
+      const failedResult: StepResult = {
+        id: 'build-manifest',
+        success: false,
+        duration: 0,
+        error: new Error('manifest generation failed'),
+      }
+      mockContext.stepResults.set('build-manifest', failedResult)
+
+      // When/Then
+      await expect(executeIncludeAssetsStep(step, mockContext)).rejects.toThrow("Step 'build-manifest' didn't succeed")
     })
   })
 })
