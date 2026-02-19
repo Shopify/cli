@@ -32,6 +32,15 @@ const webPixelSpec = createExtensionSpecification({
   schema: WebPixelSchema,
   appModuleFeatures: (_) => ['esbuild', 'single_js_entry_path'],
   buildConfig: {mode: 'ui'},
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtime_context,
