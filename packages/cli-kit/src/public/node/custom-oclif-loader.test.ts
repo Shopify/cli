@@ -4,6 +4,7 @@ import {fileExistsSync} from './fs.js'
 import {cwd, joinPath, sniffForPath} from './path.js'
 import {execaSync} from 'execa'
 import {describe, test, expect, vi, beforeEach} from 'vitest'
+import {fileURLToPath} from 'node:url'
 import type {Config as OclifConfig} from '@oclif/core'
 import type {Options} from '@oclif/core/interfaces'
 
@@ -20,8 +21,6 @@ vi.mock('@oclif/core', () => {
     _commands = new Map<string, unknown>()
     loadCommandsCalls: unknown[] = []
 
-    constructor(_options: unknown) {}
-
     async load(): Promise<void> {}
 
     loadCommands(plugin: unknown): void {
@@ -33,7 +32,7 @@ vi.mock('@oclif/core', () => {
 })
 
 // Convenience type so tests can reach mock-only properties without ts-expect-error on every line.
-type MockConfig = {
+interface MockConfig {
   plugins: Map<string, unknown>
   _commands: Map<string, unknown> | undefined
   loadCommandsCalls: unknown[]
@@ -56,7 +55,7 @@ describe('ShopifyConfig', () => {
   describe('constructor', () => {
     test('does not set pluginAdditions when not in dev mode', () => {
       const options = {root: '/workspace'} as Options
-      new ShopifyConfig(options)
+      const _config = new ShopifyConfig(options)
       expect((options as {pluginAdditions?: unknown}).pluginAdditions).toBeUndefined()
       expect(options.ignoreManifest).toBeUndefined()
     })
@@ -66,7 +65,7 @@ describe('ShopifyConfig', () => {
       vi.mocked(fileExistsSync).mockReturnValue(true)
 
       const options = {root: '/workspace'} as Options
-      new ShopifyConfig(options)
+      const _config = new ShopifyConfig(options)
 
       expect((options as {pluginAdditions?: unknown}).pluginAdditions).toEqual({
         core: ['@shopify/cli-hydrogen'],
@@ -80,7 +79,7 @@ describe('ShopifyConfig', () => {
       vi.mocked(fileExistsSync).mockReturnValue(false)
 
       const options = {root: '/workspace'} as Options
-      new ShopifyConfig(options)
+      const _config = new ShopifyConfig(options)
 
       expect((options as {pluginAdditions?: unknown}).pluginAdditions).toBeUndefined()
     })
@@ -91,7 +90,7 @@ describe('ShopifyConfig', () => {
       vi.mocked(fileExistsSync).mockReturnValue(true)
 
       const options = {root: '/workspace'} as Options
-      new ShopifyConfig(options)
+      const _config = new ShopifyConfig(options)
 
       expect((options as {pluginAdditions?: unknown}).pluginAdditions).toMatchObject({path: '/sniffed/path'})
     })
@@ -99,23 +98,29 @@ describe('ShopifyConfig', () => {
     test('runs npm prefix when cwd matches hydrogen monorepo pattern', () => {
       vi.mocked(isDevelopment).mockReturnValue(true)
       vi.mocked(cwd).mockReturnValue('/home/user/shopify/hydrogen/packages/cli')
-      vi.mocked(execaSync).mockReturnValue({stdout: '/home/user/shopify/hydrogen'} as unknown as ReturnType<typeof execaSync>)
+      vi.mocked(execaSync).mockReturnValue({stdout: '/home/user/shopify/hydrogen'} as unknown as ReturnType<
+        typeof execaSync
+      >)
       vi.mocked(fileExistsSync).mockReturnValue(true)
 
       const options = {root: '/workspace'} as Options
-      new ShopifyConfig(options)
+      const _config = new ShopifyConfig(options)
 
       expect(execaSync).toHaveBeenCalledWith('npm', ['prefix'])
-      expect((options as {pluginAdditions?: unknown}).pluginAdditions).toMatchObject({path: '/home/user/shopify/hydrogen'})
+      expect((options as {pluginAdditions?: unknown}).pluginAdditions).toMatchObject({
+        path: '/home/user/shopify/hydrogen',
+      })
     })
 
     test('also matches hydrogen/hydrogen CI path pattern', () => {
       vi.mocked(isDevelopment).mockReturnValue(true)
       vi.mocked(cwd).mockReturnValue('/runner/hydrogen/hydrogen/packages/cli')
-      vi.mocked(execaSync).mockReturnValue({stdout: '/runner/hydrogen/hydrogen'} as unknown as ReturnType<typeof execaSync>)
+      vi.mocked(execaSync).mockReturnValue({stdout: '/runner/hydrogen/hydrogen'} as unknown as ReturnType<
+        typeof execaSync
+      >)
       vi.mocked(fileExistsSync).mockReturnValue(true)
 
-      new ShopifyConfig({root: '/workspace'} as Options)
+      const _config = new ShopifyConfig({root: '/workspace'} as Options)
 
       expect(execaSync).toHaveBeenCalledWith('npm', ['prefix'])
     })
@@ -126,7 +131,7 @@ describe('ShopifyConfig', () => {
       vi.mocked(fileExistsSync).mockReturnValue(true)
       process.env.IGNORE_HYDROGEN_MONOREPO = '1'
 
-      new ShopifyConfig({root: '/workspace'} as Options)
+      const _config = new ShopifyConfig({root: '/workspace'} as Options)
 
       expect(execaSync).not.toHaveBeenCalled()
     })
@@ -137,7 +142,11 @@ describe('ShopifyConfig', () => {
       vi.mocked(isDevelopment).mockReturnValue(false)
 
       const config = new ShopifyConfig({root: '/workspace'} as Options)
-      const hydrogenPlugin = {name: '@shopify/cli-hydrogen', isRoot: false, commands: [{id: 'hydrogen:dev', aliases: [], hiddenAliases: []}]}
+      const hydrogenPlugin = {
+        name: '@shopify/cli-hydrogen',
+        isRoot: false,
+        commands: [{id: 'hydrogen:dev', aliases: [], hiddenAliases: []}],
+      }
       asMock(config).plugins.set('@shopify/cli-hydrogen', hydrogenPlugin)
       asMock(config)._commands!.set('hydrogen:dev', {bundled: true})
 
@@ -257,7 +266,7 @@ describe('ShopifyConfig', () => {
 
       // ShopifyConfig calls this.loadCommands(plugin) via @ts-expect-error.
       // If oclif removes or renames this method, this assertion will catch it.
-      expect(typeof (RealConfig as unknown as {prototype: Record<string, unknown>}).prototype.loadCommands).toBe(
+      expect(typeof (RealConfig as unknown as {prototype: {[key: string]: unknown}}).prototype.loadCommands).toBe(
         'function',
       )
     })
@@ -269,7 +278,9 @@ describe('ShopifyConfig', () => {
       // own property on every instance even before load() is called.
       // ShopifyConfig reads and mutates this._commands as a Map — if oclif renames or
       // restructures it, this assertion will fail.
-      const instance = new (RealConfig as new (options: {root: string}) => OclifConfig)({root: process.cwd()})
+      const instance = new (RealConfig as new (options: {root: string}) => OclifConfig)({
+        root: fileURLToPath(new URL('.', import.meta.url)),
+      })
       expect(Object.prototype.hasOwnProperty.call(instance, '_commands')).toBe(true)
     })
   })

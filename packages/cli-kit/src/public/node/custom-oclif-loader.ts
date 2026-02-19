@@ -1,9 +1,9 @@
-import { fileExistsSync } from './fs.js'
-import { cwd, joinPath, sniffForPath } from './path.js'
-import { isDevelopment } from './context/local.js'
-import { execaSync } from 'execa'
-import { Config } from '@oclif/core'
-import { Options } from '@oclif/core/interfaces'
+import {fileExistsSync} from './fs.js'
+import {cwd, joinPath, sniffForPath} from './path.js'
+import {isDevelopment} from './context/local.js'
+import {execaSync} from 'execa'
+import {Config} from '@oclif/core'
+import {Options} from '@oclif/core/interfaces'
 
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
@@ -48,7 +48,7 @@ export class ShopifyConfig extends Config {
 
     if (!externalHydrogenPlugin) return
 
-    if (typeof (this as Record<string, unknown>)._commands === 'undefined') {
+    if (typeof (this as {[key: string]: unknown})._commands === 'undefined') {
       throw new Error('ShopifyConfig: oclif internals changed. _commands is no longer available.')
     }
 
@@ -62,10 +62,7 @@ export class ShopifyConfig extends Config {
     for (const command of externalHydrogenPlugin.commands) {
       if (!command.id.startsWith('hydrogen')) continue
       internalCommands.delete(command.id)
-      const allAliases = [
-        ...(command.aliases ?? []),
-        ...((command as { hiddenAliases?: string[] }).hiddenAliases ?? []),
-      ]
+      const allAliases = [...(command.aliases ?? []), ...((command as {hiddenAliases?: string[]}).hiddenAliases ?? [])]
       for (const alias of allAliases) {
         internalCommands.delete(alias)
       }
