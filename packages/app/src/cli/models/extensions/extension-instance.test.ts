@@ -192,6 +192,77 @@ describe('build', async () => {
     })
   })
 
+  test('copies intent schema files when building UI extensions with intents', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const intentsDir = joinPath(tmpDir, 'intents')
+      await mkdir(intentsDir)
+      await writeFile(joinPath(intentsDir, 'create-schema.json'), '{"type": "create"}')
+      await writeFile(joinPath(intentsDir, 'update-schema.json'), '{"type": "update"}')
+
+      const distDir = joinPath(tmpDir, 'dist')
+      await mkdir(distDir)
+
+      const extensionInstance = await testUIExtension({
+        type: 'ui_extension',
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          api_version: '2025-10',
+          metafields: [],
+          capabilities: {
+            network_access: false,
+            api_access: false,
+            block_progress: false,
+          },
+          extension_points: [
+            {
+              target: 'EXTENSION::POINT::A',
+              module: './src/ExtensionPointA.js',
+              build_manifest: {
+                assets: {
+                  main: {
+                    filepath: 'test-ui-extension.js',
+                    module: './src/ExtensionPointA.js',
+                  },
+                  intents: [
+                    {
+                      filepath: 'test-ui-extension-intent-create-app_intent-create-schema.json',
+                      module: './intents/create-schema.json',
+                      static: true,
+                    },
+                    {
+                      filepath: 'test-ui-extension-intent-update-app_intent-update-schema.json',
+                      module: './intents/update-schema.json',
+                      static: true,
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+        outputPath: joinPath(distDir, 'test-ui-extension.js'),
+      })
+
+      // When
+      await extensionInstance.copyStaticAssets()
+
+      // Then
+      const createSchemaOutput = joinPath(distDir, 'test-ui-extension-intent-create-app_intent-create-schema.json')
+      const updateSchemaOutput = joinPath(distDir, 'test-ui-extension-intent-update-app_intent-update-schema.json')
+
+      expect(fileExistsSync(createSchemaOutput)).toBe(true)
+      expect(fileExistsSync(updateSchemaOutput)).toBe(true)
+
+      const createContent = await readFile(createSchemaOutput)
+      const updateContent = await readFile(updateSchemaOutput)
+      expect(createContent).toBe('{"type": "create"}')
+      expect(updateContent).toBe('{"type": "update"}')
+    })
+  })
+
   test('does not copy shopify.extension.toml file when bundling theme extensions', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given

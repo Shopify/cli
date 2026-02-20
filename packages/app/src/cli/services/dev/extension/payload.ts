@@ -6,7 +6,7 @@ import {getUIExtensionResourceURL} from '../../../utilities/extensions/configura
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
-import {BuildAsset} from '../../../models/extensions/specification.js'
+import {AssetIdentifier, BuildAsset} from '../../../models/extensions/specification.js'
 import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
 import {fileLastUpdatedTimestamp} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
@@ -19,7 +19,8 @@ export type GetUIExtensionPayloadOptions = Omit<ExtensionsPayloadStoreOptions, '
 
 interface AssetMapperContext {
   identifier: string
-  asset: BuildAsset
+  asset: BuildAsset | BuildAsset[]
+  extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest}
   url: string
   extension: ExtensionInstance
 }
@@ -155,10 +156,47 @@ async function defaultAssetMapper({
   url,
   extension,
 }: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
-  const payload = await getAssetPayload(identifier, asset, url, extension)
+  const payload = Array.isArray(asset)
+    ? await Promise.all(asset.map((child) => getAssetPayload(child.module, child, url, extension)))
+    : [await getAssetPayload(identifier, asset, url, extension)]
+
   return {
-    assets: {[payload.name]: payload},
+    assets: Object.fromEntries(payload.map((payload) => [payload.name, payload])),
   }
+}
+
+/**
+ * Intents asset mapper - transforms intents and places them at extension point level
+ */
+async function intentsAssetMapper({
+  asset,
+  extensionPoint,
+  url,
+  extension,
+}: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
+  if (!extensionPoint.intents || !Array.isArray(asset)) return {}
+
+  const intents = await Promise.all(
+    extensionPoint.intents.map(async (intent, index) => {
+      const intentAsset = asset[index]
+      if (!intentAsset) throw new Error(`Missing intent asset for ${intent.action}`)
+      return {
+        ...intent,
+        schema: await getAssetPayload('schema', intentAsset, url, extension),
+      }
+    }),
+  )
+
+  return {intents}
+}
+
+/**
+ * Asset mappers registry - defines how each asset type should be handled
+ */
+const ASSET_MAPPERS: {
+  [key in AssetIdentifier]?: (context: AssetMapperContext) => Promise<Partial<DevNewExtensionPointSchema>>
+} = {
+  [AssetIdentifier.Intents]: intentsAssetMapper,
 }
 
 /**
@@ -167,16 +205,24 @@ async function defaultAssetMapper({
  */
 async function mapBuildManifestToPayload(
   buildManifest: BuildManifest,
-  _extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
+  extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
   url: string,
   extension: ExtensionInstance,
 ): Promise<Partial<DevNewExtensionPointSchema>> {
   if (!buildManifest?.assets) return {}
 
   const mappingResults = await Promise.all(
-    Object.entries(buildManifest.assets).map(async ([identifier, asset]) => {
-      return defaultAssetMapper({identifier, asset, url, extension})
-    }),
+    Object.entries(buildManifest.assets)
+      .filter((entry): entry is [string, BuildAsset | BuildAsset[]] => {
+        const [_, asset] = entry
+        return asset !== undefined
+      })
+      .map(async ([identifier, asset]) => {
+        return (
+          ASSET_MAPPERS[identifier as AssetIdentifier]?.({identifier, asset, extensionPoint, url, extension}) ??
+          defaultAssetMapper({identifier, asset, extensionPoint, url, extension})
+        )
+      }),
   )
 
   return mappingResults.reduce<Partial<DevNewExtensionPointSchema>>(
