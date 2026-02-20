@@ -46,3 +46,8 @@ export type Scalars = {
    */
   URL: {input: string; output: string}
 }
+
+/** The code for a dev session warning. */
+export type DevSessionWarningCode =
+  /** Another user's dev session was overwritten. */
+  'SESSION_TAKEOVER'

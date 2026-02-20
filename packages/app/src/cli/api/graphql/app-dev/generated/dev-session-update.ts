@@ -13,6 +13,12 @@ export type DevSessionUpdateMutationVariables = Types.Exact<{
 
 export type DevSessionUpdateMutation = {
   devSessionUpdate?: {
+    devSession?: {
+      websocketUrl?: string | null
+      updatedAt: string
+      user?: {id: string; email?: string | null} | null
+      app: {id: string; key: string}
+    } | null
     userErrors: {message: string; on: JsonMapType; field?: string[] | null; category: string}[]
   } | null
 }
@@ -83,6 +89,42 @@ export const DevSessionUpdate = {
             selectionSet: {
               kind: 'SelectionSet',
               selections: [
+                {
+                  kind: 'Field',
+                  name: {kind: 'Name', value: 'devSession'},
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {kind: 'Field', name: {kind: 'Name', value: 'websocketUrl'}},
+                      {kind: 'Field', name: {kind: 'Name', value: 'updatedAt'}},
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'user'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'email'}},
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: {kind: 'Name', value: 'app'},
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {kind: 'Field', name: {kind: 'Name', value: 'id'}},
+                            {kind: 'Field', name: {kind: 'Name', value: 'key'}},
+                            {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                          ],
+                        },
+                      },
+                      {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
+                    ],
+                  },
+                },
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'userErrors'},
