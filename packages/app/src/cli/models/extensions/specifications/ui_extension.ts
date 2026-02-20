@@ -101,7 +101,13 @@ const uiExtensionSpec = createExtensionSpecification({
   identifier: 'ui_extension',
   dependency,
   schema: UIExtensionSchema,
-  buildConfig: {mode: 'ui'},
+  buildConfig: {
+    mode: 'ui',
+    steps: [
+      {id: 'bundle-ui', displayName: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+      {id: 'copy-static-assets', displayName: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+    ],
+  },
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'esbuild', 'generates_source_maps']
     const needsCart =

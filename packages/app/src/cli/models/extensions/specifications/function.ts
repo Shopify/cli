@@ -83,7 +83,10 @@ const functionSpec = createExtensionSpecification({
   ],
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
-  buildConfig: {mode: 'function'},
+  buildConfig: {
+    mode: 'function',
+    steps: [{id: 'build-function', displayName: 'Build Function', type: 'build_function', config: {}}],
+  },
   deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined
     const moduleId = randomUUID()

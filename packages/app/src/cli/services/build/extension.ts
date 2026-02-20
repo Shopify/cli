@@ -1,4 +1,3 @@
-import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
@@ -53,16 +52,6 @@ export interface ExtensionBuildOptions {
    * The URL where the app is running.
    */
   appURL?: string
-}
-
-/**
- * It builds the theme extensions.
- * @param options - Build options.
- */
-export async function buildThemeExtension(extension: ExtensionInstance, options: ExtensionBuildOptions): Promise<void> {
-  options.stdout.write(`Running theme check on your Theme app extension...`)
-  const offenses = await runThemeCheck(extension.directory)
-  if (offenses) options.stdout.write(offenses)
 }
 
 /**

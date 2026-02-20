@@ -90,7 +90,7 @@ describe('hosted_app_home', () => {
 
   describe('buildConfig', () => {
     test('should have hosted_app_home build mode', () => {
-      expect(spec.buildConfig).toEqual({mode: 'hosted_app_home'})
+      expect(spec.buildConfig).toEqual({mode: 'none'})
     })
   })
 

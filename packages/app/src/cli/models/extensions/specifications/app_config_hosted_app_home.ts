@@ -16,7 +16,7 @@ export const HostedAppHomeSpecIdentifier = 'hosted_app_home'
 
 const hostedAppHomeSpec = createConfigExtensionSpecification({
   identifier: HostedAppHomeSpecIdentifier,
-  buildConfig: {mode: 'hosted_app_home'} as const,
+  buildConfig: {mode: 'none'} as const,
   schema: HostedAppHomeSchema,
   transformConfig: HostedAppHomeTransformConfig,
   copyStaticAssets: async (config, directory, outputPath) => {
