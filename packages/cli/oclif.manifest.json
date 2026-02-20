@@ -460,8 +460,8 @@
           "type": "option"
         },
         "host": {
-          "default": "localhost",
-          "description": "Set which network interface the web server listens on. The default value is localhost.",
+          "default": "127.0.0.1",
+          "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
           "env": "SHOPIFY_FLAG_HOST",
           "hasDynamicHelp": false,
           "multiple": false,

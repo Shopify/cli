@@ -224,8 +224,8 @@ FLAGS
       --checkout-cart-url=<value>         Resource URL for checkout UI extension. Format:
                                           "/cart/{productVariantID}:{productQuantity}"
       --client-id=<value>                 The Client ID of your app.
-      --host=<value>                      [default: localhost] Set which network interface the web server listens on.
-                                          The default value is localhost.
+      --host=<value>                      [default: 127.0.0.1] Set which network interface the web server listens on.
+                                          The default value is 127.0.0.1.
       --localhost-port=<value>            Port to use for localhost.
       --no-color                          Disable color output.
       --no-update                         Skips the Partners Dashboard URL update step.
