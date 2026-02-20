@@ -15,7 +15,7 @@ import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app
 import {OrganizationApp} from '../../../models/organization.js'
 import {DevOptions} from '../../dev.js'
 import {LocalhostCert, getProxyingWebServer} from '../../../utilities/app/http-reverse-proxy.js'
-import {buildAppURLForAdmin, buildAppURLForWeb} from '../../../utilities/app/app-url.js'
+import {buildAppURLForWeb} from '../../../utilities/app/app-url.js'
 import {ApplicationURLs} from '../urls.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -25,7 +25,6 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess
   extends BaseProcess<{
@@ -92,6 +91,7 @@ export async function setupDevProcesses({
 }> {
   const apiKey = remoteApp.apiKey
   const apiSecret = remoteApp.apiSecretKeys[0]?.secret ?? ''
+  const appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   const env = getEnvironmentVariables()
   const shouldRenderGraphiQL = !isTruthy(env[environmentVariableNames.disableGraphiQLExplorer])
 
@@ -100,24 +100,10 @@ export async function setupDevProcesses({
   const appWatcher = new AppEventWatcher(reloadedApp, network.proxyUrl)
 
   // Decide on the appropriate preview URL for a session with these processes
-  // - 1P developers with previewable extensions: use local dev console
-  // - 1P developers without previewable extensions: use legacy OAuth redirect URL
-  // - 3P developers: use unified admin URL
+  // Use local dev console only for 1P developers (SHOPIFY_CLI_1P_DEV is enabled)
   const anyPreviewableExtensions = reloadedApp.allExtensions.some((ext) => ext.isPreviewable)
   const devConsoleURL = `${network.proxyUrl}/extensions/dev-console`
-  const is1PDev = firstPartyDev()
-
-  // appPreviewUrl is the direct app URL (used by GraphiQL and dev session fallback)
-  // previewURL is what's shown to the user (may be dev console for 1P devs)
-  let appPreviewUrl: string
-  if (is1PDev) {
-    appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
-  } else {
-    const adminDomain = await adminFqdn()
-    appPreviewUrl = buildAppURLForAdmin(storeFqdn, apiKey, adminDomain)
-  }
-
-  const useDevConsole = is1PDev && anyPreviewableExtensions
+  const useDevConsole = firstPartyDev() && anyPreviewableExtensions
   const previewURL = useDevConsole ? devConsoleURL : appPreviewUrl
 
   const graphiqlURL = shouldRenderGraphiQL
