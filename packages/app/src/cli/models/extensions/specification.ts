@@ -55,9 +55,10 @@ export interface BuildAsset {
   static?: boolean
 }
 
-type BuildConfig =
-  | {mode: 'none'}
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'copy_files'; steps: ReadonlyArray<BuildStep>}
+interface BuildConfig {
+  mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'copy_files' | 'none'
+  steps: ReadonlyArray<BuildStep>
+}
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -204,7 +205,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
+    buildConfig: spec.buildConfig ?? {mode: 'none', steps: []},
   }
   const merged = {...defaults, ...spec}
 
@@ -265,7 +266,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
+    buildConfig: spec.buildConfig ?? {mode: 'none', steps: []},
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
     copyStaticAssets: spec.copyStaticAssets,
@@ -279,7 +280,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
+    buildConfig: spec.buildConfig ?? {mode: 'none', steps: []},
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
