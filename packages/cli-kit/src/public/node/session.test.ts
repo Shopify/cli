@@ -280,7 +280,7 @@ describe('ensureAuthenticatedAdminAsApp', () => {
     // Given
     vi.mocked(shopifyFetch).mockResolvedValueOnce({
       status: 200,
-      json: async () => ({access_token: 'app_access_token'}),
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
     } as any)
 
     // When

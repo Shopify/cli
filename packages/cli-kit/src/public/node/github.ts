@@ -4,7 +4,7 @@ import {fetch, Response} from './http.js'
 import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
-import {AbortError} from './error.js'
+import {AbortError, BugError} from './error.js'
 import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
@@ -47,14 +47,22 @@ export async function getLatestGitHubRelease(
   outputDebug(outputContent`Getting the latest release of GitHub repository ${owner}/${repo}...`)
   const url = `https://api.github.com/repos/${owner}/${repo}/releases`
   const fetchResult = await fetch(url)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jsonBody: any = await fetchResult.json()
+  try {
+    const responseText = await fetchResult.text()
+    const jsonBody = JSON.parse(responseText)
 
-  if (fetchResult.status !== 200) {
-    throw new GitHubClientError(url, fetchResult.status, jsonBody)
+    if (fetchResult.status !== 200) {
+      throw new GitHubClientError(url, fetchResult.status, jsonBody)
+    }
+
+    return jsonBody.find(options.filter)
+  } catch {
+    throw new BugError(
+      `Received invalid response from GitHub API (HTTP ${fetchResult.status}).` +
+        ' The response could not be parsed as JSON. The service may be temporarily unavailable.' +
+        ' Please try again.',
+    )
   }
-
-  return jsonBody.find(options.filter)
 }
 
 interface ParseRepositoryURLOutput {
