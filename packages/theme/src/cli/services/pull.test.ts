@@ -14,6 +14,8 @@ import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {test, describe, expect, vi, beforeEach} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {fileURLToPath} from 'node:url'
 
 vi.mock('../utilities/theme-selector.js')
@@ -130,6 +132,40 @@ describe('pull', () => {
     expect(vi.mocked(insideGitDirectory)).not.toHaveBeenCalled()
     expect(vi.mocked(isClean)).not.toHaveBeenCalled()
     expect(vi.mocked(ensureDirectoryConfirmed)).not.toHaveBeenCalled()
+  })
+
+  test('should render success message with theme preview and editor links', async () => {
+    // Given
+    const theme = buildTheme({id: 1, name: 'Theme', role: 'development'})!
+    vi.mocked(findOrSelectTheme).mockResolvedValue(theme)
+    vi.mocked(fetchDevelopmentThemeSpy).mockResolvedValue(undefined)
+
+    // When
+    await pull({...defaultFlags, theme: theme.id.toString()})
+
+    // Then
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: '',
+      body: ['The theme', ...themeComponent(theme), 'has been pulled.'],
+      nextSteps: [
+        [
+          {
+            link: {
+              label: 'View your theme',
+              url: themePreviewUrl(theme, adminSession),
+            },
+          },
+        ],
+        [
+          {
+            link: {
+              label: 'Customize your theme at the theme editor',
+              url: themeEditorUrl(theme, adminSession),
+            },
+          },
+        ],
+      ],
+    })
   })
 
   describe('isEmptyDir', () => {

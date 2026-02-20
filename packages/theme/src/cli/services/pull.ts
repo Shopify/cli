@@ -14,6 +14,7 @@ import {glob} from '@shopify/cli-kit/node/fs'
 import {cwd} from '@shopify/cli-kit/node/path'
 import {insideGitDirectory, isClean} from '@shopify/cli-kit/node/git'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
+import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Writable} from 'stream'
 
 interface PullOptions {
@@ -165,9 +166,6 @@ async function executePull(
   const themeChecksums = rejectGeneratedStaticAssets(remoteChecksums)
   recordTiming('theme-service:pull:file-system')
 
-  const store = session.storeFqdn
-  const themeId = theme.id
-
   await downloadTheme(theme, session, themeChecksums, themeFileSystem, options, context)
 
   const header = options.environment ? `Environment: ${options.environment}` : ''
@@ -179,7 +177,7 @@ async function executePull(
         {
           link: {
             label: 'View your theme',
-            url: `https://${store}/?preview_theme_id=${themeId}`,
+            url: themePreviewUrl(theme, session),
           },
         },
       ],
@@ -187,7 +185,7 @@ async function executePull(
         {
           link: {
             label: 'Customize your theme at the theme editor',
-            url: `https://${store}/admin/themes/${themeId}/editor`,
+            url: themeEditorUrl(theme, session),
           },
         },
       ],
