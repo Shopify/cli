@@ -94,7 +94,7 @@ describe('buildGraphqlTypes', () => {
     const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
     // Then
-    await expect(got).rejects.toThrow(/GraphQL types can only be built for JavaScript functions/)
+    await expect(got).rejects.toThrow(/No typegen_command specified/)
   })
 
   test('runs custom typegen_command when provided', async () => {

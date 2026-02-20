@@ -138,7 +138,9 @@ export async function buildGraphqlTypes(
   }
 
   if (!fun.isJavaScript) {
-    throw new AbortError('GraphQL types can only be built for JavaScript functions')
+    throw new AbortError(
+      'No typegen_command specified. Set build.typegen_command in your function extension TOML to generate GraphQL types for non-JavaScript functions.',
+    )
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
