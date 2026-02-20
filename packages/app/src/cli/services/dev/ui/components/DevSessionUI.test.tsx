@@ -200,7 +200,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows shutting down message when aborted before dev preview is ready', async () => {
+  test('calls onAbort when aborted before dev preview is ready', async () => {
     // Given
     const abortController = new AbortController()
     devSessionStatusManager.updateStatus({isReady: false})
@@ -217,10 +217,11 @@ describe('DevSessionUI', () => {
     )
 
     abortController.abort()
-    // Wait for React 19 to render the abort state
-    await waitForContent(renderInstance, 'Shutting down')
 
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toContain('Shutting down dev ...')
+    const promise = renderInstance.waitUntilExit()
+    await promise
+
+    expect(onAbort).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
