@@ -663,6 +663,64 @@ describe('file-watcher events', () => {
       mockedExtractImportPaths.mockReset()
     })
 
+    test('detects app config changes when chokidar reports backslash paths (Windows)', async () => {
+      // Simulates the Windows scenario where chokidar returns paths with backslashes
+      // but the app configuration stores paths with forward slashes
+      let eventHandler: any
+
+      mockExtensionWatchedFiles(extension1, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension1B, ['/extensions/ui_extension_1/index.js'])
+      mockExtensionWatchedFiles(extension2, ['/extensions/ui_extension_2/index.js'])
+      mockExtensionWatchedFiles(functionExtension, ['/extensions/my-function/src/index.js'])
+      mockExtensionWatchedFiles(posExtension, [])
+      mockExtensionWatchedFiles(appAccessExtension, [])
+
+      const testApp = {
+        ...defaultApp,
+        allExtensions: defaultApp.allExtensions,
+        nonConfigExtensions: defaultApp.allExtensions.filter((ext) => !ext.isAppConfigExtension),
+        realExtensions: defaultApp.allExtensions,
+      }
+
+      const mockWatcher = {
+        on: vi.fn((event: string, listener: any) => {
+          if (event === 'all') {
+            eventHandler = listener
+          }
+          return mockWatcher
+        }),
+        close: vi.fn(() => Promise.resolve()),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(testApp, outputOptions, 50)
+      const onChange = vi.fn()
+      fileWatcher.onChange(onChange)
+
+      await fileWatcher.start()
+      await flushPromises()
+
+      // Fire event with backslash path (as chokidar would on Windows)
+      // while app.configuration.path uses forward slashes
+      await eventHandler('change', '\\shopify.app.toml')
+
+      await vi.waitFor(
+        () => {
+          expect(onChange).toHaveBeenCalled()
+          const calls = onChange.mock.calls
+          const actualEvents = calls.find((call) => call[0].length > 0)?.[0]
+
+          if (!actualEvents) {
+            throw new Error('Expected onChange to be called with events, but all calls had empty arrays')
+          }
+
+          expect(actualEvents).toHaveLength(1)
+          expect(actualEvents[0].type).toBe('extensions_config_updated')
+        },
+        {timeout: 1000, interval: 50},
+      )
+    })
+
     test('handles rapid file changes without hanging', async () => {
       let eventHandler: any
       const events: WatcherEvent[] = []
