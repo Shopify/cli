@@ -7,6 +7,7 @@ import {
   resolve,
   basename as basenamePathe,
   extname as extnamePathe,
+  parse,
   isAbsolute,
 } from 'pathe'
 import {fileURLToPath} from 'url'
@@ -93,6 +94,16 @@ export function basename(path: string, ext?: string): string {
  */
 export function extname(path: string): string {
   return extnamePathe(path)
+}
+
+/**
+ * Parses a path into its components (root, dir, base, ext, name).
+ *
+ * @param path - Path to parse.
+ * @returns Parsed path object.
+ */
+export function parsePath(path: string): {root: string; dir: string; base: string; ext: string; name: string} {
+  return parse(path)
 }
 
 /**
