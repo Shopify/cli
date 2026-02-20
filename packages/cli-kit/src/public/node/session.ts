@@ -315,8 +315,9 @@ export async function ensureAuthenticatedAdminAsApp(
     'slow-request',
   )
 
+  const body = await tokenResponse.text()
+
   if (tokenResponse.status === 400) {
-    const body = await tokenResponse.text()
     if (body.includes('app_not_installed')) {
       throw new AbortError(
         outputContent`App is not installed on ${outputToken.green(
@@ -328,7 +329,14 @@ export async function ensureAuthenticatedAdminAsApp(
       `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
     )
   }
-
-  const tokenJson = (await tokenResponse.json()) as {access_token: string}
-  return {token: tokenJson.access_token, storeFqdn}
+  try {
+    const tokenJson = JSON.parse(body) as {access_token: string}
+    return {token: tokenJson.access_token, storeFqdn}
+  } catch {
+    throw new BugError(
+      `Received invalid response from admin authentication service (HTTP ${tokenResponse.status}).` +
+        ' The response could not be parsed as JSON. The service may be temporarily unavailable.' +
+        ' Please try again.',
+    )
+  }
 }
