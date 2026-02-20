@@ -4,8 +4,8 @@ import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
 import {context as esContext, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile, glob} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
+import {copyFile, glob, writeFile} from '@shopify/cli-kit/node/fs'
+import {dirname, joinPath, relativePath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -58,6 +58,10 @@ export async function bundleExtension(options: BundleOptions, processEnv = proce
   const context = await esContext(esbuildOptions)
   const result = await context.rebuild()
   onResult(result, options)
+  if (result.metafile) {
+    const metafilePath = joinPath(dirname(options.outputPath), 'metafile.json')
+    await writeFile(metafilePath, JSON.stringify(result.metafile))
+  }
   await context.dispose()
 }
 
@@ -153,6 +157,9 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
   if (options.sourceMaps) {
     esbuildOptions.sourcemap = true
     esbuildOptions.sourceRoot = `${options.stdin.resolveDir}/src`
+  }
+  if (options.environment === 'production') {
+    esbuildOptions.metafile = true
   }
   return esbuildOptions
 }
