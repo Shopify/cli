@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.91.1
+
+### Patch Changes
+
+- ce34c6d: Change download files loop to a Promise all to ensure all files are always downloaded and display more accurate progress
+  - @shopify/cli-kit@3.91.1
+
 ## 3.91.0
 
 ### Patch Changes
