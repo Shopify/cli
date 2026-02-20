@@ -2,15 +2,122 @@ import {transformToEventsConfig, transformFromEventsConfig} from './app_config_e
 import {describe, expect, test} from 'vitest'
 
 describe('transformFromEventsConfig', () => {
-  test('returns content as-is without transformation', () => {
+  test('returns content as-is when all URIs are absolute', () => {
     const content = {
       events: {
         api_version: '2024-01',
         subscription: [{topic: 'orders/create', uri: 'https://example.com', actions: ['create']}],
       },
     }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
+
+  test('prepends application_url to relative URIs in subscriptions', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']},
+          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+        ],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [
+          {topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']},
+          {topic: 'products/update', uri: 'https://absolute.example.com/webhook', actions: ['update']},
+        ],
+      },
+    })
+  })
+
+  test('returns content as-is when no application_url in config', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+      },
+    }
+
+    const result = transformFromEventsConfig(content, {})
+
+    expect(result).toEqual(content)
+  })
+
+  test('returns content as-is when no appConfiguration provided', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+      },
+    }
 
     const result = transformFromEventsConfig(content)
+
+    expect(result).toEqual(content)
+  })
+
+  test('handles application_url with trailing slash', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: '/webhooks/orders', actions: ['create']}],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com/'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual({
+      events: {
+        api_version: '2024-01',
+        subscription: [{topic: 'orders/create', uri: 'https://tunnel.example.com/webhooks/orders', actions: ['create']}],
+      },
+    })
+  })
+
+  test('returns content as-is when subscription array is empty', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+        subscription: [],
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
+
+  test('returns content as-is when no subscriptions', () => {
+    const content = {
+      events: {
+        api_version: '2024-01',
+      },
+    }
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
+
+    expect(result).toEqual(content)
+  })
+
+  test('returns content as-is when events is undefined', () => {
+    const content = {}
+    const appConfiguration = {application_url: 'https://tunnel.example.com'}
+
+    const result = transformFromEventsConfig(content, appConfiguration)
 
     expect(result).toEqual(content)
   })

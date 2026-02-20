@@ -1,12 +1,42 @@
+import {prependApplicationUrl} from '../validation/url_prepender.js'
+import {CurrentAppConfiguration} from '../../../app/app.js'
 import {getPathValue} from '@shopify/cli-kit/common/object'
+
+interface EventsConfig {
+  events?: {
+    api_version?: string
+    subscription?: Array<{uri: string; [key: string]: unknown}>
+  }
+}
 
 /**
  * Transforms the events config from local to remote format.
- * No transformation needed - local config is already in the correct format for the server.
- * The 'identifier' field is server-managed and should not exist in local configs.
+ * Resolves relative URIs (starting with /) by prepending the application_url.
+ * During dev, application_url is set to the tunnel URL, ensuring events
+ * are delivered to the correct endpoint.
  */
-export function transformFromEventsConfig(content: object) {
-  return content
+export function transformFromEventsConfig(content: object, appConfiguration?: object) {
+  const eventsConfig = content as EventsConfig
+
+  if (!eventsConfig.events?.subscription) {
+    return content
+  }
+
+  let appUrl: string | undefined
+  if (appConfiguration && 'application_url' in appConfiguration) {
+    appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
+  }
+
+  return {
+    ...eventsConfig,
+    events: {
+      ...eventsConfig.events,
+      subscription: eventsConfig.events.subscription.map((sub) => ({
+        ...sub,
+        uri: prependApplicationUrl(sub.uri, appUrl),
+      })),
+    },
+  }
 }
 
 /**
