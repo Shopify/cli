@@ -46,7 +46,7 @@ describe('findOrSelectTheme', () => {
     expect(theme).toBe(selectedTheme)
   })
 
-  test('flags development theme as [yours]', async () => {
+  test('flags development theme as [current]', async () => {
     // Given
     const header = 'Select a theme to open'
     const themes = [mockTheme(7, 'development'), mockTheme(8, 'development')]
@@ -64,7 +64,7 @@ describe('findOrSelectTheme', () => {
     expect(renderAutocompletePrompt).toHaveBeenCalledWith({
       message: header,
       choices: [
-        expect.objectContaining({group: 'Development', label: 'theme 7 [yours]'}),
+        expect.objectContaining({group: 'Development', label: 'theme 7 [current]'}),
         expect.objectContaining({group: 'Development', label: 'theme 8'}),
       ],
     })

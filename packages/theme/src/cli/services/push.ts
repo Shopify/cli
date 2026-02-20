@@ -22,7 +22,12 @@ import {
 } from '@shopify/cli-kit/node/ui'
 import {themeEditorUrl, themePreviewUrl} from '@shopify/cli-kit/node/themes/urls'
 import {cwd, resolvePath} from '@shopify/cli-kit/node/path'
-import {LIVE_THEME_ROLE, promptThemeName, UNPUBLISHED_THEME_ROLE} from '@shopify/cli-kit/node/themes/utils'
+import {
+  DEVELOPMENT_THEME_ROLE,
+  LIVE_THEME_ROLE,
+  promptThemeName,
+  UNPUBLISHED_THEME_ROLE,
+} from '@shopify/cli-kit/node/themes/utils'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {Severity} from '@shopify/theme-check-node'
 import {recordError, recordTiming} from '@shopify/cli-kit/node/analytics'
@@ -71,6 +76,12 @@ export interface PushFlags {
 
   /** Push theme files from your remote development theme. */
   development?: boolean
+
+  /**
+   * Unique identifier for a development theme context (e.g., PR number, branch name).
+   * Reuses an existing development theme with this context name, or creates one if none exists.
+   */
+  developmentContext?: string
 
   /** Push theme files from your remote live theme. */
   live?: boolean
@@ -379,11 +390,11 @@ export async function createOrSelectTheme(
   flags: PushFlags,
   multiEnvironment?: boolean,
 ): Promise<Theme | undefined> {
-  const {live, development, unpublished, theme, environment} = flags
+  const {live, development, unpublished, theme, environment, developmentContext} = flags
 
   if (development) {
     const themeManager = new DevelopmentThemeManager(session)
-    return themeManager.findOrCreate()
+    return themeManager.findOrCreate(developmentContext, DEVELOPMENT_THEME_ROLE)
   } else if (unpublished) {
     const themeName = theme ?? (await promptThemeName('Name of the new theme'))
     return themeCreate(

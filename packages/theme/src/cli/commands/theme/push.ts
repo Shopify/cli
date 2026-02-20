@@ -62,6 +62,14 @@ export default class Push extends ThemeCommand {
       description: 'Push theme files from your remote development theme.',
       env: 'SHOPIFY_FLAG_DEVELOPMENT',
     }),
+    'development-context': Flags.string({
+      char: 'c',
+      description:
+        'Unique identifier for a development theme context (e.g., PR number, branch name). Reuses an existing development theme with this context name, or creates one if none exists.',
+      env: 'SHOPIFY_FLAG_DEVELOPMENT_CONTEXT',
+      dependsOn: ['development'],
+      exclusive: ['theme'],
+    }),
     live: Flags.boolean({
       char: 'l',
       description: 'Push theme files from your remote live theme.',
@@ -120,6 +128,7 @@ export default class Push extends ThemeCommand {
         ...flags,
         allowLive: flags['allow-live'],
         noColor: flags['no-color'],
+        developmentContext: flags['development-context'],
       },
       adminSession,
       multiEnvironment,

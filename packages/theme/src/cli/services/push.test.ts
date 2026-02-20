@@ -292,6 +292,20 @@ describe('createOrSelectTheme', async () => {
     expect(setDevelopmentTheme).toHaveBeenCalled()
   })
 
+  test('creates development theme when development and development-context flags are provided', async () => {
+    // Given
+    vi.mocked(themeCreate).mockResolvedValue(buildTheme({id: 1, name: 'Custom name', role: DEVELOPMENT_THEME_ROLE}))
+    vi.mocked(fetchTheme).mockResolvedValue(undefined)
+    const flags: PushFlags = {development: true, developmentContext: 'Custom name'}
+
+    // When
+    const theme = await createOrSelectTheme(adminSession, flags)
+
+    // Then
+    expect(theme).toMatchObject({role: DEVELOPMENT_THEME_ROLE, name: 'Custom name'})
+    expect(setDevelopmentTheme).toHaveBeenCalled()
+  })
+
   test('creates development theme when development and unpublished flags are provided', async () => {
     // Given
     vi.mocked(themeCreate).mockResolvedValue(buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE}))

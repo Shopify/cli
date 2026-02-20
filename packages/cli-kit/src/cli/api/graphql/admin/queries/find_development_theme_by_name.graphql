@@ -1,0 +1,10 @@
+query findDevelopmentThemeByName($name: String!) {
+  themes(first: 2, names: [$name], roles: [DEVELOPMENT]) {
+    nodes {
+      id
+      name
+      role
+      processing
+    }
+  }
+}
