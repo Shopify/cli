@@ -9,12 +9,12 @@ import {Writable} from 'stream'
 function buildOptions(): ExtensionBuildOptions {
   return {
     stdout: new Writable({
-      write(chunk, encoding, callback) {
+      write(_chunk, _encoding, callback) {
         callback()
       },
     }),
     stderr: new Writable({
-      write(chunk, encoding, callback) {
+      write(_chunk, _encoding, callback) {
         callback()
       },
     }),

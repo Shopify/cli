@@ -1,3 +1,4 @@
+import {getNestedValue} from './utils.js'
 import {joinPath, dirname, extname, relativePath, basename} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir} from '@shopify/cli-kit/node/fs'
 import {z} from 'zod'
@@ -258,40 +259,4 @@ async function copyByPattern(
 
   options.stdout.write(`Copied ${files.length} file(s) from ${sourceDir} to ${outputDir}\n`)
   return {filesCopied: files.length}
-}
-
-/**
- * Resolves a dot-separated path from a config object.
- * Handles TOML array-of-tables by plucking the next key across all elements.
- */
-function getNestedValue(obj: {[key: string]: unknown}, path: string): unknown {
-  const parts = path.split('.')
-  let current: unknown = obj
-
-  for (const part of parts) {
-    if (current === null || current === undefined) {
-      return undefined
-    }
-
-    if (Array.isArray(current)) {
-      const plucked = current
-        .map((item) => {
-          if (typeof item === 'object' && item !== null && part in (item as object)) {
-            return (item as {[key: string]: unknown})[part]
-          }
-          return undefined
-        })
-        .filter((item): item is NonNullable<unknown> => item !== undefined)
-      current = plucked.length > 0 ? plucked : undefined
-      continue
-    }
-
-    if (typeof current === 'object' && part in current) {
-      current = (current as {[key: string]: unknown})[part]
-    } else {
-      return undefined
-    }
-  }
-
-  return current
 }

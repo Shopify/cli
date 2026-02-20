@@ -25,6 +25,7 @@ export interface BuildStep {
   /** Step type (determines which executor handles it) */
   readonly type:
     | 'copy_files'
+    | 'build_manifest'
     | 'build_theme'
     | 'bundle_theme'
     | 'bundle_ui'
