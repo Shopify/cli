@@ -13,6 +13,7 @@ import {PrivacyComplianceWebhooksSpecIdentifier} from './specifications/app_conf
 import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
 import {EventsSpecIdentifier} from './specifications/app_config_events.js'
+import {HostedAppHomeSpecIdentifier} from './specifications/app_config_hosted_app_home.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -41,6 +42,7 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   AppHomeSpecIdentifier,
   AppProxySpecIdentifier,
   BrandingSpecIdentifier,
+  HostedAppHomeSpecIdentifier,
   PosSpecIdentifier,
   PrivacyComplianceWebhooksSpecIdentifier,
   WebhookSubscriptionSpecIdentifier,
@@ -368,6 +370,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
           this.specification.buildConfig.filePatterns,
           this.specification.buildConfig.ignoredFilePatterns,
         )
+      case 'hosted_app_home':
+        await this.copyStaticAssets()
+        break
       case 'none':
         break
     }
