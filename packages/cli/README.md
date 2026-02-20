@@ -662,7 +662,7 @@ DESCRIPTION
 
 ## `shopify app function typegen`
 
-Generate GraphQL types for a JavaScript function.
+Generate GraphQL types for a function.
 
 ```
 USAGE
@@ -678,10 +678,10 @@ FLAGS
       --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
 DESCRIPTION
-  Generate GraphQL types for a JavaScript function.
+  Generate GraphQL types for a function.
 
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
-  function written in JavaScript.
+  function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.
 ```
 
 ## `shopify app generate extension`

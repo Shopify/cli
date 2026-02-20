@@ -289,6 +289,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     return config.build?.command
   }
 
+  get typegenCommand() {
+    const config = this.configuration as unknown as FunctionConfigType
+    return config.build?.typegen_command
+  }
+
   /**
    * Default entry paths to be watched in a dev session.
    * It returns the entry source file path if defined,

@@ -27,6 +27,10 @@ const FunctionExtensionSchema = BaseSchema.extend({
       path: zod.string().optional(),
       watch: zod.union([zod.string(), zod.string().array()]).optional(),
       wasm_opt: zod.boolean().optional().default(true),
+      typegen_command: zod
+        .string()
+        .transform((value) => (value.trim() === '' ? undefined : value))
+        .optional(),
     })
     .optional(),
   name: zod.string(),

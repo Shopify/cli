@@ -123,11 +123,24 @@ async function buildJSFunctionWithTasks(
 }
 
 export async function buildGraphqlTypes(
-  fun: {directory: string; isJavaScript: boolean},
+  fun: {directory: string; isJavaScript: boolean; typegenCommand?: string},
   options: JSFunctionBuildOptions,
 ) {
+  if (fun.typegenCommand) {
+    const commandComponents = fun.typegenCommand.split(' ')
+    return runWithTimer('cmd_all_timing_network_ms')(async () => {
+      return exec(commandComponents[0]!, commandComponents.slice(1), {
+        cwd: fun.directory,
+        stderr: options.stderr,
+        signal: options.signal,
+      })
+    })
+  }
+
   if (!fun.isJavaScript) {
-    throw new AbortError('GraphQL types can only be built for JavaScript functions')
+    throw new AbortError(
+      'No typegen_command specified. Set build.typegen_command in your function extension TOML to generate GraphQL types for non-JavaScript functions.',
+    )
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {

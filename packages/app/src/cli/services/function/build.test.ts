@@ -85,7 +85,7 @@ describe('buildGraphqlTypes', () => {
     })
   })
 
-  test('errors if function is not a JS function', async () => {
+  test('errors if function is not a JS function and no typegen_command', async () => {
     // Given
     const ourFunction = await testFunctionExtension()
     ourFunction.entrySourceFilePath = 'src/main.rs'
@@ -94,7 +94,65 @@ describe('buildGraphqlTypes', () => {
     const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
 
     // Then
-    await expect(got).rejects.toThrow(/GraphQL types can only be built for JavaScript functions/)
+    await expect(got).rejects.toThrow(/No typegen_command specified/)
+  })
+
+  test('runs custom typegen_command when provided', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension({
+      config: {
+        name: 'test function',
+        type: 'order_discounts',
+        build: {
+          command: 'zig build',
+          wasm_opt: true,
+          typegen_command: 'npx shopify-function-codegen --schema schema.graphql',
+        },
+        configuration_ui: true,
+        api_version: '2024-01',
+      },
+    })
+    ourFunction.entrySourceFilePath = 'src/main.rs'
+
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith('npx', ['shopify-function-codegen', '--schema', 'schema.graphql'], {
+      cwd: ourFunction.directory,
+      stderr,
+      signal,
+    })
+  })
+
+  test('runs custom typegen_command for JS functions when provided', async () => {
+    // Given
+    const ourFunction = await testFunctionExtension({
+      entryPath: 'src/index.js',
+      config: {
+        name: 'test function',
+        type: 'order_discounts',
+        build: {
+          command: 'echo "hello"',
+          wasm_opt: true,
+          typegen_command: 'custom-typegen --output types.ts',
+        },
+        configuration_ui: true,
+        api_version: '2024-01',
+      },
+    })
+
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith('custom-typegen', ['--output', 'types.ts'], {
+      cwd: ourFunction.directory,
+      stderr,
+      signal,
+    })
   })
 })
 
