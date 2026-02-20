@@ -66,14 +66,14 @@ jobs:
           comment_suffix: "
             > [!CAUTION]
 
-            > After installing, validate the version by running just `shopify` in your terminal.
+            > After installing, validate the version by running `shopify version` in your terminal.
 
             > If the versions don't match, you might have multiple global instances installed.
 
             > Use `which shopify` to find out which one you are running and uninstall it."
           comment_package_manager: 'npm'
           comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
-          build_script: "pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
+          build_script: "node bin/update-cli-kit-version.js && pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ''
