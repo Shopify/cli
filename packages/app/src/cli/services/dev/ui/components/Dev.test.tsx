@@ -327,8 +327,6 @@ describe('Dev', () => {
     await waitForContent(renderInstance, 'first backend message')
 
     abortController.abort()
-    // Wait for React 19 to flush the shutdown state update
-    await waitForContent(renderInstance, 'Shutting down dev ...')
 
     await promise
 
@@ -336,7 +334,7 @@ describe('Dev', () => {
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
-      Shutting down dev ..."
+      "
     `)
     expect(developerPreview.disable).toHaveBeenCalledOnce()
 
@@ -381,8 +379,6 @@ describe('Dev', () => {
     await waitForContent(renderInstance, 'first backend message')
 
     abortController.abort('something went wrong')
-    // Wait for React 19 to flush the shutdown state update
-    await waitForContent(renderInstance, 'Shutting down dev because of an error ...')
 
     await promise
 
@@ -390,7 +386,7 @@ describe('Dev', () => {
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
       00:00:00 │ backend │ third backend message
-      Shutting down dev because of an error ..."
+      "
     `)
     expect(developerPreview.disable).toHaveBeenCalledOnce()
 

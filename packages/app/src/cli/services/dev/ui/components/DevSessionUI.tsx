@@ -278,11 +278,6 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           )}
         </Box>
       ) : null}
-      {isAborted && isShuttingDownMessage ? (
-        <Box flexDirection="column">
-          <Text>{isShuttingDownMessage}</Text>
-        </Box>
-      ) : null}
       {error ? (
         <Box marginTop={1} flexDirection="column">
           <Text color="red">{error}</Text>
