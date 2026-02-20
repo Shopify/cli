@@ -150,7 +150,9 @@ packages/*/docs/
 .build
 
 packaging/dist
-!./.shadowenv.d/yarn.lisp
+
+# Shadowenv generates user-specific files that shouldn't be committed
+.shadowenv.d/
 
 cloudflared*
 function-runner*

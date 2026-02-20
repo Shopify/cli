@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-printf "\033[1;32myarn \033[0;32mhas been superseded by \033[1;32mpnpm \033[0;32mso please use that instead.\n\033[0m"
-printf "\033[0;30mCheck out https://github.com/Shopify/cli/pull/870 to understand the rationale behind the move.\n"
-
-"$(brew --prefix)/bin/yarn" "$@"
-
