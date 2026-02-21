@@ -1,12 +1,10 @@
 import {
   App,
-  AppConfiguration,
-  AppConfigurationSchema,
+  AppSchema,
   AppConfigurationWithoutPath,
   AppInterface,
   AppLinkedInterface,
   CurrentAppConfiguration,
-  LegacyAppConfiguration,
   WebType,
   getAppVersionedSchema,
 } from './app.js'
@@ -94,16 +92,13 @@ export const DEFAULT_CONFIG = {
   embedded: true,
   access_scopes: {
     scopes: 'read_products',
+    use_legacy_install_flow: true,
   },
 }
 
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
   const getConfig = () => {
-    if (schemaType === 'legacy') {
-      return {scopes: '', extension_directories: [], path: ''}
-    } else {
-      return DEFAULT_CONFIG as CurrentAppConfiguration
-    }
+    return DEFAULT_CONFIG as CurrentAppConfiguration
   }
 
   const newApp = new App({
@@ -126,7 +121,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
-    configSchema: (app.configSchema ?? AppConfigurationSchema) as any,
+    configSchema: (app.configSchema ?? AppSchema) as any,
     remoteFlags: app.remoteFlags ?? [],
     hiddenConfig: app.hiddenConfig ?? {},
     devApplicationURLs: app.devApplicationURLs,
@@ -148,20 +143,6 @@ export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterfa
 interface TestAppWithConfigOptions {
   app?: Partial<AppInterface>
   config: object
-}
-
-export function testAppWithLegacyConfig({
-  app = {},
-  config = {},
-}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
-  const configuration: AppConfiguration = {
-    path: '',
-    scopes: '',
-    name: 'name',
-    extension_directories: [],
-    ...config,
-  }
-  return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
 export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinkedInterface {
@@ -207,7 +188,9 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {
+  client_id: '',
+}
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {

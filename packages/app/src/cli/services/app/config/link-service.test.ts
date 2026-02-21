@@ -3,18 +3,23 @@ import {testOrganizationApp, testDeveloperPlatformClient} from '../../../models/
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectOrganizationPrompt} from '../../../prompts/dev.js'
+import {selectConfigName} from '../../../prompts/config.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, readFile, writeFileSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/dev.js')
+vi.mock('../../../prompts/config.js')
 vi.mock('../../local-storage')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../dev/fetch.js')
 vi.mock('../../../utilities/developer-platform-client.js')
 vi.mock('../../../models/app/validation/multi-cli-warning.js')
-beforeEach(async () => {})
+beforeEach(async () => {
+  // Default mock for selectConfigName - tests that need a specific value can override
+  vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
+})
 
 function buildDeveloperPlatformClient(): DeveloperPlatformClient {
   return testDeveloperPlatformClient({
@@ -54,7 +59,19 @@ describe('link, with minimal mocking', () => {
   test('load from a fresh template, return a connected app', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const initialContent = `
-        scopes='write_something_unusual'
+name = "test-app"
+client_id = "test-client-id"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+scopes = "write_something_unusual"
+
+[auth]
+redirect_urls = ["https://example.com/callback"]
+
+[webhooks]
+api_version = "2024-01"
         `
       const filePath = joinPath(tmp, 'shopify.app.toml')
       writeFileSync(filePath, initialContent)
@@ -69,6 +86,7 @@ describe('link, with minimal mocking', () => {
         businessName: 'test',
         source: OrganizationSource.BusinessPlatform,
       })
+      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.toml')
 
       const options = {
         directory: tmp,

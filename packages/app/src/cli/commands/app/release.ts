@@ -2,7 +2,6 @@ import {appFlags} from '../../flags.js'
 import {release} from '../../services/release.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../services/app-context.js'
-import {getAppConfigurationState} from '../../models/app/loader.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
@@ -59,10 +58,6 @@ export default class Release extends AppLinkedCommand {
     const hasAnyForceFlags = flags.force || flags['allow-updates'] || flags['allow-deletes']
     if (!hasAnyForceFlags) {
       requiredNonTTYFlags.push('allow-updates')
-    }
-    const configurationState = await getAppConfigurationState(flags.path, flags.config)
-    if (configurationState.state === 'template-only' && !clientId) {
-      requiredNonTTYFlags.push('client-id')
     }
     this.failMissingNonTTYFlags(flags, requiredNonTTYFlags)
 
