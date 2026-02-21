@@ -2,11 +2,13 @@
   "title": "View your work on mobile",
   "right": {
     "one": "Scan with your phone camera to see your work",
-    "two": "Or copy the URL to share:"
+    "two": "Or copy the URL to share:",
+    "three": "Or open it directly in Shopify POS:"
   },
   "qrcode": {
     "copy": "Copy link",
     "copied": "Link copied",
+    "openPos": "Open in Shopify POS",
     "content": "Scan to test {title} on mobile"
   }
 }
