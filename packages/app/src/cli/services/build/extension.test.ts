@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, fileExists, rmdir} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -293,5 +293,139 @@ describe('buildFunctionExtension', () => {
     })
     expect(releaseLock).toHaveBeenCalled()
     expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  test('cleans up stale lock before acquiring new lock', async () => {
+    // Given
+    // Lock file exists
+    vi.mocked(fileExists).mockResolvedValue(true)
+    // Lock is stale (not actively held)
+    vi.mocked(lockfile.check).mockResolvedValue(false)
+    vi.mocked(rmdir).mockResolvedValue()
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).toHaveBeenCalled()
+    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {force: true})
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('does not clean up lock that is actively held', async () => {
+    // Given
+    // Lock file exists
+    vi.mocked(fileExists).mockResolvedValue(true)
+    // Lock is active (held by another process)
+    vi.mocked(lockfile.check).mockResolvedValue(true)
+    vi.mocked(rmdir).mockResolvedValue()
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).toHaveBeenCalled()
+    // Should not remove active lock
+    expect(rmdir).not.toHaveBeenCalled()
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('cleans up corrupted lock when check fails', async () => {
+    // Given
+    // Lock file exists
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(lockfile.check).mockRejectedValue(new Error('ENOENT or corrupted lock'))
+    vi.mocked(rmdir).mockResolvedValue()
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(lockfile.check).toHaveBeenCalled()
+    expect(rmdir).toHaveBeenCalledWith(expect.stringContaining('.build-lock'), {force: true})
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('proceeds normally when no stale lock exists', async () => {
+    // Given
+    // No lock file exists
+    vi.mocked(fileExists).mockResolvedValue(false)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    // Should not check if file doesn't exist
+    expect(lockfile.check).not.toHaveBeenCalled()
+    expect(rmdir).not.toHaveBeenCalled()
+    expect(lockfile.lock).toHaveBeenCalled()
+    expect(releaseLock).toHaveBeenCalled()
+  })
+
+  test('registers signal handlers after acquiring lock and removes them after release', async () => {
+    // Given
+    const processOnSpy = vi.spyOn(process, 'on')
+    const processRemoveListenerSpy = vi.spyOn(process, 'removeListener')
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    // Verify signal handlers were registered for SIGINT, SIGTERM, SIGHUP
+    expect(processOnSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
+    expect(processOnSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function))
+    expect(processOnSpy).toHaveBeenCalledWith('SIGHUP', expect.any(Function))
+
+    // Verify signal handlers were removed after build completed
+    expect(processRemoveListenerSpy).toHaveBeenCalledWith('SIGINT', expect.any(Function))
+    expect(processRemoveListenerSpy).toHaveBeenCalledWith('SIGTERM', expect.any(Function))
+    expect(processRemoveListenerSpy).toHaveBeenCalledWith('SIGHUP', expect.any(Function))
+
+    // Cleanup spies
+    processOnSpy.mockRestore()
+    processRemoveListenerSpy.mockRestore()
   })
 })
