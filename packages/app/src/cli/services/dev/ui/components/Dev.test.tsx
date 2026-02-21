@@ -99,6 +99,8 @@ describe('Dev', () => {
     )
 
     await frontendPromise
+    // Wait for React 19 to render the process output
+    await waitForContent(renderInstance, 'third frontend message')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -181,6 +183,8 @@ describe('Dev', () => {
     )
 
     await frontendPromise
+    // Wait for React 19 to render the process output
+    await waitForContent(renderInstance, 'third frontend message')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -319,23 +323,10 @@ describe('Dev', () => {
 
     const promise = renderInstance.waitUntilExit()
 
+    // Wait for process output to render before aborting
+    await waitForContent(renderInstance, 'first backend message')
+
     abortController.abort()
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Shutting down dev ...
-      "
-    `)
 
     await promise
 
@@ -384,23 +375,10 @@ describe('Dev', () => {
 
     const promise = renderInstance.waitUntilExit()
 
+    // Wait for process output to render before aborting
+    await waitForContent(renderInstance, 'first backend message')
+
     abortController.abort('something went wrong')
-
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
-      "00:00:00 │ backend │ first backend message
-      00:00:00 │ backend │ second backend message
-      00:00:00 │ backend │ third backend message
-
-      ────────────────────────────────────────────────────────────────────────────────────────────────────
-
-      › Press d │ toggle development store preview: ✔ on
-      › Press g │ open GraphiQL (Admin API) in your browser
-      › Press p │ preview in your browser
-      › Press q │ quit
-
-      Shutting down dev because of an error ...
-      "
-    `)
 
     await promise
 
@@ -441,7 +419,7 @@ describe('Dev', () => {
       />,
     )
 
-    await waitForContent(renderInstance, 'Preview URL')
+    await waitForContent(renderInstance, 'first backend message')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message

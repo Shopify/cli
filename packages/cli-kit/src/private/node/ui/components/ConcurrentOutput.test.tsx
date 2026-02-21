@@ -1,5 +1,5 @@
 import {ConcurrentOutput, useConcurrentOutputContext} from './ConcurrentOutput.js'
-import {render} from '../../testing/ui.js'
+import {render, waitForContent} from '../../testing/ui.js'
 import {AbortController, AbortSignal} from '../../../../public/node/abort.js'
 import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
@@ -57,6 +57,8 @@ describe('ConcurrentOutput', () => {
     )
 
     await frontendSync.promise
+    // Wait for React 19 to render the process output
+    await waitForContent(renderInstance, 'third frontend message')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!.replace(/\d/g, '0'))).toMatchInlineSnapshot(`
@@ -88,6 +90,7 @@ describe('ConcurrentOutput', () => {
     // When
     const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
     await processSync.promise
+    await waitForContent(renderInstance, output)
 
     // Then
     const logColumns = renderInstance.lastFrame()!.split('│')
@@ -116,6 +119,7 @@ describe('ConcurrentOutput', () => {
     // When
     const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
     await processSync.promise
+    await waitForContent(renderInstance, 'foo')
 
     // Then
     const logColumns = renderInstance.lastFrame()!.split('│')
@@ -151,6 +155,7 @@ describe('ConcurrentOutput', () => {
     )
 
     await processSync.promise
+    await waitForContent(renderInstance, 'foo bar')
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
@@ -190,6 +195,7 @@ describe('ConcurrentOutput', () => {
       />,
     )
     await Promise.all([processSync1.promise, processSync2.promise])
+    await waitForContent(renderInstance, 'bar')
 
     // Then
     const logLines = unstyled(renderInstance.lastFrame()!).split('\n').filter(Boolean)
@@ -221,6 +227,7 @@ describe('ConcurrentOutput', () => {
     // When
     const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
     await processSync.promise
+    await waitForContent(renderInstance, 'foo')
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
@@ -246,6 +253,7 @@ describe('ConcurrentOutput', () => {
     // When
     const renderInstance = render(<ConcurrentOutput processes={processes} abortSignal={new AbortController().signal} />)
     await processSync.promise
+    await waitForContent(renderInstance, 'foo')
 
     // Then
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
