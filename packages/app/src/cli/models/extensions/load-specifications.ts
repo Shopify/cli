@@ -12,6 +12,7 @@ import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_confi
 import appPrivacyComplienceSpec, {
   PrivacyComplianceWebhooksSpecIdentifier,
 } from './specifications/app_config_privacy_compliance_webhooks.js'
+import appBundlesSpec, {BundlesSpecIdentifier} from './specifications/app_config_bundles.js'
 import checkoutPostPurchaseSpec from './specifications/checkout_post_purchase.js'
 import checkoutSpec from './specifications/checkout_ui_extension.js'
 import flowActionSpecification from './specifications/flow_action.js'
@@ -38,6 +39,7 @@ const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   AppProxySpecIdentifier,
   PosSpecIdentifier,
   AppHomeSpecIdentifier,
+  BundlesSpecIdentifier,
 ]
 
 /**
@@ -61,6 +63,7 @@ function loadSpecifications() {
     appWebhooksSpec,
     appWebhookSubscriptionSpec,
     appEventsSpec,
+    appBundlesSpec,
   ]
   const moduleSpecs = [
     checkoutPostPurchaseSpec,
