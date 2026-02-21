@@ -14,6 +14,7 @@ import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_a
 import {WebhookSubscriptionSchema} from '../extensions/specifications/app_config_webhook_schemas/webhook_subscription_schema.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {generateMetaobjectTypes} from '../../services/dev/type-generation/metaobject-types.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
@@ -583,6 +584,9 @@ export class App<
       }
       writeFileSync(typeFilePath, typeContent)
     })
+
+    // Generate metaobject types from app configuration
+    await generateMetaobjectTypes(this.configuration, this.directory)
   }
 
   get includeConfigOnDeploy() {
