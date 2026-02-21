@@ -1,11 +1,13 @@
 <img src="https://github.com/Shopify/cli/blob/main/assets/logo.png?raw=true" width="150"/>
 
 # Shopify CLI
+
 <a href="http://twitter.com/ShopifyDevs"><img src="https://img.shields.io/twitter/follow/ShopifyDevs?style=flat-square" alt="Twitter Followers"></a>
 <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License">
 <a href="https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml">![badge](https://github.com/Shopify/cli/actions/workflows/shopify-cli.yml/badge.svg)</a>
 
 With the Shopify command line interface (Shopify CLI 3.0), you can:
+
 - initialize, build, dev, and deploy Shopify apps, extensions, functions and themes
 - build custom storefronts and manage their hosting
 
@@ -24,6 +26,7 @@ Install the latest version of  [Node.js](https://nodejs.org/en/download/) and [n
 When you’re building a Shopify app, you can initialize your project using your preferred package manager. A single command will install all the dependencies you need — including Shopify CLI itself.
 
 Initialize your project using one of the following commands:
+
 - `npm init @shopify/app@latest` (installed by default with Node)
 - `pnpm create @shopify/create-app@latest`
 - `yarn create @shopify/app`
@@ -47,9 +50,32 @@ Learn more in the docs: [Shopify CLI for themes](https://shopify.dev/docs/storef
 
 ## Developing Hydrogen custom storefronts with Shopify CLI ##
 
-The Hydrogen code lives here: https://github.com/Shopify/hydrogen/tree/main/packages/cli
+The Hydrogen code lives here: <https://github.com/Shopify/hydrogen/tree/main/packages/cli>
 
 Learn more in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.dev/docs/custom-storefronts/hydrogen/cli)
+
+<p>&nbsp;</p>
+
+## Agent Skill
+
+The repo includes an [Agent Skill](https://agentskills.io) at `skills/shopify-cli/` that injects Shopify CLI knowledge directly into the agent's context. This follows the open [Agent Skills format](https://agentskills.io/specification) and works with any compatible agent — Claude Code, Cursor, Gemini CLI, VS Code, and others.
+
+The skill is auto-discovered based on task context (e.g. when the user mentions Shopify themes or apps). It works with or without the MCP server:
+
+- **With the MCP server:** The agent uses MCP tools for execution (structured responses, auto-parsed JSON, auth detection)
+- **Without the MCP server:** The agent runs `shopify` commands directly via shell
+
+Install the skill with the [skills CLI](https://skills.sh):
+
+```sh
+npx skills add Shopify/cli --skill shopify-cli
+```
+
+Or using the full path:
+
+```sh
+npx skills add https://github.com/Shopify/cli/tree/main/skills/shopify-cli
+```
 
 <p>&nbsp;</p>
 
