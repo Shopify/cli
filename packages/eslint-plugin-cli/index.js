@@ -1,4 +1,8 @@
-module.exports = {
+const plugin = {
+  meta: {
+    name: '@shopify/eslint-plugin-cli',
+    version: '3.47.2',
+  },
   rules: {
     'command-flags-with-env': require('./rules/command-flags-with-env'),
     'command-conventional-flag-env': require('./rules/command-conventional-flag-env'),
@@ -14,8 +18,15 @@ module.exports = {
     'required-fields-when-loading-app': require('./rules/required-fields-when-loading-app'),
     'no-inline-graphql': require('./rules/no-inline-graphql'),
   },
-
-  configs: {
-    config: require('./config'),
-  },
 }
+
+// Lazy load config to avoid circular dependency
+Object.defineProperty(plugin, 'configs', {
+  get() {
+    return {
+      config: require('./config'),
+    }
+  },
+})
+
+module.exports = plugin
