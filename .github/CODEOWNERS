@@ -2,12 +2,12 @@
 * @shopify/app-inner-loop
 
 # Theme team and CLI owners should review theme changes
-packages/cli-kit/src/private/themes/* @shopify/developer-platforms @shopify/app-inner-loop
-packages/cli-kit/src/public/**/themes/* @shopify/developer-platforms @shopify/app-inner-loop
-packages/theme/** @shopify/developer-platforms @shopify/app-inner-loop
+packages/cli-kit/src/private/themes/* @shopify/developer-platforms
+packages/cli-kit/src/public/**/themes/* @shopify/developer-platforms
+packages/theme/** @shopify/developer-platforms
 
 # These are metafiles that can be reviewed by anyone
-.changeset/* @shopify/developer-platforms @shopify/app-inner-loop
+.changeset/*
 .github/CODEOWNERS @shopify/developer-platforms @shopify/app-inner-loop
 docs-shopify.dev/**  @shopify/developer-platforms @shopify/app-inner-loop
 packages/cli/oclif.manifest.json @shopify/developer-platforms @shopify/app-inner-loop
