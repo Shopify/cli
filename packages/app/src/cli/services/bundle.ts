@@ -15,7 +15,7 @@ export async function writeManifestToBundle(appManifest: AppManifest, bundlePath
 }
 
 export async function compressBundle(inputDirectory: string, outputPath: string, customMatchFilePattern?: string[]) {
-  const matchFilePattern = customMatchFilePattern ?? ['**/*', '!**/*.js.map']
+  const matchFilePattern = customMatchFilePattern ?? ['**/*', '!**/*.js.map', '!**/metafile.json']
   if (outputPath.endsWith('.br')) {
     await brotliCompress({inputDirectory, outputPath, matchFilePattern})
   } else {

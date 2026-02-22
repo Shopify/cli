@@ -53,7 +53,7 @@ describe('compressBundle', () => {
       expect(zip).toHaveBeenCalledWith({
         inputDirectory: inputDir,
         outputZipPath: outputZip,
-        matchFilePattern: ['**/*', '!**/*.js.map'],
+        matchFilePattern: ['**/*', '!**/*.js.map', '!**/metafile.json'],
       })
       expect(brotliCompress).not.toHaveBeenCalled()
     })
@@ -74,7 +74,7 @@ describe('compressBundle', () => {
       // Then
       expect(zip).toHaveBeenCalledWith(
         expect.objectContaining({
-          matchFilePattern: ['**/*', '!**/*.js.map'],
+          matchFilePattern: ['**/*', '!**/*.js.map', '!**/metafile.json'],
         }),
       )
     })
@@ -95,7 +95,7 @@ describe('compressBundle', () => {
       expect(brotliCompress).toHaveBeenCalledWith({
         inputDirectory: inputDir,
         outputPath: outputBr,
-        matchFilePattern: ['**/*', '!**/*.js.map'],
+        matchFilePattern: ['**/*', '!**/*.js.map', '!**/metafile.json'],
       })
       expect(zip).not.toHaveBeenCalled()
     })
@@ -116,7 +116,7 @@ describe('compressBundle', () => {
       // Then
       expect(brotliCompress).toHaveBeenCalledWith(
         expect.objectContaining({
-          matchFilePattern: ['**/*', '!**/*.js.map'],
+          matchFilePattern: ['**/*', '!**/*.js.map', '!**/metafile.json'],
         }),
       )
     })
