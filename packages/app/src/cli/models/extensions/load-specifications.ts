@@ -12,6 +12,7 @@ import appAccessSpec, {AppAccessSpecIdentifier} from './specifications/app_confi
 import appPrivacyComplienceSpec, {
   PrivacyComplianceWebhooksSpecIdentifier,
 } from './specifications/app_config_privacy_compliance_webhooks.js'
+// import new specifications here
 import checkoutPostPurchaseSpec from './specifications/checkout_post_purchase.js'
 import checkoutSpec from './specifications/checkout_ui_extension.js'
 import flowActionSpecification from './specifications/flow_action.js'
