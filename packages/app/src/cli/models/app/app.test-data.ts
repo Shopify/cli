@@ -235,7 +235,7 @@ export async function testUIExtension(
       },
     },
     supported_features: {
-      offline_mode: false,
+      runs_offline: false,
     },
     extension_points: [
       {

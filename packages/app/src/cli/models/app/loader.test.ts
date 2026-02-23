@@ -1484,7 +1484,7 @@ redirect_urls = [ "https://example.com/api/auth" ]
         sources = ["https://my-iframe.com"]
 
         [extensions.supported_features]
-        offline_mode = true
+        runs_offline = true
 
         [extensions.settings]
           [[extensions.settings.fields]]
@@ -1564,7 +1564,7 @@ redirect_urls = [ "https://example.com/api/auth" ]
           },
         },
         supported_features: {
-          offline_mode: true,
+          runs_offline: true,
         },
         settings: {
           fields: [
@@ -3437,7 +3437,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You canâ€™t have multiple subscriptions with the same compliance topic',
+      message: 'You can’t have multiple subscriptions with the same compliance topic',
       fatal: true,
       path: ['webhooks', 'subscriptions'],
     }
