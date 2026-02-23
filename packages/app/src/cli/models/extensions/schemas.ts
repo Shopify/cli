@@ -29,7 +29,7 @@ const CapabilitiesSchema = zod.object({
 })
 
 const SupportedFeaturesSchema = zod.object({
-  offline_mode: zod.boolean().optional(),
+  runs_offline: zod.boolean().optional(),
 })
 
 export const ExtensionsArraySchema = zod.object({

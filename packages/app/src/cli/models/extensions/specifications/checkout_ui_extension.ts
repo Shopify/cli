@@ -23,10 +23,15 @@ const checkoutSpec = createExtensionSpecification({
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path', 'generates_source_maps'],
   buildConfig: {mode: 'ui'},
   deployConfig: async (config, directory) => {
+    const supportedFeatures =
+      config.supported_features?.runs_offline === undefined
+        ? undefined
+        : {offline_mode: config.supported_features.runs_offline}
+
     return {
       extension_points: config.extension_points,
       capabilities: config.capabilities,
-      supported_features: config.supported_features,
+      supported_features: supportedFeatures,
       metafields: config.metafields ?? [],
       name: config.name,
       settings: config.settings,
