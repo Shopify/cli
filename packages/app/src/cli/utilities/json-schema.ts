@@ -1,4 +1,5 @@
 import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
+import {AppConfigurationWithoutPath} from '../models/app/app.js'
 import {BaseConfigType} from '../models/extensions/schemas.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
@@ -49,7 +50,14 @@ export async function unifiedConfigurationParserFactory(
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined
-    const subjectForAjv = zodValidatedData ?? (config as JsonMapType)
+    let subjectForAjv: object
+    // If the zod validation succeeded and a transform function is provided, use the transform function to convert the data to the format expected by the contract.
+    // Otherwise, use the zod validated data as is.
+    if (zodValidatedData && merged.transformLocalToRemote) {
+      subjectForAjv = merged.transformLocalToRemote(zodValidatedData, {} as AppConfigurationWithoutPath)
+    } else {
+      subjectForAjv = zodValidatedData ?? (config as JsonMapType)
+    }
 
     const jsonSchemaParse = jsonSchemaValidate(
       subjectForAjv,
@@ -82,7 +90,7 @@ export async function unifiedConfigurationParserFactory(
 
     return {
       state: 'ok',
-      data: jsonSchemaParse.data as BaseConfigType,
+      data: zodValidatedData as BaseConfigType,
       errors: undefined,
     }
   }
