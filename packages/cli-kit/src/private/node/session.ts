@@ -80,7 +80,7 @@ interface AppManagementAPIOauthOptions {
 /**
  * A scope supported by the Storefront Renderer API.
  */
-export type StorefrontRendererScope = 'devtools'
+export type StorefrontRendererScope = 'devtools' | 'graphql'
 interface StorefrontRendererAPIOAuthOptions {
   /** List of scopes to request permissions for. */
   scopes: StorefrontRendererScope[]
