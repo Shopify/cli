@@ -2,6 +2,7 @@ import {MinimalOrganizationApp} from '../../models/organization.js'
 import {Flag, AppModuleVersion, DeveloperPlatformClient, AppVersion} from '../../utilities/developer-platform-client.js'
 import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
+import {allAppModules} from '../../models/app/app-modules/index.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 export function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
@@ -61,13 +62,20 @@ export function remoteAppConfigurationExtensionContent(
   let remoteAppConfig: {[key: string]: unknown} = {}
   const configSpecifications = specifications.filter((spec) => spec.uidStrategy !== 'uuid')
   configRegistrations.forEach((module) => {
-    const configSpec = configSpecifications.find(
-      (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),
-    )
-    if (!configSpec) return
+    const moduleIdentifier = module.specification?.identifier.toLowerCase()
     const config = module.config
     if (!config) return
 
+    // Use AppModule decode if available
+    const appModule = allAppModules.find((m) => m.identifier === moduleIdentifier)
+    if (appModule?.decode) {
+      remoteAppConfig = deepMergeObjects(remoteAppConfig, appModule.decode(config) as {[key: string]: unknown})
+      return
+    }
+
+    // Fallback to spec transform for modules without AppModule (contract-only, etc.)
+    const configSpec = configSpecifications.find((spec) => spec.identifier === moduleIdentifier)
+    if (!configSpec) return
     remoteAppConfig = deepMergeObjects(remoteAppConfig, configSpec.transformRemoteToLocal?.(config, {flags}) ?? config)
   })
 

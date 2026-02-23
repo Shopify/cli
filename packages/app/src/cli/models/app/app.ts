@@ -143,6 +143,7 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  *
  * Try to avoid using this: generally you should be working with a more specific type.
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
 
 export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchema>
@@ -150,6 +151,7 @@ export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchem
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
 
 /**
@@ -160,11 +162,13 @@ export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
 /**
  * App configuration for a normal, linked, app -- including properties that are module derived, such as scopes etc.
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppConfigurationUsedByCli
 
 /**
  * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
  */
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
 
 /** Validation schema that produces a provided app configuration type */
@@ -498,7 +502,7 @@ export class App<
 
     const functionExtensionsWithUiHandle = this.allExtensions.filter(
       (ext) => ext.isFunctionExtension && (ext.configuration as unknown as FunctionConfigType).ui?.handle,
-    ) as ExtensionInstance<FunctionConfigType>[]
+    )
 
     if (functionExtensionsWithUiHandle.length > 0) {
       const errors = validateFunctionExtensionsWithUiHandle(functionExtensionsWithUiHandle, this.allExtensions)
@@ -507,9 +511,7 @@ export class App<
       }
     }
 
-    const extensionCollections = this.allExtensions.filter(
-      (ext) => ext.isEditorExtensionCollection,
-    ) as ExtensionInstance<EditorExtensionCollectionType>[]
+    const extensionCollections = this.allExtensions.filter((ext) => ext.isEditorExtensionCollection)
 
     if (extensionCollections.length > 0) {
       const errors = validateExtensionsHandlesInCollection(extensionCollections, this.allExtensions)
@@ -638,13 +640,13 @@ Learn more: https://shopify.dev/docs/apps/build/authentication-authorization/app
 }
 
 export function validateFunctionExtensionsWithUiHandle(
-  functionExtensionsWithUiHandle: ExtensionInstance<FunctionConfigType>[],
+  functionExtensionsWithUiHandle: ExtensionInstance[],
   allExtensions: ExtensionInstance[],
 ): string[] | undefined {
   const errors: string[] = []
 
   functionExtensionsWithUiHandle.forEach((extension) => {
-    const uiHandle = extension.configuration.ui!.handle!
+    const uiHandle = (extension.configuration as unknown as FunctionConfigType).ui!.handle!
 
     const matchingExtension = findExtensionByHandle(allExtensions, uiHandle)
     if (!matchingExtension) {
@@ -662,14 +664,15 @@ export function validateFunctionExtensionsWithUiHandle(
 export type UIExtensionType = zod.infer<typeof UIExtensionSchema>
 
 export function validateExtensionsHandlesInCollection(
-  editorExtensionCollections: ExtensionInstance<EditorExtensionCollectionType>[],
+  editorExtensionCollections: ExtensionInstance[],
   allExtensions: ExtensionInstance[],
 ): string[] | undefined {
   const errors: string[] = []
 
   const allowableTypesForExtensionInCollection = ['ui_extension']
   editorExtensionCollections.forEach((collection) => {
-    collection.configuration.inCollection.forEach((extension) => {
+    const config = collection.configuration as unknown as EditorExtensionCollectionType
+    config.inCollection.forEach((extension) => {
       const matchingExtension = findExtensionByHandle(allExtensions, extension.handle)
 
       if (!matchingExtension) {
@@ -681,8 +684,7 @@ export function validateExtensionsHandlesInCollection(
           `[${collection.handle}] editor extension collection: Remove extension of type '${matchingExtension.specification.identifier}' from this collection. This extension type is not supported in collections.`,
         )
       } else if (matchingExtension.specification.identifier === 'ui_extension') {
-        const uiExtension = matchingExtension as ExtensionInstance<UIExtensionType>
-        uiExtension.configuration.extension_points.forEach((extensionPoint) => {
+        matchingExtension.configuration.extension_points.forEach((extensionPoint: {target: string}) => {
           if (extensionPoint.target.startsWith('admin.')) {
             errors.push(
               `[${collection.handle}] editor extension collection: Remove extension '${matchingExtension.configuration.handle}' with target '${extensionPoint.target}' from this collection. This extension target is not supported in collections.`,

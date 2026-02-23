@@ -153,7 +153,8 @@ interface TestAppWithConfigOptions {
 export function testAppWithLegacyConfig({
   app = {},
   config = {},
-}: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
+}: // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
     path: '',
     scopes: '',
@@ -161,6 +162,7 @@ export function testAppWithLegacyConfig({
     extension_directories: [],
     ...config,
   }
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion, @typescript-eslint/no-unnecessary-type-arguments
   return testApp({...app, configuration}) as AppInterface<LegacyAppConfiguration>
 }
 
@@ -585,6 +587,7 @@ interface TestFunctionExtensionOptions {
 
 export async function testFunctionExtension(
   opts: TestFunctionExtensionOptions = {},
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 ): Promise<ExtensionInstance<FunctionConfigType>> {
   const directory = opts.dir ?? '/tmp/project/extensions/my-function'
   const configuration = opts.config ?? defaultFunctionConfiguration()

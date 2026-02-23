@@ -26,7 +26,6 @@ import {
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
-import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {describe, expect, test, vi} from 'vitest'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
@@ -637,9 +636,9 @@ describe('validateFunctionExtensionsWithUiHandle', () => {
         handle: 'order-summary-collection',
         includes: ['handle1', 'product-discounts-test', 'admin-extension', 'customer-account-extension'],
       }
-      const editorExtensionCollection = (await testEditorExtensionCollection({
+      const editorExtensionCollection = await testEditorExtensionCollection({
         configuration,
-      })) as ExtensionInstance<EditorExtensionCollectionType>
+      })
 
       const orderDiscountFunction = await testFunctionExtension({
         config: {

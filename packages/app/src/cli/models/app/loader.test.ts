@@ -2098,7 +2098,10 @@ redirect_urls = [ "https://example.com/api/auth" ]
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(6)
+    // 5 config modules: branding (name+handle), app_access (auth), webhooks, point_of_sale, app_home
+    // Note: events and app_proxy are NOT present because their module-specific keys
+    // (events, app_proxy) are not in the TOML. They no longer get created from base fields alone.
+    expect(app.allExtensions).toHaveLength(5)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
       expect.objectContaining({
@@ -2113,9 +2116,6 @@ redirect_urls = [ "https://example.com/api/auth" ]
         webhooks: {
           api_version: '2023-07',
         },
-      }),
-      expect.objectContaining({
-        name: 'for-testing',
       }),
       expect.objectContaining({
         pos: {
@@ -2155,20 +2155,23 @@ redirect_urls = [ "https://example.com/api/auth" ]
     // When
     const app = await loadTestingApp({remoteFlags: []})
 
-    // Then
-    expect(app.allExtensions).toHaveLength(7)
+    // Then: 4 config modules + 2 webhook subscriptions = 6
+    // Note: events, app_proxy, point_of_sale are NOT present (their keys not in TOML).
+    // Modules no longer pick up 'name' from base schema — they only contain their own keys.
+    expect(app.allExtensions).toHaveLength(6)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
+      // branding (owns 'name')
       {
         name: 'for-testing-webhooks',
       },
+      // app_access (owns 'auth')
       {
         auth: {
           redirect_urls: ['https://example.com/api/auth'],
         },
-        name: 'for-testing-webhooks',
       },
-      // this is the webhooks extension
+      // webhooks (owns 'webhooks')
       {
         webhooks: {
           api_version: '2024-01',
@@ -2177,23 +2180,18 @@ redirect_urls = [ "https://example.com/api/auth" ]
             {topics: ['orders/delete'], uri: 'https://example.com'},
           ],
         },
-        name: 'for-testing-webhooks',
       },
-      {
-        name: 'for-testing-webhooks',
-      },
+      // app_home (owns 'application_url', 'embedded')
       {
         application_url: 'https://example.com/lala',
         embedded: true,
-        name: 'for-testing-webhooks',
       },
-      // this is a webhook subscription extension
+      // webhook_subscription (dynamic — one per topic)
       {
         api_version: '2024-01',
         topic: 'orders/create',
         uri: 'https://example.com',
       },
-      // this is a webhook subscription extension
       {
         api_version: '2024-01',
         topic: 'orders/delete',

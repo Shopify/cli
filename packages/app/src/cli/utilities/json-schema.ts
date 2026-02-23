@@ -39,6 +39,15 @@ export async function unifiedConfigurationParserFactory(
   if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
     return merged.parseConfigurationObject
   }
+
+  // If this module has a CLI-side transform, TOML shape ≠ contract shape.
+  // The contract defines the API shape. Validating TOML-shaped data against it is a category error
+  // that produces silent data loss via strip mode (the access_scopes incident).
+  // Contract validation for these modules happens post-encode in deployConfig() instead.
+  if (merged.transformLocalToRemote !== undefined) {
+    return merged.parseConfigurationObject
+  }
+
   const contract = await normaliseJsonSchema(contractJsonSchema)
   contract.properties = {...JsonSchemaBaseProperties, ...contract.properties}
   const extensionIdentifier = merged.identifier

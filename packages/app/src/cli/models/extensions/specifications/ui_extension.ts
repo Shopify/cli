@@ -329,6 +329,7 @@ const uiExtensionSpec = createExtensionSpecification({
   },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 function addDistPathToAssets(extP: NewExtensionPointSchemaType & {build_manifest: BuildManifest}) {
   return {
     ...extP,
@@ -365,6 +366,7 @@ async function checkForMissingPath(
 
 async function validateUIExtensionPointConfig(
   directory: string,
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   extensionPoints: (NewExtensionPointSchemaType & {build_manifest?: BuildManifest})[],
   configPath: string,
 ): Promise<Result<unknown, string>> {
@@ -438,6 +440,7 @@ export function getShouldRenderTarget(target: string) {
 }
 
 function buildShouldRenderAsset(
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   extensionPoint: NewExtensionPointSchemaType & {build_manifest: BuildManifest},
   shouldIncludeShopifyExtend: boolean,
 ) {

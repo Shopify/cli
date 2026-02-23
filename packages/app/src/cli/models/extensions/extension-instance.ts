@@ -25,6 +25,7 @@ import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationWithoutPath} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {allAppModules} from '../app/app-modules/index.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
@@ -35,6 +36,7 @@ import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {uniq} from '@shopify/cli-kit/common/array'
+import {jsonSchemaValidate, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
@@ -214,7 +216,46 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
+    // Path 1: Modules with AppModule encode — the universal path
+    const appModule = allAppModules.find((mod) => mod.identifier === this.specification.identifier)
+    if (appModule) {
+      try {
+        const encoded = (await appModule.encode(this.configuration, {
+          appConfiguration,
+          directory: this.directory,
+          apiKey,
+        })) as {[key: string]: unknown}
+        if (!encoded || Object.keys(encoded).length === 0) return undefined
+
+        // Post-encode contract validation: validate the API-shaped output against the contract
+        const contractJson = (this.specification as {validationSchema?: {jsonSchema?: string}}).validationSchema
+          ?.jsonSchema
+        if (contractJson) {
+          const contract = await normaliseJsonSchema(contractJson)
+          const validation = jsonSchemaValidate(encoded, contract, 'fail', this.specification.identifier)
+          if (validation.state === 'error') {
+            outputDebug(
+              `Contract validation errors for "${this.handle}" (${this.specification.identifier}): ${JSON.stringify(
+                validation.errors,
+              )}`,
+            )
+          }
+        }
+
+        return encoded
+      } catch (error) {
+        // Only handle expected errors; rethrow if it's an unexpected error
+        outputDebug(`AppModule.encode() failed for "${this.handle}" (${this.specification.identifier}): ${error}`)
+        if (!(error instanceof Error)) {
+          // If error is not an instance of Error, rethrow it
+          throw error
+        }
+      }
+    }
+
+    // Path 2: Fallback for modules not yet on AppModule
     const deployConfig = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined

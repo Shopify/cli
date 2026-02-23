@@ -22,6 +22,8 @@ import {
   getTemplateScopesArray,
 } from './app.js'
 import {parseHumanReadableError} from './error-parsing.js'
+import {allAppModules} from './app-modules/index.js'
+import {AppModule, DynamicAppModule} from './app-module.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -31,8 +33,6 @@ import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
-import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
-import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
@@ -117,6 +117,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   abortOrReport: AbortOrReport = abort,
   decode: (input: string) => JsonMapType = decodeToml,
   preloadedContent?: JsonMapType,
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
@@ -410,7 +411,9 @@ export function getDotEnvFileName(configurationPath: string) {
   return configurationShorthand ? `${dotEnvFileNames.production}.${configurationShorthand}` : dotEnvFileNames.production
 }
 
+// eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
 export async function loadDotEnv(appDirectory: string, configurationPath: string): Promise<DotEnvFile | undefined> {
+  // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
   let dotEnvFile: DotEnvFile | undefined
   const dotEnvPath = joinPath(appDirectory, getDotEnvFileName(configurationPath))
   if (await fileExists(dotEnvPath)) {
@@ -609,14 +612,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     const extensionPromises = await this.createExtensionInstances(appDirectory, appConfiguration.extension_directories)
     const configExtensionPromises = isCurrentAppSchema(appConfiguration)
-      ? await this.createConfigExtensionInstances(appDirectory, appConfiguration)
+      ? await this.createConfigExtensionInstancesFromAppModules(appDirectory, appConfiguration)
       : []
 
-    const webhookPromises = isCurrentAppSchema(appConfiguration)
-      ? this.createWebhookSubscriptionInstances(appDirectory, appConfiguration)
-      : []
-
-    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises, ...webhookPromises])
+    const extensions = await Promise.all([...extensionPromises, ...configExtensionPromises])
 
     const allExtensions = getArrayRejectingUndefined(extensions.flat())
 
@@ -700,74 +699,122 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     })
   }
 
-  private createWebhookSubscriptionInstances(directory: string, appConfiguration: TConfig) {
-    const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
-    if (!specification) return []
-    const specConfiguration = parseConfigurationObject(
-      WebhooksSchema,
-      appConfiguration.path,
-      appConfiguration,
-      this.abortOrReport.bind(this),
+  /**
+   * Create config extension instances using the AppModule interface.
+   * Replaces both createConfigExtensionInstances and createWebhookSubscriptionInstances.
+   * Each AppModule handles its own extraction from the full TOML config.
+   */
+  private async createConfigExtensionInstancesFromAppModules(
+    directory: string,
+    // eslint-disable-next-line @typescript-eslint/no-redundant-type-constituents
+    appConfiguration: TConfig & CurrentAppConfiguration,
+  ) {
+    const configAsRecord = appConfiguration as unknown as {[key: string]: unknown}
+    const usedKeys = new Set<string>()
+    const allInstances: Promise<ExtensionInstance | undefined>[] = []
+
+    // Only process modules that have tomlKeys (config modules in app.toml).
+    // Extension modules (no tomlKeys) are loaded from .extension.toml files by createExtensionInstances.
+    const appTomlModules = allAppModules.filter((mod) => mod.tomlKeys !== undefined)
+
+    // Process single-UID modules first, then dynamic — matches old ordering
+    const singleModules = appTomlModules.filter((mod) => mod.uidStrategy !== 'dynamic')
+    const dynamicModules = appTomlModules.filter((mod) => mod.uidStrategy === 'dynamic')
+
+    for (const appModule of singleModules) {
+      const specification = this.findSpecificationForType(appModule.identifier)
+      if (!specification) continue
+
+      const singleKeys = appModule.tomlKeys ?? []
+      for (const key of singleKeys) {
+        usedKeys.add(key)
+      }
+
+      const extracted = (appModule as AppModule).extract(configAsRecord)
+      if (!extracted || Object.keys(extracted).length === 0) continue
+
+      // No validateConfigurationExtensionInstance needed — extractByKeys only returns
+      // data when module-specific keys are present, so phantom instances aren't created.
+      // Contract validation happens post-encode in deployConfig().
+      allInstances.push(
+        this.createExtensionInstance(specification.identifier, extracted, appConfiguration.path, directory),
+      )
+    }
+
+    for (const appModule of dynamicModules) {
+      const specification = this.findSpecificationForType(appModule.identifier)
+      if (!specification) continue
+
+      const dynamicKeys = appModule.tomlKeys ?? []
+      for (const key of dynamicKeys) {
+        usedKeys.add(key)
+      }
+
+      const items = (appModule as DynamicAppModule).extract(configAsRecord)
+      if (!items || items.length === 0) continue
+
+      for (const item of items) {
+        allInstances.push(
+          this.createExtensionInstance(specification.identifier, item, appConfiguration.path, directory),
+        )
+      }
+    }
+
+    // Also process any single-UID specs that don't have AppModules (e.g., contract-only modules)
+    const appModuleIdentifiers = new Set(allAppModules.map((mod) => mod.identifier))
+    const specsWithoutAppModules = this.specifications.filter(
+      (spec) => spec.uidStrategy === 'single' && !appModuleIdentifiers.has(spec.identifier),
     )
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const {api_version, subscriptions = []} = specConfiguration.webhooks
-    // Find all unique subscriptions
-    const webhookSubscriptions = getArrayRejectingUndefined(
-      subscriptions.flatMap((subscription) => {
-        // compliance_topics gets handled by privacy_compliance_webhooks
-        const {uri, topics, compliance_topics: _, ...optionalFields} = subscription
-        return topics?.map((topic) => {
-          return {api_version, uri, topic, ...optionalFields}
-        })
-      }),
-    )
+    for (const specification of specsWithoutAppModules) {
+      const specConfiguration = parseConfigurationObjectAgainstSpecification(
+        specification,
+        appConfiguration.path,
+        appConfiguration,
+        this.abortOrReport.bind(this),
+      )
+      if (Object.keys(specConfiguration).length === 0) continue
 
-    // Create 1 extension instance per subscription
-    const instances = webhookSubscriptions.map(async (subscription) => {
-      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
-    })
+      // Track keys from the spec's schema shape
+      const shape = (
+        specification as {schema?: {_def?: {shape?: () => {[key: string]: unknown}}}}
+      ).schema?._def?.shape?.()
+      if (shape) {
+        for (const key of Object.keys(shape)) {
+          usedKeys.add(key)
+        }
+      }
 
-    return instances
-  }
+      const instance = this.createExtensionInstance(
+        specification.identifier,
+        specConfiguration,
+        appConfiguration.path,
+        directory,
+      ).then((extensionInstance) =>
+        this.validateConfigurationExtensionInstance(appConfiguration.client_id, appConfiguration, extensionInstance),
+      )
+      allInstances.push(instance)
+    }
 
-  private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
-    const extensionInstancesWithKeys = await Promise.all(
-      this.specifications
-        .filter((specification) => specification.uidStrategy === 'single')
-        .map(async (specification) => {
-          const specConfiguration = parseConfigurationObjectAgainstSpecification(
-            specification,
-            appConfiguration.path,
-            appConfiguration,
-            this.abortOrReport.bind(this),
-          )
-
-          if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
-
-          const instance = await this.createExtensionInstance(
-            specification.identifier,
-            specConfiguration,
-            appConfiguration.path,
-            directory,
-          ).then((extensionInstance) =>
-            this.validateConfigurationExtensionInstance(
-              appConfiguration.client_id,
-              appConfiguration,
-              extensionInstance,
-            ),
-          )
-          return [instance, Object.keys(specConfiguration)] as const
-        }),
-    )
-
-    // get all the keys from appConfiguration that aren't used by any of the results
-
+    // Detect unsupported TOML sections
+    // Exclude app-level fields AND base schema fields that modules inherit but don't claim via tomlKeys
+    const configKeysThatAreNeverModules = [
+      ...Object.keys(AppSchema.shape),
+      'path',
+      'organization_id',
+      // Base schema fields from BaseSchemaWithoutHandle — present in TOML but not module-specific
+      'name',
+      'type',
+      'description',
+      'uid',
+      'api_version',
+      'extension_points',
+      'capabilities',
+      'supported_features',
+      'settings',
+    ]
     const unusedKeys = Object.keys(appConfiguration)
-      .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
-      .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path', 'organization_id']
-        return !configKeysThatAreNeverModules.includes(key)
-      })
+      .filter((key) => !usedKeys.has(key))
+      .filter((key) => !configKeysThatAreNeverModules.includes(key))
 
     if (unusedKeys.length > 0 && this.mode !== 'local') {
       this.abortOrReport(
@@ -776,9 +823,9 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
         appConfiguration.path,
       )
     }
-    return extensionInstancesWithKeys
-      .filter(([instance]) => instance)
-      .map(([instance]) => instance as ExtensionInstance)
+
+    const results = await Promise.all(allInstances)
+    return getArrayRejectingUndefined(results)
   }
 
   private async validateConfigurationExtensionInstance(
