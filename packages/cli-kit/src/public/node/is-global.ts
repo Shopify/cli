@@ -1,13 +1,40 @@
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
-import {cwd, sniffForPath} from './path.js'
+import {cwd, dirname, joinPath, resolvePath, sniffForPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
 import {isUnitTest} from './context/local.js'
-import {execaSync} from 'execa'
+import {existsSync} from 'fs'
 
 let _isGlobal: boolean | undefined
+
+/**
+ * Walks up from `start` looking for the closest directory that contains
+ * a `package.json` or `node_modules` directory, mirroring the core of
+ * npm's `loadLocalPrefix()` algorithm without the workspace-promotion step.
+ *
+ * If nothing is found, returns `start` (matching npm's cwd fallback).
+ *
+ * @param start - The directory to start searching from.
+ * @returns The closest ancestor directory containing package.json or node_modules.
+ */
+export function findNpmPrefix(start: string): string {
+  let dir = resolvePath(start)
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    if (existsSync(joinPath(dir, 'package.json')) || existsSync(joinPath(dir, 'node_modules'))) {
+      return dir
+    }
+    const parent = dirname(dir)
+    if (parent === dir) {
+      // Reached filesystem root without finding package.json or node_modules.
+      // Return original start path, matching npm's fallback behavior.
+      return resolvePath(start)
+    }
+    dir = parent
+  }
+}
 
 /**
  * Returns true if the current process is running in a global context.
@@ -25,13 +52,13 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
 
     // Closest parent directory to contain a package.json file or node_modules directory
     // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
-    const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
+    const npmPrefix = findNpmPrefix(path)
 
     // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
     const binDir = argv[1] ?? ''
 
     // If binDir starts with npmPrefix, then we are running a local CLI
-    const isLocal = binDir.startsWith(npmPrefix.trim())
+    const isLocal = binDir.startsWith(npmPrefix)
 
     _isGlobal = !isLocal
     return _isGlobal

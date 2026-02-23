@@ -1,15 +1,24 @@
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, installGlobalCLIPrompt} from './is-global.js'
+import {currentProcessIsGlobal, findNpmPrefix, inferPackageManagerForGlobalCLI, installGlobalCLIPrompt} from './is-global.js'
+import {sniffForPath, cwd} from './path.js'
 import {terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
-import * as execa from 'execa'
+import * as fs from 'fs'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('./system.js')
 vi.mock('./ui.js')
-vi.mock('execa')
+vi.mock('fs')
 vi.mock('which')
 vi.mock('./version.js')
+vi.mock('./path.js', async (importOriginal) => {
+  const original: any = await importOriginal()
+  return {
+    ...original,
+    sniffForPath: vi.fn(),
+    cwd: vi.fn(),
+  }
+})
 
 const globalNPMPath = '/path/to/global/npm'
 const globalYarnPath = '/path/to/global/yarn'
@@ -18,7 +27,14 @@ const unknownGlobalPath = '/path/to/global/unknown'
 const localProjectPath = '/path/local'
 
 beforeEach(() => {
-  ;(vi.mocked(execa.execaSync) as any).mockReturnValue({stdout: localProjectPath})
+  // sniffForPath returns undefined so findNpmPrefix starts from cwd()
+  vi.mocked(sniffForPath).mockReturnValue(undefined)
+  // cwd returns the local project path
+  vi.mocked(cwd).mockReturnValue(localProjectPath)
+  // Mock existsSync so that findNpmPrefix finds package.json at localProjectPath
+  vi.mocked(fs.existsSync).mockImplementation((filePath) => {
+    return filePath === `${localProjectPath}/package.json`
+  })
 })
 
 describe('currentProcessIsGlobal', () => {
