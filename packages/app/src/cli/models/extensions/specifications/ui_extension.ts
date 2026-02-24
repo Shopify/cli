@@ -115,16 +115,12 @@ const uiExtensionSpec = createExtensionSpecification({
   },
   deployConfig: async (config, directory) => {
     const transformedExtensionPoints = config.extension_points?.map(addDistPathToAssets) ?? []
-    const supportedFeatures =
-      config.supported_features?.runs_offline === undefined
-        ? undefined
-        : {offline_mode: config.supported_features.runs_offline}
 
     return {
       api_version: config.api_version,
       extension_points: transformedExtensionPoints,
       capabilities: config.capabilities,
-      supported_features: supportedFeatures,
+      supported_features: config.supported_features,
       name: config.name,
       description: config.description,
       settings: config.settings,

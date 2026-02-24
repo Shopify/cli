@@ -3437,7 +3437,7 @@ describe('WebhooksSchema', () => {
     }
     const errorObj = {
       code: zod.ZodIssueCode.custom,
-      message: 'You can’t have multiple subscriptions with the same compliance topic',
+      message: 'You canâ€™t have multiple subscriptions with the same compliance topic',
       fatal: true,
       path: ['webhooks', 'subscriptions'],
     }

@@ -54,7 +54,7 @@ export async function getUIExtensionPayload(
         },
       },
       supportedFeatures: {
-        offlineMode: extension.configuration.supported_features?.runs_offline ?? false,
+        runsOffline: extension.configuration.supported_features?.runs_offline ?? false,
       },
       capabilities: {
         blockProgress: extension.configuration.capabilities?.block_progress ?? false,

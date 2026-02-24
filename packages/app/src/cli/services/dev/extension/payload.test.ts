@@ -462,7 +462,7 @@ describe('getUIExtensionPayload', () => {
   })
 
   describe('supportedFeatures', () => {
-    test('returns supportedFeatures with offlineMode true when runs_offline is enabled', async () => {
+    test('returns supportedFeatures with runsOffline true when runs_offline is enabled', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await testUIExtension({
@@ -488,12 +488,12 @@ describe('getUIExtensionPayload', () => {
 
         // Then
         expect(got.supportedFeatures).toStrictEqual({
-          offlineMode: true,
+          runsOffline: true,
         })
       })
     })
 
-    test('returns supportedFeatures with offlineMode false when runs_offline is disabled', async () => {
+    test('returns supportedFeatures with runsOffline false when runs_offline is disabled', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await testUIExtension({
@@ -519,12 +519,12 @@ describe('getUIExtensionPayload', () => {
 
         // Then
         expect(got.supportedFeatures).toStrictEqual({
-          offlineMode: false,
+          runsOffline: false,
         })
       })
     })
 
-    test('returns supportedFeatures with offlineMode false when supported_features is not configured', async () => {
+    test('returns supportedFeatures with runsOffline false when supported_features is not configured', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await testUIExtension({
@@ -547,7 +547,7 @@ describe('getUIExtensionPayload', () => {
 
         // Then
         expect(got.supportedFeatures).toStrictEqual({
-          offlineMode: false,
+          runsOffline: false,
         })
       })
     })
