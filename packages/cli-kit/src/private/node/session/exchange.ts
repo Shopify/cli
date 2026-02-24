@@ -229,12 +229,22 @@ async function tokenRequest(params: {
   url.search = new URLSearchParams(Object.entries(params)).toString()
 
   const res = await shopifyFetch(url.href, {method: 'POST'})
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload: any = await res.json()
+  try {
+    const responseText = await res.text()
 
-  if (res.ok) return ok(payload)
+    const payload = JSON.parse(responseText)
+    if (res.ok) return ok(payload)
 
-  return err({error: payload.error, store: params.store})
+    return err({error: payload.error, store: params.store})
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new AbortError(
+        `Received invalid response from authentication service (HTTP ${res.status}).`,
+        'The response could not be parsed as JSON. The service may be temporarily unavailable. Please try again.',
+      )
+    }
+    throw error
+  }
 }
 
 function buildIdentityToken(
