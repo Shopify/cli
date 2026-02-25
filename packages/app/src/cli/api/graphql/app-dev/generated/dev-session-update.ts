@@ -15,7 +15,7 @@ export type DevSessionUpdateMutation = {
   devSessionUpdate?: {
     devSession?: {
       websocketUrl?: string | null
-      updatedAt: string
+      updatedAt: unknown
       user?: {id: string; email?: string | null} | null
       app: {id: string; key: string}
     } | null
