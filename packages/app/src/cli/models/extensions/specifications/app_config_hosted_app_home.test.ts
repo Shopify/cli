@@ -7,20 +7,20 @@ vi.mock('@shopify/cli-kit/node/fs')
 
 describe('hosted_app_home', () => {
   describe('transform', () => {
-    test('should return the transformed object with static_root', () => {
+    test('should return the transformed object preserving admin nesting', () => {
       const object = {
-        static_root: 'public',
+        admin: {static_root: 'public'},
       }
       const appConfigSpec = spec
 
       const result = appConfigSpec.transformLocalToRemote!(object, placeholderAppConfiguration)
 
       expect(result).toMatchObject({
-        static_root: 'public',
+        admin: {static_root: 'public'},
       })
     })
 
-    test('should return empty object when static_root is not provided', () => {
+    test('should return empty object when admin.static_root is not provided', () => {
       const object = {}
       const appConfigSpec = spec
 
@@ -31,16 +31,16 @@ describe('hosted_app_home', () => {
   })
 
   describe('reverseTransform', () => {
-    test('should return the reversed transformed object with static_root', () => {
+    test('should return the reversed transformed object preserving admin nesting', () => {
       const object = {
-        static_root: 'public',
+        admin: {static_root: 'public'},
       }
       const appConfigSpec = spec
 
       const result = appConfigSpec.transformRemoteToLocal!(object)
 
       expect(result).toMatchObject({
-        static_root: 'public',
+        admin: {static_root: 'public'},
       })
     })
 
@@ -57,7 +57,7 @@ describe('hosted_app_home', () => {
   describe('copyStaticAssets', () => {
     test('should copy static assets from source to output directory', async () => {
       vi.mocked(copyDirectoryContents).mockResolvedValue(undefined)
-      const config = {static_root: 'public'}
+      const config = {admin: {static_root: 'public'}}
       const directory = '/app/root'
       const outputPath = '/output/dist/bundle.js'
 
@@ -66,7 +66,7 @@ describe('hosted_app_home', () => {
       expect(copyDirectoryContents).toHaveBeenCalledWith('/app/root/public', '/output/dist')
     })
 
-    test('should not copy assets when static_root is not provided', async () => {
+    test('should not copy assets when admin.static_root is not provided', async () => {
       const config = {}
       const directory = '/app/root'
       const outputPath = '/output/dist/bundle.js'
@@ -78,7 +78,7 @@ describe('hosted_app_home', () => {
 
     test('should throw error when copy fails', async () => {
       vi.mocked(copyDirectoryContents).mockRejectedValue(new Error('Permission denied'))
-      const config = {static_root: 'public'}
+      const config = {admin: {static_root: 'public'}}
       const directory = '/app/root'
       const outputPath = '/output/dist/bundle.js'
 
@@ -96,7 +96,7 @@ describe('hosted_app_home', () => {
 
   describe('identifier', () => {
     test('should have correct identifier', () => {
-      expect(spec.identifier).toBe('hosted_app_home')
+      expect(spec.identifier).toBe('admin')
     })
   })
 })
