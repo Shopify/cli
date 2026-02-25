@@ -124,6 +124,7 @@ async function init(options: InitOptions) {
               await appendFile(joinPath(templateScaffoldDir, '.npmrc'), `auto-install-peers=true\n`)
               break
             }
+            case 'homebrew':
             case 'unknown':
               throw new UnknownPackageManagerError()
           }
