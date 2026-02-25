@@ -161,15 +161,10 @@ You can run this command only in a directory that matches the [default Shopify t
 
     recordEvent('theme-command:dev:single-env:authenticated')
 
-    if (devFlags.source) {
-      const resolvedSource = resolvePath(devFlags.source)
-
-      if (isDirectorySync(resolvedSource)) {
-        devFlags.path = resolvedSource
-      } else {
-        await createOverrideDevSession(resolvedSource, devFlags, adminSession)
-        return
-      }
+    if (!isDirectorySync(devFlags.path)) {
+      recordEvent('theme-command:dev:override-session')
+      await createOverrideDevSession(devFlags.path, devFlags, adminSession)
+      return
     }
 
     let theme: Theme
