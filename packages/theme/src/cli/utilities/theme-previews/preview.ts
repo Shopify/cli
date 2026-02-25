@@ -1,6 +1,7 @@
 import {buildBaseStorefrontUrl} from '../theme-environment/storefront-renderer.js'
 import {defaultHeaders} from '../theme-environment/storefront-utils.js'
 import {DevServerSession} from '../theme-environment/types.js'
+import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 
@@ -38,6 +39,7 @@ export async function createThemePreview({
   overridesContent,
   themeId,
 }: CreateThemePreviewOptions): Promise<ThemePreviewResult> {
+  recordTiming('theme-preview:create')
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}/theme_preview.json?preview_theme_id=${themeId}`
 
@@ -55,7 +57,9 @@ export async function createThemePreview({
     throw new AbortError(`Theme preview request failed with status ${response.status}: ${response.statusText}`)
   }
 
-  return parsePreviewResponse(response)
+  const result = await parsePreviewResponse(response)
+  recordTiming('theme-preview:create')
+  return result
 }
 
 /**
@@ -71,6 +75,7 @@ export async function updateThemePreview({
   themeId,
   previewIdentifier,
 }: UpdateThemePreviewOptions): Promise<ThemePreviewResult> {
+  recordTiming('theme-preview:update')
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}/theme_preview.json?preview_theme_id=${themeId}&preview_identifier=${encodeURIComponent(previewIdentifier)}`
 
@@ -88,7 +93,9 @@ export async function updateThemePreview({
     throw new AbortError(`Theme preview request failed with status ${response.status}: ${response.statusText}`)
   }
 
-  return parsePreviewResponse(response)
+  const result = await parsePreviewResponse(response)
+  recordTiming('theme-preview:update')
+  return result
 }
 
 async function parsePreviewResponse(response: Response): Promise<ThemePreviewResult> {
