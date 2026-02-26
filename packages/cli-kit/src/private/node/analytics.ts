@@ -9,6 +9,7 @@ import {ciPlatform, cloudEnvironment, macAddress} from '../../public/node/contex
 import {cwd} from '../../public/node/path.js'
 import {currentProcessIsGlobal} from '../../public/node/is-global.js'
 import {isWsl} from '../../public/node/system.js'
+
 import {Command, Interfaces} from '@oclif/core'
 
 interface StartOptions {

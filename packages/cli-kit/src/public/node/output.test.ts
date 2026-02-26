@@ -34,7 +34,7 @@ describe('Output helpers', () => {
 })
 
 describe('Color disabling', () => {
-  function processLike({env, stdoutIsTTY}: {env: {[variable: string]: string}; stdoutIsTTY: boolean}) {
+  function processLike({env, stdoutIsTTY}: {env: Record<string, string>; stdoutIsTTY: boolean}) {
     const pseudoProcess = {
       ...process,
       env,

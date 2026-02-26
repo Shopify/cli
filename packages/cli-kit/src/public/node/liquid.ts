@@ -11,7 +11,7 @@ import {
   matchGlob,
 } from './fs.js'
 import {joinPath, dirname, relativePath} from './path.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
+import {outputContent, outputToken, outputDebug} from './output.js'
 import {Liquid} from 'liquidjs'
 
 /**

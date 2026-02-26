@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/dot-notation */
 import {LocalStorage} from './local-storage.js'
 import {inTemporaryDirectory} from './fs.js'
 import {AbortError} from './error.js'
@@ -7,6 +6,13 @@ import {describe, expect, test, vi} from 'vitest'
 
 interface TestSchema {
   testValue: string
+}
+
+// Helper to access private config for testing
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getConfig(storage: LocalStorage<TestSchema>): any {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (storage as any).config
 }
 
 describe('storage', () => {
@@ -71,16 +77,16 @@ describe('error handling', () => {
       vi.spyOn(fs, 'unixFileIsOwnedByCurrentUser').mockReturnValue(true)
 
       // Mock Config to throw
-      storage['config'].set = vi.fn(() => {
+      getConfig(storage).set = vi.fn(() => {
         throw new Error('EACCES: permission denied')
       })
-      storage['config'].get = vi.fn(() => {
+      getConfig(storage).get = vi.fn(() => {
         throw new Error('EACCES: permission denied')
       })
-      storage['config'].delete = vi.fn(() => {
+      getConfig(storage).delete = vi.fn(() => {
         throw new Error('EACCES: permission denied')
       })
-      storage['config'].clear = vi.fn(() => {
+      getConfig(storage).clear = vi.fn(() => {
         throw new Error('EACCES: permission denied')
       })
 
@@ -111,7 +117,7 @@ describe('error handling', () => {
 
       // Mock Config to throw
 
-      storage['config'].get = vi.fn(() => {
+      getConfig(storage).get = vi.fn(() => {
         throw new Error('EACCES: permission denied')
       })
 
@@ -143,7 +149,7 @@ describe('error handling', () => {
 
       // Mock Config to throw non-permission error
 
-      storage['config'].set = vi.fn(() => {
+      getConfig(storage).set = vi.fn(() => {
         throw new Error('Invalid JSON format')
       })
 

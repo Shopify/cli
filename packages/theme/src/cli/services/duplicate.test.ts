@@ -1,8 +1,8 @@
 // packages/theme/src/cli/services/duplicate.test.ts
 import {duplicate} from './duplicate.js'
-import {findThemeById, findOrSelectTheme} from '../utilities/theme-selector.js'
-import {themeComponent} from '../utilities/theme-ui.js'
 import {configureCLIEnvironment} from '../utilities/cli-config.js'
+import {themeComponent} from '../utilities/theme-ui.js'
+import {findThemeById, findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themeDuplicate} from '@shopify/cli-kit/node/themes/api'
 import {renderConfirmationPrompt, renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {outputResult} from '@shopify/cli-kit/node/output'

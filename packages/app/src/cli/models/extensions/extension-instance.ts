@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'

@@ -1,5 +1,5 @@
-import {parseCookies, serializeCookies} from './cookies.js'
 import {defaultHeaders} from './storefront-utils.js'
+import {parseCookies, serializeCookies} from './cookies.js'
 import {shopifyFetch, Response} from '@shopify/cli-kit/node/http'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -54,9 +54,9 @@ export async function getStorefrontSessionCookies(
   storeFqdn: string,
   themeId: string,
   password?: string,
-  headers: {[key: string]: string} = {},
-): Promise<{[key: string]: string}> {
-  const cookieRecord: {[key: string]: string} = {}
+  headers: Record<string, string> = {},
+): Promise<Record<string, string>> {
+  const cookieRecord: Record<string, string> = {}
   const shopifyEssential = await sessionEssentialCookie(storeUrl, themeId, headers)
   const storeOrigin = prependHttps(storeFqdn)
 
@@ -83,12 +83,7 @@ export async function getStorefrontSessionCookies(
   return {...cookieRecord, ...additionalCookies}
 }
 
-async function sessionEssentialCookie(
-  storeUrl: string,
-  themeId: string,
-  headers: {[key: string]: string},
-  retries = 1,
-) {
+async function sessionEssentialCookie(storeUrl: string, themeId: string, headers: Record<string, string>, retries = 1) {
   const params = new URLSearchParams({
     preview_theme_id: themeId,
     _fd: '0',
@@ -145,8 +140,8 @@ async function enrichSessionWithStorefrontPassword(
   storeUrl: string,
   storeOrigin: string,
   password: string,
-  headers: {[key: string]: string},
-): Promise<{[key: string]: string}> {
+  headers: Record<string, string>,
+): Promise<Record<string, string>> {
   const params = new URLSearchParams({password})
 
   const response = await shopifyFetch(`${storeUrl}/password`, {
@@ -172,7 +167,7 @@ async function enrichSessionWithStorefrontPassword(
   const storefrontDigest = getCookie(setCookies, 'storefront_digest')
   const newShopifyEssential = getCookie(setCookies, '_shopify_essential')
 
-  const result: {[key: string]: string} = {}
+  const result: Record<string, string> = {}
 
   if (storefrontDigest) {
     result.storefront_digest = storefrontDigest

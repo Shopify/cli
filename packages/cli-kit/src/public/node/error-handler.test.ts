@@ -3,9 +3,10 @@ import * as metadata from './metadata.js'
 import {ciPlatform, cloudEnvironment, isUnitTest, macAddress} from './context/local.js'
 import {mockAndCaptureOutput} from './testing/output.js'
 import * as error from './error.js'
-import {hashString} from '../../public/node/crypto.js'
+import {hashString} from './crypto.js'
 import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+
 import {settings} from '@oclif/core'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 

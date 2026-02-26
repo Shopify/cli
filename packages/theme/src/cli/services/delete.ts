@@ -1,7 +1,7 @@
 import {removeDevelopmentTheme} from './local-storage.js'
-import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
-import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
+import {themeComponent, themesComponent} from '../utilities/theme-ui.js'
+import {findOrSelectTheme, findThemes} from '../utilities/theme-selector.js'
 import {themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {

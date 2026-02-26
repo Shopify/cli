@@ -8,6 +8,7 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {renderConcurrent, renderConfirmationPrompt, renderError, renderWarning} from '@shopify/cli-kit/node/ui'
+
 import type {Writable} from 'stream'
 
 vi.mock('@shopify/cli-kit/node/session')

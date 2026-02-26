@@ -532,7 +532,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       if (websOfType.length > 1) {
         const conflictingPaths = websOfType.map((web) => joinPath(web.directory, configurationFileNames.web))
         const pathsList = conflictingPaths.map((path) => `  ${path}`).join('\n')
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
         const lastConflictingPath = conflictingPaths[conflictingPaths.length - 1]!
         this.abortOrReport(
           outputContent`You can only have one "web" configuration file with the ${outputToken.yellow(
@@ -1286,7 +1286,6 @@ async function logMetadataForLoadedAppUsingRawValues(
       if (extensionsBreakdownMapping[extension.type] === undefined) {
         extensionsBreakdownMapping[extension.type] = 1
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         extensionsBreakdownMapping[extension.type]!++
       }
     }

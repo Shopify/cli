@@ -1,5 +1,4 @@
 type Scalar = string | number | boolean | null | undefined
 
-export default interface ScalarDict {
-  [key: string]: Scalar
-}
+type ScalarDict = Record<string, Scalar>
+export default ScalarDict

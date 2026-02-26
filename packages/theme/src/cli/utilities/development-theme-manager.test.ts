@@ -19,7 +19,7 @@ describe('DevelopmentThemeManager', () => {
   const existingId = 200
   const newThemeId = 201
   const onlyLocallyExistingId = 404
-  const themeTestDatabase: {[id: number]: Theme | undefined} = {
+  const themeTestDatabase: Record<number, Theme | undefined> = {
     [existingId]: {id: existingId} as Theme,
     [onlyLocallyExistingId]: undefined,
   }

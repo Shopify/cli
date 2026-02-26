@@ -15,6 +15,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {debounce} from '@shopify/cli-kit/common/function'
 import chalk from '@shopify/cli-kit/node/colors'
+
 import readline from 'readline'
 
 const DEFAULT_HOST = '127.0.0.1'

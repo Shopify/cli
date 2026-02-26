@@ -3,6 +3,7 @@ import {execa, execaCommand} from 'execa'
 import {describe, expect, test, vi} from 'vitest'
 import which from 'which'
 import {Readable} from 'stream'
+
 import * as fs from 'fs'
 
 vi.mock('which')

@@ -1,6 +1,8 @@
-import en from './translations/en.json'
 import * as styles from './QRCodeModal.module.scss'
+import en from './translations/en.json'
 import {useApp} from '../../hooks/useApp'
+import {Modal, ModalProps} from '@/components/Modal'
+import {IconButton} from '@/components/IconButton'
 import React, {useCallback, useMemo} from 'react'
 import {useI18n} from '@shopify/react-i18n'
 import copyToClipboard from 'copy-to-clipboard'
@@ -8,8 +10,6 @@ import QRCode from 'qrcode.react'
 import {toast} from 'react-toastify'
 import {Surface} from '@shopify/ui-extensions-server-kit'
 import {ClipboardIcon} from '@shopify/polaris-icons'
-import {Modal, ModalProps} from '@/components/Modal'
-import {IconButton} from '@/components/IconButton'
 
 interface Code {
   url: string

@@ -2,6 +2,7 @@ import KitchenSinkAll from './index.js'
 import {asyncTasks as asyncTasksService} from '../../services/kitchen-sink/async.js'
 import {staticService} from '../../services/kitchen-sink/static.js'
 import {prompts as promptsService} from '../../services/kitchen-sink/prompts.js'
+
 import {describe, test, vi, expect} from 'vitest'
 
 vi.mock('../../services/kitchen-sink/prompts.js')

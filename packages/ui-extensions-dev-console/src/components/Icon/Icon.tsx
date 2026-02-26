@@ -1,7 +1,7 @@
 import styles from './Icon.module.scss'
 import {VisuallyHidden} from '../VisuallyHidden/VisuallyHidden.js'
-import React from 'react'
 import {classNames} from '@/utilities/css'
+import React from 'react'
 
 export interface IconProps {
   /** The SVG contents to display in the icon (icons should fit in a 20 × 20 pixel viewBox) */

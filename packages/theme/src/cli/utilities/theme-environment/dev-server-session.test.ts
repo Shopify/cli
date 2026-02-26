@@ -1,10 +1,10 @@
+import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {
   abortOnMissingRequiredFile,
   getStorefrontSessionCookiesWithVerification,
   initializeDevServerSession,
   fetchDevServerSession,
 } from './dev-server-session.js'
-import {getStorefrontSessionCookies, ShopifyEssentialError} from './storefront-session.js'
 import {ensureAuthenticatedStorefront, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/session'
 import {fetchThemeAssets, themeDelete} from '@shopify/cli-kit/node/themes/api'
 import {describe, expect, test, vi, beforeEach} from 'vitest'

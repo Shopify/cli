@@ -27,6 +27,7 @@ import {businessPlatformRequest} from '../../public/node/api/business-platform.j
 import {getPartnersToken} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {terminalSupportsPrompting} from '../../public/node/system.js'
+
 import {vi, describe, expect, test, beforeEach} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -55,7 +56,7 @@ const validTokens: OAuthSession = {
   userId,
 }
 
-const appTokens: {[x: string]: ApplicationToken} = {
+const appTokens: Record<string, ApplicationToken> = {
   // Admin APIs includes domain in the key
   'mystore.myshopify.com-admin': {
     accessToken: 'admin_token',

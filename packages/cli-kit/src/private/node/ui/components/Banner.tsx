@@ -41,14 +41,13 @@ const Footnotes = () => {
 
 const BoxWithBorder: FunctionComponent<BannerProps> = ({type, children}) => {
   const {twoThirds} = useLayout()
-  const links = useRef<{[key: string]: Link}>({})
+  const links = useRef<Record<string, Link>>({})
 
   return (
     <LinksContext.Provider
       value={{
         links,
         addLink: (label, url) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const id: string | undefined = Object.keys(links.current).find((id) => links.current[id]!.url === url)
           if (id) {
             return id

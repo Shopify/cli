@@ -257,7 +257,7 @@ export async function runWithRateLimit(options: RunWithRateLimitOptions, config 
 }
 
 export function getConfigStoreForPartnerStatus() {
-  return new LocalStorage<{[partnerToken: string]: {status: true; checkedAt: string}}>({
+  return new LocalStorage<Record<string, {status: true; checkedAt: string}>>({
     projectName: 'shopify-cli-kit-partner-status',
   })
 }

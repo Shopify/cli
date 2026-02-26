@@ -3,6 +3,7 @@ import {MonorailEventPublic, MonorailEventSensitive} from './monorail.js'
 import {getArrayContainsDuplicates, getArrayRejectingUndefined} from '../common/array.js'
 import {PickByPrefix} from '../common/ts/pick-by-prefix.js'
 import {JsonMap} from '../../private/common/json.js'
+
 import {Config, Interfaces} from '@oclif/core'
 
 /**
@@ -40,22 +41,22 @@ type AppSpecificSensitiveMonorailFields = PickByPrefix<MonorailEventSensitive, '
 
 export interface HookReturnsPerPlugin extends HookReturnPerTunnelPlugin {
   public_command_metadata: {
-    options: {[key: string]: never}
+    options: Record<string, never>
     pluginReturns: {
       '@shopify/app': Partial<AppSpecificMonorailFields>
       [pluginName: string]: JsonMap
     }
   }
   sensitive_command_metadata: {
-    options: {[key: string]: never}
+    options: Record<string, never>
     pluginReturns: {
       '@shopify/app': Partial<AppSpecificSensitiveMonorailFields>
       [pluginName: string]: JsonMap
     }
   }
   [hookName: string]: {
-    options: {[key: string]: unknown}
-    pluginReturns: {[key: string]: unknown}
+    options: Record<string, unknown>
+    pluginReturns: Record<string, unknown>
   }
 }
 
