@@ -1,6 +1,6 @@
 import {err, ok} from './result.js'
 import {mockAndCaptureOutput} from './testing/output.js'
-import {outputSuccess} from '../../public/node/output.js'
+import {outputSuccess} from './output.js'
 import {describe, expect, test} from 'vitest'
 
 describe('ok', () => {

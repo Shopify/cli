@@ -38,8 +38,8 @@ export const templates = {
     branches: {
       prompt: 'For your React Router template, which language do you want?',
       options: {
-        javascript: {branch: 'javascript', label: 'JavaScript'},
-        typescript: {branch: 'main', label: 'TypeScript'},
+        javascript: {branch: 'javascript-cli', label: 'JavaScript'},
+        typescript: {branch: 'main-cli', label: 'TypeScript'},
       },
     },
   } as Template,

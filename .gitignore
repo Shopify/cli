@@ -150,7 +150,9 @@ packages/*/docs/
 .build
 
 packaging/dist
-!./.shadowenv.d/yarn.lisp
+
+# Shadowenv generates user-specific files that shouldn't be committed
+.shadowenv.d/
 
 cloudflared*
 function-runner*
@@ -198,3 +200,6 @@ packages/ui-extensions-dev-console/dist
 packages/cli-kit/src/cli/api/graphql/*/*_schema.graphql
 
 .claude/settings.local.json
+
+# Local dev alias scripts
+bin/p

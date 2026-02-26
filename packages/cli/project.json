@@ -24,6 +24,11 @@
     },
     "bundle": {
       "executor": "nx:run-commands",
+      "dependsOn": [
+        "cli-kit:generate-version",
+        "app:build",
+        "theme:build"
+      ],
       "options": {
         "command": "node bin/bundle",
         "cwd": "packages/cli"

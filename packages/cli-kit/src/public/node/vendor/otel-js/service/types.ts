@@ -9,19 +9,19 @@ import type {
 import type {ViewOptions} from '@opentelemetry/sdk-metrics'
 
 export type CustomMetricLabels<
-  TLabels extends {[key in TKeys]: MetricAttributes},
+  TLabels extends Record<TKeys, MetricAttributes>,
   TKeys extends string = keyof TLabels & string,
 > = {
   [P in TKeys]: TLabels[P] extends MetricAttributes ? TLabels[P] : never
 }
 
-export type MetricRecording<TAttributes extends MetricAttributes = any> = [value: number, labels?: TAttributes]
+export type MetricRecording<TAttributes extends MetricAttributes = MetricAttributes> = [value: number, labels?: TAttributes]
 
-export type RecordMetricFunction<TAttributes extends MetricAttributes = any> = (
+export type RecordMetricFunction<TAttributes extends MetricAttributes = MetricAttributes> = (
   ...args: MetricRecording<TAttributes>
 ) => void
 
-export type OnRecordCallback<TAttributes extends MetricAttributes = any> = (
+export type OnRecordCallback<TAttributes extends MetricAttributes = MetricAttributes> = (
   metricName: string,
   ...args: MetricRecording<TAttributes>
 ) => MetricRecording<TAttributes> | void
@@ -48,9 +48,7 @@ export type MetricDescriptor = MetricOptions &
       }
   )
 
-export interface MetricsConfig {
-  [key: string]: MetricDescriptor
-}
+export type MetricsConfig = Record<string, MetricDescriptor>
 
 export interface OtelService {
   readonly serviceName: string
@@ -59,7 +57,7 @@ export interface OtelService {
 
   addView(viewOptions: ViewOptions): void
 
-  record<TAttributes extends MetricAttributes = any>(...args: Parameters<OnRecordCallback<TAttributes>>): void
+  record<TAttributes extends MetricAttributes = MetricAttributes>(...args: Parameters<OnRecordCallback<TAttributes>>): void
 
   /**
    * `onRecord` callback is called when a metric is recorded.

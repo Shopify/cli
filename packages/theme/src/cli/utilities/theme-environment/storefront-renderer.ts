@@ -1,6 +1,6 @@
-import {parseCookies, serializeCookies} from './cookies.js'
-import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
 import {DevServerSession, DevServerRenderContext} from './types.js'
+import {cleanHeader, defaultHeaders, storefrontReplaceTemplatesParams} from './storefront-utils.js'
+import {parseCookies, serializeCookies} from './cookies.js'
 import {createFetchError} from '../errors.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
@@ -87,7 +87,7 @@ async function buildStandardHeaders(session: DevServerSession, context: DevServe
 async function buildThemeAccessHeaders(session: DevServerSession, context: DevServerRenderContext) {
   const cookies = await buildCookies(session, context)
   const storefrontToken = session.storefrontToken
-  const filteredHeaders: {[key: string]: string} = {}
+  const filteredHeaders: Record<string, string> = {}
   const filterKeys = ['ACCEPT', 'CONTENT-TYPE', 'CONTENT-LENGTH']
 
   for (const [key, value] of Object.entries(context.headers)) {

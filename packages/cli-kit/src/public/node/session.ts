@@ -1,14 +1,14 @@
-import {AbortError, BugError} from './error.js'
-import {getPartnersToken} from './environment.js'
-import {nonRandomUUID} from './crypto.js'
 import {shopifyFetch} from './http.js'
+import {nonRandomUUID} from './crypto.js'
+import {getPartnersToken} from './environment.js'
+import {AbortError, BugError} from './error.js'
+import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
 import {
   exchangeCustomPartnerToken,
   exchangeCliTokenForAppManagementAccessToken,
   exchangeCliTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
-import {outputContent, outputToken, outputDebug} from '../../public/node/output.js'
 import {
   AdminAPIScope,
   AppManagementAPIScope,
@@ -315,8 +315,9 @@ export async function ensureAuthenticatedAdminAsApp(
     'slow-request',
   )
 
+  const body = await tokenResponse.text()
+
   if (tokenResponse.status === 400) {
-    const body = await tokenResponse.text()
     if (body.includes('app_not_installed')) {
       throw new AbortError(
         outputContent`App is not installed on ${outputToken.green(
@@ -328,7 +329,16 @@ export async function ensureAuthenticatedAdminAsApp(
       `Failed to get access token for app ${clientId} on store ${storeFqdn}: ${tokenResponse.statusText}`,
     )
   }
-
-  const tokenJson = (await tokenResponse.json()) as {access_token: string}
-  return {token: tokenJson.access_token, storeFqdn}
+  try {
+    const tokenJson = JSON.parse(body) as {access_token: string}
+    return {token: tokenJson.access_token, storeFqdn}
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new AbortError(
+        `Received invalid response from admin authentication service (HTTP ${tokenResponse.status}).`,
+        'The response could not be parsed as JSON. The service may be temporarily unavailable. Please try again.',
+      )
+    }
+    throw error
+  }
 }

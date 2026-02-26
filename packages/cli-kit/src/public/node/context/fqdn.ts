@@ -139,8 +139,20 @@ export function normalizeStoreFqdn(store: string): string {
   }
   const containDomain = (storeFqdn: string) =>
     storeFqdn.endsWith('.myshopify.com') || storeFqdn.endsWith('shopify.io') || storeFqdn.endsWith('.shop.dev')
-  const normalizedFqdn = containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
-  // Use dev-api domain for OAuth redirects in local environment
-  // See: https://github.com/Shopify/dev_server?tab=readme-ov-file#shop-redirects
-  return normalizedFqdn.replace('.my.shop.dev', '.dev-api.shop.dev')
+  return containDomain(storeFqdn) ? storeFqdn : addDomain(storeFqdn)
+}
+
+/**
+ * Convert a store FQDN to the admin URL pattern for local development.
+ * In local mode, transforms \{store\}.my.shop.dev to admin.shop.dev/store/\{store\}.
+ *
+ * @param storeFqdn - Normalized store FQDN.
+ * @returns Store admin URL base (without protocol or path).
+ */
+export function storeAdminUrl(storeFqdn: string): string {
+  if (serviceEnvironment() === 'local' && storeFqdn.endsWith('.my.shop.dev')) {
+    const storeName = storeFqdn.replace('.my.shop.dev', '')
+    return `admin.shop.dev/store/${storeName}`
+  }
+  return storeFqdn
 }

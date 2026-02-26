@@ -22,9 +22,24 @@
       "inputs": [
         "{projectRoot}/src/**/*"
       ],
+      "dependsOn": [
+        "generate-version"
+      ],
       "options": {
         "command": "pnpm tsc -b ./tsconfig.build.json",
         "cwd": "packages/cli-kit"
+      }
+    },
+    "generate-version": {
+      "executor": "nx:run-commands",
+      "outputs": [
+        "{projectRoot}/src/public/common/version.ts"
+      ],
+      "inputs": [
+        "{projectRoot}/package.json"
+      ],
+      "options": {
+        "command": "node bin/update-cli-kit-version.js"
       }
     },
     "build-api-docs": {
@@ -50,14 +65,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.{ts,tsx}\"",
+        "command": "pnpm eslint src",
         "cwd": "packages/cli-kit"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.{ts,tsx}' --fix",
+        "command": "pnpm eslint src --fix",
         "cwd": "packages/cli-kit"
       }
     },

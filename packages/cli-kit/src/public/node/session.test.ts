@@ -17,6 +17,7 @@ import {
   exchangeCliTokenForAppManagementAccessToken,
   exchangeCliTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
+
 import {vi, describe, expect, test} from 'vitest'
 
 const futureDate = new Date(2022, 1, 1, 11)
@@ -280,7 +281,7 @@ describe('ensureAuthenticatedAdminAsApp', () => {
     // Given
     vi.mocked(shopifyFetch).mockResolvedValueOnce({
       status: 200,
-      json: async () => ({access_token: 'app_access_token'}),
+      text: async () => JSON.stringify({access_token: 'app_access_token'}),
     } as any)
 
     // When

@@ -8,6 +8,7 @@ import {err, ok, Result} from '../../../public/node/result.js'
 import {AbortError, BugError, ExtendableError} from '../../../public/node/error.js'
 import {setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../session.js'
 import {nonRandomUUID} from '../../../public/node/crypto.js'
+
 import * as jose from 'jose'
 
 export class InvalidGrantError extends ExtendableError {}
@@ -32,7 +33,7 @@ export async function exchangeAccessForApplicationTokens(
   identityToken: IdentityToken,
   scopes: ExchangeScopes,
   store?: string,
-): Promise<{[x: string]: ApplicationToken}> {
+): Promise<Record<string, ApplicationToken>> {
   const token = identityToken.accessToken
 
   const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
@@ -83,7 +84,7 @@ async function exchangeCliTokenForAccessToken(
   const appId = applicationId(apiName)
   try {
     const newToken = await requestAppToken(apiName, token, scopes)
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
     const accessToken = newToken[appId]!.accessToken
     const userId = nonRandomUUID(token)
     setLastSeenUserIdAfterAuth(userId)
@@ -162,7 +163,7 @@ export async function requestAppToken(
   token: string,
   scopes: string[] = [],
   store?: string,
-): Promise<{[x: string]: ApplicationToken}> {
+): Promise<Record<string, ApplicationToken>> {
   const appId = applicationId(api)
   const clientId = await getIdentityClientId()
 
@@ -221,20 +222,30 @@ function tokenRequestErrorHandler({error, store}: {error: string; store?: string
   return new AbortError(error)
 }
 
-async function tokenRequest(params: {
-  [key: string]: string
-}): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
+async function tokenRequest(
+  params: Record<string, string>,
+): Promise<Result<TokenRequestResult, {error: string; store?: string}>> {
   const fqdn = await identityFqdn()
   const url = new URL(`https://${fqdn}/oauth/token`)
   url.search = new URLSearchParams(Object.entries(params)).toString()
 
   const res = await shopifyFetch(url.href, {method: 'POST'})
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload: any = await res.json()
+  try {
+    const responseText = await res.text()
 
-  if (res.ok) return ok(payload)
+    const payload = JSON.parse(responseText)
+    if (res.ok) return ok(payload)
 
-  return err({error: payload.error, store: params.store})
+    return err({error: payload.error, store: params.store})
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new AbortError(
+        `Received invalid response from authentication service (HTTP ${res.status}).`,
+        'The response could not be parsed as JSON. The service may be temporarily unavailable. Please try again.',
+      )
+    }
+    throw error
+  }
 }
 
 function buildIdentityToken(
@@ -242,7 +253,6 @@ function buildIdentityToken(
   existingUserId?: string,
   existingAlias?: string,
 ): IdentityToken {
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const userId = existingUserId ?? (result.id_token ? jose.decodeJwt(result.id_token).sub! : undefined)
 
   if (!userId) {

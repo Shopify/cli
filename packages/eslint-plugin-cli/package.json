@@ -17,20 +17,20 @@
   "author": "Shopify Inc.",
   "dependencies": {
     "@babel/core": "7.27.4",
-    "@shopify/eslint-plugin": "42.1.0",
-    "@typescript-eslint/eslint-plugin": "7.13.1",
-    "@typescript-eslint/parser": "7.18.0",
-    "eslint-config-prettier": "8.10.0",
-    "eslint-plugin-import": "2.31.0",
-    "eslint-plugin-jsdoc": "48.11.0",
+    "@shopify/eslint-plugin": "50.0.0",
+    "@typescript-eslint/eslint-plugin": "8.33.0",
+    "@typescript-eslint/parser": "8.33.0",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-plugin-jsdoc": "50.7.1",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-no-catch-all": "1.1.0",
-    "eslint-plugin-prettier": "4.2.1",
-    "eslint-plugin-react": "7.37.3",
-    "eslint-plugin-react-hooks": "4.6.2",
+    "eslint-plugin-prettier": "5.5.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-tsdoc": "0.4.0",
-    "eslint-plugin-unused-imports": "3.2.0",
-    "eslint-plugin-vitest": "0.5.4",
+    "eslint-plugin-unused-imports": "4.1.4",
+    "@vitest/eslint-plugin": "1.1.44",
+    "globals": "16.2.0",
     "execa": "7.2.0",
     "debug": "4.4.0"
   },
@@ -38,7 +38,7 @@
     "prettier": "2.8.8"
   },
   "peerDependencies": {
-    "eslint": "^8.48.0"
+    "eslint": "^9.0.0"
   },
   "publishConfig": {
     "@shopify:registry": "https://registry.npmjs.org",

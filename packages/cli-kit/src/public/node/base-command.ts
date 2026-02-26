@@ -12,6 +12,7 @@ import {showNotificationsIfNeeded} from './notifications-system.js'
 import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
+
 import {Command, Config, Errors} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 
@@ -26,7 +27,6 @@ interface EnvironmentFlags {
 }
 
 abstract class BaseCommand extends Command {
-  // eslint-disable-next-line @typescript-eslint/ban-types
   static baseFlags: FlagInput<{}> = {}
 
   // Replace markdown links to plain text like: "link label" (url)
@@ -82,7 +82,6 @@ abstract class BaseCommand extends Command {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   protected exitWithTimestampWhenEnvVariablePresent() {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
       outputResult(`

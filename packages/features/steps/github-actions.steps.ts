@@ -2,6 +2,7 @@ import {exec} from '../lib/system.js'
 import {When, Then} from '@cucumber/cucumber'
 import * as path from 'pathe'
 import {strict as assert} from 'assert'
+
 import {fileURLToPath} from 'url'
 
 const __filename = fileURLToPath(import.meta.url)

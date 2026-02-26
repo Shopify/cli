@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-dynamic-delete */
-import {buildCookies} from './storefront-renderer.js'
 import {cleanHeader, defaultHeaders} from './storefront-utils.js'
+import {buildCookies} from './storefront-renderer.js'
 import {logRequestLine} from '../log-request-line.js'
+
 import {createFetchError, extractFetchErrorInfo} from '../errors.js'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, type H3Event} from 'h3'
@@ -16,6 +16,9 @@ export const EXTENSION_CDN_PREFIX = '/ext/cdn/'
 
 const API_COLLECT_PATH = '/api/collect'
 const CART_PATTERN = /^\/cart\//
+// Broader than CART_PATTERN (routing) -- covers /cart, /cart.js, /cart.json for auth exclusion.
+// CART_PATTERN only matches /cart/... subpaths to avoid proxying GET /cart (the cart HTML page).
+const CART_SESSION_PATTERN = /^\/cart(\/|\.js|\.json|$)/
 const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
 const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
@@ -112,6 +115,18 @@ export function canProxyRequest(event: H3Event) {
   if (extension === '.html' || acceptsType.includes('text/html')) return false
 
   return Boolean(extension) || acceptsType !== '*/*'
+}
+
+// Cart, checkout, and account endpoints use session-cookie auth, not Bearer tokens.
+// CHECKOUT_PATTERN and ACCOUNT_PATTERN are reused from routing because their
+// routing and auth scopes currently align; changes to those patterns should
+// consider the auth implications here.
+function needsBearerToken(path: string): boolean {
+  const [pathname] = path.split('?') as [string]
+  if (CART_SESSION_PATTERN.test(pathname)) return false
+  if (CHECKOUT_PATTERN.test(pathname)) return false
+  if (ACCOUNT_PATTERN.test(pathname)) return false
+  return true
 }
 
 function getStoreFqdnForRegEx(ctx: DevServerContext) {
@@ -277,7 +292,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
  * Filters headers to forward to SFR.
  */
 export function getProxyStorefrontHeaders(event: H3Event) {
-  const proxyRequestHeaders = getRequestHeaders(event) as {[key: string]: string}
+  const proxyRequestHeaders = getRequestHeaders(event) as Record<string, string>
 
   for (const headerKey of HOP_BY_HOP_HEADERS) {
     delete proxyRequestHeaders[headerKey]
@@ -319,15 +334,16 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   const headers = getProxyStorefrontHeaders(event)
   const body = getRequestWebStream(event)
 
-  const baseHeaders: {[key: string]: string} = {
+  const baseHeaders: Record<string, string> = {
     ...headers,
     ...defaultHeaders(),
     referer: url.origin,
     Cookie: buildCookies(ctx.session, {headers}),
   }
 
-  // Only include Authorization for theme dev, not theme-extensions
-  if (ctx.type === 'theme') {
+  // Cart, checkout, and account endpoints use cookie-based auth.
+  // Sending a Bearer token causes SFR to select token auth, which lacks cart scopes.
+  if (ctx.type === 'theme' && needsBearerToken(event.path)) {
     baseHeaders.Authorization = `Bearer ${ctx.session.storefrontToken}`
   }
 

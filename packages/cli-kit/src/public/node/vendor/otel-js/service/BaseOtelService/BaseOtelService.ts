@@ -1,6 +1,8 @@
+import {MetricInstrumentType} from '../types.js'
+import {isValidMetricName} from '../../utils/validators.js'
+import {ExplicitBucketHistogramAggregation, View} from '@opentelemetry/sdk-metrics'
 import type {MetricAttributes} from '@opentelemetry/api'
 import type {MeterProvider, ViewOptions} from '@opentelemetry/sdk-metrics'
-import {ExplicitBucketHistogramAggregation, View} from '@opentelemetry/sdk-metrics'
 
 import type {
   MetricDescriptor,
@@ -10,8 +12,6 @@ import type {
   OtelService,
   RecordMetricFunction,
 } from '../types.js'
-import {MetricInstrumentType} from '../types.js'
-import {isValidMetricName} from '../../utils/validators.js'
 
 const instrumentationScope = 'opentelemetry-js-shopify-web'
 
@@ -53,6 +53,13 @@ export class BaseOtelService implements OtelService {
 
   /**
    * Bootstraps an Otel exporter which can send Otel metrics to a dedicated Shopify supported collector endpoint.
+   *
+   * @param root0
+   * @param root0.serviceName
+   * @param root0.prefixMetric
+   * @param root0.metrics
+   * @param root0.onRecord
+   * @param root0.meterProvider
    */
   constructor({serviceName, prefixMetric = false, metrics = {}, onRecord, meterProvider}: BaseOtelServiceOptions) {
     if (!serviceName) {
@@ -78,6 +85,7 @@ export class BaseOtelService implements OtelService {
   addView(viewOptions: ViewOptions) {
     // The API to register view is not yet exposed. We need to use the private
     // property to register a new view after the initial instantiation.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     ;(this.meterProvider as any)._sharedState?.viewRegistry?.addView?.(new View(viewOptions))
   }
 

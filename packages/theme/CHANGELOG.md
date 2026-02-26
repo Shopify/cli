@@ -1,5 +1,21 @@
 # @shopify/theme
 
+## 3.91.0
+
+### Patch Changes
+
+- 947025f: Fix the default environments infrastructure so it doesn’t fail when running commands that don't require authentication
+- d0e135b: Fix 401 Unauthorized errors on cart AJAX endpoints during `shopify theme dev`
+- 7750c0c: Fix issue where certain theme commands were failing to have sessions created
+- 6a7bfce: Fix hot-reloading for the {% javascript %} tag when serving compiled assets scripts with multibyte characters
+- 5e13c83: Add --listing flag to theme dev, push, and share commands
+- 12a4037: Ignore API collect endpoint in `shopify theme dev` and `shopify app dev` commands
+- 8048cb9: Protect SSRF vulnerability in proxy requests when hosts don't match
+- Updated dependencies [fa8364d]
+- Updated dependencies [19faac6]
+- Updated dependencies [5e13c83]
+  - @shopify/cli-kit@3.91.0
+
 ## 3.90.0
 
 ### Patch Changes

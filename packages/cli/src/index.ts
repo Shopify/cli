@@ -9,6 +9,8 @@ import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
+import Doctor from './cli/commands/doctor-release/doctor-release.js'
+import DoctorTheme from './cli/commands/doctor-release/theme/index.js'
 import DocsGenerate from './cli/commands/docs/generate.js'
 import HelpCommand from './cli/commands/help.js'
 import List from './cli/commands/notifications/list.js'
@@ -24,6 +26,7 @@ import {DidYouMeanCommands} from '@shopify/plugin-did-you-mean'
 import {runCLI} from '@shopify/cli-kit/node/cli'
 import {renderFatalError} from '@shopify/cli-kit/node/ui'
 import {FatalError} from '@shopify/cli-kit/node/error'
+
 import fs from 'fs'
 
 export {DidYouMeanHook} from '@shopify/plugin-did-you-mean'
@@ -142,6 +145,8 @@ export const COMMANDS: any = {
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
   'kitchen-sink:static': KitchenSinkStatic,
+  'doctor-release': Doctor,
+  'doctor-release:theme': DoctorTheme,
   'docs:generate': DocsGenerate,
   'notifications:list': List,
   'notifications:generate': Generate,

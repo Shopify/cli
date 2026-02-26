@@ -1,5 +1,5 @@
-import {pollThemeEditorChanges} from './theme-polling.js'
 import {reconcileJsonFiles} from './theme-reconciliation.js'
+import {pollThemeEditorChanges} from './theme-polling.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {Checksum, Theme, ThemeFileSystem} from '@shopify/cli-kit/node/themes/types'

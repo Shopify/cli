@@ -97,7 +97,6 @@ export async function importExtensions(options: ImportOptions) {
     const promptAnswer = await renderSelectPrompt({message: 'Extensions to migrate', choices})
 
     if (promptAnswer !== 'All') {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       extensionsToMigrate = [extensionsToMigrate.find((ext) => ext?.uuid === promptAnswer)!]
     }
   }

@@ -27,7 +27,7 @@ export function defaultHeaders() {
   }
 }
 
-export function cleanHeader(headers: {[key: string]: string}): {[key: string]: string} {
+export function cleanHeader(headers: Record<string, string>): Record<string, string> {
   // Force the use of the 'Cookie' key if consumers also provide the 'cookie' key
   delete headers.cookie
   delete headers.authorization

@@ -26,6 +26,7 @@ import {GetThemes} from '../../../cli/api/graphql/admin/generated/get_themes.js'
 import {GetTheme} from '../../../cli/api/graphql/admin/generated/get_theme.js'
 import {adminRequestDoc, supportedApiVersions} from '../api/admin.js'
 import {AbortError} from '../error.js'
+
 import {test, vi, expect, describe, beforeEach} from 'vitest'
 import {ClientError} from 'graphql-request'
 
@@ -470,7 +471,6 @@ describe('themeDuplicate', () => {
         session,
         variables: {id: `gid://shopify/OnlineStoreTheme/${id}`, name},
         preferredBehaviour: expectedApiOptions,
-        version: '2025-10',
         responseOptions: {
           onResponse: expect.any(Function),
         },

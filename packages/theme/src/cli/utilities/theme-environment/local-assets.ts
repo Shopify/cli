@@ -1,6 +1,6 @@
-import {injectCdnProxy} from './proxy.js'
-import {parseServerEvent} from './server-utils.js'
 import {getLiquidTagContent} from './liquid-tag-content.js'
+import {parseServerEvent} from './server-utils.js'
+import {injectCdnProxy} from './proxy.js'
 import {lookupMimeType} from '@shopify/cli-kit/node/mimes'
 import {defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError} from 'h3'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -75,7 +75,6 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
       const file = fileSystem.files.get(fileKey)
       const isUnsynced = fileSystem.unsyncedFileKeys.has(fileKey)
 
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
       if (file || isUnsynced) {
         return {file, isUnsynced, fileKey}
       }
@@ -130,7 +129,7 @@ function handleStylesCss(ctx: DevServerContext, event: H3Event) {
 
   return serveStatic(event, {
     getContents: () => stylesheet,
-    getMeta: () => ({type: 'text/css', size: stylesheet.length, mtime: new Date()}),
+    getMeta: () => ({type: 'text/css', size: Buffer.byteLength(stylesheet), mtime: new Date()}),
   })
 }
 
@@ -190,7 +189,7 @@ function handleBlockScriptsJs(ctx: DevServerContext, event: H3Event, kind: 'bloc
 
   return serveStatic(event, {
     getContents: () => javascript,
-    getMeta: () => ({type: 'text/javascript', size: javascript.length, mtime: new Date()}),
+    getMeta: () => ({type: 'text/javascript', size: Buffer.byteLength(javascript), mtime: new Date()}),
   })
 }
 

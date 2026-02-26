@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {Organization, MinimalOrganizationApp, OrganizationStore, MinimalAppIdentifiers} from '../models/organization.js'
 import {getTomls} from '../utilities/app/config/getTomls.js'
 import {setCachedCommandTomlMap} from '../services/local-storage.js'
@@ -64,7 +63,16 @@ export async function selectAppPrompt(
       }
     },
   })
-  return currentAppChoices.find((app) => app.apiKey === apiKey)!
+
+  const appChoice = currentAppChoices.find((app) => app.apiKey === apiKey)!
+
+  if (!appChoice) {
+    throw new Error(
+      `Unable to select an app: the selection prompt was interrupted multiple times./n
+      Api key ${apiKey} was selected but not found in ${currentAppChoices.map((app) => app.apiKey).join(', ')}`,
+    )
+  }
+  return appChoice
 }
 
 interface SelectStorePromptOptions {

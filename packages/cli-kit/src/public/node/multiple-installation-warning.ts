@@ -14,7 +14,7 @@ import {runAtMinimumInterval} from '../../private/node/conf-store.js'
  */
 export async function showMultipleCLIWarningIfNeeded(
   directory: string,
-  dependencies: {[key: string]: string},
+  dependencies: Record<string, string>,
 ): Promise<void> {
   // Show the warning only once per day
   await runAtMinimumInterval('warn-on-multiple-versions', {days: 1}, async () => {

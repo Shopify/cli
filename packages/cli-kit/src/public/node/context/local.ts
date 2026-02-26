@@ -3,8 +3,10 @@ import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/util
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
 import {fileExists} from '../fs.js'
 import {exec} from '../system.js'
+
 import isInteractive from 'is-interactive'
 import macaddress from 'macaddress'
+
 import {homedir} from 'os'
 
 /**
@@ -110,6 +112,16 @@ export function alwaysLogMetrics(env = process.env): boolean {
  */
 export function firstPartyDev(env = process.env): boolean {
   return isTruthy(env[environmentVariables.firstPartyDev])
+}
+
+/**
+ * Returns true if the CLI can run the "doctor-release" command.
+ *
+ * @param env - The environment variables from the environment of the current process.
+ * @returns True if the CLI can run the "doctor-release" command.
+ */
+export function canRunDoctorRelease(env = process.env): boolean {
+  return isTruthy(env[environmentVariables.doctor])
 }
 
 /**

@@ -1,12 +1,11 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {Command} from './Command.js'
 import {Link} from './Link.js'
 import {List} from './List.js'
 import {UserInput} from './UserInput.js'
 import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
-import {Box, Text} from 'ink'
 import React, {FunctionComponent} from 'react'
+import {Box, Text} from 'ink'
 
 export interface LinkToken {
   link: {

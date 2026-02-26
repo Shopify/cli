@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
@@ -12,6 +10,7 @@ import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
 import {PrivacyComplianceWebhooksSpecIdentifier} from './specifications/app_config_privacy_compliance_webhooks.js'
 import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
 import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
+import {EventsSpecIdentifier} from './specifications/app_config_events.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -44,6 +43,7 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   PrivacyComplianceWebhooksSpecIdentifier,
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
+  EventsSpecIdentifier,
 ]
 
 /**
@@ -285,6 +285,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   get buildCommand() {
     const config = this.configuration as unknown as FunctionConfigType
     return config.build?.command
+  }
+
+  get typegenCommand() {
+    const config = this.configuration as unknown as FunctionConfigType
+    return config.build?.typegen_command
   }
 
   /**

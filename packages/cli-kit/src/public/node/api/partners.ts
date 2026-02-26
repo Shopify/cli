@@ -1,3 +1,4 @@
+import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {
   graphqlRequest,
   GraphQLVariables,
@@ -6,7 +7,6 @@ import {
   CacheOptions,
   UnauthorizedHandler,
 } from './graphql.js'
-import {addCursorAndFiltersToAppLogsUrl} from './utilities.js'
 import {partnersFqdn} from '../context/fqdn.js'
 import {setNextDeprecationDate} from '../../../private/node/context/deprecations-store.js'
 import {getPackageManager} from '../node-package-manager.js'
@@ -16,6 +16,7 @@ import {formatPackageManagerCommand} from '../output.js'
 import {RequestModeInput} from '../http.js'
 import {blockPartnersAccess} from '../environment.js'
 import Bottleneck from 'bottleneck'
+
 import {Variables} from 'graphql-request'
 import {TypedDocumentNode} from '@graphql-typed-document-node/core'
 

@@ -1,14 +1,17 @@
-import fs from 'node:fs'
-
-import * as ni from 'network-interfaces'
-
-import type {HostOptions} from './types.js'
 import {assertConnectable, getIpFromHosts} from './network/index.js'
 import {assertCompatibleEnvironment} from './env.js'
+import * as ni from 'network-interfaces'
+import fs from 'node:fs'
+
+import type {HostOptions} from './types.js'
 
 const NON_SHOP_PREFIXES = ['app', 'dev', 'shopify']
 const BACKEND_PORT = 8080
 
+/**
+ *
+ * @param projectName
+ */
 export function createServer(projectName: string) {
   return {
     host: (options: HostOptions = {}) => host(projectName, options),
@@ -75,6 +78,10 @@ function resolveBackendHost(name: string): string {
 // Allow overrides for more concise test setup. Meh.
 let assertRunningOverride: typeof assertRunning2024 | undefined
 
+/**
+ *
+ * @param override
+ */
 export function setAssertRunning(override: typeof assertRunningOverride) {
   assertRunningOverride = override
 }

@@ -1,9 +1,8 @@
-import type {PushMetricExporter} from '@opentelemetry/sdk-metrics'
+import {throttle} from '../utils/throttle.js'
 import {MetricReader} from '@opentelemetry/sdk-metrics'
 import {ExportResultCode} from '@opentelemetry/core'
 import {diag} from '@opentelemetry/api'
-
-import {throttle} from '../utils/throttle.js'
+import type {PushMetricExporter} from '@opentelemetry/sdk-metrics'
 
 export interface InstantaneousMetricReaderOptions {
   /**
@@ -27,27 +26,22 @@ export class InstantaneousMetricReader extends MetricReader {
     })
     this._exporter = exporter
 
-    this.onForceFlush = throttle(
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      this.onForceFlush,
-      throttleLimit,
-    )
+    this.onForceFlush = throttle(this.onForceFlush, throttleLimit)
   }
 
   protected async onForceFlush(): Promise<void> {
     const {resourceMetrics, errors} = await this.collect({})
 
     if (errors.length > 0) {
-      diag.error('PeriodicExportingMetricReader: metrics collection errors', ...errors)
+      diag.error('InstantaneousMetricReader: metrics collection errors', ...errors)
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       this._exporter.export(resourceMetrics, (result) => {
-        if (result.code === ExportResultCode.SUCCESS) {
-          resolve()
-        } else {
-          reject(result.error ?? new Error(`InstantaneousMetricReader: metrics export failed (error ${result.error})`))
+        if (result.code !== ExportResultCode.SUCCESS) {
+          diag.error('InstantaneousMetricReader: metrics export failed', result.error)
         }
+        resolve()
       })
     })
   }

@@ -1,5 +1,16 @@
 # @shopify/cli-kit
 
+## 3.91.0
+
+### Minor Changes
+
+- fa8364d: Remove hardcoded theme duplicate mutation API version
+
+### Patch Changes
+
+- 19faac6: [internal] suppress console errors when pushing metrics
+- 5e13c83: Add --listing flag to theme dev, push, and share commands
+
 ## 3.90.0
 
 ### Minor Changes

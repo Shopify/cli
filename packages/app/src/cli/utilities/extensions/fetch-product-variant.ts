@@ -26,7 +26,7 @@ export async function fetchProductVariant(store: string) {
       `Your store needs to have at least one product to test a 'checkout_ui' extension.\n\n${addProductLink}`,
     )
   }
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   const variantURL = result.products.edges[0]!.node.variants.edges[0]!.node.id
   const variantId = variantURL.split('/').pop()
   return variantId

@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
+import {outputContent, outputDebug, outputToken} from './output.js'
 import {err, ok, Result} from './result.js'
 import {fetch, Response} from './http.js'
 import {writeFile, mkdir, inTemporaryDirectory, moveFile, chmod} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {AbortError} from './error.js'
-import {outputContent, outputDebug, outputToken} from '../../public/node/output.js'
 
 class GitHubClientError extends Error {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,14 +46,24 @@ export async function getLatestGitHubRelease(
   outputDebug(outputContent`Getting the latest release of GitHub repository ${owner}/${repo}...`)
   const url = `https://api.github.com/repos/${owner}/${repo}/releases`
   const fetchResult = await fetch(url)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jsonBody: any = await fetchResult.json()
+  try {
+    const responseText = await fetchResult.text()
+    const jsonBody = JSON.parse(responseText)
 
-  if (fetchResult.status !== 200) {
-    throw new GitHubClientError(url, fetchResult.status, jsonBody)
+    if (fetchResult.status !== 200) {
+      throw new GitHubClientError(url, fetchResult.status, jsonBody)
+    }
+
+    return jsonBody.find(options.filter)
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw new AbortError(
+        `Received invalid response from GitHub API (HTTP ${fetchResult.status}).`,
+        'The response could not be parsed as JSON. The service may be temporarily unavailable. Please try again.',
+      )
+    }
+    throw error
   }
-
-  return jsonBody.find(options.filter)
 }
 
 interface ParseRepositoryURLOutput {
@@ -94,7 +103,7 @@ export function parseGitHubRepositoryURL(url: string): Result<ParseRepositoryURL
   const normalizedSite = site === 'github' ? 'github.com' : site
   const user = match[4]!
   const name = match[5]!.replace(/\.git$/, '')
-  // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+
   const subDirectory = match[6]?.slice(1)!
   const ref = match[7]!
   const branch = ref ? `#${ref}` : ''

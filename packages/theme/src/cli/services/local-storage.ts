@@ -9,13 +9,9 @@ export interface ThemeLocalStorageSchema {
   themeStore: string
 }
 
-interface DevelopmentThemeLocalStorageSchema {
-  [themeStore: string]: DevelopmentThemeId
-}
+type DevelopmentThemeLocalStorageSchema = Record<string, DevelopmentThemeId>
 
-interface ThemeStorePasswordSchema {
-  [themeStore: string]: string
-}
+type ThemeStorePasswordSchema = Record<string, string>
 
 /** Preserves the theme store a command is acting on during multi environment execution */
 const themeStoreContext = new AsyncLocalStorage<{store: string}>()

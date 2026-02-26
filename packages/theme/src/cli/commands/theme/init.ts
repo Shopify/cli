@@ -1,5 +1,3 @@
-import {themeFlags} from '../../flags.js'
-import ThemeCommand from '../../utilities/theme-command.js'
 import {
   cloneRepoAndCheckoutLatestTag,
   cloneRepo,
@@ -7,6 +5,8 @@ import {
   SKELETON_THEME_URL,
   promptAIInstruction,
 } from '../../services/init.js'
+import ThemeCommand, {RequiredFlags} from '../../utilities/theme-command.js'
+import {themeFlags} from '../../flags.js'
 import {Args, Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
@@ -56,6 +56,8 @@ export default class Init extends ThemeCommand {
       env: 'SHOPIFY_FLAG_LATEST',
     }),
   }
+
+  static multiEnvironmentsFlags: RequiredFlags = null
 
   async command(flags: InitFlags, _adminSession: AdminSession, _multiEnvironment: boolean, args: InitArgs) {
     const name = args.name || (await this.promptName(flags.path))

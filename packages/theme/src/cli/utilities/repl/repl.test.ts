@@ -4,6 +4,7 @@ import {presentValue} from './presenter.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {describe, expect, test, vi} from 'vitest'
 import {outputInfo} from '@shopify/cli-kit/node/output'
+
 import {createInterface} from 'readline'
 
 vi.mock('@shopify/cli-kit/node/output')

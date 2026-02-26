@@ -1,5 +1,4 @@
 import {spawnSync} from 'node:child_process'
-import path from 'node:path'
 
 export {getIpFromHosts} from './host.js'
 
@@ -10,12 +9,15 @@ export interface ConnectionArguments {
   timeout?: number
 }
 
-// eslint-disable-next-line prettier/prettier
 const DEFAULT_CONNECT_TIMEOUT = 1000
 // Skip initialization on module load to prevent Spin trying to load a macOS dylib
 // (port checks should never run on Spin anyway)
 let checkPort: ReturnType<typeof getCheckPortHelper>
 
+/**
+ *
+ * @param options
+ */
 export function assertConnectable(options: ConnectionArguments): void {
   checkPort ||= getCheckPortHelper()
 
@@ -33,7 +35,9 @@ export function assertConnectable(options: ConnectionArguments): void {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
+/**
+ *
+ */
 export function TEST_testResetCheckPort(): void {
   checkPort = getCheckPortHelper()
 }

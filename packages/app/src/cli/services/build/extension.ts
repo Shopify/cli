@@ -1,7 +1,7 @@
 import {runThemeCheck} from './theme-check.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
-import {buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
+import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {FunctionConfigType} from '../../models/extensions/specifications/function.js'
 import {exec} from '@shopify/cli-kit/node/system'
@@ -202,6 +202,9 @@ export async function bundleFunctionExtension(wasmPath: string, bundlePath: stri
 
 async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   if (extension.buildCommand) {
+    if (extension.typegenCommand) {
+      await buildGraphqlTypes(extension, options)
+    }
     return runCommand(extension.buildCommand, extension, options)
   } else {
     return buildJSFunction(extension as ExtensionInstance<FunctionConfigType>, options)
@@ -223,13 +226,16 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
     `)
     throw new AbortSilentError()
   }
+  if (extension.typegenCommand) {
+    await buildGraphqlTypes(extension, options)
+  }
   return runCommand(extension.buildCommand, extension, options)
 }
 
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
   const buildCommandComponents = buildCommand.split(' ')
   options.stdout.write(`Building function ${extension.localIdentifier}...`)
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
   await exec(buildCommandComponents[0]!, buildCommandComponents.slice(1), {
     stdout: options.stdout,
     stderr: options.stderr,

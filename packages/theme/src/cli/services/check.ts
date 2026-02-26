@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {fileExists, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputResult, outputInfo, outputSuccess} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -15,9 +14,7 @@ import {
 } from '@shopify/theme-check-node'
 import YAML from 'yaml'
 
-interface OffenseMap {
-  [check: string]: Offense[]
-}
+type OffenseMap = Record<string, Offense[]>
 
 interface TransformedOffense {
   check: string
@@ -317,7 +314,7 @@ export async function outputActiveChecks(root: string, configPath?: string, envi
 
   const checkCodes = Object.keys(settings)
 
-  const checksList = checkCodes.reduce((acc: {[key: string]: unknown}, checkCode: string) => {
+  const checksList = checkCodes.reduce((acc: Record<string, unknown>, checkCode: string) => {
     const {severity, enabled, ...additional} = settings[checkCode]!
     if (!enabled) {
       return acc
