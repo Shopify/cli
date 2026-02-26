@@ -1,0 +1,42 @@
+{
+  "name": "@shopify/e2e",
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.11.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "nx run e2e:test",
+    "test:phase1": "playwright test --grep @phase1",
+    "test:phase2": "playwright test --grep @phase2",
+    "test:phase3": "playwright test --grep @phase3",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ],
+    "rules": {
+      "no-console": "off",
+      "import/extensions": [
+        "error",
+        "never",
+        {
+          "ignorePackages": true
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "@types/node": "^22.0.0",
+    "execa": "^7.2.0",
+    "node-pty": "^1.0.0",
+    "strip-ansi": "^7.1.0",
+    "tempy": "^1.0.1"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  }
+}

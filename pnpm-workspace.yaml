@@ -5,6 +5,7 @@ onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
   - msw
+  - node-pty
   - nx
   - protobufjs
   - yarn
