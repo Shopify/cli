@@ -204,7 +204,8 @@
       "packages/create-app": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "bin/**/*.js"
         ],
         "project": "**/*.ts!",
         "vite": {
@@ -255,7 +256,8 @@
       "packages/cli-kit": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
-          "**/public/**/*.{ts,tsx}!"
+          "**/public/**/*.{ts,tsx}!",
+          "bin/**/*.ts"
         ],
         "ignore": [
           "**/graphql/**/generated/*.ts"
