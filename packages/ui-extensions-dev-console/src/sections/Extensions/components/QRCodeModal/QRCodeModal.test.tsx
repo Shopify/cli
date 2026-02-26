@@ -4,7 +4,7 @@ import {mockI18n} from 'tests/mock-i18n'
 import {DefaultProviders} from 'tests/DefaultProviders'
 import {Modal} from '@/components/Modal'
 import React from 'react'
-import QRCode from 'qrcode.react'
+import {QRCodeCanvas as QRCode} from 'qrcode.react'
 import {mockApp, mockExtension} from '@shopify/ui-extensions-server-kit/testing'
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 
