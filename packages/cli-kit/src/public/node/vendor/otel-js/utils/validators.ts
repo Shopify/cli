@@ -2,6 +2,10 @@ import {diag} from '@opentelemetry/api'
 
 const validMetricRegex = new RegExp('[^a-zA-Z_][^a-zA-Z0-9_]*')
 
+/**
+ *
+ * @param value
+ */
 export function isValidMetricName(value: string): boolean {
   if (validMetricRegex.test(value)) {
     diag.warn(

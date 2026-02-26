@@ -142,9 +142,7 @@ interface ThrottlingState {
   }
 }
 
-const _throttlingState: {
-  [context: string]: ThrottlingState
-} = {}
+const _throttlingState: Record<string, ThrottlingState> = {}
 
 function extractRetryDelayMsFromResponse(response: RestResponse): number {
   const retryAfterStr = header(response, 'retry-after')
@@ -275,7 +273,7 @@ if (import.meta.vitest) {
 
       // When
       const callLimit = extractApiCallLimitFromResponse(response)
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+
       const [used, limit] = callLimit!
 
       // Then

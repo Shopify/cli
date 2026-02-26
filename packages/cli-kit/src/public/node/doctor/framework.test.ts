@@ -210,8 +210,9 @@ describe('DoctorSuite', () => {
     })
 
     test('converts non-Error throws to Error', async () => {
-      // Given
+      // Given - intentionally throw a string to verify the framework wraps it in an Error.
       suite.addTest('throws string', async () => {
+        // eslint-disable-next-line no-throw-literal, @typescript-eslint/only-throw-error
         throw 'string error'
       })
 

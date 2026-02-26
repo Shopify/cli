@@ -5,12 +5,15 @@ import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
-import {outputToken, outputContent, outputDebug} from '../../public/node/output.js'
+import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
+
 import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
+
 import type {Writable} from 'stream'
+
 import type {ExecOptions} from './system.js'
 
 /** The name of the Yarn lock file */
@@ -30,7 +33,7 @@ export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
 
 /** An array containing the lockfiles from all the package managers */
 export const lockfiles: Lockfile[] = [yarnLockfile, pnpmLockfile, npmLockfile, bunLockfile]
-export const lockfilesByManager: {[key in PackageManager]: Lockfile | undefined} = {
+export const lockfilesByManager: Record<PackageManager, Lockfile | undefined> = {
   yarn: yarnLockfile,
   npm: npmLockfile,
   pnpm: pnpmLockfile,
@@ -241,10 +244,10 @@ export async function getPackageVersion(packageJsonPath: string): Promise<string
  * @param packageJsonPath - Path to the package.json file
  * @returns A promise that resolves with the list of dependencies.
  */
-export async function getDependencies(packageJsonPath: string): Promise<{[key: string]: string}> {
+export async function getDependencies(packageJsonPath: string): Promise<Record<string, string>> {
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
-  const dependencies: {[key: string]: string} = packageJsonContent.dependencies ?? {}
-  const devDependencies: {[key: string]: string} = packageJsonContent.devDependencies ?? {}
+  const dependencies: Record<string, string> = packageJsonContent.dependencies ?? {}
+  const devDependencies: Record<string, string> = packageJsonContent.devDependencies ?? {}
 
   return {...dependencies, ...devDependencies}
 }
@@ -345,22 +348,22 @@ export interface PackageJson {
   /**
    * The scripts attribute of the package.json
    */
-  scripts?: {[key: string]: string}
+  scripts?: Record<string, string>
 
   /**
    * The dependencies attribute of the package.json
    */
-  dependencies?: {[key: string]: string}
+  dependencies?: Record<string, string>
 
   /**
    * The devDependencies attribute of the package.json
    */
-  devDependencies?: {[key: string]: string}
+  devDependencies?: Record<string, string>
 
   /**
    * The peerDependencies attribute of the package.json
    */
-  peerDependencies?: {[key: string]: string}
+  peerDependencies?: Record<string, string>
 
   /**
    * The optional oclif settings attribute of the package.json
@@ -377,12 +380,12 @@ export interface PackageJson {
   /**
    * The resolutions attribute of the package.json. Only useful when using yarn as package manager
    */
-  resolutions?: {[key: string]: string}
+  resolutions?: Record<string, string>
 
   /**
    * The overrides attribute of the package.json. Only useful when using npm o npmn as package managers
    */
-  overrides?: {[key: string]: string}
+  overrides?: Record<string, string>
 
   /**
    *  The prettier attribute of the package.json
@@ -681,7 +684,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
   }
 }
 
-export async function addResolutionOrOverride(directory: string, dependencies: {[key: string]: string}): Promise<void> {
+export async function addResolutionOrOverride(directory: string, dependencies: Record<string, string>): Promise<void> {
   const packageManager = await getPackageManager(directory)
   const packageJsonPath = joinPath(directory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)

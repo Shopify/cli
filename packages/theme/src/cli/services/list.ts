@@ -1,6 +1,6 @@
 import {getDevelopmentTheme} from './local-storage.js'
-import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {Filter, FilterProps, filterThemes} from '../utilities/theme-selector/filter.js'
+import {ALLOWED_ROLES, fetchStoreThemes, Role} from '../utilities/theme-selector/fetch.js'
 import {InlineToken, renderInfo} from '@shopify/cli-kit/node/ui'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getHostTheme} from '@shopify/cli-kit/node/themes/conf'

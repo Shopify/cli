@@ -10,16 +10,18 @@ import {
   handler,
   cleanSingleStackTracePath,
 } from './error.js'
-import {isLocalEnvironment} from '../../private/node/context/service.js'
+import {outputDebug, outputInfo} from './output.js'
 import {getEnvironmentData} from '../../private/node/analytics.js'
-import {outputDebug, outputInfo} from '../../public/node/output.js'
+import {isLocalEnvironment} from '../../private/node/context/service.js'
 import {bugsnagApiKey, reportingRateLimit} from '../../private/node/constants.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 import {runWithRateLimit} from '../../private/node/conf-store.js'
 import {getLastSeenUserIdAfterAuth} from '../../private/node/session.js'
+
 import {settings, Interfaces} from '@oclif/core'
 import StackTracey from 'stacktracey'
 import Bugsnag, {Event} from '@bugsnag/js'
+
 import {realpath} from 'fs/promises'
 
 // Allowed slice names for error analytics grouping.
@@ -232,7 +234,7 @@ export async function registerCleanBugsnagErrorsFromWithinPlugins(config: Interf
   })
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function addBugsnagMetadata(event: any, config: Interfaces.Config): Promise<void> {
   const publicData = metadata.getAllPublicMetadata()
   const {commandStartOptions} = metadata.getAllSensitiveMetadata()
@@ -250,10 +252,10 @@ export async function addBugsnagMetadata(event: any, config: Interfaces.Config):
     pluginData: otherPluginsPublic,
   }
 
-  const appData = {} as {[key: string]: unknown}
-  const commandData = {} as {[key: string]: unknown}
-  const environmentData = {} as {[key: string]: unknown}
-  const miscData = {} as {[key: string]: unknown}
+  const appData = {} as Record<string, unknown>
+  const commandData = {} as Record<string, unknown>
+  const environmentData = {} as Record<string, unknown>
+  const miscData = {} as Record<string, unknown>
   const appKeys = ['api_key', 'business_platform_id', 'partner_id', 'project_type']
   const commandKeys = ['command']
   const environmentKeys = ['cli_version', 'node_version', 'uname']

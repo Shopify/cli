@@ -585,12 +585,13 @@ describe('pushUpdatesForDevSession', () => {
     // rejection through the SerialBatchProcessor (due to a missing await in bundleExtensionsAndUpload).
     // Attach a .catch() to the processing promise to prevent the unhandled rejection.
     const originalEnqueue = SerialBatchProcessor.prototype.enqueue
-    const enqueueSpy = vi
-      .spyOn(SerialBatchProcessor.prototype, 'enqueue')
-      .mockImplementation(function (this: any, ...args: [any]) {
-        originalEnqueue.apply(this, args)
-        this.processingPromise?.catch(() => {})
-      })
+    const enqueueSpy = vi.spyOn(SerialBatchProcessor.prototype, 'enqueue').mockImplementation(function (
+      this: any,
+      ...args: [any]
+    ) {
+      originalEnqueue.apply(this, args)
+      this.processingPromise?.catch(() => {})
+    })
 
     // Given - Create with initial session state
     developerPlatformClient.devSessionCreate = vi.fn().mockResolvedValue({

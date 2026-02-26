@@ -7,6 +7,7 @@ import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
+
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
 import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'

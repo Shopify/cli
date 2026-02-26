@@ -8,6 +8,7 @@ import {AbortError, BugError} from '../../../public/node/error.js'
 import {isCloudEnvironment} from '../../../public/node/context/local.js'
 import {isCI, openURL} from '../../../public/node/system.js'
 import {isTTY, keypress} from '../../../public/node/ui.js'
+
 import {Response} from 'node-fetch'
 
 export interface DeviceAuthorizationResponse {

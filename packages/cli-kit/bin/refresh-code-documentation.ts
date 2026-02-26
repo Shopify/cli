@@ -91,7 +91,7 @@ refreshDocumentation()
   .then(() => {
     process.exit(0)
   })
-  // eslint-disable-next-line node/handle-callback-err
+  // eslint-disable-next-line n/handle-callback-err
   .catch((_error) => {
     process.exit(1)
   })

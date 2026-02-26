@@ -14,7 +14,6 @@ interface CLIConfigOptions {
  */
 export function configureCLIEnvironment(options: CLIConfigOptions): void {
   if (options.verbose) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     process.env[globalFlags.verbose.env!] = 'true'
   }
 

@@ -1,6 +1,6 @@
 import {REMOTE_STRATEGY, LOCAL_STRATEGY} from './remote-theme-watcher.js'
-import {batchedRequests} from '../batching.js'
 import {MAX_GRAPHQL_THEME_FILES} from '../../constants.js'
+import {batchedRequests} from '../batching.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'

@@ -119,8 +119,10 @@ export async function businessPlatformOrganizationsRequest<T>(
   })
 }
 
-export interface BusinessPlatformOrganizationsRequestOptions<TResult, TVariables extends Variables>
-  extends BusinessPlatformRequestOptions<TResult, TVariables> {
+export interface BusinessPlatformOrganizationsRequestOptions<
+  TResult,
+  TVariables extends Variables,
+> extends BusinessPlatformRequestOptions<TResult, TVariables> {
   organizationId: string
 }
 

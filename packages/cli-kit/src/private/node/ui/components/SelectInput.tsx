@@ -1,7 +1,7 @@
 import {Scrollbar} from './Scrollbar.js'
-import {useSelectState} from '../hooks/use-select-state.js'
-import useLayout from '../hooks/use-layout.js'
 import {handleCtrlC} from '../../ui.js'
+import useLayout from '../hooks/use-layout.js'
+import {useSelectState} from '../hooks/use-select-state.js'
 import React, {useCallback, forwardRef, useEffect} from 'react'
 import {Box, Key, useInput, Text, DOMElement} from 'ink'
 import chalk from 'chalk'
@@ -9,9 +9,9 @@ import figures from 'figures'
 import sortBy from 'lodash/sortBy.js'
 
 declare module 'react' {
-  function forwardRef<T, P>(
-    render: (props: P, ref: React.Ref<T>) => React.ReactElement | null,
-  ): (props: P & React.RefAttributes<T>) => React.ReactElement | null
+  function forwardRef<T, TProps>(
+    render: (props: TProps, ref: React.Ref<T>) => React.ReactElement | null,
+  ): (props: TProps & React.RefAttributes<T>) => React.ReactElement | null
 }
 export interface SelectInputProps<T> {
   items: Item<T>[]
@@ -80,7 +80,6 @@ interface ItemProps<T> {
   index: number
 }
 
-// eslint-disable-next-line react/function-component-definition
 function Item<T>({
   item,
   previousItem,
@@ -132,7 +131,6 @@ function Item<T>({
 
 const MAX_AVAILABLE_LINES = 25
 
-// eslint-disable-next-line react/function-component-definition
 function SelectInputInner<T>(
   {
     items: rawItems,

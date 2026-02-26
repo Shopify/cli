@@ -2,6 +2,7 @@ import {SingleTask} from './SingleTask.js'
 import {render} from '../../testing/ui.js'
 import {TokenizedString} from '../../../../public/node/output.js'
 import React from 'react'
+
 import {describe, expect, test} from 'vitest'
 
 describe('SingleTask', () => {
@@ -170,7 +171,10 @@ describe('SingleTask', () => {
   test('preserves error types and messages', async () => {
     // Test with custom error
     class CustomError extends Error {
-      constructor(message: string, public code: string) {
+      constructor(
+        message: string,
+        public code: string,
+      ) {
         super(message)
         this.name = 'CustomError'
       }

@@ -1,12 +1,13 @@
-import * as styles from './AppHomeRow.module.scss'
 import en from './translations/en.json'
-
+import * as styles from './AppHomeRow.module.scss'
 import {NotApplicable, PreviewLink, QRCodeModal, Row} from '..'
 import {useApp} from '../../hooks/useApp'
 import {useExtensionServerOptions} from '../../hooks/useExtensionServerOptions.js'
-import {useI18n} from '@shopify/react-i18n'
-import React, {useState} from 'react'
+
 import {Button} from '@/components'
+import React, {useState} from 'react'
+
+import {useI18n} from '@shopify/react-i18n'
 
 export function AppHomeRow() {
   const [showModal, setShowModal] = useState(false)

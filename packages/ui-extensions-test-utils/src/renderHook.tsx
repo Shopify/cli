@@ -28,7 +28,7 @@ export function renderHook<T, TP>(
   Providers: React.ComponentType<React.PropsWithChildren<TP>> = ({children}) => <>{children}</>,
   options: Omit<TP, 'children'> = {} as TP,
 ) {
-  const hookResult: HookWrapper<T> = {} as any
+  const hookResult: HookWrapper<T> = {} as HookWrapper<T>
   const wrapper = mount(
     <Providers {...(options as TP)}>
       <MountHook callback={() => (hookResult.result = hook())} />
