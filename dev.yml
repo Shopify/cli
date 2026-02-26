@@ -9,7 +9,7 @@ up:
   - custom:
       name: 'Create p alias for pnpm'
       met?: test -x bin/p
-      meet: mkdir -p bin && printf '#!/bin/sh\nexec pnpm "$@"\n' > bin/p && chmod +x bin/p
+      meet: mkdir -p bin && printf '#!/bin/sh\nexec "%s" "$@"\n' "$(which pnpm)" > bin/p && chmod +x bin/p
   - custom:
       name: 'Install PNPM dependencies'
       # we flip these two conditions to always run `pnpm install`
@@ -25,7 +25,7 @@ up:
 env:
   SHOPIFY_CLI_ENV: development
   SHOPIFY_SERVICE_ENV: production
-  PATH: "${PWD}/bin:${PATH}"
+  PATH: "${PATH}:${PWD}/bin"
 
 open:
   app: http://localhost:3000
