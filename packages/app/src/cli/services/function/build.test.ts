@@ -121,6 +121,7 @@ describe('buildGraphqlTypes', () => {
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith('npx', ['shopify-function-codegen', '--schema', 'schema.graphql'], {
       cwd: ourFunction.directory,
+      stdout,
       stderr,
       signal,
     })
@@ -150,6 +151,7 @@ describe('buildGraphqlTypes', () => {
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith('custom-typegen', ['--output', 'types.ts'], {
       cwd: ourFunction.directory,
+      stdout,
       stderr,
       signal,
     })

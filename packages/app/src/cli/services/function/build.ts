@@ -130,6 +130,7 @@ export async function buildGraphqlTypes(
     return runWithTimer('cmd_all_timing_network_ms')(async () => {
       return exec(commandComponents[0]!, commandComponents.slice(1), {
         cwd: fun.directory,
+        stdout: options.stdout,
         stderr: options.stderr,
         signal: options.signal,
       })
