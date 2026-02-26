@@ -85,7 +85,7 @@ export interface themedev {
   '--password <value>'?: string
 
   /**
-   * The path where you want to run the command. Defaults to the current working directory.
+   * The path for the dev server. It can be a directory or a JSON overrides file. When a directory is provided, it is used as the theme directory. When a JSON file is provided, overrides are applied to the theme specified by --theme. Defaults to the current working directory.
    * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
@@ -97,16 +97,10 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
-   * An existing preview identifier to update instead of creating a new preview. Used with --source when pointing to a JSON overrides file.
+   * An existing preview identifier to update instead of creating a new preview. Used with --path when pointing to a JSON overrides file.
    * @environment SHOPIFY_FLAG_PREVIEW_ID
    */
   '--preview-id <value>'?: string
-
-  /**
-   * The source for the dev server. Can be a directory or a JSON overrides file. When a directory is provided, it is used as the theme directory. When a JSON file is provided, overrides are applied to the theme specified by --theme.
-   * @environment SHOPIFY_FLAG_SOURCE
-   */
-  '--source <value>'?: string
 
   /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
