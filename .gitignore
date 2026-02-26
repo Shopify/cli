@@ -202,4 +202,4 @@ packages/cli-kit/src/cli/api/graphql/*/*_schema.graphql
 .claude/settings.local.json
 
 # Local dev alias scripts
-bin/
+bin/p
