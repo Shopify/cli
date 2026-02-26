@@ -116,7 +116,7 @@ export function waitForChange(func: () => void, getChangingValue: () => string |
   })
 }
 
-export function waitFor(func: () => void, condition: () => boolean) {
+function waitFor(func: () => void, condition: () => boolean) {
   return new Promise<void>((resolve) => {
     func()
 
