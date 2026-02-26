@@ -6,9 +6,9 @@ const data: ReferenceEntityTemplateSchema = {
   description: `
   Uploads the current theme as the specified theme, or a [development theme](/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
-  Alternatively, a JSON overrides file can be specified using --source to quickly preview changes without uploading a theme.
+  Alternatively, a JSON overrides file can be specified using --path to quickly preview changes without uploading a theme.
 
-This command returns the following information by default, unless --source is used to target a JSON overrides file:
+This command returns the following information by default, unless --path is used to target a JSON overrides file:
 
 - A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.
 
@@ -18,7 +18,7 @@ This command returns the following information by default, unless --source is us
 
 - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.
 
-> Note: When using --source to target a JSON overrides file, the command will return the preview link instead of the development theme URL.
+> Note: When using --path to target a JSON overrides file, the command will return the preview link instead of the development theme URL.
 
 If you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the \`--theme-editor-sync\` flag.
 
@@ -26,7 +26,7 @@ If you already have a development theme for your current environment, then this 
 
 Development themes are deleted when you run \`shopify auth logout\`. If you need a preview link that can be used after you log out, then you should [share](/docs/api/shopify-cli/theme/theme-share) your theme or [push](/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.
 
-You can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure) unless --source is used to target a JSON overrides file.`,
+You can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure) unless --path is used to target a JSON overrides file.`,
   overviewPreviewDescription: `Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time. Alternatively, a JSON overrides file can be provided to quickly preview changes without uploading a theme.`,
   type: 'command',
   isVisualComponent: false,
