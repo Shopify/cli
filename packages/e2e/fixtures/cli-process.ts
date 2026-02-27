@@ -121,11 +121,11 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
             process.stdout.write(data)
           }
 
-          // Check if any waiters are satisfied
+          // Check if any waiters are satisfied (check both raw and stripped output)
           const stripped = stripAnsi(output)
           for (let i = outputWaiters.length - 1; i >= 0; i--) {
             const waiter = outputWaiters[i]!
-            if (stripped.includes(waiter.text)) {
+            if (stripped.includes(waiter.text) || output.includes(waiter.text)) {
               waiter.resolve()
               outputWaiters.splice(i, 1)
             }
@@ -151,8 +151,8 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           ptyProcess,
 
           waitForOutput(text: string, timeoutMs = 3 * 60 * 1000) {
-            // Check if already in output
-            if (stripAnsi(output).includes(text)) {
+            // Check if already in output (raw or stripped)
+            if (stripAnsi(output).includes(text) || output.includes(text)) {
               return Promise.resolve()
             }
 
