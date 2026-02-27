@@ -48,7 +48,6 @@ export interface AppInfoResult {
  * Worker-scoped fixture that performs OAuth login via browser automation.
  * Runs once per worker, stores the session in shared XDG dirs.
  */
-// eslint-disable-next-line @typescript-eslint/ban-types, @typescript-eslint/no-invalid-void-type
 const withAuth = cliFixture.extend<{}, {authLogin: void}>({
   authLogin: [
     async ({env}, use) => {
