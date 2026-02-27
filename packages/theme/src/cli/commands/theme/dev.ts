@@ -12,7 +12,6 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {recordEvent} from '@shopify/cli-kit/node/analytics'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {isDirectorySync} from '@shopify/cli-kit/node/fs'
 import {InferredFlags} from '@oclif/core/interfaces'
 
 import type {ErrorOverlayMode, LiveReload} from '../../utilities/theme-environment/types.js'
@@ -21,14 +20,14 @@ type DevFlags = InferredFlags<typeof Dev.flags>
 
 export default class Dev extends ThemeCommand {
   static summary =
-    'Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time. Alternatively, a JSON overrides file can be provided to quickly preview changes without uploading a theme.'
+    'Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time. Alternatively, a JSON overrides file can be provided via --overrides to quickly preview changes without uploading a theme.'
 
   static descriptionWithMarkdown = `
   Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
-  Alternatively, a JSON overrides file can be specified using --path to quickly preview changes without uploading a theme.
+  Alternatively, a JSON overrides file can be specified using --overrides to quickly preview changes without uploading a theme.
 
-This command returns the following information by default, unless --path is used to target a JSON overrides file:
+This command returns the following information by default, unless --overrides is used to target a JSON overrides file:
 
 - A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.
 
@@ -38,7 +37,7 @@ This command returns the following information by default, unless --path is used
 
 - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.
 
-> Note: When using --path to target a JSON overrides file, the command will return the preview link instead of the development theme URL.
+> Note: When using --overrides to target a JSON overrides file, the command will return the preview link instead of the development theme URL.
 
 If you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the \`--theme-editor-sync\` flag.
 
@@ -46,18 +45,13 @@ If you already have a development theme for your current environment, then this 
 
 Development themes are deleted when you run \`shopify auth logout\`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.
 
-You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) unless --path is used to target a JSON overrides file.`
+You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure) unless --overrides is used to target a JSON overrides file.`
 
   static description = this.descriptionWithoutMarkdown()
 
   static flags = {
     ...globalFlags,
     ...themeFlags,
-    path: {
-      ...themeFlags.path,
-      description:
-        'The path for the dev server. It can be a directory or a JSON overrides file. When a directory is provided, it is used as the theme directory. When a JSON file is provided, overrides are applied to the theme specified by --theme. Defaults to the current working directory.',
-    } as typeof themeFlags.path,
     host: Flags.string({
       description: 'Set which network interface the web server listens on. The default value is 127.0.0.1.',
       env: 'SHOPIFY_FLAG_HOST',
@@ -147,9 +141,13 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_ALLOW_LIVE',
       default: false,
     }),
-    'preview-id': Flags.string({
+    overrides: Flags.string({
       description:
-        'An existing preview identifier to update instead of creating a new preview. Used with --path when pointing to a JSON overrides file.',
+        'Path to a JSON overrides file. When provided, overrides are applied to the theme specified by --theme instead of uploading a local theme.',
+      env: 'SHOPIFY_FLAG_OVERRIDES',
+    }),
+    'preview-id': Flags.string({
+      description: 'An existing preview identifier to update instead of creating a new preview. Used with --overrides.',
       env: 'SHOPIFY_FLAG_PREVIEW_ID',
     }),
   }
@@ -161,9 +159,9 @@ You can run this command only in a directory that matches the [default Shopify t
 
     recordEvent('theme-command:dev:single-env:authenticated')
 
-    if (!isDirectorySync(devFlags.path)) {
+    if (devFlags.overrides) {
       recordEvent('theme-command:dev:override-session')
-      await createOverrideDevSession(devFlags.path, devFlags, adminSession)
+      await createOverrideDevSession(devFlags.overrides, devFlags, adminSession)
       return
     }
 
@@ -222,7 +220,7 @@ You can run this command only in a directory that matches the [default Shopify t
 
 async function createOverrideDevSession(overrideJson: string, devFlags: DevFlags, adminSession: AdminSession) {
   if (!devFlags.theme) {
-    throw new AbortError(`The --theme flag is required when using --path with a JSON file.`)
+    throw new AbortError(`The --theme flag is required when using --overrides.`)
   }
 
   const theme = await findOrSelectTheme(adminSession, {filter: {theme: devFlags.theme}})
