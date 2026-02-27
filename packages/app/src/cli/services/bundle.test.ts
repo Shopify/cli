@@ -1,4 +1,4 @@
-import {writeManifestToBundle, compressBundle} from './bundle.js'
+import {writeManifestToBundle, compressBundle, BUNDLE_EXCLUSION_PATTERNS} from './bundle.js'
 import {AppInterface} from '../models/app/app.js'
 import {describe, test, expect, vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -53,7 +53,7 @@ describe('compressBundle', () => {
       expect(zip).toHaveBeenCalledWith({
         inputDirectory: inputDir,
         outputZipPath: outputZip,
-        matchFilePattern: ['**/*', '!**/*.js.map'],
+        matchFilePattern: ['**/*', ...BUNDLE_EXCLUSION_PATTERNS],
       })
       expect(brotliCompress).not.toHaveBeenCalled()
     })
@@ -74,7 +74,7 @@ describe('compressBundle', () => {
       // Then
       expect(zip).toHaveBeenCalledWith(
         expect.objectContaining({
-          matchFilePattern: ['**/*', '!**/*.js.map'],
+          matchFilePattern: ['**/*', ...BUNDLE_EXCLUSION_PATTERNS],
         }),
       )
     })
@@ -95,7 +95,7 @@ describe('compressBundle', () => {
       expect(brotliCompress).toHaveBeenCalledWith({
         inputDirectory: inputDir,
         outputPath: outputBr,
-        matchFilePattern: ['**/*', '!**/*.js.map'],
+        matchFilePattern: ['**/*', ...BUNDLE_EXCLUSION_PATTERNS],
       })
       expect(zip).not.toHaveBeenCalled()
     })
@@ -116,7 +116,48 @@ describe('compressBundle', () => {
       // Then
       expect(brotliCompress).toHaveBeenCalledWith(
         expect.objectContaining({
-          matchFilePattern: ['**/*', '!**/*.js.map'],
+          matchFilePattern: ['**/*', ...BUNDLE_EXCLUSION_PATTERNS],
+        }),
+      )
+    })
+  })
+
+  test('excludes .metafile.json files from the zip', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const inputDir = joinPath(tmpDir, 'input')
+      const outputZip = joinPath(tmpDir, 'output.zip')
+      await mkdir(inputDir)
+      await writeFile(joinPath(inputDir, 'test.txt'), 'test content')
+      await writeFile(joinPath(inputDir, 'main.metafile.json'), '{"inputs":{},"outputs":{}}')
+
+      // When
+      await compressBundle(inputDir, outputZip)
+
+      // Then
+      expect(zip).toHaveBeenCalledWith(
+        expect.objectContaining({
+          matchFilePattern: ['**/*', ...BUNDLE_EXCLUSION_PATTERNS],
+        }),
+      )
+    })
+  })
+
+  test('uses custom file patterns as-is when provided', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const inputDir = joinPath(tmpDir, 'input')
+      const outputZip = joinPath(tmpDir, 'output.zip')
+      await mkdir(inputDir)
+      await writeFile(joinPath(inputDir, 'test.txt'), 'test content')
+
+      // When
+      await compressBundle(inputDir, outputZip, ['ext1/**', 'manifest.json'])
+
+      // Then
+      expect(zip).toHaveBeenCalledWith(
+        expect.objectContaining({
+          matchFilePattern: ['ext1/**', 'manifest.json'],
         }),
       )
     })

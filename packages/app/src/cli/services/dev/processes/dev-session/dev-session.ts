@@ -2,7 +2,13 @@ import {DevSessionLogger} from './dev-session-logger.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher, ExtensionEvent} from '../../app-events/app-event-watcher.js'
-import {compressBundle, getUploadURL, uploadToGCS, writeManifestToBundle} from '../../../bundle.js'
+import {
+  BUNDLE_EXCLUSION_PATTERNS,
+  compressBundle,
+  getUploadURL,
+  uploadToGCS,
+  writeManifestToBundle,
+} from '../../../bundle.js'
 import {DevSessionCreateOptions, DevSessionUpdateOptions} from '../../../../utilities/developer-platform-client.js'
 import {AppManifest} from '../../../../models/app/app.js'
 import {getWebSocketUrl} from '../../extension.js'
@@ -376,7 +382,7 @@ export class DevSession {
     )
 
     // Create zip file with everything
-    const filePattern = [...assets.map((ext) => `${ext}/**`), '!**/*.js.map']
+    const filePattern = [...assets.map((ext) => `${ext}/**`), ...BUNDLE_EXCLUSION_PATTERNS]
     if (includeManifest) filePattern.push('manifest.json')
 
     await compressBundle(this.bundlePath, compressedBundlePath, filePattern)

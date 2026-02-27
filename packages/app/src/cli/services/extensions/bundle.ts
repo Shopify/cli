@@ -4,14 +4,16 @@ import {themeExtensionFiles} from '../../utilities/extensions/theme.js'
 import {EsbuildEnvVarRegex, environmentVariableNames} from '../../constants.js'
 import {context as esContext, formatMessagesSync} from 'esbuild'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {copyFile, glob} from '@shopify/cli-kit/node/fs'
-import {joinPath, relativePath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {copyFile, glob, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, parsePath, relativePath} from '@shopify/cli-kit/node/path'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import graphqlLoaderPlugin from '@luckycatfactory/esbuild-graphql-loader'
 import {Writable} from 'stream'
 import type {StdinOptions, build as esBuild, Plugin} from 'esbuild'
+
+type EsbuildResult = Awaited<ReturnType<typeof esBuild>>
 
 interface BundleOptions {
   minify: boolean
@@ -58,6 +60,9 @@ export async function bundleExtension(options: BundleOptions, processEnv = proce
   const context = await esContext(esbuildOptions)
   const result = await context.rebuild()
   onResult(result, options)
+
+  await writeMetafile(result, options.outputPath)
+
   await context.dispose()
 }
 
@@ -104,7 +109,20 @@ export async function copyFilesForExtension(
   options.stdout.write(`${extension.localIdentifier} successfully built`)
 }
 
-function onResult(result: Awaited<ReturnType<typeof esBuild>> | null, options: BundleOptions) {
+async function writeMetafile(result: EsbuildResult | null, outputPath: string) {
+  if (!result?.metafile) return
+
+  const {dir, name} = parsePath(outputPath)
+  const metafilePath = joinPath(dir, `${name}.metafile.json`)
+  try {
+    await writeFile(metafilePath, JSON.stringify(result.metafile))
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputWarn(`Failed to write metafile to ${metafilePath}: ${error}`)
+  }
+}
+
+function onResult(result: EsbuildResult | null, options: BundleOptions) {
   const warnings = result?.warnings ?? []
   const errors = result?.errors ?? []
   if (warnings.length > 0) {
@@ -153,6 +171,9 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
   if (options.sourceMaps) {
     esbuildOptions.sourcemap = true
     esbuildOptions.sourceRoot = `${options.stdin.resolveDir}/src`
+  }
+  if (options.environment === 'production') {
+    esbuildOptions.metafile = true
   }
   return esbuildOptions
 }
