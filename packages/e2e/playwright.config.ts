@@ -1,4 +1,25 @@
 import {defineConfig} from '@playwright/test'
+import * as fs from 'fs'
+import * as path from 'path'
+import {fileURLToPath} from 'url'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+
+// Load .env file if present (CI provides env vars directly)
+const envPath = path.join(__dirname, '.env')
+if (fs.existsSync(envPath)) {
+  for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const eqIdx = trimmed.indexOf('=')
+    if (eqIdx === -1) continue
+    const key = trimmed.slice(0, eqIdx).trim()
+    const value = trimmed.slice(eqIdx + 1).trim()
+    if (!process.env[key]) {
+      process.env[key] = value
+    }
+  }
+}
 
 const isCI = !!process.env.CI
 

@@ -30,6 +30,8 @@ export interface SpawnedProcess {
 export interface CLIProcess {
   /** Execute a CLI command non-interactively via execa */
   exec(args: string[], opts?: {cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number}): Promise<ExecResult>
+  /** Execute the create-app binary non-interactively via execa */
+  execCreateApp(args: string[], opts?: {cwd?: string; env?: NodeJS.ProcessEnv; timeout?: number}): Promise<ExecResult>
   /** Spawn an interactive CLI command via node-pty */
   spawn(args: string[], opts?: {cwd?: string; env?: NodeJS.ProcessEnv}): Promise<SpawnedProcess>
 }
@@ -57,6 +59,28 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         }
 
         const result = await execa('node', [executables.cli, ...args], execaOpts)
+
+        return {
+          stdout: result.stdout ?? '',
+          stderr: result.stderr ?? '',
+          exitCode: result.exitCode ?? 1,
+        }
+      },
+
+      async execCreateApp(args, opts = {}) {
+        const timeout = opts.timeout ?? 5 * 60 * 1000 // 5 min default for scaffolding
+        const execaOpts: ExecaOptions = {
+          cwd: opts.cwd,
+          env: {...env.processEnv, ...opts.env},
+          timeout,
+          reject: false,
+        }
+
+        if (process.env.DEBUG === '1') {
+          console.log(`[e2e] exec: node ${executables.createApp} ${args.join(' ')}`)
+        }
+
+        const result = await execa('node', [executables.createApp, ...args], execaOpts)
 
         return {
           stdout: result.stdout ?? '',
