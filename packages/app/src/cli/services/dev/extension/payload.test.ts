@@ -462,7 +462,7 @@ describe('getUIExtensionPayload', () => {
   })
 
   describe('supportedFeatures', () => {
-    test('returns supportedFeatures with offlineMode true when offline_mode is enabled', async () => {
+    test('returns supportedFeatures with runsOffline true when runs_offline is enabled', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await testUIExtension({
@@ -473,7 +473,7 @@ describe('getUIExtensionPayload', () => {
             metafields: [],
             capabilities: {},
             supported_features: {
-              offline_mode: true,
+              runs_offline: true,
             },
             extension_points: [],
           },
@@ -488,12 +488,12 @@ describe('getUIExtensionPayload', () => {
 
         // Then
         expect(got.supportedFeatures).toStrictEqual({
-          offlineMode: true,
+          runsOffline: true,
         })
       })
     })
 
-    test('returns supportedFeatures with offlineMode false when offline_mode is disabled', async () => {
+    test('returns supportedFeatures with runsOffline false when runs_offline is disabled', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await testUIExtension({
@@ -504,7 +504,7 @@ describe('getUIExtensionPayload', () => {
             metafields: [],
             capabilities: {},
             supported_features: {
-              offline_mode: false,
+              runs_offline: false,
             },
             extension_points: [],
           },
@@ -519,12 +519,12 @@ describe('getUIExtensionPayload', () => {
 
         // Then
         expect(got.supportedFeatures).toStrictEqual({
-          offlineMode: false,
+          runsOffline: false,
         })
       })
     })
 
-    test('returns supportedFeatures with offlineMode false when supported_features is not configured', async () => {
+    test('returns supportedFeatures with runsOffline false when supported_features is not configured', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         const uiExtension = await testUIExtension({
@@ -547,7 +547,7 @@ describe('getUIExtensionPayload', () => {
 
         // Then
         expect(got.supportedFeatures).toStrictEqual({
-          offlineMode: false,
+          runsOffline: false,
         })
       })
     })

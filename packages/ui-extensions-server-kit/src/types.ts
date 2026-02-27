@@ -158,7 +158,7 @@ export interface ExtensionPayload {
 }
 
 export interface ExtensionSupportedFeatures {
-  offlineMode: boolean
+  runsOffline: boolean
 }
 
 export enum Status {

@@ -46,7 +46,7 @@ export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType 
 }
 
 interface SupportedFeatures {
-  offlineMode: boolean
+  runsOffline: boolean
 }
 
 export interface UIExtensionPayload {

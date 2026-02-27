@@ -996,7 +996,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
       })
     })
 
-    test('returns supported_features with offline_mode true when configured', async () => {
+    test('returns supported_features with runs_offline true when configured', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
@@ -1012,7 +1012,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
             metafields: [],
             capabilities: {},
             supported_features: {
-              offline_mode: true,
+              runs_offline: true,
             },
             settings: {},
           },
@@ -1030,12 +1030,12 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
 
         // Then
         expect(deployConfig?.supported_features).toStrictEqual({
-          offline_mode: true,
+          runs_offline: true,
         })
       })
     })
 
-    test('returns supported_features with offline_mode false when configured', async () => {
+    test('returns supported_features with runs_offline false when configured', async () => {
       await inTemporaryDirectory(async (tmpDir) => {
         // Given
         vi.spyOn(loadLocales, 'loadLocalesConfig').mockResolvedValue({})
@@ -1051,7 +1051,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
             metafields: [],
             capabilities: {},
             supported_features: {
-              offline_mode: false,
+              runs_offline: false,
             },
             settings: {},
           },
@@ -1069,7 +1069,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
 
         // Then
         expect(deployConfig?.supported_features).toStrictEqual({
-          offline_mode: false,
+          runs_offline: false,
         })
       })
     })

@@ -1484,7 +1484,7 @@ redirect_urls = [ "https://example.com/api/auth" ]
         sources = ["https://my-iframe.com"]
 
         [extensions.supported_features]
-        offline_mode = true
+        runs_offline = true
 
         [extensions.settings]
           [[extensions.settings.fields]]
@@ -1564,7 +1564,7 @@ redirect_urls = [ "https://example.com/api/auth" ]
           },
         },
         supported_features: {
-          offline_mode: true,
+          runs_offline: true,
         },
         settings: {
           fields: [
