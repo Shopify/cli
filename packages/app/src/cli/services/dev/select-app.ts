@@ -5,7 +5,7 @@ import {getCachedCommandInfo, setCachedCommandTomlPreference} from '../local-sto
 import {CreateAppOptions, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppConfigurationFileName} from '../../models/app/loader.js'
 import {BugError} from '@shopify/cli-kit/node/error'
-import {outputInfo, outputDebug} from '@shopify/cli-kit/node/output'
+import {outputInfo} from '@shopify/cli-kit/node/output'
 
 const MAX_PROMPT_RETRIES = 2
 
@@ -51,52 +51,33 @@ export async function selectOrCreateApp(
     const tomls = (cachedData?.tomls as {[key: string]: AppConfigurationFileName}) ?? {}
 
     for (let attempt = 0; attempt < MAX_PROMPT_RETRIES; attempt++) {
-      try {
-        // eslint-disable-next-line no-await-in-loop
-        const app = await selectAppPrompt(
-          searchForAppsByNameFactory(developerPlatformClient, org.id),
-          apps,
-          hasMorePages,
-          {directory: options.directory},
-        )
+      // eslint-disable-next-line no-await-in-loop
+      const app = await selectAppPrompt(
+        searchForAppsByNameFactory(developerPlatformClient, org.id),
+        apps,
+        hasMorePages,
+        {directory: options.directory},
+      )
 
+      if (!app) {
+        if (attempt < MAX_PROMPT_RETRIES - 1) outputInfo('App selection failed. Retrying...')
+        continue
+      } else {
         const selectedToml = tomls[app.apiKey]
         if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
         // eslint-disable-next-line no-await-in-loop
         const fullSelectedApp = await developerPlatformClient.appFromIdentifiers(app.apiKey)
 
-        if (!fullSelectedApp) {
-          throw new BugError(
-            `Unable to fetch app ${app.apiKey} from Shopify`,
-            'Try running `shopify app config link` to connect to an app you have access to.',
-          )
-        }
-
-        return fullSelectedApp
-      } catch (error) {
-        // Don't retry BugError - those indicate actual bugs, not transient issues
-        if (error instanceof BugError) {
-          throw error
-        }
-
-        const errorObj = error as Error
-
-        // Log each attempt for observability
-        outputDebug(`App selection attempt ${attempt + 1}/${MAX_PROMPT_RETRIES} failed: ${errorObj.message}`)
-
-        // If we have retries left, inform user and retry
-        if (attempt < MAX_PROMPT_RETRIES - 1) {
-          outputInfo('App selection failed. Retrying...')
-        } else {
-          throw new BugError(errorObj.message, TRY_MESSAGE)
+        if (fullSelectedApp) {
+          return fullSelectedApp
         }
       }
     }
 
     // User-facing error message with key diagnostic info
     const errorMessage = [
-      'Unable to select an app: the selection prompt was interrupted multiple times.',
+      'Unable to select an app: the selection prompt failed multiple times.',
       '',
       `Available apps: ${apps.length}`,
     ].join('\n')

@@ -3,9 +3,11 @@ import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
+import {BugError} from '@shopify/cli-kit/node/error'
 import {describe, expect, vi, test} from 'vitest'
 
 vi.mock('../../prompts/dev')
+vi.mock('@shopify/cli-kit/node/output')
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
@@ -81,5 +83,49 @@ describe('selectOrCreateApp', () => {
     expect(got).toEqual({...APP1, newApp: true})
     expect(appNamePrompt).toHaveBeenCalledWith(LOCAL_APP.name)
     expect(developerPlatformClient.createApp).toHaveBeenCalledWith(ORG1, {name: 'app-name'})
+  })
+
+  test('retries when selectAppPrompt returns undefined and succeeds on next attempt', async () => {
+    // Given
+    vi.mocked(selectAppPrompt).mockResolvedValueOnce(undefined).mockResolvedValueOnce(APPS[0])
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
+
+    // When
+    const {developerPlatformClient} = mockDeveloperPlatformClient()
+    const got = await selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})
+
+    // Then
+    expect(got).toEqual(APP1)
+    expect(selectAppPrompt).toHaveBeenCalledTimes(2)
+  })
+
+  test('throws BugError when selectAppPrompt returns undefined for all attempts', async () => {
+    // Given
+    vi.mocked(selectAppPrompt).mockResolvedValue(undefined)
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
+
+    // When/Then
+    const {developerPlatformClient} = mockDeveloperPlatformClient()
+    await expect(selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})).rejects.toThrow(
+      BugError,
+    )
+    expect(selectAppPrompt).toHaveBeenCalledTimes(2)
+  })
+
+  test('throws BugError when appFromIdentifiers returns undefined for all attempts', async () => {
+    // Given
+    vi.mocked(selectAppPrompt).mockResolvedValue(APPS[0])
+    vi.mocked(createAsNewAppPrompt).mockResolvedValue(false)
+    const developerPlatformClient = testDeveloperPlatformClient({
+      async appFromIdentifiers(_apiKey) {
+        return undefined
+      },
+    })
+
+    // When/Then
+    await expect(selectOrCreateApp(APPS, false, ORG1, developerPlatformClient, {name: LOCAL_APP.name})).rejects.toThrow(
+      BugError,
+    )
+    expect(selectAppPrompt).toHaveBeenCalledTimes(2)
   })
 })
