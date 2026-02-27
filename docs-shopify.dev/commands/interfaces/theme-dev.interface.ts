@@ -79,13 +79,19 @@ export interface themedev {
   '--open'?: ''
 
   /**
+   * Path to a JSON overrides file. When provided, overrides are applied to the theme specified by --theme instead of uploading a local theme.
+   * @environment SHOPIFY_FLAG_OVERRIDES
+   */
+  '--overrides <value>'?: string
+
+  /**
    * Password generated from the Theme Access app or an Admin API token.
    * @environment SHOPIFY_CLI_THEME_TOKEN
    */
   '--password <value>'?: string
 
   /**
-   * The path for the dev server. It can be a directory or a JSON overrides file. When a directory is provided, it is used as the theme directory. When a JSON file is provided, overrides are applied to the theme specified by --theme. Defaults to the current working directory.
+   * The path where you want to run the command. Defaults to the current working directory.
    * @environment SHOPIFY_FLAG_PATH
    */
   '--path <value>'?: string
@@ -97,7 +103,7 @@ export interface themedev {
   '--port <value>'?: string
 
   /**
-   * An existing preview identifier to update instead of creating a new preview. Used with --path when pointing to a JSON overrides file.
+   * An existing preview identifier to update instead of creating a new preview. Used with --overrides.
    * @environment SHOPIFY_FLAG_PREVIEW_ID
    */
   '--preview-id <value>'?: string

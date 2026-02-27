@@ -2110,14 +2110,14 @@ DESCRIPTION
 
 ## `shopify theme dev`
 
-Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time. Alternatively, a JSON overrides file can be provided to quickly preview changes without uploading a theme.
+Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time. Alternatively, a JSON overrides file can be provided via --overrides to quickly preview changes without uploading a theme.
 
 ```
 USAGE
   $ shopify theme dev [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
     [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...]
-    [--open] [--password <value>] [--path <value>] [--port <value>] [--preview-id <value>] [-s <value>]
-    [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
+    [--open] [--overrides <value>] [--password <value>] [--path <value>] [--port <value>] [--preview-id <value>] [-s
+    <value>] [--store-password <value>] [-t <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -2177,20 +2177,22 @@ FLAGS
   --open
       [env: SHOPIFY_FLAG_OPEN] Automatically launch the theme preview in your default web browser.
 
+  --overrides=<value>
+      [env: SHOPIFY_FLAG_OVERRIDES] Path to a JSON overrides file. When provided, overrides are applied to the theme
+      specified by --theme instead of uploading a local theme.
+
   --password=<value>
       [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin API token.
 
   --path=<value>
-      [env: SHOPIFY_FLAG_PATH] The path for the dev server. It can be a directory or a JSON overrides file. When a
-      directory is provided, it is used as the theme directory. When a JSON file is provided, overrides are applied to the
-      theme specified by --theme. Defaults to the current working directory.
+      [env: SHOPIFY_FLAG_PATH] The path where you want to run the command. Defaults to the current working directory.
 
   --port=<value>
       [env: SHOPIFY_FLAG_PORT] Local port to serve theme preview from.
 
   --preview-id=<value>
       [env: SHOPIFY_FLAG_PREVIEW_ID] An existing preview identifier to update instead of creating a new preview. Used with
-      --path when pointing to a JSON overrides file.
+      --overrides.
 
   --store-password=<value>
       [env: SHOPIFY_FLAG_STORE_PASSWORD] The password for storefronts with password protection.
@@ -2204,16 +2206,16 @@ FLAGS
 DESCRIPTION
   Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to
   your terminal. While running, changes will push to the store in real time. Alternatively, a JSON overrides file can be
-  provided to quickly preview changes without uploading a theme.
+  provided via --overrides to quickly preview changes without uploading a theme.
 
 
   Uploads the current theme as the specified theme, or a "development theme"
   (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.
 
-  Alternatively, a JSON overrides file can be specified using --path to quickly preview changes without uploading a
+  Alternatively, a JSON overrides file can be specified using --overrides to quickly preview changes without uploading a
   theme.
 
-  This command returns the following information by default, unless --path is used to target a JSON overrides file:
+  This command returns the following information by default, unless --overrides is used to target a JSON overrides file:
 
   - A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and
   sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the
@@ -2227,8 +2229,8 @@ DESCRIPTION
   (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can
   share with other developers.
 
-  > Note: When using --path to target a JSON overrides file, the command will return the preview link instead of the
-  development theme URL.
+  > Note: When using --overrides to target a JSON overrides file, the command will return the preview link instead of
+  the development theme URL.
 
   If you already have a development theme for your current environment, then this command replaces the development theme
   with your local theme. You can override this using the `--theme-editor-sync` flag.
@@ -2240,7 +2242,8 @@ DESCRIPTION
   (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.
 
   You can run this command only in a directory that matches the "default Shopify theme folder structure"
-  (https://shopify.dev/docs/themes/tools/cli#directory-structure) unless --path is used to target a JSON overrides file.
+  (https://shopify.dev/docs/themes/tools/cli#directory-structure) unless --overrides is used to target a JSON overrides
+  file.
 ```
 
 ## `shopify theme duplicate`
