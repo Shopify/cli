@@ -252,10 +252,10 @@ export function graphiqlTemplate({
             }),
             defaultEditorToolsVisibility: true,
             {% if query %}
-            query: '{{query}}',
+            query: {{query}},
             {% endif %}
             {% if variables %}
-            variables: '{{variables}}',
+            variables: {{variables}},
             {% endif %}
             defaultTabs: [
               {query: "${graphiqlIntroMessage

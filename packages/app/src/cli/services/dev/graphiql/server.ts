@@ -168,8 +168,8 @@ export function setupGraphiQLServer({
         {
           url,
           defaultQueries: [{query: defaultQuery}],
-          query,
-          variables,
+          query: query ? JSON.stringify(query) : undefined,
+          variables: variables ? JSON.stringify(variables) : undefined,
         },
       ),
     )
