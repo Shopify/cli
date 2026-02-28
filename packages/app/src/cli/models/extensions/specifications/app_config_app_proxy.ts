@@ -1,13 +1,11 @@
-import {prependApplicationUrl} from './validation/url_prepender.js'
 import {removeTrailingSlash} from './validation/common.js'
 import {validateRelativeUrl} from '../../app/validation/common.js'
 import {
   ExtensionSpecification,
-  CustomTransformationConfig,
   createConfigExtensionSpecification,
+  configWithoutFirstClassFields,
 } from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
-import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppProxySchema = BaseSchemaWithoutHandle.extend({
@@ -27,25 +25,14 @@ export type AppProxyConfigType = zod.infer<typeof AppProxySchema>
 
 export const AppProxySpecIdentifier = 'app_proxy'
 
-const AppProxyTransformConfig: CustomTransformationConfig = {
-  forward: (content, appConfiguration) => {
-    const appProxyConfig = content as {app_proxy?: {url: string; subpath: string; prefix: string}}
-
-    if (!appProxyConfig.app_proxy) {
-      return {}
-    }
-
-    let appUrl: string | undefined
-    if ('application_url' in appConfiguration) {
-      appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
-    }
-    return {
-      url: prependApplicationUrl(appProxyConfig.app_proxy.url, appUrl),
-      subpath: appProxyConfig.app_proxy.subpath,
-      prefix: appProxyConfig.app_proxy.prefix,
-    }
+const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
+  identifier: AppProxySpecIdentifier,
+  schema: AppProxySchema,
+  deployConfig: async (config) => {
+    const {name, ...rest} = configWithoutFirstClassFields(config)
+    return rest
   },
-  reverse: (content) => {
+  transformRemoteToLocal: (content) => {
     const proxyConfig = content as {url: string; subpath: string; prefix: string}
     return {
       app_proxy: {
@@ -55,12 +42,6 @@ const AppProxyTransformConfig: CustomTransformationConfig = {
       },
     }
   },
-}
-
-const appProxySpec: ExtensionSpecification = createConfigExtensionSpecification({
-  identifier: AppProxySpecIdentifier,
-  schema: AppProxySchema,
-  transformConfig: AppProxyTransformConfig,
   getDevSessionUpdateMessages: async (config) => {
     if (!config.app_proxy) {
       return []

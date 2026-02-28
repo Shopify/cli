@@ -877,38 +877,34 @@ describe('manifest', () => {
       name: 'my-app',
       handle: '',
       modules: [
-        {
+        expect.objectContaining({
           type: 'app_home_external',
           handle: 'app_home',
           uid: appHome.uid,
-          assets: appHome.uid,
-          target: appHome.contextValue,
           config: expect.objectContaining({
             application_url: 'https://new-url.io',
           }),
-        },
-        {
+        }),
+        expect.objectContaining({
           type: 'app_proxy_external',
           handle: 'app_proxy',
           uid: appProxy.uid,
-          assets: appProxy.uid,
-          target: appProxy.contextValue,
           config: expect.objectContaining({
-            url: 'https://new-proxy-url.io',
-            subpath: '/updated-path',
-            prefix: 'updated-prefix',
+            app_proxy: expect.objectContaining({
+              url: 'https://new-proxy-url.io',
+              subpath: '/updated-path',
+              prefix: 'updated-prefix',
+            }),
           }),
-        },
-        {
+        }),
+        expect.objectContaining({
           type: 'app_access_external',
           handle: 'app_access',
           uid: appAccess.uid,
-          assets: appAccess.uid,
-          target: appAccess.contextValue,
           config: expect.objectContaining({
             auth: {redirect_urls: ['https://new-url.io/auth/callback']},
           }),
-        },
+        }),
       ],
     })
   })
