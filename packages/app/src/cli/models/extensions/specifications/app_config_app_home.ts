@@ -1,6 +1,7 @@
 import {validateUrl} from '../../app/validation/common.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
-import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {configWithoutFirstClassFields, createConfigExtensionSpecification} from '../specification.js'
+import {getPathValue, setPathValue} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const AppHomeSchema = BaseSchemaWithoutHandle.extend({
@@ -13,18 +14,25 @@ const AppHomeSchema = BaseSchemaWithoutHandle.extend({
     .optional(),
 })
 
-const AppHomeTransformConfig: TransformationConfig = {
-  app_url: 'application_url',
-  embedded: 'embedded',
-  preferences_url: 'app_preferences.url',
-}
-
 export const AppHomeSpecIdentifier = 'app_home'
 
 const appHomeSpec = createConfigExtensionSpecification({
   identifier: AppHomeSpecIdentifier,
   schema: AppHomeSchema,
-  transformConfig: AppHomeTransformConfig,
+  deployConfig: async (config) => {
+    const {name, ...rest} = configWithoutFirstClassFields(config)
+    return rest
+  },
+  transformRemoteToLocal: (remoteContent: object) => {
+    const result: {[key: string]: unknown} = {}
+    const appUrl = getPathValue(remoteContent, 'app_url')
+    if (appUrl !== undefined) result.application_url = appUrl
+    const embedded = getPathValue(remoteContent, 'embedded')
+    if (embedded !== undefined) result.embedded = embedded
+    const preferencesUrl = getPathValue(remoteContent, 'preferences_url')
+    if (preferencesUrl !== undefined) setPathValue(result, 'app_preferences.url', preferencesUrl)
+    return result
+  },
   patchWithAppDevURLs: (config, urls) => {
     config.application_url = urls.applicationUrl
   },

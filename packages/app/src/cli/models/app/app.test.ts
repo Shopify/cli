@@ -884,7 +884,7 @@ describe('manifest', () => {
           assets: appHome.uid,
           target: appHome.contextValue,
           config: expect.objectContaining({
-            app_url: 'https://new-url.io',
+            application_url: 'https://new-url.io',
           }),
         },
         {
@@ -942,8 +942,9 @@ describe('manifest', () => {
           assets: appHome.uid,
           target: appHome.contextValue,
           config: {
-            app_url: 'https://example.com',
+            application_url: 'https://example.com',
             embedded: true,
+            metafields: [],
           },
         },
       ],
