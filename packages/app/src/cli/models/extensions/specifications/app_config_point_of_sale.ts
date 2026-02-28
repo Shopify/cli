@@ -1,4 +1,4 @@
-import {createConfigExtensionSpecification, TransformationConfig} from '../specification.js'
+import {createConfigExtensionSpecification, configWithoutFirstClassFields} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -12,14 +12,14 @@ const PosConfigurationSchema = BaseSchemaWithoutHandle.extend({
 
 export const PosSpecIdentifier = 'point_of_sale'
 
-const PosTransformConfig: TransformationConfig = {
-  embedded: 'pos.embedded',
-}
-
 const appPOSSpec = createConfigExtensionSpecification({
   identifier: PosSpecIdentifier,
   schema: PosConfigurationSchema,
-  transformConfig: PosTransformConfig,
+  deployConfig: async (config) => {
+    const {name, ...rest} = configWithoutFirstClassFields(config)
+    return rest
+  },
+  transformRemoteToLocal: (content: object) => ({pos: {embedded: (content as {embedded: boolean}).embedded}}),
 })
 
 export default appPOSSpec

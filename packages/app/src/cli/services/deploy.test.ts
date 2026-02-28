@@ -453,7 +453,7 @@ describe('deploy', () => {
       appModules: [
         {
           uuid: extensionNonUuidManaged.localIdentifier,
-          config: JSON.stringify({embedded: true}),
+          config: JSON.stringify({pos: {embedded: true}}),
           context: '',
           handle: extensionNonUuidManaged.handle,
           specificationIdentifier: undefined,

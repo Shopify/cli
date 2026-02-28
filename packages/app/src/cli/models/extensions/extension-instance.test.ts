@@ -246,7 +246,7 @@ describe('deployConfig', async () => {
       appConfiguration: placeholderAppConfiguration,
     })
 
-    expect(got).toMatchObject({embedded: true})
+    expect(got).toMatchObject({pos: {embedded: true}})
   })
 
   test('returns undefined when the transformed config is empty', async () => {
