@@ -1,7 +1,7 @@
 import {WebhookSubscriptionUriValidation, removeTrailingSlash} from './validation/common.js'
 import {prependApplicationUrl} from './validation/url_prepender.js'
 import {WebhookSubscription} from './types/app_config_webhook.js'
-import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {createConfigExtensionSpecification} from '../specification.js'
 import {CurrentAppConfiguration} from '../../app/app.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -54,8 +54,10 @@ function transformToWebhookSubscriptionConfig(content: object) {
   }
 }
 
-const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
-  forward: (content, appConfiguration) => {
+const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
+  identifier: WebhookSubscriptionSpecIdentifier,
+  schema: SingleWebhookSubscriptionSchema,
+  transformLocalToRemote: (content, appConfiguration) => {
     const webhookConfig = content as WebhookSubscription
     let appUrl: string | undefined
     if ('application_url' in appConfiguration) {
@@ -66,13 +68,7 @@ const WebhookSubscriptionTransformConfig: CustomTransformationConfig = {
       uri: prependApplicationUrl(webhookConfig.uri, appUrl),
     }
   },
-  reverse: transformToWebhookSubscriptionConfig,
-}
-
-const appWebhookSubscriptionSpec = createConfigExtensionSpecification({
-  identifier: WebhookSubscriptionSpecIdentifier,
-  schema: SingleWebhookSubscriptionSchema,
-  transformConfig: WebhookSubscriptionTransformConfig,
+  transformRemoteToLocal: transformToWebhookSubscriptionConfig,
   uidStrategy: 'dynamic',
 })
 
