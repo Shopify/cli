@@ -3,14 +3,9 @@ import {WebhooksSchema} from './app_config_webhook_schemas/webhooks_schema.js'
 import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription_schema.js'
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {removeTrailingSlash} from './validation/common.js'
-import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {createConfigExtensionSpecification} from '../specification.js'
 import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
-
-const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
-  forward: transformToPrivacyComplianceWebhooksModule,
-  reverse: (content: object) => transformFromPrivacyComplianceWebhooksModule(content),
-}
 
 export const PrivacyComplianceWebhooksSpecIdentifier = 'privacy_compliance_webhooks'
 
@@ -18,7 +13,8 @@ export const PrivacyComplianceWebhooksSpecIdentifier = 'privacy_compliance_webho
 const appPrivacyComplienceSpec = createConfigExtensionSpecification({
   identifier: PrivacyComplianceWebhooksSpecIdentifier,
   schema: WebhooksSchema,
-  transformConfig: PrivacyComplianceWebhooksTransformConfig,
+  transformLocalToRemote: transformToPrivacyComplianceWebhooksModule,
+  transformRemoteToLocal: (content: object) => transformFromPrivacyComplianceWebhooksModule(content),
 })
 
 export default appPrivacyComplienceSpec
@@ -31,9 +27,9 @@ function transformToPrivacyComplianceWebhooksModule(content: object, appConfigur
   }
 
   const urls = compact({
-    customers_redact_url: relativeUri(getCustomersDeletionUri(webhooks), appUrl),
-    customers_data_request_url: relativeUri(getCustomersDataRequestUri(webhooks), appUrl),
-    shop_redact_url: relativeUri(getShopDeletionUri(webhooks), appUrl),
+    customer_deletion_url: relativeUri(getCustomersDeletionUri(webhooks), appUrl),
+    customer_data_request_url: relativeUri(getCustomersDataRequestUri(webhooks), appUrl),
+    shop_deletion_url: relativeUri(getShopDeletionUri(webhooks), appUrl),
   })
 
   if (Object.keys(urls).length === 0) {

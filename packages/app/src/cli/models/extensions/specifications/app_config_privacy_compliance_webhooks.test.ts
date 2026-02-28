@@ -23,9 +23,9 @@ describe('privacy_compliance_webhooks', () => {
 
       // Then
       expect(result).toMatchObject({
-        customers_redact_url: 'https://customer-deletion-url.dev',
-        customers_data_request_url: 'https://customer-data-request-url.dev',
-        shop_redact_url: 'https://shop-deletion-url.dev',
+        customer_deletion_url: 'https://customer-deletion-url.dev',
+        customer_data_request_url: 'https://customer-data-request-url.dev',
+        shop_deletion_url: 'https://shop-deletion-url.dev',
       })
     })
 
@@ -54,9 +54,9 @@ describe('privacy_compliance_webhooks', () => {
       // Then
       expect(result).toMatchObject({
         api_version: '2024-07',
-        customers_redact_url: 'https://example.com/customers_webhooks',
-        customers_data_request_url: 'https://example.com/customers_webhooks',
-        shop_redact_url: 'https://example.com/shop_webhooks',
+        customer_deletion_url: 'https://example.com/customers_webhooks',
+        customer_data_request_url: 'https://example.com/customers_webhooks',
+        shop_deletion_url: 'https://example.com/shop_webhooks',
       })
     })
 
@@ -107,9 +107,9 @@ describe('privacy_compliance_webhooks', () => {
       // Then
       expect(result).toMatchObject({
         api_version: '2024-07',
-        customers_redact_url: 'https://example.com/customers_webhooks',
-        customers_data_request_url: 'https://example.com/customers_webhooks',
-        shop_redact_url: 'https://example.com/shop_webhooks',
+        customer_deletion_url: 'https://example.com/customers_webhooks',
+        customer_data_request_url: 'https://example.com/customers_webhooks',
+        shop_deletion_url: 'https://example.com/shop_webhooks',
       })
     })
   })
