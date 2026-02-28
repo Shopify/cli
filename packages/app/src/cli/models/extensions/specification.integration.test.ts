@@ -1,7 +1,13 @@
 import {loadLocalExtensionsSpecifications} from './load-specifications.js'
-import {configWithoutFirstClassFields, createContractBasedModuleSpecification} from './specification.js'
+import {
+  configWithoutFirstClassFields,
+  createConfigExtensionSpecification,
+  createContractBasedModuleSpecification,
+} from './specification.js'
+import {BaseSchemaWithoutHandle} from './schemas.js'
 import {AppSchema} from '../app/app.js'
 import {describe, test, expect, beforeAll} from 'vitest'
+import {zod} from '@shopify/cli-kit/node/schema'
 
 // If the AppSchema is not instanced, the dynamic loading of loadLocalExtensionsSpecifications is not working
 beforeAll(() => {
@@ -45,6 +51,70 @@ describe('createContractBasedModuleSpecification', () => {
       }),
     )
     expect(got.appModuleFeatures()).toEqual(['localization'])
+  })
+})
+
+describe('createConfigExtensionSpecification', () => {
+  const TestSchema = BaseSchemaWithoutHandle.extend({
+    name: zod.string().optional(),
+    handle: zod.string().optional(),
+  })
+
+  test('derives transforms from transformConfig when direct params are not provided', () => {
+    const spec = createConfigExtensionSpecification({
+      identifier: 'test-module',
+      schema: TestSchema,
+      transformConfig: {server_name: 'name'},
+    })
+
+    // Forward transform maps TOML field names to server field names
+    const transformed = spec.transformLocalToRemote!({name: 'My App'}, {} as any)
+    expect(transformed).toEqual({server_name: 'My App'})
+
+    // Reverse transform maps server field names back to TOML
+    const reversed = spec.transformRemoteToLocal!({server_name: 'My App'})
+    expect(reversed).toEqual({name: 'My App'})
+
+    expect(spec.experience).toBe('configuration')
+    expect(spec.uidStrategy).toBe('single')
+  })
+
+  test('uses deployConfig and transformRemoteToLocal directly when provided without transformConfig', () => {
+    const spec = createConfigExtensionSpecification({
+      identifier: 'test-module',
+      schema: TestSchema,
+      deployConfig: async (config) => ({name: (config as any).name}),
+      transformRemoteToLocal: (content: object) => ({
+        name: (content as any).server_name,
+      }),
+    })
+
+    // No forward transform — deployConfig handles the deploy path instead
+    expect(spec.transformLocalToRemote).toBeUndefined()
+
+    // Reverse transform is the directly provided function
+    const reversed = spec.transformRemoteToLocal!({server_name: 'My App'})
+    expect(reversed).toEqual({name: 'My App'})
+
+    // deployConfig is set
+    expect(spec.deployConfig).toBeDefined()
+  })
+
+  test('direct params take precedence over transformConfig-derived values', () => {
+    const directForward = (obj: object) => ({overridden: true})
+    const directReverse = (obj: object) => ({overridden: true})
+
+    const spec = createConfigExtensionSpecification({
+      identifier: 'test-module',
+      schema: TestSchema,
+      transformConfig: {server_name: 'name'},
+      transformLocalToRemote: directForward,
+      transformRemoteToLocal: directReverse,
+    })
+
+    // Direct params win over transformConfig-derived values
+    expect(spec.transformLocalToRemote!({name: 'test'}, {} as any)).toEqual({overridden: true})
+    expect(spec.transformRemoteToLocal!({server_name: 'test'})).toEqual({overridden: true})
   })
 })
 

@@ -246,20 +246,30 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
   identifier: string
   schema: ZodSchemaType<TConfiguration>
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
-  transformConfig: TransformationConfig | CustomTransformationConfig
+  transformConfig?: TransformationConfig | CustomTransformationConfig
+  deployConfig?: ExtensionSpecification<TConfiguration>['deployConfig']
+  transformLocalToRemote?: ExtensionSpecification<TConfiguration>['transformLocalToRemote']
+  transformRemoteToLocal?: ExtensionSpecification<TConfiguration>['transformRemoteToLocal']
   uidStrategy?: UidStrategy
   getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
 }): ExtensionSpecification<TConfiguration> {
   const appModuleFeatures = spec.appModuleFeatures ?? (() => [])
+
+  const transformLocalToRemote =
+    spec.transformLocalToRemote ?? (spec.transformConfig ? resolveAppConfigTransform(spec.transformConfig) : undefined)
+  const transformRemoteToLocal =
+    spec.transformRemoteToLocal ?? resolveReverseAppConfigTransform(spec.schema, spec.transformConfig)
+
   return createExtensionSpecification({
     identifier: spec.identifier,
     // This casting is required because `name` and `type` are mandatory for the existing extension spec configurations,
     // however, app config extensions config content is parsed from the `shopify.app.toml`
     schema: spec.schema,
     appModuleFeatures,
-    transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
-    transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    deployConfig: spec.deployConfig,
+    transformLocalToRemote,
+    transformRemoteToLocal,
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
