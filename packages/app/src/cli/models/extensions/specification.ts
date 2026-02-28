@@ -22,7 +22,7 @@ export type ExtensionFeature =
   | 'localization'
   | 'generates_source_maps'
 
-export interface TransformationConfig {
+interface TransformationConfig {
   [key: string]: string
 }
 

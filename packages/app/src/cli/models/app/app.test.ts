@@ -836,7 +836,7 @@ describe('manifest', () => {
           assets: appAccessModule.uid,
           target: appAccessModule.contextValue,
           config: expect.objectContaining({
-            redirect_url_allowlist: ['https://example.com/auth/callback'],
+            auth: {redirect_urls: ['https://example.com/auth/callback']},
           }),
         },
       ],
@@ -906,7 +906,7 @@ describe('manifest', () => {
           assets: appAccess.uid,
           target: appAccess.contextValue,
           config: expect.objectContaining({
-            redirect_url_allowlist: ['https://new-url.io/auth/callback'],
+            auth: {redirect_urls: ['https://new-url.io/auth/callback']},
           }),
         },
       ],

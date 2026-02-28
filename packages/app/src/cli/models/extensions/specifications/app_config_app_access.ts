@@ -1,5 +1,5 @@
 import {validateUrl} from '../../app/validation/common.js'
-import {TransformationConfig, createConfigExtensionSpecification} from '../specification.js'
+import {configWithoutFirstClassFields, createConfigExtensionSpecification} from '../specification.js'
 import {BaseSchemaWithoutHandle} from '../schemas.js'
 import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -33,19 +33,37 @@ const AppAccessSchema = BaseSchemaWithoutHandle.extend({
 
 export const AppAccessSpecIdentifier = 'app_access'
 
-const AppAccessTransformConfig: TransformationConfig = {
-  access: 'access',
-  scopes: 'access_scopes.scopes',
-  required_scopes: 'access_scopes.required_scopes',
-  optional_scopes: 'access_scopes.optional_scopes',
-  use_legacy_install_flow: 'access_scopes.use_legacy_install_flow',
-  redirect_url_allowlist: 'auth.redirect_urls',
-}
-
 const appAccessSpec = createConfigExtensionSpecification({
   identifier: AppAccessSpecIdentifier,
   schema: AppAccessSchema,
-  transformConfig: AppAccessTransformConfig,
+  deployConfig: async (config) => {
+    const {name, ...rest} = configWithoutFirstClassFields(config)
+    return rest
+  },
+  transformRemoteToLocal: (remoteContent: object) => {
+    const remote = remoteContent as {[key: string]: unknown}
+    const result: {[key: string]: unknown} = {}
+
+    if (remote.access !== undefined) {
+      result.access = remote.access
+    }
+
+    const accessScopes: {[key: string]: unknown} = {}
+    if (remote.scopes !== undefined) accessScopes.scopes = remote.scopes
+    if (remote.required_scopes !== undefined) accessScopes.required_scopes = remote.required_scopes
+    if (remote.optional_scopes !== undefined) accessScopes.optional_scopes = remote.optional_scopes
+    if (remote.use_legacy_install_flow !== undefined)
+      accessScopes.use_legacy_install_flow = remote.use_legacy_install_flow
+    if (Object.keys(accessScopes).length > 0) {
+      result.access_scopes = accessScopes
+    }
+
+    if (remote.redirect_url_allowlist !== undefined) {
+      result.auth = {redirect_urls: remote.redirect_url_allowlist}
+    }
+
+    return result
+  },
   getDevSessionUpdateMessages: async (config) => {
     const hasAccessModule = config.access_scopes !== undefined
     const isLegacyInstallFlow = config.access_scopes?.use_legacy_install_flow === true
