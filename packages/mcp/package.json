@@ -1,0 +1,71 @@
+{
+  "name": "@shopify/mcp",
+  "version": "3.91.0",
+  "description": "MCP server for the Shopify Admin API",
+  "packageManager": "pnpm@10.11.1",
+  "private": false,
+  "keywords": [
+    "shopify",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "homepage": "https://github.com/shopify/cli#readme",
+  "bugs": {
+    "url": "https://community.shopify.dev/c/shopify-cli-libraries/14"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shopify/cli.git",
+    "directory": "packages/mcp"
+  },
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "shopify-mcp": "./bin/shopify-mcp.js"
+  },
+  "files": [
+    "/bin",
+    "/dist"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "nx build",
+    "clean": "nx clean",
+    "lint": "nx lint",
+    "lint:fix": "nx lint:fix",
+    "prepack": "NODE_ENV=production pnpm nx build && cp ../../README.md README.md",
+    "vitest": "vitest",
+    "type-check": "nx type-check"
+  },
+  "eslintConfig": {
+    "extends": [
+      "../../.eslintrc.cjs"
+    ]
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.27.1",
+    "@shopify/cli-kit": "3.91.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@vitest/coverage-istanbul": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=20.10.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "publishConfig": {
+    "@shopify:registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "engine-strict": true
+}
