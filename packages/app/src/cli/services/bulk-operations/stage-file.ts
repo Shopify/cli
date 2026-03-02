@@ -103,7 +103,7 @@ async function uploadFileToStagedUrl(
     form.append(param.name, param.value)
   }
 
-  form.append('file', new Blob([fileContents], {type: 'text/jsonl'}), filename)
+  form.append('file', new Blob([new Uint8Array(fileContents)], {type: 'text/jsonl'}), filename)
 
   const uploadResponse = await renderSingleTask({
     title: outputContent`Uploading bulk operation variables`,
