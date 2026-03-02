@@ -32,7 +32,7 @@
     "@cucumber/pretty-formatter": "2.4.1",
     "@types/fs-extra": "^9.0.13",
     "fs-extra": "^9.1.0",
-    "tempy": "^1.0.1"
+    "tempy": "^3.1.0"
   },
   "engines": {
     "node": ">=20.10.0"
