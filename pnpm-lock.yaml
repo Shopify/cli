@@ -163,9 +163,6 @@ importers:
       '@shopify/cli-kit':
         specifier: 3.91.0
         version: link:../cli-kit
-      '@shopify/function-runner':
-        specifier: 4.1.1
-        version: 4.1.1
       '@shopify/plugin-cloudflare':
         specifier: 3.91.0
         version: link:../plugin-cloudflare
@@ -3640,11 +3637,6 @@ packages:
     engines: {node: '>=18.12.0'}
     deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
-  '@shopify/function-runner@4.1.1':
-    resolution: {integrity: sha512-NXRh8W9xb8JFitNeQcYjvJc6Jx7qta2UBsPs+Kw2M2bZhB7JdOOR0pIeFrFBi3GHpPN3aOflL/g4w7oRWWWDjg==}
-    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
-    hasBin: true
-
   '@shopify/generate-docs@0.15.6':
     resolution: {integrity: sha512-4p6c2Xlt5TVAACM/YD6dcEioKeCpHwv5n65TOIGQaFhRUsA3yRFrbD+8G2TSfeW60QIZchzvRQ7xwYjljGajlA==}
     hasBin: true
@@ -4828,10 +4820,6 @@ packages:
   cacheable-request@10.2.14:
     resolution: {integrity: sha512-zkDT5WAF4hSSoUgyfg5tFIxz8XQK+25W/TLVojJTMKBaxevLBBtLxgqguAuVQB8PVW79FVjHcU+GJ9tVbDZ9mQ==}
     engines: {node: '>=14.16'}
-
-  cachedir@2.4.0:
-    resolution: {integrity: sha512-9EtFOZR8g22CL7BWjJ9BUx1+A/djkofnyW3aOXZORNW2kxoUpx2h+uN2cOqwPmFhnpVmxg+KW2OjOSgChTEvsQ==}
-    engines: {node: '>=6'}
 
   call-bind-apply-helpers@1.0.2:
     resolution: {integrity: sha512-Sp1ablJ0ivDkSzjcaJdxEunN5/XvksFJ2sMBFfq6x0ryhQV/2b/KwFe21cMpmHtPOSij8K99/wSfoEuTObmuMQ==}
@@ -13286,11 +13274,6 @@ snapshots:
 
   '@shopify/function-enhancers@3.1.0': {}
 
-  '@shopify/function-runner@4.1.1':
-    dependencies:
-      cachedir: 2.4.0
-      node-fetch: 3.3.2
-
   '@shopify/generate-docs@0.15.6':
     dependencies:
       '@types/react': 18.3.12
@@ -14796,8 +14779,6 @@ snapshots:
       mimic-response: 4.0.0
       normalize-url: 8.1.1
       responselike: 3.0.0
-
-  cachedir@2.4.0: {}
 
   call-bind-apply-helpers@1.0.2:
     dependencies:
