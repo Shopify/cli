@@ -1481,7 +1481,7 @@ Creates a new Hydrogen storefront.
 ```
 USAGE
   $ shopify hydrogen init [-f] [--git] [--install-deps] [--language <value>] [--markets <value>] [--mock-shop]
-    [--path <value>] [--quickstart] [--routes] [--shortcut] [--styling <value>] [--template <value>]
+    [--path <value>] [--quickstart] [--shortcut] [--styling <value>] [--template <value>]
 
 FLAGS
   -f, --force              [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
@@ -1496,8 +1496,7 @@ FLAGS
       --path=<value>       [env: SHOPIFY_HYDROGEN_FLAG_PATH] The path to the directory of the new Hydrogen storefront.
       --quickstart         [env: SHOPIFY_HYDROGEN_FLAG_QUICKSTART] Scaffolds a new Hydrogen project with a set of
                            sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart
-                           --mock-shop --language js --shortcut --routes --markets none`
-      --[no-]routes        [env: SHOPIFY_HYDROGEN_FLAG_ROUTES] Generate routes for all pages.
+                           --mock-shop --language js --shortcut --markets none`
       --[no-]shortcut      [env: SHOPIFY_HYDROGEN_FLAG_SHORTCUT] Creates a global h2 shortcut for Shopify CLI using
                            shell aliases. Deactivate with `--no-shortcut`.
       --styling=<value>    [env: SHOPIFY_HYDROGEN_FLAG_STYLING] Sets the styling strategy to use. One of `tailwind`,
