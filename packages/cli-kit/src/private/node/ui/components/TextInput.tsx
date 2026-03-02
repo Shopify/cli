@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import {shouldDisplayColors} from '../../../../public/node/output.js'
-import React, {useEffect, useState} from 'react'
+import React, {useState} from 'react'
 import {Text, useInput} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -29,18 +29,11 @@ const TextInput: FunctionComponent<TextInputProps> = ({
 }: TextInputProps) => {
   const [cursorOffset, setCursorOffset] = useState((originalValue || '').length)
 
-  // if the updated value is shorter than the last one we need to reset the cursor
-  useEffect(() => {
-    setCursorOffset((previousOffset) => {
-      const newValue = originalValue || ''
-
-      if (previousOffset > newValue.length - 1) {
-        return newValue.length
-      }
-
-      return previousOffset
-    })
-  }, [originalValue])
+  // Clamp cursor synchronously so useInput never sees a stale offset
+  const clampedCursorOffset = Math.min(cursorOffset, (originalValue || '').length)
+  if (clampedCursorOffset !== cursorOffset) {
+    setCursorOffset(clampedCursorOffset)
+  }
 
   const value = password ? '*'.repeat(originalValue.length) : originalValue
   let renderedValue
@@ -60,7 +53,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
   renderedValue = value
     .split('')
     .map((char, index) => {
-      if (index === cursorOffset) {
+      if (index === clampedCursorOffset) {
         return noColor ? cursorChar : chalk.inverse(char)
       } else {
         return char
@@ -68,7 +61,7 @@ const TextInput: FunctionComponent<TextInputProps> = ({
     })
     .join('')
 
-  if (cursorOffset === value.length) {
+  if (clampedCursorOffset === value.length) {
     renderedValue = (
       <Text>
         {renderedValue}
@@ -89,25 +82,29 @@ const TextInput: FunctionComponent<TextInputProps> = ({
         }
       }
 
-      let nextCursorOffset = cursorOffset
+      let nextCursorOffset = clampedCursorOffset
       let nextValue = originalValue
 
       if (key.leftArrow) {
-        if (cursorOffset > 0) {
+        if (clampedCursorOffset > 0) {
           nextCursorOffset--
         }
       } else if (key.rightArrow) {
-        if (cursorOffset < originalValue.length) {
+        if (clampedCursorOffset < originalValue.length) {
           nextCursorOffset++
         }
       } else if (key.backspace || key.delete) {
-        if (cursorOffset > 0) {
-          nextValue = originalValue.slice(0, cursorOffset - 1) + originalValue.slice(cursorOffset, originalValue.length)
+        if (clampedCursorOffset > 0) {
+          nextValue =
+            originalValue.slice(0, clampedCursorOffset - 1) +
+            originalValue.slice(clampedCursorOffset, originalValue.length)
           nextCursorOffset--
         }
       } else {
         nextValue =
-          originalValue.slice(0, cursorOffset) + input + originalValue.slice(cursorOffset, originalValue.length)
+          originalValue.slice(0, clampedCursorOffset) +
+          input +
+          originalValue.slice(clampedCursorOffset, originalValue.length)
         nextCursorOffset += input.length
       }
 
