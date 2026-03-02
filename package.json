@@ -253,6 +253,20 @@
           ]
         }
       },
+      "packages/mcp": {
+        "entry": [
+          "**/src/index.ts!"
+        ],
+        "project": "**/*.ts!",
+        "ignoreDependencies": [
+          "zod-to-json-schema"
+        ],
+        "vite": {
+          "config": [
+            "vite.config.ts"
+          ]
+        }
+      },
       "packages/plugin-did-you-mean": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",

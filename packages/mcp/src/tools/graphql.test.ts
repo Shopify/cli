@@ -140,13 +140,25 @@ describe('handleGraphql', () => {
     expect(result.content[0]!.text).toContain('allowMutations')
   })
 
+  test('detects mutations after a query in multi-operation document', async () => {
+    process.env.SHOPIFY_FLAG_STORE = 'test.myshopify.com'
+    const sm = createMockSessionManager()
+    const result = await handleGraphql(sm, {
+      query: 'query { shop { name } }\nmutation { productDelete(input: {id: "1"}) { deletedProductId } }',
+      allowMutations: false,
+    })
+    expect(result.isError).toBe(true)
+    expect(result.content[0]!.text).toContain('allowMutations')
+  })
+
   test('mutation pattern detection', () => {
-    const pattern = /^\s*mutation[\s({]/i
+    const pattern = /(?:^|\n)\s*mutation[\s({]/i
     expect(pattern.test('mutation { shop { name } }')).toBe(true)
     expect(pattern.test('  mutation CreateProduct($input: ProductInput!) { }')).toBe(true)
     expect(pattern.test('mutation(')).toBe(true)
     expect(pattern.test('MUTATION { }')).toBe(true)
     expect(pattern.test('Mutation { }')).toBe(true)
+    expect(pattern.test('query { shop { name } }\nmutation { }')).toBe(true)
     expect(pattern.test('query { shop { name } }')).toBe(false)
     expect(pattern.test('{ shop { name } }')).toBe(false)
     expect(pattern.test('query GetMutationResults { }')).toBe(false)
