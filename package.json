@@ -310,7 +310,6 @@
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreDependencies": [
-          "@shopify/react-testing",
           "react-dom"
         ]
       },
