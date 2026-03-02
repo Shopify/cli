@@ -32,7 +32,7 @@ export async function selectAppPrompt(
   options?: {
     directory?: string
   },
-): Promise<MinimalAppIdentifiers> {
+): Promise<MinimalAppIdentifiers | undefined> {
   const tomls = await getTomls(options?.directory)
 
   if (tomls) setCachedCommandTomlMap(tomls)
@@ -64,15 +64,7 @@ export async function selectAppPrompt(
     },
   })
 
-  const appChoice = currentAppChoices.find((app) => app.apiKey === apiKey)!
-
-  if (!appChoice) {
-    throw new Error(
-      `Unable to select an app: the selection prompt was interrupted multiple times./n
-      Api key ${apiKey} was selected but not found in ${currentAppChoices.map((app) => app.apiKey).join(', ')}`,
-    )
-  }
-  return appChoice
+  return currentAppChoices.find((app) => app.apiKey === apiKey)
 }
 
 interface SelectStorePromptOptions {
