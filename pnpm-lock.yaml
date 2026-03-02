@@ -292,8 +292,8 @@ importers:
         specifier: 3.91.0
         version: link:../app
       '@shopify/cli-hydrogen':
-        specifier: 11.1.5
-        version: 11.1.5(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.11)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))
+        specifier: 11.1.10
+        version: 11.1.10(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.11)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))
       '@shopify/cli-kit':
         specifier: 3.91.0
         version: link:../cli-kit
@@ -3583,15 +3583,15 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
-  '@shopify/cli-hydrogen@11.1.5':
-    resolution: {integrity: sha512-KnyKdJ2EZI44YzRK8mWifP7g0ndm3Q9daPdq2da84EnXpZ+a7AHSruud95b1fANawVBoK7i6RIeDrgcwmri0NA==}
-    engines: {node: '>=18.0.0'}
+  '@shopify/cli-hydrogen@11.1.10':
+    resolution: {integrity: sha512-MEnTbWVeNMeV/0dawod4y2AuhhFFLlwpaYzbaqQXJ2HMm20g+bPoOogqSnGF04DoySIT9nEVXI9CXm/TgBsvoA==}
+    engines: {node: ^20 || ^22 || ^24}
     hasBin: true
     peerDependencies:
       '@graphql-codegen/cli': ^5.0.2
-      '@react-router/dev': 7.9.2
-      '@shopify/hydrogen-codegen': ^0.3.3
-      '@shopify/mini-oxygen': ^4.0.0
+      '@react-router/dev': 7.12.0
+      '@shopify/hydrogen-codegen': 0.3.3
+      '@shopify/mini-oxygen': 4.0.1
       graphql-config: ^5.0.3
       vite: 6.4.1
     peerDependenciesMeta:
@@ -13218,7 +13218,7 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/cli-hydrogen@11.1.5(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.11)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))':
+  '@shopify/cli-hydrogen@11.1.10(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.11)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))':
     dependencies:
       '@ast-grep/napi': 0.34.1
       '@oclif/core': 3.26.5
@@ -13229,10 +13229,11 @@ snapshots:
       chokidar: 3.5.3
       cli-truncate: 4.0.0
       diff: 5.2.2
+      esbuild: 0.25.12
       get-east-asian-width: 1.5.0
       get-port: 7.1.0
       gunzip-maybe: 1.4.2
-      prettier: 2.8.8
+      prettier: 3.8.1
       semver: 7.7.4
       source-map: 0.7.6
       source-map-support: 0.5.21
@@ -14356,14 +14357,14 @@ snapshots:
       msw: 2.12.10(@types/node@18.19.70)(typescript@5.9.3)
       vite: 6.4.1(@types/node@18.19.70)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0)
 
-  '@vitest/mocker@3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@18.19.70)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))':
+  '@vitest/mocker@3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))':
     dependencies:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
       msw: 2.12.10(@types/node@22.19.11)(typescript@5.9.3)
-      vite: 6.4.1(@types/node@18.19.70)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0)
+      vite: 6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -19897,7 +19898,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@18.19.70)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))
+      '@vitest/mocker': 3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.7.0))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4
