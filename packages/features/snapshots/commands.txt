@@ -1,0 +1,109 @@
+├─ app
+│  ├─ build
+│  ├─ bulk
+│  │  ├─ cancel
+│  │  ├─ execute
+│  │  └─ status
+│  ├─ config
+│  │  ├─ link
+│  │  ├─ pull
+│  │  └─ use
+│  ├─ deploy
+│  ├─ dev
+│  │  └─ clean
+│  ├─ env
+│  │  ├─ pull
+│  │  └─ show
+│  ├─ execute
+│  ├─ function
+│  │  ├─ build
+│  │  ├─ info
+│  │  ├─ replay
+│  │  ├─ run
+│  │  ├─ schema
+│  │  └─ typegen
+│  ├─ generate
+│  │  └─ extension
+│  ├─ import-custom-data-definitions
+│  ├─ import-extensions
+│  ├─ info
+│  ├─ init
+│  ├─ logs
+│  │  └─ sources
+│  ├─ release
+│  ├─ versions
+│  │  └─ list
+│  └─ webhook
+│     └─ trigger
+├─ auth
+│  ├─ login
+│  └─ logout
+├─ commands
+├─ config
+│  └─ autocorrect
+│     ├─ off
+│     ├─ on
+│     └─ status
+├─ help
+├─ hydrogen
+│  ├─ build
+│  ├─ check
+│  ├─ codegen
+│  ├─ customer-account-push
+│  ├─ debug
+│  │  └─ cpu
+│  ├─ deploy
+│  ├─ dev
+│  ├─ env
+│  │  ├─ list
+│  │  ├─ pull
+│  │  └─ push
+│  ├─ generate
+│  │  ├─ route
+│  │  └─ routes
+│  ├─ init
+│  ├─ link
+│  ├─ list
+│  ├─ login
+│  ├─ logout
+│  ├─ preview
+│  ├─ setup
+│  │  ├─ css
+│  │  ├─ markets
+│  │  └─ vite
+│  ├─ shortcut
+│  ├─ unlink
+│  └─ upgrade
+├─ plugins
+│  ├─ add
+│  ├─ inspect
+│  ├─ install
+│  ├─ link
+│  ├─ remove
+│  ├─ reset
+│  ├─ uninstall
+│  ├─ unlink
+│  └─ update
+├─ search
+├─ theme
+│  ├─ check
+│  ├─ console
+│  ├─ delete
+│  ├─ dev
+│  ├─ duplicate
+│  ├─ info
+│  ├─ init
+│  ├─ language-server
+│  ├─ list
+│  ├─ metafields
+│  │  └─ pull
+│  ├─ open
+│  ├─ package
+│  ├─ profile
+│  ├─ publish
+│  ├─ pull
+│  ├─ push
+│  ├─ rename
+│  └─ share
+├─ upgrade
+└─ version
