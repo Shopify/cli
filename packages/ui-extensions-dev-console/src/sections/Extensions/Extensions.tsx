@@ -8,8 +8,8 @@ import {useApp} from './hooks/useApp'
 
 import {isEmbedded} from '@/utilities/embedded'
 import {isAppPreview} from '@/utilities/app-preview'
+import {useI18n} from '@/hooks/useI18n'
 import React from 'react'
-import {useI18n} from '@shopify/react-i18n'
 
 export function Extensions() {
   const [i18n] = useI18n({
