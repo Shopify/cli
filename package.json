@@ -196,8 +196,7 @@
           "**/graphql/**/generated/*.ts"
         ],
         "ignoreDependencies": [
-          "@shopify/plugin-cloudflare",
-          "@shopify/function-runner"
+          "@shopify/plugin-cloudflare"
         ],
         "vite": {
           "config": [
