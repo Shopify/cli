@@ -127,7 +127,6 @@ function Item<T>({
 
 const MAX_AVAILABLE_LINES = 25
 
-// eslint-disable-next-line react/function-component-definition
 function SelectInput<T>({
   items: rawItems,
   initialItems = rawItems,
