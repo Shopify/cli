@@ -1,8 +1,8 @@
 import en from './translations/en.json'
 import * as styles from './Status.module.scss'
 import {Tooltip} from '@/components/Tooltip'
+import {useI18n} from '@/hooks/useI18n'
 import React from 'react'
-import {useI18n} from '@shopify/react-i18n'
 import {Status as StatusProp} from '@shopify/ui-extensions-server-kit'
 
 interface Props {

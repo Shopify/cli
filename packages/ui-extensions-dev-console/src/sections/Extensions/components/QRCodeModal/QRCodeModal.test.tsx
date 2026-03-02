@@ -1,6 +1,4 @@
 import {QRCodeModal} from './QRCodeModal'
-import en from './translations/en.json'
-import {mockI18n} from 'tests/mock-i18n'
 import {DefaultProviders} from 'tests/DefaultProviders'
 import {Modal} from '@/components/Modal'
 import React from 'react'
@@ -11,8 +9,6 @@ import {render, withProviders} from '@shopify/ui-extensions-test-utils'
 vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
 
 vi.mock('@/components/Modal', () => ({Modal: (props: any) => props.children}))
-
-mockI18n(en)
 
 describe('QRCodeModal', () => {
   const defaultProps = {
