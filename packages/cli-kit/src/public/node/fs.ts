@@ -48,6 +48,7 @@ import {
   access as fsAccess,
   rename as fsRename,
   unlink as fsUnlink,
+  rm as fsRm,
   readdir as fsReaddir,
   symlink as fsSymlink,
 } from 'fs/promises'
@@ -312,9 +313,8 @@ interface RmDirOptions {
  * @param options - Options to remove the directory with.
  */
 export async function rmdir(path: string, options: RmDirOptions = {}): Promise<void> {
-  const {default: del} = await import('del')
   outputDebug(outputContent`Removing directory at ${outputToken.path(path)}...`)
-  await del(path, {force: options.force})
+  await fsRm(path, {recursive: true, force: options.force ?? true})
 }
 
 /**
