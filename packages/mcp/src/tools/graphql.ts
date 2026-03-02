@@ -5,7 +5,7 @@ import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
 import {z} from 'zod'
 import {adminRequest} from '@shopify/cli-kit/node/api/admin'
 
-const MUTATION_PATTERN = /^\s*mutation[\s({]/i
+const MUTATION_PATTERN = /(?:^|\n)\s*mutation[\s({]/i
 
 export async function handleGraphql(
   sessionManager: SessionManager,
@@ -19,7 +19,7 @@ export async function handleGraphql(
     }
   }
 
-  const stripped = params.query.replace(/^\s*(#[^\n]*\n)*/g, '')
+  const stripped = params.query.replace(/#[^\n]*/g, '')
   if (MUTATION_PATTERN.test(stripped) && !params.allowMutations) {
     return {
       content: [{type: 'text', text: 'Error: Mutations require allowMutations: true. This is a safety measure to prevent unintended changes.'}],

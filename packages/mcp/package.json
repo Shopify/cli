@@ -48,9 +48,10 @@
     ]
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.27.1",
+    "@modelcontextprotocol/sdk": "1.22.0",
     "@shopify/cli-kit": "3.91.0",
-    "zod": "3.25.76"
+    "zod": "3.24.1",
+    "zod-to-json-schema": "3.24.5"
   },
   "devDependencies": {
     "@vitest/coverage-istanbul": "^3.1.4"

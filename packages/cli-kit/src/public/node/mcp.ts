@@ -28,7 +28,7 @@ export async function requestDeviceCode(): Promise<DeviceCodeResponse> {
   const fqdn = await identityFqdn()
   const identityClientId = clientId()
   const scopes = allDefaultScopes()
-  const params = `client_id=${identityClientId}&scope=${scopes.join(' ')}`
+  const params = new URLSearchParams({client_id: identityClientId, scope: scopes.join(' ')}).toString()
   const url = `https://${fqdn}/oauth/device_authorization`
 
   const response = await shopifyFetch(url, {
