@@ -86,6 +86,7 @@ export type OrganizationUserProvisionShopAccessInput = {
 export type Store =
   | 'APP_DEVELOPMENT'
   | 'CLIENT_TRANSFER'
+  | 'COLLABORATOR'
   | 'DEVELOPMENT'
   | 'DEVELOPMENT_SUPERSET'
   | 'PRODUCTION';
