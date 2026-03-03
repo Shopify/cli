@@ -1,20 +1,25 @@
 import {AppHomeRow} from '.'
-import {PreviewLink, QRCodeModal} from '..'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {Button} from '@/components'
 import React from 'react'
-
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
+import {screen, fireEvent} from '@testing-library/react'
+
+const {QRCodeModalMock, PreviewLinkMock} = vi.hoisted(() => ({
+  QRCodeModalMock: vi.fn(),
+  PreviewLinkMock: vi.fn(),
+}))
 
 vi.mock('..', () => ({
   NotApplicable: () => null,
-  PreviewLink: () => null,
-  QRCodeModal: () => null,
-  Row: (props: any) => props.children,
-}))
-
-vi.mock('@/components', () => ({
-  Button: (props: any) => props.children,
+  PreviewLink: (props: any) => {
+    PreviewLinkMock(props)
+    return null
+  },
+  QRCodeModal: (props: any) => {
+    QRCodeModalMock(props)
+    return <div data-testid="qr-code-modal" onClick={props.onClose} />
+  },
+  Row: ({children}: any) => <tr>{children}</tr>,
 }))
 
 describe('<AppHomeRow/>', () => {
@@ -22,55 +27,60 @@ describe('<AppHomeRow/>', () => {
     app: {url: 'mock.url', title: 'Mock App Title'},
   }
 
-  test('renders a <QRCodeModal/>, closed by default', () => {
-    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {state: defaultState})
+  beforeEach(() => {
+    QRCodeModalMock.mockClear()
+    PreviewLinkMock.mockClear()
+  })
 
-    expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
+  test('renders a <QRCodeModal/>, closed by default', () => {
+    render(<AppHomeRow />, withProviders(DefaultProviders), {state: defaultState})
+
+    expect(QRCodeModalMock).toHaveBeenLastCalledWith(expect.objectContaining({code: undefined}))
   })
 
   test('Opens and closes the <QRCodeModal/> ', () => {
-    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {state: defaultState})
+    render(<AppHomeRow />, withProviders(DefaultProviders), {state: defaultState})
 
-    container.act(() => {
-      container.find(Button)?.trigger('onClick')
-    })
+    fireEvent.click(screen.getByText('View mobile'))
 
-    expect(container).toContainReactComponent(QRCodeModal, {
-      code: {
-        url: defaultState.app.url,
-        type: 'home',
-        title: defaultState.app.title,
-      },
-    })
+    expect(QRCodeModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        code: {
+          url: defaultState.app.url,
+          type: 'home',
+          title: defaultState.app.title,
+        },
+      }),
+    )
 
-    container.act(() => {
-      container.find(QRCodeModal)?.trigger('onClose')
-    })
+    fireEvent.click(screen.getByTestId('qr-code-modal'))
 
-    expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
+    expect(QRCodeModalMock).toHaveBeenLastCalledWith(expect.objectContaining({code: undefined}))
   })
 
   test("renders a <PreviewLink/> with the resource url set to the app's handle if the surface has been set to 'admin'", () => {
     const appState = {
       app: {url: 'mock.url', title: 'Mock App Title', handle: 'my-app-handle'},
     }
-    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {
+    render(<AppHomeRow />, withProviders(DefaultProviders), {
       state: appState,
       client: {options: {surface: 'admin'}},
     })
 
-    expect(container).toContainReactComponent(PreviewLink, {resourceUrl: '/admin/apps/my-app-handle'})
+    expect(PreviewLinkMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({resourceUrl: '/admin/apps/my-app-handle'}),
+    )
   })
 
   test("renders a <PreviewLink/> without a resource url if the surface has not been set to 'admin'", () => {
     const appState = {
       app: {url: 'mock.url', title: 'Mock App Title', handle: 'my-app-handle'},
     }
-    const container = render(<AppHomeRow />, withProviders(DefaultProviders), {
+    render(<AppHomeRow />, withProviders(DefaultProviders), {
       state: appState,
       client: {options: {surface: 'checkout'}},
     })
 
-    expect(container).toContainReactComponent(PreviewLink, {resourceUrl: undefined})
+    expect(PreviewLinkMock).toHaveBeenLastCalledWith(expect.objectContaining({resourceUrl: undefined}))
   })
 })
