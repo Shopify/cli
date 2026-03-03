@@ -1,5 +1,4 @@
 import {
-  exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
   exchangeCliTokenForAppManagementAccessToken,
   exchangeCliTokenForBusinessPlatformAccessToken,
@@ -53,88 +52,6 @@ beforeEach(() => {
 afterAll(() => {
   // Restore Date mock
   vi.useRealTimers()
-})
-
-describe('exchange identity token for application tokens', () => {
-  const scopes = {admin: [], partners: [], storefront: [], businessPlatform: [], appManagement: []}
-
-  test('returns tokens for all APIs if a store is passed', async () => {
-    // Given
-    vi.mocked(shopifyFetch).mockImplementation(async () => Promise.resolve(new Response(JSON.stringify(data))))
-
-    // When
-    const got = await exchangeAccessForApplicationTokens(identityToken, scopes, 'storeFQDN')
-
-    // Then
-    const expected = {
-      'app-management': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      partners: {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      'storefront-renderer': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      'storeFQDN-admin': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      'business-platform': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-    }
-    expect(got).toEqual(expected)
-  })
-
-  test('does not return token for admin if there is no store', async () => {
-    // Given
-    const response = new Response(JSON.stringify(data))
-
-    // Need to do it 3 times because a Response can only be used once
-    vi.mocked(shopifyFetch)
-      .mockResolvedValue(response)
-      .mockResolvedValueOnce(response.clone())
-      .mockResolvedValueOnce(response.clone())
-      .mockResolvedValueOnce(response.clone())
-
-    // When
-    const got = await exchangeAccessForApplicationTokens(identityToken, scopes, undefined)
-
-    // Then
-    const expected = {
-      'app-management': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      partners: {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      'storefront-renderer': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-      'business-platform': {
-        accessToken: 'access_token',
-        expiresAt: expiredDate,
-        scopes: ['scope', 'scope2'],
-      },
-    }
-    expect(got).toEqual(expected)
-  })
 })
 
 describe('refresh access tokens', () => {

@@ -7,17 +7,11 @@ import {
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from './session.js'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCustomPartnerToken,
-  refreshAccessToken,
-  InvalidGrantError,
-} from './session/exchange.js'
+import {exchangeCustomPartnerToken, refreshAccessToken, InvalidGrantError} from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
 import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} from './session/store.js'
-import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
+import {IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
-import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {getCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
@@ -56,26 +50,9 @@ const validTokens: OAuthSession = {
   userId,
 }
 
-const appTokens: Record<string, ApplicationToken> = {}
-
-const partnersToken: ApplicationToken = {
-  accessToken: 'custom_partners_token',
-  expiresAt: futureDate,
-  scopes: ['scope2'],
-}
-
 const fqdn = 'fqdn.com'
 
 const validSessions: Sessions = {
-  [fqdn]: {
-    [userId]: {
-      identity: validIdentityToken,
-      applications: appTokens,
-    },
-  },
-}
-
-const invalidSessions: Sessions = {
   [fqdn]: {
     [userId]: {
       identity: validIdentityToken,
@@ -85,7 +62,6 @@ const invalidSessions: Sessions = {
 }
 
 vi.mock('../../public/node/context/local.js')
-vi.mock('./session/identity')
 vi.mock('./session/authorize')
 vi.mock('./session/exchange')
 vi.mock('./session/scopes')
@@ -101,11 +77,9 @@ vi.mock('../../public/node/system.js')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
-  vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
-  vi.mocked(applicationId).mockImplementation((app) => app)
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue({
-    accessToken: partnersToken.accessToken,
+    accessToken: 'custom_partners_token',
     userId: validIdentityToken.userId,
   })
   vi.mocked(partnersRequest).mockResolvedValue(undefined)
@@ -140,7 +114,6 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -180,9 +153,9 @@ The CLI is currently unable to prompt for reauthentication.`,
   test('executes complete auth flow if session is for a different fqdn', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
-    vi.mocked(fetchSessions).mockResolvedValue(invalidSessions)
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
     const expectedSessions = {
-      ...invalidSessions,
+      ...validSessions,
       [fqdn]: {
         [userId]: {
           identity: {
@@ -198,7 +171,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
@@ -217,7 +190,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
@@ -253,7 +226,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -279,7 +252,7 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
@@ -303,7 +276,7 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
@@ -321,7 +294,7 @@ describe('when existing session is valid', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     const expectedSessions = {
       [fqdn]: {
         [userId]: {
@@ -349,7 +322,7 @@ describe('when existing session is expired', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     const expectedSessions = {
       [fqdn]: {
         [userId]: {
@@ -378,7 +351,7 @@ describe('when existing session is expired', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
