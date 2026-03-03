@@ -9,7 +9,7 @@ import {
 import {extensionMigrationPrompt, matchConfirmationPrompt} from './prompts.js'
 import {manualMatchIds} from './id-manual-matching.js'
 import {EnsureDeploymentIdsPresenceOptions, LocalSource, RemoteSource} from './identifiers.js'
-import {AppInterface, AppConfiguration} from '../../models/app/app.js'
+import {AppInterface} from '../../models/app/app.js'
 import {
   testApp,
   testAppConfigExtensions,
@@ -109,12 +109,15 @@ const LOCAL_APP = (
     configuration: {
       path: '/shopify.app.toml',
       client_id: 'test-client-id',
+      name: 'my-app',
+      application_url: 'https://example.com',
+      embedded: true,
       access_scopes: {
         scopes: 'read_products',
       },
       extension_directories: ['extensions/*'],
       ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),
-    } as AppConfiguration,
+    },
     allExtensions: [...uiExtensions, ...functionExtensions, ...configExtensions],
   })
 }

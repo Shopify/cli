@@ -3494,7 +3494,7 @@ describe('getAppConfigurationState', () => {
           path: expect.stringMatching(/shopify.app.toml$/),
           client_id: 'abcdef',
         },
-        isTemplateForm: false,
+        isLinked: true,
       },
     ],
     [
@@ -3506,7 +3506,7 @@ describe('getAppConfigurationState', () => {
           client_id: 'abcdef',
           something_extra: 'keep',
         },
-        isTemplateForm: false,
+        isLinked: true,
       },
     ],
     [
@@ -3516,7 +3516,7 @@ describe('getAppConfigurationState', () => {
           path: expect.stringMatching(/shopify.app.toml$/),
           client_id: '',
         },
-        isTemplateForm: true,
+        isLinked: false,
       },
     ],
   ])('loads from %s', async (content, resultShouldContain) => {
@@ -3542,7 +3542,7 @@ describe('getAppConfigurationState', () => {
       const result = await getAppConfigurationState(tmpDir, undefined)
 
       expect(result.basicConfiguration.client_id).toBe('')
-      expect(result.isTemplateForm).toBe(true)
+      expect(result.isLinked).toBe(false)
     })
   })
 })

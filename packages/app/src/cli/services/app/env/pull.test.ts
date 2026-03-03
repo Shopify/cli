@@ -1,5 +1,5 @@
 import {pullEnv} from './pull.js'
-import {AppInterface, AppLinkedInterface, AppConfiguration} from '../../../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../../../models/app/app.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
@@ -109,11 +109,14 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     configuration: {
       path: joinPath('/', 'shopify.app.toml'),
       client_id: 'test-client-id',
+      name: 'my-app',
+      application_url: 'https://example.com',
+      embedded: true,
       access_scopes: {
         scopes: 'my-scope',
       },
       extension_directories: ['extensions/*'],
-    } as AppConfiguration,
+    },
     nodeDependencies,
   })
 }

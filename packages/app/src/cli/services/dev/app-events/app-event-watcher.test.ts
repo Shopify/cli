@@ -11,7 +11,7 @@ import {
 } from '../../../models/app/app.test-data.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
-import {AppLinkedInterface, AppConfiguration} from '../../../models/app/app.js'
+import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -50,11 +50,14 @@ const posExtensionUpdated = await testAppConfigExtensions(true)
 
 const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
 
-const testAppConfiguration: AppConfiguration = {
+const testAppConfiguration: CurrentAppConfiguration = {
   client_id: 'test-client-id',
   access_scopes: {scopes: ''},
   extension_directories: [],
   path: 'shopify.app.custom.toml',
+  name: 'my-app',
+  application_url: 'https://example.com',
+  embedded: true,
 }
 
 /**

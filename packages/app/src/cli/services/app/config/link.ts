@@ -10,7 +10,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
   AppConfigurationFileName,
-  AppConfigurationStateLinked,
+  AppConfigurationState,
   getAppConfigurationFileName,
   loadApp,
   loadOpaqueApp,
@@ -50,7 +50,7 @@ export interface LinkOptions {
 interface LinkOutput {
   configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
-  state: AppConfigurationStateLinked
+  state: AppConfigurationState
 }
 /**
  * Link a local app configuration file to a remote app on the Shopify platform.
@@ -76,7 +76,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const localAppOptions = await loadLocalAppOptions(options, specifications, flags, remoteApp.apiKey)
   const configFileName = await loadConfigurationFileName(remoteApp, options, {
     appDirectory: localAppOptions.appDirectory,
-    format: localAppOptions.configFormat,
   })
 
   await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
@@ -96,13 +95,13 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  const state: AppConfigurationStateLinked = {
+  const state: AppConfigurationState = {
     basicConfiguration: mergedAppConfiguration,
     appDirectory,
     configurationPath: joinPath(appDirectory, configFileName),
     configSource: options.configName ? 'flag' : 'cached',
     configurationFileName: configFileName,
-    isTemplateForm: mergedAppConfiguration.client_id === '',
+    isLinked: mergedAppConfiguration.client_id !== '',
   }
 
   return {configuration: mergedAppConfiguration, remoteApp, state}
@@ -195,7 +194,6 @@ interface ExistingConfig {
 type LocalAppOptions =
   | {
       state: 'reusable-current-app'
-      configFormat: 'current'
       scopes: string
       localAppIdMatchedRemote: true
       existingBuildOptions: CliBuildPreferences
@@ -212,12 +210,10 @@ type LocalAppOptions =
     } & (
       | {
           state: 'unable-to-reuse-current-config'
-          configFormat: 'current'
           localAppIdMatchedRemote: true
         }
       | {
           state: 'unable-to-load-config'
-          configFormat: 'current'
           localAppIdMatchedRemote: false
         }
     ))
@@ -256,7 +252,6 @@ export async function loadLocalAppOptions(
       if (configuration.client_id === remoteAppApiKey || options.isNewApp) {
         return {
           state: 'reusable-current-app',
-          configFormat: 'current',
           scopes: getAppScopes(configuration),
           localAppIdMatchedRemote: true,
           existingBuildOptions: configuration.build,
@@ -267,7 +262,6 @@ export async function loadLocalAppOptions(
       }
       return {
         state: 'unable-to-reuse-current-config',
-        configFormat: 'current',
         scopes: '',
         localAppIdMatchedRemote: true,
         appDirectory: undefined,
@@ -278,10 +272,8 @@ export async function loadLocalAppOptions(
     }
 
     case 'loaded-template':
-      // Template with extra config keys (metafields, etc.) - treat as legacy for linking
       return {
         state: 'reusable-current-app',
-        configFormat: 'current',
         scopes: result.scopes,
         localAppIdMatchedRemote: true,
         existingBuildOptions: undefined,
@@ -293,7 +285,6 @@ export async function loadLocalAppOptions(
     case 'error':
       return {
         state: 'unable-to-load-config',
-        configFormat: 'current',
         scopes: '',
         localAppIdMatchedRemote: false,
         appDirectory: undefined,
@@ -316,15 +307,12 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localAppInfo: {
     appDirectory?: string
-    format: 'current'
   },
 ): Promise<AppConfigurationFileName> {
-  // config name from the options takes precedence over everything else
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
 
-  // otherwise, use the cached config name if it exists
   const cache = getCachedCommandInfo()
   if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
 

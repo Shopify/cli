@@ -26,7 +26,7 @@ import {
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {AppConfigurationStateLinked, getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
+import {AppConfigurationState, getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {
@@ -77,7 +77,7 @@ const STORE1: OrganizationStore = {
   provisionable: true,
 }
 
-const state: AppConfigurationStateLinked = {
+const state: AppConfigurationState = {
   basicConfiguration: {
     ...DEFAULT_CONFIG,
     path: 'shopify.app.toml',
@@ -87,7 +87,7 @@ const state: AppConfigurationStateLinked = {
   configurationPath: 'shopify.app.toml',
   configSource: 'flag',
   configurationFileName: 'shopify.app.toml',
-  isTemplateForm: false,
+  isLinked: true,
 }
 
 const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployOptions => {

@@ -1,6 +1,6 @@
 import {showEnv} from './show.js'
 import {fetchOrganizations} from '../../dev/fetch.js'
-import {AppInterface, AppConfiguration} from '../../../models/app/app.js'
+import {AppInterface} from '../../../models/app/app.js'
 import {selectOrganizationPrompt} from '../../../prompts/dev.js'
 import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js'
 import {OrganizationSource} from '../../../models/organization.js'
@@ -55,10 +55,13 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     configuration: {
       path: joinPath('/', 'shopify.app.toml'),
       client_id: 'test-client-id',
+      name: 'my-app',
+      application_url: 'https://example.com',
+      embedded: true,
       access_scopes: {
         scopes: 'my-scope',
       },
-    } as AppConfiguration,
+    },
     nodeDependencies,
   })
 }

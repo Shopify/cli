@@ -195,7 +195,10 @@ export class AppErrors {
   }
 }
 
-interface AppLoaderConstructorArgs<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
+interface AppLoaderConstructorArgs<
+  TConfig extends CurrentAppConfiguration,
+  TModuleSpec extends ExtensionSpecification,
+> {
   mode?: AppLoaderMode
   loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
   // Used when reloading an app, to avoid some expensive steps during loading.
@@ -216,7 +219,7 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const webs = await loadWebsForAppCreation(state.appDirectory, config.web_directories)
   const isLaunchable = webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
 
-  const scopesArray = getAppScopesArray(config)
+  const scopesArray = getAppScopesArray(config as CurrentAppConfiguration)
 
   return {
     isLaunchable,
@@ -259,19 +262,19 @@ async function loadSingleWeb(webConfigPath: string, abortOrReport: AbortOrReport
  * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
  */
 export async function loadApp<TModuleSpec extends ExtensionSpecification = ExtensionSpecification>(
-  options: Omit<AppLoaderConstructorArgs<AppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
+  options: Omit<AppLoaderConstructorArgs<CurrentAppConfiguration, ExtensionSpecification>, 'loadedConfiguration'> & {
     directory: string
     userProvidedConfigName: string | undefined
     specifications: TModuleSpec[]
     remoteFlags?: Flag[]
   },
-): Promise<AppInterface<AppConfiguration, TModuleSpec>> {
+): Promise<AppInterface<CurrentAppConfiguration, TModuleSpec>> {
   const specifications = options.specifications
 
   const state = await getAppConfigurationState(options.directory, options.userProvidedConfigName)
   const loadedConfiguration = await loadAppConfigurationFromState(state, specifications, options.remoteFlags ?? [])
 
-  const loader = new AppLoader<AppConfiguration, TModuleSpec>({
+  const loader = new AppLoader<CurrentAppConfiguration, TModuleSpec>({
     mode: options.mode,
     loadedConfiguration,
   })
@@ -288,7 +291,7 @@ export type OpaqueAppLoadResult =
   | {
       state: 'loaded-app'
       app: AppInterface
-      configuration: AppConfiguration
+      configuration: CurrentAppConfiguration
     }
   | {
       state: 'loaded-template'
@@ -374,8 +377,8 @@ export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInter
   return loader.loaded()
 }
 
-export async function loadAppUsingConfigurationState<TConfig extends AppConfigurationState>(
-  configState: TConfig,
+export async function loadAppUsingConfigurationState(
+  configState: AppConfigurationState,
   {
     specifications,
     remoteFlags,
@@ -385,7 +388,7 @@ export async function loadAppUsingConfigurationState<TConfig extends AppConfigur
     remoteFlags?: Flag[]
     mode: AppLoaderMode
   },
-): Promise<AppInterface<LoadedAppConfigFromConfigState<typeof configState>, RemoteAwareExtensionSpecification>> {
+): Promise<AppInterface<CurrentAppConfiguration, RemoteAwareExtensionSpecification>> {
   const loadedConfiguration = await loadAppConfigurationFromState(configState, specifications, remoteFlags ?? [])
 
   const loader = new AppLoader({
@@ -395,12 +398,7 @@ export async function loadAppUsingConfigurationState<TConfig extends AppConfigur
   return loader.loaded()
 }
 
-/**
- * Given basic information about an app's configuration state, what should the validated configuration type be?
- */
-type LoadedAppConfigFromConfigState<TConfigState> = TConfigState extends AppConfigurationStateLinked
-  ? CurrentAppConfiguration
-  : never
+type LoadedAppConfigFromConfigState = CurrentAppConfiguration
 
 export function getDotEnvFileName(configurationPath: string) {
   const configurationShorthand: string | undefined = getAppConfigurationShorthand(configurationPath)
@@ -416,7 +414,7 @@ export async function loadDotEnv(appDirectory: string, configurationPath: string
   return dotEnvFile
 }
 
-class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionSpecification> {
+class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends ExtensionSpecification> {
   private readonly mode: AppLoaderMode
   private readonly errors: AppErrors = new AppErrors()
   private readonly specifications: TModuleSpec[]
@@ -445,8 +443,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     // These don't need to be processed again if the app is being reloaded
     // name is required by BrandingSchema, so it must be present in the configuration
-    const configName = (configuration as CurrentAppConfiguration).name
-    const configHandle: string | undefined = (configuration as CurrentAppConfiguration).handle
+    const configName = configuration.name
+    const configHandle: string | undefined = configuration.handle
     const name: string = this.previousApp?.name ?? configHandle ?? configName ?? ''
     const nodeDependencies = this.previousApp?.nodeDependencies ?? (await getDependencies(packageJSONPath))
     const packageManager = this.previousApp?.packageManager ?? (await getPackageManager(directory))
@@ -836,7 +834,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     return generateApplicationURLs(
       previousDevUrls.applicationUrl,
       webs.map(({configuration}) => configuration.auth_callback_path).find((path) => path),
-      (currentConfiguration as CurrentAppConfiguration).app_proxy,
+      currentConfiguration.app_proxy,
     )
   }
 }
@@ -884,7 +882,7 @@ type ConfigurationLoadResultMetadata = {
 )
 
 type ConfigurationLoaderResult<
-  TConfig extends AppConfiguration,
+  TConfig extends CurrentAppConfiguration,
   TModuleSpec extends ExtensionSpecification,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
@@ -897,12 +895,10 @@ interface AppConfigurationStateBasics {
   configurationFileName: AppConfigurationFileName
 }
 
-export type AppConfigurationStateLinked = AppConfigurationStateBasics & {
+export type AppConfigurationState = AppConfigurationStateBasics & {
   basicConfiguration: BasicAppConfigurationWithoutModules
-  isTemplateForm: boolean
+  isLinked: boolean
 }
-
-type AppConfigurationState = AppConfigurationStateLinked
 
 /**
  * Get the app configuration state from the file system.
@@ -942,8 +938,7 @@ export async function getAppConfigurationState(
 
   const parsedConfig = await parseConfigurationFile(AppSchema, configurationPath)
 
-  // Check if the config is in template form by verifying if client_id is empty
-  const isTemplateForm = parsedConfig.client_id === ''
+  const isLinked = parsedConfig.client_id !== ''
 
   return {
     appDirectory,
@@ -954,7 +949,7 @@ export async function getAppConfigurationState(
     },
     configSource,
     configurationFileName,
-    isTemplateForm,
+    isLinked,
   }
 }
 
@@ -963,20 +958,17 @@ export async function getAppConfigurationState(
  *
  * This is typically called after getting remote-aware extension specifications. The app configuration is validated acordingly.
  */
-async function loadAppConfigurationFromState<
-  TConfig extends AppConfigurationState,
-  TModuleSpec extends ExtensionSpecification,
->(
-  configState: TConfig,
+async function loadAppConfigurationFromState<TModuleSpec extends ExtensionSpecification>(
+  configState: AppConfigurationState,
   specifications: TModuleSpec[],
   remoteFlags: Flag[],
-): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState<TConfig>, TModuleSpec>> {
+): Promise<ConfigurationLoaderResult<LoadedAppConfigFromConfigState, TModuleSpec>> {
   const file: JsonMapType = {
     ...configState.basicConfiguration,
   } as JsonMapType
   delete file.path
   const appVersionedSchema = getAppVersionedSchema(specifications)
-  const schemaForConfigurationFile = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
+  const schemaForConfigurationFile = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState>
 
   const configuration = (await parseConfigurationFile(
     schemaForConfigurationFile,
@@ -984,7 +976,7 @@ async function loadAppConfigurationFromState<
     abort,
     decodeToml,
     file,
-  )) as LoadedAppConfigFromConfigState<TConfig>
+  )) as LoadedAppConfigFromConfigState
   const allClientIdsByConfigName = await getAllLinkedConfigClientIds(configState.appDirectory, {
     [configState.configurationFileName]: configuration.client_id,
   })
@@ -994,7 +986,6 @@ async function loadAppConfigurationFromState<
     allClientIdsByConfigName,
   }
 
-  // enhance metadata based on the config type
   let gitTracked = false
   try {
     gitTracked = await checkIfGitTracked(configState.appDirectory, configState.configurationPath)
@@ -1009,8 +1000,7 @@ async function loadAppConfigurationFromState<
     name: configState.configurationFileName,
     gitTracked,
     source: configState.configSource,
-    usesCliManagedUrls: (configuration as LoadedAppConfigFromConfigState<AppConfigurationStateLinked>).build
-      ?.automatically_update_urls_on_dev,
+    usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
   }
 
   return {

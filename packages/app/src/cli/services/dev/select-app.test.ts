@@ -1,5 +1,5 @@
 import {selectOrCreateApp} from './select-app.js'
-import {AppInterface, AppConfiguration, WebType} from '../../models/app/app.js'
+import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource} from '../../models/organization.js'
 import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {testApp, testOrganizationApp, testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
@@ -14,9 +14,12 @@ const LOCAL_APP: AppInterface = testApp({
   configuration: {
     path: '/shopify.app.toml',
     client_id: 'test-client-id',
+    name: 'my-app',
+    application_url: 'https://example.com',
+    embedded: true,
     access_scopes: {scopes: 'read_products'},
     extension_directories: ['extensions/*'],
-  } as AppConfiguration,
+  },
   webs: [
     {
       directory: '',
