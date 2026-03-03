@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.91.1
+
+### Patch Changes
+
+- 52ecfe9: Updates cli-hydrogen to 11.1.10 and removes the `--routes` flag and confirmation prompt from `shopify hydrogen init`, now that routes are automatically scaffolded by default.
+
 ## 3.91.0
 
 ### Patch Changes
