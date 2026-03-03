@@ -1,6 +1,6 @@
 import {writeFile} from '../lib/fs.js'
 import {Given, After, setDefaultTimeout} from '@cucumber/cucumber'
-import tempy from 'tempy'
+import {temporaryDirectory} from 'tempy'
 import {rimrafSync} from 'rimraf'
 import * as path from 'pathe'
 
@@ -12,7 +12,7 @@ if (process.env.DEBUG === '1') {
 }
 
 Given('I have a working directory', async function () {
-  this.temporaryDirectory = tempy.directory()
+  this.temporaryDirectory = temporaryDirectory()
   const dataHomeDirectory = path.join(this.temporaryDirectory, 'XDG_DATA_HOME')
   const configHomeDirectory = path.join(this.temporaryDirectory, 'XDG_CONFIG_HOME')
   const stateHomeDirectory = path.join(this.temporaryDirectory, 'XDG_STATE_HOME')
