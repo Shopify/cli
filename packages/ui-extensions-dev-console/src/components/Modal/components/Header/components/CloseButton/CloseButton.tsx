@@ -1,8 +1,8 @@
 import en from './translations/en.json'
 import {IconButton} from '@/components/IconButton/IconButton'
+import {useI18n} from '@/hooks/useI18n'
 import React from 'react'
 import {XIcon} from '@shopify/polaris-icons'
-import {useI18n} from '@shopify/react-i18n'
 
 interface CloseButtonProps {
   pressed?: boolean

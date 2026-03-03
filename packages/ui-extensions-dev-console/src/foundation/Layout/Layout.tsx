@@ -1,9 +1,9 @@
 import en from './translations/en.json'
 import * as styles from './Layout.module.scss'
 import {isAppPreview} from '@/utilities/app-preview'
+import {useI18n} from '@/hooks/useI18n'
 import React from 'react'
 import {WrenchIcon} from '@shopify/polaris-icons'
-import {useI18n} from '@shopify/react-i18n'
 
 interface Props {
   children: React.ReactNode

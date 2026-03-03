@@ -4,8 +4,8 @@ import * as styles from './ExtensionRow.module.scss'
 import {QRCodeModal, Row, Status} from '..'
 import {useExtension} from '../../hooks/useExtension'
 import {Button} from '@/components/Button'
+import {useI18n} from '@/hooks/useI18n'
 import React, {useState} from 'react'
-import {useI18n} from '@shopify/react-i18n'
 import {ExtensionPayload, ExtensionPoint, isUIExtension} from '@shopify/ui-extensions-server-kit'
 
 interface Props {

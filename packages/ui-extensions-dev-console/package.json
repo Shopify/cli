@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@shopify/polaris-icons": "^8.0.0",
-    "@shopify/react-i18n": "^7.5.0",
     "@shopify/ui-extensions-server-kit": "5.4.0",
     "copy-to-clipboard": "^3.3.3",
     "qrcode.react": "^4.2.0",
