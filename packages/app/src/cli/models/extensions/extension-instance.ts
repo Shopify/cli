@@ -31,7 +31,12 @@ import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/n
 import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
+import {
+  extractJSImports,
+  extractImportPathsRecursively,
+  clearImportPathsCache,
+} from '@shopify/cli-kit/node/import-extractor'
+import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {uniq} from '@shopify/cli-kit/common/array'
 
 export const CONFIG_EXTENSION_IDS: string[] = [
@@ -516,6 +521,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   async rescanImports(): Promise<boolean> {
     const oldImportPaths = this.cachedImportPaths
     this.cachedImportPaths = undefined
+    clearImportPathsCache()
     this.scanImports()
     return oldImportPaths !== this.cachedImportPaths
   }
@@ -527,6 +533,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   private scanImports(): string[] {
     // Return cached paths if available
     if (this.cachedImportPaths !== undefined) {
+      return this.cachedImportPaths
+    }
+
+    if (isTruthy(process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING)) {
+      this.cachedImportPaths = []
       return this.cachedImportPaths
     }
 

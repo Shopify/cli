@@ -1,7 +1,11 @@
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath} from './path.js'
-import {extractImportPaths, extractImportPathsRecursively} from './import-extractor.js'
-import {describe, test, expect} from 'vitest'
+import {extractImportPaths, extractImportPathsRecursively, clearImportPathsCache} from './import-extractor.js'
+import {describe, test, expect, beforeEach} from 'vitest'
+
+beforeEach(() => {
+  clearImportPathsCache()
+})
 
 describe('extractImportPaths', () => {
   describe('JavaScript imports', () => {
@@ -607,6 +611,37 @@ describe('extractImportPathsRecursively', () => {
       expect(imports).toHaveLength(4)
       // Ensure sharedModule appears only once despite being imported by multiple files
       expect(imports.filter((imp) => imp === sharedModule)).toHaveLength(1)
+    })
+  })
+})
+
+describe('clearImportPathsCache', () => {
+  test('picks up file changes after cache is cleared', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mainFile = joinPath(tmpDir, 'main.js')
+      const utilsFile = joinPath(tmpDir, 'utils.js')
+
+      await writeFile(utilsFile, 'export const foo = "bar"')
+      await writeFile(mainFile, `import { foo } from './utils.js'`)
+
+      const firstResult = extractImportPaths(mainFile)
+      expect(firstResult).toContain(utilsFile)
+
+      // Modify the file to add a new import
+      const helpersFile = joinPath(tmpDir, 'helpers.js')
+      await writeFile(helpersFile, 'export const helper = () => {}')
+      await writeFile(mainFile, `import { foo } from './utils.js'\nimport { helper } from './helpers.js'`)
+
+      // Without clearing, we still get cached results
+      const cachedResult = extractImportPaths(mainFile)
+      expect(cachedResult).toHaveLength(1)
+
+      // After clearing, new imports are picked up
+      clearImportPathsCache()
+      const freshResult = extractImportPaths(mainFile)
+      expect(freshResult).toContain(utilsFile)
+      expect(freshResult).toContain(helpersFile)
+      expect(freshResult).toHaveLength(2)
     })
   })
 })

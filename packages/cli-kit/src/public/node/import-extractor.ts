@@ -1,17 +1,34 @@
 import {readFileSync, fileExistsSync, isDirectorySync} from './fs.js'
 import {dirname, joinPath} from './path.js'
 
+// Caches direct import results per file path to avoid redundant file reads and parsing
+// when multiple extensions import the same shared code.
+const directImportsCache = new Map<string, string[]>()
+
+/**
+ * Clears the import paths cache. Should be called when watched files change
+ * so that rescanning picks up updated imports.
+ */
+export function clearImportPathsCache(): void {
+  directImportsCache.clear()
+}
+
 /**
  * Extracts import paths from a source file.
  * Supports JavaScript, TypeScript, and Rust files.
+ * Results are cached per file path to avoid redundant I/O.
  *
  * @param filePath - Path to the file to analyze.
  * @returns Array of absolute paths to imported files.
  */
 export function extractImportPaths(filePath: string): string[] {
+  const cached = directImportsCache.get(filePath)
+  if (cached) return cached
+
   const content = readFileSync(filePath).toString()
   const ext = filePath.substring(filePath.lastIndexOf('.'))
 
+  let result: string[]
   switch (ext) {
     case '.js':
     case '.mjs':
@@ -19,12 +36,17 @@ export function extractImportPaths(filePath: string): string[] {
     case '.ts':
     case '.tsx':
     case '.jsx':
-      return extractJSLikeImports(content, filePath)
+      result = extractJSLikeImports(content, filePath)
+      break
     case '.rs':
-      return extractRustImports(content, filePath)
+      result = extractRustImports(content, filePath)
+      break
     default:
-      return []
+      result = []
   }
+
+  directImportsCache.set(filePath, result)
+  return result
 }
 
 /**
