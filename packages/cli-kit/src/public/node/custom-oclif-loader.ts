@@ -5,6 +5,12 @@ import {execaSync} from 'execa'
 import {Config} from '@oclif/core'
 import {Options} from '@oclif/core/interfaces'
 
+interface OclifCommand {
+  id: string
+  aliases?: string[]
+  hiddenAliases?: string[]
+}
+
 export class ShopifyConfig extends Config {
   constructor(options: Options) {
     if (isDevelopment()) {
@@ -14,7 +20,8 @@ export class ShopifyConfig extends Config {
       // Hydrogen CI uses `hydrogen/hydrogen` path, while local dev uses `shopify/hydrogen`.
       const currentPathMightBeHydrogenMonorepo = /(shopify|hydrogen)\/hydrogen/i.test(currentPath)
       const ignoreHydrogenMonorepo = process.env.IGNORE_HYDROGEN_MONOREPO
-      if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
+      const useHydrogenMonorepo = currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo
+      if (useHydrogenMonorepo) {
         path = execaSync('npm', ['prefix']).stdout.trim()
       }
 
@@ -26,9 +33,12 @@ export class ShopifyConfig extends Config {
           core: ['@shopify/cli-hydrogen'],
           path,
         }
-        // Force OCLIF to ignore manifests so commands are loaded dynamically
-        // to be replaced later
-        options.ignoreManifest = true
+        if (useHydrogenMonorepo) {
+          // Skip the oclif manifest cache so external plugin commands are loaded
+          // from disk rather than from a potentially stale manifest. This has a
+          // startup performance cost, but only applies inside the Hydrogen monorepo.
+          options.ignoreManifest = true
+        }
       }
     }
 
@@ -52,9 +62,11 @@ export class ShopifyConfig extends Config {
       throw new Error('ShopifyConfig: oclif internals changed. _commands is no longer available.')
     }
 
-    // Extract _commands once to avoid repeated @ts-expect-error suppressions.
     // @ts-expect-error: _commands is private but we need to replace bundled commands
     const internalCommands = this._commands as Map<string, unknown>
+    if (!(internalCommands instanceof Map)) {
+      throw new Error('ShopifyConfig: oclif internals changed. _commands is no longer a Map.')
+    }
 
     // Delete all bundled hydrogen command entries (canonical IDs, aliases, and hidden aliases)
     // before reloading from the external plugin. This mirrors oclif's own insertLegacyPlugins
@@ -62,7 +74,7 @@ export class ShopifyConfig extends Config {
     for (const command of externalHydrogenPlugin.commands) {
       if (!command.id.startsWith('hydrogen')) continue
       internalCommands.delete(command.id)
-      const allAliases = [...(command.aliases ?? []), ...((command as {hiddenAliases?: string[]}).hiddenAliases ?? [])]
+      const allAliases = [...(command.aliases ?? []), ...((command as OclifCommand).hiddenAliases ?? [])]
       for (const alias of allAliases) {
         internalCommands.delete(alias)
       }

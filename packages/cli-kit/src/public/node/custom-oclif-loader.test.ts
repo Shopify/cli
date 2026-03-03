@@ -60,7 +60,7 @@ describe('ShopifyConfig', () => {
       expect(options.ignoreManifest).toBeUndefined()
     })
 
-    test('sets pluginAdditions and ignoreManifest when package.json exists in dev mode', () => {
+    test('sets pluginAdditions but not ignoreManifest when package.json exists outside H2 monorepo in dev mode', () => {
       vi.mocked(isDevelopment).mockReturnValue(true)
       vi.mocked(fileExistsSync).mockReturnValue(true)
 
@@ -70,6 +70,24 @@ describe('ShopifyConfig', () => {
       expect((options as {pluginAdditions?: unknown}).pluginAdditions).toEqual({
         core: ['@shopify/cli-hydrogen'],
         path: '/workspace',
+      })
+      expect(options.ignoreManifest).toBeUndefined()
+    })
+
+    test('sets pluginAdditions and ignoreManifest when package.json exists inside H2 monorepo in dev mode', () => {
+      vi.mocked(isDevelopment).mockReturnValue(true)
+      vi.mocked(cwd).mockReturnValue('/home/user/shopify/hydrogen/packages/cli')
+      vi.mocked(execaSync).mockReturnValue({stdout: '/home/user/shopify/hydrogen'} as unknown as ReturnType<
+        typeof execaSync
+      >)
+      vi.mocked(fileExistsSync).mockReturnValue(true)
+
+      const options = {root: '/workspace'} as Options
+      const _config = new ShopifyConfig(options)
+
+      expect((options as {pluginAdditions?: unknown}).pluginAdditions).toMatchObject({
+        core: ['@shopify/cli-hydrogen'],
+        path: '/home/user/shopify/hydrogen',
       })
       expect(options.ignoreManifest).toBe(true)
     })
@@ -125,15 +143,17 @@ describe('ShopifyConfig', () => {
       expect(execaSync).toHaveBeenCalledWith('npm', ['prefix'])
     })
 
-    test('skips npm prefix when IGNORE_HYDROGEN_MONOREPO is set', () => {
+    test('skips npm prefix and ignoreManifest when IGNORE_HYDROGEN_MONOREPO is set', () => {
       vi.mocked(isDevelopment).mockReturnValue(true)
       vi.mocked(cwd).mockReturnValue('/home/user/shopify/hydrogen/packages/cli')
       vi.mocked(fileExistsSync).mockReturnValue(true)
       process.env.IGNORE_HYDROGEN_MONOREPO = '1'
 
-      const _config = new ShopifyConfig({root: '/workspace'} as Options)
+      const options = {root: '/workspace'} as Options
+      const _config = new ShopifyConfig(options)
 
       expect(execaSync).not.toHaveBeenCalled()
+      expect(options.ignoreManifest).toBeUndefined()
     })
   })
 
@@ -254,6 +274,24 @@ describe('ShopifyConfig', () => {
         'ShopifyConfig: oclif internals changed. _commands is no longer available.',
       )
     })
+
+    test('throws a descriptive error when _commands is not a Map, catching future oclif API changes', async () => {
+      vi.mocked(isDevelopment).mockReturnValue(true)
+
+      const config = new ShopifyConfig({root: '/workspace'} as Options)
+      asMock(config).plugins.set('@shopify/cli-hydrogen', {
+        name: '@shopify/cli-hydrogen',
+        isRoot: false,
+        commands: [],
+      })
+
+      // Simulate oclif changing _commands from Map to a plain object
+      ;(config as unknown as {_commands: unknown})._commands = {}
+
+      await expect(config.load()).rejects.toThrow(
+        'ShopifyConfig: oclif internals changed. _commands is no longer a Map.',
+      )
+    })
   })
 
   // These tests use the REAL @oclif/core (via vi.importActual) so they will fail
@@ -282,6 +320,22 @@ describe('ShopifyConfig', () => {
         root: fileURLToPath(new URL('.', import.meta.url)),
       })
       expect(Object.prototype.hasOwnProperty.call(instance, '_commands')).toBe(true)
+    })
+
+    test('Command objects still expose hiddenAliases', async () => {
+      const {Config: RealConfig} = await vi.importActual<typeof import('@oclif/core')>('@oclif/core')
+
+      // ShopifyConfig reads hiddenAliases from command objects via an OclifCommand cast.
+      // If oclif renames or removes this property, the ?? [] fallback silently skips alias
+      // cleanup, leaving stale bundled entries in _commands. This assertion catches that.
+      const config = new (RealConfig as new (options: {root: string}) => OclifConfig)({
+        root: fileURLToPath(new URL('.', import.meta.url)),
+      })
+      await config.load()
+      const someCommand = Array.from(config.commands)[0]
+      if (someCommand) {
+        expect('hiddenAliases' in someCommand).toBe(true)
+      }
     })
   })
 })
