@@ -5,14 +5,18 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const HostedAppHomeSchema = BaseSchemaWithoutHandle.extend({
-  static_root: zod.string().optional(),
+  admin: zod
+    .object({
+      static_root: zod.string().optional(),
+    })
+    .optional(),
 })
 
 const HostedAppHomeTransformConfig: TransformationConfig = {
-  static_root: 'static_root',
+  admin: 'admin',
 }
 
-export const HostedAppHomeSpecIdentifier = 'hosted_app_home'
+export const HostedAppHomeSpecIdentifier = 'admin'
 
 const hostedAppHomeSpec = createConfigExtensionSpecification({
   identifier: HostedAppHomeSpecIdentifier,
@@ -20,8 +24,9 @@ const hostedAppHomeSpec = createConfigExtensionSpecification({
   schema: HostedAppHomeSchema,
   transformConfig: HostedAppHomeTransformConfig,
   copyStaticAssets: async (config, directory, outputPath) => {
-    if (!config.static_root) return
-    const sourceDir = joinPath(directory, config.static_root)
+    const staticRoot = config.admin?.static_root
+    if (!staticRoot) return
+    const sourceDir = joinPath(directory, staticRoot)
     const outputDir = dirname(outputPath)
 
     return copyDirectoryContents(sourceDir, outputDir).catch((error) => {
