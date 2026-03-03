@@ -50,35 +50,13 @@ const validIdentityToken: IdentityToken = {
 }
 
 const validTokens: OAuthSession = {
-  admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
-  storefront: 'storefront_token',
-  partners: 'partners_token',
+  admin: {token: 'access_token', storeFqdn: 'mystore.myshopify.com'},
+  storefront: 'access_token',
+  partners: 'access_token',
   userId,
 }
 
-const appTokens: Record<string, ApplicationToken> = {
-  // Admin APIs includes domain in the key
-  'mystore.myshopify.com-admin': {
-    accessToken: 'admin_token',
-    expiresAt: futureDate,
-    scopes: ['scope', 'scope2'],
-  },
-  'storefront-renderer': {
-    accessToken: 'storefront_token',
-    expiresAt: futureDate,
-    scopes: ['scope1'],
-  },
-  partners: {
-    accessToken: 'partners_token',
-    expiresAt: futureDate,
-    scopes: ['scope2'],
-  },
-  'business-platform': {
-    accessToken: 'business_platform_token',
-    expiresAt: futureDate,
-    scopes: ['scope3'],
-  },
-}
+const appTokens: Record<string, ApplicationToken> = {}
 
 const partnersToken: ApplicationToken = {
   accessToken: 'custom_partners_token',
@@ -162,7 +140,7 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -211,7 +189,7 @@ The CLI is currently unable to prompt for reauthentication.`,
             ...validIdentityToken,
             alias: 'user@example.com',
           },
-          applications: appTokens,
+          applications: {},
         },
       },
     }
@@ -220,7 +198,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
@@ -239,7 +217,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
@@ -250,26 +228,20 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(got).toEqual(validTokens)
   })
 
-  test('falls back to userId when no business platform token available', async () => {
+  test('uses identity token to fetch email during full auth flow', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
-    const appTokensWithoutBusinessPlatform = {
-      'mystore.myshopify.com-admin': appTokens['mystore.myshopify.com-admin']!,
-      'storefront-renderer': appTokens['storefront-renderer']!,
-      partners: appTokens.partners!,
-    }
-    vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValueOnce(appTokensWithoutBusinessPlatform)
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(businessPlatformRequest).not.toHaveBeenCalled()
+    expect(businessPlatformRequest).toHaveBeenCalledWith(expect.any(String), 'access_token')
 
-    // Verify the session was stored with userId as alias (fallback)
+    // Verify the session was stored with email as alias
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('user@example.com')
   })
 
   test('executes complete auth flow if requesting additional scopes', async () => {
@@ -281,7 +253,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -320,7 +292,12 @@ describe('when existing session is valid', () => {
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
     vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
-    const expected = {...validTokens, partners: 'custom_partners_token'}
+    const expected = {
+      admin: {token: 'access_token', storeFqdn: 'mystore.myshopify.com'},
+      storefront: 'access_token',
+      partners: 'custom_partners_token',
+      userId,
+    }
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
@@ -344,8 +321,16 @@ describe('when existing session is valid', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
@@ -364,8 +349,16 @@ describe('when existing session is expired', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
@@ -385,7 +378,7 @@ describe('when existing session is expired', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
@@ -644,7 +637,15 @@ describe('ensureAuthenticated email fetch functionality', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(storeSessions).toBeCalledWith(validSessions)
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
   })
 
@@ -659,7 +660,15 @@ describe('ensureAuthenticated email fetch functionality', () => {
     // Then
     // The email fetch is not called during refresh - the session keeps its existing alias
     expect(businessPlatformRequest).not.toHaveBeenCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
   })
 

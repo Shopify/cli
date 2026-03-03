@@ -1,10 +1,7 @@
-import {applicationId} from './session/identity.js'
 import {validateSession} from './session/validate.js'
-import {allDefaultScopes, apiScopes} from './session/scopes.js'
+import {allDefaultScopes} from './session/scopes.js'
 import {
-  exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
-  ExchangeScopes,
   refreshAccessToken,
   InvalidGrantError,
   InvalidRequestError,
@@ -293,8 +290,6 @@ The CLI is currently unable to prompt for reauthentication.`,
  */
 async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
   const scopes = getFlattenScopes(applications)
-  const exchangeScopes = getExchangeScopes(applications)
-  const store = applications.adminApi?.storeFqdn
   if (firstPartyDev()) {
     outputDebug(outputContent`Authenticating as Shopify Employee...`)
     scopes.push('employee')
@@ -314,20 +309,18 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   }
 
-  // Exchange identity token for application tokens
-  outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
-  const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
+  outputDebug(outputContent`CLI token received (PCAT). Using it directly for API access...`)
 
   // Get the alias for the session (email or userId)
-  const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
-  const alias = (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
+  // Use the PCAT identity token directly to fetch the email
+  const alias = (await fetchEmail(identityToken.accessToken)) ?? identityToken.userId
 
   const session: Session = {
     identity: {
       ...identityToken,
       alias,
     },
-    applications: result,
+    applications: {},
   }
 
   outputCompleted(`Logged in.`)
@@ -340,25 +333,19 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
  *
  * @param session - The session to refresh.
  */
-async function refreshTokens(session: Session, applications: OAuthApplications): Promise<Session> {
-  // Refresh Identity Token
+async function refreshTokens(session: Session, _applications: OAuthApplications): Promise<Session> {
+  // Refresh Identity Token (PCAT) - no exchange needed
   const identityToken = await refreshAccessToken(session.identity)
-  // Exchange new identity token for application tokens
-  const exchangeScopes = getExchangeScopes(applications)
-  const applicationTokens = await exchangeAccessForApplicationTokens(
-    identityToken,
-    exchangeScopes,
-    applications.adminApi?.storeFqdn,
-  )
 
   return {
     identity: identityToken,
-    applications: applicationTokens,
+    applications: {},
   }
 }
 
 /**
  * Get the application tokens for a given session.
+ * With PCAT, the identity token can be used directly for all APIs.
  *
  * @param applications - An object containing the applications we need the tokens for.
  * @param session - The current session.
@@ -369,33 +356,26 @@ async function tokensFor(applications: OAuthApplications, session: Session): Pro
     userId: session.identity.userId,
   }
 
+  const pcatToken = session.identity.accessToken
+
   if (applications.adminApi) {
-    const appId = applicationId('admin')
-    const realAppId = `${applications.adminApi.storeFqdn}-${appId}`
-    const token = session.applications[realAppId]?.accessToken
-    if (token) {
-      tokens.admin = {token, storeFqdn: applications.adminApi.storeFqdn}
-    }
+    tokens.admin = {token: pcatToken, storeFqdn: applications.adminApi.storeFqdn}
   }
 
   if (applications.partnersApi) {
-    const appId = applicationId('partners')
-    tokens.partners = session.applications[appId]?.accessToken
+    tokens.partners = pcatToken
   }
 
   if (applications.storefrontRendererApi) {
-    const appId = applicationId('storefront-renderer')
-    tokens.storefront = session.applications[appId]?.accessToken
+    tokens.storefront = pcatToken
   }
 
   if (applications.businessPlatformApi) {
-    const appId = applicationId('business-platform')
-    tokens.businessPlatform = session.applications[appId]?.accessToken
+    tokens.businessPlatform = pcatToken
   }
 
   if (applications.appManagementApi) {
-    const appId = applicationId('app-management')
-    tokens.appManagement = session.applications[appId]?.accessToken
+    tokens.appManagement = pcatToken
   }
 
   return tokens
@@ -416,27 +396,6 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const appManagement = apps.appManagementApi?.scopes ?? []
   const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
   return allDefaultScopes(requestedScopes)
-}
-
-/**
- * Get the scopes for the given applications.
- *
- * @param apps - An object containing the applications we need the scopes for.
- * @returns An object containing the scopes for each application.
- */
-function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
-  const adminScope = apps.adminApi?.scopes ?? []
-  const partnerScope = apps.partnersApi?.scopes ?? []
-  const storefrontScopes = apps.storefrontRendererApi?.scopes ?? []
-  const businessPlatformScopes = apps.businessPlatformApi?.scopes ?? []
-  const appManagementScopes = apps.appManagementApi?.scopes ?? []
-  return {
-    admin: apiScopes('admin', adminScope),
-    partners: apiScopes('partners', partnerScope),
-    storefront: apiScopes('storefront-renderer', storefrontScopes),
-    businessPlatform: apiScopes('business-platform', businessPlatformScopes),
-    appManagement: apiScopes('app-management', appManagementScopes),
-  }
 }
 
 function buildIdentityTokenFromEnv(
