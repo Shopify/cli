@@ -72,10 +72,9 @@ export async function linkedAppContext({
   let configState = await getAppConfigurationState(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 
-  // If forceRelink is true, force a link.
-  if (forceRelink) {
-    // If forceRelink is true, we don't want to use the cached config name and instead prompt the user for a new one.
-    const result = await link({directory, apiKey: clientId, configName: undefined})
+  if (!configState.isLinked || forceRelink) {
+    const configName = forceRelink ? undefined : configState.configurationFileName
+    const result = await link({directory, apiKey: clientId, configName})
     remoteApp = result.remoteApp
     configState = result.state
   }

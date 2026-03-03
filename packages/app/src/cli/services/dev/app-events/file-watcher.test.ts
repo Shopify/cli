@@ -7,7 +7,6 @@ import {
   testFunctionExtension,
   testUIExtension,
 } from '../../../models/app/app.test-data.js'
-import {AppConfiguration} from '../../../models/app/app.js'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {describe, expect, test, vi} from 'vitest'
 import chokidar from 'chokidar'
@@ -236,8 +235,11 @@ describe('file-watcher events', () => {
         configuration: {
           path: joinPath(dir, '/shopify.app.toml'),
           client_id: 'test-client-id',
+          name: 'my-app',
+          application_url: 'https://example.com',
+          embedded: true,
           access_scopes: {scopes: ''},
-        } as AppConfiguration,
+        },
       })
 
       // Add a custom gitignore file to the extension

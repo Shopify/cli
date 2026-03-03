@@ -1,6 +1,6 @@
 import {PartnersClient} from './partners-client.js'
 import {CreateAppQuery} from '../../api/graphql/create_app.js'
-import {AppInterface, AppConfiguration, WebType} from '../../models/app/app.js'
+import {AppInterface, WebType} from '../../models/app/app.js'
 import {Organization, OrganizationSource, OrganizationStore} from '../../models/organization.js'
 import {
   testPartnersUserSession,
@@ -26,9 +26,12 @@ const LOCAL_APP: AppInterface = testApp({
   configuration: {
     path: '/shopify.app.toml',
     client_id: 'test-client-id',
+    name: 'my-app',
+    application_url: 'https://example.com',
+    embedded: true,
     access_scopes: {scopes: 'read_products'},
     extension_directories: ['extensions/*'],
-  } as AppConfiguration,
+  },
   webs: [
     {
       directory: '',

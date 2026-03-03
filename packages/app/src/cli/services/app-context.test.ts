@@ -158,7 +158,7 @@ client_id="test-api-key"`
           configurationPath: `${tmp}/shopify.app.toml`,
           configSource: 'cached',
           configurationFileName: 'shopify.app.toml',
-          isTemplateForm: false,
+          isLinked: true,
           basicConfiguration: {
             client_id: 'test-api-key',
             path: normalizePath(joinPath(tmp, 'shopify.app.toml')),

@@ -115,7 +115,7 @@ describe('link', () => {
         configurationPath: expect.stringMatching(/\/shopify.app.default-value.toml$/),
         configSource: 'flag',
         configurationFileName: 'shopify.app.default-value.toml',
-        isTemplateForm: false,
+        isLinked: true,
       })
 
       expect(remoteApp).toEqual(mockRemoteApp({developerPlatformClient}))
@@ -304,7 +304,7 @@ embedded = false
         configurationPath: expect.stringMatching(/\/shopify.app.toml$/),
         configSource: 'cached',
         configurationFileName: 'shopify.app.toml',
-        isTemplateForm: false,
+        isLinked: true,
       })
     })
   })

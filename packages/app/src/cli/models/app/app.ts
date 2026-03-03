@@ -123,21 +123,17 @@ export function getAppVersionedSchema(
  * Get scopes from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopes(config: AppConfiguration): string {
-  return (config as CurrentAppConfiguration).access_scopes?.scopes ?? ''
+export function getAppScopes(config: CurrentAppConfiguration): string {
+  return config.access_scopes?.scopes ?? ''
 }
 
 /**
  * Get scopes as an array from a given app.toml config file.
  * @param config - a configuration file
  */
-export function getAppScopesArray(config: AppConfiguration) {
+export function getAppScopesArray(config: CurrentAppConfiguration) {
   const scopes = getAppScopes(config)
   return scopes.length ? scopes.split(',').map((scope) => scope.trim()) : []
-}
-
-export function usesLegacyScopesBehavior(config: AppConfiguration) {
-  return (config as CurrentAppConfiguration).access_scopes?.use_legacy_install_flow === true
 }
 
 export function appHiddenConfigPath(appDirectory: string) {
@@ -194,7 +190,7 @@ export interface Web {
 }
 
 export interface AppConfigurationInterface<
-  TConfig extends AppConfiguration = AppConfiguration,
+  TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > {
   directory: string
@@ -222,7 +218,7 @@ export interface ManifestModule extends JsonMapType {
 }
 
 export interface AppInterface<
-  TConfig extends AppConfiguration = AppConfiguration,
+  TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
@@ -264,8 +260,8 @@ export interface AppInterface<
 }
 
 type AppConstructor<
-  TConfig extends AppConfiguration,
-  TModuleSpec extends ExtensionSpecification,
+  TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
+  TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   name: string
   packageManager: PackageManager
@@ -282,7 +278,7 @@ type AppConstructor<
 }
 
 export class App<
-  TConfig extends AppConfiguration = AppConfiguration,
+  TConfig extends CurrentAppConfiguration = CurrentAppConfiguration,
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > implements AppInterface<TConfig, TModuleSpec> {
   name: string
@@ -450,7 +446,7 @@ export class App<
   }
 
   get appIsEmbedded(): boolean {
-    return (this.configuration as CurrentAppConfiguration).embedded
+    return this.configuration.embedded
   }
 
   creationDefaultOptions(): CreateAppOptions {
@@ -498,20 +494,18 @@ export class App<
   }
 
   private patchAppConfiguration(devApplicationURLs: ApplicationURLs) {
-    const config = this.configuration as CurrentAppConfiguration
     this.devApplicationURLs = devApplicationURLs
-    config.application_url = devApplicationURLs.applicationUrl
+    this.configuration.application_url = devApplicationURLs.applicationUrl
     if (devApplicationURLs.appProxy) {
-      config.app_proxy = {
+      this.configuration.app_proxy = {
         url: devApplicationURLs.appProxy.proxyUrl,
         subpath: devApplicationURLs.appProxy.proxySubPath,
         prefix: devApplicationURLs.appProxy.proxySubPathPrefix,
       }
     }
-    if (config.auth?.redirect_urls) {
-      config.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
+    if (this.configuration.auth?.redirect_urls) {
+      this.configuration.auth.redirect_urls = devApplicationURLs.redirectUrlWhitelist
     }
-    this.configuration = config as TConfig
   }
 
   /**
@@ -521,14 +515,11 @@ export class App<
    * @throws When app-specific webhooks are used with legacy install flow
    */
   private validateWebhookLegacyFlowCompatibility(): void {
-    // These fields might not exist on basic AppConfiguration but could be added by specifications
-    const config = this.configuration as CurrentAppConfiguration
-
     const hasAppSpecificWebhooks =
-      config.webhooks?.subscriptions?.some(
+      this.configuration.webhooks?.subscriptions?.some(
         (subscription: WebhookSubscription) => subscription.topics && subscription.topics.length > 0,
       ) ?? false
-    const usesLegacyInstallFlow = config.access_scopes?.use_legacy_install_flow === true
+    const usesLegacyInstallFlow = this.configuration.access_scopes?.use_legacy_install_flow === true
 
     if (hasAppSpecificWebhooks && usesLegacyInstallFlow) {
       throw new AbortError(

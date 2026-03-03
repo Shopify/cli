@@ -8,7 +8,7 @@ import {
   extensionsIdentifiersReleaseBreakdown,
 } from './breakdown-extensions.js'
 import {RemoteSource} from './identifiers.js'
-import {AppConfiguration, AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
+import {AppInterface, CurrentAppConfiguration} from '../../models/app/app.js'
 import {
   buildVersionedAppSchema,
   testApp,
@@ -273,7 +273,7 @@ const APP_CONFIGURATION: CurrentAppConfiguration = {
 
 const LOCAL_APP = async (
   uiExtensions: ExtensionInstance[],
-  configuration: AppConfiguration = APP_CONFIGURATION,
+  configuration: CurrentAppConfiguration = APP_CONFIGURATION,
   flags = [],
 ): Promise<AppInterface> => {
   const versionSchema = await buildVersionedAppSchema()
