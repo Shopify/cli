@@ -244,7 +244,8 @@ describe('ui', () => {
           devSessionStatusManager,
           onAbort: expect.any(Function),
         }),
-        expect.anything(),
+        // React 19 no longer passes legacy context as second argument
+        undefined,
       )
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
     })
