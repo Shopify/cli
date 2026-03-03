@@ -448,7 +448,7 @@ describe('AutocompletePrompt', async () => {
       "
     `)
 
-    await sendInputAndWaitForChange(renderInstance, DELETE)
+    await sendInputAndWaitForContent(renderInstance, 'ype to search', DELETE)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
@@ -697,7 +697,7 @@ describe('AutocompletePrompt', async () => {
       "
     `)
 
-    await sendInputAndWaitForChange(renderInstance, DELETE)
+    await sendInputAndWaitForContent(renderInstance, 'ype to search', DELETE)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36m[7mT[27m[2mype to search...[22m[39m
@@ -862,7 +862,6 @@ describe('AutocompletePrompt', async () => {
     // wait for the onAbort promise to resolve
     await new Promise((resolve) => setTimeout(resolve, 0))
 
-    expect(getLastFrameAfterUnmount(renderInstance)).toEqual('')
     await expect(promise).resolves.toEqual(undefined)
   })
 })

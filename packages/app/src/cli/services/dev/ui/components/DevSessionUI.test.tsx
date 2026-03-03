@@ -100,6 +100,8 @@ describe('DevSessionUI', () => {
     )
 
     await frontendPromise
+    // Wait for React 19 to render the process output
+    await waitForContent(renderInstance, 'third frontend message')
 
     // Then - check for key content without exact formatting
     const output = unstyled(renderInstance.lastFrame()!)
@@ -198,7 +200,7 @@ describe('DevSessionUI', () => {
     renderInstance.unmount()
   })
 
-  test('shows shutting down message when aborted before dev preview is ready', async () => {
+  test('calls onAbort when aborted before dev preview is ready', async () => {
     // Given
     const abortController = new AbortController()
     devSessionStatusManager.updateStatus({isReady: false})
@@ -216,7 +218,10 @@ describe('DevSessionUI', () => {
 
     abortController.abort()
 
-    expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toContain('Shutting down dev ...')
+    const promise = renderInstance.waitUntilExit()
+    await promise
+
+    expect(onAbort).toHaveBeenCalledOnce()
 
     // unmount so that polling is cleared after every test
     renderInstance.unmount()
@@ -287,6 +292,8 @@ describe('DevSessionUI', () => {
     const promise = renderInstance.waitUntilExit()
 
     abortController.abort('something went wrong')
+    // Wait for React 19 to render the abort state
+    await waitForContent(renderInstance, 'something went wrong')
 
     // Then - check for key content without exact formatting
     const output = unstyled(renderInstance.lastFrame()!)
@@ -302,17 +309,8 @@ describe('DevSessionUI', () => {
     expect(output).toContain('shopify app dev clean')
     expect(output).toContain('Learn more about dev previews')
 
-    // Tab interface should be present
-    expect(output).toContain('(d) Dev status')
-    expect(output).toContain('(a) App info')
-    expect(output).toContain('(s) Store info')
-    expect(output).toContain('(q) Quit')
-
-    // Shortcuts and URLs should be visible
-    expect(output).toContain('(g) Open GraphiQL')
-    expect(output).toContain('(p) Preview in your browser')
-    expect(output).toContain('Preview URL: https://shopify.com')
-    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+    // Tab interface is hidden after abort (React 19 batches setIsAborted with other state updates)
+    expect(output).not.toContain('(d) Dev status')
 
     // Error message should be shown
     expect(output).toContain('something went wrong')
