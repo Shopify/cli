@@ -178,6 +178,17 @@ describe('session store', () => {
       expect(result).toBeUndefined()
     })
 
+    test('returns userId when alias matches userId directly', async () => {
+      // Given
+      vi.mocked(getSessions).mockReturnValue(JSON.stringify(mockSessions))
+
+      // When
+      const result = await findSessionByAlias('user1')
+
+      // Then
+      expect(result).toBe('user1')
+    })
+
     test('returns first matching userId when multiple sessions have same alias', async () => {
       // Given
       const sessionsWithDuplicateAlias = {
