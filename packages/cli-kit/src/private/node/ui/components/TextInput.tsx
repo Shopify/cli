@@ -1,6 +1,6 @@
 /* eslint-disable no-nested-ternary */
 import {shouldDisplayColors} from '../../../../public/node/output.js'
-import React, {useState} from 'react'
+import React, {useLayoutEffect, useState} from 'react'
 import {Text, useInput} from 'ink'
 import chalk from 'chalk'
 import figures from 'figures'
@@ -29,11 +29,13 @@ const TextInput: FunctionComponent<TextInputProps> = ({
 }: TextInputProps) => {
   const [cursorOffset, setCursorOffset] = useState((originalValue || '').length)
 
-  // Clamp cursor synchronously so useInput never sees a stale offset
   const clampedCursorOffset = Math.min(cursorOffset, (originalValue || '').length)
-  if (clampedCursorOffset !== cursorOffset) {
-    setCursorOffset(clampedCursorOffset)
-  }
+
+  useLayoutEffect(() => {
+    if (clampedCursorOffset !== cursorOffset) {
+      setCursorOffset(clampedCursorOffset)
+    }
+  }, [clampedCursorOffset, cursorOffset])
 
   const value = password ? '*'.repeat(originalValue.length) : originalValue
   let renderedValue
