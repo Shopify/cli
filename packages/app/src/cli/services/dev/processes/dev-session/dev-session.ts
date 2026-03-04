@@ -1,5 +1,6 @@
+import {DevSessionEvent, DevSessionEventLog} from './dev-session-event-log.js'
 import {DevSessionLogger} from './dev-session-logger.js'
-import {DevSessionStatusManager} from './dev-session-status-manager.js'
+import {DevSessionStatus, DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSessionProcessOptions} from './dev-session-process.js'
 import {AppEvent, AppEventWatcher, ExtensionEvent} from '../../app-events/app-event-watcher.js'
 import {
@@ -15,6 +16,7 @@ import {getWebSocketUrl} from '../../extension.js'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {ClientError} from 'graphql-request'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {firstPartyDev, isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -41,38 +43,74 @@ type DevSessionResult =
   | {status: 'unknown-error'; error: Error}
 
 export class DevSession {
-  public static async start(options: DevSessionProcessOptions, stdout: Writable): Promise<DevSession> {
+  public static async start(
+    options: DevSessionProcessOptions,
+    stdout: Writable,
+    abortSignal?: AbortSignal,
+  ): Promise<DevSession> {
     const devSession = new DevSession(options, stdout)
-    await devSession.start()
+    await devSession.start(abortSignal)
     return devSession
   }
 
   private readonly statusManager: DevSessionStatusManager
   private readonly logger: DevSessionLogger
+  private readonly eventLog?: DevSessionEventLog
   private readonly options: DevSessionProcessOptions
   private readonly appWatcher: AppEventWatcher
   private readonly bundlePath: string
   private readonly appEventsProcessor: SerialBatchProcessor<AppEvent>
+  private readonly statusUpdateHandler: (status: DevSessionStatus) => void
   private failedEvents: AppEvent[] = []
   private currentSessionState: DevSessionState | null = null
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
     this.logger = new DevSessionLogger(stdout)
+    this.eventLog = processOptions.eventLog
     this.options = processOptions
     this.appWatcher = processOptions.appWatcher
     this.bundlePath = processOptions.appWatcher.buildOutputPath
     this.appEventsProcessor = new SerialBatchProcessor((events: AppEvent[]) => this.processEvents(events))
+    this.statusUpdateHandler = (status: DevSessionStatus) => {
+      const {type, message} = status.statusMessage ?? {}
+      // Only log updates with a status message; purely internal state changes (e.g. isReady toggling) are excluded
+      if (type && message) {
+        this.writeEvent({
+          event: `status-${type}`,
+          message,
+          is_ready: status.isReady,
+          preview_url: status.previewURL,
+        })
+      }
+    }
   }
 
-  private async start() {
+  private async start(abortSignal?: AbortSignal) {
     await this.logger.info(`Preparing dev preview on ${this.options.storeFqdn}`)
     this.statusManager.setMessage('LOADING')
+
+    this.statusManager.on('dev-session-update', this.statusUpdateHandler)
+    abortSignal?.addEventListener('abort', () => this.cleanup(), {once: true})
 
     this.appWatcher
       .onEvent(async (event) => this.onEvent(event))
       .onStart(async (event) => this.onStart(event))
       .onError(async (error) => this.handleDevSessionResult({status: 'unknown-error', error}))
+  }
+
+  private cleanup() {
+    this.statusManager.off('dev-session-update', this.statusUpdateHandler)
+    this.appWatcher.removeAllListeners()
+    this.eventLog?.close()
+  }
+
+  private writeEvent(event: Omit<DevSessionEvent, 'ts'>) {
+    this.eventLog?.write(event).catch((error) => {
+      const msg = `Event log write failed: ${error instanceof Error ? error.message : String(error)}`
+      // eslint-disable-next-line no-void
+      void this.logger.debug(msg)
+    })
   }
 
   /**
@@ -101,13 +139,22 @@ export class DevSession {
     this.failedEvents = []
     if (!event) return
 
+    this.writeEvent({
+      event: 'change-detected',
+      extension_count: event.extensionEvents.length,
+      extensions: event.extensionEvents.map((ext) => ({
+        handle: ext.extension.handle,
+        type: ext.type,
+      })),
+    })
+
     this.statusManager.setMessage('CHANGE_DETECTED')
     this.updatePreviewURL(event)
     await this.logger.logExtensionEvents(event)
 
     const networkStartTime = startHRTime()
     const result = await this.bundleExtensionsAndUpload(event)
-    await this.handleDevSessionResult(result, event)
+    await this.handleDevSessionResult(result, event, Number(endHRTimeInMs(networkStartTime)))
     await this.logger.debug(
       `✅ Event handled [Network: ${endHRTimeInMs(networkStartTime)}ms - Total: ${endHRTimeInMs(event.startTime)}ms]`,
     )
@@ -159,13 +206,27 @@ export class DevSession {
    * @param event - The app event
    */
   private async onStart(event: AppEvent) {
+    this.writeEvent({
+      event: 'session-starting',
+      store: this.options.storeFqdn,
+      app_id: this.options.appId,
+      extension_count: event.app.allExtensions.length,
+    })
+
+    const startTime = startHRTime()
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
       await this.logger.logMultipleErrors(errors)
+      this.writeEvent({
+        event: 'session-start-failed',
+        reason: 'build-errors',
+        error_count: errors.length,
+        duration_ms: Number(endHRTimeInMs(startTime)),
+      })
       throw new AbortError('Dev preview aborted, build errors detected in extensions')
     }
     const result = await this.bundleExtensionsAndUpload(event)
-    await this.handleDevSessionResult(result, event)
+    await this.handleDevSessionResult(result, event, Number(endHRTimeInMs(startTime)))
   }
 
   /**
@@ -221,12 +282,23 @@ export class DevSession {
    * @param result - The result of the dev session
    * @param event - The app event
    */
-  private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent) {
+  private async handleDevSessionResult(result: DevSessionResult, event?: AppEvent, durationMs?: number) {
     if (result.status === 'updated') {
+      this.writeEvent({
+        event: 'session-updated',
+        extensions_updated: event?.extensionEvents.map((ext) => ext.extension.handle) ?? [],
+        duration_ms: durationMs,
+      })
       await this.logger.success(`✅ Updated dev preview on ${this.options.storeFqdn}`)
       await this.logger.logExtensionUpdateMessages(event)
       await this.setUpdatedStatusMessage()
     } else if (result.status === 'created') {
+      this.writeEvent({
+        event: 'session-created',
+        preview_url: this.statusManager.status.previewURL,
+        graphiql_url: this.statusManager.status.graphiqlURL,
+        duration_ms: durationMs,
+      })
       this.statusManager.updateStatus({isReady: true})
       await this.logger.success(`✅ Ready, watching for changes in your app `)
       await this.logger.logExtensionUpdateMessages(event)
@@ -234,6 +306,14 @@ export class DevSession {
     } else if (result.status === 'aborted') {
       await this.logger.debug('❌ Dev preview update aborted (new change detected or error during update)')
     } else if (result.status === 'remote-error' || result.status === 'unknown-error') {
+      this.writeEvent({
+        event: result.status === 'remote-error' ? 'remote-error' : 'unknown-error',
+        duration_ms: durationMs,
+        errors:
+          result.status === 'remote-error'
+            ? result.error.map((err) => ({message: err.message, category: err.category}))
+            : [{message: result.error.message}],
+      })
       await this.logger.logUserErrors(result.error, event?.app.allExtensions ?? [])
       if (result.error instanceof Error && (result.error as Error & {cause?: string}).cause === 'validation-error') {
         this.statusManager.setMessage('VALIDATION_ERROR')
@@ -290,7 +370,17 @@ export class DevSession {
   private async bundleExtensionsAndUpload(appEvent: AppEvent): Promise<DevSessionResult> {
     try {
       const {manifest, inheritedModuleUids, assets} = await this.createManifest(appEvent)
+      const uploadStartTime = startHRTime()
       const signedURL = await this.uploadAssetsIfNeeded(assets, !this.statusManager.status.isReady)
+
+      if (signedURL) {
+        this.writeEvent({
+          event: 'bundle-uploaded',
+          duration_ms: Number(endHRTimeInMs(uploadStartTime)),
+          extensions: manifest.modules.map((mod) => mod.handle),
+          inherited_count: inheritedModuleUids.length,
+        })
+      }
 
       const websocketUrl = getWebSocketUrl(this.options.url)
       if (this.statusManager.status.isReady) {

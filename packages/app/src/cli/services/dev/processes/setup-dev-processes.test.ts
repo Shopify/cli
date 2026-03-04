@@ -6,6 +6,7 @@ import {PreviewableExtensionProcess, launchPreviewableExtensionProcess} from './
 import {launchGraphiQLServer} from './graphiql.js'
 import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
+import {DevSessionEventLog} from './dev-session/dev-session-event-log.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
 import {
@@ -37,7 +38,16 @@ import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
+vi.mock('./dev-session/dev-session-event-log.js')
+vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/output')>()
+  return {
+    ...original,
+    outputDebug: vi.fn(),
+  }
+})
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
 vi.mock('../fetch.js')
@@ -80,6 +90,17 @@ beforeEach(() => {
   // By default, firstPartyDev is false (local dev console only shown for 1P devs)
   vi.mocked(firstPartyDev).mockReturnValue(false)
   vi.mocked(adminFqdn).mockResolvedValue('admin.shopify.com')
+
+  // DevSessionEventLog mock: init() succeeds by default
+  vi.mocked(DevSessionEventLog).mockImplementation(
+    () =>
+      ({
+        init: vi.fn().mockResolvedValue(undefined),
+        write: vi.fn().mockResolvedValue(undefined),
+        close: vi.fn(),
+        path: '/tmp/.shopify/dev-session-events.jsonl',
+      }) as unknown as DevSessionEventLog,
+  )
 })
 
 const appContextResult = {
@@ -378,6 +399,113 @@ describe('setup-dev-processes', () => {
         storeFqdn: 'store.myshopify.io',
       },
     })
+  })
+
+  test('dev-session process receives eventLog when init succeeds', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: true})
+    const localApp = testAppWithConfig()
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions: {
+        ...appContextResult,
+        directory: '',
+        update: false,
+        commandConfig: new Config({root: ''}),
+        skipDependenciesInstallation: false,
+        tunnel: {mode: 'auto'},
+      },
+      network: {
+        proxyUrl: 'https://example.com/proxy',
+        proxyPort: 444,
+        backendPort: 111,
+        frontendPort: 222,
+        currentUrls: {
+          applicationUrl: 'https://example.com/application',
+          redirectUrlWhitelist: ['https://example.com/redirect'],
+        },
+      },
+      remoteApp: {
+        apiKey: 'api-key',
+        apiSecretKeys: [{secret: 'api-secret'}],
+        id: '1234',
+        title: 'App',
+        organizationId: '5678',
+        grantedScopes: [],
+        flags: [],
+        developerPlatformClient,
+      },
+      remoteAppUpdated: true,
+      storeFqdn: 'store.myshopify.io',
+      storeId: '123456789',
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort: 1234,
+      graphiqlKey: 'somekey',
+    })
+
+    const devSessionProcess = res.processes.find((proc) => proc.type === 'dev-session')
+    expect(devSessionProcess?.options.eventLog).toBeDefined()
+  })
+
+  test('dev-session process receives no eventLog when init fails', async () => {
+    vi.mocked(DevSessionEventLog).mockImplementation(
+      () =>
+        ({
+          init: vi.fn().mockRejectedValue(new Error('permission denied')),
+          write: vi.fn().mockResolvedValue(undefined),
+          close: vi.fn(),
+          path: '/tmp/.shopify/dev-session-events.jsonl',
+        }) as unknown as DevSessionEventLog,
+    )
+
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({supportsDevSessions: true})
+    const localApp = testAppWithConfig()
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions: {
+        ...appContextResult,
+        directory: '',
+        update: false,
+        commandConfig: new Config({root: ''}),
+        skipDependenciesInstallation: false,
+        tunnel: {mode: 'auto'},
+      },
+      network: {
+        proxyUrl: 'https://example.com/proxy',
+        proxyPort: 444,
+        backendPort: 111,
+        frontendPort: 222,
+        currentUrls: {
+          applicationUrl: 'https://example.com/application',
+          redirectUrlWhitelist: ['https://example.com/redirect'],
+        },
+      },
+      remoteApp: {
+        apiKey: 'api-key',
+        apiSecretKeys: [{secret: 'api-secret'}],
+        id: '1234',
+        title: 'App',
+        organizationId: '5678',
+        grantedScopes: [],
+        flags: [],
+        developerPlatformClient,
+      },
+      remoteAppUpdated: true,
+      storeFqdn: 'store.myshopify.io',
+      storeId: '123456789',
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort: 1234,
+      graphiqlKey: 'somekey',
+    })
+
+    const devSessionProcess = res.processes.find((proc) => proc.type === 'dev-session')
+    expect(devSessionProcess?.options.eventLog).toBeUndefined()
+    expect(outputDebug).toHaveBeenCalledWith(expect.stringContaining('permission denied'))
   })
 
   test('process list includes app polling when envVar is enabled and functions are available', async () => {
