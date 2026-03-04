@@ -7,17 +7,11 @@ import {
   setLastSeenAuthMethod,
   setLastSeenUserIdAfterAuth,
 } from './session.js'
-import {
-  exchangeAccessForApplicationTokens,
-  exchangeCustomPartnerToken,
-  refreshAccessToken,
-  InvalidGrantError,
-} from './session/exchange.js'
+import {exchangeCustomPartnerToken, refreshAccessToken, InvalidGrantError} from './session/exchange.js'
 import {allDefaultScopes} from './session/scopes.js'
 import {store as storeSessions, fetch as fetchSessions, remove as secureRemove} from './session/store.js'
-import {ApplicationToken, IdentityToken, Sessions} from './session/schema.js'
+import {IdentityToken, Sessions} from './session/schema.js'
 import {validateSession} from './session/validate.js'
-import {applicationId} from './session/identity.js'
 import {pollForDeviceAuthorization, requestDeviceAuthorization} from './session/device-authorization.js'
 import {getCurrentSessionId} from './conf-store.js'
 import * as fqdnModule from '../../public/node/context/fqdn.js'
@@ -50,54 +44,15 @@ const validIdentityToken: IdentityToken = {
 }
 
 const validTokens: OAuthSession = {
-  admin: {token: 'admin_token', storeFqdn: 'mystore.myshopify.com'},
-  storefront: 'storefront_token',
-  partners: 'partners_token',
+  admin: {token: 'access_token', storeFqdn: 'mystore.myshopify.com'},
+  storefront: 'access_token',
+  partners: 'access_token',
   userId,
-}
-
-const appTokens: Record<string, ApplicationToken> = {
-  // Admin APIs includes domain in the key
-  'mystore.myshopify.com-admin': {
-    accessToken: 'admin_token',
-    expiresAt: futureDate,
-    scopes: ['scope', 'scope2'],
-  },
-  'storefront-renderer': {
-    accessToken: 'storefront_token',
-    expiresAt: futureDate,
-    scopes: ['scope1'],
-  },
-  partners: {
-    accessToken: 'partners_token',
-    expiresAt: futureDate,
-    scopes: ['scope2'],
-  },
-  'business-platform': {
-    accessToken: 'business_platform_token',
-    expiresAt: futureDate,
-    scopes: ['scope3'],
-  },
-}
-
-const partnersToken: ApplicationToken = {
-  accessToken: 'custom_partners_token',
-  expiresAt: futureDate,
-  scopes: ['scope2'],
 }
 
 const fqdn = 'fqdn.com'
 
 const validSessions: Sessions = {
-  [fqdn]: {
-    [userId]: {
-      identity: validIdentityToken,
-      applications: appTokens,
-    },
-  },
-}
-
-const invalidSessions: Sessions = {
   [fqdn]: {
     [userId]: {
       identity: validIdentityToken,
@@ -107,7 +62,6 @@ const invalidSessions: Sessions = {
 }
 
 vi.mock('../../public/node/context/local.js')
-vi.mock('./session/identity')
 vi.mock('./session/authorize')
 vi.mock('./session/exchange')
 vi.mock('./session/scopes')
@@ -123,11 +77,9 @@ vi.mock('../../public/node/system.js')
 
 beforeEach(() => {
   vi.spyOn(fqdnModule, 'identityFqdn').mockResolvedValue(fqdn)
-  vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValue(appTokens)
   vi.mocked(refreshAccessToken).mockResolvedValue(validIdentityToken)
-  vi.mocked(applicationId).mockImplementation((app) => app)
   vi.mocked(exchangeCustomPartnerToken).mockResolvedValue({
-    accessToken: partnersToken.accessToken,
+    accessToken: 'custom_partners_token',
     userId: validIdentityToken.userId,
   })
   vi.mocked(partnersRequest).mockResolvedValue(undefined)
@@ -162,7 +114,6 @@ describe('ensureAuthenticated when previous session is invalid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -202,16 +153,16 @@ The CLI is currently unable to prompt for reauthentication.`,
   test('executes complete auth flow if session is for a different fqdn', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
-    vi.mocked(fetchSessions).mockResolvedValue(invalidSessions)
+    vi.mocked(fetchSessions).mockResolvedValue(validSessions)
     const expectedSessions = {
-      ...invalidSessions,
+      ...validSessions,
       [fqdn]: {
         [userId]: {
           identity: {
             ...validIdentityToken,
             alias: 'user@example.com',
           },
-          applications: appTokens,
+          applications: {},
         },
       },
     }
@@ -220,7 +171,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
@@ -239,7 +190,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
@@ -250,26 +201,20 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(got).toEqual(validTokens)
   })
 
-  test('falls back to userId when no business platform token available', async () => {
+  test('uses identity token to fetch email during full auth flow', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
-    const appTokensWithoutBusinessPlatform = {
-      'mystore.myshopify.com-admin': appTokens['mystore.myshopify.com-admin']!,
-      'storefront-renderer': appTokens['storefront-renderer']!,
-      partners: appTokens.partners!,
-    }
-    vi.mocked(exchangeAccessForApplicationTokens).mockResolvedValueOnce(appTokensWithoutBusinessPlatform)
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(businessPlatformRequest).not.toHaveBeenCalled()
+    expect(businessPlatformRequest).toHaveBeenCalledWith(expect.any(String), 'access_token')
 
-    // Verify the session was stored with userId as alias (fallback)
+    // Verify the session was stored with email as alias
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('user@example.com')
   })
 
   test('executes complete auth flow if requesting additional scopes', async () => {
@@ -281,7 +226,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
@@ -307,7 +252,7 @@ describe('when existing session is valid', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
@@ -320,13 +265,18 @@ describe('when existing session is valid', () => {
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
     vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
-    const expected = {...validTokens, partners: 'custom_partners_token'}
+    const expected = {
+      admin: {token: 'access_token', storeFqdn: 'mystore.myshopify.com'},
+      storefront: 'access_token',
+      partners: 'custom_partners_token',
+      userId,
+    }
 
     // When
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(exchangeAccessForApplicationTokens).not.toBeCalled()
+
     expect(refreshAccessToken).not.toBeCalled()
     expect(got).toEqual(expected)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
@@ -344,8 +294,16 @@ describe('when existing session is valid', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
@@ -364,8 +322,16 @@ describe('when existing session is expired', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
     await expect(getLastSeenUserIdAfterAuth()).resolves.toBe('1234-5678')
     await expect(getLastSeenAuthMethod()).resolves.toEqual('device_auth')
@@ -385,7 +351,7 @@ describe('when existing session is expired', () => {
 
     // Then
     expect(refreshAccessToken).toBeCalled()
-    expect(exchangeAccessForApplicationTokens).toBeCalled()
+
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
@@ -644,7 +610,15 @@ describe('ensureAuthenticated email fetch functionality', () => {
     const got = await ensureAuthenticated(defaultApplications)
 
     // Then
-    expect(storeSessions).toBeCalledWith(validSessions)
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
   })
 
@@ -659,7 +633,15 @@ describe('ensureAuthenticated email fetch functionality', () => {
     // Then
     // The email fetch is not called during refresh - the session keeps its existing alias
     expect(businessPlatformRequest).not.toHaveBeenCalled()
-    expect(storeSessions).toBeCalledWith(validSessions)
+    const expectedSessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: validIdentityToken,
+          applications: {},
+        },
+      },
+    }
+    expect(storeSessions).toBeCalledWith(expectedSessions)
     expect(got).toEqual(validTokens)
   })
 
