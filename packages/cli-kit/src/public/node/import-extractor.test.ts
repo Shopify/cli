@@ -1,6 +1,11 @@
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath} from './path.js'
-import {extractImportPaths, extractImportPathsRecursively, clearImportPathsCache} from './import-extractor.js'
+import {
+  extractImportPaths,
+  extractImportPathsRecursively,
+  clearImportPathsCache,
+  getImportScanningCacheStats,
+} from './import-extractor.js'
 import {describe, test, expect, beforeEach} from 'vitest'
 
 beforeEach(() => {
@@ -642,6 +647,51 @@ describe('clearImportPathsCache', () => {
       expect(freshResult).toContain(utilsFile)
       expect(freshResult).toContain(helpersFile)
       expect(freshResult).toHaveLength(2)
+    })
+  })
+
+  test('clears all caches including filesystem stat caches', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const mainFile = joinPath(tmpDir, 'main.js')
+      const utilsFile = joinPath(tmpDir, 'utils.js')
+
+      await writeFile(utilsFile, 'export const foo = "bar"')
+      await writeFile(mainFile, `import { foo } from './utils.js'`)
+
+      extractImportPaths(mainFile)
+      const statsAfterScan = getImportScanningCacheStats()
+      expect(statsAfterScan.directImports).toBeGreaterThan(0)
+      expect(statsAfterScan.fileExists).toBeGreaterThan(0)
+
+      clearImportPathsCache()
+      const statsAfterClear = getImportScanningCacheStats()
+      expect(statsAfterClear.directImports).toBe(0)
+      expect(statsAfterClear.fileExists).toBe(0)
+      expect(statsAfterClear.isDir).toBe(0)
+    })
+  })
+})
+
+describe('getImportScanningCacheStats', () => {
+  test('tracks cache sizes across multiple scans', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const file1 = joinPath(tmpDir, 'file1.js')
+      const file2 = joinPath(tmpDir, 'file2.js')
+      const shared = joinPath(tmpDir, 'shared.js')
+
+      await writeFile(shared, 'export const x = 1')
+      await writeFile(file1, `import { x } from './shared.js'`)
+      await writeFile(file2, `import { x } from './shared.js'`)
+
+      extractImportPathsRecursively(file1)
+      const statsAfterFirst = getImportScanningCacheStats()
+
+      extractImportPathsRecursively(file2)
+      const statsAfterSecond = getImportScanningCacheStats()
+
+      // Second scan should grow the directImports cache (file2 is new)
+      // but shared.js stat results are reused from the first scan
+      expect(statsAfterSecond.directImports).toBeGreaterThanOrEqual(statsAfterFirst.directImports)
     })
   })
 })

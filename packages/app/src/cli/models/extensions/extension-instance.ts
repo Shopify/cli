@@ -35,6 +35,7 @@ import {
   extractJSImports,
   extractImportPathsRecursively,
   clearImportPathsCache,
+  getImportScanningCacheStats,
 } from '@shopify/cli-kit/node/import-extractor'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {uniq} from '@shopify/cli-kit/common/array'
@@ -548,12 +549,20 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     }
 
     try {
-      const imports = this.devSessionDefaultWatchPaths().flatMap((entryFile) => {
+      const startTime = performance.now()
+      const entryFiles = this.devSessionDefaultWatchPaths()
+
+      const imports = entryFiles.flatMap((entryFile) => {
         return extractImportPathsRecursively(entryFile).map((importPath) => normalizePath(resolvePath(importPath)))
       })
-      // Cache and return unique paths
+
       this.cachedImportPaths = uniq(imports) ?? []
-      outputDebug(`Found ${this.cachedImportPaths.length} external imports (recursively) for extension ${this.handle}`)
+      const elapsed = Math.round(performance.now() - startTime)
+      const cacheStats = getImportScanningCacheStats()
+      const cacheInfo = cacheStats ? ` (cache: ${cacheStats.directImports} parsed, ${cacheStats.fileExists} stats)` : ''
+      outputDebug(
+        `Import scan for "${this.handle}": ${entryFiles.length} entries, ${this.cachedImportPaths.length} files, ${elapsed}ms${cacheInfo}`,
+      )
       return this.cachedImportPaths
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
