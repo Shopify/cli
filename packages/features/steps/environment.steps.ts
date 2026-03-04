@@ -1,7 +1,7 @@
 import {writeFile} from '../lib/fs.js'
 import {Given, After, setDefaultTimeout} from '@cucumber/cucumber'
 import tempy from 'tempy'
-import rimraf from 'rimraf'
+import {rimrafSync} from 'rimraf'
 import * as path from 'pathe'
 
 // In the case of debug we want to disable
@@ -35,6 +35,6 @@ Given('I have a working directory', async function () {
 
 After(function () {
   if (this.temporaryDirectory) {
-    rimraf.sync(this.temporaryDirectory)
+    rimrafSync(this.temporaryDirectory)
   }
 })

@@ -17,7 +17,7 @@
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist"],
       "options": {
-        "command": "pnpm vite build --config vite.config.ts",
+        "command": "pnpm vite build --config vite.config.mts",
         "cwd": "packages/ui-extensions-server-kit"
       }
     },

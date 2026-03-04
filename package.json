@@ -74,12 +74,12 @@
     "octokit-plugin-create-pull-request": "^3.12.2",
     "pathe": "1.1.1",
     "pin-github-action": "^3.3.1",
-    "rimraf": "^3.0.2",
+    "rimraf": "^6.1.3",
     "tmp": "^0.2.5",
     "ts-node": "^10.9.1",
     "typescript": "5.9.3",
     "vitest": "^3.1.4",
-    "zod": "^3.24.1"
+    "zod": "3.24.4"
   },
   "workspaces": {
     "packages": [
@@ -96,6 +96,26 @@
     "printWidth": 120
   },
   "version": "0.0.0",
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@shopify/cli-hydrogen>@graphql-codegen/cli": "6.0.1",
+        "@shopify/polaris>react": "19.2.4",
+        "@shopify/polaris>react-dom": "19.2.4",
+        "react-dom>react": "18.3.1",
+        "use-resize-observer>react-dom": "19.2.4"
+      }
+    },
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "esbuild",
+      "msw",
+      "nx",
+      "protobufjs",
+      "unrs-resolver",
+      "yarn"
+    ]
+  },
   "resolutions": {
     "@types/react": "18.3.12",
     "vite": "6.4.1",
@@ -286,7 +306,8 @@
         ],
         "project": "**/*.{ts,tsx}!",
         "ignoreDependencies": [
-          "@shopify/react-testing"
+          "@shopify/react-testing",
+          "react-dom"
         ]
       },
       "packages/ui-extensions-test-utils": {
