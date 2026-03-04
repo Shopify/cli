@@ -11,5 +11,6 @@ query fetchSpecifications($organizationId: ID!) {
     validationSchema {
       jsonSchema
     }
+    clientSteps
   }
 }
