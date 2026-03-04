@@ -230,13 +230,13 @@ export class FileWatcher {
   private readonly handleFileEvent = (event: string, path: string) => {
     const startTime = startHRTime()
     const normalizedPath = normalizePath(path)
-    const isConfigAppPath = path === this.app.configuration.path
+    const isConfigAppPath = normalizedPath === normalizePath(this.app.configuration.path)
     const isExtensionToml = path.endsWith('.extension.toml')
 
     outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
 
     if (isConfigAppPath) {
-      this.handleEventForExtension(event, path, this.app.directory, startTime, false)
+      this.handleEventForExtension(event, path, this.app.directory, startTime, false, isExtensionToml, isConfigAppPath)
     } else {
       const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
       const isUnknownExtension = affectedExtensions === undefined || affectedExtensions.size === 0
@@ -249,10 +249,10 @@ export class FileWatcher {
       }
 
       for (const extensionPath of affectedExtensions ?? []) {
-        this.handleEventForExtension(event, path, extensionPath, startTime, false)
+        this.handleEventForExtension(event, path, extensionPath, startTime, false, isExtensionToml, isConfigAppPath)
       }
       if (isUnknownExtension) {
-        this.handleEventForExtension(event, path, this.app.directory, startTime, true)
+        this.handleEventForExtension(event, path, this.app.directory, startTime, true, isExtensionToml, isConfigAppPath)
       }
     }
     this.debouncedEmit()
@@ -264,9 +264,9 @@ export class FileWatcher {
     extensionPath: string,
     startTime: StartTime,
     isUnknownExtension: boolean,
+    isExtensionToml: boolean,
+    isConfigAppPath: boolean,
   ) {
-    const isExtensionToml = path.endsWith('.extension.toml')
-    const isConfigAppPath = path === this.app.configuration.path
 
     switch (event) {
       case 'change':
