@@ -5,12 +5,36 @@ import {dirname, joinPath} from './path.js'
 // when multiple extensions import the same shared code.
 const directImportsCache = new Map<string, string[]>()
 
+// Caches filesystem stat results to avoid redundant synchronous I/O.
+// Each stat call also triggers outputDebug overhead, so caching here
+// avoids both the kernel round-trip and the debug string construction.
+const fileExistsCache = new Map<string, boolean>()
+const isDirCache = new Map<string, boolean>()
+
+function cachedFileExists(path: string): boolean {
+  const cached = fileExistsCache.get(path)
+  if (cached !== undefined) return cached
+  const result = fileExistsSync(path)
+  fileExistsCache.set(path, result)
+  return result
+}
+
+function cachedIsDir(path: string): boolean {
+  const cached = isDirCache.get(path)
+  if (cached !== undefined) return cached
+  const result = isDirectorySync(path)
+  isDirCache.set(path, result)
+  return result
+}
+
 /**
- * Clears the import paths cache. Should be called when watched files change
- * so that rescanning picks up updated imports.
+ * Clears all import-scanning caches (direct imports, recursive results, and filesystem stats).
+ * Should be called when watched files change so that rescanning picks up updated imports.
  */
 export function clearImportPathsCache(): void {
   directImportsCache.clear()
+  fileExistsCache.clear()
+  isDirCache.clear()
 }
 
 /**
@@ -60,38 +84,44 @@ export function extractImportPaths(filePath: string): string[] {
  * @throws If an unexpected error occurs while processing files (not including ENOENT file not found errors).
  */
 export function extractImportPathsRecursively(filePath: string, visited: Set<string> = new Set<string>()): string[] {
-  // Avoid processing the same file twice (handles circular dependencies)
   if (visited.has(filePath)) {
     return []
   }
 
   visited.add(filePath)
 
-  // Get direct imports from this file
   const directImports = extractImportPaths(filePath)
   const allImports = [filePath, ...directImports]
 
-  // Recursively process each imported file
   for (const importedFile of directImports) {
     try {
-      // Only process files that exist and are not directories
-      // Note: resolveJSImport already resolves directory imports to their index files
-      if (fileExistsSync(importedFile) && !isDirectorySync(importedFile)) {
+      if (cachedFileExists(importedFile) && !cachedIsDir(importedFile)) {
         const nestedImports = extractImportPathsRecursively(importedFile, visited)
         allImports.push(...nestedImports)
       }
     } catch (error) {
-      // Rethrow unexpected errors after checking for expected file read errors
       if (error instanceof Error && error.message.includes('ENOENT')) {
-        // Skip files that don't exist or can't be read
         continue
       }
       throw error
     }
   }
 
-  // Return unique list of imports
   return [...new Set(allImports)]
+}
+
+/**
+ * Returns diagnostic information about the import scanning caches.
+ * Useful for debugging performance issues with --verbose.
+ *
+ * @returns Cache size stats for directImports, fileExists, and isDir.
+ */
+export function getImportScanningCacheStats(): {directImports: number; fileExists: number; isDir: number} {
+  return {
+    directImports: directImportsCache.size,
+    fileExists: fileExistsCache.size,
+    isDir: isDirCache.size,
+  }
 }
 
 /**
@@ -161,7 +191,7 @@ function extractRustImports(content: string, filePath: string): string[] {
     const pathValue = match[1]
     if (pathValue) {
       const resolvedPath = joinPath(dirname(filePath), pathValue)
-      if (fileExistsSync(resolvedPath)) {
+      if (cachedFileExists(resolvedPath)) {
         imports.push(resolvedPath)
       }
     }
@@ -171,11 +201,10 @@ function extractRustImports(content: string, filePath: string): string[] {
 }
 
 function resolveJSImport(importPath: string, fromFile: string): string | null {
-  const basePath = fileExistsSync(fromFile) && isDirectorySync(fromFile) ? fromFile : dirname(fromFile)
+  const basePath = cachedFileExists(fromFile) && cachedIsDir(fromFile) ? fromFile : dirname(fromFile)
   const resolvedPath = joinPath(basePath, importPath)
 
-  // If the import path resolves to a directory, look for index files
-  if (fileExistsSync(resolvedPath) && isDirectorySync(resolvedPath)) {
+  if (cachedFileExists(resolvedPath) && cachedIsDir(resolvedPath)) {
     const indexPaths = [
       joinPath(resolvedPath, 'index.js'),
       joinPath(resolvedPath, 'index.ts'),
@@ -184,15 +213,13 @@ function resolveJSImport(importPath: string, fromFile: string): string | null {
     ]
 
     for (const indexPath of indexPaths) {
-      if (fileExistsSync(indexPath) && !isDirectorySync(indexPath)) {
+      if (cachedFileExists(indexPath) && !cachedIsDir(indexPath)) {
         return indexPath
       }
     }
-    // If no index file found, don't return the directory
     return null
   }
 
-  // Check for file with extensions
   const possiblePaths = [
     resolvedPath,
     `${resolvedPath}.js`,
@@ -202,7 +229,7 @@ function resolveJSImport(importPath: string, fromFile: string): string | null {
   ]
 
   for (const path of possiblePaths) {
-    if (fileExistsSync(path) && !isDirectorySync(path)) {
+    if (cachedFileExists(path) && !cachedIsDir(path)) {
       return path
     }
   }
@@ -215,7 +242,7 @@ function resolveRustModule(modName: string, fromFile: string): string | null {
   const possiblePaths = [joinPath(basePath, `${modName}.rs`), joinPath(basePath, modName, 'mod.rs')]
 
   for (const path of possiblePaths) {
-    if (fileExistsSync(path)) {
+    if (cachedFileExists(path)) {
       return path
     }
   }
