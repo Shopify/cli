@@ -35,7 +35,7 @@ async function fetchEmail(businessPlatformToken: string | undefined): Promise<st
 
   try {
     const userEmailResult = await businessPlatformRequest<UserEmailQuery>(UserEmailQueryString, businessPlatformToken)
-    return userEmailResult.currentUserAccount?.email
+    return userEmailResult.currentUserAccount?.email ?? undefined
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     outputDebug(outputContent`Failed to fetch user email: ${(error as Error).message ?? String(error)}`)
@@ -230,7 +230,7 @@ ${outputToken.json(applications)}
   if (validationResult === 'needs_full_auth') {
     await throwOnNoPrompt(noPrompt)
     outputDebug(outputContent`Initiating the full authentication flow...`)
-    newSession = await executeCompleteFlow(applications)
+    newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
   } else if (validationResult === 'needs_refresh' || forceRefresh) {
     outputDebug(outputContent`The current session is valid but needs refresh. Refreshing...`)
     try {
@@ -238,7 +238,7 @@ ${outputToken.json(applications)}
     } catch (error) {
       if (error instanceof InvalidGrantError) {
         await throwOnNoPrompt(noPrompt)
-        newSession = await executeCompleteFlow(applications)
+        newSession = await executeCompleteFlow(applications, currentSession?.identity.alias)
       } else if (error instanceof InvalidRequestError) {
         await sessionStore.remove()
         throw new AbortError('\nError validating auth session', "We've cleared the current session, please try again")
@@ -289,9 +289,9 @@ The CLI is currently unable to prompt for reauthentication.`,
  * Execute the full authentication flow.
  *
  * @param applications - An object containing the applications we need to be authenticated with.
- * @param alias - Optional alias to use for the session.
+ * @param existingAlias - Optional alias from a previous session to preserve if the email fetch fails.
  */
-async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
+async function executeCompleteFlow(applications: OAuthApplications, existingAlias?: string): Promise<Session> {
   const scopes = getFlattenScopes(applications)
   const exchangeScopes = getExchangeScopes(applications)
   const store = applications.adminApi?.storeFqdn
@@ -318,9 +318,9 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
 
-  // Get the alias for the session (email or userId)
+  // Preserve existing alias if available, otherwise try fetching email
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
-  const alias = (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
+  const alias = existingAlias ?? (await fetchEmail(businessPlatformToken))
 
   const session: Session = {
     identity: {
@@ -447,6 +447,6 @@ function buildIdentityTokenFromEnv(
     ...identityTokenInformation,
     expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     scopes,
-    alias: identityTokenInformation.userId,
+    alias: undefined,
   }
 }
