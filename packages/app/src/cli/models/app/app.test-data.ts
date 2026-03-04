@@ -1048,6 +1048,23 @@ const testRemoteSpecifications: RemoteSpecification[] = [
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
     },
   },
+  {
+    name: 'Admin Link',
+    externalName: 'Admin Link',
+    identifier: 'admin_link',
+    externalIdentifier: 'admin_link_external',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 10,
+      uidIsClientProvided: true,
+    },
+    validationSchema: {
+      jsonSchema:
+        '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":true,"properties":{"name":{"type":"string"},"type":{"type":"string"},"handle":{"type":"string"},"targeting":{"type":"array","items":{"type":"object","properties":{"target":{"type":"string"},"tools":{"type":"string"},"instructions":{"type":"string"},"intents":{"type":"array"},"build_manifest":{"type":"object"}},"additionalProperties":true}}},"required":["name","targeting"]}',
+    },
+  },
 ]
 
 const productSubscriptionUIExtensionTemplate: ExtensionTemplate = {

@@ -32,7 +32,7 @@ interface Asset {
   lastUpdated: number
 }
 
-export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType {
+export interface DevNewExtensionPointSchema extends Omit<NewExtensionPointSchemaType, 'intents'> {
   build_manifest: BuildManifest
   assets: {
     [name: string]: Asset
@@ -43,6 +43,13 @@ export interface DevNewExtensionPointSchema extends NewExtensionPointSchemaType 
   resource: {
     url: string
   }
+  intents?: {
+    type: string
+    action: string
+    name?: string
+    description?: string
+    schema: Asset
+  }[]
 }
 
 interface SupportedFeatures {
