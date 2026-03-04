@@ -14,10 +14,17 @@ import {
   setCachedPartnerAccountStatus,
   runWithRateLimit,
 } from './conf-store.js'
+import {isLocalEnvironment} from './context/service.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {inTemporaryDirectory} from '../../public/node/fs.js'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+
+vi.mock('./context/service.js')
+
+beforeEach(() => {
+  vi.mocked(isLocalEnvironment).mockReturnValue(false)
+})
 
 describe('getSession', () => {
   test('returns the content of the SessionStore key', async () => {
@@ -68,7 +75,7 @@ describe('removeSession', () => {
 })
 
 describe('getCurrentSessionId', () => {
-  test('returns the content of the currentSessionId key', async () => {
+  test('returns the content of the currentSessionId key in production', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -79,6 +86,21 @@ describe('getCurrentSessionId', () => {
 
       // Then
       expect(got).toEqual('user-123')
+    })
+  })
+
+  test('returns the content of the currentDevSessionId key in dev', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      vi.mocked(isLocalEnvironment).mockReturnValue(true)
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('currentDevSessionId', 'dev-user-456')
+
+      // When
+      const got = getCurrentSessionId(config)
+
+      // Then
+      expect(got).toEqual('dev-user-456')
     })
   })
 
@@ -94,10 +116,24 @@ describe('getCurrentSessionId', () => {
       expect(got).toBeUndefined()
     })
   })
+
+  test('does not return dev session when in production', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('currentDevSessionId', 'dev-user')
+
+      // When
+      const got = getCurrentSessionId(config)
+
+      // Then
+      expect(got).toBeUndefined()
+    })
+  })
 })
 
 describe('setCurrentSessionId', () => {
-  test('saves the desired content in the currentSessionId key', async () => {
+  test('saves to currentSessionId in production', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -107,12 +143,28 @@ describe('setCurrentSessionId', () => {
 
       // Then
       expect(config.get('currentSessionId')).toEqual('user-456')
+      expect(config.get('currentDevSessionId')).toBeUndefined()
+    })
+  })
+
+  test('saves to currentDevSessionId in dev', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      vi.mocked(isLocalEnvironment).mockReturnValue(true)
+      const config = new LocalStorage<ConfSchema>({cwd})
+
+      // When
+      setCurrentSessionId('dev-user-789', config)
+
+      // Then
+      expect(config.get('currentDevSessionId')).toEqual('dev-user-789')
+      expect(config.get('currentSessionId')).toBeUndefined()
     })
   })
 })
 
 describe('removeCurrentSessionId', () => {
-  test('removes the currentSessionId key', async () => {
+  test('removes the currentSessionId key in production', async () => {
     await inTemporaryDirectory(async (cwd) => {
       // Given
       const config = new LocalStorage<ConfSchema>({cwd})
@@ -123,6 +175,87 @@ describe('removeCurrentSessionId', () => {
 
       // Then
       expect(config.get('currentSessionId')).toBeUndefined()
+    })
+  })
+
+  test('removes the currentDevSessionId key in dev', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      vi.mocked(isLocalEnvironment).mockReturnValue(true)
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('currentDevSessionId', 'dev-user')
+
+      // When
+      removeCurrentSessionId(config)
+
+      // Then
+      expect(config.get('currentDevSessionId')).toBeUndefined()
+    })
+  })
+})
+
+describe('session environment isolation', () => {
+  test('getSessions returns production sessions in production', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('sessionStore', 'prod-sessions')
+      config.set('devSessionStore', 'dev-sessions')
+
+      // When
+      const got = getSessions(config)
+
+      // Then
+      expect(got).toEqual('prod-sessions')
+    })
+  })
+
+  test('getSessions returns dev sessions in dev', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      vi.mocked(isLocalEnvironment).mockReturnValue(true)
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('sessionStore', 'prod-sessions')
+      config.set('devSessionStore', 'dev-sessions')
+
+      // When
+      const got = getSessions(config)
+
+      // Then
+      expect(got).toEqual('dev-sessions')
+    })
+  })
+
+  test('setSessions writes to devSessionStore in dev without affecting production', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      setSessions('prod-sessions', config)
+
+      // When
+      vi.mocked(isLocalEnvironment).mockReturnValue(true)
+      setSessions('dev-sessions', config)
+
+      // Then
+      expect(config.get('sessionStore')).toEqual('prod-sessions')
+      expect(config.get('devSessionStore')).toEqual('dev-sessions')
+    })
+  })
+
+  test('removeSessions only removes sessions for the current environment', async () => {
+    await inTemporaryDirectory(async (cwd) => {
+      // Given
+      const config = new LocalStorage<ConfSchema>({cwd})
+      config.set('sessionStore', 'prod-sessions')
+      config.set('devSessionStore', 'dev-sessions')
+
+      // When
+      vi.mocked(isLocalEnvironment).mockReturnValue(true)
+      removeSessions(config)
+
+      // Then
+      expect(config.get('devSessionStore')).toBeUndefined()
+      expect(config.get('sessionStore')).toEqual('prod-sessions')
     })
   })
 })

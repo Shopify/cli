@@ -1,3 +1,4 @@
+import {isLocalEnvironment} from './context/service.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {LocalStorage} from '../../public/node/local-storage.js'
 import {outputContent, outputDebug} from '../../public/node/output.js'
@@ -28,6 +29,8 @@ interface Cache {
 export interface ConfSchema {
   sessionStore: string
   currentSessionId?: string
+  devSessionStore?: string
+  currentDevSessionId?: string
   cache?: Cache
 }
 
@@ -45,6 +48,14 @@ function cliKitStore() {
   return _instance
 }
 
+function sessionStoreKey(): 'devSessionStore' | 'sessionStore' {
+  return isLocalEnvironment() ? 'devSessionStore' : 'sessionStore'
+}
+
+function currentSessionIdKey(): 'currentDevSessionId' | 'currentSessionId' {
+  return isLocalEnvironment() ? 'currentDevSessionId' : 'currentSessionId'
+}
+
 /**
  * Get session.
  *
@@ -52,7 +63,7 @@ function cliKitStore() {
  */
 export function getSessions(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
   outputDebug(outputContent`Getting session store...`)
-  return config.get('sessionStore')
+  return config.get(sessionStoreKey())
 }
 
 /**
@@ -62,7 +73,7 @@ export function getSessions(config: LocalStorage<ConfSchema> = cliKitStore()): s
  */
 export function setSessions(session: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Setting session store...`)
-  config.set('sessionStore', session)
+  config.set(sessionStoreKey(), session)
 }
 
 /**
@@ -70,7 +81,7 @@ export function setSessions(session: string, config: LocalStorage<ConfSchema> = 
  */
 export function removeSessions(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing session store...`)
-  config.delete('sessionStore')
+  config.delete(sessionStoreKey())
 }
 
 /**
@@ -80,7 +91,7 @@ export function removeSessions(config: LocalStorage<ConfSchema> = cliKitStore())
  */
 export function getCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): string | undefined {
   outputDebug(outputContent`Getting current session ID...`)
-  return config.get('currentSessionId')
+  return config.get(currentSessionIdKey())
 }
 
 /**
@@ -90,7 +101,7 @@ export function getCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitSto
  */
 export function setCurrentSessionId(sessionId: string, config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Setting current session ID...`)
-  config.set('currentSessionId', sessionId)
+  config.set(currentSessionIdKey(), sessionId)
 }
 
 /**
@@ -98,7 +109,7 @@ export function setCurrentSessionId(sessionId: string, config: LocalStorage<Conf
  */
 export function removeCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing current session ID...`)
-  config.delete('currentSessionId')
+  config.delete(currentSessionIdKey())
 }
 
 type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['value']
