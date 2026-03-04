@@ -17,5 +17,6 @@ export interface TestResult {
 
 export interface DoctorContext {
   workingDirectory: string
+  cliCommand: string
   data: {[key: string]: unknown}
 }

@@ -18,7 +18,7 @@ export default class ThemeInitTests extends DoctorSuite<ThemeDoctorContext> {
       this.themePath = joinPath(this.context.workingDirectory, this.themeName)
 
       const result = await this.runInteractive(
-        `shopify theme init ${this.themeName} --path ${this.context.workingDirectory}`,
+        `${this.context.cliCommand} theme init ${this.themeName} --path ${this.context.workingDirectory}`,
       )
       this.assertSuccess(result)
 

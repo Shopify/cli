@@ -27,9 +27,35 @@ export interface ThemeDoctorOptions {
   password?: string
 }
 
-export function createDoctorContext(options: ThemeDoctorOptions): ThemeDoctorContext {
+/**
+ * Detects the CLI command used to invoke the current process by finding the
+ * command's first topic in argv and returning everything before it.
+ *
+ * Examples:
+ * `npx shopify doctor-release theme` → `npx shopify`
+ * `shopify doctor-release theme` → `shopify`
+ * `pnpm shopify doctor-release theme` → `pnpm shopify`
+ * `node packages/cli/bin/dev.js doctor-release theme` → `node packages/cli/bin/dev.js`
+ */
+export function detectCliCommand(commandHandle?: string, argv: string[] = process.argv): string {
+  const defaultCommand = 'shopify'
+
+  if (!commandHandle) return defaultCommand
+
+  const firstTopic = commandHandle.split(':')[0]
+  if (!firstTopic) return defaultCommand
+
+  const index = argv.findIndex((arg) => arg === firstTopic)
+
+  if (index <= 0) return defaultCommand
+
+  return argv.slice(0, index).join(' ')
+}
+
+export function createDoctorContext(options: ThemeDoctorOptions, commandHandle?: string): ThemeDoctorContext {
   return {
     workingDirectory: options.path ?? cwd(),
+    cliCommand: detectCliCommand(commandHandle),
     environment: options.environment,
     store: options.store,
     password: options.password,

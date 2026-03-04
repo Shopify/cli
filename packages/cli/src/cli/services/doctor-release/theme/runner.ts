@@ -19,9 +19,9 @@ const themeSuites: (new () => DoctorSuite<ThemeDoctorContext>)[] = [ThemeInitTes
  * Run all theme doctor tests.
  * Stops on first failure.
  */
-export async function runThemeDoctor(options: ThemeDoctorOptions): Promise<TestResult[]> {
+export async function runThemeDoctor(options: ThemeDoctorOptions, commandHandle?: string): Promise<TestResult[]> {
   const results: TestResult[] = []
-  const context = createDoctorContext(options)
+  const context = createDoctorContext(options, commandHandle)
 
   // Initialize reporter with working directory
   initReporter(context.workingDirectory)
