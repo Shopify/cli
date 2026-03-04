@@ -71,7 +71,7 @@ export async function findSessionByAlias(alias: string): Promise<string | undefi
   if (!fqdnSessions) return undefined
 
   for (const [userId, session] of Object.entries(fqdnSessions)) {
-    if (session.identity.alias === alias) {
+    if (session.identity.alias === alias || userId === alias) {
       return userId
     }
   }
