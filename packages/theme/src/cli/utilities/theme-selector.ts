@@ -45,11 +45,11 @@ export async function findOrSelectTheme(session: AdminSession, options: FindOrSe
 
   const message = options.header ?? ''
   const choices = themes.map((theme) => {
-    const yoursLabel = theme.id.toString() === getDevelopmentTheme() ? ' [yours]' : ''
+    const currentLabel = theme.id.toString() === getDevelopmentTheme() ? ' [current]' : ''
 
     return {
       value: async () => theme,
-      label: `${theme.name}${yoursLabel}`,
+      label: `${theme.name}${currentLabel}`,
       group: capitalize(theme.role),
     }
   })
