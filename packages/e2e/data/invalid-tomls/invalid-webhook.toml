@@ -1,0 +1,11 @@
+# Invalid TOML: bad webhook config (missing required uri)
+client_id = "__E2E_CLIENT_ID__"
+name = "Invalid Webhook App"
+application_url = "https://example.com"
+embedded = true
+
+[webhooks]
+api_version = "2025-01"
+
+  [[webhooks.subscriptions]]
+  topics = ["products/create"]
