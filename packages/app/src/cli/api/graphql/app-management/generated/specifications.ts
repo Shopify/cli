@@ -11,6 +11,7 @@ export type FetchSpecificationsQuery = {
   specifications: {
     name: string
     identifier: string
+    clientSteps?: string
     externalIdentifier: string
     features: string[]
     uidStrategy:
@@ -78,6 +79,7 @@ export const FetchSpecifications = {
                     ],
                   },
                 },
+                {kind: 'Field', name: {kind: 'Name', value: 'clientSteps'}},
                 {kind: 'Field', name: {kind: 'Name', value: '__typename'}},
               ],
             },

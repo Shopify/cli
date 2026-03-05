@@ -21,6 +21,7 @@ export const ExtensionSpecificationsQuery = gql`
       validationSchema {
         jsonSchema
       }
+      clientSteps
     }
   }
 `
@@ -49,6 +50,7 @@ export interface RemoteSpecification {
   validationSchema?: {
     jsonSchema: string
   } | null
+  clientSteps?: string
 }
 
 export interface FlattenedRemoteSpecification extends RemoteSpecification {

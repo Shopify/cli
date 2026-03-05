@@ -463,6 +463,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         },
         experience: experience(spec.identifier),
         validationSchema: spec.validationSchema,
+        clientSteps: spec.clientSteps,
       }),
     )
   }
