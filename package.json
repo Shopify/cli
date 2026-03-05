@@ -28,6 +28,7 @@
     "post-release": "./bin/post-release",
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
+    "test:e2e": "nx run-many --target=build --projects=cli,create-app --skip-nx-cache && pnpm --filter e2e exec playwright test",
     "test:features": "pnpm nx run features:test",
     "test:regenerate-snapshots": "nx build cli && packages/features/snapshots/regenerate.sh",
     "test:unit": "pnpm vitest run",
@@ -130,7 +131,8 @@
       "@graphql-typed-document-node/core"
     ],
     "ignoreWorkspaces": [
-      "packages/eslint-plugin-cli"
+      "packages/eslint-plugin-cli",
+      "packages/e2e"
     ],
     "paths": {
       "@shopify/eslint-plugin-cli/configs": [

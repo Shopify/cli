@@ -1,0 +1,11 @@
+{
+  "extends": "../../configurations/tsconfig.json",
+  "include": ["./**/*.ts"],
+  "exclude": ["./dist", "./test-results", "./playwright-report", "./scripts"],
+  "compilerOptions": {
+    "outDir": "dist",
+    "composite": false,
+    "declaration": false,
+    "types": ["node"]
+  }
+}
