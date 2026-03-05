@@ -85,7 +85,6 @@ export function requireEnv(
  * Worker-scoped fixture providing auth tokens and environment configuration.
  * Auth tokens are optional — tests that need them should call requireEnv().
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export const envFixture = base.extend<{}, {env: E2EEnv}>({
   env: [
     // eslint-disable-next-line no-empty-pattern
