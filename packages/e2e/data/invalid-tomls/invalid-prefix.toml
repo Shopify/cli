@@ -1,0 +1,10 @@
+# Invalid TOML: app_proxy with invalid prefix value
+client_id = "__E2E_CLIENT_ID__"
+name = "Invalid Prefix App"
+application_url = "https://example.com"
+embedded = true
+
+[app_proxy]
+url = "https://example.com/proxy"
+subpath = "test"
+prefix = "not-a-valid-prefix"

@@ -1,0 +1,9 @@
+# Invalid TOML: wrong types for known fields
+client_id = "__E2E_CLIENT_ID__"
+name = "Wrong Type App"
+application_url = "https://example.com"
+embedded = "not-a-boolean"
+
+[access_scopes]
+scopes = 12345
+use_legacy_install_flow = "nope"
