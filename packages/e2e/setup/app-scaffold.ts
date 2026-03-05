@@ -72,7 +72,9 @@ const withAuth = cliFixture.extend<{}, {authLogin: void}>({
         if (value !== undefined) spawnEnv[key] = value
       }
       spawnEnv.CI = ''
-      spawnEnv.BROWSER = 'none'
+      // Pretend we're in a cloud environment so the CLI prints the login URL
+      // directly instead of opening a system browser (BROWSER=none doesn't work on macOS)
+      spawnEnv.CODESPACES = 'true'
 
       const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
         name: 'xterm-color',
@@ -87,9 +89,7 @@ const withAuth = cliFixture.extend<{}, {authLogin: void}>({
         if (process.env.DEBUG === '1') process.stdout.write(data)
       })
 
-      await waitForText(() => output, 'Press any key to open the login page', 30_000)
-      ptyProcess.write(' ')
-      await waitForText(() => output, 'start the auth process', 10_000)
+      await waitForText(() => output, 'Open this link to start the auth process', 30_000)
 
       const stripped = stripAnsi(output)
       const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
