@@ -125,10 +125,12 @@
       "unlisted": "error",
       "unresolved": "error"
     },
+    "ignoreBinaries": [
+      "playwright"
+    ],
     "ignoreDependencies": [
       "@shopify/theme-check-node",
-      "@shopify/theme-check-docs-updater",
-      "@graphql-typed-document-node/core"
+      "@shopify/theme-check-docs-updater"
     ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli",
