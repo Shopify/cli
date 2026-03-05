@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-imports */
-import {appScaffoldFixture as test} from '../fixtures/app-scaffold.js'
-import {requireEnv} from '../fixtures/env.js'
+import {appScaffoldFixture as test} from '../setup/app.js'
+import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'

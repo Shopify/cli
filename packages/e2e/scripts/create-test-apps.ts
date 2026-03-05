@@ -10,6 +10,7 @@ import {fileURLToPath} from 'url'
 import {execa} from 'execa'
 import {chromium} from '@playwright/test'
 import stripAnsiModule from 'strip-ansi'
+import {completeLogin} from '../helpers/browser-login.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '../../..')
@@ -165,19 +166,7 @@ async function oauthLogin() {
     extraHTTPHeaders: {'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true'},
   })
   const page = await context.newPage()
-  await page.goto(urlMatch[0])
-
-  await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: 60_000})
-  await page.locator('input[name="account[email]"], input[type="email"]').first().fill(email!)
-  await page.locator('button[type="submit"]').first().click()
-  await page.waitForSelector('input[name="account[password]"], input[type="password"]', {timeout: 60_000})
-  await page.locator('input[name="account[password]"], input[type="password"]').first().fill(password!)
-  await page.locator('button[type="submit"]').first().click()
-  await page.waitForTimeout(3000)
-  try {
-    const btn = page.locator('button[type="submit"]').first()
-    if (await btn.isVisible({timeout: 5000})) await btn.click()
-  } catch {}
+  await completeLogin(page, urlMatch[0], email!, password!)
 
   await waitForText(() => output, 'Logged in', 60_000)
   try { pty.kill() } catch {}
