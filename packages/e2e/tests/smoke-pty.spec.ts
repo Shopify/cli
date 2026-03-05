@@ -1,4 +1,4 @@
-import {cliFixture as test} from '../fixtures/cli-process.js'
+import {cliFixture as test} from '../setup/cli.js'
 import {expect} from '@playwright/test'
 
 test.describe('PTY smoke test', () => {
