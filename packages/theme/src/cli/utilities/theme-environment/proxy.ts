@@ -303,6 +303,12 @@ export function getProxyStorefrontHeaders(event: H3Event) {
   // so we must also remove it from the response CSP.
   delete proxyRequestHeaders['upgrade-insecure-requests']
 
+  // Remove the browser's user-agent so that defaultHeaders() can reliably set the CLI
+  // user-agent. In HTTP/2, browsers send 'user-agent' in lowercase; without this deletion
+  // both 'user-agent' (browser) and 'User-Agent' (CLI) coexist as separate JS object keys
+  // and Node's fetch normalizes them such that the browser UA wins.
+  delete proxyRequestHeaders['user-agent']
+
   const ipAddress = getRequestIP(event)
   if (ipAddress) proxyRequestHeaders['X-Forwarded-For'] = ipAddress
 

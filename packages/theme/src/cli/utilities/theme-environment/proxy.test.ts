@@ -279,10 +279,10 @@ describe('dev proxy', () => {
       event.node.req.headers.connection = '...'
       event.node.req.headers['proxy-authenticate'] = '...'
       event.node.req.headers.host = 'abnb'
+      event.node.req.headers['user-agent'] = 'Mozilla/5.0 (browser UA)'
       // Kept:
       event.node.req.headers.accept = 'text/html'
       event.node.req.headers.cookie = 'oreo'
-      event.node.req.headers['user-agent'] = 'vitest'
       event.node.req.headers['x-custom'] = 'true'
 
       expect(getProxyStorefrontHeaders(event)).toMatchInlineSnapshot(`
@@ -290,10 +290,22 @@ describe('dev proxy', () => {
           "X-Forwarded-For": "42",
           "accept": "text/html",
           "cookie": "oreo",
-          "user-agent": "vitest",
           "x-custom": "true",
         }
       `)
+    })
+
+    test('removes browser user-agent so CLI user-agent is not overridden', () => {
+      // In HTTP/2, browsers send 'user-agent' in lowercase. Without explicit deletion,
+      // both 'user-agent' (browser) and 'User-Agent' (CLI, from defaultHeaders()) coexist
+      // as separate JS object keys, and Node's fetch normalizes them such that the browser
+      // UA wins. This matters for cart/checkout endpoints where the CLI UA identifies the
+      // request as coming from a dev tool, not a real user.
+      const event = createH3Event('POST', '/cart/add.js')
+      event.node.req.headers['user-agent'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X)'
+
+      const headers = getProxyStorefrontHeaders(event)
+      expect(headers['user-agent']).toBeUndefined()
     })
   })
 
