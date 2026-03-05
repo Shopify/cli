@@ -151,6 +151,9 @@ packages/*/docs/
 
 packaging/dist
 
+# E2E test temp directories and artifacts
+.e2e-tmp
+
 # Shadowenv generates user-specific files that shouldn't be committed
 .shadowenv.d/
 
