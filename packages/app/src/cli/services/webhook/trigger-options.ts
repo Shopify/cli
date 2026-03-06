@@ -43,7 +43,7 @@ export async function collectCredentials(
 
   renderCurrentlyUsedConfigInfo({
     appName: remoteApp.title,
-    configFile: basename(app.configuration.path),
+    configFile: basename(app.configPath),
   })
 
   const clientSecret = remoteApp.apiSecretKeys.find((elm) => elm.secret)!.secret

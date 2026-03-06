@@ -54,7 +54,6 @@ const testAppConfiguration: CurrentAppConfiguration = {
   client_id: 'test-client-id',
   access_scopes: {scopes: ''},
   extension_directories: [],
-  path: 'shopify.app.custom.toml',
   name: 'my-app',
   application_url: 'https://example.com',
   embedded: true,
@@ -285,6 +284,7 @@ describe('app-event-watcher', () => {
           // When
           const app = testAppLinked({
             allExtensions: initialExtensions,
+            configPath: 'shopify.app.custom.toml',
             configuration: testAppConfiguration,
           })
 
@@ -356,6 +356,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
         const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
@@ -393,6 +394,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
 
@@ -429,6 +431,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1, posExtension],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
 
@@ -461,6 +464,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1, extension2],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
         const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
@@ -509,6 +513,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
@@ -552,6 +557,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [flowExtension],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
 
@@ -586,6 +592,7 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
+          configPath: 'shopify.app.custom.toml',
           configuration: testAppConfiguration,
         })
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])

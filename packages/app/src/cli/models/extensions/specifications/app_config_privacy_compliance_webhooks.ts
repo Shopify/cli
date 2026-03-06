@@ -4,7 +4,7 @@ import {ComplianceTopic} from './app_config_webhook_schemas/webhook_subscription
 import {mergeAllWebhooks} from './transform/app_config_webhook.js'
 import {removeTrailingSlash} from './validation/common.js'
 import {CustomTransformationConfig, createConfigExtensionSpecification} from '../specification.js'
-import {AppConfigurationWithoutPath, CurrentAppConfiguration} from '../../app/app.js'
+import {AppConfiguration, CurrentAppConfiguration} from '../../app/app.js'
 import {compact, getPathValue} from '@shopify/cli-kit/common/object'
 
 const PrivacyComplianceWebhooksTransformConfig: CustomTransformationConfig = {
@@ -23,7 +23,7 @@ const appPrivacyComplienceSpec = createConfigExtensionSpecification({
 
 export default appPrivacyComplienceSpec
 
-function transformToPrivacyComplianceWebhooksModule(content: object, appConfiguration: AppConfigurationWithoutPath) {
+function transformToPrivacyComplianceWebhooksModule(content: object, appConfiguration: AppConfiguration) {
   const webhooks = getPathValue(content, 'webhooks') as WebhooksConfig
   let appUrl: string | undefined
   if ('application_url' in appConfiguration) {

@@ -272,8 +272,8 @@ function mockApp({
   return testAppLinked({
     name: 'my app',
     directory,
+    configPath: joinPath(directory, 'shopify.app.toml'),
     configuration: {
-      path: joinPath(directory, 'shopify.app.toml'),
       client_id: 'test-client-id',
       name: 'my-app',
       application_url: 'https://example.com',

@@ -12,7 +12,6 @@ vi.mock('@shopify/cli-kit/node/output')
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
   configuration: {
-    path: '/shopify.app.toml',
     client_id: 'test-client-id',
     name: 'my-app',
     application_url: 'https://example.com',

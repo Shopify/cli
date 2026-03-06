@@ -1,4 +1,5 @@
 import {
+  AppConfiguration,
   AppSchema,
   CurrentAppConfiguration,
   getAppScopes,
@@ -29,7 +30,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
-  path: '',
   name: 'app 1',
   client_id: '12345',
   extension_directories: ['extensions/*'],
