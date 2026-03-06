@@ -48,7 +48,7 @@ describe('writeAppConfigurationFile', () => {
       const {schema} = await buildVersionedAppSchema()
 
       // When
-      await writeAppConfigurationFile({...FULL_CONFIGURATION, path: filePath}, schema)
+      await writeAppConfigurationFile(FULL_CONFIGURATION, schema, filePath)
 
       // Then
       const content = await readFile(filePath)
@@ -107,7 +107,6 @@ url = "https://example.com/prefs"
       await writeAppConfigurationFile(
         {
           ...FULL_CONFIGURATION,
-          path: filePath,
           build: undefined,
           app_preferences: undefined,
           pos: undefined,
@@ -117,6 +116,7 @@ url = "https://example.com/prefs"
           },
         } as CurrentAppConfiguration,
         schema,
+        filePath,
       )
 
       // Then
@@ -138,10 +138,10 @@ url = "https://example.com/prefs"
       await writeAppConfigurationFile(
         {
           ...FULL_CONFIGURATION,
-          path: filePath,
           auth: {redirect_urls: []},
         } as CurrentAppConfiguration,
         schema,
+        filePath,
       )
 
       // Then

@@ -210,9 +210,9 @@ const outputOptions: OutputContextOptions = {stdout: process.stdout, stderr: pro
 const defaultApp = testAppLinked({
   allExtensions: [extension1, extension1B, extension2, posExtension, appAccessExtension, functionExtension],
   directory: '/',
+  configPath: '/shopify.app.toml',
   configuration: {
     ...DEFAULT_CONFIG,
-    path: '/shopify.app.toml',
     extension_directories: ['/extensions'],
   } as any,
 })
@@ -232,7 +232,8 @@ describe('file-watcher events', () => {
       const app = testAppLinked({
         allExtensions: [ext1, ext2, posExtension],
         directory: dir,
-        configuration: {path: joinPath(dir, '/shopify.app.toml'), scopes: ''},
+        configPath: joinPath(dir, '/shopify.app.toml'),
+        configuration: {scopes: ''},
       })
 
       // Add a custom gitignore file to the extension
@@ -241,7 +242,7 @@ describe('file-watcher events', () => {
 
       const watchSpy = vi.spyOn(chokidar, 'watch').mockImplementation(() => {
         return {
-          on: (_: string, listener: any) => listener('change', '/shopify.app.toml'),
+          on: (_: string, listener: any) => listener('change', joinPath(dir, '/shopify.app.toml')),
           close: () => Promise.resolve(),
         } as any
       })

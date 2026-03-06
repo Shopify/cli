@@ -68,7 +68,6 @@ client_id="test-api-key"`
           configuration: {
             client_id: 'test-api-key',
             name: 'test-app',
-            path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
           },
         }),
         remoteApp: mockRemoteApp,
@@ -103,14 +102,12 @@ client_id="test-api-key"`
           configurationFileName: 'shopify.app.stg.toml',
           basicConfiguration: {
             client_id: 'test-api-key',
-            path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
           },
         },
         configuration: {
           client_id: 'test-api-key',
           name: 'test-app',
           application_url: 'https://test-app.com',
-          path: normalizePath(joinPath(tmp, 'shopify.app.stg.toml')),
           embedded: false,
         },
       })
@@ -216,14 +213,12 @@ client_id="test-api-key"`
           configurationFileName: 'shopify.app.toml',
           basicConfiguration: {
             client_id: 'test-api-key',
-            path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
           },
         },
         configuration: {
           client_id: 'test-api-key',
           name: 'test-app',
           application_url: 'https://test-app.com',
-          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
           embedded: false,
         },
       })
@@ -344,9 +339,9 @@ describe('localAppContext', () => {
       expect(result.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app',
-          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
         }),
       )
+      expect(result.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.toml')))
       // Verify no network calls were made
       expect(appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetchOrgFromId).not.toHaveBeenCalled()
@@ -373,9 +368,9 @@ describe('localAppContext', () => {
       expect(result.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app-custom',
-          path: normalizePath(joinPath(tmp, 'shopify.app.custom.toml')),
         }),
       )
+      expect(result.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.custom.toml')))
     })
   })
 

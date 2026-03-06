@@ -4,7 +4,7 @@ import {testApp, testOrganizationApp} from '../../../models/app/app.test-data.js
 import {Organization, OrganizationApp, OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, beforeEach, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
-import {resolvePath, joinPath} from '@shopify/cli-kit/node/path'
+import {resolvePath} from '@shopify/cli-kit/node/path'
 import {unstyled, stringifyMessage} from '@shopify/cli-kit/node/output'
 
 const ORG1: Organization = {
@@ -107,7 +107,6 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     name: 'myapp',
     directory: '/',
     configuration: {
-      path: joinPath('/', 'shopify.app.toml'),
       scopes: 'my-scope',
       extension_directories: ['extensions/*'],
     },

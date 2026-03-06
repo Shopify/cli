@@ -7,7 +7,6 @@ import {OrganizationSource} from '../../../models/organization.js'
 import {describe, expect, vi, test} from 'vitest'
 import * as file from '@shopify/cli-kit/node/fs'
 import {stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('../../dev/fetch.js')
 vi.mock('../../../prompts/dev.js')
@@ -53,7 +52,6 @@ function mockApp(currentVersion = '2.2.2'): AppInterface {
     name: 'myapp',
     directory: '/',
     configuration: {
-      path: joinPath('/', 'shopify.app.toml'),
       scopes: 'my-scope',
     },
     nodeDependencies,

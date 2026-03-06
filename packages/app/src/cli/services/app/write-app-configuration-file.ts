@@ -6,8 +6,12 @@ import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
-  outputDebug(`Writing app configuration to ${configuration.path}`)
+export async function writeAppConfigurationFile(
+  configuration: CurrentAppConfiguration,
+  schema: zod.ZodTypeAny,
+  configPath: string,
+) {
+  outputDebug(`Writing app configuration to ${configPath}`)
 
   // we need to condense the compliance and non-compliance webhooks again
   // so compliance topics and topics with the same uri are under
@@ -16,7 +20,7 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
 
   const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as JsonMapType
 
-  const file = new TomlFile(configuration.path, {})
+  const file = new TomlFile(configPath, {})
   await file.replace(sorted)
   await file.transformRaw(addDefaultCommentsToToml)
 }
@@ -46,7 +50,7 @@ export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config
     })
 
     // if dynamic config was enabled, its possible to have more keys in the file than the schema
-    const blockedKeys = ['path', 'scopes']
+    const blockedKeys = ['scopes']
 
     Object.entries(confObj)
       .filter(([key]) => !blockedKeys.includes(key))

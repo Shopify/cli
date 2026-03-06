@@ -158,7 +158,7 @@ export async function ensureDeployContext(options: DeployOptions): Promise<Ensur
     org: organization.businessName,
     appName: remoteApp.title,
     appDotEnv: app.dotenv?.path,
-    configFile: basename(app.configuration.path),
+    configFile: basename(app.configPath),
     includeConfigOnDeploy,
     messages: [resetHelpMessage],
   })
@@ -237,7 +237,7 @@ async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
   const includeConfigOnDeploy = configuration.build?.include_config_on_deploy
   if (includeConfigOnDeploy === undefined) return
 
-  const configFile = await TomlFile.read(localApp.configuration.path)
+  const configFile = await TomlFile.read(localApp.configPath)
   await configFile.remove('build.include_config_on_deploy')
 
   includeConfigOnDeploy ? renderInfoAboutIncludeConfigOnDeploy() : renderWarningAboutIncludeConfigOnDeploy()
@@ -270,13 +270,13 @@ function renderWarningAboutIncludeConfigOnDeploy() {
 }
 
 async function promptAndSaveIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions): Promise<boolean> {
-  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
+  const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configPath)
   const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
   localConfiguration.build = {
     ...localConfiguration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
-  const configFile = await TomlFile.read(localConfiguration.path)
+  const configFile = await TomlFile.read(options.localApp.configPath)
   await configFile.patch({build: {include_config_on_deploy: shouldIncludeConfigDeploy}})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
   return shouldIncludeConfigDeploy
@@ -350,7 +350,7 @@ export function showReusedDevValues({organization, app, remoteApp, selectedStore
     appName: remoteApp.title,
     devStore: selectedStore.shopDomain,
     updateURLs,
-    configFile: basename(app.configuration.path),
+    configFile: basename(app.configPath),
     messages,
   })
 }

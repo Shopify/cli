@@ -103,7 +103,6 @@ describe('link', () => {
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.default-value.toml$/),
       })
 
       expect(state).toEqual({
@@ -181,7 +180,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.staging.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -288,7 +286,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
         build: {
           include_config_on_deploy: true,
         },
@@ -433,7 +430,6 @@ url = "https://api-client-config.com/preferences"
         pos: {
           embedded: true,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
         build: {
           include_config_on_deploy: true,
         },
@@ -451,8 +447,8 @@ url = "https://api-client-config.com/preferences"
         developerPlatformClient,
       }
       const localApp = {
+        configPath: 'shopify.app.development.toml',
         configuration: {
-          path: 'shopify.app.development.toml',
           name: 'my app',
           client_id: '12345',
           webhooks: {api_version: '2023-04'},
@@ -551,7 +547,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.staging.toml$/),
         build: {
           automatically_update_urls_on_dev: true,
           dev_store_url: 'my-store.myshopify.com',
@@ -572,7 +567,6 @@ embedded = false
       }
       const localApp = {
         configuration: {
-          path: 'shopify.app.toml',
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
@@ -643,7 +637,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.staging.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -724,7 +717,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -790,7 +782,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -835,7 +826,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
     })
   })
@@ -874,8 +864,8 @@ embedded = false
         developerPlatformClient,
       }
       const localApp = {
+        configPath: 'shopify.app.foo.toml',
         configuration: {
-          path: 'shopify.app.foo.toml',
           name: 'my app',
           client_id: '12345',
           webhooks: {api_version: '2023-04'},
@@ -942,7 +932,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.foo.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1002,7 +991,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1069,7 +1057,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1196,7 +1183,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1324,7 +1310,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })
@@ -1340,7 +1325,6 @@ embedded = false
       }
       const localApp = {
         configuration: {
-          path: 'shopify.app.development.toml',
           name: 'my app',
           client_id: '12345',
           scopes: 'write_products',
@@ -1632,8 +1616,8 @@ embedded = false
         configName: 'shopify.app.toml',
       }
       const localApp = {
+        configPath: joinPath(tmp, 'shopify.app.toml'),
         configuration: {
-          path: joinPath(tmp, 'shopify.app.toml'),
           name: 'my app',
           client_id: 'invalid_client_id_from_template',
           webhooks: {
@@ -1711,8 +1695,8 @@ embedded = false
         configName: 'staging',
       }
       const localApp = {
+        configPath: joinPath(tmp, 'shopify.app.staging.toml'),
         configuration: {
-          path: joinPath(tmp, 'shopify.app.staging.toml'),
           name: 'my app',
           client_id: 'invalid_client_id_from_template',
           webhooks: {
@@ -1791,8 +1775,8 @@ embedded = false
         apiKey: '1',
       }
       const localApp = {
+        configPath: joinPath(tmp, 'shopify.app.toml'),
         configuration: {
-          path: joinPath(tmp, 'shopify.app.toml'),
           name: 'my app',
           client_id: 'invalid_client_id_from_template',
           webhooks: {

@@ -107,7 +107,6 @@ const LOCAL_APP = (
     name: 'my-app',
     directory: '/app',
     configuration: {
-      path: '/shopify.app.toml',
       scopes: 'read_products',
       extension_directories: ['extensions/*'],
       ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),

@@ -2,7 +2,7 @@ import {
   ExtensionUpdateDraftMutation,
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
-import {AppConfigurationWithoutPath} from '../../models/app/app.js'
+import {AppConfiguration} from '../../models/app/app.js'
 import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
@@ -23,7 +23,7 @@ interface UpdateExtensionDraftOptions {
   registrationId: string
   stdout: Writable
   stderr: Writable
-  appConfiguration: AppConfigurationWithoutPath
+  appConfiguration: AppConfiguration
   bundlePath: string
 }
 
