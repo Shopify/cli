@@ -1,5 +1,4 @@
-import {buildBaseStorefrontUrl} from '../theme-environment/storefront-renderer.js'
-import {defaultHeaders} from '../theme-environment/storefront-utils.js'
+import {buildBaseStorefrontUrl, buildHeaders} from '../theme-environment/storefront-renderer.js'
 import {DevServerSession} from '../theme-environment/types.js'
 import {recordTiming} from '@shopify/cli-kit/node/analytics'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -35,7 +34,6 @@ interface PreviewResponse {
  */
 export async function createThemePreview({
   session,
-  storefrontToken,
   overridesContent,
   themeId,
 }: CreateThemePreviewOptions): Promise<ThemePreviewResult> {
@@ -43,14 +41,11 @@ export async function createThemePreview({
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}/theme_preview.json?preview_theme_id=${themeId}`
 
+  const headers = await buildHeaders(session, {headers: {'Content-Type': 'application/json'}})
   const response = await shopifyFetch(url, {
     method: 'POST',
     body: overridesContent,
-    headers: {
-      ...defaultHeaders(),
-      Authorization: `Bearer ${storefrontToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -70,7 +65,6 @@ export async function createThemePreview({
  */
 export async function updateThemePreview({
   session,
-  storefrontToken,
   overridesContent,
   themeId,
   previewIdentifier,
@@ -79,14 +73,11 @@ export async function updateThemePreview({
   const baseUrl = buildBaseStorefrontUrl(session)
   const url = `${baseUrl}/theme_preview.json?preview_theme_id=${themeId}&preview_identifier=${encodeURIComponent(previewIdentifier)}`
 
+  const headers = await buildHeaders(session, {headers: {'Content-Type': 'application/json'}})
   const response = await shopifyFetch(url, {
     method: 'POST',
     body: overridesContent,
-    headers: {
-      ...defaultHeaders(),
-      Authorization: `Bearer ${storefrontToken}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
   })
 
   if (!response.ok) {

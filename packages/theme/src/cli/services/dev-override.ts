@@ -16,6 +16,7 @@ interface DevWithOverrideFileOptions {
   themeId: string
   previewIdentifier?: string
   open: boolean
+  password?: string
 }
 
 /**
@@ -36,7 +37,7 @@ export async function devWithOverrideFile(options: DevWithOverrideFileOptions) {
     throw new AbortError(`Failed to parse override file: ${options.overrideJson}`, reason)
   }
 
-  const session = await fetchDevServerSession(options.themeId, options.adminSession)
+  const session = await fetchDevServerSession(options.themeId, options.adminSession, options.password)
   const overridesContent = JSON.stringify(overrides)
 
   const preview = options.previewIdentifier

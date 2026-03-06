@@ -45,6 +45,9 @@ describe('devWithOverrideFile', () => {
     await devWithOverrideFile({adminSession, overrideJson: '/overrides.json', themeId: expectedThemeId, open: false})
 
     // Then
+    expect(fetchDevServerSession).toHaveBeenCalledWith(expectedThemeId, adminSession, undefined)
+
+    // Then
     expect(createThemePreview).toHaveBeenCalledWith(
       expect.objectContaining({
         session: mockSession,
@@ -150,5 +153,25 @@ describe('devWithOverrideFile', () => {
 
     // Then
     expect(openURLSafely).not.toHaveBeenCalled()
+  })
+
+  test('passes password to fetchDevServerSession when provided', async () => {
+    // Given
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+    vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
+    vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
+
+    // When
+    await devWithOverrideFile({
+      adminSession,
+      overrideJson: '/overrides.json',
+      themeId: '789',
+      open: false,
+      password: 'shptka_abc123',
+    })
+
+    // Then
+    expect(fetchDevServerSession).toHaveBeenCalledWith('789', adminSession, 'shptka_abc123')
   })
 })
