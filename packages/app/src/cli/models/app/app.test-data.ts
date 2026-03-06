@@ -137,7 +137,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
 }
 
 export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
-  return testApp(app, 'current') as AppLinkedInterface
+  return testApp(app) as AppLinkedInterface
 }
 
 interface TestAppWithConfigOptions {

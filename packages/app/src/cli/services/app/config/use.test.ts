@@ -234,7 +234,7 @@ describe('use', () => {
   test('renders warning when warning message is specified', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
-      const {configuration} = testApp({}, 'current')
+      const {configuration} = testApp({})
       const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory,
@@ -265,7 +265,7 @@ describe('use', () => {
   test('does not render success when shouldRenderSuccess is false', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
-      const {configuration} = testApp({}, 'current')
+      const {configuration} = testApp({})
       const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory,
