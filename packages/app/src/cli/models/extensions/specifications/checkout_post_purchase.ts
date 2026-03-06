@@ -15,6 +15,15 @@ const checkoutPostPurchaseSpec = createExtensionSpecification({
   schema: CheckoutPostPurchaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path'],
   buildConfig: {mode: 'ui'},
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (config, _) => {
     return {metafields: config.metafields ?? []}
   },
