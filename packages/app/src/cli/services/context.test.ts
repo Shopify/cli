@@ -7,7 +7,6 @@ import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
 import link from './app/config/link.js'
 import {fetchSpecifications} from './generate/fetch-extension-specifications.js'
-import * as patchAppConfigurationFileModule from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {
   MinimalAppIdentifiers,
@@ -35,6 +34,7 @@ import {
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -142,13 +142,8 @@ vi.mock('@shopify/cli-kit/node/session')
 vi.mock('./generate/fetch-extension-specifications.js')
 vi.mock('./app/select-app.js')
 vi.mock('../utilities/developer-platform-client.js')
-vi.mock('./app/patch-app-configuration-file.js', () => {
-  return {
-    patchAppConfigurationFile: vi.fn(),
-    setAppConfigValue: vi.fn(),
-    unsetAppConfigValue: vi.fn(),
-  }
-})
+const mockTomlFilePatch = vi.fn()
+const mockTomlFileRemove = vi.fn()
 
 beforeAll(async () => {
   const localSpecs = await loadSpecifications.loadLocalExtensionsSpecifications()
@@ -169,6 +164,12 @@ beforeEach(async () => {
   vi.mocked(getPackageManager).mockResolvedValue('npm')
   vi.mocked(isWebType).mockReturnValue(true)
   vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
+  vi.spyOn(TomlFile, 'read').mockResolvedValue({
+    patch: mockTomlFilePatch,
+    remove: mockTomlFileRemove,
+    content: {},
+    path: '',
+  } as unknown as TomlFile)
   vi.mocked(link).mockResolvedValue({
     configuration: testAppWithConfig({config: {path: 'shopify.app.toml', client_id: APP2.apiKey}}).configuration,
     remoteApp: APP2,
@@ -205,7 +206,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(loadApp).mockResolvedValue(app)
     vi.mocked(link).mockResolvedValue((app as any).configuration)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const setAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'setAppConfigValue').mockResolvedValue()
+    mockTomlFilePatch.mockResolvedValue(undefined)
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     const options = deployOptions(app)
@@ -218,7 +219,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn).toHaveBeenCalled()
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalled()
+    expect(mockTomlFilePatch).toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -235,7 +236,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    setAppConfigValueSpy.mockRestore()
+    mockTomlFilePatch.mockClear()
   })
 
   test('doesnt prompt the user to include the configuration and display the current value if the config is true', async () => {
@@ -253,7 +254,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(link).mockResolvedValue((app as any).configuration)
     // vi.mocked(selectDeveloperPlatformClient).mockReturnValue(testDeveloperPlatformClient)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const setAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'setAppConfigValue').mockResolvedValue()
+    mockTomlFilePatch.mockResolvedValue(undefined)
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     const options = deployOptions(app)
@@ -266,7 +267,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn).not.toHaveBeenCalled()
 
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(setAppConfigValueSpy).not.toHaveBeenCalled()
+    expect(mockTomlFilePatch).not.toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -283,7 +284,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    setAppConfigValueSpy.mockRestore()
+    mockTomlFilePatch.mockClear()
   })
 
   test('prompts the user to include the configuration when reset is used and the flag is present', async () => {
@@ -298,7 +299,7 @@ describe('ensureDeployContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const setAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'setAppConfigValue').mockResolvedValue()
+    mockTomlFilePatch.mockResolvedValue(undefined)
     const metadataSpyOn = vi.spyOn(metadata, 'addPublicMetadata').mockImplementation(async () => {})
 
     const options = deployOptions(app, true)
@@ -311,7 +312,7 @@ describe('ensureDeployContext', () => {
     expect(metadataSpyOn.mock.calls[0]![0]()).toEqual({cmd_deploy_confirm_include_config_used: false})
 
     expect(renderConfirmationPrompt).toHaveBeenCalled()
-    expect(setAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy', false)
+    expect(mockTomlFilePatch).toHaveBeenCalledWith({build: {include_config_on_deploy: false}})
 
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
@@ -329,7 +330,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    setAppConfigValueSpy.mockRestore()
+    mockTomlFilePatch.mockClear()
   })
 
   test('aborts when force is true and include_config_on_deploy is not set on Partners', async () => {
@@ -386,14 +387,14 @@ describe('ensureDeployContext', () => {
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(renderConfirmationPrompt).mockResolvedValue(false)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const setAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'setAppConfigValue').mockResolvedValue()
+    mockTomlFilePatch.mockResolvedValue(undefined)
 
     // When
     await ensureDeployContext(deployOptions(app, false, true))
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(setAppConfigValueSpy).not.toHaveBeenCalled()
+    expect(mockTomlFilePatch).not.toHaveBeenCalled()
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         {
@@ -410,7 +411,7 @@ describe('ensureDeployContext', () => {
       ],
       headline: 'Using shopify.app.toml for default values:',
     })
-    setAppConfigValueSpy.mockRestore()
+    mockTomlFilePatch.mockClear()
   })
 
   test('removes the include_config_on_deploy field when using app management API and the value is true', async () => {
@@ -424,7 +425,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const unsetAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'unsetAppConfigValue').mockResolvedValue()
+    mockTomlFileRemove.mockResolvedValue(undefined)
 
     // When
     const options = {
@@ -441,7 +442,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(unsetAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy')
+    expect(mockTomlFileRemove).toHaveBeenCalledWith('build.include_config_on_deploy')
     expect(renderInfo).toHaveBeenCalledWith({
       body: [
         'The `include_config_on_deploy` field is no longer supported, since all apps must now include configuration on deploy. It has been removed from your configuration file.',
@@ -452,7 +453,7 @@ describe('ensureDeployContext', () => {
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
       },
     })
-    unsetAppConfigValueSpy.mockRestore()
+    mockTomlFileRemove.mockClear()
   })
 
   test('removes the include_config_on_deploy field when using app management API and the value is false', async () => {
@@ -466,7 +467,7 @@ describe('ensureDeployContext', () => {
     }
     vi.mocked(ensureDeploymentIdsPresence).mockResolvedValue(identifiers)
     vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.toml')
-    const unsetAppConfigValueSpy = vi.spyOn(patchAppConfigurationFileModule, 'unsetAppConfigValue').mockResolvedValue()
+    mockTomlFileRemove.mockResolvedValue(undefined)
 
     // When
     const options = {
@@ -483,7 +484,7 @@ describe('ensureDeployContext', () => {
 
     // Then
     expect(renderConfirmationPrompt).not.toHaveBeenCalled()
-    expect(unsetAppConfigValueSpy).toHaveBeenCalledWith(app.configuration.path, 'build.include_config_on_deploy')
+    expect(mockTomlFileRemove).toHaveBeenCalledWith('build.include_config_on_deploy')
     expect(renderWarning).toHaveBeenCalledWith({
       body: [
         "The `include_config_on_deploy` field is no longer supported and has been removed from your configuration file. Review this file to ensure it's up to date with the correct configuration.",
@@ -494,7 +495,7 @@ describe('ensureDeployContext', () => {
         url: 'https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration#build',
       },
     })
-    unsetAppConfigValueSpy.mockRestore()
+    mockTomlFileRemove.mockClear()
   })
 
   test('sets didMigrateExtensionsToDevDash to true when app modules are missing registration IDs', async () => {

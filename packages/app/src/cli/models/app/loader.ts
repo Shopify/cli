@@ -39,6 +39,7 @@ import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-
 import {ApplicationURLs, generateApplicationURLs} from '../../services/dev/urls.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {TomlFile, TomlParseError} from '@shopify/cli-kit/node/toml/toml-file'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {
@@ -49,7 +50,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
-import {JsonMapType, decodeToml} from '@shopify/cli-kit/node/toml'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, OutputMessage, outputToken} from '@shopify/cli-kit/node/output'
@@ -82,27 +83,19 @@ const noopAbortOrReport: AbortOrReport = (_errorMessage, fallback, _configuratio
 export async function loadConfigurationFileContent(
   filepath: string,
   abortOrReport: AbortOrReport = abort,
-  decode: (input: string) => JsonMapType = decodeToml,
 ): Promise<JsonMapType> {
   if (!(await fileExists(filepath))) {
     return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, {}, filepath)
   }
 
   try {
-    const configurationContent = await readFile(filepath)
-    return decode(configurationContent)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    // TOML errors have line, pos and col properties
-    if (err.line !== undefined && err.pos !== undefined && err.col !== undefined) {
-      return abortOrReport(
-        outputContent`Fix the following error in ${outputToken.path(filepath)}:\n${err.message}`,
-        {},
-        filepath,
-      )
-    } else {
-      throw err
+    const file = await TomlFile.read(filepath)
+    return file.content
+  } catch (err) {
+    if (err instanceof TomlParseError) {
+      return abortOrReport(outputContent`${err.message}`, {}, filepath)
     }
+    throw err
   }
 }
 
@@ -115,12 +108,11 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
   abortOrReport: AbortOrReport = abort,
-  decode: (input: string) => JsonMapType = decodeToml,
   preloadedContent?: JsonMapType,
 ): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
-  const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport, decode))
+  const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport))
 
   if (!configurationObject) return fallbackOutput
 
@@ -517,13 +509,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     )
   }
 
-  private parseConfigurationFile<TSchema extends zod.ZodType>(
-    schema: TSchema,
-    filepath: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    decode: (input: any) => any = decodeToml,
-  ) {
-    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this), decode)
+  private parseConfigurationFile<TSchema extends zod.ZodType>(schema: TSchema, filepath: string) {
+    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this))
   }
 
   private validateWebs(webs: Web[]): void {
@@ -1027,7 +1014,6 @@ async function loadAppConfigurationFromState<
     schemaForConfigurationFile,
     configState.configurationPath,
     abort,
-    decodeToml,
     file,
   )) as LoadedAppConfigFromConfigState<TConfig>
   const allClientIdsByConfigName = await getAllLinkedConfigClientIds(configState.appDirectory, {

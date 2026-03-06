@@ -1,13 +1,11 @@
 import {CurrentAppConfiguration} from '../../models/app/app.js'
 import {reduceWebhooks} from '../../models/extensions/specifications/transform/app_config_webhook.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
-import {writeFileSync} from '@shopify/cli-kit/node/fs'
-import {JsonMapType, encodeToml} from '@shopify/cli-kit/node/toml'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
-// toml does not support comments and there aren't currently any good/maintained libs for this,
-// so for now, we manually add comments
 export async function writeAppConfigurationFile(configuration: CurrentAppConfiguration, schema: zod.ZodTypeAny) {
   outputDebug(`Writing app configuration to ${configuration.path}`)
 
@@ -16,15 +14,11 @@ export async function writeAppConfigurationFile(configuration: CurrentAppConfigu
   // the same [[webhooks.subscriptions]] in the TOML
   const condensedWebhooksAppConfiguration = condenseComplianceAndNonComplianceWebhooks(configuration)
 
-  const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as {
-    [key: string]: string | boolean | object
-  }
+  const sorted = rewriteConfiguration(schema, condensedWebhooksAppConfiguration) as JsonMapType
 
-  const encodedString = encodeToml(sorted as JsonMapType)
-
-  const file = addDefaultCommentsToToml(encodedString)
-
-  writeFileSync(configuration.path, file)
+  const file = new TomlFile(configuration.path, {})
+  await file.replace(sorted)
+  await file.transformRaw(addDefaultCommentsToToml)
 }
 
 export const rewriteConfiguration = <T extends zod.ZodTypeAny>(schema: T, config: unknown): unknown => {

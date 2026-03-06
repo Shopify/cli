@@ -22,12 +22,16 @@ describe('extension-to-toml', () => {
     const got = buildTomlObject(extension)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "subscription_link_extension"
-name = "custom subscription link"
-handle = "custom-subscription-link"
-pattern = "/subscriptions{?customer_id,shop}&id={contract_id}"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'subscription_link_extension',
+          name: 'custom subscription link',
+          handle: 'custom-subscription-link',
+          pattern: '/subscriptions{?customer_id,shop}&id={contract_id}',
+        },
+      ],
+    })
   })
 
   test('truncates the handle if the title has >50 characters', () => {
@@ -46,6 +50,8 @@ pattern = "/subscriptions{?customer_id,shop}&id={contract_id}"
     const got = buildTomlObject(extension)
 
     // Then
-    expect(got).toContain('handle = "subscription-link-test-123455555555544444477777"')
+    expect((got as {extensions: [{handle: string}]}).extensions[0].handle).toBe(
+      'subscription-link-test-123455555555544444477777',
+    )
   })
 })

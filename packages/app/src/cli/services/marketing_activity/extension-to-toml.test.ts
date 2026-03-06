@@ -41,32 +41,36 @@ describe('extension-to-toml', () => {
     const got = buildTomlObject(extension)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "marketing_activity"
-name = "mae @ test! 123"
-handle = "mae-test-123"
-title = "test mae"
-description = "test mae description"
-api_path = "/api/v1"
-tactic = "ad"
-marketing_channel = "social"
-referring_domain = "facebook.com"
-is_automation = false
-
-  [[extensions.preview_data]]
-  label = "test label"
-  value = "test value"
-
-  [[extensions.fields]]
-  ui_type = "text-single-line"
-  name = "test_field"
-  label = "test field"
-  help_text = "help text"
-  required = false
-  min_length = 1
-  max_length = 50
-  placeholder = "placeholder"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'marketing_activity',
+          name: 'mae @ test! 123',
+          handle: 'mae-test-123',
+          title: 'test mae',
+          description: 'test mae description',
+          api_path: '/api/v1',
+          tactic: 'ad',
+          marketing_channel: 'social',
+          referring_domain: 'facebook.com',
+          is_automation: false,
+          use_external_editor: undefined,
+          preview_data: [{label: 'test label', value: 'test value'}],
+          fields: [
+            {
+              ui_type: 'text-single-line',
+              name: 'test_field',
+              label: 'test field',
+              help_text: 'help text',
+              required: false,
+              min_length: 1,
+              max_length: 50,
+              placeholder: 'placeholder',
+            },
+          ],
+        },
+      ],
+    })
   })
 
   test('truncates the handle if the title has >50 characters', () => {
@@ -82,10 +86,10 @@ is_automation = false
     }
 
     // When
-    const got = buildTomlObject(extension)
+    const got = buildTomlObject(extension) as {extensions: {handle: string}[]}
 
     // Then
-    expect(got).toContain('handle = "mae-test-12345555555554444447777778888888123455"')
+    expect(got.extensions[0]!.handle).toBe('mae-test-12345555555554444447777778888888123455')
   })
 
   test('sets the channel and referring domain to empty string if no platform mapping is found', () => {
@@ -101,10 +105,10 @@ is_automation = false
     }
 
     // When
-    const got = buildTomlObject(extension)
+    const got = buildTomlObject(extension) as {extensions: {marketing_channel: string; referring_domain: string}[]}
 
     // Then
-    expect(got).toContain('marketing_channel = ""')
-    expect(got).toContain('referring_domain = ""')
+    expect(got.extensions[0]!.marketing_channel).toBe('')
+    expect(got.extensions[0]!.referring_domain).toBe('')
   })
 })
