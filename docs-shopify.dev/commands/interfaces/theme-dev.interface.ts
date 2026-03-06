@@ -79,6 +79,12 @@ export interface themedev {
   '--open'?: ''
 
   /**
+   * Path to a JSON overrides file. When provided, overrides are applied to the theme specified by --theme instead of uploading a local theme.
+   * @environment SHOPIFY_FLAG_OVERRIDES
+   */
+  '--overrides <value>'?: string
+
+  /**
    * Password generated from the Theme Access app or an Admin API token.
    * @environment SHOPIFY_CLI_THEME_TOKEN
    */
@@ -95,6 +101,12 @@ export interface themedev {
    * @environment SHOPIFY_FLAG_PORT
    */
   '--port <value>'?: string
+
+  /**
+   * An existing preview identifier to update instead of creating a new preview. Used with --overrides.
+   * @environment SHOPIFY_FLAG_PREVIEW_ID
+   */
+  '--preview-id <value>'?: string
 
   /**
    * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).

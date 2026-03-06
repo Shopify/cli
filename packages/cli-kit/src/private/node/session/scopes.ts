@@ -48,7 +48,7 @@ function defaultApiScopes(api: API): string[] {
     case 'admin':
       return ['graphql', 'themes', 'collaborator']
     case 'storefront-renderer':
-      return ['devtools']
+      return ['devtools', 'graphql']
     case 'partners':
       return ['cli']
     case 'business-platform':
