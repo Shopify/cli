@@ -1,4 +1,4 @@
-import {JsonMap} from '../../private/common/json.js'
+import {JsonMap} from '../../../private/common/json.js'
 import * as toml from '@iarna/toml'
 
 export type JsonMapType = JsonMap
