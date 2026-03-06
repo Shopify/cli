@@ -232,7 +232,14 @@ describe('file-watcher events', () => {
       const app = testAppLinked({
         allExtensions: [ext1, ext2, posExtension],
         directory: dir,
-        configuration: {path: joinPath(dir, '/shopify.app.toml'), scopes: ''},
+        configuration: {
+          path: joinPath(dir, '/shopify.app.toml'),
+          client_id: 'test-client-id',
+          name: 'my-app',
+          application_url: 'https://example.com',
+          embedded: true,
+          access_scopes: {scopes: ''},
+        },
       })
 
       // Add a custom gitignore file to the extension

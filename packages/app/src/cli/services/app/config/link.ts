@@ -3,7 +3,6 @@ import {
   AppConfiguration,
   CurrentAppConfiguration,
   getAppVersionedSchema,
-  isCurrentAppSchema,
   CliBuildPreferences,
   getAppScopes,
 } from '../../../models/app/app.js'
@@ -11,7 +10,7 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
   AppConfigurationFileName,
-  AppConfigurationStateLinked,
+  AppConfigurationState,
   getAppConfigurationFileName,
   loadApp,
   loadOpaqueApp,
@@ -23,7 +22,6 @@ import {
   InvalidApiKeyErrorMessage,
 } from '../../context.js'
 import {Flag, DeveloperPlatformClient, CreateAppOptions} from '../../../utilities/developer-platform-client.js'
-import {configurationFileNames} from '../../../constants.js'
 import {writeAppConfigurationFile} from '../write-app-configuration-file.js'
 import {getCachedCommandInfo} from '../../local-storage.js'
 import {RemoteAwareExtensionSpecification} from '../../../models/extensions/specification.js'
@@ -52,7 +50,7 @@ export interface LinkOptions {
 interface LinkOutput {
   configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
-  state: AppConfigurationStateLinked
+  state: AppConfigurationState
 }
 /**
  * Link a local app configuration file to a remote app on the Shopify platform.
@@ -78,7 +76,6 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
   const localAppOptions = await loadLocalAppOptions(options, specifications, flags, remoteApp.apiKey)
   const configFileName = await loadConfigurationFileName(remoteApp, options, {
     appDirectory: localAppOptions.appDirectory,
-    format: localAppOptions.configFormat,
   })
 
   await logMetadataForLoadedContext(remoteApp, developerPlatformClient.organizationSource)
@@ -98,13 +95,13 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  const state: AppConfigurationStateLinked = {
-    state: 'connected-app',
+  const state: AppConfigurationState = {
     basicConfiguration: mergedAppConfiguration,
     appDirectory,
     configurationPath: joinPath(appDirectory, configFileName),
     configSource: options.configName ? 'flag' : 'cached',
     configurationFileName: configFileName,
+    isLinked: mergedAppConfiguration.client_id !== '',
   }
 
   return {configuration: mergedAppConfiguration, remoteApp, state}
@@ -196,18 +193,7 @@ interface ExistingConfig {
 
 type LocalAppOptions =
   | {
-      state: 'legacy'
-      configFormat: 'legacy'
-      scopes: string
-      localAppIdMatchedRemote: false
-      existingBuildOptions: undefined
-      existingConfig: ExistingConfig
-      appDirectory: string
-      packageManager: PackageManager
-    }
-  | {
       state: 'reusable-current-app'
-      configFormat: 'current'
       scopes: string
       localAppIdMatchedRemote: true
       existingBuildOptions: CliBuildPreferences
@@ -224,12 +210,10 @@ type LocalAppOptions =
     } & (
       | {
           state: 'unable-to-reuse-current-config'
-          configFormat: 'current'
           localAppIdMatchedRemote: true
         }
       | {
           state: 'unable-to-load-config'
-          configFormat: 'legacy'
           localAppIdMatchedRemote: false
         }
     ))
@@ -265,21 +249,9 @@ export async function loadLocalAppOptions(
     case 'loaded-app': {
       const {app, configuration} = result
 
-      if (!isCurrentAppSchema(configuration)) {
-        return {
-          state: 'legacy',
-          configFormat: 'legacy',
-          scopes: getAppScopes(configuration),
-          localAppIdMatchedRemote: false,
-          existingBuildOptions: undefined,
-          existingConfig: configuration,
-          appDirectory: app.directory,
-          packageManager: app.packageManager,
-        }
-      } else if (configuration.client_id === remoteAppApiKey || options.isNewApp) {
+      if (configuration.client_id === remoteAppApiKey || options.isNewApp) {
         return {
           state: 'reusable-current-app',
-          configFormat: 'current',
           scopes: getAppScopes(configuration),
           localAppIdMatchedRemote: true,
           existingBuildOptions: configuration.build,
@@ -290,7 +262,6 @@ export async function loadLocalAppOptions(
       }
       return {
         state: 'unable-to-reuse-current-config',
-        configFormat: 'current',
         scopes: '',
         localAppIdMatchedRemote: true,
         appDirectory: undefined,
@@ -301,12 +272,10 @@ export async function loadLocalAppOptions(
     }
 
     case 'loaded-template':
-      // Template with extra config keys (metafields, etc.) - treat as legacy for linking
       return {
-        state: 'legacy',
-        configFormat: 'legacy',
+        state: 'reusable-current-app',
         scopes: result.scopes,
-        localAppIdMatchedRemote: false,
+        localAppIdMatchedRemote: true,
         existingBuildOptions: undefined,
         existingConfig: result.rawConfig,
         appDirectory: result.appDirectory,
@@ -316,7 +285,6 @@ export async function loadLocalAppOptions(
     case 'error':
       return {
         state: 'unable-to-load-config',
-        configFormat: 'legacy',
         scopes: '',
         localAppIdMatchedRemote: false,
         appDirectory: undefined,
@@ -339,21 +307,14 @@ async function loadConfigurationFileName(
   options: LinkOptions,
   localAppInfo: {
     appDirectory?: string
-    format: 'legacy' | 'current'
   },
 ): Promise<AppConfigurationFileName> {
-  // config name from the options takes precedence over everything else
   if (options.configName) {
     return getAppConfigurationFileName(options.configName)
   }
 
-  // otherwise, use the cached config name if it exists
   const cache = getCachedCommandInfo()
   if (cache?.selectedToml) return cache.selectedToml as AppConfigurationFileName
-
-  if (localAppInfo.format === 'legacy') {
-    return configurationFileNames.app
-  }
 
   const existingTomls = await getTomls(options.directory)
   const currentToml = existingTomls[remoteApp.apiKey]

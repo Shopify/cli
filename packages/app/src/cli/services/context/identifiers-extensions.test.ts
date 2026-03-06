@@ -108,7 +108,13 @@ const LOCAL_APP = (
     directory: '/app',
     configuration: {
       path: '/shopify.app.toml',
-      scopes: 'read_products',
+      client_id: 'test-client-id',
+      name: 'my-app',
+      application_url: 'https://example.com',
+      embedded: true,
+      access_scopes: {
+        scopes: 'read_products',
+      },
       extension_directories: ['extensions/*'],
       ...(includeDeployConfig ? {build: {include_config_on_deploy: true}} : {}),
     },
@@ -935,7 +941,8 @@ describe('deployConfirmed: handle non existent uuid managed extensions', () => {
 
     // When
     const CONFIG_A = await testAppConfigExtensions()
-    const ensureExtensionsIdsOptions = options([], [], {configExtensions: [CONFIG_A], developerPlatformClient})
+    // Don't pass config extensions when includeConfigOnDeploy is false - they won't be in allExtensions
+    const ensureExtensionsIdsOptions = options([], [], {developerPlatformClient})
     const got = await deployConfirmed(ensureExtensionsIdsOptions, [], [], {
       extensionsToCreate,
       validMatches,

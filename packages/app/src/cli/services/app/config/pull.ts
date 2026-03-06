@@ -1,7 +1,7 @@
 // packages/app/src/cli/services/app/config/pull.ts
 
 import {LinkOptions, loadLocalAppOptions, overwriteLocalConfigFileWithRemoteAppConfiguration} from './link.js'
-import {CurrentAppConfiguration, isCurrentAppSchema} from '../../../models/app/app.js'
+import {CurrentAppConfiguration} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {AppConfigurationFileName} from '../../../models/app/loader.js'
 import {fetchSpecifications} from '../../generate/fetch-extension-specifications.js'
@@ -28,7 +28,7 @@ interface PullOutput {
 export default async function pull(options: PullOptions): Promise<PullOutput> {
   const {directory, configName, configuration, remoteApp} = options
 
-  if (!isCurrentAppSchema(configuration) || !configuration.client_id) {
+  if (!configuration.client_id) {
     throw new AbortError(
       'The selected configuration is not linked to a remote app.',
       'Run `shopify app config link` first to link this configuration to a Shopify app.',
