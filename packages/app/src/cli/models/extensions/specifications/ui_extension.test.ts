@@ -79,7 +79,7 @@ describe('ui_extension', async () => {
 
   async function setupToolsExtension(
     tmpDir: string,
-    options: {tools?: string; instructions?: string; createFiles?: boolean} = {},
+    options: {tools?: string; instructions?: string; createFiles?: boolean; apiVersion?: string} = {},
   ) {
     await mkdir(joinPath(tmpDir, 'src'))
     await touchFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'))
@@ -106,7 +106,7 @@ describe('ui_extension', async () => {
 
     const configuration = {
       targeting: [targetConfig],
-      api_version: '2023-01' as const,
+      api_version: options.apiVersion ?? '2025-10',
       name: 'UI Extension',
       description: 'This is an ordinary test extension',
       type: 'ui_extension',
@@ -557,7 +557,7 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('build_manifest includes tools asset when tools is present', async () => {
+    test('build_manifest includes tools asset when tools is present and api_version supports Remote DOM', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
@@ -568,7 +568,7 @@ describe('ui_extension', async () => {
             tools: './tools.json',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2025-10' as const,
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -625,7 +625,70 @@ describe('ui_extension', async () => {
       ])
     })
 
-    test('build_manifest includes instructions asset when instructions is present', async () => {
+    test('build_manifest excludes tools asset when api_version does not support Remote DOM', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            tools: './tools.json',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          tools: undefined,
+          instructions: undefined,
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
+    test('build_manifest includes instructions asset when instructions is present and api_version supports Remote DOM', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
@@ -636,7 +699,7 @@ describe('ui_extension', async () => {
             instructions: './instructions.md',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2025-10' as const,
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
@@ -685,6 +748,69 @@ describe('ui_extension', async () => {
                 filepath: 'test-ui-extension-instructions-instructions.md',
                 module: './instructions.md',
                 static: true,
+              },
+            },
+          },
+          urls: {},
+        },
+      ])
+    })
+
+    test('build_manifest excludes instructions asset when api_version does not support Remote DOM', async () => {
+      const allSpecs = await loadLocalExtensionsSpecifications()
+      const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
+      const configuration = {
+        targeting: [
+          {
+            target: 'EXTENSION::POINT::A',
+            module: './src/ExtensionPointA.js',
+            instructions: './instructions.md',
+          },
+        ],
+        api_version: '2023-01' as const,
+        name: 'UI Extension',
+        description: 'This is an ordinary test extension',
+        type: 'ui_extension',
+        handle: 'test-ui-extension',
+        capabilities: {
+          block_progress: false,
+          network_access: false,
+          api_access: false,
+          collect_buyer_consent: {
+            customer_privacy: true,
+            sms_marketing: false,
+          },
+          iframe: {
+            sources: [],
+          },
+        },
+        settings: {},
+      }
+
+      // When
+      const parsed = specification.parseConfigurationObject(configuration)
+      if (parsed.state !== 'ok') {
+        throw new Error("Couldn't parse configuration")
+      }
+
+      const got = parsed.data
+
+      // Then
+      expect(got.extension_points).toStrictEqual([
+        {
+          target: 'EXTENSION::POINT::A',
+          module: './src/ExtensionPointA.js',
+          tools: undefined,
+          instructions: undefined,
+          metafields: [],
+          default_placement_reference: undefined,
+          capabilities: undefined,
+          preloads: {},
+          build_manifest: {
+            assets: {
+              main: {
+                filepath: 'test-ui-extension.js',
+                module: './src/ExtensionPointA.js',
               },
             },
           },
@@ -852,7 +978,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
       })
     })
 
-    test('build_manifest includes both tools and instructions when both are present', async () => {
+    test('build_manifest includes both tools and instructions when both are present and api_version supports Remote DOM', async () => {
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'ui_extension')!
       const configuration = {
@@ -864,7 +990,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
             instructions: './instructions.md',
           },
         ],
-        api_version: '2023-01' as const,
+        api_version: '2025-10' as const,
         name: 'UI Extension',
         description: 'This is an ordinary test extension',
         type: 'ui_extension',
