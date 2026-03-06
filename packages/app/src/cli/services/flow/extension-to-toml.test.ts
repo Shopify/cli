@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {describe, expect, test} from 'vitest'
 
 describe('extension-to-toml', () => {
-  test('correctly builds a toml string for a flow_action', () => {
+  test('correctly builds a toml object for a flow_action', () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '26237698049',
@@ -20,38 +20,28 @@ describe('extension-to-toml', () => {
     const got = buildTomlObject(extension1)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "flow_action"
-name = "action title"
-handle = "flow-action-char"
-description = "action description"
-runtime_url = "https://google.es"
-config_page_url = "https://destinationsurl.test.dev"
-config_page_preview_url = "https://previewurl.test.dev"
-validation_url = "https://validation.test.dev"
-
-[[settings.fields]]
-type = "customer_reference"
-required = true
-
-[[settings.fields]]
-type = "product_reference"
-required = true
-
-[[settings.fields]]
-key = "email field"
-description = "email help"
-type = "email"
-name = "email label"
-required = false
-
-[[settings.fields]]
-key = "number name"
-description = "number help"
-type = "number_decimal"
-name = "number label"
-required = true
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'flow_action',
+          name: 'action title',
+          handle: 'flow-action-char',
+          description: 'action description',
+          runtime_url: 'https://google.es',
+          config_page_url: 'https://destinationsurl.test.dev',
+          config_page_preview_url: 'https://previewurl.test.dev',
+          validation_url: 'https://validation.test.dev',
+        },
+      ],
+      settings: {
+        fields: [
+          {type: 'customer_reference', required: true},
+          {type: 'product_reference', required: true},
+          {key: 'email field', description: 'email help', type: 'email', name: 'email label', required: false},
+          {key: 'number name', description: 'number help', type: 'number_decimal', name: 'number label', required: true},
+        ],
+      },
+    })
   })
 
   test('truncates the handle if the title has >50 characters', () => {
@@ -71,41 +61,31 @@ required = true
     const got = buildTomlObject(extension1)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "flow_action"
-name = "action title"
-handle = "flow-action-char-flow-action-char-flow-actio"
-description = "action description"
-runtime_url = "https://google.es"
-config_page_url = "https://destinationsurl.test.dev"
-config_page_preview_url = "https://previewurl.test.dev"
-validation_url = "https://validation.test.dev"
-
-[[settings.fields]]
-type = "customer_reference"
-required = true
-
-[[settings.fields]]
-type = "product_reference"
-required = true
-
-[[settings.fields]]
-key = "email field"
-description = "email help"
-type = "email"
-name = "email label"
-required = false
-
-[[settings.fields]]
-key = "number name"
-description = "number help"
-type = "number_decimal"
-name = "number label"
-required = true
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'flow_action',
+          name: 'action title',
+          handle: 'flow-action-char-flow-action-char-flow-actio',
+          description: 'action description',
+          runtime_url: 'https://google.es',
+          config_page_url: 'https://destinationsurl.test.dev',
+          config_page_preview_url: 'https://previewurl.test.dev',
+          validation_url: 'https://validation.test.dev',
+        },
+      ],
+      settings: {
+        fields: [
+          {type: 'customer_reference', required: true},
+          {type: 'product_reference', required: true},
+          {key: 'email field', description: 'email help', type: 'email', name: 'email label', required: false},
+          {key: 'number name', description: 'number help', type: 'number_decimal', name: 'number label', required: true},
+        ],
+      },
+    })
   })
 
-  test('correctly builds a toml string for a flow_trigger', () => {
+  test('correctly builds a toml object for a flow_trigger', () => {
     // Given
     const extension2 = {
       id: '26237861889',
@@ -126,24 +106,26 @@ required = true
     const got = buildTomlObject(extension2)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "flow_trigger"
-name = "trigger title"
-handle = "trigger-ext"
-description = "trigger description"
-
-[[settings.fields]]
-type = "customer_reference"
-
-[[settings.fields]]
-key = "number property"
-description = "number description"
-type = "number_decimal"
-
-[[settings.fields]]
-key = "email name"
-description = "email description"
-type = "email"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'flow_trigger',
+          name: 'trigger title',
+          handle: 'trigger-ext',
+          description: 'trigger description',
+          runtime_url: undefined,
+          config_page_url: undefined,
+          config_page_preview_url: undefined,
+          validation_url: undefined,
+        },
+      ],
+      settings: {
+        fields: [
+          {type: 'customer_reference'},
+          {key: 'number property', description: 'number description', type: 'number_decimal'},
+          {key: 'email name', description: 'email description', type: 'email'},
+        ],
+      },
+    })
   })
 })

@@ -1,5 +1,5 @@
-import {decodeToml} from './toml.js'
-import {findPathUp, readFile} from './fs.js'
+import {TomlFile} from './toml/toml-file.js'
+import {findPathUp} from './fs.js'
 import {cwd} from './path.js'
 import * as metadata from './metadata.js'
 import {renderWarning} from './ui.js'
@@ -38,7 +38,8 @@ export async function loadEnvironment(
     renderWarningIfNeeded({body: 'Environment file not found.'}, options?.silent)
     return undefined
   }
-  const environmentsJson = decodeToml(await readFile(filePath)) as Environments
+  const file = await TomlFile.read(filePath)
+  const environmentsJson = file.content as Environments
   const environments = environmentsJson.environments
   if (!environments) {
     renderWarningIfNeeded(

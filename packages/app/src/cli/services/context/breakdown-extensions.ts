@@ -21,7 +21,6 @@ import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
 import {throwUidMappingError} from '../../prompts/uid-mapping-error.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 export interface ConfigExtensionIdentifiersBreakdown {
@@ -220,19 +219,15 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
     })
   }
 
-  const diffConfigContent = buildDiffConfigContent(baselineConfig, remoteConfig, app.configSchema)
+  const diffFieldNames = buildDiffFieldNames(baselineConfig, remoteConfig, app.configSchema)
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
   // (versioned fields)
   const versionedLocalFieldNames = filterNonVersionedAppFields(baselineConfig)
   // List of remote fields that have different values to the local ones or are not present in the local config
-  const remoteDiffModifications = diffConfigContent
-    ? getFieldsFromDiffConfigContent(diffConfigContent.baselineContent)
-    : []
-  // List of local fields that have different values to the remote ones or  are not present in the remote config
-  const localDiffModifications = diffConfigContent
-    ? getFieldsFromDiffConfigContent(diffConfigContent.updatedContent)
-    : []
+  const remoteDiffModifications = diffFieldNames?.baselineFieldNames ?? []
+  // List of local fields that have different values to the remote ones or are not present in the remote config
+  const localDiffModifications = diffFieldNames?.updatedFieldNames ?? []
   // List of versioned field that exists locally and remotely and have the same value
   const notModifiedVersionedLocalFieldNames = versionedLocalFieldNames.filter(
     (field) => !remoteDiffModifications.includes(field) && !localDiffModifications.includes(field),
@@ -259,7 +254,11 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
   }
 }
 
-function buildDiffConfigContent(
+/**
+ * Computes the diff between local and remote config (after schema rewriting) and returns
+ * the top-level field names that differ on each side.
+ */
+function buildDiffFieldNames(
   localConfig: CurrentAppConfiguration,
   remoteConfig: Partial<AppConfigurationUsedByCli>,
   schema: zod.ZodTypeAny,
@@ -273,64 +272,15 @@ function buildDiffConfigContent(
     return undefined
   }
 
+  const definedKeys = (obj: object) =>
+    Object.entries(obj)
+      .filter(([_, value]) => value !== undefined)
+      .map(([key]) => key)
+
   return {
-    baselineContent: encodeToml(baseline),
-    updatedContent: encodeToml(updated),
+    updatedFieldNames: definedKeys(updated),
+    baselineFieldNames: definedKeys(baseline),
   }
-}
-
-/**
- * This method extracts the list of global fields or global sections from the string that represents a toml section like
- * this:
- *        embedded = true
- *
- *        [access_scopes]
- *        scopes = "read_products,write_products,write_discounts"
- *
- *        [webhooks.privacy_compliance]
- *        customer_deletion_url = "https://myhooks.dev/apps/customer_deletion_url_edited"
- *
- * Each block is separated by a breaking line. The method will the extract
- * the `field`  following these patterns:
- * - <field> = <value> (in this case all the fields inside the block that matches the pattern will be returned)
- * - [<field>]
- * - [\<field.subsection\>]
- *
- * @param diffConfigContent - The toml string to parse
- * @returns The list of fields
- */
-function getFieldsFromDiffConfigContent(diffConfigContent: string): string[] {
-  const fields = diffConfigContent
-    // Split the input string into sections by one or more blank lines
-    .split(/\n\s*\n/)
-    .flatMap((section) => {
-      // Split each section into lines
-      const lines = section.split('\n')
-      if (lines.length === 0) return []
-      // Match the first line of the section against a regular expression to extract the first field name based on the
-      // described patterns
-      const firstLineMatch = lines[0]!.match(/^(?:\[(\w+)|(\w+)\s*=)/)
-      if (!firstLineMatch) return []
-      // Extract the first field name from the appropriate capture group
-      const firstFieldName = firstLineMatch[1] || firstLineMatch[2]
-      if (!firstFieldName) return []
-      // Return field if matches either the pattern [\<field.subsection\>] or [<field>]
-      if (firstFieldName.includes('.')) return [firstFieldName.split('.')[0]]
-      // If the first line of the section matches the pattern  <field> = <value> extract the following
-      // <field> = <value>  that match that condition until the section is finished
-      const otherFieldNames = firstLineMatch[2]
-        ? lines
-            .slice(1)
-            .map((line) => line.match(/^(\w+)\s*=/))
-            .filter(Boolean)
-            .map((match) => match![1])
-        : []
-      return [firstFieldName, ...otherFieldNames]
-    })
-    .filter((match): match is string => match !== undefined)
-
-  // Return the list of fields without duplicates
-  return Array.from(new Set(fields))
 }
 
 function loadLocalExtensionsIdentifiersBreakdown({
