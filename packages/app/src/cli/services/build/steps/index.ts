@@ -1,4 +1,5 @@
 import {executeIncludeAssetsStep} from './include_assets_step.js'
+import {executeBuildManifestStep} from './build-manifest-step.js'
 import {executeBuildThemeStep} from './build-theme-step.js'
 import {executeBundleThemeStep} from './bundle-theme-step.js'
 import {executeBundleUIStep} from './bundle-ui-step.js'
@@ -20,6 +21,9 @@ export async function executeStepByType(step: ClientStep, context: BuildContext)
   switch (step.type) {
     case 'include_assets':
       return executeIncludeAssetsStep(step, context)
+
+    case 'build_manifest':
+      return executeBuildManifestStep(step, context)
 
     case 'build_theme':
       return executeBuildThemeStep(step, context)

@@ -26,6 +26,7 @@ export interface ClientStep {
     | 'validate'
     | 'transform'
     | 'custom'
+    | 'build_manifest'
 
   /** Step-specific configuration */
   readonly config: {[key: string]: unknown}
@@ -60,7 +61,7 @@ export interface BuildContext {
   [key: string]: unknown
 }
 
-interface StepResult {
+export interface StepResult {
   readonly id: string
   readonly success: boolean
   readonly duration: number
