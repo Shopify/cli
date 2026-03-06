@@ -1,3 +1,4 @@
+import {ClientSteps} from '../../services/build/client-steps.js'
 import {gql} from 'graphql-request'
 
 export const ExtensionSpecificationsQuery = gql`
@@ -36,6 +37,7 @@ export interface RemoteSpecification {
   gated: boolean
   externalIdentifier: string
   experience: 'extension' | 'configuration' | 'deprecated'
+  clientSteps?: ClientSteps
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number

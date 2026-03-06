@@ -141,6 +141,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
+import {ClientSteps} from '../../services/build/client-steps.js'
 import {getPartnersToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
@@ -456,6 +457,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         identifier: spec.identifier,
         externalIdentifier: spec.externalIdentifier,
         gated: false,
+        clientSteps: parseClientSteps(spec.clientSteps),
         options: {
           managementExperience: 'cli',
           registrationLimit: spec.uidStrategy.appModuleLimit,
@@ -1425,4 +1427,8 @@ function toUserError(err: CreateAppVersionMutation['appVersionCreate']['userErro
 
 function isStoreProvisionable(permissions: string[]) {
   return permissions.includes('ondemand_access_to_stores')
+}
+function parseClientSteps(clientSteps: string | null | undefined): ClientSteps | undefined {
+  if (!clientSteps) return undefined
+  return JSON.parse(clientSteps)
 }

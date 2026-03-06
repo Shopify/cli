@@ -13,6 +13,7 @@ export type FetchSpecificationsQuery = {
     identifier: string
     externalIdentifier: string
     features: string[]
+    clientSteps?: string | null
     uidStrategy:
       | {appModuleLimit: number; isClientProvided: boolean}
       | {appModuleLimit: number; isClientProvided: boolean}
@@ -55,6 +56,7 @@ export const FetchSpecifications = {
                 {kind: 'Field', name: {kind: 'Name', value: 'identifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'externalIdentifier'}},
                 {kind: 'Field', name: {kind: 'Name', value: 'features'}},
+                {kind: 'Field', name: {kind: 'Name', value: 'clientSteps'}},
                 {
                   kind: 'Field',
                   name: {kind: 'Name', value: 'uidStrategy'},
