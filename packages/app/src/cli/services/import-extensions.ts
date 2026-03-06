@@ -26,7 +26,7 @@ interface ImportAllOptions {
 
 interface ImportOptions extends ImportAllOptions {
   extensionTypes: string[]
-  buildTomlObject: (
+  buildExtensionConfig: (
     ext: ExtensionRegistration,
     allExtensions: ExtensionRegistration[],
     appConfig: CurrentAppConfiguration,
@@ -79,7 +79,7 @@ async function handleExtensionDirectory({
 }
 
 export async function importExtensions(options: ImportOptions) {
-  const {app, remoteApp, developerPlatformClient, extensionTypes, extensions, buildTomlObject, all} = options
+  const {app, remoteApp, developerPlatformClient, extensionTypes, extensions, buildExtensionConfig, all} = options
 
   let extensionsToMigrate = extensions.filter((ext) => extensionTypes.includes(ext.type.toLowerCase()))
   extensionsToMigrate = filterOutImportedExtensions(app, extensionsToMigrate)
@@ -111,7 +111,7 @@ export async function importExtensions(options: ImportOptions) {
     extensionUuids[handle] = ext.uuid
 
     if (action === DirectoryAction.Write) {
-      const tomlContent = buildTomlObject(ext, extensions, app.configuration)
+      const tomlContent = buildExtensionConfig(ext, extensions, app.configuration)
       const tomlPath = joinPath(directory, 'shopify.extension.toml')
       const file = new TomlFile(tomlPath, tomlContent as JsonMapType)
       await file.replace(tomlContent as JsonMapType)
@@ -150,7 +150,7 @@ export async function importAllExtensions(options: ImportAllOptions) {
       return importExtensions({
         ...options,
         extensionTypes: choice.extensionTypes,
-        buildTomlObject: choice.buildTomlObject,
+        buildExtensionConfig: choice.buildExtensionConfig,
         all: true,
       })
     }),

@@ -162,7 +162,7 @@ function getUrlPath(url: string) {
 /**
  * Given a dashboard-built marketing activity extension config file, convert it to toml for the CLI extension
  */
-export function buildTomlObject(extension: ExtensionRegistration): object {
+export function buildExtensionConfig(extension: ExtensionRegistration): object {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const config: MarketingActivityDashboardConfig = JSON.parse(versionConfig)

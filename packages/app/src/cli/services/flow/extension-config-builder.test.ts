@@ -1,8 +1,8 @@
-import {buildTomlObject} from './extension-to-toml.js'
+import {buildExtensionConfig} from './extension-config-builder.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test} from 'vitest'
 
-describe('extension-to-toml', () => {
+describe('extension-config-builder', () => {
   test('correctly builds a toml object for a flow_action', () => {
     // Given
     const extension1: ExtensionRegistration = {
@@ -17,7 +17,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildExtensionConfig(extension1)
 
     // Then
     expect(got).toEqual({
@@ -64,7 +64,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1)
+    const got = buildExtensionConfig(extension1)
 
     // Then
     expect(got).toEqual({
@@ -115,7 +115,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension2)
+    const got = buildExtensionConfig(extension2)
 
     // Then
     expect(got).toEqual({

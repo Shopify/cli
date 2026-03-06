@@ -1,4 +1,4 @@
-import {buildTomlObject, MarketingActivityDashboardConfig} from './extension-to-toml.js'
+import {buildExtensionConfig, MarketingActivityDashboardConfig} from './extension-config-builder.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test} from 'vitest'
 
@@ -24,7 +24,7 @@ const defaultDashboardConfig: MarketingActivityDashboardConfig = {
     },
   ],
 }
-describe('extension-to-toml', () => {
+describe('extension-config-builder', () => {
   test('converts the dashboard config to the new cli config', () => {
     // Given
     const extension: ExtensionRegistration = {
@@ -38,7 +38,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension)
+    const got = buildExtensionConfig(extension)
 
     // Then
     expect(got).toEqual({
@@ -86,7 +86,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension) as {extensions: {handle: string}[]}
+    const got = buildExtensionConfig(extension) as {extensions: {handle: string}[]}
 
     // Then
     expect(got.extensions[0]!.handle).toBe('mae-test-12345555555554444447777778888888123455')
@@ -105,7 +105,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension) as {extensions: {marketing_channel: string; referring_domain: string}[]}
+    const got = buildExtensionConfig(extension) as {extensions: {marketing_channel: string; referring_domain: string}[]}
 
     // Then
     expect(got.extensions[0]!.marketing_channel).toBe('')
