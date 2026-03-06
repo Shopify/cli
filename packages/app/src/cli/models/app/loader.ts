@@ -427,7 +427,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   async loaded() {
-    const {configuration, directory, configPath, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
+    const {configuration, directory, configPath, configurationLoadResultMetadata, configSchema} =
+      this.loadedConfiguration
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
@@ -1010,12 +1011,12 @@ async function loadAppConfigurationFromState<
     schemaForConfigurationFile = appSchema
   }
 
-  const configuration = (await parseConfigurationFile(
+  const configuration = await parseConfigurationFile(
     schemaForConfigurationFile,
     configState.configurationPath,
     abort,
     file,
-  )) as LoadedAppConfigFromConfigState<TConfig>
+  )
   const allClientIdsByConfigName = await getAllLinkedConfigClientIds(configState.appDirectory, {
     [configState.configurationFileName]: configuration.client_id,
   })
