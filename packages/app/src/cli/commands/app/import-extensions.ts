@@ -48,7 +48,7 @@ export default class ImportExtensions extends AppLinkedCommand {
         ...appContext,
         extensions,
         extensionTypes: migrationChoice.extensionTypes,
-        buildTomlObject: migrationChoice.buildTomlObject,
+        buildExtensionConfig: migrationChoice.buildExtensionConfig,
       })
     }
 
