@@ -38,7 +38,13 @@ describe('extension-to-toml', () => {
           {type: 'customer_reference', required: true},
           {type: 'product_reference', required: true},
           {key: 'email field', description: 'email help', type: 'email', name: 'email label', required: false},
-          {key: 'number name', description: 'number help', type: 'number_decimal', name: 'number label', required: true},
+          {
+            key: 'number name',
+            description: 'number help',
+            type: 'number_decimal',
+            name: 'number label',
+            required: true,
+          },
         ],
       },
     })
@@ -79,7 +85,13 @@ describe('extension-to-toml', () => {
           {type: 'customer_reference', required: true},
           {type: 'product_reference', required: true},
           {key: 'email field', description: 'email help', type: 'email', name: 'email label', required: false},
-          {key: 'number name', description: 'number help', type: 'number_decimal', name: 'number label', required: true},
+          {
+            key: 'number name',
+            description: 'number help',
+            type: 'number_decimal',
+            name: 'number label',
+            required: true,
+          },
         ],
       },
     })
