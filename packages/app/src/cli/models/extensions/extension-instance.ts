@@ -44,6 +44,7 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
   EventsSpecIdentifier,
+  'admin',
 ]
 
 /**
@@ -368,8 +369,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
         return copyFilesForExtension(
           this,
           options,
-          this.specification.buildConfig.filePatterns,
-          this.specification.buildConfig.ignoredFilePatterns,
+          this.specification.buildConfig.filePatterns ?? [],
+          this.specification.buildConfig.ignoredFilePatterns ?? [],
         )
       case 'none':
         break
@@ -377,8 +378,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-
+    if (this.isAppConfigExtension) {
+      this.outputPath = joinPath(bundleDirectory, this.uid)
+    } else {
+      this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
+    }
     await this.build(options)
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
