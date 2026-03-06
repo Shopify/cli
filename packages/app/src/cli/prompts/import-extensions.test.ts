@@ -23,10 +23,10 @@ describe('allMigrationChoices', () => {
       expect(choice).toHaveProperty('label')
       expect(choice).toHaveProperty('value')
       expect(choice).toHaveProperty('extensionTypes')
-      expect(choice).toHaveProperty('buildTomlObject')
+      expect(choice).toHaveProperty('buildExtensionConfig')
       expect(Array.isArray(choice.extensionTypes)).toBe(true)
       expect(choice.extensionTypes.length).toBeGreaterThan(0)
-      expect(typeof choice.buildTomlObject).toBe('function')
+      expect(typeof choice.buildExtensionConfig).toBe('function')
     })
   })
 
@@ -134,7 +134,7 @@ describe('selectMigrationChoice', () => {
       label: 'Test Extension',
       value: 'test',
       extensionTypes: ['test_type'],
-      buildTomlObject: vi.fn(),
+      buildExtensionConfig: vi.fn(),
     }
     const result = await selectMigrationChoice([singleChoice])
     expect(result).toBe(singleChoice)
@@ -147,13 +147,13 @@ describe('selectMigrationChoice', () => {
         label: 'Choice 1',
         value: 'choice1',
         extensionTypes: ['type1'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
       {
         label: 'Choice 2',
         value: 'choice2',
         extensionTypes: ['type2'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
     ]
 
@@ -177,13 +177,13 @@ describe('selectMigrationChoice', () => {
         label: 'Choice 1',
         value: 'choice1',
         extensionTypes: ['type1'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
       {
         label: 'Choice 2',
         value: 'choice2',
         extensionTypes: ['type2'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
     ]
 
@@ -204,19 +204,19 @@ describe('selectMigrationChoice', () => {
         label: 'Payments Extensions',
         value: 'payments',
         extensionTypes: ['payments_app'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
       {
         label: 'Flow Extensions',
         value: 'flow',
         extensionTypes: ['flow_action_definition'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
       {
         label: 'Marketing Activity Extensions',
         value: 'marketing activity',
         extensionTypes: ['marketing_activity_extension'],
-        buildTomlObject: vi.fn(),
+        buildExtensionConfig: vi.fn(),
       },
     ]
 

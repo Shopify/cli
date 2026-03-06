@@ -1,8 +1,8 @@
-import {buildTomlObject} from './extension-to-toml.js'
+import {buildExtensionConfig} from './extension-config-builder.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test} from 'vitest'
 
-describe('extension-to-toml', () => {
+describe('extension-config-builder', () => {
   test('correctly builds a toml object for a app_link extension on a non embedded app', () => {
     // Given
     const appConfig = {
@@ -25,7 +25,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [], appConfig)
+    const got = buildExtensionConfig(extension1, [], appConfig)
 
     // Then
     expect(got).toEqual({
@@ -66,7 +66,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [], appConfig)
+    const got = buildExtensionConfig(extension1, [], appConfig)
 
     // Then
     expect(got).toEqual({
@@ -106,7 +106,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [], appConfig)
+    const got = buildExtensionConfig(extension1, [], appConfig)
 
     // Then
     expect(got).toEqual({
@@ -146,7 +146,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [], appConfig)
+    const got = buildExtensionConfig(extension1, [], appConfig)
 
     // Then
     expect(got).toEqual({
