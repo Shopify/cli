@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {describe, expect, test} from 'vitest'
 
 describe('extension-to-toml', () => {
-  test('correctly builds a toml string for a app_link extension on a non embedded app', () => {
+  test('correctly builds a toml object for a app_link extension on a non embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -28,18 +28,24 @@ describe('extension-to-toml', () => {
     const got = buildTomlObject(extension1, [], appConfig)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "admin_link"
-name = "Admin link label"
-handle = "admin-link-title"
-
-  [[extensions.targeting]]
-  url = "https://google.es"
-  target = "admin.collection-details.action.link"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'admin_link',
+          name: 'Admin link label',
+          handle: 'admin-link-title',
+          targeting: [
+            {
+              url: 'https://google.es',
+              target: 'admin.collection-details.action.link',
+            },
+          ],
+        },
+      ],
+    })
   })
 
-  test('correctly builds a toml string for bulk_action extension with path in an embedded app', () => {
+  test('correctly builds a toml object for bulk_action extension with path in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -63,17 +69,23 @@ handle = "admin-link-title"
     const got = buildTomlObject(extension1, [], appConfig)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "admin_link"
-name = "Bulk action label"
-handle = "bulk-action-title"
-
-  [[extensions.targeting]]
-  url = "app://action/product?product_id=123#hash"
-  target = "admin.product-index.selection-action.link"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'admin_link',
+          name: 'Bulk action label',
+          handle: 'bulk-action-title',
+          targeting: [
+            {
+              url: 'app://action/product?product_id=123#hash',
+              target: 'admin.product-index.selection-action.link',
+            },
+          ],
+        },
+      ],
+    })
   })
-  test('correctly builds a toml string for bulk_action extension with no path in an embedded app', () => {
+  test('correctly builds a toml object for bulk_action extension with no path in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -97,17 +109,23 @@ handle = "bulk-action-title"
     const got = buildTomlObject(extension1, [], appConfig)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "admin_link"
-name = "Bulk action label"
-handle = "bulk-action-title"
-
-  [[extensions.targeting]]
-  url = "app://"
-  target = "admin.product-index.selection-action.link"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'admin_link',
+          name: 'Bulk action label',
+          handle: 'bulk-action-title',
+          targeting: [
+            {
+              url: 'app://',
+              target: 'admin.product-index.selection-action.link',
+            },
+          ],
+        },
+      ],
+    })
   })
-  test('correctly builds a toml string for bulk_action extension with no path but search query in an embedded app', () => {
+  test('correctly builds a toml object for bulk_action extension with no path but search query in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -131,14 +149,20 @@ handle = "bulk-action-title"
     const got = buildTomlObject(extension1, [], appConfig)
 
     // Then
-    expect(got).toEqual(`[[extensions]]
-type = "admin_link"
-name = "Bulk action label"
-handle = "bulk-action-title"
-
-  [[extensions.targeting]]
-  url = "app://?foo=bar"
-  target = "admin.product-index.selection-action.link"
-`)
+    expect(got).toEqual({
+      extensions: [
+        {
+          type: 'admin_link',
+          name: 'Bulk action label',
+          handle: 'bulk-action-title',
+          targeting: [
+            {
+              url: 'app://?foo=bar',
+              target: 'admin.product-index.selection-action.link',
+            },
+          ],
+        },
+      ],
+    })
   })
 })

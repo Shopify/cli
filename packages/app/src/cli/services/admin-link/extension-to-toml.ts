@@ -2,7 +2,6 @@ import {contextToTarget} from './utils.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {CurrentAppConfiguration} from '../../models/app/app.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 interface AdminLinkConfig {
@@ -17,7 +16,7 @@ export function buildTomlObject(
   extension: ExtensionRegistration,
   _: ExtensionRegistration[],
   appConfiguration: CurrentAppConfiguration,
-): string {
+): object {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
 
@@ -55,6 +54,5 @@ export function buildTomlObject(
       },
     ],
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return encodeToml(localExtensionRepresentation as any)
+  return localExtensionRepresentation
 }

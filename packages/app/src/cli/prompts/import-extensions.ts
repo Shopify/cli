@@ -16,7 +16,7 @@ export interface MigrationChoice {
     ext: ExtensionRegistration,
     allExtensions: ExtensionRegistration[],
     appConfiguration: CurrentAppConfiguration,
-  ) => string
+  ) => object
 }
 
 export const allMigrationChoices: MigrationChoice[] = [

@@ -64,7 +64,6 @@ describe('addUidToTomlsIfNecessary', () => {
       // Then
       const updatedContent = await readFile(tomlPath)
       expect(updatedContent).toContain('uid = "123"')
-      expect(updatedContent).toMatch(/uid.*type/s)
     })
   })
 

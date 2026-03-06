@@ -3,16 +3,13 @@ import {
   ExtensionUpdateDraftMutationVariables,
 } from '../../api/graphql/partners/generated/update-draft.js'
 import {AppConfigurationWithoutPath} from '../../models/app/app.js'
-import {
-  loadConfigurationFileContent,
-  parseConfigurationFile,
-  parseConfigurationObjectAgainstSpecification,
-} from '../../models/app/loader.js'
+import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../../models/extensions/schemas.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {themeExtensionConfig} from '../deploy/theme-extension-config.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {readFile} from '@shopify/cli-kit/node/fs'
 import {OutputMessage, outputInfo} from '@shopify/cli-kit/node/output'
 import {relativizePath} from '@shopify/cli-kit/node/path'
@@ -123,7 +120,8 @@ export async function reloadExtensionConfig({extension}: UpdateExtensionConfigOp
     throw new AbortError(message)
   }
 
-  let configObject = await loadConfigurationFileContent(extension.configurationPath)
+  const tomlFile = await TomlFile.read(extension.configurationPath)
+  let configObject = tomlFile.content
   const {extensions} = ExtensionsArraySchema.parse(configObject)
 
   if (extensions) {

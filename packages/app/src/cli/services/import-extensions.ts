@@ -8,7 +8,9 @@ import {allMigrationChoices, getMigrationChoices} from '../prompts/import-extens
 import {configurationFileNames, blocks} from '../constants.js'
 import {renderSelectPrompt, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {basename, joinPath} from '@shopify/cli-kit/node/path'
-import {removeFile, writeFile, fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {removeFile, fileExists, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {slugify, hyphenate} from '@shopify/cli-kit/common/string'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
@@ -28,7 +30,7 @@ interface ImportOptions extends ImportAllOptions {
     ext: ExtensionRegistration,
     allExtensions: ExtensionRegistration[],
     appConfig: CurrentAppConfiguration,
-  ) => string
+  ) => object
   all?: boolean
 }
 
@@ -109,9 +111,10 @@ export async function importExtensions(options: ImportOptions) {
     extensionUuids[handle] = ext.uuid
 
     if (action === DirectoryAction.Write) {
-      const tomlObject = buildTomlObject(ext, extensions, app.configuration)
-      const path = joinPath(directory, 'shopify.extension.toml')
-      await writeFile(path, tomlObject)
+      const tomlContent = buildTomlObject(ext, extensions, app.configuration)
+      const tomlPath = joinPath(directory, 'shopify.extension.toml')
+      const file = new TomlFile(tomlPath, tomlContent as JsonMapType)
+      await file.replace(tomlContent as JsonMapType)
       const lockFilePath = joinPath(directory, configurationFileNames.lockFile)
       await removeFile(lockFilePath)
     }
