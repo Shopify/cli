@@ -1,8 +1,8 @@
 import {writeAppConfigurationFile} from './write-app-configuration-file.js'
-import {buildVersionedAppSchema, configurationSpecifications} from '../../models/app/app.test-data.js'
+import {buildVersionedAppSchema} from '../../models/app/app.test-data.js'
 import {CurrentAppConfiguration, getAppVersionedSchema} from '../../models/app/app.js'
-import {loadConfigurationFileContent, parseConfigurationFile} from '../../models/app/loader.js'
-import {inTemporaryDirectory, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {parseConfigurationFile} from '../../models/app/loader.js'
+import {inTemporaryDirectory, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
@@ -93,10 +93,7 @@ describe('Config pipeline snapshots', () => {
       await writeAppConfigurationFile({...REALISTIC_CONFIG, path: filePath}, schema)
 
       // Read back through the full parse pipeline (which fires Zod transforms)
-      const parsedConfig = await parseConfigurationFile(
-        getAppVersionedSchema(specs),
-        filePath,
-      )
+      const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
 
       // Second write from the parsed (transformed) config
       await writeAppConfigurationFile(parsedConfig, schema)
@@ -191,10 +188,7 @@ describe('Config pipeline snapshots', () => {
       await writeAppConfigurationFile(config, schema)
       const firstWrite = await readFile(filePath)
 
-      const parsedConfig = await parseConfigurationFile(
-        getAppVersionedSchema(specs),
-        filePath,
-      )
+      const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
       await writeAppConfigurationFile(parsedConfig, schema)
       const secondWrite = await readFile(filePath)
 
