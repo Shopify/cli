@@ -1,8 +1,8 @@
-import {buildTomlObject as buildPaymentsTomlObject} from '../services/payments/extension-to-toml.js'
-import {buildTomlObject as buildFlowTomlObject} from '../services/flow/extension-to-toml.js'
-import {buildTomlObject as buildAdminLinkTomlObject} from '../services/admin-link/extension-to-toml.js'
-import {buildTomlObject as buildMarketingActivityTomlObject} from '../services/marketing_activity/extension-to-toml.js'
-import {buildTomlObject as buildSubscriptionLinkTomlObject} from '../services/subscription_link/extension-to-toml.js'
+import {buildExtensionConfig as buildPaymentsConfig} from '../services/payments/extension-config-builder.js'
+import {buildExtensionConfig as buildFlowConfig} from '../services/flow/extension-config-builder.js'
+import {buildExtensionConfig as buildAdminLinkConfig} from '../services/admin-link/extension-config-builder.js'
+import {buildExtensionConfig as buildMarketingActivityConfig} from '../services/marketing_activity/extension-config-builder.js'
+import {buildExtensionConfig as buildSubscriptionLinkConfig} from '../services/subscription_link/extension-config-builder.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
 import {CurrentAppConfiguration} from '../models/app/app.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -12,7 +12,7 @@ export interface MigrationChoice {
   label: string
   value: string
   extensionTypes: string[]
-  buildTomlObject: (
+  buildExtensionConfig: (
     ext: ExtensionRegistration,
     allExtensions: ExtensionRegistration[],
     appConfiguration: CurrentAppConfiguration,
@@ -31,31 +31,31 @@ export const allMigrationChoices: MigrationChoice[] = [
       'payments_app_redeemable',
       'payments_extension',
     ],
-    buildTomlObject: buildPaymentsTomlObject,
+    buildExtensionConfig: buildPaymentsConfig,
   },
   {
     label: 'Flow Extensions',
     value: 'flow',
     extensionTypes: ['flow_action_definition', 'flow_trigger_definition', 'flow_trigger_discovery_webhook'],
-    buildTomlObject: buildFlowTomlObject,
+    buildExtensionConfig: buildFlowConfig,
   },
   {
     label: 'Marketing Activity Extensions',
     value: 'marketing activity',
     extensionTypes: ['marketing_activity_extension'],
-    buildTomlObject: buildMarketingActivityTomlObject,
+    buildExtensionConfig: buildMarketingActivityConfig,
   },
   {
     label: 'Subscription Link Extensions',
     value: 'subscription link',
     extensionTypes: ['subscription_link', 'subscription_link_extension'],
-    buildTomlObject: buildSubscriptionLinkTomlObject,
+    buildExtensionConfig: buildSubscriptionLinkConfig,
   },
   {
     label: 'Admin Link extensions',
     value: 'link extension',
     extensionTypes: ['app_link', 'bulk_action'],
-    buildTomlObject: buildAdminLinkTomlObject,
+    buildExtensionConfig: buildAdminLinkConfig,
   },
 ]
 

@@ -1,11 +1,11 @@
-import {buildTomlObject, SubscriptionLinkDashboardConfig} from './extension-to-toml.js'
+import {buildExtensionConfig, SubscriptionLinkDashboardConfig} from './extension-config-builder.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test} from 'vitest'
 
 const defaultDashboardConfig: SubscriptionLinkDashboardConfig = {
   pattern: '/subscriptions{?customer_id,shop}&id={contract_id}',
 }
-describe('extension-to-toml', () => {
+describe('extension-config-builder', () => {
   test('converts the dashboard config to the new cli config', () => {
     // Given
     const extension: ExtensionRegistration = {
@@ -19,7 +19,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension)
+    const got = buildExtensionConfig(extension)
 
     // Then
     expect(got).toEqual({
@@ -47,7 +47,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension)
+    const got = buildExtensionConfig(extension)
 
     // Then
     expect((got as {extensions: [{handle: string}]}).extensions[0].handle).toBe(

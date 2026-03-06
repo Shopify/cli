@@ -1,4 +1,4 @@
-import {buildTomlObject, DashboardPaymentExtensionType} from './extension-to-toml.js'
+import {buildExtensionConfig, DashboardPaymentExtensionType} from './extension-config-builder.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {describe, expect, test} from 'vitest'
 
@@ -53,7 +53,7 @@ const expectObjectIncludesKeys = (got: object, config: string) => {
   }
 }
 
-describe('extension-to-toml', () => {
+describe('extension-config-builder', () => {
   test('correctly builds a toml object for a CLI payments extension', async () => {
     // Given
     const extension1: ExtensionRegistration = {
@@ -68,7 +68,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1])
+    const got = buildExtensionConfig(extension1, [extension1])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
@@ -116,7 +116,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1])
+    const got = buildExtensionConfig(extension1, [extension1])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
@@ -163,7 +163,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1])
+    const got = buildExtensionConfig(extension1, [extension1])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_OFFSITE_CONFIG)
@@ -216,7 +216,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1, extension2])
+    const got = buildExtensionConfig(extension1, [extension1, extension2])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_CREDIT_CARD_CONFIG)
@@ -271,7 +271,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1, extension2])
+    const got = buildExtensionConfig(extension1, [extension1, extension2])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_CUSTOM_CREDIT_CARD_CONFIG)
@@ -325,7 +325,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1, extension2])
+    const got = buildExtensionConfig(extension1, [extension1, extension2])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_CUSTOM_ONSITE_CONFIG)
@@ -383,7 +383,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1, extension2])
+    const got = buildExtensionConfig(extension1, [extension1, extension2])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_REDEEMABLE_CONFIG)
@@ -430,7 +430,7 @@ describe('extension-to-toml', () => {
     }
 
     // When
-    const got = buildTomlObject(extension1, [extension1])
+    const got = buildExtensionConfig(extension1, [extension1])
 
     // Then
     expectObjectIncludesKeys(got, SAMPLE_CARD_PRESENT_CONFIG)
