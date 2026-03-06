@@ -142,14 +142,12 @@ export const AppConfigurationSchema = zod.union([LegacyAppSchema, AppSchema])
  *
  * Try to avoid using this: generally you should be working with a more specific type.
  */
-export type AppConfiguration = zod.infer<typeof AppConfigurationSchema> & {path: string}
-
-export type AppConfigurationWithoutPath = zod.infer<typeof AppConfigurationSchema>
+export type AppConfiguration = zod.infer<typeof AppConfigurationSchema>
 
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
-export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
+export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema>
 
 /**
  * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
@@ -164,15 +162,15 @@ export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppC
 /**
  * App configuration for a freshly minted app template. Very old apps *may* have a client_id provided.
  */
-export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema> & {path: string}
+export type LegacyAppConfiguration = zod.infer<typeof LegacyAppSchema>
 
 /** Validation schema that produces a provided app configuration type */
-export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
+export type SchemaForConfig<TConfig> = ZodObjectOf<TConfig>
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
   allowDynamicallySpecifiedConfigs = true,
-): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
+): ZodObjectOf<CurrentAppConfiguration> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
 
@@ -188,8 +186,7 @@ export function getAppVersionedSchema(
  * @param item - the item to validate
  */
 export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConfiguration {
-  const {path, ...rest} = item
-  return isType(LegacyAppSchema, rest)
+  return isType(LegacyAppSchema, item)
 }
 
 /**
@@ -197,8 +194,7 @@ export function isLegacyAppSchema(item: AppConfiguration): item is LegacyAppConf
  * @param item - the item to validate
  */
 export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppConfiguration {
-  const {path, ...rest} = item
-  return isType(AppSchema.nonstrict(), rest)
+  return isType(AppSchema.nonstrict(), item)
 }
 
 /**
@@ -237,7 +233,7 @@ export function appHiddenConfigPath(appDirectory: string) {
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */
 export function filterNonVersionedAppFields(configuration: object): string[] {
-  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path', 'organization_id')
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('organization_id')
   return Object.keys(configuration).filter((fieldName) => {
     return !builtInFieldNames.includes(fieldName)
   })
@@ -287,6 +283,7 @@ export interface AppConfigurationInterface<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > {
   directory: string
+  configPath: string
   configuration: TConfig
   configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
@@ -377,6 +374,7 @@ export class App<
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
+  configPath: string
   packageManager: PackageManager
   configuration: TConfig
   nodeDependencies: {[key: string]: string}
@@ -385,7 +383,7 @@ export class App<
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: TModuleSpec[]
-  configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
+  configSchema: SchemaForConfig<TConfig>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
   devApplicationURLs?: ApplicationURLs
@@ -394,6 +392,7 @@ export class App<
   constructor({
     name,
     directory,
+    configPath,
     packageManager,
     configuration,
     nodeDependencies,
@@ -410,6 +409,7 @@ export class App<
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
+    this.configPath = configPath
     this.packageManager = packageManager
     this.configuration = configuration
     this.nodeDependencies = nodeDependencies

@@ -97,7 +97,7 @@ async function prepareForLogs(commandOptions: LogsOptions): Promise<{
 }> {
   const {app, remoteApp, developerPlatformClient, primaryStore, organization} = commandOptions
 
-  const configFile = basename(app.configuration.path)
+  const configFile = basename(app.configPath)
   if (commandOptions.format === 'text') {
     renderAppLogsConfigInfo(
       remoteApp.title,

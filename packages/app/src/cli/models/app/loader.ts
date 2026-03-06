@@ -109,15 +109,14 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   filepath: string,
   abortOrReport: AbortOrReport = abort,
   preloadedContent?: JsonMapType,
-): Promise<zod.TypeOf<TSchema> & {path: string}> {
+): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport))
 
   if (!configurationObject) return fallbackOutput
 
-  const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
-  return {...configuration, path: filepath}
+  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
 }
 
 /**
@@ -355,7 +354,7 @@ export async function loadOpaqueApp(options: {
 }
 
 export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInterface> {
-  const state = await getAppConfigurationState(app.directory, basename(app.configuration.path))
+  const state = await getAppConfigurationState(app.directory, basename(app.configPath))
   if (state.state !== 'connected-app') {
     throw new AbortError('Error loading the app, please check your app configuration.')
   }
@@ -428,11 +427,12 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   async loaded() {
-    const {configuration, directory, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
+    const {configuration, directory, configPath, configurationLoadResultMetadata, configSchema} =
+      this.loadedConfiguration
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
-    const dotenv = await loadDotEnv(directory, configuration.path)
+    const dotenv = await loadDotEnv(directory, configPath)
 
     const extensions = await this.loadExtensions(directory, configuration)
 
@@ -461,6 +461,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const appClass = new App({
       name,
       directory,
+      configPath,
       packageManager,
       configuration,
       nodeDependencies,
@@ -690,9 +691,10 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   private createWebhookSubscriptionInstances(directory: string, appConfiguration: TConfig) {
     const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
     if (!specification) return []
+    const configPath = this.loadedConfiguration.configPath
     const specConfiguration = parseConfigurationObject(
       WebhooksSchema,
-      appConfiguration.path,
+      configPath,
       appConfiguration,
       this.abortOrReport.bind(this),
     )
@@ -711,20 +713,21 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
 
     // Create 1 extension instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
-      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
+      return this.createExtensionInstance(specification.identifier, subscription, configPath, directory)
     })
 
     return instances
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig & CurrentAppConfiguration) {
+    const configPath = this.loadedConfiguration.configPath
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
           const specConfiguration = parseConfigurationObjectAgainstSpecification(
             specification,
-            appConfiguration.path,
+            configPath,
             appConfiguration,
             this.abortOrReport.bind(this),
           )
@@ -734,7 +737,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
           const instance = await this.createExtensionInstance(
             specification.identifier,
             specConfiguration,
-            appConfiguration.path,
+            configPath,
             directory,
           ).then((extensionInstance) =>
             this.validateConfigurationExtensionInstance(
@@ -752,7 +755,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path', 'organization_id']
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'organization_id']
         return !configKeysThatAreNeverModules.includes(key)
       })
 
@@ -760,7 +763,7 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
       this.abortOrReport(
         outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
         undefined,
-        appConfiguration.path,
+        configPath,
       )
     }
     return extensionInstancesWithKeys
@@ -992,7 +995,6 @@ async function loadAppConfigurationFromState<
         file = {
           ...configState.startingOptions,
         }
-        delete file.path
         appSchema = LegacyAppSchema as unknown as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
         break
       }
@@ -1000,7 +1002,6 @@ async function loadAppConfigurationFromState<
         file = {
           ...configState.basicConfiguration,
         }
-        delete file.path
         const appVersionedSchema = getAppVersionedSchema(specifications)
         appSchema = appVersionedSchema as SchemaForConfig<LoadedAppConfigFromConfigState<TConfig>>
         break
@@ -1010,12 +1011,12 @@ async function loadAppConfigurationFromState<
     schemaForConfigurationFile = appSchema
   }
 
-  const configuration = (await parseConfigurationFile(
+  const configuration = await parseConfigurationFile(
     schemaForConfigurationFile,
     configState.configurationPath,
     abort,
     file,
-  )) as LoadedAppConfigFromConfigState<TConfig>
+  )
   const allClientIdsByConfigName = await getAllLinkedConfigClientIds(configState.appDirectory, {
     [configState.configurationFileName]: configuration.client_id,
   })
@@ -1054,6 +1055,7 @@ async function loadAppConfigurationFromState<
 
   return {
     directory: configState.appDirectory,
+    configPath: configState.configurationPath,
     configuration,
     configurationLoadResultMetadata,
     configSchema: schemaForConfigurationFile,

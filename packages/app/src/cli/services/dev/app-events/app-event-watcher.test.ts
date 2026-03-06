@@ -275,7 +275,8 @@ describe('app-event-watcher', () => {
           // When
           const app = testAppLinked({
             allExtensions: initialExtensions,
-            configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+            configPath: 'shopify.app.custom.toml',
+            configuration: {scopes: '', extension_directories: []},
           })
 
           const mockManager = new MockESBuildContextManager()
@@ -346,7 +347,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
         const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
 
@@ -383,7 +385,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
 
         const mockManager = new MockESBuildContextManager()
@@ -419,7 +422,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1, posExtension],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
 
         const mockManager = new MockESBuildContextManager()
@@ -451,7 +455,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1, extension2],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
         const generateTypesSpy = vi.spyOn(app, 'generateExtensionTypes')
 
@@ -499,7 +504,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 
@@ -542,7 +548,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [flowExtension],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
 
         // When
@@ -576,7 +583,8 @@ describe('app-event-watcher', () => {
         const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
         const app = testAppLinked({
           allExtensions: [extension1],
-          configuration: {scopes: '', extension_directories: [], path: 'shopify.app.custom.toml'},
+          configPath: 'shopify.app.custom.toml',
+          configuration: {scopes: '', extension_directories: []},
         })
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
 

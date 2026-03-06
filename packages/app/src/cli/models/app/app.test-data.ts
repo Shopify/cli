@@ -2,7 +2,6 @@ import {
   App,
   AppConfiguration,
   AppConfigurationSchema,
-  AppConfigurationWithoutPath,
   AppInterface,
   AppLinkedInterface,
   CurrentAppConfiguration,
@@ -84,7 +83,6 @@ import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export const DEFAULT_CONFIG = {
-  path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
   client_id: 'api-key',
   name: 'my app',
@@ -100,7 +98,7 @@ export const DEFAULT_CONFIG = {
 export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
   const getConfig = () => {
     if (schemaType === 'legacy') {
-      return {scopes: '', extension_directories: [], path: ''}
+      return {scopes: '', extension_directories: []}
     } else {
       return DEFAULT_CONFIG as CurrentAppConfiguration
     }
@@ -109,6 +107,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
   const newApp = new App({
     name: app.name ?? 'App',
     directory: app.directory ?? '/tmp/project',
+    configPath: app.configPath ?? '/tmp/project/shopify.app.toml',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
     nodeDependencies: app.nodeDependencies ?? {},
@@ -155,7 +154,6 @@ export function testAppWithLegacyConfig({
   config = {},
 }: TestAppWithConfigOptions): AppInterface<LegacyAppConfiguration> {
   const configuration: AppConfiguration = {
-    path: '',
     scopes: '',
     name: 'name',
     extension_directories: [],
@@ -207,7 +205,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export const placeholderAppConfiguration: AppConfigurationWithoutPath = {scopes: ''}
+export const placeholderAppConfiguration: AppConfiguration = {scopes: ''}
 
 export async function testUIExtension(
   uiExtension: Omit<Partial<ExtensionInstance>, 'configuration'> & {

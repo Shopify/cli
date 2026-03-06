@@ -272,8 +272,8 @@ function mockApp({
   return testAppLinked({
     name: 'my app',
     directory,
+    configPath: joinPath(directory, 'shopify.app.toml'),
     configuration: {
-      path: joinPath(directory, 'shopify.app.toml'),
       scopes: 'my-scope',
       extension_directories: ['extensions/*'],
     },

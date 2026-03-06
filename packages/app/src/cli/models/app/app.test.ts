@@ -1,4 +1,5 @@
 import {
+  AppConfiguration,
   AppSchema,
   CurrentAppConfiguration,
   LegacyAppConfiguration,
@@ -34,7 +35,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
-  path: '',
   name: 'app 1',
   client_id: '12345',
   extension_directories: ['extensions/*'],
@@ -64,7 +64,6 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
 }
 
 const CORRECT_LEGACY_APP_SCHEMA: LegacyAppConfiguration = {
-  path: '',
   extension_directories: [],
   web_directories: [],
   scopes: 'write_products',
@@ -213,7 +212,7 @@ describe('getUIExtensionRendererVersion', () => {
 
 describe('getAppScopes', () => {
   test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes,read_products'}
+    const config = {scopes: 'read_themes,read_products'} as AppConfiguration
     expect(getAppScopes(config)).toEqual('read_themes,read_products')
   })
 
@@ -225,7 +224,7 @@ describe('getAppScopes', () => {
 
 describe('getAppScopesArray', () => {
   test('returns the scopes key when schema is legacy', () => {
-    const config = {path: '', scopes: 'read_themes, read_order ,write_products'}
+    const config = {scopes: 'read_themes, read_order ,write_products'} as AppConfiguration
     expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
   })
 

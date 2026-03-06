@@ -23,7 +23,7 @@ beforeEach(() => {
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
-  configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
+  configuration: {scopes: 'read_products', extension_directories: ['extensions/*']},
   webs: [
     {
       directory: '',

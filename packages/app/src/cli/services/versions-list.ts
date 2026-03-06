@@ -100,7 +100,7 @@ export default async function versionList(options: VersionListOptions) {
   renderCurrentlyUsedConfigInfo({
     org: organization.businessName,
     appName: remoteApp.title,
-    configFile: basename(options.app.configuration.path),
+    configFile: basename(options.app.configPath),
   })
 
   if (appVersions.length === 0) {

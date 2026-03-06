@@ -46,11 +46,10 @@ describe('updateAppIdentifiers', () => {
       const app = testAppWithConfig({
         app: {
           directory: tmpDir,
+          configPath: joinPath(tmpDir, 'shopify.app.staging.toml'),
           allExtensions: [uiExtension],
         },
-        config: {
-          path: joinPath(tmpDir, 'shopify.app.staging.toml'),
-        },
+        config: {},
       })
 
       // When
