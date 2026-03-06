@@ -1,7 +1,6 @@
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {decodeToml} from '@shopify/cli-kit/node/toml'
-import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 
 export async function addUidToTomlsIfNecessary(
@@ -20,26 +19,26 @@ export async function addUidToTomlsIfNecessary(
 async function addUidToToml(extension: ExtensionInstance) {
   if (!extension.isUUIDStrategyExtension || extension.configuration.uid) return
 
-  const tomlContents = await readFile(extension.configurationPath)
-  const extensionConfig = decodeToml(tomlContents)
-  const extensions = getPathValue(extensionConfig, 'extensions') as ExtensionInstance[]
+  const file = await TomlFile.read(extension.configurationPath)
+  const extensionsArray = getPathValue(file.content, 'extensions') as ExtensionInstance[]
 
-  if ('uid' in extensionConfig) return
-  if (extensions) {
-    const currentExtension = extensions.find((ext) => ext.handle === extension.handle)
+  if ('uid' in file.content) return
+  if (extensionsArray) {
+    const currentExtension = extensionsArray.find((ext) => ext.handle === extension.handle)
     if (currentExtension && 'uid' in currentExtension) return
   }
 
-  let updatedTomlContents = tomlContents
-  if (extensions?.length > 1) {
-    // If the TOML has multiple extensions, we look for the correct handle to add the uid below
-    const regex = new RegExp(`(\\n?(\\s*)handle\\s*=\\s*"${extension.handle}")`)
-    updatedTomlContents = tomlContents.replace(regex, `$1\n$2uid = "${extension.uid}"`)
+  if (extensionsArray && extensionsArray.length > 1) {
+    // Multi-extension TOML: use regex to insert uid after the correct handle.
+    // updateTomlValues (WASM) doesn't support patching individual array-of-tables entries,
+    // so transformRaw with positional insertion is the pragmatic choice here.
+    const handle = extension.handle
+    await file.transformRaw((raw) => {
+      const regex = new RegExp(`(\\n?(\\s*)handle\\s*=\\s*"${handle}")`)
+      return raw.replace(regex, `$1\n$2uid = "${extension.uid}"`)
+    })
   } else {
-    // If the TOML has only one extension, we add the uid before the type, which is always present
-    if ('uid' in extensionConfig) return
-    const regex = /\n?((\s*)type\s*=\s*"\S*")/
-    updatedTomlContents = tomlContents.replace(regex, `$2\nuid = "${extension.uid}"\n$1`)
+    // Single extension (or no extensions array): add uid at the top level via WASM patch
+    await file.patch({uid: extension.uid})
   }
-  await writeFile(extension.configurationPath, updatedTomlContents)
 }

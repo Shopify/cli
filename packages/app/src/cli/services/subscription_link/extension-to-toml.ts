@@ -1,6 +1,5 @@
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 export interface SubscriptionLinkDashboardConfig {
@@ -10,7 +9,7 @@ export interface SubscriptionLinkDashboardConfig {
 /**
  * Given a dashboard-built subscription link extension config file, convert it to toml for the CLI extension
  */
-export function buildTomlObject(extension: ExtensionRegistration): string {
+export function buildTomlObject(extension: ExtensionRegistration): object {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const config: SubscriptionLinkDashboardConfig = JSON.parse(versionConfig)
@@ -25,6 +24,5 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
       },
     ],
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return encodeToml(localExtensionRepresentation as any)
+  return localExtensionRepresentation
 }

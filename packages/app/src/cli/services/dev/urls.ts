@@ -5,7 +5,7 @@ import {setCachedAppInfo} from '../local-storage.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {prependApplicationUrl} from '../../models/extensions/specifications/validation/url_prepender.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
 import {isValidURL} from '@shopify/cli-kit/common/url'
@@ -187,20 +187,21 @@ export async function updateURLs(
   }
 
   if (localApp && localApp.configuration.client_id === apiKey) {
-    const configValues = [
-      {keyPath: 'application_url', value: urls.applicationUrl},
-      {keyPath: 'auth.redirect_urls', value: urls.redirectUrlWhitelist},
-    ]
-
-    if (urls.appProxy) {
-      configValues.push(
-        {keyPath: 'app_proxy.url', value: urls.appProxy.proxyUrl},
-        {keyPath: 'app_proxy.subpath', value: urls.appProxy.proxySubPath},
-        {keyPath: 'app_proxy.prefix', value: urls.appProxy.proxySubPathPrefix},
-      )
+    const configFile = await TomlFile.read(localApp.configuration.path)
+    const patch: {[key: string]: unknown} = {
+      application_url: urls.applicationUrl,
+      auth: {redirect_urls: urls.redirectUrlWhitelist},
     }
 
-    await setManyAppConfigValues(localApp.configuration.path, configValues)
+    if (urls.appProxy) {
+      patch.app_proxy = {
+        url: urls.appProxy.proxyUrl,
+        subpath: urls.appProxy.proxySubPath,
+        prefix: urls.appProxy.proxySubPathPrefix,
+      }
+    }
+
+    await configFile.patch(patch)
   }
 }
 
@@ -249,8 +250,8 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
-      const path = options.localApp.configuration.path
-      await setManyAppConfigValues(path, [{keyPath: 'build.automatically_update_urls_on_dev', value: shouldUpdateURLs}])
+      const configFile = await TomlFile.read(options.localApp.configuration.path)
+      await configFile.patch({build: {automatically_update_urls_on_dev: shouldUpdateURLs}})
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})
     }

@@ -31,7 +31,6 @@ import {
   CARD_PRESENT_TARGET,
 } from '../../models/extensions/specifications/payments_app_extension_schemas/card_present_payments_app_extension_schema.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 function typeToContext(type: string) {
@@ -59,7 +58,7 @@ export enum DashboardPaymentExtensionType {
   CardPresent = 'payments_app_card_present',
 }
 
-export function buildTomlObject(extension: ExtensionRegistration, allExtensions: ExtensionRegistration[]): string {
+export function buildTomlObject(extension: ExtensionRegistration, allExtensions: ExtensionRegistration[]): object {
   const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
   switch (context) {
     case OFFSITE_TARGET:
@@ -136,6 +135,5 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
       },
     ],
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return encodeToml(localExtensionRepresentation as any)
+  return localExtensionRepresentation
 }

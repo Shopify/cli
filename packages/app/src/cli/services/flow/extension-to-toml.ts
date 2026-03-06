@@ -2,7 +2,6 @@ import {configFromSerializedFields} from './serialize-partners-fields.js'
 import {FlowPartnersExtensionTypes} from './types.js'
 import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registrations.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../models/extensions/schemas.js'
-import {encodeToml} from '@shopify/cli-kit/node/toml'
 import {slugify} from '@shopify/cli-kit/common/string'
 
 // Used for importing flow_action_definition and flow_trigger_definition migrating them to flow_action and flow_trigger
@@ -32,7 +31,7 @@ interface FlowWebhookConfig {
  * Given a flow extension config file, convert it to toml
  * Works for both trigger and action because trigger config is a subset of action config
  */
-export function buildTomlObject(extension: ExtensionRegistration): string {
+export function buildTomlObject(extension: ExtensionRegistration): object {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
 
@@ -71,6 +70,5 @@ export function buildTomlObject(extension: ExtensionRegistration): string {
       settings: (fields?.length ?? 0) > 0 ? {fields} : undefined,
     }
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return encodeToml(localExtensionRepresentation as any)
+  return localExtensionRepresentation
 }
