@@ -177,6 +177,9 @@ export async function sendInputAndWaitForContent(
   ...inputs: string[]
 ) {
   await waitForContent(renderInstance, content, () => inputs.forEach((input) => renderInstance.stdin.write(input)))
+  // Yield so React 19's scheduler can flush effects (e.g. re-register useInput
+  // handlers with up-to-date closures) before subsequent input is sent.
+  await new Promise((resolve) => setImmediate(() => setTimeout(resolve, 0)))
 }
 
 /** Function that is useful when you want to check the last frame of a component that unmounted.
