@@ -239,6 +239,15 @@ async function init(options: InitOptions) {
     reference: [
       {link: {label: 'Shopify docs', url: 'https://shopify.dev'}},
       [
+        {
+          link: {
+            label: 'Shopify Dev MCP,',
+            url: 'https://shopify.dev/docs/apps/build/devmcp',
+          },
+        },
+        'connect your AI assistant to development resources',
+      ],
+      [
         'For an overview of commands, run',
         {command: formatPackageManagerCommand(packageManager, 'shopify app', '--help')},
       ],
