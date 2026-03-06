@@ -1,5 +1,5 @@
 import * as environments from './environments.js'
-import {encodeToml as tomlEncode} from './toml.js'
+import {encodeToml as tomlEncode} from './toml/codec.js'
 import {inTemporaryDirectory, writeFile} from './fs.js'
 import {joinPath} from './path.js'
 import {mockAndCaptureOutput} from './testing/output.js'

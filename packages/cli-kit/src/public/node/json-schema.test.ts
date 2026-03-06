@@ -1,5 +1,5 @@
 import {jsonSchemaValidate, normaliseJsonSchema} from './json-schema.js'
-import {decodeToml} from './toml.js'
+import {decodeToml} from './toml/codec.js'
 import {zod} from './schema.js'
 import {describe, expect, test} from 'vitest'
 

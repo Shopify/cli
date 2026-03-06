@@ -1,6 +1,6 @@
 import Command from './base-command.js'
 import {Environments} from './environments.js'
-import {encodeToml as encodeTOML} from './toml.js'
+import {encodeToml as encodeTOML} from './toml/codec.js'
 import {globalFlags} from './cli.js'
 import {inTemporaryDirectory, mkdir, writeFile} from './fs.js'
 import {joinPath, resolvePath, cwd} from './path.js'
