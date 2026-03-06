@@ -1,4 +1,4 @@
-import {decodeToml} from './toml.js'
+import {decodeToml} from './codec.js'
 import {describe, expect, test} from 'vitest'
 
 describe('decodeToml', () => {
