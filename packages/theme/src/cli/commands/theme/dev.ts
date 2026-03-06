@@ -230,5 +230,6 @@ async function createOverrideDevSession(overrideJson: string, devFlags: DevFlags
     themeId: theme.id.toString(),
     previewIdentifier: devFlags['preview-id'],
     open: devFlags.open,
+    password: devFlags.password,
   })
 }

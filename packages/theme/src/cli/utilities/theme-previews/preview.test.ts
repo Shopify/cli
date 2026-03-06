@@ -13,6 +13,14 @@ const session: DevServerSession = {
   sessionCookies: {},
 }
 
+const themeAccessSession: DevServerSession = {
+  token: 'shptka_abc123',
+  storeFqdn: 'store.myshopify.com',
+  storefrontToken: 'shptka_abc123',
+  storefrontPassword: 'password',
+  sessionCookies: {},
+}
+
 function jsonResponse(body: object, options: {status?: number; statusText?: string} = {}): Response {
   const {status = 200, statusText = 'OK'} = options
   return {
@@ -47,7 +55,7 @@ describe('createThemePreview', () => {
         method: 'POST',
         body: overrides,
         headers: expect.objectContaining({
-          Authorization: 'Bearer sf_token',
+          Authorization: `Bearer ${session.storefrontToken}`,
           'Content-Type': 'application/json',
         }),
       }),
@@ -107,7 +115,7 @@ describe('updateThemePreview', () => {
         method: 'POST',
         body: overrides,
         headers: expect.objectContaining({
-          Authorization: 'Bearer sf_token',
+          Authorization: `Bearer ${session.storefrontToken}`,
           'Content-Type': 'application/json',
         }),
       }),
@@ -173,5 +181,82 @@ describe('updateThemePreview', () => {
         previewIdentifier: '1234-abc',
       }),
     ).rejects.toThrow('Theme preview failed: Session expired')
+  })
+})
+
+describe('Theme Access headers', () => {
+  test('createThemePreview includes Theme Access headers when using a shptka_ token', async () => {
+    // Given
+    const overrides = JSON.stringify({templates: {}})
+    const responseBody = {url: 'https://abc.shopifypreview.com', preview_identifier: 'abc'}
+    vi.mocked(shopifyFetch).mockResolvedValue(jsonResponse(responseBody))
+
+    // When
+    await createThemePreview({
+      session: themeAccessSession,
+      storefrontToken: 'shptka_abc123',
+      overridesContent: overrides,
+      themeId: '123',
+    })
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Shopify-Shop': 'store.myshopify.com',
+          'X-Shopify-Access-Token': 'shptka_abc123',
+          Authorization: 'Bearer shptka_abc123',
+        }),
+      }),
+    )
+  })
+
+  test('updateThemePreview includes Theme Access headers when using a shptka_ token', async () => {
+    // Given
+    const overrides = JSON.stringify({templates: {}})
+    const responseBody = {url: 'https://abc.shopifypreview.com', preview_identifier: 'abc'}
+    vi.mocked(shopifyFetch).mockResolvedValue(jsonResponse(responseBody))
+
+    // When
+    await updateThemePreview({
+      session: themeAccessSession,
+      storefrontToken: 'shptka_abc123',
+      overridesContent: overrides,
+      themeId: '123',
+      previewIdentifier: 'abc',
+    })
+
+    // Then
+    expect(shopifyFetch).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'X-Shopify-Shop': 'store.myshopify.com',
+          'X-Shopify-Access-Token': 'shptka_abc123',
+          Authorization: 'Bearer shptka_abc123',
+        }),
+      }),
+    )
+  })
+
+  test('createThemePreview does not include Theme Access headers for standard tokens', async () => {
+    // Given
+    const overrides = JSON.stringify({templates: {}})
+    const responseBody = {url: 'https://abc.shopifypreview.com', preview_identifier: 'abc'}
+    vi.mocked(shopifyFetch).mockResolvedValue(jsonResponse(responseBody))
+
+    // When
+    await createThemePreview({
+      session,
+      storefrontToken: 'sf_token',
+      overridesContent: overrides,
+      themeId: '123',
+    })
+
+    // Then
+    const callHeaders = vi.mocked(shopifyFetch).mock.calls[0]![1]!.headers as Record<string, string>
+    expect(callHeaders).not.toHaveProperty('X-Shopify-Shop')
+    expect(callHeaders).not.toHaveProperty('X-Shopify-Access-Token')
   })
 })

@@ -65,7 +65,7 @@ export async function render(session: DevServerSession, context: DevServerRender
   return response
 }
 
-async function buildHeaders(session: DevServerSession, context: DevServerRenderContext) {
+export async function buildHeaders(session: DevServerSession, context: Pick<DevServerRenderContext, 'headers'>) {
   if (isThemeAccessSession(session)) {
     return buildThemeAccessHeaders(session, context)
   } else {
@@ -73,7 +73,7 @@ async function buildHeaders(session: DevServerSession, context: DevServerRenderC
   }
 }
 
-async function buildStandardHeaders(session: DevServerSession, context: DevServerRenderContext) {
+async function buildStandardHeaders(session: DevServerSession, context: Pick<DevServerRenderContext, 'headers'>) {
   const cookies = await buildCookies(session, context)
   const storefrontToken = session.storefrontToken
 
@@ -84,7 +84,7 @@ async function buildStandardHeaders(session: DevServerSession, context: DevServe
   })
 }
 
-async function buildThemeAccessHeaders(session: DevServerSession, context: DevServerRenderContext) {
+async function buildThemeAccessHeaders(session: DevServerSession, context: Pick<DevServerRenderContext, 'headers'>) {
   const cookies = await buildCookies(session, context)
   const storefrontToken = session.storefrontToken
   const filteredHeaders: Record<string, string> = {}
