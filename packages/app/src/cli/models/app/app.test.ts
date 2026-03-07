@@ -175,16 +175,16 @@ describe('getUIExtensionRendererVersion', () => {
 })
 
 describe('getAppScopes', () => {
-  test('returns the access_scopes.scopes key', () => {
+  test('returns the access_scopes.scopes key with normalization', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes,read_themes'}}
-    expect(getAppScopes(config)).toEqual('read_themes,read_themes')
+    expect(getAppScopes(config)).toEqual('read_themes')
   })
 })
 
 describe('getAppScopesArray', () => {
-  test('returns the access_scopes.scopes key', () => {
+  test('returns the access_scopes.scopes key as array with normalization', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
-    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+    expect(getAppScopesArray(config)).toEqual(['read_order', 'read_themes', 'write_products'])
   })
 })
 
