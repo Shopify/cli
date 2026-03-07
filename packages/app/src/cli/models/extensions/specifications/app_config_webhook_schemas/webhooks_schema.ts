@@ -2,7 +2,6 @@ import {WebhookSubscriptionSchema} from './webhook_subscription_schema.js'
 import {webhookValidator} from '../validation/app_config_webhook.js'
 import {WebhookSubscriptionUriValidation} from '../validation/common.js'
 import {SingleWebhookSubscriptionSchema} from '../app_config_webhook_subscription.js'
-import {mergeAllWebhooks} from '../transform/app_config_webhook.js'
 import {BaseSchemaWithoutHandle} from '../../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -15,10 +14,7 @@ const WebhooksConfigSchema = zod.object({
       shop_deletion_url: WebhookSubscriptionUriValidation.optional(),
     })
     .optional(),
-  subscriptions: zod
-    .array(WebhookSubscriptionSchema)
-    .optional()
-    .transform((value) => mergeAllWebhooks(value ?? [])),
+  subscriptions: zod.array(WebhookSubscriptionSchema).optional(),
 })
 
 export type SingleWebhookSubscriptionType = zod.infer<typeof SingleWebhookSubscriptionSchema>
