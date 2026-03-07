@@ -219,24 +219,24 @@ describe('getUIExtensionRendererVersion', () => {
 describe('getAppScopes', () => {
   test('returns the scopes key when schema is legacy', () => {
     const config = {scopes: 'read_themes,read_products'} as AppConfiguration
-    expect(getAppScopes(config)).toEqual('read_themes,read_products')
+    expect(getAppScopes(config)).toEqual('read_products,read_themes')
   })
 
   test('returns the access_scopes.scopes key when schema is current', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes,read_themes'}}
-    expect(getAppScopes(config)).toEqual('read_themes,read_themes')
+    expect(getAppScopes(config)).toEqual('read_themes')
   })
 })
 
 describe('getAppScopesArray', () => {
   test('returns the scopes key when schema is legacy', () => {
     const config = {scopes: 'read_themes, read_order ,write_products'} as AppConfiguration
-    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+    expect(getAppScopesArray(config)).toEqual(['read_order', 'read_themes', 'write_products'])
   })
 
   test('returns the access_scopes.scopes key when schema is current', () => {
     const config = {...DEFAULT_CONFIG, access_scopes: {scopes: 'read_themes, read_order ,write_products'}}
-    expect(getAppScopesArray(config)).toEqual(['read_themes', 'read_order', 'write_products'])
+    expect(getAppScopesArray(config)).toEqual(['read_order', 'read_themes', 'write_products'])
   })
 })
 
