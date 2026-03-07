@@ -77,30 +77,27 @@ describe('Config pipeline snapshots', () => {
     })
   })
 
-  test('config round-trip (write → read → write) reorders webhook subscriptions', async () => {
-    // KNOWN ASYMMETRY: The current pipeline does NOT round-trip cleanly.
-    // mergeAllWebhooks() sorts compliance subscriptions first during parse,
-    // so the second write has a different subscription order than the first.
-    // This test documents the current behavior as a snapshot.
-    // When the webhook transform is extracted from the schema (Phase 2),
-    // this test should be updated to verify clean round-trips.
+  test('config round-trip (write → read → write) preserves subscription order', async () => {
+    // With the mergeAllWebhooks transform extracted from the Zod schema,
+    // the parse pipeline no longer reorders webhook subscriptions.
+    // This verifies a clean round-trip: first write === second write.
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
       const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write
       await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, schema, filePath)
+      const firstWrite = await readFile(filePath)
 
-      // Read back through the full parse pipeline (which fires Zod transforms)
+      // Read back through the full parse pipeline (no more Zod transforms on webhooks)
       const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
 
-      // Second write from the parsed (transformed) config
+      // Second write from the parsed config
       await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
 
-      // Snapshot the round-tripped output — it differs from the first write
-      // because compliance subscriptions get sorted first by mergeAllWebhooks
-      expect(secondWrite).toMatchSnapshot()
+      // Clean round-trip: second write matches the first
+      expect(secondWrite).toEqual(firstWrite)
     })
   })
 
