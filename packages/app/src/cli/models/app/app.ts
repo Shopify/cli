@@ -34,11 +34,7 @@ import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
 // Schemas for loading app configuration
 
-const ExtensionDirectoriesSchema = zod
-  .array(zod.string())
-  .optional()
-  .transform(removeTrailingPathSeparator)
-  .transform(fixSingleWildcards)
+const ExtensionDirectoriesSchema = zod.array(zod.string()).optional()
 
 /**
  * Schema for a freshly minted app template.
@@ -72,6 +68,14 @@ function removeTrailingPathSeparator(value: string[] | undefined) {
 function fixSingleWildcards(value: string[] | undefined) {
   // eslint-disable-next-line no-useless-escape
   return value?.map((dir) => dir.replace(/([^\*])\*$/, '$1**'))
+}
+
+/**
+ * Normalize extension directories for glob/chokidar consumption:
+ * strips trailing path separators, then converts single trailing `*` to `**`.
+ */
+export function normalizeExtensionDirectories(dirs: string[] | undefined): string[] | undefined {
+  return fixSingleWildcards(removeTrailingPathSeparator(dirs))
 }
 
 /**

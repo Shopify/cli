@@ -20,6 +20,7 @@ import {
   isLegacyAppSchema,
   TemplateConfigSchema,
   getTemplateScopesArray,
+  normalizeExtensionDirectories,
 } from './app.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -630,7 +631,8 @@ class AppLoader<TConfig extends AppConfiguration, TModuleSpec extends ExtensionS
   }
 
   private async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
-    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+    const normalizedDirs = normalizeExtensionDirectories(extensionDirectories)
+    const extensionConfigPaths = [...(normalizedDirs ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
