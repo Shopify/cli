@@ -3517,7 +3517,7 @@ describe('getAppConfigurationState', () => {
         appDirectory: expect.any(String),
         configurationPath: expect.stringMatching(/shopify.app.toml$/),
         startingOptions: {
-          scopes: 'write_abc,write_xyz',
+          scopes: '  write_xyz,     write_abc    ',
         },
       },
     ],

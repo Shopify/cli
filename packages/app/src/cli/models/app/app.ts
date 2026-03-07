@@ -43,10 +43,7 @@ export const LegacyAppSchema = zod
   .object({
     client_id: zod.number().optional(),
     name: zod.string().optional(),
-    scopes: zod
-      .string()
-      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
-      .default(''),
+    scopes: zod.string().default(''),
     extension_directories: ExtensionDirectoriesSchema,
     web_directories: zod.array(zod.string()).optional(),
     webhooks: zod
@@ -85,13 +82,10 @@ export function normalizeExtensionDirectories(dirs: string[] | undefined): strin
  */
 export const TemplateConfigSchema = zod
   .object({
-    scopes: zod
-      .string()
-      .transform((scopes) => normalizeDelimitedString(scopes) ?? '')
-      .optional(),
+    scopes: zod.string().optional(),
     access_scopes: zod
       .object({
-        scopes: zod.string().transform((scopes) => normalizeDelimitedString(scopes) ?? ''),
+        scopes: zod.string(),
       })
       .optional(),
     web_directories: zod.array(zod.string()).optional(),
@@ -101,12 +95,9 @@ export const TemplateConfigSchema = zod
 export type TemplateConfig = zod.infer<typeof TemplateConfigSchema>
 
 export function getTemplateScopesArray(config: TemplateConfig): string[] {
-  const scopesString = config.scopes ?? config.access_scopes?.scopes ?? ''
-  if (scopesString.length === 0) return []
-  return scopesString
-    .split(',')
-    .map((scope) => scope.trim())
-    .sort()
+  const scopesString = normalizeDelimitedString(config.scopes ?? config.access_scopes?.scopes)
+  if (!scopesString || scopesString.length === 0) return []
+  return scopesString.split(',').map((scope) => scope.trim())
 }
 
 /**
@@ -207,9 +198,9 @@ export function isCurrentAppSchema(item: AppConfiguration): item is CurrentAppCo
  */
 export function getAppScopes(config: AppConfiguration): string {
   if (isLegacyAppSchema(config)) {
-    return config.scopes
+    return normalizeDelimitedString(config.scopes) ?? ''
   } else if (isCurrentAppSchema(config)) {
-    return config.access_scopes?.scopes ?? ''
+    return normalizeDelimitedString(config.access_scopes?.scopes) ?? ''
   }
   return ''
 }
