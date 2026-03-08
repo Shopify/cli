@@ -17,6 +17,7 @@ import {
   normalizeExtensionDirectories,
 } from './app.js'
 import {sliceConfigForSpec, findUnclaimedKeys} from './config/slice.js'
+import {validateSpecConfig} from './config/validate.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -724,22 +725,50 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           const sliceKeys = Object.keys(slice)
           if (sliceKeys.length === 0) return [null, []] as const
 
-          // createExtensionInstance still parses the slice through the spec's schema
-          // (validation + normalization via .preprocess()). The second parse is a
-          // guardrail ensuring instance.configuration is schema-validated.
-          const instance = await this.createExtensionInstance(
-            specification.identifier,
-            slice,
-            configPath,
+          // Validate the slice — errors only, no data shaping
+          const errors = validateSpecConfig(slice, specification)
+          if (errors.length > 0) {
+            this.abortOrReport(
+              outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
+                configPath,
+              )}:\n\n${parseHumanReadableError(errors)}`,
+              undefined,
+              configPath,
+            )
+            return [null, []] as const
+          }
+
+          // Create instance directly with the slice — no second parse
+          const entryPath = await this.findEntryPath(directory, specification)
+          const instance = new ExtensionInstance({
+            configuration: slice,
+            configurationPath: configPath,
+            entryPath,
             directory,
-          ).then((extensionInstance) =>
-            this.validateConfigurationExtensionInstance(
-              appConfiguration.client_id,
-              appConfiguration,
-              extensionInstance,
-            ),
+            specification,
+          })
+
+          // Preserve devUUID from previous app (for reload consistency)
+          const previousExtension = this.previousApp?.allExtensions.find((ext) => ext.handle === instance.handle)
+          if (previousExtension) {
+            instance.devUUID = previousExtension.devUUID
+          }
+
+          // Spec-level business rule validation (separate from schema validation)
+          if (specification.validate) {
+            const validateResult = await instance.validate()
+            if (validateResult.isErr()) {
+              this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configPath)
+            }
+          }
+
+          // Check that deploy payload is non-empty (same as validateConfigurationExtensionInstance)
+          const validInstance = await this.validateConfigurationExtensionInstance(
+            appConfiguration.client_id,
+            appConfiguration,
+            instance,
           )
-          return [instance, sliceKeys] as const
+          return [validInstance, sliceKeys] as const
         }),
     )
 
