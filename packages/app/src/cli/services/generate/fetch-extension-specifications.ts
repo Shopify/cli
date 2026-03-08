@@ -92,19 +92,10 @@ async function mergeLocalAndRemoteSpecs(
       ;(merged as RemoteAwareExtensionSpecification & {contractSchema: SchemaObject}).contractSchema = contractSchema
     }
 
-    // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
-    let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
-    switch (merged.uidStrategy) {
-      case 'uuid':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-      case 'single':
-        handleInvalidAdditionalProperties = 'strip'
-        break
-      case 'dynamic':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-    }
+    // All specs use 'fail' mode — AJV rejects invalid data, never strips.
+    // Single specs use validateSpecConfig() for validation (no AJV stripping needed).
+    // UUID and dynamic specs already used 'fail'.
+    const handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'fail'
 
     const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
 
