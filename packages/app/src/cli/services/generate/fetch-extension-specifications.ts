@@ -73,6 +73,8 @@ async function mergeLocalAndRemoteSpecs(
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
       })
       localSpec.uidStrategy = remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single'
+      // Contract-based specs use zod.any() — declaredKeys comes from the JSON Schema
+      localSpec.declaredKeys = Object.keys(normalisedSchema.properties ?? {})
     }
     if (!localSpec) return undefined
 
