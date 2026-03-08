@@ -259,7 +259,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     schema: spec.schema,
     appModuleFeatures,
     transformLocalToRemote: resolveAppConfigTransform(spec.transformConfig),
-    transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
+    transformRemoteToLocal: resolveReverseAppConfigTransform(spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
@@ -294,14 +294,7 @@ function resolveAppConfigTransform(transformConfig: TransformationConfig | Custo
   }
 }
 
-function resolveReverseAppConfigTransform<T>(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schema: zod.ZodType<T, any, any>,
-  transformConfig?: TransformationConfig | CustomTransformationConfig,
-) {
-  if (!transformConfig)
-    return (content: object) => defaultAppConfigReverseTransform(schema, content as {[key: string]: unknown})
-
+function resolveReverseAppConfigTransform(transformConfig: TransformationConfig | CustomTransformationConfig) {
   if (Object.keys(transformConfig).includes('reverse')) {
     return (transformConfig as CustomTransformationConfig).reverse!
   } else {
@@ -346,43 +339,6 @@ function appConfigTransform(
   }
 
   return transformedContent
-}
-
-/**
- * Nest the content inside the first level objects expected by the local schema.
- * ```json
- * {
- *  embedded = true
- * }
- * ```
- * will be nested after applying the proper schema:
- * ```json
- * {
- *   pos: {
- *    embedded = true
- *   }
- * }
- * ```
- * @param content - The objet to be nested
- *
- * @returns The nested object
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
-  return Object.keys(schema._def.shape()).reduce((result: {[key: string]: unknown}, key: string) => {
-    let innerSchema = schema._def.shape()[key]
-    if (innerSchema instanceof zod.ZodOptional) {
-      innerSchema = innerSchema._def.innerType
-    }
-    if (innerSchema instanceof zod.ZodObject) {
-      result[key] = defaultAppConfigReverseTransform(innerSchema, content)
-    } else {
-      if (content[key] !== undefined) result[key] = content[key]
-
-      delete content[key]
-    }
-    return result
-  }, {})
 }
 
 /**
