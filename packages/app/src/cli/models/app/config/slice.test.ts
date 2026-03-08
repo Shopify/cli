@@ -62,29 +62,27 @@ describe('findUnclaimedKeys', () => {
       unknown_section: {foo: 'bar'},
       another_unknown: true,
     }
-    const slices: [string, object][] = [
-      ['branding', {name: 'my-app'}],
-    ]
+    const claimedKeyArrays = [['name']]
 
-    const unclaimed = findUnclaimedKeys(raw, slices)
+    const unclaimed = findUnclaimedKeys(raw, claimedKeyArrays)
 
     // client_id is in AppSchema — claimed
-    // name is in branding slice — claimed
+    // name is claimed by branding
     // unknown_section and another_unknown are unclaimed
     expect(unclaimed.sort()).toEqual(['another_unknown', 'unknown_section'])
   })
 
   test('returns empty array when all keys are claimed', () => {
     const raw = {client_id: '123', name: 'my-app'}
-    const slices: [string, object][] = [['branding', {name: 'my-app'}]]
+    const claimedKeyArrays = [['name']]
 
-    expect(findUnclaimedKeys(raw, slices)).toEqual([])
+    expect(findUnclaimedKeys(raw, claimedKeyArrays)).toEqual([])
   })
 
   test('organization_id is always claimed', () => {
     const raw = {client_id: '123', organization_id: 'org-1'}
-    const slices: [string, object][] = []
+    const claimedKeyArrays: string[][] = []
 
-    expect(findUnclaimedKeys(raw, slices)).toEqual([])
+    expect(findUnclaimedKeys(raw, claimedKeyArrays)).toEqual([])
   })
 })

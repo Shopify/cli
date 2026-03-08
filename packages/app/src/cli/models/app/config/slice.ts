@@ -26,14 +26,10 @@ export function sliceConfigForSpec(raw: object, spec: ExtensionSpecification): o
  * These are "unsupported sections" that the CLI doesn't recognize.
  *
  * @param raw - The full app configuration object
- * @param slices - Array of [specId, slice] pairs from sliceConfigForSpec
+ * @param claimedKeyArrays - Array of key arrays, one per spec (from Object.keys(slice))
  * @returns Array of unclaimed key names
  */
-export function findUnclaimedKeys(raw: object, slices: [string, object][]): string[] {
-  const claimed = new Set([
-    ...Object.keys(AppSchema.shape),
-    'organization_id',
-    ...slices.flatMap(([_, slice]) => Object.keys(slice)),
-  ])
+export function findUnclaimedKeys(raw: object, claimedKeyArrays: string[][]): string[] {
+  const claimed = new Set([...Object.keys(AppSchema.shape), 'organization_id', ...claimedKeyArrays.flat()])
   return Object.keys(raw).filter((key) => !claimed.has(key))
 }
