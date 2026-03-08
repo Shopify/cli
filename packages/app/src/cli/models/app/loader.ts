@@ -16,6 +16,7 @@ import {
   AppHiddenConfig,
   normalizeExtensionDirectories,
 } from './app.js'
+import {sliceConfigForSpec} from './config/slice.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -725,6 +726,11 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
             this.abortOrReport.bind(this),
           )
 
+          // Equivalence assertion: verify that declarative slicing produces
+          // the same keys and values as the current parse-based approach.
+          // This runs alongside the existing code path — no behavior change.
+          assertSliceEquivalence(specification, appConfiguration, specConfiguration)
+
           if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
 
           const instance = await this.createExtensionInstance(
@@ -1307,4 +1313,35 @@ export function isValidFormatAppConfigurationFileName(configName: string): confi
     return true
   }
   return false
+}
+
+/**
+ * Equivalence assertion: verify that declarative slicing (pick by declaredKeys)
+ * produces the same keys and values as the current Zod+AJV parse.
+ *
+ * This runs during development/testing alongside the existing parse.
+ * Key mismatches are logged as debug output. Value mismatches are expected
+ * for specs with .preprocess() (app_proxy trailing slash) and are documented.
+ */
+function assertSliceEquivalence(
+  specification: ExtensionSpecification,
+  appConfiguration: object,
+  specConfiguration: object,
+) {
+  const slice = sliceConfigForSpec(appConfiguration, specification)
+  const oldKeys = Object.keys(specConfiguration).sort()
+  const newKeys = Object.keys(slice).sort()
+
+  if (oldKeys.join(',') !== newKeys.join(',')) {
+    const msg = `Slice key mismatch for ${specification.identifier}: parse=[${oldKeys}] slice=[${newKeys}]`
+    outputDebug(msg)
+  }
+
+  for (const key of oldKeys) {
+    const oldVal = JSON.stringify((specConfiguration as Record<string, unknown>)[key])
+    const newVal = JSON.stringify((slice as Record<string, unknown>)[key])
+    if (oldVal !== newVal) {
+      outputDebug(`Slice value mismatch for ${specification.identifier}.${key}`)
+    }
+  }
 }
