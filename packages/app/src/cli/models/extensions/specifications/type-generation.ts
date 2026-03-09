@@ -166,7 +166,7 @@ interface CreateTypeDefinitionOptions {
   toolsTypeDefinition?: string
 }
 
-export interface SharedTypeDefinition {
+interface SharedTypeDefinition {
   apiVersion: string
   targets: Set<string>
   toolsTypeDefinition?: string
@@ -194,7 +194,7 @@ function buildShopifyType(targets: string[], toolsTypeDefinition?: string): stri
   return null
 }
 
-export function createTypeDefinition({
+function createTypeDefinition({
   fullPath,
   typeFilePath,
   targets,
