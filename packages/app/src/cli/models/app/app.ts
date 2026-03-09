@@ -7,6 +7,7 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../exte
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
+import {renderTypeDefinitions, TypeDefinitionsByFile} from '../extensions/specifications/type-generation.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {configurationFileNames} from '../../constants.js'
@@ -446,29 +447,35 @@ export class App<
   }
 
   async generateExtensionTypes() {
-    const typeDefinitionsByFile = new Map<string, Set<string>>()
+    const typeDefinitionsByFile: TypeDefinitionsByFile = new Map()
     await Promise.all(
-      this.allExtensions.map((extension) => extension.contributeToSharedTypeFile(typeDefinitionsByFile)),
+      this.allExtensions.map((extension) =>
+        extension.contributeToSharedTypeFile(typeDefinitionsByFile, this.directory),
+      ),
     )
-    typeDefinitionsByFile.forEach((types, typeFilePath) => {
-      const exists = fileExistsSync(typeFilePath)
-      // No types to add, remove the file if it exists
-      if (types.size === 0) {
-        if (exists) {
-          removeFileSync(typeFilePath)
-        }
-        return
-      }
 
-      const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
-      // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
-      // This is needed to enable file-specific global type declarations.
-      const typeContent = [`import '@shopify/ui-extensions';\n`, ...Array.from(types)].join('\n')
-      if (originalContent === typeContent) {
-        return
-      }
-      writeFileSync(typeFilePath, typeContent)
-    })
+    await Promise.all(
+      Array.from(typeDefinitionsByFile.entries()).map(async ([typeFilePath, typeDefinitions]) => {
+        const types = await renderTypeDefinitions(typeDefinitions, typeFilePath)
+        const exists = fileExistsSync(typeFilePath)
+        // No types to add, remove the file if it exists
+        if (types.size === 0) {
+          if (exists) {
+            removeFileSync(typeFilePath)
+          }
+          return
+        }
+
+        const originalContent = exists ? readFileSync(typeFilePath).toString() : ''
+        // We need this top-level import to work around the TS restriction of not allowing  declaring modules with relative paths.
+        // This is needed to enable file-specific global type declarations.
+        const typeContent = [`import '@shopify/ui-extensions';\n`, ...Array.from(types)].join('\n')
+        if (originalContent === typeContent) {
+          return
+        }
+        writeFileSync(typeFilePath, typeContent)
+      }),
+    )
   }
 
   get includeConfigOnDeploy() {

@@ -1,5 +1,6 @@
 import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './schemas.js'
 import {FunctionConfigType} from './specifications/function.js'
+import {TypeDefinitionsByFile} from './specifications/type-generation.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
 import {
@@ -437,8 +438,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.specification.patchWithAppDevURLs(this.configuration, urls)
   }
 
-  async contributeToSharedTypeFile(typeDefinitionsByFile: Map<string, Set<string>>) {
-    await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile)
+  async contributeToSharedTypeFile(typeDefinitionsByFile: TypeDefinitionsByFile, appDirectory?: string) {
+    await this.specification.contributeToSharedTypeFile?.(this, typeDefinitionsByFile, appDirectory)
   }
 
   /**
