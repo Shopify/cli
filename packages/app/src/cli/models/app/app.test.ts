@@ -25,6 +25,7 @@ import {
 } from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {addTypeDefinition} from '../extensions/specifications/type-generation.js'
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
@@ -960,6 +961,27 @@ describe('generateExtensionTypes', () => {
 
       await mkdir(ext1Dir)
       await mkdir(ext2Dir)
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.product-details.action.render'))
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.orders-details.block.render'))
+      await writeFile(
+        joinPath(
+          tmpDir,
+          'node_modules',
+          '@shopify',
+          'ui-extensions',
+          'admin.product-details.action.render',
+          'index.js',
+        ),
+        '// render target',
+      )
+      await writeFile(
+        joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.orders-details.block.render', 'index.js'),
+        '// orders target',
+      )
+      await writeFile(joinPath(ext1Dir, 'ext1-module-1.jsx'), 'export {}')
+      await writeFile(joinPath(ext1Dir, 'ext1-module-2.jsx'), 'export {}')
+      await writeFile(joinPath(ext2Dir, 'ext2-module-1.jsx'), 'export {}')
+      await writeFile(joinPath(ext2Dir, 'ext2-module-2.jsx'), 'export {}')
 
       const uiExtension1 = await testUIExtension({type: 'ui_extension', handle: 'ext1', directory: ext1Dir})
       const uiExtension2 = await testUIExtension({type: 'ui_extension', handle: 'ext2', directory: ext2Dir})
@@ -971,22 +993,32 @@ describe('generateExtensionTypes', () => {
 
       // Mock the extension contributions
       vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockImplementation(async (typeDefinitionsByFile) => {
-        typeDefinitionsByFile.set(
-          joinPath(ext1Dir, 'shopify.d.ts'),
-          new Set([
-            "declare module './ext1-module-1.jsx' { // mocked ext1 module 1 definition }",
-            "declare module './ext1-module-2.jsx' { // mocked ext1 module 2 definition }",
-          ]),
-        )
+        addTypeDefinition(typeDefinitionsByFile, {
+          fullPath: joinPath(ext1Dir, 'ext1-module-1.jsx'),
+          typeFilePath: joinPath(ext1Dir, 'shopify.d.ts'),
+          targets: ['admin.product-details.action.render'],
+          apiVersion: '2025-10',
+        })
+        addTypeDefinition(typeDefinitionsByFile, {
+          fullPath: joinPath(ext1Dir, 'ext1-module-2.jsx'),
+          typeFilePath: joinPath(ext1Dir, 'shopify.d.ts'),
+          targets: ['admin.product-details.action.render'],
+          apiVersion: '2025-10',
+        })
       })
       vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockImplementation(async (typeDefinitionsByFile) => {
-        typeDefinitionsByFile.set(
-          joinPath(ext2Dir, 'shopify.d.ts'),
-          new Set([
-            "declare module './ext2-module-1.jsx' { // mocked ext2 module 1 definition }",
-            "declare module './ext2-module-2.jsx' { // mocked ext2 module 2 definition }",
-          ]),
-        )
+        addTypeDefinition(typeDefinitionsByFile, {
+          fullPath: joinPath(ext2Dir, 'ext2-module-1.jsx'),
+          typeFilePath: joinPath(ext2Dir, 'shopify.d.ts'),
+          targets: ['admin.orders-details.block.render'],
+          apiVersion: '2025-10',
+        })
+        addTypeDefinition(typeDefinitionsByFile, {
+          fullPath: joinPath(ext2Dir, 'ext2-module-2.jsx'),
+          typeFilePath: joinPath(ext2Dir, 'shopify.d.ts'),
+          targets: ['admin.orders-details.block.render'],
+          apiVersion: '2025-10',
+        })
       })
 
       // When
@@ -997,15 +1029,107 @@ describe('generateExtensionTypes', () => {
       const ext1FileContent = await readFile(ext1TypeFilePath)
       const normalizedExt1Content = ext1FileContent.toString().replace(/\\/g, '/')
       expect(normalizedExt1Content).toBe(`import '@shopify/ui-extensions';\n
-declare module './ext1-module-1.jsx' { // mocked ext1 module 1 definition }
-declare module './ext1-module-2.jsx' { // mocked ext1 module 2 definition }`)
+//@ts-ignore
+declare module './ext1-module-1.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}
+
+//@ts-ignore
+declare module './ext1-module-2.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.product-details.action.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}
+`)
 
       const ext2TypeFilePath = joinPath(ext2Dir, 'shopify.d.ts')
       const ext2FileContent = await readFile(ext2TypeFilePath)
       const normalizedExt2Content = ext2FileContent.toString().replace(/\\/g, '/')
       expect(normalizedExt2Content).toBe(`import '@shopify/ui-extensions';\n
-declare module './ext2-module-1.jsx' { // mocked ext2 module 1 definition }
-declare module './ext2-module-2.jsx' { // mocked ext2 module 2 definition }`)
+//@ts-ignore
+declare module './ext2-module-1.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.orders-details.block.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}
+
+//@ts-ignore
+declare module './ext2-module-2.jsx' {
+  const shopify: import('@shopify/ui-extensions/admin.orders-details.block.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}
+`)
+    })
+  })
+
+  test('merges shared file targets across multiple UI extensions into one declaration', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const ext1Dir = joinPath(tmpDir, 'extensions', 'ext1')
+      const ext2Dir = joinPath(tmpDir, 'extensions', 'ext2')
+      const sharedDir = joinPath(tmpDir, 'shared')
+
+      await mkdir(ext1Dir)
+      await mkdir(ext2Dir)
+      await mkdir(sharedDir)
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.product-details.action.render'))
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.orders-details.block.render'))
+      await writeFile(
+        joinPath(
+          tmpDir,
+          'node_modules',
+          '@shopify',
+          'ui-extensions',
+          'admin.product-details.action.render',
+          'index.js',
+        ),
+        '// render target',
+      )
+      await writeFile(
+        joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.orders-details.block.render', 'index.js'),
+        '// orders target',
+      )
+      await writeFile(joinPath(sharedDir, 'utils.js'), 'export {}')
+
+      const uiExtension1 = await testUIExtension({type: 'ui_extension', handle: 'ext1', directory: ext1Dir})
+      const uiExtension2 = await testUIExtension({type: 'ui_extension', handle: 'ext2', directory: ext2Dir})
+
+      const app = testApp({
+        directory: tmpDir,
+        allExtensions: [uiExtension1, uiExtension2],
+      })
+
+      vi.spyOn(uiExtension1, 'contributeToSharedTypeFile').mockImplementation(async (typeDefinitionsByFile) => {
+        addTypeDefinition(typeDefinitionsByFile, {
+          fullPath: joinPath(sharedDir, 'utils.js'),
+          typeFilePath: joinPath(tmpDir, 'shopify.d.ts'),
+          targets: ['admin.product-details.action.render'],
+          apiVersion: '2025-10',
+        })
+      })
+
+      vi.spyOn(uiExtension2, 'contributeToSharedTypeFile').mockImplementation(async (typeDefinitionsByFile) => {
+        addTypeDefinition(typeDefinitionsByFile, {
+          fullPath: joinPath(sharedDir, 'utils.js'),
+          typeFilePath: joinPath(tmpDir, 'shopify.d.ts'),
+          targets: ['admin.orders-details.block.render'],
+          apiVersion: '2025-10',
+        })
+      })
+
+      await app.generateExtensionTypes()
+
+      const shopifyDtsPath = joinPath(tmpDir, 'shopify.d.ts')
+      const fileContent = await readFile(shopifyDtsPath)
+      const normalizedContent = fileContent.toString().replace(/\\/g, '/')
+
+      expect(normalizedContent).toBe(`import '@shopify/ui-extensions';\n
+//@ts-ignore
+declare module './shared/utils.js' {
+  const shopify:
+    | import('@shopify/ui-extensions/admin.orders-details.block.render').Api
+    | import('@shopify/ui-extensions/admin.product-details.action.render').Api;
+  const globalThis: { shopify: typeof shopify };
+}
+`)
     })
   })
 })
