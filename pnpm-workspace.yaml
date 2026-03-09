@@ -1,6 +1,8 @@
 packages:
   - packages/*
   - workspace
+autoInstallPeers: true
+linkWorkspacePackages: true
 onlyBuiltDependencies:
   - '@parcel/watcher'
   - esbuild
@@ -8,12 +10,11 @@ onlyBuiltDependencies:
   - node-pty
   - nx
   - protobufjs
+  - unrs-resolver
   - yarn
-strictPeerDependencies: false
-autoInstallPeers: true
-linkWorkspacePackages: true
 publicHoistPattern:
   - '*vitest*'
   - '*vite*'
   - '*eslint*'
   - '*prettier*'
+strictPeerDependencies: false

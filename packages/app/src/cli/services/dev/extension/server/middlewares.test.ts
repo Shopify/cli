@@ -19,50 +19,41 @@ import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-ki
 import * as h3 from 'h3'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
+import type {H3Event} from 'h3'
+
 vi.mock('h3', async () => {
   const actual: any = await vi.importActual('h3')
   return {
     ...actual,
-    send: vi.fn(),
     sendRedirect: vi.fn(),
   }
 })
 
-function getMockRequest({context = {}, headers = {}}) {
-  const request = {
-    context,
-    headers,
-  }
-
-  return request as unknown as h3.IncomingMessage
-}
-
-function getMockResponse() {
+function getMockEvent({
+  params = {},
+  headers = {},
+}: {params?: Record<string, string>; headers?: Record<string, string>} = {}) {
   const setHeader = vi.fn()
   const writeHead = vi.fn()
   const end = vi.fn()
   const getHeader = vi.fn()
 
-  const response = {
-    setHeader,
-    writeHead,
-    end,
-    event: {
+  const event = {
+    method: 'GET',
+    path: '/',
+    context: {params},
+    node: {
+      req: {headers},
       res: {
         setHeader,
+        writeHead,
         end,
         getHeader,
       },
     },
   }
 
-  return response as unknown as h3.ServerResponse
-}
-
-function getMockNext() {
-  const next = vi.fn()
-
-  return next as unknown as (err?: Error) => unknown
+  return event as unknown as H3Event
 }
 
 function getOptions({devOptions}: {devOptions: Partial<GetExtensionsMiddlewareOptions['devOptions']>}) {
@@ -75,14 +66,14 @@ function getOptions({devOptions}: {devOptions: Partial<GetExtensionsMiddlewareOp
 }
 
 describe('corsMiddleware()', () => {
-  test('sets headers to allow cross origin requests', () => {
-    const response = getMockResponse()
+  test('sets headers to allow cross origin requests', async () => {
+    const event = getMockEvent()
 
-    corsMiddleware(getMockRequest({}), response, getMockNext())
+    await corsMiddleware(event)
 
-    expect(response.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
-    expect(response.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'GET, OPTIONS')
-    expect(response.setHeader).toHaveBeenCalledWith(
+    expect(event.node.res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Origin', '*')
+    expect(event.node.res.setHeader).toHaveBeenCalledWith('Access-Control-Allow-Methods', 'GET, OPTIONS')
+    expect(event.node.res.setHeader).toHaveBeenCalledWith(
       'Access-Control-Allow-Headers',
       'Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, ngrok-skip-browser-warning',
     )
@@ -90,22 +81,22 @@ describe('corsMiddleware()', () => {
 })
 
 describe('noCacheMiddleware()', () => {
-  test('sets headers to prevent caching', () => {
-    const response = getMockResponse()
+  test('sets headers to prevent caching', async () => {
+    const event = getMockEvent()
 
-    noCacheMiddleware(getMockRequest({}), response, getMockNext())
+    await noCacheMiddleware(event)
 
-    expect(response.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-cache')
+    expect(event.node.res.setHeader).toHaveBeenCalledWith('Cache-Control', 'no-cache')
   })
 })
 
 describe('redirectToDevConsoleMiddleware()', () => {
   test('redirects to /extensions/dev-console', async () => {
-    const response = getMockResponse()
+    const event = getMockEvent()
 
-    await redirectToDevConsoleMiddleware(getMockRequest({}), response, getMockNext())
+    await redirectToDevConsoleMiddleware(event)
 
-    expect(h3.sendRedirect).toHaveBeenCalledWith(response.event, '/extensions/dev-console', 307)
+    expect(h3.sendRedirect).toHaveBeenCalledWith(event, '/extensions/dev-console', 307)
   })
 })
 
@@ -118,13 +109,11 @@ describe('fileServerMiddleware()', async () => {
       await mkdir(joinPath(tmpDir, 'foo'))
 
       const filePath = joinPath(tmpDir, 'foo', 'missing.file')
-      const response = getMockResponse()
+      const event = getMockEvent()
 
-      await fileServerMiddleware(getMockRequest({}), getMockResponse(), getMockNext(), {
-        filePath,
-      })
+      await fileServerMiddleware(event, {filePath})
 
-      expect(utilities.sendError).toHaveBeenCalledWith(response, {
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
         statusCode: 404,
         statusMessage: `Not Found: ${filePath}`,
       })
@@ -137,15 +126,14 @@ describe('fileServerMiddleware()', async () => {
       await touchFile(joinPath(tmpDir, 'foo', 'index.html'))
       await writeFile(joinPath(tmpDir, 'foo', 'index.html'), '<html></html>')
 
-      const response = getMockResponse()
+      const event = getMockEvent()
 
-      await fileServerMiddleware(getMockRequest({}), response, getMockNext(), {
+      const result = await fileServerMiddleware(event, {
         filePath: joinPath(tmpDir, 'foo'),
       })
 
-      expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html')
-      expect(response.writeHead).toHaveBeenCalledWith(200)
-      expect(response.end).toHaveBeenCalledWith('<html></html>')
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html')
+      expect(result).toBe('<html></html>')
     })
   })
 
@@ -171,15 +159,14 @@ describe('fileServerMiddleware()', async () => {
       await touchFile(joinPath(tmpDir, 'foo', fileName))
       await writeFile(joinPath(tmpDir, 'foo', fileName), fileContent)
 
-      const response = getMockResponse()
+      const event = getMockEvent()
 
-      await fileServerMiddleware(getMockRequest({}), response, getMockNext(), {
+      const result = await fileServerMiddleware(event, {
         filePath: joinPath(tmpDir, 'foo', fileName),
       })
 
-      expect(response.setHeader).toHaveBeenCalledWith('Content-Type', contentType)
-      expect(response.writeHead).toHaveBeenCalledWith(200)
-      expect(response.end).toHaveBeenCalledWith(fileContent)
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', contentType)
+      expect(result).toBe(fileContent)
     })
   })
 
@@ -189,15 +176,14 @@ describe('fileServerMiddleware()', async () => {
       await touchFile(joinPath(tmpDir, 'foo', 'bar.foo'))
       await writeFile(joinPath(tmpDir, 'foo', 'bar.foo'), 'Content for bar.foo')
 
-      const response = getMockResponse()
+      const event = getMockEvent()
 
-      await fileServerMiddleware(getMockRequest({}), response, getMockNext(), {
+      const result = await fileServerMiddleware(event, {
         filePath: joinPath(tmpDir, 'foo', 'bar.foo'),
       })
 
-      expect(response.setHeader).toHaveBeenCalledWith('Content-Type', 'text/plain')
-      expect(response.writeHead).toHaveBeenCalledWith(200)
-      expect(response.end).toHaveBeenCalledWith('Content for bar.foo')
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/plain')
+      expect(result).toBe('Content for bar.foo')
     })
   })
 })
@@ -218,22 +204,16 @@ describe('getExtensionAssetMiddleware()', () => {
         },
       })
 
-      const response = getMockResponse()
+      const event = getMockEvent({
+        params: {
+          extensionId: '456dev',
+          assetPath: 'test-ui-extension.js',
+        },
+      })
 
-      await getExtensionAssetMiddleware(options)(
-        getMockRequest({
-          context: {
-            params: {
-              extensionId: '456dev',
-              assetPath: 'test-ui-extension.js',
-            },
-          },
-        }),
-        response,
-        getMockNext(),
-      )
+      await getExtensionAssetMiddleware(options)(event)
 
-      expect(utilities.sendError).toHaveBeenCalledWith(response, {
+      expect(utilities.sendError).toHaveBeenCalledWith(event, {
         statusCode: 404,
         statusMessage: `Extension with id 456dev not found`,
       })
@@ -254,29 +234,23 @@ describe('getExtensionAssetMiddleware()', () => {
         },
       })
 
-      const response = getMockResponse()
       const fileName = 'test-ui-extension.js'
 
       await mkdir(dirname(outputPath))
       await touchFile(outputPath)
       await writeFile(outputPath, `content from ${fileName}`)
 
-      await getExtensionAssetMiddleware(options)(
-        getMockRequest({
-          context: {
-            params: {
-              extensionId: extension.devUUID,
-              assetPath: fileName,
-            },
-          },
-        }),
-        response,
-        getMockNext(),
-      )
+      const event = getMockEvent({
+        params: {
+          extensionId: extension.devUUID,
+          assetPath: fileName,
+        },
+      })
 
-      expect(response.setHeader('Content-Type', 'text/javascript'))
-      expect(response.writeHead).toHaveBeenCalledWith(200)
-      expect(response.end).toHaveBeenCalledWith(`content from ${fileName}`)
+      const result = await getExtensionAssetMiddleware(options)(event)
+
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/javascript')
+      expect(result).toBe(`content from ${fileName}`)
     })
   })
 })
@@ -298,21 +272,15 @@ describe('getExtensionPayloadMiddleware()', () => {
       },
     })
 
-    const response = getMockResponse()
+    const event = getMockEvent({
+      params: {
+        extensionId: requestedExtensionId,
+      },
+    })
 
-    await getExtensionPayloadMiddleware(options)(
-      getMockRequest({
-        context: {
-          params: {
-            extensionId: requestedExtensionId,
-          },
-        },
-      }),
-      response,
-      getMockNext(),
-    )
+    await getExtensionPayloadMiddleware(options)(event)
 
-    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
       statusCode: 404,
       statusMessage: `Extension with id ${requestedExtensionId} not found`,
     })
@@ -336,22 +304,16 @@ describe('getExtensionPayloadMiddleware()', () => {
         },
       })
 
-      const response = getMockResponse()
+      const event = getMockEvent({
+        headers: {
+          accept: 'text/html',
+        },
+        params: {
+          extensionId,
+        },
+      })
 
-      await getExtensionPayloadMiddleware(options)(
-        getMockRequest({
-          headers: {
-            accept: 'text/html',
-          },
-          context: {
-            params: {
-              extensionId,
-            },
-          },
-        }),
-        response,
-        getMockNext(),
-      )
+      const result = await getExtensionPayloadMiddleware(options)(event)
 
       expect(templates.getHTML).toHaveBeenCalledWith({
         data: {
@@ -361,7 +323,7 @@ describe('getExtensionPayloadMiddleware()', () => {
         extensionSurface: 'post_purchase',
       })
 
-      expect(h3.send).toHaveBeenCalledWith(response.event, 'mock html')
+      expect(result).toBe('mock html')
     })
 
     test('returns the redirect URL if the extension surface is not post_purchase', async () => {
@@ -385,24 +347,18 @@ describe('getExtensionPayloadMiddleware()', () => {
         },
       })
 
-      const response = getMockResponse()
+      const event = getMockEvent({
+        headers: {
+          accept: 'text/html',
+        },
+        params: {
+          extensionId,
+        },
+      })
 
-      await getExtensionPayloadMiddleware(options)(
-        getMockRequest({
-          headers: {
-            accept: 'text/html',
-          },
-          context: {
-            params: {
-              extensionId,
-            },
-          },
-        }),
-        response,
-        getMockNext(),
-      )
+      await getExtensionPayloadMiddleware(options)(event)
 
-      expect(h3.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
+      expect(h3.sendRedirect).toHaveBeenCalledWith(event, 'http://www.mock.com/redirect/url', 307)
     })
   })
 
@@ -430,42 +386,34 @@ describe('getExtensionPayloadMiddleware()', () => {
         },
       })
 
-      const response = getMockResponse()
+      const event = getMockEvent({
+        params: {
+          extensionId,
+        },
+      })
 
-      await getExtensionPayloadMiddleware(options)(
-        getMockRequest({
-          context: {
-            params: {
-              extensionId,
-            },
-          },
-        }),
-        response,
-        getMockNext(),
-      )
+      const result = await getExtensionPayloadMiddleware(options)(event)
 
-      expect(response.setHeader).toHaveBeenCalledWith('content-type', 'application/json')
-      expect(response.end).toHaveBeenCalledWith(
-        JSON.stringify({
-          app: {
-            apiKey: 'mock-api-key',
-          },
-          version: '3',
-          root: {
-            url: 'http://mock.url/extensions',
-          },
-          socket: {
-            url: 'wss://mock.url/extensions',
-          },
-          devConsole: {
-            url: 'http://mock.url/extensions/dev-console',
-          },
-          store: 'mock-store.myshopify.com',
-          extension: {
-            mock: 'extension payload',
-          },
-        }),
-      )
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('content-type', 'application/json')
+      expect(result).toEqual({
+        app: {
+          apiKey: 'mock-api-key',
+        },
+        version: '3',
+        root: {
+          url: 'http://mock.url/extensions',
+        },
+        socket: {
+          url: 'wss://mock.url/extensions',
+        },
+        devConsole: {
+          url: 'http://mock.url/extensions/dev-console',
+        },
+        store: 'mock-store.myshopify.com',
+        extension: {
+          mock: 'extension payload',
+        },
+      })
     })
   })
 })
@@ -487,21 +435,15 @@ describe('getExtensionPointMiddleware()', () => {
       },
     })
 
-    const response = getMockResponse()
+    const event = getMockEvent({
+      params: {
+        extensionId: requestedExtensionId,
+      },
+    })
 
-    await getExtensionPointMiddleware(options)(
-      getMockRequest({
-        context: {
-          params: {
-            extensionId: requestedExtensionId,
-          },
-        },
-      }),
-      response,
-      getMockNext(),
-    )
+    await getExtensionPointMiddleware(options)(event)
 
-    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
       statusCode: 404,
       statusMessage: `Extension with id ${requestedExtensionId} not found`,
     })
@@ -533,22 +475,16 @@ describe('getExtensionPointMiddleware()', () => {
       },
     })
 
-    const response = getMockResponse()
+    const event = getMockEvent({
+      params: {
+        extensionId,
+        extensionPointTarget: requestedExtensionPointTarget,
+      },
+    })
 
-    await getExtensionPointMiddleware(options)(
-      getMockRequest({
-        context: {
-          params: {
-            extensionId,
-            extensionPointTarget: requestedExtensionPointTarget,
-          },
-        },
-      }),
-      response,
-      getMockNext(),
-    )
+    await getExtensionPointMiddleware(options)(event)
 
-    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
       statusCode: 404,
       statusMessage: `Extension with id ${extensionId} has not configured the "${requestedExtensionPointTarget}" extension target`,
     })
@@ -580,22 +516,16 @@ describe('getExtensionPointMiddleware()', () => {
       },
     })
 
-    const response = getMockResponse()
+    const event = getMockEvent({
+      params: {
+        extensionId,
+        extensionPointTarget,
+      },
+    })
 
-    await getExtensionPointMiddleware(options)(
-      getMockRequest({
-        context: {
-          params: {
-            extensionId,
-            extensionPointTarget,
-          },
-        },
-      }),
-      response,
-      getMockNext(),
-    )
+    await getExtensionPointMiddleware(options)(event)
 
-    expect(utilities.sendError).toHaveBeenCalledWith(response, {
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
       statusCode: 404,
       statusMessage: `Redirect url can't be constructed for extension with id ${extensionId} and extension target "${extensionPointTarget}"`,
     })
@@ -628,24 +558,18 @@ describe('getExtensionPointMiddleware()', () => {
       },
     })
 
-    const response = getMockResponse()
+    const event = getMockEvent({
+      headers: {
+        accept: 'text/html',
+      },
+      params: {
+        extensionId,
+        extensionPointTarget,
+      },
+    })
 
-    await getExtensionPayloadMiddleware(options)(
-      getMockRequest({
-        headers: {
-          accept: 'text/html',
-        },
-        context: {
-          params: {
-            extensionId,
-            extensionPointTarget,
-          },
-        },
-      }),
-      response,
-      getMockNext(),
-    )
+    await getExtensionPayloadMiddleware(options)(event)
 
-    expect(h3.sendRedirect).toHaveBeenCalledWith(response.event, 'http://www.mock.com/redirect/url', 307)
+    expect(h3.sendRedirect).toHaveBeenCalledWith(event, 'http://www.mock.com/redirect/url', 307)
   })
 })
