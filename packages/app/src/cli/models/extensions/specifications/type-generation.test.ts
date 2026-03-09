@@ -1,6 +1,209 @@
-import {createToolsTypeDefinition} from './type-generation.js'
+import {
+  addTypeDefinition,
+  assertTargetsResolvable,
+  createToolsTypeDefinition,
+  findNearestTsConfigDir,
+  parseApiVersion,
+  renderTypeDefinitions,
+  TypeDefinitionsByFile,
+} from './type-generation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
+
+describe('parseApiVersion', () => {
+  test('returns parsed year and month for valid api versions', () => {
+    expect(parseApiVersion('2026-01')).toEqual({year: 2026, month: 1})
+  })
+
+  test('returns null for invalid api versions', () => {
+    expect(parseApiVersion('2026')).toBeNull()
+  })
+})
+
+describe('assertTargetsResolvable', () => {
+  test('throws using fallback api version when the api version is invalid', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const fullPath = joinPath(tmpDir, 'src', 'index.ts')
+      const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
+
+      await mkdir(joinPath(tmpDir, 'src'))
+      await writeFile(fullPath, 'export {}')
+
+      expect(() =>
+        assertTargetsResolvable({
+          fullPath,
+          typeFilePath,
+          targets: ['admin.unknown.action.render'],
+          apiVersion: 'invalid',
+        }),
+      ).toThrow(
+        new AbortError(
+          'Type reference for admin.unknown.action.render could not be found. You might be using the wrong @shopify/ui-extensions version.',
+          'Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~2025.10.0, in your dependencies.',
+        ),
+      )
+    })
+  })
+})
+
+describe('shared type generation helpers', () => {
+  test('merges targets and prefers the newest valid api version', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const typeDefinitionsByFile: TypeDefinitionsByFile = new Map()
+      const fullPath = joinPath(tmpDir, 'shared', 'utils.ts')
+      const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
+
+      await mkdir(joinPath(tmpDir, 'shared'))
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.product-details.action.render'))
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.orders-details.block.render'))
+      await writeFile(fullPath, 'export {}')
+      await writeFile(
+        joinPath(
+          tmpDir,
+          'node_modules',
+          '@shopify',
+          'ui-extensions',
+          'admin.product-details.action.render',
+          'index.js',
+        ),
+        '// product details target',
+      )
+      await writeFile(
+        joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.orders-details.block.render', 'index.js'),
+        '// order details target',
+      )
+
+      addTypeDefinition(typeDefinitionsByFile, {
+        fullPath,
+        typeFilePath,
+        targets: ['admin.product-details.action.render'],
+        apiVersion: '2025-07',
+      })
+
+      addTypeDefinition(typeDefinitionsByFile, {
+        fullPath,
+        typeFilePath,
+        targets: ['admin.orders-details.block.render'],
+        apiVersion: '2026-01',
+        toolsTypeDefinition: 'interface ShopifyTools {}',
+      })
+
+      addTypeDefinition(typeDefinitionsByFile, {
+        fullPath,
+        typeFilePath,
+        targets: ['admin.product-details.action.render'],
+        apiVersion: 'invalid',
+      })
+
+      const storedDefinition = typeDefinitionsByFile.get(typeFilePath)?.get(fullPath) as any
+      expect(storedDefinition.apiVersion).toBe('2026-01')
+      expect(Array.from(storedDefinition.targets)).toEqual([
+        'admin.product-details.action.render',
+        'admin.orders-details.block.render',
+      ])
+      expect(storedDefinition.toolsTypeDefinition).toBe('interface ShopifyTools {}')
+
+      const renderedDefinitions = Array.from(
+        await renderTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath),
+      )
+
+      expect(renderedDefinitions).toHaveLength(1)
+      expect(renderedDefinitions[0]).toContain("declare module './shared/utils.ts'")
+      expect(renderedDefinitions[0]).toContain('interface ShopifyTools {}')
+      expect(renderedDefinitions[0]).toContain(
+        "| import('@shopify/ui-extensions/admin.orders-details.block.render').Api",
+      )
+      expect(renderedDefinitions[0]).toContain(
+        "| import('@shopify/ui-extensions/admin.product-details.action.render').Api",
+      )
+      expect(renderedDefinitions[0]).toContain(') & { tools: ShopifyTools };')
+    })
+  })
+
+  test('sorts rendered definitions and filters files without targets', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const typeDefinitionsByFile: TypeDefinitionsByFile = new Map()
+      const typeFilePath = joinPath(tmpDir, 'shopify.d.ts')
+
+      await mkdir(joinPath(tmpDir, 'shared'))
+      await mkdir(joinPath(tmpDir, 'node_modules', '@shopify', 'ui-extensions', 'admin.product-details.action.render'))
+      await writeFile(joinPath(tmpDir, 'shared', 'a.ts'), 'export {}')
+      await writeFile(joinPath(tmpDir, 'shared', 'z.ts'), 'export {}')
+      await writeFile(
+        joinPath(
+          tmpDir,
+          'node_modules',
+          '@shopify',
+          'ui-extensions',
+          'admin.product-details.action.render',
+          'index.js',
+        ),
+        '// product details target',
+      )
+
+      addTypeDefinition(typeDefinitionsByFile, {
+        fullPath: joinPath(tmpDir, 'shared', 'z.ts'),
+        typeFilePath,
+        targets: ['admin.product-details.action.render'],
+        apiVersion: '2025-10',
+      })
+
+      addTypeDefinition(typeDefinitionsByFile, {
+        fullPath: joinPath(tmpDir, 'shared', 'ignored.ts'),
+        typeFilePath,
+        targets: [],
+        apiVersion: '2025-10',
+      })
+
+      addTypeDefinition(typeDefinitionsByFile, {
+        fullPath: joinPath(tmpDir, 'shared', 'a.ts'),
+        typeFilePath,
+        targets: ['admin.product-details.action.render'],
+        apiVersion: '2025-10',
+      })
+
+      const renderedDefinitions = Array.from(
+        await renderTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath),
+      )
+
+      expect(renderedDefinitions).toHaveLength(2)
+      expect(renderedDefinitions[0]).toContain("declare module './shared/a.ts'")
+      expect(renderedDefinitions[1]).toContain("declare module './shared/z.ts'")
+    })
+  })
+})
+
+describe('findNearestTsConfigDir', () => {
+  test('returns the nearest tsconfig within the app directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const appDir = joinPath(tmpDir, 'app')
+      const sharedDir = joinPath(appDir, 'shared')
+      const sourceFile = joinPath(sharedDir, 'utils.ts')
+
+      await mkdir(sharedDir)
+      await writeFile(joinPath(appDir, 'tsconfig.json'), '{}')
+      await writeFile(sourceFile, 'export {}')
+
+      await expect(findNearestTsConfigDir(sourceFile, appDir)).resolves.toBe(appDir)
+    })
+  })
+
+  test('does not return a tsconfig outside the app directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const appDir = joinPath(tmpDir, 'app')
+      const sharedDir = joinPath(appDir, 'shared')
+      const sourceFile = joinPath(sharedDir, 'utils.ts')
+
+      await mkdir(sharedDir)
+      await writeFile(joinPath(tmpDir, 'tsconfig.json'), '{}')
+      await writeFile(sourceFile, 'export {}')
+
+      await expect(findNearestTsConfigDir(sourceFile, appDir)).resolves.toBeUndefined()
+    })
+  })
+})
 
 describe('createToolsTypeDefinition', () => {
   test('returns empty string when tools array is empty', async () => {
