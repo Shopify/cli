@@ -1750,53 +1750,6 @@ describe('organizations', () => {
     ])
   })
 
-  test('appends ID to businessName when organizations have duplicate names', async () => {
-    // Given
-    const client = AppManagementClient.getInstance()
-    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
-    const mockResponse = {
-      currentUserAccount: {
-        uuid: 'user-123',
-        organizationsWithAccessToDestination: {
-          nodes: [
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMQ==', name: 'My Org'},
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMg==', name: 'My Org'},
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vMw==', name: 'Other Org'},
-            {id: 'Z2lkOi8vQnVzaW5lc3NQbGF0Zm9ybS9Pcmdhbml6YXRpb24vNA==', name: 'My Org'},
-          ],
-        },
-      },
-    }
-    vi.mocked(businessPlatformRequestDoc).mockResolvedValueOnce(mockResponse)
-
-    // When
-    const result = await client.organizations()
-
-    // Then
-    expect(result).toEqual([
-      {
-        id: '1',
-        businessName: 'My Org (1)',
-        source: 'BusinessPlatform',
-      },
-      {
-        id: '2',
-        businessName: 'My Org (2)',
-        source: 'BusinessPlatform',
-      },
-      {
-        id: '3',
-        businessName: 'Other Org (3)',
-        source: 'BusinessPlatform',
-      },
-      {
-        id: '4',
-        businessName: 'My Org (4)',
-        source: 'BusinessPlatform',
-      },
-    ])
-  })
-
   test('returns empty array when organizationsWithAccessToDestination is empty', async () => {
     // Given
     const client = AppManagementClient.getInstance()

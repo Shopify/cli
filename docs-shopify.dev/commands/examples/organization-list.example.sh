@@ -1,0 +1,1 @@
+shopify organization list [flags]
