@@ -21,7 +21,8 @@
   "license": "MIT",
   "type": "module",
   "bin": {
-    "shopify-mcp": "./bin/shopify-mcp.js"
+    "shopify-mcp": "./bin/shopify-mcp.js",
+    "shopify-mcp-http": "./bin/shopify-mcp-http.js"
   },
   "files": [
     "/bin",
