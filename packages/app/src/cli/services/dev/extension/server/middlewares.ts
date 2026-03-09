@@ -6,6 +6,8 @@ import {getWebSocketUrl} from '../../extension.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
 import {joinPath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {defineEventHandler, getRequestHeader, getRouterParams, sendRedirect, setResponseHeader} from 'h3'
+import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -68,7 +70,7 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
 
 export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
-    const {extensionId, assetPath = ''} = getRouterParams(event)
+    const {extensionId, assetPath} = getRouterParams(event)
     const extension = getExtensions().find((ext) => ext.devUUID === extensionId)
 
     if (!extension) {
@@ -84,7 +86,7 @@ export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExte
     const buildDirectory = dirname(extensionOutputPath)
 
     return fileServerMiddleware(event, {
-      filePath: joinPath(buildDirectory, assetPath),
+      filePath: joinPath(buildDirectory, assetPath!),
     })
   })
 }
@@ -115,7 +117,7 @@ export const devConsoleIndexMiddleware = defineEventHandler(async (event) => {
 })
 
 export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
-  const {assetPath = ''} = getRouterParams(event)
+  const {assetPath} = getRouterParams(event)
 
   const rootDirectory = await findPathUp(joinPath('assets', 'dev-console', 'extensions', 'dev-console', 'assets'), {
     type: 'directory',
@@ -130,7 +132,7 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
   }
 
   return fileServerMiddleware(event, {
-    filePath: joinPath(rootDirectory, assetPath),
+    filePath: joinPath(rootDirectory, assetPath!),
   })
 })
 
@@ -138,7 +140,7 @@ export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler((event) => {
     outputDebug(`UI extensions server received a ${event.method} request to URL ${event.path}`, devOptions.stdout)
   })
-}
+})
 
 export function getExtensionPayloadMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
@@ -192,7 +194,7 @@ export function getExtensionPayloadMiddleware({devOptions, getExtensions}: GetEx
 
 export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
-    const {extensionId: extensionID, extensionPointTarget: requestedTarget = ''} = getRouterParams(event)
+    const {extensionId: extensionID, extensionPointTarget: requestedTarget} = getRouterParams(event)
     const extension = getExtensions().find((ext) => ext.devUUID === extensionID)
 
     if (!extension) {
@@ -204,7 +206,7 @@ export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExte
 
     if (
       extension.configuration.type !== 'checkout_post_purchase' &&
-      !extension.hasExtensionPointTarget(requestedTarget)
+      !extension.hasExtensionPointTarget(requestedTarget!)
     ) {
       return sendError(event, {
         statusCode: 404,
@@ -212,7 +214,7 @@ export function getExtensionPointMiddleware({devOptions, getExtensions}: GetExte
       })
     }
 
-    const url = getExtensionPointRedirectUrl(requestedTarget, extension, devOptions)
+    const url = getExtensionPointRedirectUrl(requestedTarget!, extension, devOptions)
     if (!url) {
       return sendError(event, {
         statusCode: 404,
