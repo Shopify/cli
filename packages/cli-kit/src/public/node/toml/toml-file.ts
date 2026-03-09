@@ -69,8 +69,9 @@ export class TomlFile {
     const patches = flattenToPatchEntries(changes)
     const raw = await readFile(this.path)
     const updated = updateTomlValues(raw, patches)
+    const parsed = this.decode(updated)
     await writeFile(this.path, updated)
-    this.content = this.decode(updated)
+    this.content = parsed
   }
 
   /**
@@ -86,8 +87,9 @@ export class TomlFile {
     const keys = keyPath.split('.')
     const raw = await readFile(this.path)
     const updated = updateTomlValues(raw, [[keys, undefined]])
+    const parsed = this.decode(updated)
     await writeFile(this.path, updated)
-    this.content = this.decode(updated)
+    this.content = parsed
   }
 
   /**
@@ -102,6 +104,7 @@ export class TomlFile {
    */
   async replace(content: JsonMapType): Promise<void> {
     const encoded = encodeToml(content)
+    this.decode(encoded)
     await writeFile(this.path, encoded)
     this.content = content
   }
