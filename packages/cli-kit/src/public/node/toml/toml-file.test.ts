@@ -266,6 +266,21 @@ describe('TomlFile', () => {
         expect(file.content).toStrictEqual({name: 'app', client_id: '123'})
       })
     })
+
+    test('throws TomlParseError and does not write to disk when transform produces invalid TOML', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        const path = joinPath(dir, 'test.toml')
+        const originalContent = 'name = "app"\n'
+        await writeFile(path, originalContent)
+
+        const file = await TomlFile.read(path)
+        await expect(file.transformRaw(() => 'name = [invalid')).rejects.toThrow(TomlParseError)
+
+        const raw = await readFile(path)
+        expect(raw).toBe(originalContent)
+        expect(file.content).toStrictEqual({name: 'app'})
+      })
+    })
   })
 
   describe('constructor', () => {

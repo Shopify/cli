@@ -39,9 +39,13 @@ export class TomlFile {
    */
   static async read(path: string): Promise<TomlFile> {
     const raw = await readFile(path)
+    const content = TomlFile.decode(path, raw)
+    return new TomlFile(path, content)
+  }
+
+  private static decode(path: string, raw: string): JsonMapType {
     try {
-      const content = decodeToml(raw)
-      return new TomlFile(path, content)
+      return decodeToml(raw)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.line !== undefined && err.col !== undefined) {
@@ -77,7 +81,7 @@ export class TomlFile {
     const raw = await readFile(this.path)
     const updated = updateTomlValues(raw, patches)
     await writeFile(this.path, updated)
-    this.content = decodeToml(updated)
+    this.content = TomlFile.decode(this.path, updated)
   }
 
   /**
@@ -94,7 +98,7 @@ export class TomlFile {
     const raw = await readFile(this.path)
     const updated = updateTomlValues(raw, [[keys, undefined]])
     await writeFile(this.path, updated)
-    this.content = decodeToml(updated)
+    this.content = TomlFile.decode(this.path, updated)
   }
 
   /**
@@ -130,8 +134,9 @@ export class TomlFile {
   async transformRaw(transform: (raw: string) => string): Promise<void> {
     const raw = await readFile(this.path)
     const transformed = transform(raw)
+    const parsed = TomlFile.decode(this.path, transformed)
     await writeFile(this.path, transformed)
-    this.content = decodeToml(transformed)
+    this.content = parsed
   }
 }
 
