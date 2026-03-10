@@ -27,7 +27,7 @@ import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath, basename, normalizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {joinPath, normalizePath, resolvePath, relativePath, basename} from '@shopify/cli-kit/node/path'
 import {fileExists, touchFile, moveFile, writeFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -143,14 +143,11 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get outputFileName() {
-    const mode = this.specification.buildConfig.mode
-    if (mode === 'copy_files' || mode === 'theme') {
-      return ''
-    } else if (mode === 'function') {
-      return 'index.wasm'
-    } else {
-      return `${this.handle}.js`
-    }
+    return basename(this.outputRelativePath)
+  }
+
+  get outputRelativePath() {
+    return this.specification.getOutputRelativePath?.(this) ?? ''
   }
 
   constructor(options: {
@@ -168,19 +165,9 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     this.handle = this.buildHandle()
     this.localIdentifier = this.handle
     this.idEnvironmentVariableName = `SHOPIFY_${constantize(this.localIdentifier)}_ID`
-    this.outputPath = this.directory
+    this.outputPath = joinPath(this.directory, this.outputRelativePath)
     this.uid = this.buildUIDFromStrategy()
     this.devUUID = `dev-${this.uid}`
-
-    if (this.features.includes('esbuild') || this.type === 'tax_calculation') {
-      this.outputPath = joinPath(this.directory, 'dist', this.outputFileName)
-    }
-
-    if (this.isFunctionExtension) {
-      const config = this.configuration as unknown as FunctionConfigType
-      const defaultPath = joinPath('dist', 'index.wasm')
-      this.outputPath = joinPath(this.directory, config.build?.path ?? defaultPath)
-    }
   }
 
   get draftMessages() {
@@ -253,7 +240,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     const pathToMove = pathsToMove[0]
     if (pathToMove === undefined) return Promise.resolve()
 
-    const outputPath = joinPath(this.directory, 'dist', basename(pathToMove))
+    const outputPath = joinPath(this.directory, relativePath(inputPath, pathToMove))
     await moveFile(pathToMove, outputPath, {overwrite: true})
     outputDebug(`Source map for ${this.localIdentifier} created: ${outputPath}`)
   }
@@ -414,8 +401,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
   getOutputPathForDirectory(directory: string, outputId?: string) {
     const id = this.getOutputFolderId(outputId)
-    const outputFile = this.outputFileName === '' ? '' : joinPath('dist', this.outputFileName)
-    return joinPath(directory, id, outputFile)
+    return joinPath(directory, id, this.outputRelativePath)
   }
 
   get singleTarget() {
