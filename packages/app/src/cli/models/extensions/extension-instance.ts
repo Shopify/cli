@@ -46,7 +46,6 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
   EventsSpecIdentifier,
-
   // Hardcoded identifiers that don't exist locally.
   'data',
   'admin',
