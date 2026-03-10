@@ -2,6 +2,7 @@ import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
+import {fetchOrgFromId} from '../../services/dev/fetch.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
@@ -27,6 +28,8 @@ export default class Init extends AppLinkedCommand {
       char: 'n',
       env: 'SHOPIFY_FLAG_NAME',
       hidden: false,
+      description:
+        'The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.',
     }),
     path: Flags.string({
       char: 'p',
@@ -69,6 +72,7 @@ export default class Init extends AppLinkedCommand {
       description:
         'The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
       env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+      exclusive: ['client-id'],
     }),
   }
 
@@ -102,15 +106,7 @@ export default class Init extends AppLinkedCommand {
       let org: Organization
       if (flags['organization-id']) {
         // If an organization-id is provided, fetch the organization directly
-        const matchingOrg = await developerPlatformClient.orgFromId(flags['organization-id'])
-        if (!matchingOrg) {
-          throw new AbortError(
-            `Organization with ID ${flags['organization-id']} not found`,
-            "Run `shopify auth login` to confirm you've selected the right account, and verify your organization ID. " +
-              'You can find your organization ID in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
-          )
-        }
-        org = matchingOrg
+        org = await fetchOrgFromId(flags['organization-id'], developerPlatformClient)
       } else {
         org = await selectOrg()
       }

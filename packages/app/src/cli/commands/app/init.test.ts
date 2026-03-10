@@ -3,9 +3,15 @@ import initPrompt from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {selectOrg} from '../../services/context.js'
-import {appNamePrompt, createAsNewAppPrompt} from '../../prompts/dev.js'
+import {fetchOrgFromId, NoOrgError} from '../../services/dev/fetch.js'
+import {appNamePrompt, createAsNewAppPrompt, selectAppPrompt} from '../../prompts/dev.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
-import {testAppLinked, testDeveloperPlatformClient, testOrganization} from '../../models/app/app.test-data.js'
+import {
+  testAppLinked,
+  testDeveloperPlatformClient,
+  testOrganization,
+  testOrganizationApp,
+} from '../../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 import {generateRandomNameForSubdirectory} from '@shopify/cli-kit/node/fs'
@@ -15,6 +21,13 @@ vi.mock('../../prompts/init/init.js')
 vi.mock('../../services/init/init.js')
 vi.mock('../../utilities/developer-platform-client.js')
 vi.mock('../../services/context.js')
+vi.mock('../../services/dev/fetch.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../services/dev/fetch.js')>()
+  return {
+    ...actual,
+    fetchOrgFromId: vi.fn(),
+  }
+})
 vi.mock('../../prompts/dev.js')
 vi.mock('../../services/init/validate.js')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -75,8 +88,8 @@ describe('Init command', () => {
     vi.mocked(inferPackageManager).mockReturnValue('npm')
     vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
-    // Mock orgFromId to return the organization
-    vi.mocked(mockDeveloperPlatformClient.orgFromId).mockResolvedValue(mockOrganization)
+    // Mock fetchOrgFromId to return the organization
+    vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
 
     // Mock the orgAndApps method on the developer platform client
     vi.mocked(mockDeveloperPlatformClient.orgAndApps).mockResolvedValue({
@@ -114,7 +127,6 @@ describe('Init command', () => {
 
   test('fails with clear error message when invalid organization-id is provided', async () => {
     // Given
-    const validOrg = testOrganization()
     const mockDeveloperPlatformClient = testDeveloperPlatformClient()
 
     // Suppress stderr output for this error test
@@ -127,8 +139,10 @@ describe('Init command', () => {
       vi.mocked(inferPackageManager).mockReturnValue('npm')
       vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
 
-      // Mock orgFromId to return undefined for invalid organization
-      vi.mocked(mockDeveloperPlatformClient.orgFromId).mockResolvedValue(undefined)
+      // Mock fetchOrgFromId to throw NoOrgError for invalid organization
+      vi.mocked(fetchOrgFromId).mockRejectedValue(
+        new NoOrgError({type: 'UserAccount', email: 'test@example.com'}, 'invalid-org-id'),
+      )
 
       vi.mocked(initPrompt).mockResolvedValue({
         template: 'https://github.com/Shopify/shopify-app-template-remix',
@@ -144,7 +158,7 @@ describe('Init command', () => {
       ).rejects.toThrow('process.exit unexpectedly called with "1"')
 
       // Verify the error message was displayed
-      expect(outputMock.error()).toContain('Organization with ID invalid-org-id not found')
+      expect(outputMock.error()).toContain('No Organization found')
 
       // Verify initService was never called since validation failed
       expect(initService).not.toHaveBeenCalled()
@@ -152,5 +166,55 @@ describe('Init command', () => {
       // Always restore console.error, even if the test fails
       consoleErrorSpy.mockRestore()
     }
+  })
+
+  test('skips app selection prompts when organization has existing apps but --name flag is provided', async () => {
+    // Given
+    const mockOrganization = testOrganization()
+    const mockDeveloperPlatformClient = testDeveloperPlatformClient()
+    const mockApp = testAppLinked()
+    const existingApp = testOrganizationApp()
+
+    mockAndCaptureOutput()
+    vi.mocked(validateTemplateValue).mockReturnValue(undefined)
+    vi.mocked(validateFlavorValue).mockReturnValue(undefined)
+    vi.mocked(inferPackageManager).mockReturnValue('npm')
+    vi.mocked(selectDeveloperPlatformClient).mockReturnValue(mockDeveloperPlatformClient)
+
+    // Mock fetchOrgFromId to return the organization
+    vi.mocked(fetchOrgFromId).mockResolvedValue(mockOrganization)
+
+    // Mock the orgAndApps method to return existing apps
+    vi.mocked(mockDeveloperPlatformClient.orgAndApps).mockResolvedValue({
+      organization: mockOrganization,
+      apps: [existingApp],
+      hasMorePages: false,
+    })
+
+    vi.mocked(initPrompt).mockResolvedValue({
+      template: 'https://github.com/Shopify/shopify-app-template-remix',
+      templateType: 'remix',
+      globalCLIResult: {install: false, alreadyInstalled: false},
+    })
+    vi.mocked(initService).mockResolvedValue({app: mockApp})
+
+    // When
+    await Init.run(['--organization-id', mockOrganization.id, '--name', 'my-new-app', '--template', 'remix'])
+
+    // Then
+    // Verify that app selection prompts were NOT called even though org has existing apps
+    expect(selectOrg).not.toHaveBeenCalled()
+    expect(createAsNewAppPrompt).not.toHaveBeenCalled()
+    expect(selectAppPrompt).not.toHaveBeenCalled()
+    expect(appNamePrompt).not.toHaveBeenCalled()
+
+    // Verify the command completed successfully with the provided name
+    expect(initService).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'my-new-app',
+        packageManager: 'npm',
+        template: 'https://github.com/Shopify/shopify-app-template-remix',
+      }),
+    )
   })
 })
