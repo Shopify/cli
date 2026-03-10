@@ -72,10 +72,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
 
         await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(true)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'uid1', 'scriptToMove.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'uid1', 'scriptToMove.js.map'))).toBe(true)
+        expect(fileExistsSync(joinPath(outputPath, 'otherUID', 'scriptToIgnore.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'otherUID', 'scriptToIgnore.js.map'))).toBe(false)
       })
     })
   })
@@ -103,10 +103,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
 
         await extensionInstance.keepBuiltSourcemapsLocally(bundleInputPath)
 
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'wrongUID', 'scriptToMove.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'wrongUID', 'scriptToMove.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'otherUID', 'scriptToIgnore.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'otherUID', 'scriptToIgnore.js.map'))).toBe(false)
       })
     })
   })
@@ -133,10 +133,10 @@ describe('keepBuiltSourcemapsLocally', async () => {
 
         await extensionInstance.keepBuiltSourcemapsLocally(bundleDirectory)
 
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToMove.js.map'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js'))).toBe(false)
-        expect(fileExistsSync(joinPath(outputPath, 'dist', 'scriptToIgnore.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'uid1', 'scriptToMove.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'uid1', 'scriptToMove.js.map'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'otherUID', 'scriptToIgnore.js'))).toBe(false)
+        expect(fileExistsSync(joinPath(outputPath, 'otherUID', 'scriptToIgnore.js.map'))).toBe(false)
       })
     })
   })
