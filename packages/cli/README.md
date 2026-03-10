@@ -806,13 +806,14 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [--organization-id
-    <value>] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
+  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [--organization-id <value> | [--client-id
+    <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  [env: SHOPIFY_FLAG_PACKAGE_MANAGER]
                                   <options: npm|yarn|pnpm|bun>
-  -n, --name=<value>              [env: SHOPIFY_FLAG_NAME]
+  -n, --name=<value>              [env: SHOPIFY_FLAG_NAME] The name for the new app. When provided, skips the app
+                                  selection prompt and creates a new app with this name.
   -p, --path=<value>              [default: ., env: SHOPIFY_FLAG_PATH]
       --client-id=<value>         [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app. Use this to automatically
                                   link your new project to an existing app. Using this flag avoids the app selection

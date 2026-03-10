@@ -13,7 +13,7 @@ export interface appinit {
   '--flavor <value>'?: string
 
   /**
-   * 
+   * The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.
    * @environment SHOPIFY_FLAG_NAME
    */
   '-n, --name <value>'?: string

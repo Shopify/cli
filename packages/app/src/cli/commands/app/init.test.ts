@@ -217,4 +217,54 @@ describe('Init command', () => {
       }),
     )
   })
+
+  test('fails with clear error message when --name flag is empty', async () => {
+    // Given
+    // Suppress stderr output for this error test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      const outputMock = mockAndCaptureOutput()
+      vi.mocked(validateTemplateValue).mockReturnValue(undefined)
+      vi.mocked(validateFlavorValue).mockReturnValue(undefined)
+
+      // When/Then
+      await expect(Init.run(['--name', '', '--template', 'remix'])).rejects.toThrow(
+        'process.exit unexpectedly called with "1"',
+      )
+
+      // Verify the error message was displayed
+      expect(outputMock.error()).toContain("The --name flag can't be empty")
+
+      // Verify initService was never called since validation failed
+      expect(initService).not.toHaveBeenCalled()
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
+
+  test('fails with clear error message when --name flag is whitespace only', async () => {
+    // Given
+    // Suppress stderr output for this error test
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    try {
+      const outputMock = mockAndCaptureOutput()
+      vi.mocked(validateTemplateValue).mockReturnValue(undefined)
+      vi.mocked(validateFlavorValue).mockReturnValue(undefined)
+
+      // When/Then
+      await expect(Init.run(['--name', '   ', '--template', 'remix'])).rejects.toThrow(
+        'process.exit unexpectedly called with "1"',
+      )
+
+      // Verify the error message was displayed
+      expect(outputMock.error()).toContain("The --name flag can't be empty")
+
+      // Verify initService was never called since validation failed
+      expect(initService).not.toHaveBeenCalled()
+    } finally {
+      consoleErrorSpy.mockRestore()
+    }
+  })
 })

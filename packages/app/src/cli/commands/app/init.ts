@@ -82,6 +82,11 @@ export default class Init extends AppLinkedCommand {
     validateTemplateValue(flags.template)
     validateFlavorValue(flags.template, flags.flavor)
 
+    // Validate that --name is not empty/whitespace if provided
+    if (flags.name !== undefined && flags.name.trim() === '') {
+      throw new AbortError("The --name flag can't be empty", 'Provide a valid app name, for example: --name my-app')
+    }
+
     const inferredPackageManager = inferPackageManager(flags['package-manager'])
     const name = flags.name ?? (await getAppName(flags.path))
 
