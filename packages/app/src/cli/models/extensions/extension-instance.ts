@@ -44,6 +44,7 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
   EventsSpecIdentifier,
+  'admin',
 ]
 
 /**
