@@ -90,10 +90,7 @@ import {
   DevSessionUpdateMutationVariables,
 } from '../../api/graphql/app-dev/generated/dev-session-update.js'
 import {DevSessionDelete, DevSessionDeleteMutation} from '../../api/graphql/app-dev/generated/dev-session-delete.js'
-import {
-  FetchStoreByDomain,
-  FetchStoreByDomainQueryVariables,
-} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
+import {FetchStoreByDomain} from '../../api/graphql/business-platform-organizations/generated/fetch_store_by_domain.js'
 import {
   ListAppDevStores,
   ListAppDevStoresQuery,
@@ -841,26 +838,30 @@ export class AppManagementClient implements DeveloperPlatformClient {
   }
 
   async storeByDomain(orgId: string, shopDomain: string, storeTypes: Store[]): Promise<OrganizationStore | undefined> {
-    const queryVariables: FetchStoreByDomainQueryVariables = {
-      domain: shopDomain,
-      storeTypes: storeTypes.map((t) => t.toLowerCase()).join(','),
-    }
-    const storesResult = await this.businessPlatformOrganizationsRequest({
-      query: FetchStoreByDomain,
-      organizationId: String(numberFromGid(orgId)),
-      variables: queryVariables,
-    })
+    const results = await Promise.all(
+      storeTypes.map((storeType) =>
+        this.businessPlatformOrganizationsRequest({
+          query: FetchStoreByDomain,
+          organizationId: String(numberFromGid(orgId)),
+          variables: {
+            domain: shopDomain,
+            filters: [{field: 'STORE_TYPE' as const, operator: 'EQUALS' as const, value: storeType.toLowerCase()}],
+          },
+        }),
+      ),
+    )
 
-    const organization = storesResult.organization
-
-    if (!organization) {
+    const organizations = results.map((result) => result.organization).filter((org) => org != null)
+    if (organizations.length === 0) {
       throw new AbortError(`No organization found`)
     }
 
-    const bpStoresArray = organization.accessibleShops?.edges.map((value) => value.node) ?? []
-    const provisionable = isStoreProvisionable(organization.currentUser?.organizationPermissions ?? [])
-    const storesArray = mapBusinessPlatformStoresToOrganizationStores(bpStoresArray, provisionable)
-    return storesArray[0]
+    const stores = organizations.flatMap((org) => {
+      const nodes = org.accessibleShops?.edges.map((edge) => edge.node) ?? []
+      const provisionable = isStoreProvisionable(org.currentUser?.organizationPermissions ?? [])
+      return mapBusinessPlatformStoresToOrganizationStores(nodes, provisionable)
+    })
+    return stores[0]
   }
 
   async ensureUserAccessToStore(orgId: string, store: OrganizationStore): Promise<void> {
