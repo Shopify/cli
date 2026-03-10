@@ -29,7 +29,7 @@ function sleep(ms) {
  * @property {string} owner
  * @property {string} repo
  * @property {string} pathToFile
- * @property {string} localPath
+ * @property {string[]} localPaths
  * @property {string | undefined} [branch]
  * @property {boolean} [usesLfs]
  */
@@ -42,64 +42,54 @@ const schemas = [
     owner: 'Shopify',
     repo: 'partners',
     pathToFile: 'db/graphql/cli_schema.graphql',
-    localPath: './packages/app/src/cli/api/graphql/partners/cli_schema.graphql',
+    localPaths: ['./packages/app/src/cli/api/graphql/partners/cli_schema.graphql'],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/destinations_schema.graphql',
-    localPath: './packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql',
+    localPaths: ['./packages/app/src/cli/api/graphql/business-platform-destinations/destinations_schema.graphql'],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/platforms/organizations/db/graphql/organizations_schema.graphql',
-    localPath: './packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql',
+    localPaths: ['./packages/app/src/cli/api/graphql/business-platform-organizations/organizations_schema.graphql'],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/app_dev_schema_unstable_public.graphql',
-    localPath: './packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql',
+    localPaths: ['./packages/app/src/cli/api/graphql/app-dev/app_dev_schema.graphql'],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/app_management_schema_unstable_public.graphql',
-    localPath: './packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql',
+    localPaths: ['./packages/app/src/cli/api/graphql/app-management/app_management_schema.graphql'],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
-    localPath: './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
+    localPaths: [
+      './packages/cli-kit/src/cli/api/graphql/admin/admin_schema.graphql',
+      './packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql',
+      './packages/app/src/cli/api/graphql/admin/admin_schema.graphql',
+    ],
     usesLfs: true,
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/webhooks_schema_unstable_public.graphql',
-    localPath: './packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql',
+    localPaths: ['./packages/app/src/cli/api/graphql/webhooks/webhooks_schema.graphql'],
   },
   {
     owner: 'shop',
     repo: 'world',
     pathToFile: 'areas/core/shopify/db/graphql/functions_cli_api_schema_unstable_public.graphql',
-    localPath: './packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql',
-  },
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
-    localPath: './packages/app/src/cli/api/graphql/bulk-operations/admin_schema.graphql',
-    usesLfs: true,
-  },
-  {
-    owner: 'shop',
-    repo: 'world',
-    pathToFile: 'areas/core/shopify/db/graphql/admin_schema_unstable_public.graphql',
-    localPath: './packages/app/src/cli/api/graphql/admin/admin_schema.graphql',
-    usesLfs: true,
+    localPaths: ['./packages/app/src/cli/api/graphql/functions/functions_cli_schema.graphql'],
   },
 ]
 
@@ -152,16 +142,13 @@ async function fetchFileForSchema(schema, octokit) {
         content = Buffer.from(data).toString('utf-8')
       }
 
-      // Define the local path where the file will be saved
-      const localFilePath = schema.localPath
-
-      const dir = path.dirname(localFilePath)
-      fs.mkdirSync(dir, {recursive: true})
-
-      // Write the content to a local file
-      fs.writeFileSync(localFilePath, content)
-
-      console.log(`File downloaded successfully to ${localFilePath}`)
+      // Write the content to all local paths
+      for (const localFilePath of schema.localPaths) {
+        const dir = path.dirname(localFilePath)
+        fs.mkdirSync(dir, {recursive: true})
+        fs.writeFileSync(localFilePath, content)
+        console.log(`File saved to ${localFilePath}`)
+      }
       return true
     } catch (error) {
       const isRateLimited = error.status === 429
@@ -218,8 +205,10 @@ async function fetchFilesFromLocal() {
     const localDir = schema.repo === 'world' ? '//' : schema.repo
     const localRepoDirectory = execSync(`/opt/dev/bin/dev cd --no-chdir ${localDir}`).toString().split('/areas')[0].trim()
     const sourcePath = path.join(localRepoDirectory, schema.pathToFile)
-    console.log('Copying', sourcePath, 'to', schema.localPath)
-    fs.copyFileSync(sourcePath, schema.localPath)
+    for (const localPath of schema.localPaths) {
+      console.log('Copying', sourcePath, 'to', localPath)
+      fs.copyFileSync(sourcePath, localPath)
+    }
   }
   console.log('Done!')
 }
