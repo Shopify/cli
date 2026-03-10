@@ -482,6 +482,7 @@ async function handleFailedUploads(
   }
 
   recordEvent(`theme-service:upload-failed-retry:${failedUploadParams.length}`)
+  await new Promise((resolve) => setTimeout(resolve, (count + 1) * 1000))
   return handleBulkUpload(failedUploadParams, themeId, session, count + 1)
 }
 

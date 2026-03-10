@@ -560,6 +560,66 @@ describe('theme-uploader', () => {
     )
   })
 
+  test('waits before retrying failed uploads', async () => {
+    // Given
+    const remoteChecksums = [{key: 'assets/existing.liquid', checksum: '1'}]
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([['assets/new.liquid', {checksum: '2', key: ''}]]),
+    )
+
+    vi.mocked(bulkUploadThemeAssets)
+      .mockResolvedValueOnce([
+        // ensureThemeCreation call — MINIMUM_THEME_ASSETS upload
+        {
+          key: 'config/settings_schema.json',
+          success: true,
+          errors: {},
+          operation: Operation.Upload,
+          asset: {key: 'config/settings_schema.json', checksum: 'abc'},
+        },
+      ])
+      .mockResolvedValueOnce([
+        // first upload attempt for assets/new.liquid — fails
+        {
+          key: 'assets/new.liquid',
+          success: false,
+          errors: {},
+          operation: Operation.Upload,
+          asset: {key: 'assets/new.liquid', checksum: '2'},
+        },
+      ])
+      .mockResolvedValue([
+        // retry — succeeds
+        {
+          key: 'assets/new.liquid',
+          success: true,
+          errors: {},
+          operation: Operation.Upload,
+          asset: {key: 'assets/new.liquid', checksum: '2'},
+        },
+      ])
+
+    vi.useFakeTimers()
+
+    // When
+    const {renderThemeSyncProgress} = uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    const progressPromise = renderThemeSyncProgress()
+    await vi.runAllTimersAsync()
+    await progressPromise
+
+    vi.useRealTimers()
+
+    // Then — initial creation + failed attempt + successful retry
+    expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(3)
+  })
+
   test('should not delete or upload files specified by the --ignore flag', async () => {
     // Given
     const remote = [

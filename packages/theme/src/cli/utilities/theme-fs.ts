@@ -53,6 +53,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   const files = new Map<string, ThemeAsset>()
   const uploadErrors = new Map<string, string[]>()
   const unsyncedFileKeys = new Set<string>()
+  const pendingDebounces = new Map<string, ReturnType<typeof setTimeout>>()
   const filterPatterns = {
     ignoreFromFile: [] as string[],
     ignore: options?.filters?.ignore ?? [],
@@ -105,8 +106,6 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
     filePath: string,
   ) {
     if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD && filePath === inferLocalHotReloadScriptPath()) {
-      // Trigger a full browser when the local hot reload logic changes.
-      // This only happens during local Shopifolk development.
       triggerBrowserFullReload(themeId, filePath)
       return
     }
@@ -124,19 +123,29 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
       }
     }
 
-    notifyFileChange(fileKey)
-      .then(() => {
-        switch (eventName) {
-          case 'add':
-          case 'change':
-            return handleFileUpdate(eventName, themeId, adminSession, fileKey)
-          case 'unlink':
-            return handleFileDelete(themeId, adminSession, fileKey, uploadErrors)
-        }
-      })
-      .catch((error) => {
-        outputWarn(`Error handling file event for ${fileKey}: ${error}`)
-      })
+    if (eventName === 'unlink') {
+      notifyFileChange(fileKey)
+        .then(() => handleFileDelete(themeId, adminSession, fileKey, uploadErrors))
+        .catch((error) => {
+          outputWarn(`Error handling file event for ${fileKey}: ${error}`)
+        })
+      return
+    }
+
+    const existing = pendingDebounces.get(fileKey)
+    if (existing) clearTimeout(existing)
+
+    pendingDebounces.set(
+      fileKey,
+      setTimeout(() => {
+        pendingDebounces.delete(fileKey)
+        notifyFileChange(fileKey)
+          .then(() => handleFileUpdate(eventName, themeId, adminSession, fileKey))
+          .catch((error) => {
+            outputWarn(`Error handling file event for ${fileKey}: ${error}`)
+          })
+      }, 300),
+    )
   }
 
   function notifyFileChange(fileKey: string): Promise<void> {

@@ -949,6 +949,120 @@ describe('theme-fs', () => {
     })
   })
 
+  describe('file event debouncing', () => {
+    const themeId = '1'
+    const adminSession = {token: 'token', storeFqdn: 'store.myshopify.com'} as AdminSession
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    test('debounces rapid successive change events for the same file to a single upload', async () => {
+      // Given
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Upload},
+      ])
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+      // Force checksum mismatch so handleFileUpdate marks the file as unsynced
+      themeFileSystem.files.delete('assets/base.css')
+
+      const syncPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('change', (event) => {
+          if (event.fileKey === 'assets/base.css') {
+            event.onSync(resolve, resolve)
+          }
+        })
+      })
+
+      // When — emit 3 rapid change events for the same file before the debounce fires
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('change', `${root}/assets/base.css`)
+      watcher.emit('change', `${root}/assets/base.css`)
+      watcher.emit('change', `${root}/assets/base.css`)
+
+      // Wait for the debounced sync to complete
+      await syncPromise
+
+      // Then — only one upload should have fired
+      expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(1)
+    })
+
+    test('fires separate uploads for changes to different files', async () => {
+      // Given
+      vi.mocked(bulkUploadThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Upload},
+      ])
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+      // Force checksum mismatch so both files are treated as changed
+      themeFileSystem.files.delete('assets/base.css')
+      themeFileSystem.files.delete('layout/theme.liquid')
+
+      const syncedKeys = new Set<string>()
+      const bothSyncedPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('change', (event) => {
+          event.onSync(
+            () => {
+              syncedKeys.add(event.fileKey)
+              if (syncedKeys.has('assets/base.css') && syncedKeys.has('layout/theme.liquid')) {
+                resolve()
+              }
+            },
+            () => {
+              syncedKeys.add(event.fileKey)
+              if (syncedKeys.has('assets/base.css') && syncedKeys.has('layout/theme.liquid')) {
+                resolve()
+              }
+            },
+          )
+        })
+      })
+
+      // When — emit change events for two different files
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('change', `${root}/assets/base.css`)
+      watcher.emit('change', `${root}/layout/theme.liquid`)
+
+      // Wait for both debounced syncs to complete
+      await bothSyncedPromise
+
+      // Then — each file should trigger its own upload
+      expect(bulkUploadThemeAssets).toHaveBeenCalledTimes(2)
+    })
+
+    test('does not debounce unlink events', async () => {
+      // Given
+      vi.mocked(deleteThemeAssets).mockResolvedValue([
+        {key: 'assets/base.css', success: true, operation: Operation.Delete},
+      ])
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      const deleteEventPromise = new Promise<void>((resolve) => {
+        themeFileSystem.addEventListener('unlink', () => {
+          setImmediate(resolve)
+        })
+      })
+
+      // When — emit unlink event (no timer involved)
+      const watcher = chokidar.watch('') as EventEmitter
+      watcher.emit('unlink', `${root}/assets/base.css`)
+
+      await deleteEventPromise
+
+      // Then
+      expect(deleteThemeAssets).toHaveBeenCalledWith(Number(themeId), ['assets/base.css'], adminSession)
+    })
+  })
+
   function fsEntry({key, checksum}: Checksum): [string, ThemeAsset] {
     return [
       key,
