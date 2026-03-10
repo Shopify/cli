@@ -1,9 +1,11 @@
+import {ExtensionInstance} from '../extension-instance.js'
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {createExtensionSpecification} from '../specification.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/post-purchase-ui-extensions'
 
+type CheckoutPostPurchaseConfigType = zod.infer<typeof CheckoutPostPurchaseSchema>
 const CheckoutPostPurchaseSchema = BaseSchema.extend({
   metafields: zod.array(MetafieldSchema).optional(),
 })
@@ -15,6 +17,8 @@ const checkoutPostPurchaseSpec = createExtensionSpecification({
   schema: CheckoutPostPurchaseSchema,
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path'],
   buildConfig: {mode: 'ui'},
+  getOutputFileName: (extension: ExtensionInstance<CheckoutPostPurchaseConfigType>) => `${extension.handle}.js`,
+  getOutputRelativePath: (_extension: ExtensionInstance<CheckoutPostPurchaseConfigType>) => 'dist',
   deployConfig: async (config, _) => {
     return {metafields: config.metafields ?? []}
   },

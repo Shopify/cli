@@ -1,10 +1,12 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 
 const dependency = '@shopify/checkout-ui-extensions'
 
+type CheckoutConfigType = zod.infer<typeof CheckoutSchema>
 const CheckoutSchema = BaseSchema.extend({
   name: zod.string(),
   extension_points: zod.array(zod.string()).optional(),
@@ -22,6 +24,8 @@ const checkoutSpec = createExtensionSpecification({
   schema: CheckoutSchema,
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path', 'generates_source_maps'],
   buildConfig: {mode: 'ui'},
+  getOutputFileName: (extension: ExtensionInstance<CheckoutConfigType>) => `${extension.handle}.js`,
+  getOutputRelativePath: (_extension: ExtensionInstance<CheckoutConfigType>) => 'dist',
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extension_points,

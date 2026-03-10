@@ -151,7 +151,8 @@ export async function buildFunctionExtension(
   try {
     const bundlePath = extension.outputPath
     const relativeBuildPath =
-      (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ?? joinPath('dist', 'index.wasm')
+      (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ??
+      joinPath(extension.specification.getOutputRelativePath?.(extension) ?? '', extension.outputFileName)
 
     extension.outputPath = joinPath(extension.directory, relativeBuildPath)
 
