@@ -8,6 +8,22 @@ import {execSync} from "node:child_process";
 
 const BRANCH = 'main'
 
+// Retry config for GitHub API rate limiting (gitmon).
+// Uses longer delays than cli-kit's DEFAULT_RETRY_DELAY_MS (1s) because gitmon
+// blocks by subnet/network pattern, requiring more patience than typical API throttling.
+// Exponential backoff: 5s → 10s → 20s (35s total) is acceptable for CI scripts.
+const MAX_RETRIES = 3
+const INITIAL_RETRY_DELAY_MS = 5000
+
+/**
+ * Sleep for the specified number of milliseconds
+ * @param {number} ms
+ * @returns {Promise<void>}
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 /**
  * @typedef {Object} Schema
  * @property {string} owner
@@ -94,52 +110,86 @@ const schemas = [
  * @returns {Promise<boolean>}
  */
 async function fetchFileForSchema(schema, octokit) {
-  try {
-    // Fetch the file content from the repository
-    const branch = schema.branch ?? BRANCH
-    const owner = schema.owner
-    const repoName = schema.repo
+  const branch = schema.branch ?? BRANCH
+  const owner = schema.owner
+  const repoName = schema.repo
+  const fileDescription = schema.usesLfs
+    ? `LFS file ${owner}/${repoName}#${branch}: ${schema.pathToFile}`
+    : `${owner}/${repoName}#${branch}: ${schema.pathToFile}`
 
-    let content = ''
-    if (schema.usesLfs) {
-      console.log(`\nFetching LFS file ${owner}/${repoName}#${branch}: ${schema.pathToFile} ...`)
-      const {data: {download_url}} = await octokit.repos.getContent({
-        mediaType: { format: "json" },
-        owner: owner,
-        repo: repoName,
-        path: schema.pathToFile,
-        ref: branch,
-      })
-      console.log(`LFS download via ${download_url}...`)
-      content = await fetch(download_url).then(res => res.text())
-    } else {
-      console.log(`\nFetching ${owner}/${repoName}#${branch}: ${schema.pathToFile} ...`)
-      const {data} = await octokit.repos.getContent({
-        mediaType: { format: "raw" },
-        owner: owner,
-        repo: repoName,
-        path: schema.pathToFile,
-        ref: branch,
-      })
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      let content = ''
+      if (schema.usesLfs) {
+        console.log(`\nFetching ${fileDescription} ...`)
+        const {data: {download_url}} = await octokit.repos.getContent({
+          mediaType: { format: "json" },
+          owner: owner,
+          repo: repoName,
+          path: schema.pathToFile,
+          ref: branch,
+        })
+        console.log(`LFS download via ${download_url}...`)
+        content = await fetch(download_url).then(res => {
+          if (!res.ok) {
+            const error = new Error(`HTTP ${res.status}: ${res.statusText}`)
+            error.status = res.status
+            error.response = {headers: res.headers}
+            throw error
+          }
+          return res.text()
+        })
+      } else {
+        console.log(`\nFetching ${fileDescription} ...`)
+        const {data} = await octokit.repos.getContent({
+          mediaType: { format: "raw" },
+          owner: owner,
+          repo: repoName,
+          path: schema.pathToFile,
+          ref: branch,
+        })
 
-      content = Buffer.from(data).toString('utf-8')
+        content = Buffer.from(data).toString('utf-8')
+      }
+
+      // Define the local path where the file will be saved
+      const localFilePath = schema.localPath
+
+      const dir = path.dirname(localFilePath)
+      fs.mkdirSync(dir, {recursive: true})
+
+      // Write the content to a local file
+      fs.writeFileSync(localFilePath, content)
+
+      console.log(`File downloaded successfully to ${localFilePath}`)
+      return true
+    } catch (error) {
+      const isRateLimited = error.status === 429
+      const isTransientNetworkError = ['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNREFUSED', 'EAI_AGAIN']
+        .includes(error.code)
+      const isRetryable = isRateLimited || isTransientNetworkError
+      const hasRetriesLeft = attempt < MAX_RETRIES
+
+      if (isRetryable && hasRetriesLeft) {
+        const retryAfterHeader = error.response?.headers?.['retry-after']
+        const parsedRetryAfter = parseInt(retryAfterHeader, 10)
+        const retryAfterSeconds = (!isNaN(parsedRetryAfter) && parsedRetryAfter > 0) ? Math.min(parsedRetryAfter, 120) : null
+        const delayMs = retryAfterSeconds ? retryAfterSeconds * 1000 : INITIAL_RETRY_DELAY_MS * Math.pow(2, attempt)
+        const delaySeconds = Math.round(delayMs / 1000)
+
+        const reason = isRateLimited ? 'Rate limited' : `Network error (${error.code})`
+        console.warn(`${reason} fetching ${fileDescription}. Retrying in ${delaySeconds}s (retry ${attempt + 1} of ${MAX_RETRIES}). Error: ${error.message}`)
+        await sleep(delayMs)
+        continue
+      }
+
+      console.error(`Error fetching ${fileDescription}: ${error.message}`)
+      return false
     }
-
-    // Define the local path where the file will be saved
-    const localFilePath = schema.localPath
-
-    const dir = path.dirname(localFilePath)
-    fs.mkdirSync(dir, {recursive: true})
-
-    // Write the content to a local file
-    fs.writeFileSync(localFilePath, content)
-
-    console.log(`File downloaded successfully to ${localFilePath}`)
-    return true
-  } catch (error) {
-    console.error(`Error fetching file: ${error.message}`)
-    return false
   }
+
+  // All retries exhausted without success
+  return false
 }
 
 /**
