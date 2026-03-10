@@ -36,6 +36,7 @@ export interface BuildManifest {
 
 const missingExtensionPointsMessage = 'No extension targets defined, add a `targeting` field to your configuration'
 
+type UIExtensionConfigType = zod.infer<typeof UIExtensionSchema>
 export const UIExtensionSchema = BaseSchema.extend({
   name: zod.string(),
   type: zod.literal('ui_extension'),
@@ -102,6 +103,8 @@ const uiExtensionSpec = createExtensionSpecification({
   dependency,
   schema: UIExtensionSchema,
   buildConfig: {mode: 'ui'},
+  getOutputFileName: (extension: ExtensionInstance<UIExtensionConfigType>) =>
+    joinPath('dist', `${extension.handle}.js`),
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'esbuild', 'generates_source_maps']
     const needsCart =

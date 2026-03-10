@@ -72,6 +72,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
+  getOutputFileName?: (extension: ExtensionInstance<TConfiguration>) => string
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,

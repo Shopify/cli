@@ -1,6 +1,7 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
@@ -88,6 +89,8 @@ const functionSpec = createExtensionSpecification({
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
   buildConfig: {mode: 'function'},
+  getOutputFileName: (extension: ExtensionInstance<FunctionConfigType>) =>
+    extension.configuration.build?.path ?? joinPath('dist', 'index.wasm'),
   deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined
     const moduleId = randomUUID()
