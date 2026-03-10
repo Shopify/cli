@@ -2,6 +2,7 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema, MetafieldSchema} from '../schemas.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const CartLinePropertySchema = zod.object({
   key: zod.string(),
@@ -31,7 +32,7 @@ const spec = createExtensionSpecification({
   schema: TaxCalculationsSchema,
   appModuleFeatures: (_) => [],
   buildConfig: {mode: 'tax_calculation'},
-  getOutputRelativePath: (extension: ExtensionInstance<TaxCalculationsConfigType>) => `dist/${extension.handle}.js`,
+  getOutputRelativePath: (extension: ExtensionInstance<TaxCalculationsConfigType>) => joinPath('dist', `${extension.handle}.js`),
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.production_api_base_url,

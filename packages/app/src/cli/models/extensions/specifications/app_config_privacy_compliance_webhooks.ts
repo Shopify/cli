@@ -77,13 +77,13 @@ function relativeUri(uri?: string, appUrl?: string) {
 }
 
 function getCustomersDeletionUri(webhooks: WebhooksConfig) {
-  return getComplianceUri(webhooks, 'customers/redact') || webhooks?.privacy_compliance?.customer_deletion_url
+  return getComplianceUri(webhooks, 'customers/redact') ?? webhooks?.privacy_compliance?.customer_deletion_url
 }
 
 function getCustomersDataRequestUri(webhooks: WebhooksConfig) {
-  return getComplianceUri(webhooks, 'customers/data_request') || webhooks?.privacy_compliance?.customer_data_request_url
+  return getComplianceUri(webhooks, 'customers/data_request') ?? webhooks?.privacy_compliance?.customer_data_request_url
 }
 
 function getShopDeletionUri(webhooks: WebhooksConfig) {
-  return getComplianceUri(webhooks, 'shop/redact') || webhooks?.privacy_compliance?.shop_deletion_url
+  return getComplianceUri(webhooks, 'shop/redact') ?? webhooks?.privacy_compliance?.shop_deletion_url
 }
