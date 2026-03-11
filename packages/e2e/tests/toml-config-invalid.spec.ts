@@ -37,6 +37,7 @@ test.describe('TOML config invalid', () => {
         const output = result.stdout + result.stderr
         console.log(`[${label}] exit code: ${result.exitCode}\n[${label}] output:\n${output}`)
         expect(result.exitCode, `expected deploy to fail for ${label}, but it succeeded:\n${output}`).not.toBe(0)
+        expect(output.toLowerCase(), `expected error output for ${label}:\n${output}`).toMatch(/error|invalid|failed/)
       } finally {
         fs.rmSync(appDir, {recursive: true, force: true})
       }

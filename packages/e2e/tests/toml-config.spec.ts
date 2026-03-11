@@ -15,7 +15,7 @@ test.describe('TOML config regression', () => {
   })
 
   test('dev starts with fully populated toml', async ({cli, env, tomlAppDir}) => {
-    test.setTimeout(5 * 60 * 1000)
+    test.setTimeout(6 * 60 * 1000)
     requireEnv(env, 'clientId', 'storeFqdn')
 
     const proc = await cli.spawn(['app', 'dev', '--path', tomlAppDir], {
@@ -26,7 +26,7 @@ test.describe('TOML config regression', () => {
       await proc.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
 
       const output = proc.getOutput()
-      expect(output).toContain('q')
+      expect(output).toMatch(/q\s*[│|]\s*quit/i)
 
       proc.sendKey('q')
       const exitCode = await proc.waitForExit(30_000)

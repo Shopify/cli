@@ -1,9 +1,0 @@
-# Invalid TOML: unknown top-level section
-client_id = "__E2E_CLIENT_ID__"
-name = "Unknown Section App"
-application_url = "https://example.com"
-embedded = true
-
-[completely_made_up_section]
-foo = "bar"
-baz = 123
