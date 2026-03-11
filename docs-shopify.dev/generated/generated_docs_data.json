@@ -5578,6 +5578,71 @@
     "related": []
   },
   {
+    "name": "organization list",
+    "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
+    "overviewPreviewDescription": "List Shopify organizations you have access to.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "organization list",
+            "code": "shopify organization list [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "organization list"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `organization list` command:",
+        "type": "organizationlist",
+        "typeDefinitions": {
+          "organizationlist": {
+            "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
+            "name": "organizationlist",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "\"\"",
+                "description": "Output the result as JSON.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              }
+            ],
+            "value": "export interface organizationlist {\n  /**\n   * Output the result as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "organization",
+    "related": []
+  },
+  {
     "name": "search",
     "description": "Starts a search on shopify.dev.",
     "overviewPreviewDescription": "Starts a search on shopify.dev.",

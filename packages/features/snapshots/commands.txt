@@ -74,6 +74,8 @@
 │  ├─ shortcut
 │  ├─ unlink
 │  └─ upgrade
+├─ organization
+│  └─ list
 ├─ plugins
 │  ├─ add
 │  ├─ inspect

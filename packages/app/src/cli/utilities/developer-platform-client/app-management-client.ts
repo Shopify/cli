@@ -378,11 +378,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const organizationsResult = await this.businessPlatformRequest({query: ListOrganizations})
     if (!organizationsResult.currentUserAccount) return []
     const orgs = organizationsResult.currentUserAccount.organizationsWithAccessToDestination.nodes
-    const uniqueNames = new Set(orgs.map((org) => org.name))
-    const duplicatedNames = uniqueNames.size < orgs.length
     return orgs.map((org) => ({
       id: idFromEncodedGid(org.id),
-      businessName: duplicatedNames ? `${org.name} (${idFromEncodedGid(org.id)})` : org.name,
+      businessName: org.name,
       source: this.organizationSource,
     }))
   }
@@ -1246,11 +1244,18 @@ function createAppVars(
 // Business platform uses base64-encoded GIDs, while App Management uses
 // just the integer portion of that ID. These functions convert between the two.
 
+// 1234 => gid://organization/Organization/1234
+export function organizationGidForBP(id: string): string {
+  const num = id.startsWith('gid://') ? numberFromGid(id) : Number(id)
+  if (Number.isNaN(num)) {
+    throw new Error(`Invalid organization ID: ${id}`)
+  }
+  return `gid://organization/Organization/${num}`
+}
+
 // 1234 => gid://organization/Organization/1234 => base64
 export function encodedGidFromOrganizationIdForBP(id: string): string {
-  const num = id.startsWith('gid://') ? numberFromGid(id) : Number(id)
-  const gid = `gid://organization/Organization/${num}`
-  return Buffer.from(gid).toString('base64')
+  return Buffer.from(organizationGidForBP(id)).toString('base64')
 }
 
 // App Managament uses a different GID format than Business Platform for organizationId.

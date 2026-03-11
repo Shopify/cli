@@ -61,6 +61,7 @@
 * [`shopify hydrogen shortcut`](#shopify-hydrogen-shortcut)
 * [`shopify hydrogen unlink`](#shopify-hydrogen-unlink)
 * [`shopify hydrogen upgrade`](#shopify-hydrogen-upgrade)
+* [`shopify organization list`](#shopify-organization-list)
 * [`shopify plugins add PLUGIN`](#shopify-plugins-add-plugin)
 * [`shopify plugins:inspect PLUGIN...`](#shopify-pluginsinspect-plugin)
 * [`shopify plugins install PLUGIN`](#shopify-plugins-install-plugin)
@@ -1743,6 +1744,25 @@ FLAGS
 
 DESCRIPTION
   Upgrade Remix and Hydrogen npm dependencies.
+```
+
+## `shopify organization list`
+
+List Shopify organizations you have access to.
+
+```
+USAGE
+  $ shopify organization list [-j] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json      [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+      --no-color  [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  List Shopify organizations you have access to.
+
+  Lists the Shopify organizations that you have access to, along with their organization IDs.
 ```
 
 ## `shopify plugins add PLUGIN`

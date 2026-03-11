@@ -17,7 +17,13 @@ export async function selectOrganizationPrompt(organizations: Organization[]): P
     return organizations[0]!
   }
 
-  const orgList = organizations.map((org) => ({label: org.businessName, value: org.id}))
+  // Add ID suffix to disambiguate when duplicate names exist
+  const uniqueNames = new Set(organizations.map((org) => org.businessName))
+  const hasDuplicates = uniqueNames.size < organizations.length
+  const orgList = organizations.map((org) => ({
+    label: hasDuplicates ? `${org.businessName} (${org.id})` : org.businessName,
+    value: org.id,
+  }))
   const id = await renderAutocompletePrompt({
     message: `Which organization is this work for?`,
     choices: orgList,

@@ -35,11 +35,14 @@ import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
 import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
+import OrganizationList from './commands/organization/list.js'
+import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
- * All app commands should extend AppCommand.
+ * App commands should extend AppLinkedCommand or AppUnlinkedCommand.
+ * Organization commands extend BaseCommand directly.
  */
-export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlinkedCommand} = {
+export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlinkedCommand | typeof BaseCommand} = {
   'app:build': Build,
   'app:bulk:cancel': BulkCancel,
   'app:bulk:status': BulkStatus,
@@ -72,6 +75,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:webhook:trigger': WebhookTrigger,
   'webhook:trigger': WebhookTriggerDeprecated,
   'demo:watcher': DemoWatcher,
+  'organization:list': OrganizationList,
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
