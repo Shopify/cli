@@ -1,7 +1,17 @@
 [
   {
+    "category": "app-configuration",
+    "title": "App configuration (app.toml)",
+    "sections": []
+  },
+  {
     "category": "app",
     "title": "Shopify CLI App commands",
+    "sections": []
+  },
+  {
+    "category": "extension-configuration",
+    "title": "Extension configuration (extension.toml)",
     "sections": []
   },
   {

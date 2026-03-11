@@ -7,7 +7,7 @@ import type {RemoteAwareExtensionSpecification} from '../../models/extensions/sp
 /**
  * Represents a single field extracted from a JSON Schema.
  */
-export interface SchemaField {
+interface SchemaField {
   name: string
   type: string
   description?: string
@@ -51,7 +51,7 @@ interface JsonSchemaProperty {
 /**
  * Walk a dereferenced JSON Schema object and extract fields.
  */
-export function jsonSchemaToFields(schema: JsonSchemaProperty, parentRequired?: string[]): SchemaField[] {
+function jsonSchemaToFields(schema: JsonSchemaProperty, parentRequired?: string[]): SchemaField[] {
   const properties = schema.properties
   if (!properties) return []
 
@@ -278,7 +278,7 @@ function tsTypeForField(field: SchemaField): string {
 }
 
 function escapeSingleQuotes(str: string): string {
-  return str.replace(/'/g, "\\'")
+  return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 }
 
 // ---------------------------------------------------------------------------
