@@ -13,6 +13,7 @@ export function resolveStore(store: string | undefined): string | undefined {
 }
 
 export async function handleAuthLogin(sessionManager: SessionManager, store: string | undefined): Promise<ToolResult> {
+  console.error('[tool_call] shopify_auth_login store=%s', store)
   const resolvedStore = resolveStore(store)
   if (!resolvedStore) {
     return {

@@ -17,7 +17,7 @@
       "outputs": ["{workspaceRoot}/dist"],
       "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
       "options": {
-        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "command": "pnpm tsc -b ./tsconfig.build.json && cp -r src/prompts/skills dist/prompts/skills",
         "cwd": "packages/mcp"
       }
     },

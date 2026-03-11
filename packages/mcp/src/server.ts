@@ -1,3 +1,6 @@
+import {registerLiquidThemesTool} from './prompts/liquid_themes.js'
+import {registerThemeA11yTool} from './prompts/theme_a11y.js'
+import {registerThemeStandardsTool} from './prompts/theme_standards.js'
 import {SessionManager} from './session-manager.js'
 import {registerAuthTool} from './tools/auth.js'
 import {registerGraphqlTool} from './tools/graphql.js'
@@ -18,6 +21,10 @@ export function createServer(): McpServer {
 
   registerAuthTool(server, sessionManager)
   registerGraphqlTool(server, sessionManager)
+
+  registerLiquidThemesTool(server)
+  registerThemeStandardsTool(server)
+  registerThemeA11yTool(server)
 
   return server
 }
