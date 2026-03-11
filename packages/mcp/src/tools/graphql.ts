@@ -11,6 +11,7 @@ export async function handleGraphql(
   sessionManager: SessionManager,
   params: {query: string; variables?: Record<string, unknown>; store?: string; allowMutations: boolean},
 ): Promise<ToolResult> {
+  console.error('[tool_call] shopify_graphql store=%s mutation=%s', params.store, MUTATION_PATTERN.test(params.query.replace(/#[^\n]*/g, '')))
   const resolvedStore = resolveStore(params.store)
   if (!resolvedStore) {
     return {
