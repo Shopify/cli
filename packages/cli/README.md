@@ -807,19 +807,22 @@ Create a new app project
 
 ```
 USAGE
-  $ shopify app init [--client-id <value> | ] [--flavor <value>] [-n <value>] [--no-color] [-d
-    npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
+  $ shopify app init [--flavor <value>] [-n <value>] [--no-color] [--organization-id <value> | [--client-id
+    <value> | ]] [-d npm|yarn|pnpm|bun] [-p <value>] [--template <value>] [--verbose]
 
 FLAGS
   -d, --package-manager=<option>  [env: SHOPIFY_FLAG_PACKAGE_MANAGER]
                                   <options: npm|yarn|pnpm|bun>
-  -n, --name=<value>              [env: SHOPIFY_FLAG_NAME]
+  -n, --name=<value>              [env: SHOPIFY_FLAG_NAME] The name for the new app. When provided, skips the app
+                                  selection prompt and creates a new app with this name.
   -p, --path=<value>              [default: ., env: SHOPIFY_FLAG_PATH]
       --client-id=<value>         [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app. Use this to automatically
                                   link your new project to an existing app. Using this flag avoids the app selection
                                   prompt.
       --flavor=<value>            [env: SHOPIFY_FLAG_TEMPLATE_FLAVOR] Which flavor of the given template to use.
       --no-color                  [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --organization-id=<value>   [env: SHOPIFY_FLAG_ORGANIZATION_ID] The organization ID. Your organization ID can be
+                                  found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>
       --template=<value>          [env: SHOPIFY_FLAG_TEMPLATE] The app template. Accepts one of the following:
                                   - <reactRouter|remix|none>
                                   - Any GitHub repo with optional branch and subpath, e.g.,

@@ -2,6 +2,7 @@ import initPrompt, {visibleTemplates} from '../../prompts/init/init.js'
 import initService from '../../services/init/init.js'
 import {DeveloperPlatformClient, selectDeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {appFromIdentifiers, selectOrg} from '../../services/context.js'
+import {fetchOrgFromId} from '../../services/dev/fetch.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
 import {validateFlavorValue, validateTemplateValue} from '../../services/init/validate.js'
 import {MinimalOrganizationApp, Organization, OrganizationApp} from '../../models/organization.js'
@@ -27,6 +28,8 @@ export default class Init extends AppLinkedCommand {
       char: 'n',
       env: 'SHOPIFY_FLAG_NAME',
       hidden: false,
+      description:
+        'The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.',
     }),
     path: Flags.string({
       char: 'p',
@@ -64,6 +67,13 @@ export default class Init extends AppLinkedCommand {
       env: 'SHOPIFY_FLAG_CLIENT_ID',
       exclusive: ['config'],
     }),
+    'organization-id': Flags.string({
+      hidden: false,
+      description:
+        'The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>',
+      env: 'SHOPIFY_FLAG_ORGANIZATION_ID',
+      exclusive: ['client-id'],
+    }),
   }
 
   async run(): Promise<AppLinkedCommandOutput> {
@@ -71,6 +81,11 @@ export default class Init extends AppLinkedCommand {
 
     validateTemplateValue(flags.template)
     validateFlavorValue(flags.template, flags.flavor)
+
+    // Validate that --name is not empty/whitespace if provided
+    if (flags.name !== undefined && flags.name.trim() === '') {
+      throw new AbortError("The --name flag can't be empty", 'Provide a valid app name, for example: --name my-app')
+    }
 
     const inferredPackageManager = inferPackageManager(flags['package-manager'])
     const name = flags.name ?? (await getAppName(flags.path))
@@ -93,10 +108,23 @@ export default class Init extends AppLinkedCommand {
       developerPlatformClient = selectedApp.developerPlatformClient ?? developerPlatformClient
       selectAppResult = {result: 'existing', app: selectedApp}
     } else {
-      const org = await selectOrg()
+      let org: Organization
+      if (flags['organization-id']) {
+        // If an organization-id is provided, fetch the organization directly
+        org = await fetchOrgFromId(flags['organization-id'], developerPlatformClient)
+      } else {
+        org = await selectOrg()
+      }
       developerPlatformClient = selectDeveloperPlatformClient({organization: org})
       const {organization, apps, hasMorePages} = await developerPlatformClient.orgAndApps(org.id)
-      selectAppResult = await selectAppOrNewAppName(name, apps, hasMorePages, organization, developerPlatformClient)
+      selectAppResult = await selectAppOrNewAppName(
+        flags.name !== undefined,
+        name,
+        apps,
+        hasMorePages,
+        organization,
+        developerPlatformClient,
+      )
       appName = selectAppResult.result === 'new' ? selectAppResult.name : selectAppResult.app.title
     }
 
@@ -152,18 +180,19 @@ export type SelectAppOrNewAppNameResult =
  * But doesn't create the app yet, the app creation is deferred and is responsibility of the caller.
  */
 async function selectAppOrNewAppName(
+  nameProvidedAsFlag: boolean,
   localAppName: string,
   apps: MinimalOrganizationApp[],
   hasMorePages: boolean,
   org: Organization,
   developerPlatformClient: DeveloperPlatformClient,
 ): Promise<SelectAppOrNewAppNameResult> {
-  let createNewApp = apps.length === 0
+  let createNewApp = apps.length === 0 || nameProvidedAsFlag
   if (!createNewApp) {
     createNewApp = await createAsNewAppPrompt()
   }
   if (createNewApp) {
-    const name = await appNamePrompt(localAppName)
+    const name = nameProvidedAsFlag ? localAppName : await appNamePrompt(localAppName)
     return {result: 'new', name, org}
   } else {
     const app = await selectAppPrompt(searchForAppsByNameFactory(developerPlatformClient, org.id), apps, hasMorePages)

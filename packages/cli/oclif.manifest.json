@@ -2464,6 +2464,7 @@
         },
         "name": {
           "char": "n",
+          "description": "The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.",
           "env": "SHOPIFY_FLAG_NAME",
           "hasDynamicHelp": false,
           "hidden": false,
@@ -2478,6 +2479,18 @@
           "hidden": false,
           "name": "no-color",
           "type": "boolean"
+        },
+        "organization-id": {
+          "description": "The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>",
+          "env": "SHOPIFY_FLAG_ORGANIZATION_ID",
+          "exclusive": [
+            "client-id"
+          ],
+          "hasDynamicHelp": false,
+          "hidden": false,
+          "multiple": false,
+          "name": "organization-id",
+          "type": "option"
         },
         "package-manager": {
           "char": "d",

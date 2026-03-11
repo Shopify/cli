@@ -13,7 +13,7 @@ export interface appinit {
   '--flavor <value>'?: string
 
   /**
-   * 
+   * The name for the new app. When provided, skips the app selection prompt and creates a new app with this name.
    * @environment SHOPIFY_FLAG_NAME
    */
   '-n, --name <value>'?: string
@@ -23,6 +23,12 @@ export interface appinit {
    * @environment SHOPIFY_FLAG_NO_COLOR
    */
   '--no-color'?: ''
+
+  /**
+   * The organization ID. Your organization ID can be found in your Dev Dashboard URL: https://dev.shopify.com/dashboard/<organization-id>
+   * @environment SHOPIFY_FLAG_ORGANIZATION_ID
+   */
+  '--organization-id <value>'?: string
 
   /**
    * 
