@@ -7,11 +7,14 @@
  */
 
 import * as fs from 'fs'
+import * as os from 'os'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
 import {execa} from 'execa'
 import {chromium, type Page} from '@playwright/test'
-import stripAnsiModule from 'strip-ansi'
+import {completeLogin} from '../helpers/browser-login.js'
+import {stripAnsi} from '../helpers/strip-ansi.js'
+import {waitForText} from '../helpers/wait-for-text.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '../../..')
@@ -19,6 +22,10 @@ const cliPath = path.join(rootDir, 'packages/cli/bin/run.js')
 
 const dryRun = process.argv.includes('--dry-run')
 const filterIdx = process.argv.indexOf('--filter')
+if (filterIdx >= 0 && !process.argv[filterIdx + 1]) {
+  console.error('--filter requires a value')
+  process.exit(1)
+}
 const filterPattern = filterIdx >= 0 ? process.argv[filterIdx + 1] : undefined
 const headed = process.argv.includes('--headed') || !process.env.CI
 
@@ -31,7 +38,11 @@ if (fs.existsSync(envPath)) {
     const eqIdx = trimmed.indexOf('=')
     if (eqIdx === -1) continue
     const key = trimmed.slice(0, eqIdx).trim()
-    const value = trimmed.slice(eqIdx + 1).trim()
+    let value = trimmed.slice(eqIdx + 1).trim()
+    // Remove surrounding quotes if present
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1)
+    }
     if (!process.env[key]) process.env[key] = value
   }
 }
@@ -74,7 +85,7 @@ async function main() {
   pty.write(' ')
   await waitForText(() => output, 'start the auth process', 10_000)
 
-  const stripped = stripAnsiModule(output)
+  const stripped = stripAnsi(output)
   const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
   if (!urlMatch) throw new Error(`No login URL found:\n${stripped}`)
 
@@ -87,26 +98,8 @@ async function main() {
   })
   const page = await context.newPage()
 
-  // Complete OAuth login
-  await page.goto(urlMatch[0])
-  await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: 60_000})
-  await page.locator('input[name="account[email]"], input[type="email"]').first().fill(email)
-  await page.locator('button[type="submit"]').first().click()
-  await page.waitForSelector('input[name="account[password]"], input[type="password"]', {timeout: 60_000})
-  await page.locator('input[name="account[password]"], input[type="password"]').first().fill(password!)
-  await page.locator('button[type="submit"]').first().click()
-
-  // Wait for confirmation page and handle it
-  await page.waitForTimeout(3000)
-  try {
-    const confirmBtn = page.locator('button[type="submit"]').first()
-    if (await confirmBtn.isVisible({timeout: 5000})) {
-      await confirmBtn.click()
-    }
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_err) {
-    // No confirmation page
-  }
+  // Complete OAuth login using shared helper
+  await completeLogin(page, urlMatch[0], email!, password!)
 
   await waitForText(() => output, 'Logged in', 60_000)
   console.log('Logged in successfully!')
@@ -117,98 +110,100 @@ async function main() {
     // already dead
   }
 
-  // Step 2: Navigate to dev dashboard
-  console.log('\n--- Navigating to dev dashboard ---')
-  await page.goto('https://dev.shopify.com/dashboard', {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(3000)
-
-  // Handle account picker if shown
-  const accountButton = page.locator(`text=${email}`).first()
-  if (await accountButton.isVisible({timeout: 5000}).catch(() => false)) {
-    console.log('Account picker detected, selecting account...')
-    await accountButton.click()
+  try {
+    // Step 2: Navigate to dev dashboard
+    console.log('\n--- Navigating to dev dashboard ---')
+    await page.goto('https://dev.shopify.com/dashboard', {waitUntil: 'domcontentloaded'})
     await page.waitForTimeout(3000)
-  }
 
-  // May need to handle org selection or retry on error
-  await page.waitForTimeout(2000)
-
-  // Check for 500 error and retry
-  const pageText = await page.textContent('body') ?? ''
-  if (pageText.includes('500') || pageText.includes('Internal Server Error')) {
-    console.log('Got 500 error, retrying...')
-    await page.reload({waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(3000)
-  }
-
-  // Check for org selection page
-  const orgLink = page.locator('a, button').filter({hasText: /core-build|cli-e2e/i}).first()
-  if (await orgLink.isVisible({timeout: 3000}).catch(() => false)) {
-    console.log('Org selection detected, clicking...')
-    await orgLink.click()
-    await page.waitForTimeout(3000)
-  }
-
-  await page.screenshot({path: '/tmp/e2e-dashboard.png'})
-  console.log(`Dashboard URL: ${page.url()}`)
-  console.log('Dashboard screenshot saved to /tmp/e2e-dashboard.png')
-
-  // Step 3: Find all app cards on the dashboard
-  // Each app is a clickable card/row with the app name visible
-  const appCards = await page.locator('a[href*="/apps/"]').all()
-  console.log(`Found ${appCards.length} app links on dashboard`)
-
-  // Collect app names and URLs
-  const apps: {name: string; url: string}[] = []
-  for (const card of appCards) {
-    const href = await card.getAttribute('href')
-    const text = await card.textContent()
-    if (href && text && href.match(/\/apps\/\d+/)) {
-      // Extract just the app name (first line of text, before "installs")
-      const name = text.split(/\d+ install/)[0]?.trim() ?? text.trim()
-      if (!name) continue
-      if (filterPattern && !name.toLowerCase().includes(filterPattern.toLowerCase())) continue
-      const url = href.startsWith('http') ? href : `https://dev.shopify.com${href}`
-      apps.push({name, url})
+    // Handle account picker if shown
+    const accountButton = page.locator(`text=${email}`).first()
+    if (await accountButton.isVisible({timeout: 5000}).catch(() => false)) {
+      console.log('Account picker detected, selecting account...')
+      await accountButton.click()
+      await page.waitForTimeout(3000)
     }
-  }
 
-  if (apps.length === 0) {
-    console.log('No apps found to delete.')
-    await browser.close()
-    return
-  }
+    // May need to handle org selection or retry on error
+    await page.waitForTimeout(2000)
 
-  console.log(`\nApps to delete (${apps.length}):`)
-  for (const app of apps) {
-    console.log(`  - ${app.name}`)
-  }
-
-  if (dryRun) {
-    console.log('\n--dry-run: not deleting anything.')
-    await browser.close()
-    return
-  }
-
-  // Step 4: Delete each app
-  let deleted = 0
-  for (const app of apps) {
-    console.log(`\nDeleting "${app.name}"...`)
-    try {
-      await deleteApp(page, app.url, app.name)
-      deleted++
-      console.log(`  Deleted "${app.name}"`)
-    } catch (err) {
-      console.error(`  Failed to delete "${app.name}":`, err)
-      await page.screenshot({path: `/tmp/e2e-delete-error-${deleted}.png`})
+    // Check for 500 error and retry
+    const pageText = await page.textContent('body') ?? ''
+    if (pageText.includes('500') || pageText.includes('Internal Server Error')) {
+      console.log('Got 500 error, retrying...')
+      await page.reload({waitUntil: 'domcontentloaded'})
+      await page.waitForTimeout(3000)
     }
-  }
 
-  console.log(`\n--- Done: deleted ${deleted}/${apps.length} apps ---`)
-  await browser.close()
+    // Check for org selection page
+    const orgLink = page.locator('a, button').filter({hasText: /core-build|cli-e2e/i}).first()
+    if (await orgLink.isVisible({timeout: 3000}).catch(() => false)) {
+      console.log('Org selection detected, clicking...')
+      await orgLink.click()
+      await page.waitForTimeout(3000)
+    }
+
+    const dashboardScreenshot = path.join(os.tmpdir(), 'e2e-dashboard.png')
+    await page.screenshot({path: dashboardScreenshot})
+    console.log(`Dashboard URL: ${page.url()}`)
+    console.log(`Dashboard screenshot saved to ${dashboardScreenshot}`)
+
+    // Step 3: Find all app cards on the dashboard
+    // Each app is a clickable card/row with the app name visible
+    const appCards = await page.locator('a[href*="/apps/"]').all()
+    console.log(`Found ${appCards.length} app links on dashboard`)
+
+    // Collect app names and URLs
+    const apps: {name: string; url: string}[] = []
+    for (const card of appCards) {
+      const href = await card.getAttribute('href')
+      const text = await card.textContent()
+      if (href && text && href.match(/\/apps\/\d+/)) {
+        // Extract just the app name (first line of text, before "installs")
+        const name = text.split(/\d+ install/)[0]?.trim() || text.split('\n')[0]?.trim() || text.trim()
+        if (!name || name.length > 200) continue
+        if (filterPattern && !name.toLowerCase().includes(filterPattern.toLowerCase())) continue
+        const url = href.startsWith('http') ? href : `https://dev.shopify.com${href}`
+        apps.push({name, url})
+      }
+    }
+
+    if (apps.length === 0) {
+      console.log('No apps found to delete.')
+      return
+    }
+
+    console.log(`\nApps to delete (${apps.length}):`)
+    for (const app of apps) {
+      console.log(`  - ${app.name}`)
+    }
+
+    if (dryRun) {
+      console.log('\n--dry-run: not deleting anything.')
+      return
+    }
+
+    // Step 4: Delete each app
+    let deleted = 0
+    for (const [index, app] of apps.entries()) {
+      console.log(`\nDeleting "${app.name}"...`)
+      try {
+        await deleteApp(page, app.url)
+        deleted++
+        console.log(`  Deleted "${app.name}"`)
+      } catch (err) {
+        console.error(`  Failed to delete "${app.name}":`, err)
+        await page.screenshot({path: path.join(os.tmpdir(), `e2e-delete-error-${index}.png`)})
+      }
+    }
+
+    console.log(`\n--- Done: deleted ${deleted}/${apps.length} apps ---`)
+  } finally {
+    await browser.close()
+  }
 }
 
-async function deleteApp(page: Page, appUrl: string, _appName: string): Promise<void> {
+async function deleteApp(page: Page, appUrl: string): Promise<void> {
   // Navigate to the app page
   await page.goto(appUrl, {waitUntil: 'domcontentloaded'})
   await page.waitForTimeout(3000)
@@ -218,7 +213,7 @@ async function deleteApp(page: Page, appUrl: string, _appName: string): Promise<
   await page.waitForTimeout(3000)
 
   // Take screenshot for debugging
-  await page.screenshot({path: '/tmp/e2e-settings-page.png'})
+  await page.screenshot({path: path.join(os.tmpdir(), 'e2e-settings-page.png')})
 
   // Look for delete button
   const deleteButton = page.locator('button:has-text("Delete app")').first()
@@ -227,7 +222,7 @@ async function deleteApp(page: Page, appUrl: string, _appName: string): Promise<
   await page.waitForTimeout(2000)
 
   // Take screenshot of confirmation dialog
-  await page.screenshot({path: '/tmp/e2e-delete-confirm.png'})
+  await page.screenshot({path: path.join(os.tmpdir(), 'e2e-delete-confirm.png')})
 
   // Handle confirmation dialog - may need to type app name or click confirm
   const confirmInput = page.locator('input[type="text"]').last()
@@ -240,22 +235,6 @@ async function deleteApp(page: Page, appUrl: string, _appName: string): Promise<
   const confirmButton = page.locator('button:has-text("Delete app")').last()
   await confirmButton.click()
   await page.waitForTimeout(3000)
-}
-
-function waitForText(getOutput: () => string, text: string, timeoutMs: number): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const interval = setInterval(() => {
-      if (stripAnsiModule(getOutput()).includes(text) || getOutput().includes(text)) {
-        clearInterval(interval)
-        clearTimeout(timer)
-        resolve()
-      }
-    }, 200)
-    const timer = setTimeout(() => {
-      clearInterval(interval)
-      reject(new Error(`Timed out waiting for: "${text}"`))
-    }, timeoutMs)
-  })
 }
 
 main().catch((err) => {
