@@ -1,0 +1,46 @@
+# Comprehensive shopify.app.toml for E2E regression testing
+# client_id is injected at runtime by the toml-app fixture
+client_id = "__E2E_CLIENT_ID__"
+name = "E2E TOML Regression Test"
+application_url = "https://example.com"
+embedded = true
+
+[access_scopes]
+scopes = "read_products,write_products,read_orders"
+use_legacy_install_flow = false
+
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
+
+[auth]
+redirect_urls = [
+  "https://example.com/auth/callback",
+  "https://example.com/auth/shopify/callback",
+]
+
+[webhooks]
+api_version = "2025-01"
+
+  [[webhooks.subscriptions]]
+  topics = ["products/create"]
+  uri = "https://example.com/webhooks/products/create"
+
+  [[webhooks.subscriptions]]
+  topics = ["orders/create"]
+  uri = "https://example.com/webhooks/orders/create"
+
+[app_proxy]
+url = "https://example.com/proxy"
+subpath = "e2e-test"
+prefix = "apps"
+
+[pos]
+embedded = false
+
+[build]
+automatically_update_urls_on_dev = true
+include_config_on_deploy = true
+
+[app_preferences]
+url = "https://example.com/preferences"
