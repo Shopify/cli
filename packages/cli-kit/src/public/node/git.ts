@@ -13,9 +13,33 @@ import {
 import {AbortError} from './error.js'
 import {cwd, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
-import git, {TaskOptions, SimpleGitProgressEvent, DefaultLogFields, ListLogLine, SimpleGit} from 'simple-git'
+import {execa} from 'execa'
 
 import ignore from 'ignore'
+
+export interface GitLogEntry {
+  hash: string
+  date: string
+  message: string
+  refs: string
+  body: string
+  author_name: string
+  author_email: string
+}
+
+async function gitCommand(args: string[], directory?: string): Promise<string> {
+  try {
+    const result = await execa('git', args, {cwd: directory})
+    return result.stdout
+  } catch (err) {
+    if (err instanceof Error) {
+      const abortError = new AbortError(err.message)
+      abortError.stack = err.stack
+      throw abortError
+    }
+    throw err
+  }
+}
 
 /**
  * Initialize a git repository at the given directory.
@@ -27,10 +51,8 @@ export async function initializeGitRepository(directory: string, initialBranch =
   outputDebug(outputContent`Initializing git repository at ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
   // We use init and checkout instead of `init --initial-branch` because the latter is only supported in git 2.28+
-  await withGit({directory}, async (repo) => {
-    await repo.init()
-    await repo.checkoutLocalBranch(initialBranch)
-  })
+  await gitCommand(['init'], directory)
+  await gitCommand(['checkout', '-b', initialBranch], directory)
 }
 
 /**
@@ -43,7 +65,14 @@ export async function initializeGitRepository(directory: string, initialBranch =
  * @returns Files ignored by the lockfile.
  */
 export async function checkIfIgnoredInGitRepository(directory: string, files: string[]): Promise<string[]> {
-  return withGit({directory}, (repo) => repo.checkIgnore(files))
+  try {
+    const stdout = await gitCommand(['check-ignore', ...files], directory)
+    return stdout.split('\n').filter(Boolean)
+  } catch (error) {
+    // git check-ignore exits with code 1 when no files are ignored
+    if (error instanceof AbortError) return []
+    throw error
+  }
 }
 
 export type GitIgnoreTemplate = Record<string, string[]>
@@ -128,7 +157,7 @@ export interface GitCloneOptions {
  */
 export async function downloadGitRepository(cloneOptions: GitCloneOptions): Promise<void> {
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    const {repoUrl, destination, progressUpdater, shallow, latestTag} = cloneOptions
+    const {repoUrl, destination, shallow, latestTag} = cloneOptions
     outputDebug(outputContent`Git-cloning repository ${repoUrl} into ${outputToken.path(destination)}...`)
     await ensureGitIsPresentOrAbort()
 
@@ -158,13 +187,9 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
     }
 
     const [repository, branch] = repoUrl.split('#')
-    const options: TaskOptions = {'--recurse-submodules': null}
 
     if (branch && latestTag) {
       throw new AbortError("Error cloning the repository. Git can't clone the latest release with a 'branch'.")
-    }
-    if (branch) {
-      options['--branch'] = branch
     }
 
     if (shallow && latestTag) {
@@ -172,32 +197,30 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
         "Error cloning the repository. Git can't clone the latest release with the 'shallow' property.",
       )
     }
+
+    const args = ['clone', '--recurse-submodules']
+    if (branch) {
+      args.push('--branch', branch)
+    }
     if (shallow) {
-      options['--depth'] = 1
+      args.push('--depth', '1')
     }
+    if (!isTerminalInteractive()) {
+      args.push('-c', 'core.askpass=true')
+    }
+    args.push(repository!, destination)
 
-    const progress = ({stage, progress, processed, total}: SimpleGitProgressEvent) => {
-      const updateString = `${stage}, ${processed}/${total} objects (${progress}% complete)`
-      if (progressUpdater) progressUpdater(updateString)
-    }
-
-    const simpleGitOptions = {
-      progress,
-      ...(!isTerminalInteractive() && {config: ['core.askpass=true']}),
-    }
     try {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-
-      await git(simpleGitOptions).clone(repository!, destination, options)
+      await execa('git', args)
 
       if (latestTag) {
-        await withGit({directory: destination}, async (localGitRepository) => {
-          const latestTag = await getLocalLatestTag(localGitRepository, repoUrl)
-          await localGitRepository.checkout(latestTag)
-        })
+        const tag = await getLatestTagFromDirectory(destination, repoUrl)
+        await gitCommand(['checkout', tag], destination)
       }
     } catch (err) {
+      if (err instanceof AbortError) {
+        throw err
+      }
       if (err instanceof Error) {
         const abortError = new AbortError(err.message)
         abortError.stack = err.stack
@@ -208,21 +231,15 @@ export async function downloadGitRepository(cloneOptions: GitCloneOptions): Prom
   })
 }
 
-/**
- * Get the most recent tag of a local git repository.
- *
- * @param repository - The local git repository.
- * @param repoUrl - The URL of the repository.
- * @returns The most recent tag of the repository.
- */
-async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promise<string> {
-  const latest = (await repository.tags()).latest
+async function getLatestTagFromDirectory(directory: string, repoUrl: string): Promise<string> {
+  const stdout = await gitCommand(['describe', '--tags', '--abbrev=0'], directory)
+  const tag = stdout.trim()
 
-  if (!latest) {
+  if (!tag) {
     throw new AbortError(`Couldn't obtain the most recent tag of the repository ${repoUrl}`)
   }
 
-  return latest
+  return tag
 }
 
 /**
@@ -231,9 +248,10 @@ async function getLocalLatestTag(repository: SimpleGit, repoUrl: string): Promis
  * @param directory - The directory of the git repository.
  * @returns The latest commit of the repository.
  */
-export async function getLatestGitCommit(directory?: string): Promise<DefaultLogFields & ListLogLine> {
-  const logs = await withGit({directory}, (repo) => repo.log({maxCount: 1}))
-  if (!logs.latest) {
+export async function getLatestGitCommit(directory?: string): Promise<GitLogEntry> {
+  const format = '%H%n%ai%n%s%n%D%n%b%n%an%n%ae'
+  const stdout = await gitCommand(['log', '-1', `--format=${format}`], directory)
+  if (!stdout.trim()) {
     throw new AbortError(
       'Must have at least one commit to run command',
       outputContent`Run ${outputToken.genericShellCommand(
@@ -241,7 +259,16 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
       )} to create your first commit.`,
     )
   }
-  return logs.latest
+  const lines = stdout.split('\n')
+  return {
+    hash: lines[0]!,
+    date: lines[1]!,
+    message: lines[2]!,
+    refs: lines[3]!,
+    body: lines[4]!,
+    author_name: lines[5]!,
+    author_email: lines[6]!,
+  }
 }
 
 /**
@@ -251,7 +278,7 @@ export async function getLatestGitCommit(directory?: string): Promise<DefaultLog
  * @returns A promise that resolves when the files are added to the index.
  */
 export async function addAllToGitFromDirectory(directory?: string): Promise<void> {
-  await withGit({directory}, (repo) => repo.raw('add', '--all'))
+  await gitCommand(['add', '--all'], directory)
 }
 
 export interface CreateGitCommitOptions {
@@ -267,9 +294,13 @@ export interface CreateGitCommitOptions {
  * @returns The hash of the created commit.
  */
 export async function createGitCommit(message: string, options?: CreateGitCommitOptions): Promise<string> {
-  const commitOptions = options?.author ? {'--author': options.author} : undefined
-  const result = await withGit({directory: options?.directory}, (repo) => repo.commit(message, commitOptions))
-  return result.commit
+  const args = ['commit', '-m', message]
+  if (options?.author) {
+    args.push('--author', options.author)
+  }
+  await gitCommand(args, options?.directory)
+  const stdout = await gitCommand(['rev-parse', 'HEAD'], options?.directory)
+  return stdout.trim()
 }
 
 /**
@@ -279,7 +310,7 @@ export async function createGitCommit(message: string, options?: CreateGitCommit
  * @returns The HEAD symbolic reference of the repository.
  */
 export async function getHeadSymbolicRef(directory?: string): Promise<string> {
-  const ref = await withGit({directory}, (repo) => repo.raw('symbolic-ref', '-q', 'HEAD'))
+  const ref = await gitCommand(['symbolic-ref', '-q', 'HEAD'], directory)
   if (!ref) {
     throw new AbortError(
       "Git HEAD can't be detached to run command",
@@ -318,10 +349,8 @@ export class OutsideGitDirectoryError extends AbortError {}
  * @param directory - The directory to check.
  */
 export async function ensureInsideGitDirectory(directory?: string): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
   if (!(await insideGitDirectory(directory))) {
-    throw new OutsideGitDirectoryError(`${outputToken.path(directory || cwd())} is not a Git directory`)
+    throw new OutsideGitDirectoryError(`${outputToken.path(directory ?? cwd())} is not a Git directory`)
   }
 }
 
@@ -332,7 +361,13 @@ export async function ensureInsideGitDirectory(directory?: string): Promise<void
  * @returns True if the directory is inside a .git directory tree.
  */
 export async function insideGitDirectory(directory?: string): Promise<boolean> {
-  return withGit({directory}, (repo) => repo.checkIsRepo())
+  try {
+    await execa('git', ['rev-parse', '--git-dir'], {cwd: directory})
+    return true
+  } catch (error) {
+    if (error instanceof Error && 'exitCode' in error) return false
+    throw error
+  }
 }
 
 export class GitDirectoryNotCleanError extends AbortError {}
@@ -344,7 +379,7 @@ export class GitDirectoryNotCleanError extends AbortError {}
  */
 export async function ensureIsClean(directory?: string): Promise<void> {
   if (!(await isClean(directory))) {
-    throw new GitDirectoryNotCleanError(`${outputToken.path(directory || cwd())} is not a clean Git directory`)
+    throw new GitDirectoryNotCleanError(`${outputToken.path(directory ?? cwd())} is not a clean Git directory`)
   }
 }
 
@@ -355,7 +390,8 @@ export async function ensureIsClean(directory?: string): Promise<void> {
  * @returns True is the .git directory is clean.
  */
 export async function isClean(directory?: string): Promise<boolean> {
-  return (await withGit({directory}, (git: SimpleGit) => git.status())).isClean()
+  const stdout = await gitCommand(['status', '--porcelain'], directory)
+  return stdout.trim() === ''
 }
 
 /**
@@ -365,8 +401,13 @@ export async function isClean(directory?: string): Promise<boolean> {
  * @returns String with the latest tag or undefined if no tags are found.
  */
 export async function getLatestTag(directory?: string): Promise<string | undefined> {
-  const tags = await withGit({directory}, (repo) => repo.tags())
-  return tags.latest
+  try {
+    const stdout = await gitCommand(['describe', '--tags', '--abbrev=0'], directory)
+    return stdout.trim() || undefined
+  } catch (error) {
+    if (error instanceof AbortError) return undefined
+    throw error
+  }
 }
 
 /**
@@ -380,39 +421,13 @@ export async function removeGitRemote(directory: string, remoteName = 'origin'):
   outputDebug(outputContent`Removing git remote ${remoteName} from ${outputToken.path(directory)}...`)
   await ensureGitIsPresentOrAbort()
 
-  await withGit({directory}, async (repo) => {
-    // Check if remote exists first
-    const remotes = await repo.getRemotes()
-    const remoteExists = remotes.some((remote: {name: string}) => remote.name === remoteName)
+  const stdout = await gitCommand(['remote'], directory)
+  const remotes = stdout.split('\n').filter(Boolean)
 
-    if (!remoteExists) {
-      outputDebug(outputContent`Remote ${remoteName} does not exist, no action needed`)
-      return
-    }
-
-    await repo.removeRemote(remoteName)
-  })
-}
-
-async function withGit<T>(
-  {
-    directory,
-  }: {
-    directory?: string
-  },
-  callback: (git: SimpleGit) => Promise<T>,
-): Promise<T> {
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const repo = git({baseDir: directory})
-  try {
-    return await callback(repo)
-  } catch (err) {
-    if (err instanceof Error) {
-      const abortError = new AbortError(err.message)
-      abortError.stack = err.stack
-      throw abortError
-    }
-    throw err
+  if (!remotes.includes(remoteName)) {
+    outputDebug(outputContent`Remote ${remoteName} does not exist, no action needed`)
+    return
   }
+
+  await gitCommand(['remote', 'remove', remoteName], directory)
 }
