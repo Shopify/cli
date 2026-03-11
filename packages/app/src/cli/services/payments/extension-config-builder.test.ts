@@ -54,7 +54,7 @@ const expectObjectIncludesKeys = (got: object, config: string) => {
 }
 
 describe('extension-config-builder', () => {
-  test('correctly builds a toml object for a CLI payments extension', async () => {
+  test('correctly builds a config object for a CLI payments extension', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
@@ -150,7 +150,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for an offsite app', async () => {
+  test('correctly builds a config object for an offsite app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
@@ -197,7 +197,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for a credit card app', async () => {
+  test('correctly builds a config object for a credit card app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
@@ -252,7 +252,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for a custom credit card app', async () => {
+  test('correctly builds a config object for a custom credit card app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
@@ -306,7 +306,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for a custom onsite app', async () => {
+  test('correctly builds a config object for a custom onsite app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
@@ -364,7 +364,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for a redeemable app', async () => {
+  test('correctly builds a config object for a redeemable app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',
@@ -417,7 +417,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for a card present app', async () => {
+  test('correctly builds a config object for a card present app', async () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '30366498817',

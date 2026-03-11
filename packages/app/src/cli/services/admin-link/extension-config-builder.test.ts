@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {describe, expect, test} from 'vitest'
 
 describe('extension-config-builder', () => {
-  test('correctly builds a toml object for a app_link extension on a non embedded app', () => {
+  test('correctly builds a config object for a app_link extension on a non embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -45,7 +45,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for bulk_action extension with path in an embedded app', () => {
+  test('correctly builds a config object for bulk_action extension with path in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -85,7 +85,7 @@ describe('extension-config-builder', () => {
       ],
     })
   })
-  test('correctly builds a toml object for bulk_action extension with no path in an embedded app', () => {
+  test('correctly builds a config object for bulk_action extension with no path in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',
@@ -125,7 +125,7 @@ describe('extension-config-builder', () => {
       ],
     })
   })
-  test('correctly builds a toml object for bulk_action extension with no path but search query in an embedded app', () => {
+  test('correctly builds a config object for bulk_action extension with no path but search query in an embedded app', () => {
     // Given
     const appConfig = {
       path: '',

@@ -3,7 +3,7 @@ import {ExtensionRegistration} from '../../api/graphql/all_app_extension_registr
 import {describe, expect, test} from 'vitest'
 
 describe('extension-config-builder', () => {
-  test('correctly builds a toml object for a flow_action', () => {
+  test('correctly builds a config object for a flow_action', () => {
     // Given
     const extension1: ExtensionRegistration = {
       id: '26237698049',
@@ -97,7 +97,7 @@ describe('extension-config-builder', () => {
     })
   })
 
-  test('correctly builds a toml object for a flow_trigger', () => {
+  test('correctly builds a config object for a flow_trigger', () => {
     // Given
     const extension2 = {
       id: '26237861889',
