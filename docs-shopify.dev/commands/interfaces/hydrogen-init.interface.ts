@@ -43,16 +43,10 @@ export interface hydrogeninit {
   '--path <value>'?: string
 
   /**
-   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --routes --markets none`
+   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`
    * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART
    */
   '--quickstart'?: ''
-
-  /**
-   * Generate routes for all pages.
-   * @environment SHOPIFY_HYDROGEN_FLAG_ROUTES
-   */
-  '--routes'?: ''
 
   /**
    * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.
