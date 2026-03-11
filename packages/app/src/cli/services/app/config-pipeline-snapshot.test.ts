@@ -7,14 +7,15 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test} from 'vitest'
 
 /**
- * These snapshot tests lock the current behavior of the config pipeline.
- * They verify that:
- * 1. writeAppConfigurationFile produces expected TOML output
- * 2. A config read back after writing round-trips cleanly
- * 3. The webhook expansion/condensation cycle produces stable output
+ * Snapshot tests for the config pipeline (write → read → write).
  *
- * These tests are the safety net for config model refactoring.
- * If any of them break, the refactor changed external behavior.
+ * These verify that:
+ * 1. A config read back after writing round-trips cleanly (or documents known asymmetries)
+ * 2. The webhook expansion/condensation cycle produces stable output
+ * 3. Edge cases around webhook merging (filters, include_fields, compliance) behave predictably
+ *
+ * These tests serve as the long-term regression suite for config pipeline behavior.
+ * If any of them break, the change altered externally-visible config file output.
  */
 
 const REALISTIC_CONFIG = {
@@ -31,6 +32,14 @@ const REALISTIC_CONFIG = {
   access_scopes: {
     scopes: 'read_products,write_orders',
     use_legacy_install_flow: false,
+    required_scopes: ['read_products'],
+    optional_scopes: ['write_orders'],
+  },
+  access: {
+    admin: {
+      direct_api_mode: 'online',
+      embedded_app_direct_api_access: true,
+    },
   },
   auth: {
     redirect_urls: ['https://myapp.example.com/auth/callback', 'https://myapp.example.com/auth/shopify/callback'],
@@ -66,25 +75,11 @@ const REALISTIC_CONFIG = {
 }
 
 describe('Config pipeline snapshots', () => {
-  test('writeAppConfigurationFile produces stable TOML output for a full config', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema} = await buildVersionedAppSchema()
-
-      await writeAppConfigurationFile({...REALISTIC_CONFIG, path: filePath}, schema)
-
-      const content = await readFile(filePath)
-      expect(content).toMatchSnapshot()
-    })
-  })
-
   test('config round-trip (write → read → write) reorders webhook subscriptions', async () => {
     // KNOWN ASYMMETRY: The current pipeline does NOT round-trip cleanly.
     // mergeAllWebhooks() sorts compliance subscriptions first during parse,
     // so the second write has a different subscription order than the first.
     // This test documents the current behavior as a snapshot.
-    // When the webhook transform is extracted from the schema (Phase 2),
-    // this test should be updated to verify clean round-trips.
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
       const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
@@ -130,7 +125,7 @@ describe('Config pipeline snapshots', () => {
   test('webhook subscriptions with mixed topics and compliance topics produce stable output', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema} = await buildVersionedAppSchema()
+      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
 
       const config = {
         ...REALISTIC_CONFIG,
@@ -159,9 +154,16 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
+      // Snapshot the first write
       await writeAppConfigurationFile(config, schema)
-      const content = await readFile(filePath)
-      expect(content).toMatchSnapshot()
+      const firstWrite = await readFile(filePath)
+      expect(firstWrite).toMatchSnapshot()
+
+      // Round-trip to verify reordering behavior on the most complex fixture
+      const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsedConfig, schema)
+      const secondWrite = await readFile(filePath)
+      expect(secondWrite).toMatchSnapshot()
     })
   })
 
@@ -210,11 +212,104 @@ describe('Config pipeline snapshots', () => {
         access_scopes: {
           scopes: 'read_products',
         },
-      }
+        auth: {
+          redirect_urls: ['https://example.com/auth/callback'],
+        },
+      } satisfies CurrentAppConfiguration
 
-      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema)
+      await writeAppConfigurationFile(config, schema)
       const content = await readFile(filePath)
       expect(content).toMatchSnapshot()
+    })
+  })
+
+  test('subscriptions with same URI but different filters stay separate through round-trip', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+
+      const config = {
+        ...REALISTIC_CONFIG,
+        path: filePath,
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {topics: ['orders/create'], uri: '/webhooks/orders', filter: 'status:paid'},
+            {topics: ['orders/update'], uri: '/webhooks/orders', filter: 'status:pending'},
+          ],
+        },
+      }
+
+      await writeAppConfigurationFile(config, schema)
+      const firstWrite = await readFile(filePath)
+
+      const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsedConfig, schema)
+      const secondWrite = await readFile(filePath)
+
+      expect(firstWrite).toMatchSnapshot()
+      expect(secondWrite).toEqual(firstWrite)
+    })
+  })
+
+  test('subscriptions with same URI but different include_fields stay separate through round-trip', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+
+      const config = {
+        ...REALISTIC_CONFIG,
+        path: filePath,
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {topics: ['products/create'], uri: '/webhooks/products', include_fields: ['id', 'title']},
+            {topics: ['products/update'], uri: '/webhooks/products', include_fields: ['id']},
+          ],
+        },
+      }
+
+      await writeAppConfigurationFile(config, schema)
+      const firstWrite = await readFile(filePath)
+
+      const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsedConfig, schema)
+      const secondWrite = await readFile(filePath)
+
+      expect(firstWrite).toMatchSnapshot()
+      expect(secondWrite).toEqual(firstWrite)
+    })
+  })
+
+  test('subscription with both topics and compliance_topics on same URI splits after round-trip', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+
+      const config = {
+        ...REALISTIC_CONFIG,
+        path: filePath,
+        webhooks: {
+          api_version: '2024-01',
+          subscriptions: [
+            {
+              topics: ['orders/create'],
+              compliance_topics: ['customers/data_request', 'customers/redact'],
+              uri: '/webhooks',
+            },
+          ],
+        },
+      }
+
+      await writeAppConfigurationFile(config, schema)
+      const firstWrite = await readFile(filePath)
+
+      const parsedConfig = await parseConfigurationFile(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsedConfig, schema)
+      const secondWrite = await readFile(filePath)
+
+      // After round-trip, compliance and regular topics should be split into separate subscriptions
+      expect(secondWrite).toMatchSnapshot()
     })
   })
 })
