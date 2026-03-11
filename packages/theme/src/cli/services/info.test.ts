@@ -1,10 +1,12 @@
-import {themeInfoJSON, fetchThemeInfo} from './info.js'
+import {themeInfoJSON, fetchThemeInfo, themeEnvironmentInfoJSON} from './info.js'
+import {getDevelopmentTheme, getThemeStore} from './local-storage.js'
 import {DevelopmentThemeManager} from '../utilities/development-theme-manager.js'
 import {findOrSelectTheme} from '../utilities/theme-selector.js'
 import {themePreviewUrl, themeEditorUrl} from '@shopify/cli-kit/node/themes/urls'
 import {Theme} from '@shopify/cli-kit/node/themes/types'
 import {describe, vi, test, expect} from 'vitest'
 
+vi.mock('./local-storage.js')
 vi.mock('../utilities/development-theme-manager.js')
 vi.mock('../utilities/theme-selector.js', () => {
   return {findOrSelectTheme: vi.fn()}
@@ -45,6 +47,25 @@ describe('info', () => {
     expect(output).toHaveProperty('theme.shop', session.storeFqdn)
     expect(output).toHaveProperty('theme.preview_url', expect.stringContaining(session.storeFqdn))
     expect(output).toHaveProperty('theme.editor_url', expect.stringContaining(session.storeFqdn))
+  })
+
+  describe('themeEnvironmentInfoJSON', () => {
+    test('generate theme environment info JSON', () => {
+      // Given
+      vi.mocked(getThemeStore).mockReturnValue('my-shop.myshopify.com')
+      vi.mocked(getDevelopmentTheme).mockReturnValue(undefined)
+
+      // When
+      const output = themeEnvironmentInfoJSON({cliVersion: '3.91.0'})
+
+      // Then
+      expect(output).toHaveProperty('store', 'my-shop.myshopify.com')
+      expect(output).toHaveProperty('development_theme_id', null)
+      expect(output).toHaveProperty('cli_version', '3.91.0')
+      expect(output).toHaveProperty('os', expect.stringContaining('-'))
+      expect(output).toHaveProperty('shell', process.env.SHELL ?? 'unknown')
+      expect(output).toHaveProperty('node_version', process.version)
+    })
   })
 
   test('fetch theme info by id', async () => {
