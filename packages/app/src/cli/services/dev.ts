@@ -24,7 +24,6 @@ import {DevProcessFunction} from './dev/processes/types.js'
 import {getCachedAppInfo, setCachedAppInfo} from './local-storage.js'
 import {canEnablePreviewMode} from './extensions/common.js'
 import {fetchAppRemoteConfiguration} from './app/select-app.js'
-import {setAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-status-manager.js'
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
@@ -38,6 +37,7 @@ import {RemoteAwareExtensionSpecification} from '../models/extensions/specificat
 import {ports} from '../constants.js'
 import {generateCertificate} from '../utilities/mkcert.js'
 import {throwUidMappingError} from '../prompts/uid-mapping-error.js'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {Config} from '@oclif/core'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {checkPortAvailability, getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -114,7 +114,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    await setAppConfigValue(app.configuration.path, 'build.dev_store_url', store.shopDomain)
+    const configFile = await TomlFile.read(app.configuration.path)
+    await configFile.patch({build: {dev_store_url: store.shopDomain}})
   }
 
   if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {

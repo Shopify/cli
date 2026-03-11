@@ -1847,9 +1847,10 @@ describe('configExtensionsIdentifiersBreakdown', () => {
       expect(result).toEqual({
         existingFieldNames: [],
         existingUpdatedFieldNames: [],
-        newFieldNames: ['name', 'application_url', 'embedded', 'webhooks'],
+        newFieldNames: expect.arrayContaining(['name', 'application_url', 'embedded', 'webhooks']),
         deletedFieldNames: [],
       })
+      expect(result!.newFieldNames).toHaveLength(4)
     })
   })
   describe('deploy not including the configuration app modules', () => {

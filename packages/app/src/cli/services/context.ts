@@ -3,7 +3,6 @@ import {fetchOrganizations} from './dev/fetch.js'
 import {ensureDeploymentIdsPresence} from './context/identifiers.js'
 import {createExtension} from './dev/create-extension.js'
 import {CachedAppInfo} from './local-storage.js'
-import {setAppConfigValue, unsetAppConfigValue} from './app/patch-app-configuration-file.js'
 import {DeployOptions} from './deploy.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
@@ -25,6 +24,7 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {Token, renderConfirmationPrompt, renderInfo, renderWarning} from '@shopify/cli-kit/node/ui'
@@ -237,7 +237,8 @@ async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
   const includeConfigOnDeploy = configuration.build?.include_config_on_deploy
   if (includeConfigOnDeploy === undefined) return
 
-  await unsetAppConfigValue(localApp.configuration.path, 'build.include_config_on_deploy')
+  const configFile = await TomlFile.read(localApp.configuration.path)
+  await configFile.remove('build.include_config_on_deploy')
 
   includeConfigOnDeploy ? renderInfoAboutIncludeConfigOnDeploy() : renderWarningAboutIncludeConfigOnDeploy()
 }
@@ -275,7 +276,8 @@ async function promptAndSaveIncludeConfigOnDeploy(options: ShouldOrPromptInclude
     ...localConfiguration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
-  await setAppConfigValue(localConfiguration.path, 'build.include_config_on_deploy', shouldIncludeConfigDeploy)
+  const configFile = await TomlFile.read(localConfiguration.path)
+  await configFile.patch({build: {include_config_on_deploy: shouldIncludeConfigDeploy}})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
   return shouldIncludeConfigDeploy
 }

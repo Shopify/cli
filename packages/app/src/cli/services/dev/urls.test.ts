@@ -15,8 +15,8 @@ import {
 } from '../../models/app/app.test-data.js'
 import {UpdateURLsVariables} from '../../api/graphql/update_urls.js'
 import {setCachedAppInfo} from '../local-storage.js'
-import {setManyAppConfigValues} from '../app/patch-app-configuration-file.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
+import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {beforeEach, describe, expect, vi, test} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
@@ -25,11 +25,7 @@ import {renderConfirmationPrompt, renderSelectPrompt} from '@shopify/cli-kit/nod
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
 
 vi.mock('../local-storage.js')
-vi.mock('../app/patch-app-configuration-file.js', () => {
-  return {
-    setManyAppConfigValues: vi.fn(),
-  }
-})
+const mockTomlFilePatch = vi.fn()
 vi.mock('@shopify/cli-kit/node/tcp')
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/plugins')
@@ -40,6 +36,11 @@ beforeEach(() => {
   vi.mocked(getAvailableTCPPort).mockResolvedValue(3042)
   vi.mocked(isUnitTest).mockReturnValue(true)
   vi.mocked(terminalSupportsPrompting).mockReturnValue(true)
+  vi.spyOn(TomlFile, 'read').mockResolvedValue({
+    patch: mockTomlFilePatch,
+    content: {},
+    path: '',
+  } as unknown as TomlFile)
 })
 
 const defaultOptions: FrontendURLOptions = {
@@ -94,17 +95,16 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(setManyAppConfigValues).toHaveBeenCalledWith(appWithConfig.configuration.path, [
-      {keyPath: 'application_url', value: 'https://example.com'},
-      {
-        keyPath: 'auth.redirect_urls',
-        value: [
+    expect(mockTomlFilePatch).toHaveBeenCalledWith({
+      application_url: 'https://example.com',
+      auth: {
+        redirect_urls: [
           'https://example.com/auth/callback',
           'https://example.com/auth/shopify/callback',
           'https://example.com/api/auth/callback',
         ],
       },
-    ])
+    })
   })
 
   test('throws an error if requests has a user error', async () => {
@@ -177,20 +177,21 @@ describe('updateURLs', () => {
     await updateURLs(urls, apiKey, testDeveloperPlatformClient(), appWithConfig)
 
     // Then
-    expect(setManyAppConfigValues).toHaveBeenCalledWith(appWithConfig.configuration.path, [
-      {keyPath: 'application_url', value: 'https://example.com'},
-      {
-        keyPath: 'auth.redirect_urls',
-        value: [
+    expect(mockTomlFilePatch).toHaveBeenCalledWith({
+      application_url: 'https://example.com',
+      auth: {
+        redirect_urls: [
           'https://example.com/auth/callback',
           'https://example.com/auth/shopify/callback',
           'https://example.com/api/auth/callback',
         ],
       },
-      {keyPath: 'app_proxy.url', value: 'https://example.com'},
-      {keyPath: 'app_proxy.subpath', value: 'subpath'},
-      {keyPath: 'app_proxy.prefix', value: 'prefix'},
-    ])
+      app_proxy: {
+        url: 'https://example.com',
+        subpath: 'subpath',
+        prefix: 'prefix',
+      },
+    })
   })
 })
 
@@ -350,7 +351,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(setManyAppConfigValues).not.toHaveBeenCalled()
+    expect(mockTomlFilePatch).not.toHaveBeenCalled()
   })
 
   test('updates the config file if current config client matches remote', async () => {
@@ -375,9 +376,7 @@ describe('shouldOrPromptUpdateURLs', () => {
     // Then
     expect(result).toBe(true)
     expect(setCachedAppInfo).not.toHaveBeenCalled()
-    expect(setManyAppConfigValues).toHaveBeenCalledWith(localApp.configuration.path, [
-      {keyPath: 'build.automatically_update_urls_on_dev', value: true},
-    ])
+    expect(mockTomlFilePatch).toHaveBeenCalledWith({build: {automatically_update_urls_on_dev: true}})
   })
 })
 
