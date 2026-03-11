@@ -12,7 +12,7 @@ interface AdminLinkConfig {
 /**
  * Given an app_link or bulk_action extension config file, convert it to toml
  */
-export function buildTomlObject(
+export function buildExtensionConfig(
   extension: ExtensionRegistration,
   _: ExtensionRegistration[],
   appConfiguration: CurrentAppConfiguration,

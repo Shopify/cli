@@ -9,7 +9,7 @@ export interface SubscriptionLinkDashboardConfig {
 /**
  * Given a dashboard-built subscription link extension config file, convert it to toml for the CLI extension
  */
-export function buildTomlObject(extension: ExtensionRegistration): object {
+export function buildExtensionConfig(extension: ExtensionRegistration): object {
   const versionConfig = extension.activeVersion?.config ?? extension.draftVersion?.config
   if (!versionConfig) throw new Error('No config found for extension')
   const config: SubscriptionLinkDashboardConfig = JSON.parse(versionConfig)

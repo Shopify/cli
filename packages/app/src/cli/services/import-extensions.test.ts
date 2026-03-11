@@ -1,5 +1,5 @@
 import {importExtensions, filterOutImportedExtensions} from './import-extensions.js'
-import {buildTomlObject} from './flow/extension-to-toml.js'
+import {buildExtensionConfig} from './flow/extension-config-builder.js'
 import {testAppLinked, testDeveloperPlatformClient, testUIExtension} from '../models/app/app.test-data.js'
 import {OrganizationApp} from '../models/organization.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -110,7 +110,7 @@ describe('import-extensions', () => {
           'subscription_link_extension',
         ],
         extensions,
-        buildTomlObject,
+        buildExtensionConfig,
       })
 
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -167,7 +167,7 @@ describe('import-extensions', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition'],
         extensions,
-        buildTomlObject,
+        buildExtensionConfig,
       })
 
       // Then - expect the success message to be shown (even for skipped extensions)
@@ -213,7 +213,7 @@ describe('import-extensions', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
         extensionTypes: ['flow_action_definition'],
         extensions,
-        buildTomlObject,
+        buildExtensionConfig,
       })
 
       // Then - expect the success message to be shown
@@ -261,7 +261,7 @@ describe('import-extensions', () => {
           developerPlatformClient: testDeveloperPlatformClient(),
           extensionTypes: ['flow_action_definition'],
           extensions,
-          buildTomlObject,
+          buildExtensionConfig,
         }),
       ).rejects.toThrow(AbortSilentError)
 
@@ -300,7 +300,7 @@ describe('import-extensions', () => {
           'subscription_link_extension',
         ],
         extensions,
-        buildTomlObject,
+        buildExtensionConfig,
       })
 
       expect(renderSuccess).toHaveBeenCalledWith({
@@ -349,7 +349,7 @@ describe('import-extensions', () => {
             'subscription_link_extension',
           ],
           extensions,
-          buildTomlObject,
+          buildExtensionConfig,
         }),
       ).rejects.toThrow('No extensions to migrate')
 
