@@ -17,7 +17,7 @@
   "devDependencies": {
     "@actions/core": "^1.10.0",
     "git-diff": "^2.0.6",
-    "simple-git": "3.19.1",
+    "simple-git": "3.32.3",
     "tempy": "3.0.0"
   }
 }
