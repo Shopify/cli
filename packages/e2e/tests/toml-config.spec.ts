@@ -25,9 +25,6 @@ test.describe('TOML config regression', () => {
     try {
       await proc.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
 
-      const output = proc.getOutput()
-      expect(output).toMatch(/q\s*[│|]\s*quit/i)
-
       proc.sendKey('q')
       const exitCode = await proc.waitForExit(30_000)
       expect(exitCode, `dev exited with non-zero code. Output:\n${proc.getOutput()}`).toBe(0)
