@@ -1,4 +1,4 @@
-import {decodeToml} from './toml.js'
+import {decodeToml} from './toml/codec.js'
 import {findPathUp, readFile} from './fs.js'
 import {cwd} from './path.js'
 import * as metadata from './metadata.js'
