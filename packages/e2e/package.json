@@ -14,6 +14,9 @@
     "extends": [
       "../../.eslintrc.cjs"
     ],
+    "ignorePatterns": [
+      "scripts/"
+    ],
     "rules": {
       "no-console": "off",
       "import/extensions": [
