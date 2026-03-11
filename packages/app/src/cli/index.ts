@@ -36,7 +36,9 @@ import DevClean from './commands/app/dev/clean.js'
 import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
 import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
+import DocsGenerateSchema from './commands/app/docs/generate-schema.js'
 import OrganizationList from './commands/organization/list.js'
+// eslint-disable-next-line @nx/enforce-module-boundaries -- pre-existing import, nx false positive from docs:generate-schema dependency chain
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -76,6 +78,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:versions:list': VersionsList,
   'app:webhook:trigger': WebhookTrigger,
   'webhook:trigger': WebhookTriggerDeprecated,
+  'docs:generate-schema': DocsGenerateSchema,
   'demo:watcher': DemoWatcher,
   'organization:list': OrganizationList,
 }
