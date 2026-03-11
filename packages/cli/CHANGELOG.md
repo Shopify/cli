@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.92.0
+
+### Patch Changes
+
+- b776177: change hardcoded links in theme pull to use methods to surface urls instead
+
 ## 3.91.0
 
 ### Patch Changes

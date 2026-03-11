@@ -1,5 +1,18 @@
 # @shopify/app
 
+## 3.92.0
+
+### Minor Changes
+
+- 9ca669c: Emit esbuild metafiles for ui extensions
+
+### Patch Changes
+
+- Updated dependencies [ce34c6d]
+  - @shopify/theme@3.92.0
+  - @shopify/cli-kit@3.92.0
+  - @shopify/plugin-cloudflare@3.92.0
+
 ## 3.91.0
 
 ### Patch Changes
