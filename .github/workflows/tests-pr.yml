@@ -220,6 +220,53 @@ jobs:
         with:
           base-branch-name: '${{ github.base_ref }}'
 
+  e2e-tests:
+    name: 'E2E tests'
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+        working-directory: packages/e2e
+      - name: Rebuild node-pty
+        run: pnpm rebuild node-pty
+      - name: Run E2E tests
+        working-directory: packages/e2e
+        env:
+          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.E2E_CLIENT_ID }}
+          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
+          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
+          E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
+          E2E_SECONDARY_CLIENT_ID: ${{ secrets.E2E_SECONDARY_CLIENT_ID }}
+        run: npx playwright test
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: packages/e2e/playwright-report/
+          retention-days: 14
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-results
+          path: packages/e2e/test-results/
+          retention-days: 14
+
   type-diff:
     if: github.event.pull_request.head.repo.full_name == github.repository
     name: 'Type-diff'
