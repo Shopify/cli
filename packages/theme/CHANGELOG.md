@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.92.1
+
+### Patch Changes
+
+- a2a7925: Fix Cart rate limiting issue
+  - @shopify/cli-kit@3.92.1
+
 ## 3.92.0
 
 ### Patch Changes

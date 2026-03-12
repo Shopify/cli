@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.92.1
+
+### Patch Changes
+
+- Updated dependencies [a2a7925]
+  - @shopify/theme@3.92.1
+  - @shopify/cli-kit@3.92.1
+  - @shopify/plugin-cloudflare@3.92.1
+
 ## 3.92.0
 
 ### Minor Changes
