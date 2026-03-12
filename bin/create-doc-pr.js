@@ -1,9 +1,10 @@
-#!/usr/bin/env node
 
-import * as path from "pathe"
 import {fileURLToPath} from "node:url"
 import {createRequire} from 'node:module'
+
+import * as path from "pathe"
 import {findUp} from "find-up"
+
 import {withOctokit} from './github-utils.js'
 
 const require = createRequire(import.meta.url)
@@ -22,11 +23,11 @@ async function createPR() {
     files[`areas/platforms/shopify-dev/db/data/docs/templated_apis/shopify_cli/${fileName}`] = (await readFile(path.join(generatedDirectory, fileName))).toString()
   }
 
-  await withOctokit("shopify", async (octokit) => {
+  await withOctokit("shop", async (octokit) => {
     const response = await octokit
       .createPullRequest({
-        owner: "shopify",
-        repo: "shopify-dev",
+        owner: "shop",
+        repo: "world",
         title: `[CLI] Update docs for version: ${version}`,
         body: `We are updating the CLI documentation with the contents of the recently released version of the Shopify CLI [${version}](https://www.npmjs.com/package/@shopify/cli/v/${version})`,
         head: `shopify-cli-${version}`,
@@ -43,7 +44,7 @@ async function createPR() {
       })
 
     if (response) {
-      console.log(`PR URL: https://github.com/shopify/shopify-dev/pull/${response.data.number}`)
+      console.log(`PR URL: https://github.com/shop/world/pull/${response.data.number}`)
     } else {
       console.log("No changes detected, PR not created.")
     }
