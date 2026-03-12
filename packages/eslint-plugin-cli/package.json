@@ -35,7 +35,7 @@
     "debug": "4.4.0"
   },
   "devDependencies": {
-    "prettier": "2.8.8"
+    "prettier": "3.8.1"
   },
   "peerDependencies": {
     "eslint": "^9.0.0"
