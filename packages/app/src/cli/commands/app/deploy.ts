@@ -82,7 +82,7 @@ export default class Deploy extends AppLinkedCommand {
 
     if (flags.force) {
       renderWarning({
-        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in Shopify CLI 4.0.'],
+        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in a future major release.'],
         body: [
           'Use',
           {command: '--allow-updates'},
