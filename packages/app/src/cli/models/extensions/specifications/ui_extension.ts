@@ -105,6 +105,15 @@ const uiExtensionSpec = createExtensionSpecification({
   buildConfig: {mode: 'ui'},
   getOutputFileName: (extension: ExtensionInstance<UIExtensionConfigType>) =>
     joinPath('dist', `${extension.handle}.js`),
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   appModuleFeatures: (config) => {
     const basic: ExtensionFeature[] = ['ui_preview', 'esbuild', 'generates_source_maps']
     const needsCart =

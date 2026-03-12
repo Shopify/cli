@@ -18,6 +18,15 @@ const posUISpec = createExtensionSpecification({
   appModuleFeatures: (_) => ['ui_preview', 'esbuild', 'single_js_entry_path'],
   buildConfig: {mode: 'ui'},
   getOutputFileName: (extension: ExtensionInstance<PosUIConfigType>) => joinPath('dist', `${extension.handle}.js`),
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (config, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

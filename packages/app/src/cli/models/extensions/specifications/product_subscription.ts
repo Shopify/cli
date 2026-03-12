@@ -20,6 +20,15 @@ const productSubscriptionSpec = createExtensionSpecification({
   buildConfig: {mode: 'ui'},
   getOutputFileName: (extension: ExtensionInstance<ProductSubscriptionConfigType>) =>
     joinPath('dist', `${extension.handle}.js`),
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (_, directory) => {
     const result = await getDependencyVersion(dependency, directory)
     if (result === 'not_found') throw new BugError(`Dependency ${dependency} not found`)

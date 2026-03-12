@@ -26,6 +26,15 @@ const checkoutSpec = createExtensionSpecification({
   appModuleFeatures: (_) => ['ui_preview', 'cart_url', 'esbuild', 'single_js_entry_path', 'generates_source_maps'],
   buildConfig: {mode: 'ui'},
   getOutputFileName: (extension: ExtensionInstance<CheckoutConfigType>) => joinPath('dist', `${extension.handle}.js`),
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+      ],
+    },
+  ],
   deployConfig: async (config, directory) => {
     return {
       extension_points: config.extension_points,
