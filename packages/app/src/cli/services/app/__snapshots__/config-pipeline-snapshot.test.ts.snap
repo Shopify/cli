@@ -1,0 +1,365 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Config pipeline snapshots > config round-trip (write → read → write) reorders webhook subscriptions 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"My Test App\\"
+application_url = \\"https://myapp.example.com\\"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = \\"test-store.myshopify.com\\"
+include_config_on_deploy = true
+
+[access.admin]
+direct_api_mode = \\"online\\"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products,write_orders\\"
+required_scopes = [ \\"read_products\\" ]
+optional_scopes = [ \\"write_orders\\" ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  \\"https://myapp.example.com/auth/callback\\",
+  \\"https://myapp.example.com/auth/shopify/callback\\"
+]
+
+[webhooks]
+api_version = \\"2024-01\\"
+
+  [[webhooks.subscriptions]]
+  uri = \\"/webhooks/compliance\\"
+  compliance_topics = [ \\"customers/data_request\\", \\"customers/redact\\" ]
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"orders/create\\" ]
+  uri = \\"/webhooks/orders\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"products/create\\", \\"products/update\\" ]
+  uri = \\"/webhooks/products\\"
+
+[app_proxy]
+url = \\"https://myapp.example.com/proxy\\"
+subpath = \\"app\\"
+prefix = \\"apps\\"
+
+[pos]
+embedded = false
+
+[app_preferences]
+url = \\"https://myapp.example.com/preferences\\"
+"
+`;
+
+exports[`Config pipeline snapshots > minimal config without webhooks produces stable output 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"Minimal App\\"
+application_url = \\"https://example.com\\"
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products\\"
+
+[auth]
+redirect_urls = [ \\"https://example.com/auth/callback\\" ]
+"
+`;
+
+exports[`Config pipeline snapshots > subscription with both topics and compliance_topics on same URI splits after round-trip 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"My Test App\\"
+application_url = \\"https://myapp.example.com\\"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = \\"test-store.myshopify.com\\"
+include_config_on_deploy = true
+
+[access.admin]
+direct_api_mode = \\"online\\"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products,write_orders\\"
+required_scopes = [ \\"read_products\\" ]
+optional_scopes = [ \\"write_orders\\" ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  \\"https://myapp.example.com/auth/callback\\",
+  \\"https://myapp.example.com/auth/shopify/callback\\"
+]
+
+[webhooks]
+api_version = \\"2024-01\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"orders/create\\" ]
+  uri = \\"/webhooks\\"
+  compliance_topics = [ \\"customers/data_request\\", \\"customers/redact\\" ]
+
+[app_proxy]
+url = \\"https://myapp.example.com/proxy\\"
+subpath = \\"app\\"
+prefix = \\"apps\\"
+
+[pos]
+embedded = false
+
+[app_preferences]
+url = \\"https://myapp.example.com/preferences\\"
+"
+`;
+
+exports[`Config pipeline snapshots > subscriptions with same URI but different filters stay separate through round-trip 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"My Test App\\"
+application_url = \\"https://myapp.example.com\\"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = \\"test-store.myshopify.com\\"
+include_config_on_deploy = true
+
+[access.admin]
+direct_api_mode = \\"online\\"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products,write_orders\\"
+required_scopes = [ \\"read_products\\" ]
+optional_scopes = [ \\"write_orders\\" ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  \\"https://myapp.example.com/auth/callback\\",
+  \\"https://myapp.example.com/auth/shopify/callback\\"
+]
+
+[webhooks]
+api_version = \\"2024-01\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"orders/create\\" ]
+  uri = \\"/webhooks/orders\\"
+  filter = \\"status:paid\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"orders/update\\" ]
+  uri = \\"/webhooks/orders\\"
+  filter = \\"status:pending\\"
+
+[app_proxy]
+url = \\"https://myapp.example.com/proxy\\"
+subpath = \\"app\\"
+prefix = \\"apps\\"
+
+[pos]
+embedded = false
+
+[app_preferences]
+url = \\"https://myapp.example.com/preferences\\"
+"
+`;
+
+exports[`Config pipeline snapshots > subscriptions with same URI but different include_fields stay separate through round-trip 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"My Test App\\"
+application_url = \\"https://myapp.example.com\\"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = \\"test-store.myshopify.com\\"
+include_config_on_deploy = true
+
+[access.admin]
+direct_api_mode = \\"online\\"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products,write_orders\\"
+required_scopes = [ \\"read_products\\" ]
+optional_scopes = [ \\"write_orders\\" ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  \\"https://myapp.example.com/auth/callback\\",
+  \\"https://myapp.example.com/auth/shopify/callback\\"
+]
+
+[webhooks]
+api_version = \\"2024-01\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"products/create\\" ]
+  uri = \\"/webhooks/products\\"
+  include_fields = [ \\"id\\", \\"title\\" ]
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"products/update\\" ]
+  uri = \\"/webhooks/products\\"
+  include_fields = [ \\"id\\" ]
+
+[app_proxy]
+url = \\"https://myapp.example.com/proxy\\"
+subpath = \\"app\\"
+prefix = \\"apps\\"
+
+[pos]
+embedded = false
+
+[app_preferences]
+url = \\"https://myapp.example.com/preferences\\"
+"
+`;
+
+exports[`Config pipeline snapshots > webhook subscriptions with mixed topics and compliance topics produce stable output 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"My Test App\\"
+application_url = \\"https://myapp.example.com\\"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = \\"test-store.myshopify.com\\"
+include_config_on_deploy = true
+
+[access.admin]
+direct_api_mode = \\"online\\"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products,write_orders\\"
+required_scopes = [ \\"read_products\\" ]
+optional_scopes = [ \\"write_orders\\" ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  \\"https://myapp.example.com/auth/callback\\",
+  \\"https://myapp.example.com/auth/shopify/callback\\"
+]
+
+[webhooks]
+api_version = \\"2024-01\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"orders/create\\", \\"orders/updated\\", \\"orders/cancelled\\" ]
+  uri = \\"/webhooks/orders\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"products/create\\" ]
+  uri = \\"/webhooks/products\\"
+  include_fields = [ \\"id\\", \\"title\\" ]
+
+  [[webhooks.subscriptions]]
+  uri = \\"/webhooks/compliance\\"
+  compliance_topics = [ \\"customers/data_request\\", \\"customers/redact\\", \\"shop/redact\\" ]
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"app/uninstalled\\" ]
+  uri = \\"/webhooks/app\\"
+
+[app_proxy]
+url = \\"https://myapp.example.com/proxy\\"
+subpath = \\"app\\"
+prefix = \\"apps\\"
+
+[pos]
+embedded = false
+
+[app_preferences]
+url = \\"https://myapp.example.com/preferences\\"
+"
+`;
+
+exports[`Config pipeline snapshots > webhook subscriptions with mixed topics and compliance topics produce stable output 2`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = \\"12345\\"
+name = \\"My Test App\\"
+application_url = \\"https://myapp.example.com\\"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = \\"test-store.myshopify.com\\"
+include_config_on_deploy = true
+
+[access.admin]
+direct_api_mode = \\"online\\"
+embedded_app_direct_api_access = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = \\"read_products,write_orders\\"
+required_scopes = [ \\"read_products\\" ]
+optional_scopes = [ \\"write_orders\\" ]
+use_legacy_install_flow = false
+
+[auth]
+redirect_urls = [
+  \\"https://myapp.example.com/auth/callback\\",
+  \\"https://myapp.example.com/auth/shopify/callback\\"
+]
+
+[webhooks]
+api_version = \\"2024-01\\"
+
+  [[webhooks.subscriptions]]
+  uri = \\"/webhooks/compliance\\"
+  compliance_topics = [ \\"customers/data_request\\", \\"customers/redact\\", \\"shop/redact\\" ]
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"app/uninstalled\\" ]
+  uri = \\"/webhooks/app\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"orders/cancelled\\", \\"orders/create\\", \\"orders/updated\\" ]
+  uri = \\"/webhooks/orders\\"
+
+  [[webhooks.subscriptions]]
+  topics = [ \\"products/create\\" ]
+  uri = \\"/webhooks/products\\"
+  include_fields = [ \\"id\\", \\"title\\" ]
+
+[app_proxy]
+url = \\"https://myapp.example.com/proxy\\"
+subpath = \\"app\\"
+prefix = \\"apps\\"
+
+[pos]
+embedded = false
+
+[app_preferences]
+url = \\"https://myapp.example.com/preferences\\"
+"
+`;
