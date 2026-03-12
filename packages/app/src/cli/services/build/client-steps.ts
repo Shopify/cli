@@ -26,6 +26,7 @@ export interface LifecycleStep {
     | 'validate'
     | 'transform'
     | 'custom'
+    | 'build_manifest'
 
   /** Step-specific configuration */
   readonly config: {[key: string]: unknown}
@@ -60,7 +61,7 @@ export interface BuildContext {
   [key: string]: unknown
 }
 
-type StepResult = {
+export type StepResult = {
   readonly id: string
   readonly duration: number
 } & (
