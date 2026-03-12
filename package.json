@@ -111,6 +111,7 @@
       "@parcel/watcher",
       "esbuild",
       "msw",
+      "node-pty",
       "nx",
       "protobufjs",
       "unrs-resolver",
