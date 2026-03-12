@@ -69,6 +69,7 @@ const paymentExtensionSpec = createExtensionSpecification({
         )
       case CARD_PRESENT_TARGET:
         return cardPresentPaymentsAppExtensionDeployConfig(config as CardPresentPaymentsAppExtensionConfigType)
+      case undefined:
       default:
         return {}
     }
