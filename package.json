@@ -29,6 +29,7 @@
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "test:e2e": "nx run-many --target=build --projects=cli,create-app --skip-nx-cache && pnpm --filter e2e exec playwright test",
+    "test:regenerate-snapshots": "packages/e2e/scripts/regenerate-snapshots.sh",
     "test:unit": "pnpm vitest run",
     "test": "pnpm vitest run",
     "type-check:affected": "nx affected --target=type-check",
