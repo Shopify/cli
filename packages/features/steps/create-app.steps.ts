@@ -29,7 +29,7 @@ When(
         throw new Error(`Unknown app type: ${appType}`)
     }
 
-    const {stdout} = await exec(
+    const {stdout, stderr} = await exec(
       'node',
       [
         executables.createApp,
@@ -44,7 +44,8 @@ When(
       ],
       {env: {...process.env, ...this.temporaryEnv, NODE_OPTIONS: '', FORCE_COLOR: '0'}},
     )
-    const hyphenatedAppName = stdout?.match(/([\w-]+) is ready for you to build!/)?.[1] ?? appName
+    const output = `${stdout}\n${stderr}`
+    const hyphenatedAppName = output.match(/([\w-]+) is ready for you to build!/)?.[1] ?? appName
     this.appDirectory = path.join(this.temporaryDirectory, hyphenatedAppName)
 
     // Ensure .npmrc exists before appending to it
