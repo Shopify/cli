@@ -6,7 +6,7 @@ import {CachedAppInfo} from './local-storage.js'
 import {DeployOptions} from './deploy.js'
 import {formatConfigInfoBody} from './format-config-info-body.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
-import {AppInterface, CurrentAppConfiguration, AppLinkedInterface} from '../models/app/app.js'
+import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {Identifiers, updateAppIdentifiers, getAppIdentifiers} from '../models/app/identifiers.js'
 import {Organization, OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import metadata from '../metadata.js'
@@ -233,8 +233,7 @@ async function checkIncludeConfigOnDeploy({
 }
 
 async function removeIncludeConfigOnDeployField(localApp: AppInterface) {
-  const configuration = localApp.configuration as CurrentAppConfiguration
-  const includeConfigOnDeploy = configuration.build?.include_config_on_deploy
+  const includeConfigOnDeploy = localApp.configuration.build?.include_config_on_deploy
   if (includeConfigOnDeploy === undefined) return
 
   const configFile = await TomlFile.read(localApp.configuration.path)
@@ -271,12 +270,11 @@ function renderWarningAboutIncludeConfigOnDeploy() {
 
 async function promptAndSaveIncludeConfigOnDeploy(options: ShouldOrPromptIncludeConfigDeployOptions): Promise<boolean> {
   const shouldIncludeConfigDeploy = await includeConfigOnDeployPrompt(options.localApp.configuration.path)
-  const localConfiguration = options.localApp.configuration as CurrentAppConfiguration
-  localConfiguration.build = {
-    ...localConfiguration.build,
+  options.localApp.configuration.build = {
+    ...options.localApp.configuration.build,
     include_config_on_deploy: shouldIncludeConfigDeploy,
   }
-  const configFile = await TomlFile.read(localConfiguration.path)
+  const configFile = await TomlFile.read(options.localApp.configuration.path)
   await configFile.patch({build: {include_config_on_deploy: shouldIncludeConfigDeploy}})
   await metadata.addPublicMetadata(() => ({cmd_deploy_confirm_include_config_used: shouldIncludeConfigDeploy}))
   return shouldIncludeConfigDeploy

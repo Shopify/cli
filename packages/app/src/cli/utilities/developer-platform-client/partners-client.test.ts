@@ -5,7 +5,7 @@ import {Organization, OrganizationSource, OrganizationStore} from '../../models/
 import {
   testPartnersUserSession,
   testApp,
-  testAppWithLegacyConfig,
+  testAppWithConfig,
   testOrganizationApp,
 } from '../../models/app/app.test-data.js'
 import {appNamePrompt} from '../../prompts/dev.js'
@@ -23,7 +23,15 @@ beforeEach(() => {
 
 const LOCAL_APP: AppInterface = testApp({
   directory: '',
-  configuration: {path: '/shopify.app.toml', scopes: 'read_products', extension_directories: ['extensions/*']},
+  configuration: {
+    path: '/shopify.app.toml',
+    client_id: 'test-client-id',
+    name: 'my-app',
+    application_url: 'https://example.com',
+    embedded: true,
+    access_scopes: {scopes: 'read_products'},
+    extension_directories: ['extensions/*'],
+  },
   webs: [
     {
       directory: '',
@@ -82,7 +90,7 @@ describe('createApp', () => {
   test('sends request to create app with launchable defaults and returns it', async () => {
     // Given
     const partnersClient = PartnersClient.getInstance(testPartnersUserSession)
-    const localApp = testAppWithLegacyConfig({config: {scopes: 'write_products'}})
+    const localApp = testAppWithConfig({config: {access_scopes: {scopes: 'write_products'}}})
     vi.mocked(appNamePrompt).mockResolvedValue('app-name')
     vi.mocked(partnersRequest).mockResolvedValueOnce({appCreate: {app: APP1, userErrors: []}})
     const variables = {
