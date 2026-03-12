@@ -30,7 +30,7 @@ test("loads the app", async () => {
 })
 ```
 
-Tests can be run with `pnpm test` or `pnpm test:watch` for the entire workspace or individual packages. `test:watch` keeps the process alive and runs tests as files are changed. If you want to run a single test, pass the path to the file as argument:
+Tests can be run with `pnpm test` for the Vitest suite, `pnpm test:watch` for watch mode, or `pnpm test:e2e` for the Playwright end-to-end suite. If you want to run a single unit test, pass the path to the file as argument:
 
 ```
 pnpm test path/to/my.test.ts
