@@ -109,7 +109,7 @@ describe('downloadRepository()', async () => {
       const latestTag = true
 
       await git.downloadGitRepository({repoUrl, destination, latestTag})
-    }).rejects.toThrowError()
+    }).rejects.toThrowError(/fatal: No names found/)
   })
 
   test('clones and checks out the latest tag', async () => {
@@ -220,7 +220,7 @@ describe('createGitIgnore()', () => {
 
 describe('getLatestCommit()', () => {
   test('gets the latest commit through git log', async () => {
-    mockGitCommand('abc123\n2024-01-01\ncommit message\nHEAD -> main\n\nJohn\njohn@test.com')
+    mockGitCommand('abc123\x002024-01-01\x00commit message\x00HEAD -> main\x00\x00John\x00john@test.com')
 
     const result = await git.getLatestGitCommit()
     expect(result.hash).toBe('abc123')
@@ -236,7 +236,7 @@ describe('getLatestCommit()', () => {
 
   test('passes the directory option', async () => {
     const directory = '/test/directory'
-    mockGitCommand('abc123\n2024-01-01\nmsg\nrefs\n\nJohn\njohn@test.com')
+    mockGitCommand('abc123\x002024-01-01\x00msg\x00refs\x00\x00John\x00john@test.com')
 
     await git.getLatestGitCommit(directory)
 

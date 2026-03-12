@@ -35,6 +35,9 @@ async function gitCommand(args: string[], directory?: string): Promise<string> {
     if (err instanceof Error) {
       const abortError = new AbortError(err.message)
       abortError.stack = err.stack
+      if ('exitCode' in err) {
+        Object.assign(abortError, {exitCode: err.exitCode})
+      }
       throw abortError
     }
     throw err
@@ -70,7 +73,7 @@ export async function checkIfIgnoredInGitRepository(directory: string, files: st
     return stdout.split('\n').filter(Boolean)
   } catch (error) {
     // git check-ignore exits with code 1 when no files are ignored
-    if (error instanceof AbortError) return []
+    if (error instanceof AbortError && 'exitCode' in error && error.exitCode === 1) return []
     throw error
   }
 }
@@ -138,14 +141,12 @@ export function addToGitIgnore(root: string, entry: string): void {
  *
  * @param repoUrl - The URL of the repository to clone.
  * @param destination - The directory where the repository will be cloned.
- * @param progressUpdater - A function that will be called with the progress of the clone.
  * @param shallow - Whether to clone the repository shallowly.
  * @param latestTag - Whether to clone the latest tag instead of the default branch.
  */
 export interface GitCloneOptions {
   repoUrl: string
   destination: string
-  progressUpdater?: (statusString: string) => void
   shallow?: boolean
   latestTag?: boolean
 }
@@ -249,7 +250,7 @@ async function getLatestTagFromDirectory(directory: string, repoUrl: string): Pr
  * @returns The latest commit of the repository.
  */
 export async function getLatestGitCommit(directory?: string): Promise<GitLogEntry> {
-  const format = '%H%n%ai%n%s%n%D%n%b%n%an%n%ae'
+  const format = '%H%x00%ai%x00%s%x00%D%x00%b%x00%an%x00%ae'
   const stdout = await gitCommand(['log', '-1', `--format=${format}`], directory)
   if (!stdout.trim()) {
     throw new AbortError(
@@ -259,15 +260,15 @@ export async function getLatestGitCommit(directory?: string): Promise<GitLogEntr
       )} to create your first commit.`,
     )
   }
-  const lines = stdout.split('\n')
+  const parts = stdout.split('\x00')
   return {
-    hash: lines[0]!,
-    date: lines[1]!,
-    message: lines[2]!,
-    refs: lines[3]!,
-    body: lines[4]!,
-    author_name: lines[5]!,
-    author_email: lines[6]!,
+    hash: parts[0]!,
+    date: parts[1]!,
+    message: parts[2]!,
+    refs: parts[3]!,
+    body: parts[4]!,
+    author_name: parts[5]!,
+    author_email: parts[6]!,
   }
 }
 
@@ -365,7 +366,7 @@ export async function insideGitDirectory(directory?: string): Promise<boolean> {
     await execa('git', ['rev-parse', '--git-dir'], {cwd: directory})
     return true
   } catch (error) {
-    if (error instanceof Error && 'exitCode' in error) return false
+    if (error instanceof Error && 'exitCode' in error && error.exitCode === 128) return false
     throw error
   }
 }
@@ -405,7 +406,7 @@ export async function getLatestTag(directory?: string): Promise<string | undefin
     const stdout = await gitCommand(['describe', '--tags', '--abbrev=0'], directory)
     return stdout.trim() || undefined
   } catch (error) {
-    if (error instanceof AbortError) return undefined
+    if (error instanceof AbortError && 'exitCode' in error && error.exitCode === 128) return undefined
     throw error
   }
 }
