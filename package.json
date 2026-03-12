@@ -42,7 +42,7 @@
     "@changesets/cli": "2.29.7",
     "@graphql-codegen/add": "6.0.0",
     "@graphql-codegen/cli": "6.0.1",
-    "@graphql-codegen/near-operation-file-preset": "3.1.0",
+    "@graphql-codegen/near-operation-file-preset": "4.0.0",
     "@graphql-codegen/typed-document-node": "6.1.0",
     "@graphql-codegen/typescript-operations": "5.0.2",
     "@nx/eslint-plugin": "22.0.2",
@@ -201,8 +201,7 @@
           "**/graphql/**/generated/*.ts"
         ],
         "ignoreDependencies": [
-          "@shopify/plugin-cloudflare",
-          "@shopify/function-runner"
+          "@shopify/plugin-cloudflare"
         ],
         "vite": {
           "config": [
