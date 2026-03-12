@@ -52,7 +52,7 @@ export default class Release extends AppLinkedCommand {
 
     if (flags.force) {
       renderWarning({
-        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in a future major release.'],
+        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in the next major release.'],
         body: [
           'Use',
           {command: '--allow-updates'},
