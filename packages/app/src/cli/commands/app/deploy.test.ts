@@ -38,7 +38,7 @@ describe('app deploy --force deprecation warning', () => {
     )
     const call = vi.mocked(renderWarning).mock.calls[0]![0]
     expect(JSON.stringify(call)).toContain('--force')
-    expect(JSON.stringify(call)).toContain('future major release')
+    expect(JSON.stringify(call)).toContain('next major release')
   })
 
   test('shows deprecation warning when SHOPIFY_FLAG_FORCE env var is set', async () => {
