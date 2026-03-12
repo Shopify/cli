@@ -173,6 +173,7 @@
         ],
         "ignoreBinaries": [
           "bin/*",
+          "packages/e2e/scripts/*",
           "shopify",
           "shopify-nightly",
           "brew",

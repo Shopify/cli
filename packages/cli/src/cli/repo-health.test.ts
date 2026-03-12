@@ -4,7 +4,7 @@ import glob from 'fast-glob'
 import * as fs from 'fs/promises'
 import * as path from 'path'
 
-const repoRoot = path.join(__dirname, '..')
+const repoRoot = path.join(__dirname, '../../../..')
 
 describe('GitHub Actions pinning', () => {
   test('all non-official actions are pinned to SHA', async () => {
