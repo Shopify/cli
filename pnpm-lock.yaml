@@ -483,9 +483,6 @@ importers:
       semver:
         specifier: 7.6.3
         version: 7.6.3
-      simple-git:
-        specifier: 3.32.3
-        version: 3.32.3
       stacktracey:
         specifier: 2.1.8
         version: 2.1.8
