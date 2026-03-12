@@ -221,11 +221,16 @@ jobs:
           base-branch-name: '${{ github.base_ref }}'
 
   e2e-tests:
-    name: 'E2E tests'
+    name: 'E2E tests (${{ matrix.os }}, node ${{ matrix.node }})'
     if: github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest', 'windows-latest', 'macos-latest']
+        node: ['20.14.0', '22.2.0', '24.1.0']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -235,7 +240,7 @@ jobs:
       - name: Setup deps
         uses: ./.github/actions/setup-cli-deps
         with:
-          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+          node-version: ${{ matrix.node }}
       - name: Build
         run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Install Playwright Chromium
@@ -256,14 +261,14 @@ jobs:
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.os }}-node${{ matrix.node }}
           path: packages/e2e/playwright-report/
           retention-days: 14
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
-          name: playwright-results
+          name: playwright-results-${{ matrix.os }}-node${{ matrix.node }}
           path: packages/e2e/test-results/
           retention-days: 14
 
