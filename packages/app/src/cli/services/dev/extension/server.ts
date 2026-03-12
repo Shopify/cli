@@ -12,7 +12,7 @@ import {
 } from './server/middlewares.js'
 import {ExtensionsPayloadStore, ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
-import {createApp, createRouter} from 'h3'
+import {createApp, createRouter, toNodeListener} from 'h3'
 import {createServer} from 'http'
 
 interface SetupHTTPServerOptions {
@@ -40,8 +40,7 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
 
   httpApp.use(httpRouter)
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  const httpServer = createServer(httpApp)
+  const httpServer = createServer(toNodeListener(httpApp))
   httpServer.listen(options.devOptions.port, 'localhost')
   return httpServer
 }
