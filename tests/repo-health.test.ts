@@ -1,7 +1,8 @@
+/* eslint-disable no-restricted-imports, no-await-in-loop */
 import {describe, test, expect} from 'vitest'
+import glob from 'fast-glob'
 import * as fs from 'fs/promises'
 import * as path from 'path'
-import glob from 'fast-glob'
 
 const repoRoot = path.join(__dirname, '..')
 
@@ -15,7 +16,7 @@ describe('GitHub Actions pinning', () => {
     for (const file of workflowFiles) {
       const content = await fs.readFile(file, 'utf-8')
       const matches = content.match(/uses:\s+\S+/g) ?? []
-      allActions.push(...matches.map((m) => m.split(/\s+/)[1]!))
+      allActions.push(...matches.map((match) => match.split(/\s+/)[1]!))
     }
 
     const thirdParty = allActions.filter(
@@ -24,11 +25,14 @@ describe('GitHub Actions pinning', () => {
 
     const unpinned = thirdParty.filter((action) => !action.match(/^[^@]+@[0-9a-f]+/))
 
-    expect(unpinned, [
-      'The following unofficial GitHub actions have not been pinned:\n',
-      ...unpinned.map((el) => `  - ${el}\n`),
-      '\nRun bin/pin-github-actions.js, verify the action is not doing anything malicious, then commit your changes.',
-    ].join('')).toHaveLength(0)
+    expect(
+      unpinned,
+      [
+        'The following unofficial GitHub actions have not been pinned:\n',
+        ...unpinned.map((el) => `  - ${el}\n`),
+        '\nRun bin/pin-github-actions.js, verify the action is not doing anything malicious, then commit your changes.',
+      ].join(''),
+    ).toHaveLength(0)
   })
 })
 
@@ -69,7 +73,7 @@ describe('Node dependency version sync', () => {
       const name = path.dirname(pkgPath).split('/').pop()!
       packageJsonMap[name] = JSON.parse(await fs.readFile(pkgPath, 'utf-8')) as PackageJson
     }
-    packageJsonMap['root'] = JSON.parse(await fs.readFile(path.join(repoRoot, 'package.json'), 'utf-8')) as PackageJson
+    packageJsonMap.root = JSON.parse(await fs.readFile(path.join(repoRoot, 'package.json'), 'utf-8')) as PackageJson
 
     const different: {dep: string; versions: {packageName: string; version: string}[]}[] = []
 
@@ -87,7 +91,7 @@ describe('Node dependency version sync', () => {
         }
       }
 
-      const uniqueVersions = [...new Set(depVersions.map((v) => v.version))]
+      const uniqueVersions = [...new Set(depVersions.map((ver) => ver.version))]
       if (uniqueVersions.length > 1) {
         different.push({dep, versions: depVersions})
       }

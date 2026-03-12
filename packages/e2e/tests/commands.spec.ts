@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports */
 import {cliFixture as test} from '../setup/cli.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs/promises'
