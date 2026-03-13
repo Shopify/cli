@@ -61,9 +61,9 @@ esBuild({
   splitting: true,
   // these tree shaking and minify options remove any in-source tests from the bundle
   treeShaking: true,
-  minifyWhitespace: false,
+  minifyWhitespace: true,
   minifySyntax: true,
-  minifyIdentifiers: false,
+  minifyIdentifiers: true,
 
   plugins: [
     ShopifyVSCodePlugin,

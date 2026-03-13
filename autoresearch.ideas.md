@@ -1,26 +1,35 @@
 # Autoresearch Ideas
 
-## Key Insights
-- Original baseline is ~590ms wall / ~420ms user (not 1840ms as initially measured cold)
-- Static imports are loaded in parallel by ESM loader; dynamic awaits are sequential
-- Network calls (analytics POST, version check) add 100-500ms wall clock time
-- The postrun hook (analytics, deprecation checks) takes ~400ms CPU when loaded cold
+## Current State
+- Baseline: 610ms → Current: 190ms (69% improvement, all universal)
+- Startup chunk size: ~694KB (down from 9.5MB)
+- Node startup: ~40ms, V8 compile: ~40ms, oclif+command: ~110ms
+
+## Proven Techniques (already applied)
+- Separate bootstrap from index.ts (don't load all commands upfront)
+- Lazy command loading via registry
+- Lazy prerun/postrun/init hooks (fire-and-forget after command)
+- Deferred error-handler (only on error path)
+- TypeScript compiler externalized from bundle
+- Native Node.js builtins instead of cli-kit wrappers in hot path
+- process.exit(0) to skip waiting for analytics/network
 
 ## Ideas to Explore
 
-### High Impact
-- **Bundle bootstrap + hot path with esbuild**: Single file eliminates hundreds of file I/O operations. The existing `bin/bundle.js` already does this but bundles ALL files. A targeted bundle of just the startup path (bootstrap → cli → oclif → config.load → hooks) could be much smaller and faster.
-- **Pre-warm hook modules**: Start importing postrun/prerun dependencies in the background right after config.load(), so they're cached by the time hooks run. Use `void import(...)` to trigger loading without blocking.
-- **Reduce @oclif/core cold load cost**: Oclif itself takes ~50-80ms. Check if we can use a lighter subset.
-- **Move analytics to a detached child process**: Fire off analytics data to a background script that handles the HTTP POST. CLI exits immediately.
-
 ### Medium Impact
-- **Reduce node-package-manager.js weight**: It imports latest-version, semver, conf-store. These are only needed for version checking. Make them lazy.
-- **Replace node-fetch with native fetch**: Node 18+ has built-in fetch. Saves ~127ms of module loading.
-- **Reduce conf package overhead**: The `conf` package loads atomically, parses JSON config. Consider a lighter alternative or lazy init.
-- **Tree-shake @shopify/cli-kit**: Many modules import the full output.js chain even when they only need simple utilities.
+- **Reduce @oclif/core chunk size**: The oclif chunk is 520KB. Can we tree-shake unused parts (oclif update system, plugin management, etc.)? Custom esbuild plugin to strip dead code paths.
+- **Lazy command class loading in oclif**: Override Config.loadPluginsAndCommands to skip loading command classes upfront. Only load the manifest metadata.
+- **Optimize oclif config.load()**: Profile what config.load() actually does. May read multiple package.json files, resolve symlinks, etc.
+- **Replace conf package**: LocalStorage uses `conf` (creates atomic JSON files). A lighter implementation could save ~20ms.
 
-### Low Impact / Risky
-- **Skip postrun for lightweight commands**: version, help, search don't need analytics. But this breaks analytics tracking.
-- **Use V8 code cache / snapshots**: Node.js can serialize compiled code. Complex to set up but could save 100-200ms.
-- **Compile to a single binary**: Use pkg or sea (Node single executable). Eliminates all module resolution.
+### Low Impact (diminishing returns)
+- **V8 code cache**: Use `--compile-cache` or similar to cache V8 compiled bytecode. Could save ~40ms of compile time.
+- **Inline oclif manifest into bundle**: Instead of reading JSON from disk, include the manifest as a JS object. Saves ~5ms.
+- **Reduce CJS shim overhead**: The esbuild CJS-to-ESM bridge takes ~33ms. Converting deps to ESM would help but is impractical.
+
+### Tried and Didn't Work
+- ~~Pre-warm hook modules~~ (ESM loader is single-threaded, adds contention)
+- ~~Lazy session.js in analytics~~ (sequential dynamic import is slower than parallel static)
+- ~~Defer global-agent~~ (only 72KB, no measurable impact at this code size)
+- ~~Skip hydrogen plugin when not installed~~ (oclif handles missing plugins quickly)
+- ~~Replace help command with oclif built-in~~ (worse and inconsistent)
