@@ -6,6 +6,5 @@
   "packages/plugin-did-you-mean",
   "packages/theme",
   "packages/ui-extensions-dev-console",
-  "packages/ui-extensions-server-kit",
-  "packages/ui-extensions-test-utils"
+  "packages/ui-extensions-server-kit"
 ]
