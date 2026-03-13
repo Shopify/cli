@@ -1,7 +1,8 @@
-import {fileExistsSync} from './fs.js'
-import {cwd, joinPath, sniffForPath} from './path.js'
-import {isDevelopment} from './context/local.js'
-import {execaSync} from 'execa'
+// Use native Node.js modules instead of cli-kit wrappers to avoid pulling in
+// heavy dependency chains (fs.js → fs-extra, execa, etc.) that add ~550KB of chunks.
+import {existsSync} from 'node:fs'
+import {join} from 'node:path'
+import {execFileSync} from 'node:child_process'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/interfaces'
 
@@ -12,21 +13,44 @@ import {Options} from '@oclif/core/interfaces'
  */
 export type LazyCommandLoader = (id: string) => Promise<typeof Command | undefined>
 
+/**
+ * Check if CLI is in development mode.
+ * Inlined to avoid importing context/local.js and its dependency chain.
+ */
+function isDev(): boolean {
+  return process.env.SHOPIFY_CLI_ENV === 'development'
+}
+
+/**
+ * Extract --path flag value from argv.
+ * Inlined to avoid importing path.js and its dependency chain.
+ */
+function sniffPath(argv = process.argv): string | undefined {
+  const idx = argv.indexOf('--path')
+  if (idx === -1) {
+    const arg = argv.find((a) => a.startsWith('--path='))
+    return arg?.split('=')[1]
+  }
+  const flag = argv[idx + 1]
+  if (!flag || flag.startsWith('-')) return undefined
+  return flag
+}
+
 export class ShopifyConfig extends Config {
   private lazyCommandLoader?: LazyCommandLoader
 
   constructor(options: Options) {
-    if (isDevelopment()) {
-      const currentPath = cwd()
+    if (isDev()) {
+      const currentPath = process.cwd()
 
-      let path = sniffForPath() ?? currentPath
+      let path = sniffPath() ?? currentPath
       // Hydrogen CI uses `hydrogen/hydrogen` path, while local dev uses `shopify/hydrogen`.
       const currentPathMightBeHydrogenMonorepo = /(shopify|hydrogen)\/hydrogen/i.test(currentPath)
       const ignoreHydrogenMonorepo = process.env.IGNORE_HYDROGEN_MONOREPO
       if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
-        path = execaSync('npm', ['prefix']).stdout.trim()
+        path = execFileSync('npm', ['prefix'], {encoding: 'utf8'}).trim()
       }
-      if (fileExistsSync(joinPath(path, 'package.json'))) {
+      if (existsSync(join(path, 'package.json'))) {
         // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
         // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
         // 2. To allow the Hydrogen team to load a local version for testing.
@@ -39,7 +63,7 @@ export class ShopifyConfig extends Config {
 
     super(options)
 
-    if (isDevelopment()) {
+    if (isDev()) {
       // @ts-expect-error: This is a private method that we are overriding. OCLIF doesn't provide a way to extend it.
 
       this.determinePriority = this.customPriority
