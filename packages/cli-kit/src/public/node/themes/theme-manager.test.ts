@@ -68,6 +68,7 @@ describe('ThemeManager', () => {
       expect(fetchTheme).toHaveBeenCalledWith(123, session)
       expect(result).toEqual(mockTheme)
       expect(themeCreate).not.toHaveBeenCalled()
+      expect(manager.getStoredThemeId()).toBe('123')
     })
 
     test('creates a new theme when one does not exist', async () => {
@@ -105,6 +106,7 @@ describe('ThemeManager', () => {
       expect(findDevelopmentThemeByName).toHaveBeenCalledWith('Dev', session)
       expect(result).toEqual(mockTheme)
       expect(themeCreate).not.toHaveBeenCalled()
+      expect(manager.getStoredThemeId()).toBe('123')
     })
   })
 

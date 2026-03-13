@@ -15,7 +15,9 @@ export abstract class ThemeManager {
 
   async findOrCreate(name?: string, role?: Role): Promise<Theme> {
     let theme = await this.fetch(name, role)
-    if (!theme) {
+    if (theme) {
+      this.setTheme(theme.id.toString())
+    } else {
       theme = await this.create(role, name)
     }
     return theme
@@ -29,8 +31,7 @@ export abstract class ThemeManager {
     const theme =
       name && role === DEVELOPMENT_THEME_ROLE
         ? await findDevelopmentThemeByName(name, this.adminSession)
-        : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          await fetchTheme(parseInt(this.themeId!, 10), this.adminSession)
+        : await fetchTheme(parseInt(this.themeId!, 10), this.adminSession)
 
     if (!theme) {
       this.removeTheme()
