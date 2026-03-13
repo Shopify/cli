@@ -1,9 +1,8 @@
-import type {AlertCustomSection} from './ui.js'
 import {normalizePath} from './path.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/token-utils.js'
-
 import {Errors} from '@oclif/core'
+import type {AlertCustomSection} from './ui.js'
 
 export {ExtendableError} from 'ts-error'
 

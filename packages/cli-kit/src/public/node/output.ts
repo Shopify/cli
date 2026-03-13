@@ -1,10 +1,8 @@
 import {isUnitTest, isVerbose} from './context/local.js'
-import type {PackageManager} from './node-package-manager.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
 import {isTruthy} from './context/utilities.js'
-import type {TokenItem} from '../../private/node/ui/components/token-utils.js'
 import {
   ColorContentToken,
   CommandContentToken,
@@ -21,10 +19,10 @@ import {
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/token-utils.js'
 import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
-
 import stripAnsi from 'strip-ansi'
-
 import {Writable} from 'stream'
+import type {PackageManager} from './node-package-manager.js'
+import type {TokenItem} from '../../private/node/ui/components/token-utils.js'
 
 import type {Change} from 'diff'
 

@@ -5,9 +5,9 @@
  * It intentionally does NOT import any command modules or heavy packages.
  * Commands are loaded lazily by oclif from the manifest + index.ts only when needed.
  */
+import {loadCommand} from './command-registry.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import {runCLI} from '@shopify/cli-kit/node/cli'
-import {loadCommand} from './command-registry.js'
 
 import fs from 'fs'
 
@@ -24,6 +24,7 @@ createGlobalProxyAgent({
 // not be called. The tunnel plugin is an example of that. Here we make sure to print
 // the error stack and manually call exit so that the cleanup code is called. This
 // makes sure that there are no lingering tunnel processes.
+// eslint-disable-next-line @typescript-eslint/no-misused-promises
 process.on('uncaughtException', async (err) => {
   try {
     const {FatalError} = await import('@shopify/cli-kit/node/error')
@@ -33,6 +34,7 @@ process.on('uncaughtException', async (err) => {
     } else {
       fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
     }
+    // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     fs.writeSync(process.stderr.fd, `${err.stack ?? err.message ?? err}\n`)
   }

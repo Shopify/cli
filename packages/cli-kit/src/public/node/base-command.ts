@@ -5,8 +5,10 @@ import {outputContent, outputResult, outputToken} from './output.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
-import type {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
+import {Command, Config, Errors} from '@oclif/core'
+import type {JsonMap} from '../../private/common/json.js'
+import type {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 
 /**
  * Inlined from system.js to avoid loading execa/which/cross-spawn chain (~50KB).
@@ -16,9 +18,6 @@ function terminalSupportsPrompting(): boolean {
   if (isTruthy(process.env.CI)) return false
   return Boolean(process.stdin.isTTY && process.stdout.isTTY)
 }
-
-import {Command, Config, Errors} from '@oclif/core'
-import type {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ArgOutput = OutputArgs<any>
@@ -367,6 +366,7 @@ async function removeDuplicatedPlugins(config: Config): Promise<void> {
     })
   }
   const filteredPlugins = plugins.filter((plugin) => !bundlePlugins.includes(plugin.name))
+  // eslint-disable-next-line require-atomic-updates -- config.plugins won't be modified by renderWarning above
   config.plugins = new Map(filteredPlugins.map((plugin) => [plugin.name, plugin]))
 }
 

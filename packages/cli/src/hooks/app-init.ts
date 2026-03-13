@@ -2,8 +2,8 @@ import {Hook} from '@oclif/core'
 import {randomUUID} from 'crypto'
 
 /**
- * Inlined version of the @shopify/app init hook.
- * The original hook imports @shopify/app → local-storage → cli-kit error chain (~1s).
+ * Inlined version of the `\@shopify/app` init hook.
+ * The original hook imports `\@shopify/app` → local-storage → cli-kit error chain (~1s).
  * This inlined version avoids those imports entirely. It lazily imports the
  * LocalStorage class only at call time, and uses Node's native crypto.
  */

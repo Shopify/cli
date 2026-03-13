@@ -1,7 +1,7 @@
-import type {PackageManager} from './node-package-manager.js'
 import {cwd, sniffForPath} from './path.js'
 import {isUnitTest} from './context/local.js'
 import {execaSync} from 'execa'
+import type {PackageManager} from './node-package-manager.js'
 
 let _isGlobal: boolean | undefined
 

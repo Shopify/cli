@@ -1,7 +1,7 @@
 import {Hook} from '@oclif/core'
 
 /**
- * Hydrogen init hook — only loads @shopify/cli-hydrogen when running a hydrogen command.
+ * Hydrogen init hook — only loads `\@shopify/cli-hydrogen` when running a hydrogen command.
  * This avoids the ~300ms+ import cost for non-hydrogen commands.
  */
 const hook: Hook<'init'> = async (options) => {

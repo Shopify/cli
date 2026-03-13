@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+// eslint-disable-next-line n/no-unsupported-features/node-builtins
 import {enableCompileCache} from 'node:module'
 
 enableCompileCache()

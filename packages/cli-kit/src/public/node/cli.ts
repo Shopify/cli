@@ -1,9 +1,8 @@
 import {isTruthy} from './context/utilities.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
-import type {LazyCommandLoader} from './custom-oclif-loader.js'
 import {environmentVariables} from '../../private/node/constants.js'
-
 import {Flags} from '@oclif/core'
+import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically

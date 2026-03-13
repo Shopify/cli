@@ -6,11 +6,10 @@ import {FilePath} from './FilePath.js'
 import {Subdued} from './Subdued.js'
 import React, {FunctionComponent} from 'react'
 import {Box, Text} from 'ink'
-
-// Re-export types and string utilities from the lightweight module
-export type {LinkToken, UserInputToken, ListToken, BoldToken, Token, InlineToken, TokenItem} from './token-utils.js'
-export {tokenItemToString, appendToTokenItem} from './token-utils.js'
 import type {Token, ListToken, TokenItem} from './token-utils.js'
+
+export type {LinkToken, UserInputToken, ListToken, BoldToken, Token, InlineToken, TokenItem} from './token-utils.js'
+export {tokenItemToString} from './token-utils.js'
 
 type DisplayType = 'block' | 'inline'
 interface Block {

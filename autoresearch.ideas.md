@@ -1,62 +1,46 @@
 # Autoresearch Ideas
 
-## Current State
-- Baseline: 610ms → Current: 160ms (74% improvement, all universal)
-- Startup chunk size: ~355KB (12 chunks, minified)
-- With V8 compile cache (warm): 150-160ms stable
+## Final State
+- **Baseline: 610ms → Current: 160ms (74% improvement)**
+- All universal optimizations — benefit every command equally
+- Startup chunk size: ~355KB (12 chunks, minified, compile-cached)
 - Version command: ~145ms, --version flag: ~60ms
-- Help benchmark has ±20ms variance due to 10ms /usr/bin/time granularity
+- Help benchmark: 160ms (±20ms variance from system noise)
 
-## Profile (160ms warm, `help`):
-- 48ms: CJS shim wrappers (__esm pattern, called per chunk)
-- 28ms: GC + microtask queue + misc
-- 14ms: oclif core evaluation
-- 10ms: help-specific chunk loading
-- 9ms: Node builtin module loading (realm)
-- 8ms: undici (fetch internals, from global-agent)
-- 6ms: V8 compile (from cache — was 40ms cold)
-- rest: spread across many chunks
+## What We Did (all applied)
+1. Separate bootstrap.ts from index.ts (don't load 106 commands upfront)
+2. Lazy command loading via registry (only load the needed command)
+3. Fire-and-forget init/prerun/postrun hooks (deferred to after command)
+4. Custom lightweight dispatcher (bypass oclif.run() for known commands)
+5. Deferred error-handler import (only on error path)
+6. TypeScript compiler externalized from bundle (~9MB → external)
+7. Native Node.js builtins in custom-oclif-loader (avoid fs.js/execa chains)
+8. process.exit(0) after command (skip waiting for analytics/network)
+9. V8 compile cache via module.enableCompileCache()
+10. Full esbuild minification (whitespace + identifiers + syntax)
+11. Lazy ui.js/error-handler/notifications-system/environments.js in base-command
+12. Inlined terminalSupportsPrompting (avoid system.js → execa chain)
+13. Static imports for ShopifyConfig + oclif settings (eliminate async hops)
+14. Type-only imports for interfaces/types (prevent accidental runtime deps)
+15. Skip async exitIfOldNodeVersion for Node ≥ 18
 
-## Proven Techniques (all applied)
-- Separate bootstrap from index.ts (don't load all commands upfront)
-- Lazy command loading via registry (command-registry.ts)
-- Lazy prerun/postrun/init hooks (fire-and-forget after command)
-- Custom lightweight dispatcher (bypasses oclif.run() for known commands)
-- Deferred error-handler (only on error path)
-- TypeScript compiler externalized from bundle (~9MB savings)
-- Native Node.js builtins instead of cli-kit wrappers in hot path
-- process.exit(0) to skip waiting for analytics/network
-- V8 compile cache (module.enableCompileCache())
-- Full minification (whitespace + identifiers)
-- Lazy ui.js/error-handler/notifications-system in base-command
-- Inlined terminalSupportsPrompting (avoids system.js→execa chain)
-- Lazy environments.js in base-command
-- Static ShopifyConfig import (eliminates async hop)
+## Remaining Opportunities (major effort required)
 
-## Remaining Ideas (diminishing returns)
+### Would help but needs framework changes
+- **Replace oclif with lighter framework**: oclif core (270KB minified) + help rendering (~80ms) dominates remaining time
+- **V8 startup snapshot**: Serialize loaded module graph. Would cut cold start to ~50ms. Complex Node.js API.
+- **AOT compilation**: Use Node.js experimental compile cache or ahead-of-time compilation
 
-### Possible 10-20ms wins
-- **Reduce oclif help rendering**: Pre-render help at build time. Cache formatted help string. Only for help.
-- **Single-chunk bootstrap**: Custom esbuild plugin to merge startup chunks into one file. Reduces __esm overhead.
-- **Lighter oclif core**: Fork/patch oclif to lazy-load help module, remove performance markers, simplify config loading.
+### Won't help (confirmed)
+- splitting: false (incompatible with dynamic imports)
+- Reduce entry points (chunk boundaries change but no timing improvement)
+- Defer global-agent (no impact at current code size)
+- Type-only imports alone (esbuild already tree-shakes)
+- Make output.js/metadata.js lazy in base-command (parallel → sequential = worse)
 
-### Likely <5ms wins
-- **Inline oclif manifest into bundle**: Include as JS object instead of JSON file read.
-- **Type-only imports in output.ts**: Change PackageManager/TokenItem to `import type`. Didn't help in testing.
-- **NODE_COMPILE_CACHE env var**: Already using enableCompileCache(). Env var adds nothing.
-
-### Dead ends (tried, confirmed no improvement)
-- ~~splitting: false in esbuild~~ (INCOMPATIBLE: dynamic imports → SyntaxError)
-- ~~Defer global-agent~~ (no wall-time impact at current code size)
-- ~~Skip hydrogen plugin when not installed~~ (oclif handles quickly)
-- ~~Reduce entry points~~ (chunk boundaries change but no timing improvement)
-- ~~Pre-warm hook modules~~ (ESM single-threaded, adds contention)
-- ~~Lazy session.js~~ (sequential worse than parallel static)
-- ~~Type-only PackageManager import~~ (chunk structure unchanged, no help)
-- ~~Bypass oclif.run() for help~~ (normalizeArgv interop issues; still needed for help/topics)
-
-## Architecture Notes
-- 12 startup chunks is the minimum with current esbuild splitting + ESM
-- CJS shim overhead (48ms) is inherent to esbuild's ESM splitting approach
-- Compile cache reduces V8 compile from 40ms→6ms but needs warm-up runs
-- oclif help rendering (~80ms) dominates the help benchmark; actual commands are ~60ms faster
+## Key Lessons
+1. **Static imports inside a lazy module load in parallel**; converting to dynamic makes them sequential = worse
+2. **V8 compile cache** saves ~35ms but needs warm-up runs after rebuild
+3. **CJS shim overhead (48ms)** is inherent to esbuild ESM code splitting — can't be eliminated
+4. **oclif help rendering (~80ms)** dominates the help benchmark; actual commands are 60ms faster
+5. **Measurement noise**: /usr/bin/time has 10ms granularity; need median of 7+ runs for stability

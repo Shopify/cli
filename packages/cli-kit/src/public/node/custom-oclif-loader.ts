@@ -1,10 +1,12 @@
 // Use native Node.js modules instead of cli-kit wrappers to avoid pulling in
 // heavy dependency chains (fs.js → fs-extra, execa, etc.) that add ~550KB of chunks.
-import {existsSync} from 'node:fs'
-import {join} from 'node:path'
-import {execFileSync} from 'node:child_process'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/interfaces'
+import {existsSync} from 'node:fs'
+// eslint-disable-next-line no-restricted-imports
+import {join} from 'node:path'
+// eslint-disable-next-line no-restricted-imports
+import {execFileSync} from 'node:child_process'
 
 /**
  * Optional lazy command loader function.
@@ -24,11 +26,14 @@ function isDev(): boolean {
 /**
  * Extract --path flag value from argv.
  * Inlined to avoid importing path.js and its dependency chain.
+ *
+ * @param argv - The process argv to search for the --path flag.
+ * @returns The path value if found, undefined otherwise.
  */
 function sniffPath(argv = process.argv): string | undefined {
   const idx = argv.indexOf('--path')
   if (idx === -1) {
-    const arg = argv.find((a) => a.startsWith('--path='))
+    const arg = argv.find((item) => item.startsWith('--path='))
     return arg?.split('=')[1]
   }
   const flag = argv[idx + 1]
@@ -41,6 +46,7 @@ export class ShopifyConfig extends Config {
 
   constructor(options: Options) {
     if (isDev()) {
+      // eslint-disable-next-line @shopify/cli/no-process-cwd
       const currentPath = process.cwd()
 
       let path = sniffPath() ?? currentPath
@@ -73,6 +79,8 @@ export class ShopifyConfig extends Config {
   /**
    * Set a lazy command loader that will be used to load individual command classes on demand,
    * bypassing the default oclif behavior of importing the entire COMMANDS module.
+   *
+   * @param loader - The lazy command loader function.
    */
   setLazyCommandLoader(loader: LazyCommandLoader): void {
     this.lazyCommandLoader = loader
@@ -82,6 +90,12 @@ export class ShopifyConfig extends Config {
    * Override runHook to make init hooks non-blocking for faster startup.
    * Init hooks (app-init, hydrogen-init) set up LocalStorage and check hydrogen —
    * these are setup tasks that don't need to complete before commands run.
+   *
+   * @param event - The hook event name.
+   * @param opts - Options to pass to the hook.
+   * @param timeout - Optional timeout for the hook.
+   * @param captureErrors - Whether to capture errors instead of throwing.
+   * @returns The hook result with successes and failures arrays.
    */
   // @ts-expect-error: overriding with looser types for hook interception
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -99,6 +113,11 @@ export class ShopifyConfig extends Config {
    * Override runCommand to use lazy loading when available.
    * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
    * we directly import only the needed command module.
+   *
+   * @param id - The command ID to run.
+   * @param argv - The arguments to pass to the command.
+   * @param cachedCommand - An optional cached command loadable.
+   * @returns The command result.
    */
   async runCommand<T = unknown>(
     id: string,
@@ -109,9 +128,8 @@ export class ShopifyConfig extends Config {
       const cmd = cachedCommand ?? this.findCommand(id)
       if (cmd) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const commandClass = await this.lazyCommandLoader(id) as any
+        const commandClass = (await this.lazyCommandLoader(id)) as any
         if (commandClass) {
-          // Set the required properties on the command class
           commandClass.id = id
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
@@ -129,7 +147,6 @@ export class ShopifyConfig extends Config {
         }
       }
     }
-    // Fall back to default behavior if lazy loader is not set or command not found
     return super.runCommand<T>(id, argv, cachedCommand)
   }
 
@@ -145,38 +162,31 @@ export class ShopifyConfig extends Config {
 
       // If there is an external cli-hydrogen plugin, its commands should take priority over bundled ('core') commands
       if (aCommand.pluginType === 'core' && bCommand.pluginAlias === '@shopify/cli-hydrogen') {
-        // If b is hydrogen and a is core sort b first
         return 1
       }
 
       if (aCommand.pluginAlias === '@shopify/cli-hydrogen' && bCommand.pluginType === 'core') {
-        // If a is hydrogen and b is core sort a first
         return -1
       }
 
       // All other cases are the default implementation from the private `determinePriority` method
       // When both plugin types are 'core' plugins sort based on index
       if (aCommand.pluginType === 'core' && bCommand.pluginType === 'core') {
-        // If b appears first in the pjson.plugins sort it first
         return aIndex - bIndex
       }
 
-      // if b is a core plugin and a is not sort b first
       if (bCommand.pluginType === 'core' && aCommand.pluginType !== 'core') {
         return 1
       }
 
-      // if a is a core plugin and b is not sort a first
       if (aCommand.pluginType === 'core' && bCommand.pluginType !== 'core') {
         return -1
       }
 
-      // if a is a jit plugin and b is not sort b first
       if (aCommand.pluginType === 'jit' && bCommand.pluginType !== 'jit') {
         return 1
       }
 
-      // if b is a jit plugin and a is not sort a first
       if (bCommand.pluginType === 'jit' && aCommand.pluginType !== 'jit') {
         return -1
       }

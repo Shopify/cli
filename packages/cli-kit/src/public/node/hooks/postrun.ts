@@ -34,7 +34,7 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
 /**
  * Override the command name with the stop one for analytics purposes.
  *
- * @param commandClass - Command.Class
+ * @param commandClass - Command.Class.
  */
 async function detectStopCommand(commandClass: Command.Class): Promise<void> {
   const currentTime = new Date().getTime()

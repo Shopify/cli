@@ -17,11 +17,7 @@ export const hook: Hook.Prerun = async (options) => {
   const args = options.argv
 
   // Load heavy modules in parallel
-  const [
-    {outputDebug},
-    analyticsMod,
-    notificationsMod,
-  ] = await Promise.all([
+  const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([
     import('../output.js'),
     import('../../../private/node/analytics.js'),
     import('../notifications-system.js'),

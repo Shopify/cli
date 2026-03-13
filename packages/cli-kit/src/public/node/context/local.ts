@@ -1,6 +1,10 @@
 import {isTruthy} from './utilities.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
+import isInteractive from 'is-interactive'
+import macaddress from 'macaddress'
+import {homedir} from 'os'
+
 // Dynamic imports to avoid circular dependency: context/local → fs → output → context/local
 // fileExists and exec are only used in specific async functions, not at module init.
 async function lazyFileExists(path: string): Promise<boolean> {
@@ -12,11 +16,6 @@ async function lazyExec(command: string, args: string[]): Promise<void> {
   const {exec} = await import('../system.js')
   await exec(command, args)
 }
-
-import isInteractive from 'is-interactive'
-import macaddress from 'macaddress'
-
-import {homedir} from 'os'
 
 /**
  * It returns true if the terminal is interactive.
