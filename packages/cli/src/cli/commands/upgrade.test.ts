@@ -1,13 +1,12 @@
 import Upgrade from './upgrade.js'
+import {runCLIUpgrade} from '@shopify/cli-kit/node/upgrade'
 import {describe, test, vi, expect} from 'vitest'
 
-vi.mock('@shopify/cli-kit/node/upgrade', () => ({
-  runCLIUpgrade: vi.fn().mockResolvedValue(undefined),
-}))
+vi.mock('@shopify/cli-kit/node/upgrade')
 
 describe('upgrade command', () => {
   test('calls runCLIUpgrade', async () => {
-    const {runCLIUpgrade} = await import('@shopify/cli-kit/node/upgrade')
+    vi.mocked(runCLIUpgrade).mockResolvedValue(undefined)
 
     await Upgrade.run([], import.meta.url)
 

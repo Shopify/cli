@@ -16,6 +16,9 @@ import {exec, isCI} from './system.js'
 import {isPreReleaseVersion} from './version.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
+// Homebrew triggers `brew update` as a side effect, which can take 30–90 s on slow networks.
+const HOMEBREW_TIMEOUT_MS = 120_000
+
 /**
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
@@ -71,8 +74,6 @@ export async function runCLIUpgrade(): Promise<void> {
     outputInfo(outputContent`Upgrading Shopify CLI by running: ${outputToken.genericShellCommand(installCommand)}...`)
     const packageManager = inferPackageManagerForGlobalCLI()
     if (packageManager === 'homebrew') {
-      // Homebrew triggers `brew update` as a side effect, which can take 30–90 s on slow networks.
-      const HOMEBREW_TIMEOUT_MS = 120_000
       await exec(command, args, {
         stdio: 'inherit',
         timeout: HOMEBREW_TIMEOUT_MS,
