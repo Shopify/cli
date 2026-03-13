@@ -1,22 +1,38 @@
 # Bundle Size Reduction Ideas
 
-## High Impact (>1 MB savings each)
-- **Disable source maps** (`sourcemap: false`): Maps are 35.9 MB / 63% of current bundle. Used by stacktracey for Bugsnag error reporting — verify if needed in release
-- **Replace lodash with es-toolkit or specific imports** (~700 KB input): lodash is fully bundled. es-toolkit is already in the bundle (243 KB) so there may be overlap
-- **Deduplicate react-reconciler** (two versions: 0.29.2 + 0.32.0 = ~1.8 MB input): ink v5 vs ink v6 pulling different versions
+## Remaining Targets (by input size)
+- **react-reconciler@0.32.0** (~1 MB): Core of ink@6, can't externalize without externalizing ink itself
+- **graphql** (~610 KB): Tried externalizing — caused cli-launcher test timeout. Needs investigation.
+- **@oclif/core** (~592 KB): 58 import sites, deeply integrated. Could externalize but risky.
+- **@shopify/cli-hydrogen** (~353 KB): Direct hydrogen CLI code
+- **iconv-lite** (~314 KB): Used by body-parser/raw-body for HTTP charset decoding
+- **yaml** (~279 KB): Used for YAML parsing
+- **esprima** (~277 KB): JS parser, likely used by theme-check or language server
+- **minimatch** (~272 KB): Glob matching, used in many places
+- **es-toolkit** (~243 KB): Modern utility library (already a lodash replacement)
+- **acorn** (~237 KB): JS parser
+- **async** (~220 KB): Async utilities
+- **tr46** (~216 KB): Unicode normalization for URL parsing
+- **js-yaml** (~213 KB): YAML parsing (in addition to yaml package)
+- **web-streams-polyfill** (~207 KB): Polyfill for web streams
+- **ajv** (~206 KB): JSON schema validation
 
-## Medium Impact (200 KB–1 MB)
-- **Externalize/remove polaris + polaris-icons** (~2.1 MB input): Only used for GraphiQL HTML template rendering. Could pre-render to static HTML at build time
-- **Replace iconv-lite** (~314 KB): May not be needed if only UTF-8 is used
-- **Minimize @opentelemetry bundle** (~1 MB total): Check if all OTel packages are needed
-- **Reduce @vscode/web-custom-data** (~321 KB): Large data file for theme language server
-
-## Build Config Tweaks
-- Enable `minifyIdentifiers: true` — more aggressive but might cause issues with dynamic property access
-- Check if `splitting: true` is optimal or if single-file would be smaller (less chunk overhead)
+## Build Config Possibilities
+- Investigate if `splitting: false` produces smaller output (eliminates chunk overhead)
+- Consider externalizing more @shopify/* packages that are transitive deps
 
 ## Done ✅
-- ~~Externalize ts-morph + typescript~~ (saved ~42 MB)
-- ~~Externalize prettier~~ (saved ~11.7 MB)
-- ~~Enable minifyWhitespace~~ (saved ~14 MB)
 - ~~Replace brotli JS with native zlib~~ (saved ~5.9 MB)
+- ~~Enable minifyWhitespace~~ (saved ~14 MB)
+- ~~Externalize prettier~~ (saved ~11.7 MB)
+- ~~Externalize ts-morph~~ (saved ~23 MB)
+- ~~Externalize typescript~~ (saved ~19 MB)
+- ~~Disable source maps~~ (saved ~35.7 MB)
+- ~~Enable minifyIdentifiers~~ (saved ~4.7 MB)
+- ~~Externalize polaris + polaris-icons + polaris-tokens~~ (saved ~1.1 MB)
+- ~~Externalize react-dom~~ (saved ~524 KB)
+- ~~Externalize vscode language services~~ (saved ~992 KB)
+- ~~Externalize @oclif/table~~ (saved ~424 KB)
+- ~~Externalize lodash~~ (saved ~112 KB)
+- ~~Externalize @opentelemetry~~ (saved ~416 KB)
+- ~~Externalize theme-check/language-server + ohm-js + liquid-html-parser + @vscode/web-custom-data~~ (saved ~1.1 MB)

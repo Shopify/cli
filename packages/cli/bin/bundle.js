@@ -72,6 +72,18 @@ const external = [
   '@shopify/liquid-html-parser',
   // @vscode/web-custom-data (~321KB), data files for language services
   '@vscode/web-custom-data',
+  // Additional transitive dependencies available at runtime
+  'ink',
+  'react',
+  'react-reconciler',
+  'yoga-wasm-web',
+  'ajv',
+  'archiver',
+  'liquidjs',
+  'semver',
+  'yaml',
+  'js-yaml',
+  'execa',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
