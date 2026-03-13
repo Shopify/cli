@@ -4,6 +4,7 @@ import {outputDebug, outputWarn} from '../output.js'
 import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from '../upgrade.js'
 import BaseCommand from '../base-command.js'
 import * as metadata from '../metadata.js'
+import {inferPackageManagerForGlobalCLI} from '../is-global.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {isMajorVersionChange} from '../version.js'
 
@@ -40,19 +41,35 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
  */
 export async function autoUpgradeIfNeeded(): Promise<void> {
   const newerVersion = versionToAutoUpgrade()
-  if (!newerVersion) return
-  if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
-    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+  if (!newerVersion) {
+    // versionToAutoUpgrade already logged the reason via outputDebug
     return
   }
 
+  if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
+    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    await metadata.addPublicMetadata(() => ({
+      cmd_all_auto_upgrade_triggered: true,
+      cmd_all_auto_upgrade_skipped_reason: 'major_version',
+    }))
+    return
+  }
+
+  const packageManager = inferPackageManagerForGlobalCLI()
+  await metadata.addPublicMetadata(() => ({
+    cmd_all_auto_upgrade_triggered: true,
+    cmd_all_auto_upgrade_package_manager: packageManager,
+  }))
+
   try {
     await runCLIUpgrade()
+    await metadata.addPublicMetadata(() => ({cmd_all_auto_upgrade_success: true}))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)
     outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    await metadata.addPublicMetadata(() => ({cmd_all_auto_upgrade_success: false}))
     // Report to Observe as a handled error without showing anything extra to the user
     const {sendErrorToBugsnag} = await import('../error-handler.js')
     await sendErrorToBugsnag(new Error(errorMessage), 'expected_error')
