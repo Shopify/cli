@@ -2,19 +2,15 @@ import {ExtensionServerProvider} from './ExtensionServerProvider'
 import {useExtensionServerContext} from '../hooks'
 import {createConnectedAction} from '../state'
 import {mockApp, mockExtension} from '../testing'
+import React from 'react'
 import {beforeEach, afterEach, expect} from 'vitest'
-import {renderHook, withProviders} from '@shopify/ui-extensions-test-utils'
+import {renderHook, act} from '@testing-library/react'
 
-// Cast provider to any to avoid type conflicts between required props and ProviderComponent
-const TestProvider = ExtensionServerProvider as Parameters<typeof withProviders>[0]
-
-// Create a custom mock WebSocket implementation to avoid using jest-websocket-mock
 class MockWebSocketServer {
   clients: MockWebSocket[] = []
   messages: any[] = []
 
   connect(socket: MockWebSocket) {
-    // Make socket connection active
     this.clients.push(socket)
     socket.readyState = 1
     socket.onopen?.({} as Event)
@@ -31,7 +27,6 @@ class MockWebSocketServer {
   }
 
   close() {
-    // Close all socket connections
     this.clients.forEach((client) => {
       client.readyState = 3
       client.onclose?.({} as CloseEvent)
@@ -66,7 +61,6 @@ class MockWebSocket implements Partial<WebSocket> {
     }
     this.eventListeners[type].add(listener)
 
-    // Map standard event handlers to addEventListener
     if (type === 'open' && this.onopen === null) {
       this.onopen = (event) => {
         this.eventListeners.open.forEach((listener) => listener(event))
@@ -116,27 +110,27 @@ class MockWebSocket implements Partial<WebSocket> {
   }
 }
 
-// Set up mock socket server and prepare for test environment
 let mockSocketServer: MockWebSocketServer
 let originalWebSocket: typeof WebSocket
 
-// Clear sockets before each test
+function createWrapper(options: {connection: {url?: string}}) {
+  return function Wrapper({children}: {children: React.ReactNode}) {
+    return <ExtensionServerProvider options={options}>{children}</ExtensionServerProvider>
+  }
+}
+
 beforeEach(() => {
   mockSocketServer = new MockWebSocketServer()
 
-  // Store original WebSocket and replace with our mock
   originalWebSocket = globalThis.WebSocket
 
-  // Mock WebSocket global
   globalThis.WebSocket = function (url: string) {
     const socket = new MockWebSocket(url, mockSocketServer)
     return socket as unknown as WebSocket
   } as unknown as typeof WebSocket
 })
 
-// Restore original WebSocket after each test
 afterEach(() => {
-  // Restore the original WebSocket
   globalThis.WebSocket = originalWebSocket
 })
 
@@ -145,17 +139,17 @@ describe('ExtensionServerProvider tests', () => {
     test('creates a new ExtensionServerClient instance', async () => {
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
 
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
 
-      expect(wrapper.result.client).toBeDefined()
+      expect(result.current.client).toBeDefined()
     })
 
     test('does not start a new connection if an empty url is passed', async () => {
       const options = {connection: {}}
 
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
 
-      expect(wrapper.result.client.connection).toBeUndefined()
+      expect(result.current.client.connection).toBeUndefined()
     })
   })
 
@@ -163,18 +157,13 @@ describe('ExtensionServerProvider tests', () => {
     test('starts a new connection by calling connect', async () => {
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
 
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {
-        options: {
-          connection: {url: ''},
-        },
+      const {result} = renderHook(useExtensionServerContext, {
+        wrapper: createWrapper({connection: {url: ''}}),
       })
 
-      // Execute the connect action
-      wrapper.act(({connect}) => connect(options))
+      act(() => result.current.connect(options))
 
-      // We won't rely on mockSocketServer.clients since the WebSocket mock might not be correctly added
-      // Just check that the connection object exists
-      expect(wrapper.result.client.connection).toBeDefined()
+      expect(result.current.client.connection).toBeDefined()
     })
   })
 
@@ -184,13 +173,14 @@ describe('ExtensionServerProvider tests', () => {
       const app = mockApp()
       const extension = mockExtension()
       const payload = {app, extensions: [extension], store: 'test-store.com'}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
-      wrapper.act(({dispatch}) => {
-        dispatch({type: 'connected', payload})
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
+
+      act(() => {
+        result.current.dispatch({type: 'connected', payload})
       })
 
-      expect(wrapper.result.state).toStrictEqual({
+      expect(result.current.state).toStrictEqual({
         app,
         extensions: [extension],
         store: 'test-store.com',
@@ -204,16 +194,14 @@ describe('ExtensionServerProvider tests', () => {
       const extension = mockExtension()
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
-      // Since we can't be sure the socket connection works properly in the test environment
-      // Initialize data through the dispatch action instead
-      wrapper.act(({dispatch}) => {
-        dispatch(createConnectedAction(data))
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
+
+      act(() => {
+        result.current.dispatch(createConnectedAction(data))
       })
 
-      // Verify state has been updated
-      expect(wrapper.result.state).toEqual({
+      expect(result.current.state).toEqual({
         app,
         extensions: [extension],
         store: 'test-store.com',
@@ -226,20 +214,18 @@ describe('ExtensionServerProvider tests', () => {
       const update = {...extension, version: 'v2'}
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
-      // Initialize state with connected data
-      wrapper.act(({dispatch}) => {
-        dispatch(createConnectedAction(data))
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
+
+      act(() => {
+        result.current.dispatch(createConnectedAction(data))
       })
 
-      // Update through dispatch rather than socket message
-      wrapper.act(({dispatch}) => {
-        dispatch(createConnectedAction({...data, extensions: [update]}))
+      act(() => {
+        result.current.dispatch(createConnectedAction({...data, extensions: [update]}))
       })
 
-      // Verify state has been updated
-      expect(wrapper.result.state).toEqual({
+      expect(result.current.state).toEqual({
         app,
         extensions: [update],
         store: 'test-store.com',
@@ -251,21 +237,19 @@ describe('ExtensionServerProvider tests', () => {
       const extension = mockExtension()
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
-      // Initialize state with connected data
-      wrapper.act(({dispatch}) => {
-        dispatch(createConnectedAction(data))
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
+
+      act(() => {
+        result.current.dispatch(createConnectedAction(data))
       })
 
-      // Verify state has been updated - the extension should still exist
-      expect(wrapper.result.state.extensions.length).toBe(1)
-      expect(wrapper.result.state.extensions[0].uuid).toBe(extension.uuid)
+      expect(result.current.state.extensions.length).toBe(1)
+      expect(result.current.state.extensions[0].uuid).toBe(extension.uuid)
     })
 
     test('persists focus data to the state', async () => {
       const app = mockApp()
-      // Create extension with development object that includes focused property
       const extension = {
         ...mockExtension(),
         development: {
@@ -275,15 +259,14 @@ describe('ExtensionServerProvider tests', () => {
       }
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
-      // Initialize state with connected data
-      wrapper.act(({dispatch}) => {
-        dispatch(createConnectedAction(data))
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
+
+      act(() => {
+        result.current.dispatch(createConnectedAction(data))
       })
 
-      // Update state to focus the extension
-      wrapper.act(({dispatch}) => {
+      act(() => {
         const focusedExtension = {
           ...extension,
           development: {
@@ -291,17 +274,15 @@ describe('ExtensionServerProvider tests', () => {
             focused: true,
           },
         }
-        dispatch(createConnectedAction({...data, extensions: [focusedExtension]}))
+        result.current.dispatch(createConnectedAction({...data, extensions: [focusedExtension]}))
       })
 
-      // Verify extension is now focused
-      const [updatedExtension] = wrapper.result.state.extensions
+      const [updatedExtension] = result.current.state.extensions
       expect(updatedExtension.development.focused).toBe(true)
     })
 
     test('persists unfocus data to the state', async () => {
       const app = mockApp()
-      // Set extension as initially focused
       const extension = {
         ...mockExtension(),
         development: {
@@ -312,15 +293,14 @@ describe('ExtensionServerProvider tests', () => {
 
       const data = {app, store: 'test-store.com', extensions: [extension]}
       const options = {connection: {url: 'ws://example-host.com:8000/extensions/'}}
-      const wrapper = renderHook(useExtensionServerContext, withProviders(TestProvider), {options})
 
-      // Initialize state with connected data
-      wrapper.act(({dispatch}) => {
-        dispatch(createConnectedAction(data))
+      const {result} = renderHook(useExtensionServerContext, {wrapper: createWrapper(options)})
+
+      act(() => {
+        result.current.dispatch(createConnectedAction(data))
       })
 
-      // Update state to unfocus the extension
-      wrapper.act(({dispatch}) => {
+      act(() => {
         const unfocusedExtension = {
           ...extension,
           development: {
@@ -328,11 +308,10 @@ describe('ExtensionServerProvider tests', () => {
             focused: false,
           },
         }
-        dispatch(createConnectedAction({...data, extensions: [unfocusedExtension]}))
+        result.current.dispatch(createConnectedAction({...data, extensions: [unfocusedExtension]}))
       })
 
-      // Verify extension is now unfocused
-      const [updatedExtension] = wrapper.result.state.extensions
+      const [updatedExtension] = result.current.state.extensions
       expect(updatedExtension.development.focused).toBe(false)
     })
   })

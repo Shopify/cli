@@ -1,6 +1,6 @@
 import {Backdrop} from '.'
 import React from 'react'
-import {render} from '@shopify/ui-extensions-test-utils'
+import {render, fireEvent} from '@testing-library/react'
 
 describe('<Backdrop />', () => {
   const defaultProps = {
@@ -11,8 +11,8 @@ describe('<Backdrop />', () => {
   describe('onClick()', () => {
     test('is called when the backdrop is clicked', () => {
       const spy = vi.fn()
-      const backdrop = render(<Backdrop {...defaultProps} onClick={spy} />)
-      backdrop.find('div')!.trigger('onClick')
+      const {container} = render(<Backdrop {...defaultProps} onClick={spy} />)
+      fireEvent.click(container.firstElementChild!)
       expect(spy).toHaveBeenCalled()
     })
   })
@@ -20,8 +20,8 @@ describe('<Backdrop />', () => {
   describe('onMouseDown', () => {
     test('calls setClosing()', () => {
       const spy = vi.fn()
-      const backdrop = render(<Backdrop {...defaultProps} setClosing={spy} />)
-      backdrop.find('div')!.trigger('onMouseDown')
+      const {container} = render(<Backdrop {...defaultProps} setClosing={spy} />)
+      fireEvent.mouseDown(container.firstElementChild!)
       expect(spy).toHaveBeenCalledWith(true)
     })
   })
@@ -29,15 +29,15 @@ describe('<Backdrop />', () => {
   describe('onMouseUp', () => {
     test('calls setClosing()', () => {
       const spy = vi.fn()
-      const backdrop = render(<Backdrop {...defaultProps} setClosing={spy} />)
-      backdrop.find('div')!.trigger('onMouseUp')
+      const {container} = render(<Backdrop {...defaultProps} setClosing={spy} />)
+      fireEvent.mouseUp(container.firstElementChild!)
       expect(spy).toHaveBeenCalledWith(false)
     })
 
-    test('calls setClosing()', () => {
+    test('calls onClick()', () => {
       const spy = vi.fn()
-      const backdrop = render(<Backdrop {...defaultProps} onClick={spy} />)
-      backdrop.find('div')!.trigger('onMouseUp')
+      const {container} = render(<Backdrop {...defaultProps} onClick={spy} />)
+      fireEvent.mouseUp(container.firstElementChild!)
       expect(spy).toHaveBeenCalled()
     })
   })

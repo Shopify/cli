@@ -1,10 +1,14 @@
 import React from 'react'
-import {mount} from '@shopify/react-testing'
+import {render as rtlRender, type RenderResult} from '@testing-library/react'
 
-export function render<TProps, TProviderProps>(
-  element: React.ReactElement<TProps>,
+export type {RenderResult}
+
+export function render<TProviderProps extends object>(
+  element: React.ReactElement,
   Providers: React.ComponentType<React.PropsWithChildren<TProviderProps>> = ({children}) => <>{children}</>,
   options: Omit<TProviderProps, 'children'> = {} as TProviderProps,
-) {
-  return mount(<Providers {...(options as TProviderProps)}>{element}</Providers>)
+): RenderResult {
+  return rtlRender(element, {
+    wrapper: ({children}) => React.createElement(Providers, options as TProviderProps, children),
+  })
 }

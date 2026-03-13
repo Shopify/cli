@@ -1,7 +1,6 @@
 import {Tooltip} from '../Tooltip'
 import React from 'react'
-import {mount} from '@shopify/react-testing'
-import {vi, test} from 'vitest'
+import {render, screen, fireEvent, act} from '@testing-library/react'
 
 const handleClick = vi.fn()
 
@@ -16,33 +15,33 @@ const ComponentChildComponent = () => (
 
 describe('<Tooltip />', () => {
   test.each([
-    ['onMouseEnter', 'onMouseLeave'],
-    ['onFocus', 'onBlur'],
-  ])('appears if hovered/focused/etc, hidden otherwise', (showEvent: any, hideEvent: any) => {
-    const wrapper = mount(<TextChildComponent />)
+    ['mouseEnter', 'mouseLeave'],
+    ['focus', 'blur'],
+  ] as const)('appears if hovered/focused/etc, hidden otherwise', (showEvent, hideEvent) => {
+    render(<TextChildComponent />)
 
-    wrapper.act(() => {
-      wrapper.find('div')?.trigger(showEvent)
+    const trigger = screen.getByText('test')
+
+    act(() => {
+      fireEvent[showEvent](trigger)
     })
 
-    let tooltip = wrapper.find('div', {role: 'tooltip'})
+    expect(screen.queryByRole('tooltip')).toBeInTheDocument()
 
-    expect(tooltip).not.toBeNull()
-
-    wrapper.act(() => {
-      wrapper.find('div')?.trigger(hideEvent)
+    act(() => {
+      fireEvent[hideEvent](trigger)
     })
 
-    tooltip = wrapper.find('div', {role: 'tooltip'})
-
-    expect(tooltip).toBeNull()
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument()
   })
 
   test('hitting enter triggers content onClick', () => {
-    const wrapper = mount(<ComponentChildComponent />)
+    render(<ComponentChildComponent />)
 
-    wrapper.act(() => {
-      wrapper.find('div')?.trigger('onKeyUp', {key: 'Enter'})
+    const trigger = screen.getByText('Button').closest('div[tabindex]')!
+
+    act(() => {
+      fireEvent.keyUp(trigger, {key: 'Enter'})
     })
 
     expect(handleClick).toHaveBeenCalled()
