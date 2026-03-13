@@ -62,7 +62,7 @@ esBuild({
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
-  sourcemap: true,
+  sourcemap: false,
   loader: {'.node': 'copy'},
   splitting: true,
   // these tree shaking and minify options remove any in-source tests from the bundle
