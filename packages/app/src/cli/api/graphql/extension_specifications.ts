@@ -1,5 +1,6 @@
 import {gql} from 'graphql-request'
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const ExtensionSpecificationsQuery = gql`
   query fetchSpecifications($apiKey: String!) {
     extensionSpecifications(apiKey: $apiKey) {
