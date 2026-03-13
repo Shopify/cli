@@ -516,7 +516,7 @@ importers:
         specifier: 3.0.0
         version: 3.0.0
       ts-morph:
-        specifier: ^17.0.1
+        specifier: 17.0.1
         version: 17.0.1
       typescript:
         specifier: 5.9.3
