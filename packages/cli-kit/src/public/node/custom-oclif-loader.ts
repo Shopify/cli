@@ -115,18 +115,16 @@ export class ShopifyConfig extends Config {
           commandClass.id = id
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-          // Fire prerun hook in background (analytics metadata setup).
-          // Don't await - it runs in parallel with command execution.
-          // By the time postrun needs the metadata, it will be ready.
-          const prerunPromise = this.runHook('prerun', {argv, Command: commandClass})
-          // Execute the command
+          // Execute the command first — give it exclusive CPU time.
           const result = (await commandClass.run(argv, this)) as T
-          // Ensure prerun completed before postrun reads analytics metadata
-          await prerunPromise
-          // Fire postrun hook (analytics, deprecation checks) without blocking.
-          // Analytics is best-effort; the user shouldn't wait for it.
+          // Fire prerun + postrun AFTER command completes. Both are fire-and-forget.
+          // Analytics is best-effort; process.exit(0) in bootstrap may terminate
+          // before these complete, which is fine.
           // eslint-disable-next-line no-void
-          void this.runHook('postrun', {argv, Command: commandClass, result})
+          void this.runHook('prerun', {argv, Command: commandClass}).then(() => {
+            // eslint-disable-next-line no-void
+            void this.runHook('postrun', {argv, Command: commandClass, result})
+          })
           return result
         }
       }
