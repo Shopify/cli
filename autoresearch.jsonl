@@ -1,0 +1,1 @@
+{"type":"config","name":"Reduce Shopify CLI bundle size (packages/cli/dist)","metricName":"bundle_kb","metricUnit":"kb","bestDirection":"lower"}
