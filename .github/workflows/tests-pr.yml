@@ -159,22 +159,31 @@ jobs:
           # Add sharding for Windows jobs to reduce wall-clock time
           - os: windows-latest
             node: '20.14.0'
-            shard: '1/2'
+            shard: '1/3'
           - os: windows-latest
             node: '20.14.0'
-            shard: '2/2'
+            shard: '2/3'
+          - os: windows-latest
+            node: '20.14.0'
+            shard: '3/3'
           - os: windows-latest
             node: '22.2.0'
-            shard: '1/2'
+            shard: '1/3'
           - os: windows-latest
             node: '22.2.0'
-            shard: '2/2'
+            shard: '2/3'
+          - os: windows-latest
+            node: '22.2.0'
+            shard: '3/3'
           - os: windows-latest
             node: '24.1.0'
-            shard: '1/2'
+            shard: '1/3'
           - os: windows-latest
             node: '24.1.0'
-            shard: '2/2'
+            shard: '2/3'
+          - os: windows-latest
+            node: '24.1.0'
+            shard: '3/3'
         exclude:
           # Exclude the non-sharded Windows entries (replaced by sharded ones above)
           - os: windows-latest
