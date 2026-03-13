@@ -5,9 +5,8 @@ import {useApp} from '../../hooks/useApp'
 import {useExtensionServerOptions} from '../../hooks/useExtensionServerOptions.js'
 
 import {Button} from '@/components'
+import {useI18n} from '@/hooks/useI18n'
 import React, {useState} from 'react'
-
-import {useI18n} from '@shopify/react-i18n'
 
 export function AppHomeRow() {
   const [showModal, setShowModal] = useState(false)

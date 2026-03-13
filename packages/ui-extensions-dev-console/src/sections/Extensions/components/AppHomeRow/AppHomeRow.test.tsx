@@ -1,8 +1,6 @@
 import {AppHomeRow} from '.'
-import en from './translations/en.json'
 import {PreviewLink, QRCodeModal} from '..'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {mockI18n} from 'tests/mock-i18n'
 import {Button} from '@/components'
 import React from 'react'
 
@@ -18,8 +16,6 @@ vi.mock('..', () => ({
 vi.mock('@/components', () => ({
   Button: (props: any) => props.children,
 }))
-
-mockI18n(en)
 
 describe('<AppHomeRow/>', () => {
   const defaultState = {

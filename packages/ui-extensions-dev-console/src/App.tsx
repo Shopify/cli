@@ -4,7 +4,6 @@ import {Toast} from '@/foundation/Toast'
 import {Theme} from '@/foundation/Theme'
 import {ModalContainer} from '@/foundation/ModalContainer'
 import {ExtensionServerProvider, isValidSurface} from '@shopify/ui-extensions-server-kit'
-import {I18nContext, I18nManager} from '@shopify/react-i18n'
 import React from 'react'
 
 function getConnectionUrl() {
@@ -25,26 +24,16 @@ const extensionServerOptions = {
   surface: isValidSurface(surface) ? surface : undefined,
 }
 
-const i18nManager = new I18nManager({
-  locale: 'en',
-  onError(error) {
-    // eslint-disable-next-line no-console
-    console.error(error)
-  },
-})
-
 function App() {
   return (
     <ExtensionServerProvider options={extensionServerOptions}>
-      <I18nContext.Provider value={i18nManager}>
-        <Theme>
-          <Layout>
-            <Routes />
-            <Toast />
-            <ModalContainer />
-          </Layout>
-        </Theme>
-      </I18nContext.Provider>
+      <Theme>
+        <Layout>
+          <Routes />
+          <Toast />
+          <ModalContainer />
+        </Layout>
+      </Theme>
     </ExtensionServerProvider>
   )
 }

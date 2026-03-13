@@ -1,8 +1,6 @@
 import {ExtensionRow} from '.'
-import en from './translations/en.json'
 import {QRCodeModal} from '..'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {mockI18n} from 'tests/mock-i18n'
 import {Button} from '@/components'
 import React from 'react'
 
@@ -18,8 +16,6 @@ vi.mock('..', () => ({
   Row: (props: any) => props.children,
   Status: () => null,
 }))
-
-mockI18n(en)
 
 describe('<ExtensionRow/>', () => {
   const legacyAdminExtension = mockExtension({type: 'product_subscription', surface: 'admin'})
