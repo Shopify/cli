@@ -7,7 +7,6 @@ import {vi, describe, test, expect, beforeEach} from 'vitest'
 vi.mock('./is-global.js')
 vi.mock('./node-package-manager.js')
 vi.mock('./system.js')
-vi.mock('../../private/node/conf-store.js')
 
 describe('cliInstallCommand', () => {
   test('returns undefined when process is not global', () => {
@@ -69,6 +68,15 @@ describe('versionToAutoUpgrade', () => {
     expect(got).toBeUndefined()
   })
 
+  test('returns undefined when SHOPIFY_CLI_NO_AUTO_UPGRADE is set', () => {
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.100.0')
+    vi.stubEnv('SHOPIFY_CLI_NO_AUTO_UPGRADE', '1')
+
+    const got = versionToAutoUpgrade()
+
+    expect(got).toBeUndefined()
+  })
+
   test('returns version when SHOPIFY_CLI_FORCE_AUTO_UPGRADE is set', () => {
     vi.mocked(checkForCachedNewVersion).mockReturnValue('3.100.0')
     vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', '1')
@@ -78,15 +86,14 @@ describe('versionToAutoUpgrade', () => {
     expect(got).toBe('3.100.0')
   })
 
-  test('returns undefined when auto-upgrade is not enabled', async () => {
+  test('FORCE_AUTO_UPGRADE overrides NO_AUTO_UPGRADE', () => {
     vi.mocked(checkForCachedNewVersion).mockReturnValue('3.100.0')
-
-    const {getAutoUpgradeEnabled} = await import('../../private/node/conf-store.js')
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
+    vi.stubEnv('SHOPIFY_CLI_NO_AUTO_UPGRADE', '1')
+    vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', '1')
 
     const got = versionToAutoUpgrade()
 
-    expect(got).toBeUndefined()
+    expect(got).toBe('3.100.0')
   })
 })
 

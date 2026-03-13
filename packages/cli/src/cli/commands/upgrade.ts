@@ -1,5 +1,5 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {promptAutoUpgrade, runCLIUpgrade} from '@shopify/cli-kit/node/upgrade'
+import {runCLIUpgrade} from '@shopify/cli-kit/node/upgrade'
 
 export default class Upgrade extends Command {
   static summary = 'Upgrades Shopify CLI.'
@@ -9,7 +9,6 @@ export default class Upgrade extends Command {
   static description = this.descriptionWithoutMarkdown()
 
   async run(): Promise<void> {
-    await promptAutoUpgrade()
     await runCLIUpgrade()
   }
 }

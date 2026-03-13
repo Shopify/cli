@@ -13,9 +13,7 @@ import {
 import {outputContent, outputDebug, outputInfo, outputToken} from './output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
-import {renderConfirmationPrompt} from './ui.js'
 import {isPreReleaseVersion} from './version.js'
-import {getAutoUpgradeEnabled, setAutoUpgradeEnabled} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
 /**
@@ -79,7 +77,7 @@ export async function runCLIUpgrade(): Promise<void> {
 
 /**
  * Returns the version to auto-upgrade to, or undefined if auto-upgrade should be skipped.
- * Auto-upgrade is disabled by default and must be enabled via `shopify upgrade`.
+ * Auto-upgrade is on by default. Set SHOPIFY_CLI_NO_AUTO_UPGRADE=1 to opt out.
  * Also skips for CI, pre-release versions, or when no newer version is available.
  *
  * @returns The version string to upgrade to, or undefined if no upgrade should happen.
@@ -95,8 +93,8 @@ export function versionToAutoUpgrade(): string | undefined {
     outputDebug('Auto-upgrade: Forcing auto-upgrade because of SHOPIFY_CLI_FORCE_AUTO_UPGRADE.')
     return newerVersion
   }
-  if (!getAutoUpgradeEnabled()) {
-    outputDebug('Auto-upgrade: Skipping because auto-upgrade is not enabled.')
+  if (process.env.SHOPIFY_CLI_NO_AUTO_UPGRADE === '1') {
+    outputDebug('Auto-upgrade: Disabled via SHOPIFY_CLI_NO_AUTO_UPGRADE.')
     return undefined
   }
   if (isCI()) {
@@ -123,21 +121,6 @@ export function getOutputUpdateCLIReminder(version: string): string {
     return outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
   }
   return outputContent`💡 Version ${version} available!`.value
-}
-
-/**
- * Prompts the user to enable or disable automatic upgrades, then persists their choice.
- *
- * @returns Whether the user chose to enable auto-upgrade.
- */
-export async function promptAutoUpgrade(): Promise<boolean> {
-  const enabled = await renderConfirmationPrompt({
-    message: 'Enable automatic updates for Shopify CLI?',
-    confirmationMessage: 'Yes, automatically update',
-    cancellationMessage: "No, I'll update manually",
-  })
-  setAutoUpgradeEnabled(enabled)
-  return enabled
 }
 
 async function upgradeLocalShopify(projectDir: string, currentVersion: string) {
