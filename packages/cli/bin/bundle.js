@@ -43,6 +43,14 @@ const external = [
   '@oclif/table',
   // lodash (~700KB input). Available as a runtime dependency.
   'lodash',
+  // @opentelemetry packages (~1.3MB input). Available as runtime dependencies.
+  '@opentelemetry/api',
+  '@opentelemetry/core',
+  '@opentelemetry/exporter-metrics-otlp-http',
+  '@opentelemetry/otlp-transformer',
+  '@opentelemetry/resources',
+  '@opentelemetry/sdk-metrics',
+  '@opentelemetry/semantic-conventions',
 
   // vscode language services are ~2MB, used by theme language server.
   // Available as transitive dependencies at runtime.
