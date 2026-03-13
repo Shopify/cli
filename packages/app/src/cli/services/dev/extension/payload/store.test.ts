@@ -7,7 +7,17 @@ import {
 import {UIExtensionPayload, ExtensionsEndpointPayload} from './models.js'
 import * as payload from '../payload.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {normalizeStoreFqdn, storeAdminUrl} from '@shopify/cli-kit/node/context/fqdn'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+
+vi.mock('@shopify/cli-kit/node/context/fqdn', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@shopify/cli-kit/node/context/fqdn')>()
+  return {
+    ...original,
+    normalizeStoreFqdn: vi.fn(original.normalizeStoreFqdn),
+    storeAdminUrl: vi.fn(original.storeAdminUrl),
+  }
+})
 
 describe('getExtensionsPayloadStoreRawPayload()', () => {
   test('returns the raw payload', async () => {
@@ -34,7 +44,7 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       app: {
         title: 'mock-app-name',
         apiKey: 'mock-api-key',
-        url: 'https://mock-store-fqdn.myshopify.com/admin/oauth/redirect_from_cli?client_id=mock-api-key',
+        url: 'https://admin.shopify.com/store/mock-store-fqdn/extensions-dev/preview?client_id=mock-api-key',
         mobileUrl:
           'https://mock-store-fqdn.myshopify.com/admin/apps/mock-api-key?shop=mock-store-fqdn.myshopify.com&host=bW9jay1zdG9yZS1mcWRuLm15c2hvcGlmeS5jb20vYWRtaW4vYXBwcy9tb2NrLWFwaS1rZXk',
       },
@@ -51,6 +61,30 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       store: 'mock-store-fqdn.myshopify.com',
       extensions: [{mock: 'extension-payload'}, {mock: 'extension-payload'}, {mock: 'extension-payload'}],
     })
+  })
+
+  test('uses the admin-web preflight URL for local development stores', async () => {
+    vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
+      mock: 'extension-payload',
+    } as unknown as UIExtensionPayload)
+    vi.mocked(normalizeStoreFqdn).mockReturnValue('mock-store-fqdn.my.shop.dev')
+    vi.mocked(storeAdminUrl).mockReturnValue('admin.shop.dev/store/mock-store-fqdn')
+
+    const options = {
+      apiKey: 'mock-api-key',
+      appName: 'mock-app-name',
+      url: 'https://mock-url.com',
+      websocketURL: 'wss://mock-websocket-url.com',
+      extensions: [{}],
+      storeFqdn: 'mock-store-fqdn.my.shop.dev',
+      manifestVersion: '3',
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
+
+    expect(rawPayload.app.url).toBe(
+      'https://admin.shop.dev/store/mock-store-fqdn/extensions-dev/preview?client_id=mock-api-key',
+    )
   })
 })
 
