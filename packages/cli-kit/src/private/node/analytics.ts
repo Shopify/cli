@@ -1,4 +1,5 @@
 import {getLastSeenAuthMethod} from './session.js'
+import {getAutoUpgradeEnabled} from './conf-store.js'
 import {hashString} from '../../public/node/crypto.js'
 import {getPackageManager, packageManagerFromUserAgent} from '../../public/node/node-package-manager.js'
 import BaseCommand from '../../public/node/base-command.js'
@@ -67,6 +68,7 @@ interface EnvironmentData {
   env_auth_method: string
   env_is_wsl: boolean
   env_build_repository: string
+  env_auto_upgrade_enabled: boolean | null
 }
 
 export async function getEnvironmentData(config: Interfaces.Config): Promise<EnvironmentData> {
@@ -92,6 +94,7 @@ export async function getEnvironmentData(config: Interfaces.Config): Promise<Env
     env_auth_method: await getLastSeenAuthMethod(),
     env_is_wsl: await isWsl(),
     env_build_repository: process.env.SHOPIFY_CLI_BUILD_REPO ?? 'unknown',
+    env_auto_upgrade_enabled: getAutoUpgradeEnabled() ?? null,
   }
 }
 

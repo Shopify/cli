@@ -22,7 +22,7 @@ import {CLI_KIT_VERSION} from '../common/version.js'
  * Utility function for generating an install command for the user to run
  * to install an updated version of Shopify CLI.
  *
- * @returns A string with the command to run.
+ * @returns A string with the command to run, or undefined if the package manager cannot be determined.
  */
 export function cliInstallCommand(): string | undefined {
   const packageManager = inferPackageManagerForGlobalCLI()

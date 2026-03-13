@@ -31,14 +31,7 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   outputDebug(`Completed command ${command}`)
   postRunHookCompleted = true
 
-  if (!Command.id?.includes('upgrade') && !Command.id?.startsWith('notifications')) {
-    try {
-      await autoUpgradeIfNeeded()
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error) {
-      outputDebug(`Auto-upgrade check failed: ${error}`)
-    }
-  }
+  if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
 }
 
 /**
@@ -69,16 +62,29 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
 
 async function performAutoUpgrade(newerVersion: string): Promise<void> {
   if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
-    return outputWarn(getOutputUpdateCLIReminder(newerVersion, true))
+    outputWarn(getOutputUpdateCLIReminder(newerVersion, true))
+    await metadata.addPublicMetadata(() => ({
+      env_auto_upgrade_triggered: true,
+      env_auto_upgrade_skipped_reason: 'major_version',
+    }))
+    return
   }
+
+  const packageManager = inferPackageManagerForGlobalCLI()
+  await metadata.addPublicMetadata(() => ({
+    env_auto_upgrade_triggered: true,
+    env_auto_upgrade_package_manager: packageManager,
+  }))
 
   try {
     await runCLIUpgrade()
+    await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)
     outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: false}))
     // Report to Observe as a handled error without showing anything extra to the user
     const {sendErrorToBugsnag} = await import('../error-handler.js')
     const enrichedError = Object.assign(new Error(errorMessage), {
