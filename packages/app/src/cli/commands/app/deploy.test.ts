@@ -28,6 +28,7 @@ describe('app deploy --force deprecation warning', () => {
         businessName: 'test',
         source: OrganizationSource.Partners,
       },
+      specifications: [],
     })
     vi.mocked(deploy).mockResolvedValue({app: testAppLinked()})
   })
