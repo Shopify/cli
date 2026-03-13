@@ -78,6 +78,8 @@ export class ShopifyConfig extends Config {
           await this.runHook('prerun', {argv, Command: commandClass})
           // Execute the command
           const result = (await commandClass.run(argv, this)) as T
+          // Run postrun hook (analytics, deprecation checks)
+          await this.runHook('postrun', {argv, Command: commandClass, result})
           return result
         }
       }

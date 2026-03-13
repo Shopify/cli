@@ -1,9 +1,5 @@
-import {PackageManager} from './node-package-manager.js'
-import {outputInfo} from './output.js'
+import type {PackageManager} from './node-package-manager.js'
 import {cwd, sniffForPath} from './path.js'
-import {exec, terminalSupportsPrompting} from './system.js'
-import {renderSelectPrompt} from './ui.js'
-import {globalCLIVersion} from './version.js'
 import {isUnitTest} from './context/local.js'
 import {execaSync} from 'execa'
 
@@ -47,6 +43,8 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
  * @param packageManager - The package manager to use.
  */
 export async function installGlobalShopifyCLI(packageManager: PackageManager): Promise<void> {
+  const {outputInfo} = await import('./output.js')
+  const {exec} = await import('./system.js')
   const args =
     packageManager === 'yarn' ? ['global', 'add', '@shopify/cli@latest'] : ['install', '-g', '@shopify/cli@latest']
   outputInfo(`Running ${packageManager} ${args.join(' ')}...`)
@@ -63,10 +61,13 @@ export interface InstallGlobalCLIPromptResult {
  * @returns `true` if the user has installed the global CLI.
  */
 export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptResult> {
+  const {terminalSupportsPrompting} = await import('./system.js')
   if (!terminalSupportsPrompting()) return {install: false, alreadyInstalled: false}
+  const {globalCLIVersion} = await import('./version.js')
   if (await globalCLIVersion()) {
     return {install: false, alreadyInstalled: true}
   }
+  const {renderSelectPrompt} = await import('./ui.js')
   const result = await renderSelectPrompt({
     message: 'We recommend installing Shopify CLI globally in your system. Would you like to install it now?',
     choices: [
