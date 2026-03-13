@@ -1,10 +1,10 @@
 import {isUnitTest, isVerbose} from './context/local.js'
-import {PackageManager} from './node-package-manager.js'
+import type {PackageManager} from './node-package-manager.js'
 import {currentProcessIsGlobal} from './is-global.js'
 import {AbortSignal} from './abort.js'
 import colors from './colors.js'
 import {isTruthy} from './context/utilities.js'
-import {TokenItem} from './ui.js'
+import type {TokenItem} from '../../private/node/ui/components/token-utils.js'
 import {
   ColorContentToken,
   CommandContentToken,
