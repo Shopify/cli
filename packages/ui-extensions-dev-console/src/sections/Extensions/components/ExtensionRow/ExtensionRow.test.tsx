@@ -1,19 +1,24 @@
 import {ExtensionRow} from '.'
-import {QRCodeModal} from '..'
 import {DefaultProviders} from 'tests/DefaultProviders'
-import {Button} from '@/components'
 import React from 'react'
-
 import {render, withProviders} from '@shopify/ui-extensions-test-utils'
+import {screen, fireEvent} from '@testing-library/react'
 import {mockExtension} from '@shopify/ui-extensions-server-kit/testing'
+
+const {QRCodeModalMock} = vi.hoisted(() => ({
+  QRCodeModalMock: vi.fn(),
+}))
 
 vi.mock('./components', () => ({
   PreviewLinks: () => null,
 }))
 
 vi.mock('..', () => ({
-  QRCodeModal: () => null,
-  Row: (props: any) => props.children,
+  QRCodeModal: (props: any) => {
+    QRCodeModalMock(props)
+    return <div data-testid="qr-code-modal" onClick={props.onClose} />
+  },
+  Row: ({children, ...props}: any) => <tr {...props}>{children}</tr>,
   Status: () => null,
 }))
 
@@ -53,115 +58,91 @@ describe('<ExtensionRow/>', () => {
     ],
   }
 
+  beforeEach(() => {
+    QRCodeModalMock.mockClear()
+  })
+
   test('renders a <QRCodeModal/>, closed by default', () => {
-    const container = render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {state: defaultState})
+    render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {state: defaultState})
 
-    expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
+    expect(QRCodeModalMock).toHaveBeenLastCalledWith(expect.objectContaining({code: undefined}))
   })
 
-  test('renders a <Button/> to open the QRCodeModal for a POS UI extension', () => {
-    const container = render(
-      <ExtensionRow {...defaultProps} uuid={posUiExtension.uuid} />,
-      withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
-    )
+  test('renders a button to open the QRCodeModal for a POS UI extension', () => {
+    render(<ExtensionRow {...defaultProps} uuid={posUiExtension.uuid} />, withProviders(DefaultProviders), {
+      state: defaultState,
+    })
 
-    expect(container).toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.getByText('View mobile')).toBeInTheDocument()
   })
 
-  test('renders a <Button/> to open the QRCodeModal for a legacy Admin extension', () => {
-    const container = render(
-      <ExtensionRow {...defaultProps} uuid={legacyAdminExtension.uuid} />,
-      withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
-    )
+  test('renders a button to open the QRCodeModal for a legacy Admin extension', () => {
+    render(<ExtensionRow {...defaultProps} uuid={legacyAdminExtension.uuid} />, withProviders(DefaultProviders), {
+      state: defaultState,
+    })
 
-    expect(container).toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.getByText('View mobile')).toBeInTheDocument()
   })
 
-  test('renders a <Button/> to open the QRCodeModal for a legacy POS extension', () => {
-    const container = render(
-      <ExtensionRow {...defaultProps} uuid={legacyPosExtension.uuid} />,
-      withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
-    )
+  test('renders a button to open the QRCodeModal for a legacy POS extension', () => {
+    render(<ExtensionRow {...defaultProps} uuid={legacyPosExtension.uuid} />, withProviders(DefaultProviders), {
+      state: defaultState,
+    })
 
-    expect(container).toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.getByText('View mobile')).toBeInTheDocument()
   })
 
-  test('does not render a <Button/> to open the QRCodeModal for a legacy Post purchase extension', () => {
-    const container = render(
+  test('does not render a button to open the QRCodeModal for a legacy Post purchase extension', () => {
+    render(
       <ExtensionRow {...defaultProps} uuid={legacyPostPurchaseExtension.uuid} />,
       withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
+      {state: defaultState},
     )
 
-    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.queryByText('View mobile')).not.toBeInTheDocument()
   })
 
-  test('does not render a <Button/> to open the QRCodeModal for a legacy Checkout extension', () => {
-    const container = render(
-      <ExtensionRow {...defaultProps} uuid={legacyCheckoutExtension.uuid} />,
-      withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
-    )
+  test('does not render a button to open the QRCodeModal for a legacy Checkout extension', () => {
+    render(<ExtensionRow {...defaultProps} uuid={legacyCheckoutExtension.uuid} />, withProviders(DefaultProviders), {
+      state: defaultState,
+    })
 
-    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.queryByText('View mobile')).not.toBeInTheDocument()
   })
 
-  test('does not render a <Button/> to open the QRCodeModal for a Checkout UI extension', () => {
-    const container = render(
-      <ExtensionRow {...defaultProps} uuid={checkoutUiExtension.uuid} />,
-      withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
-    )
+  test('does not render a button to open the QRCodeModal for a Checkout UI extension', () => {
+    render(<ExtensionRow {...defaultProps} uuid={checkoutUiExtension.uuid} />, withProviders(DefaultProviders), {
+      state: defaultState,
+    })
 
-    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.queryByText('View mobile')).not.toBeInTheDocument()
   })
 
-  test('does not render a <Button/> to open the QRCodeModal for an Admin UI extension', () => {
-    const container = render(
-      <ExtensionRow {...defaultProps} uuid={adminUiExtension.uuid} />,
-      withProviders(DefaultProviders),
-      {
-        state: defaultState,
-      },
-    )
+  test('does not render a button to open the QRCodeModal for an Admin UI extension', () => {
+    render(<ExtensionRow {...defaultProps} uuid={adminUiExtension.uuid} />, withProviders(DefaultProviders), {
+      state: defaultState,
+    })
 
-    expect(container).not.toContainReactComponent(Button, {id: 'showQRCodeModalButton'})
+    expect(screen.queryByText('View mobile')).not.toBeInTheDocument()
   })
 
   test('Opens and closes the <QRCodeModal/> ', () => {
-    const container = render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {state: defaultState})
+    render(<ExtensionRow {...defaultProps} />, withProviders(DefaultProviders), {state: defaultState})
 
-    container.act(() => {
-      container.find(Button, {id: 'showQRCodeModalButton'})?.trigger('onClick')
-    })
+    fireEvent.click(screen.getByText('View mobile'))
 
-    expect(container).toContainReactComponent(QRCodeModal, {
-      code: {
-        url: legacyAdminExtension.development.root.url,
-        type: legacyAdminExtension.surface,
-        title: legacyAdminExtension.handle,
-      },
-    })
+    expect(QRCodeModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        code: {
+          url: legacyAdminExtension.development.root.url,
+          type: legacyAdminExtension.surface,
+          title: legacyAdminExtension.handle,
+        },
+      }),
+    )
 
-    container.act(() => {
-      container.find(QRCodeModal)?.trigger('onClose')
-    })
+    fireEvent.click(screen.getByTestId('qr-code-modal'))
 
-    expect(container).toContainReactComponent(QRCodeModal, {code: undefined})
+    expect(QRCodeModalMock).toHaveBeenLastCalledWith(expect.objectContaining({code: undefined}))
   })
 })

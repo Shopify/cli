@@ -359,7 +359,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Build
-        run: pnpm nx run-many --all --skip-nx-cache --target=build --exclude=features --output-style=stream
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Type-diff
         working-directory: workspace
         id: type-diff
