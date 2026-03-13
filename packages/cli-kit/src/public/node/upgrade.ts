@@ -10,11 +10,14 @@ import {
   addNPMDependencies,
   getPackageManager,
 } from './node-package-manager.js'
-import {outputContent, outputDebug, outputInfo, outputToken} from './output.js'
+import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
 import {isPreReleaseVersion} from './version.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
+
+// Homebrew triggers `brew update` as a side effect, which can take 30–90 s on slow networks.
+const HOMEBREW_TIMEOUT_MS = 120_000
 
 /**
  * Utility function for generating an install command for the user to run
@@ -29,10 +32,12 @@ export function cliInstallCommand(): string | undefined {
   if (packageManager === 'homebrew') {
     return 'brew upgrade shopify-cli'
   } else if (packageManager === 'yarn') {
-    return `${packageManager} global add @shopify/cli@latest`
+    return 'yarn global add @shopify/cli@latest'
+  } else if (packageManager === 'pnpm') {
+    // pnpm v8+ requires --global instead of -g
+    return 'pnpm add --global @shopify/cli@latest'
   } else {
-    const verb = packageManager === 'pnpm' ? 'add' : 'install'
-    return `${packageManager} ${verb} -g @shopify/cli@latest`
+    return `${packageManager} install -g @shopify/cli@latest`
   }
 }
 
@@ -67,7 +72,21 @@ export async function runCLIUpgrade(): Promise<void> {
       throw new Error('Could not determine the command to run')
     }
     outputInfo(outputContent`Upgrading Shopify CLI by running: ${outputToken.genericShellCommand(installCommand)}...`)
-    await exec(command, args, {stdio: 'inherit'})
+    const packageManager = inferPackageManagerForGlobalCLI()
+    if (packageManager === 'homebrew') {
+      await exec(command, args, {
+        stdio: 'inherit',
+        timeout: HOMEBREW_TIMEOUT_MS,
+        externalErrorHandler: async (error: unknown) => {
+          if ((error as {timedOut?: boolean}).timedOut) {
+            outputWarn('Homebrew upgrade timed out. Run `brew upgrade shopify-cli` manually.')
+          }
+          throw error
+        },
+      })
+    } else {
+      await exec(command, args, {stdio: 'inherit'})
+    }
   } else if (projectDir) {
     await upgradeLocalShopify(projectDir, CLI_KIT_VERSION)
   } else {
