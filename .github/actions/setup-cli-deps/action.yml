@@ -24,6 +24,15 @@ runs:
         registry-url: 'https://registry.npmjs.org'
         cache: 'pnpm'
         cache-dependency-path: 'pnpm-lock.yaml'
+    - name: Cache node_modules
+      uses: actions/cache@v4
+      id: node-modules-cache
+      with:
+        path: |
+          node_modules
+          packages/*/node_modules
+        key: node-modules-${{ runner.os }}-${{ inputs.node-version }}-${{ hashFiles('pnpm-lock.yaml') }}
     - name: Install dependencies
+      if: steps.node-modules-cache.outputs.cache-hit != 'true'
       run: pnpm install --frozen-lockfile --prefer-offline
       shell: bash
