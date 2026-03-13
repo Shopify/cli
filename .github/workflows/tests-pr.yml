@@ -226,11 +226,14 @@ jobs:
           SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
         run: pnpm test:features --output-style=stream
 
-  test-coverage:
+  test-coverage-shard:
     if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
-    name: 'Test Coverage'
+    name: "Test Coverage (shard ${{ matrix.shard }})"
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        shard: ['1/2', '2/2']
     steps:
       - uses: actions/checkout@v3
         with:
@@ -241,10 +244,54 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - name: Run and save test coverage
-        uses: ./.github/actions/run-and-save-test-coverage
+      - name: Unit tests with coverage (shard)
+        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=.vitest-blob-reports/blob.json --shard ${{ matrix.shard }}
+        env:
+          VITEST_MIN_THREADS: "1"
+          VITEST_MAX_THREADS: "4"
+      - uses: actions/upload-artifact@v4
         with:
-          branch-name: '${{ github.head_ref }}'
+          name: coverage-blob-${{ strategy.job-index }}
+          path: .vitest-blob-reports/
+          retention-days: 1
+
+  test-coverage-merge:
+    if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
+    needs: test-coverage-shard
+    name: 'Test Coverage'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-blob-*
+          path: .vitest-blob-reports
+          merge-multiple: true
+      - name: Merge coverage reports
+        run: pnpm vitest --mergeReports .vitest-blob-reports --reporter=json --outputFile=./coverage/report.json --coverage --coverage.all=false
+      - name: Convert coverage to Jest
+        run: ./bin/save-coverage-file.js
+      - name: Take copy of report as new baseline for branch
+        run: cp ./report.json ./baseline-report.json
+      - name: Clean ref name
+        env:
+          SAFE_REF_NAME: "${{ github.head_ref }}"
+        run: |
+          SAFE_REF_NAME="${SAFE_REF_NAME//[\/.]/}"
+          echo "SAFE_REF_NAME=${SAFE_REF_NAME}" >> $GITHUB_ENV
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.SAFE_REF_NAME }}--coverage-report
+          path: ./baseline-report.json
       - name: Download and publish test coverage
         uses: ./.github/actions/download-and-publish-test-coverage
         with:
