@@ -1,5 +1,7 @@
 # @shopify/cli-kit
 
+## 3.93.0
+
 ## 3.92.0
 
 ## 3.91.0
@@ -586,7 +588,6 @@
 - db5981a1e: Clean errors related to metrics requests on theme dev
 - 7f8a9436d: Add log information when graphql requests return an error
 - d2a352442: Added 2 new utilities on the git module:
-
   - git.ensureIsClean(directory?: string): Promise<void>: If the .git directory tree is not clean (has uncommitted changes) it throws an abort error.
   - git.isClean(directory?: string): Promise<boolean>: Returns true if the .git directory tree is clean (no uncommitted changes).
 

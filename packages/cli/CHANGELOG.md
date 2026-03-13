@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.93.0
+
+### Patch Changes
+
+- 67aaf10: fix missing json output for theme info when no theme or dev flag is present
+
 ## 3.92.0
 
 ### Patch Changes

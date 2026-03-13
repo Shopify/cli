@@ -1,5 +1,11 @@
 # @shopify/plugin-cloudflare
 
+## 3.93.0
+
+### Patch Changes
+
+- @shopify/cli-kit@3.93.0
+
 ## 3.92.0
 
 ### Patch Changes
