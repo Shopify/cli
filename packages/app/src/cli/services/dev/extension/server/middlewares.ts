@@ -5,7 +5,7 @@ import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {IncomingMessage, ServerResponse, sendRedirect, send} from 'h3'
-import {joinPath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 export function corsMiddleware(_request: IncomingMessage, response: ServerResponse, next: (err?: Error) => unknown) {
@@ -90,7 +90,7 @@ export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExte
     const bundlePath = devOptions.appWatcher.buildOutputPath
     const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
 
-    const buildDirectory = extensionOutputPath.replace(extension.outputFileName, '')
+    const buildDirectory = dirname(extensionOutputPath)
 
     return fileServerMiddleware(request, response, next, {
       filePath: joinPath(buildDirectory, assetPath),
