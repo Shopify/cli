@@ -1,17 +1,17 @@
 #!/bin/bash
 set -euo pipefail
 
-# Ensure build is up to date
-pnpm nx build cli 2>&1 | tail -1
+# Ensure bundle is up to date (bundle includes build as dependency)
+pnpm nx bundle cli 2>&1 | tail -1
 
 # Warmup run (filesystem cache)
-node packages/cli/bin/dev.js version > /dev/null 2>&1
+node packages/cli/bin/dev.js help > /dev/null 2>&1
 
 # Benchmark: median of 7 runs (wall clock and user time)
 wall_times=()
 user_times=()
 for i in 1 2 3 4 5 6 7; do
-  output=$( { /usr/bin/time -p node packages/cli/bin/dev.js version > /dev/null; } 2>&1 )
+  output=$( { /usr/bin/time -p node packages/cli/bin/dev.js help > /dev/null; } 2>&1 )
   wall=$( echo "$output" | awk '/^real/{print $2}' )
   user=$( echo "$output" | awk '/^user/{print $2}' )
   wall_ms=$(echo "$wall * 1000" | bc | cut -d. -f1)
