@@ -110,8 +110,8 @@ importers:
         specifier: 5.59.1
         version: 5.59.1(@types/node@18.19.70)(typescript@5.9.3)
       liquidjs:
-        specifier: 10.20.1
-        version: 10.20.1
+        specifier: 10.25.0
+        version: 10.25.0
       node-fetch:
         specifier: ^3.3.2
         version: 3.3.2
@@ -442,8 +442,8 @@ importers:
         specifier: 7.0.0
         version: 7.0.0
       liquidjs:
-        specifier: 10.20.1
-        version: 10.20.1
+        specifier: 10.25.0
+        version: 10.25.0
       lodash:
         specifier: 4.17.23
         version: 4.17.23
@@ -7046,9 +7046,9 @@ packages:
   linkify-it@5.0.0:
     resolution: {integrity: sha512-5aHCbzQRADcdP+ATqnDuhhJ/MRIqDkZX5pyjFHRRysS8vZ5AbqGEoFIb6pYHPZ+L/OC2Lc+xT8uHVVR5CAK/wQ==}
 
-  liquidjs@10.20.1:
-    resolution: {integrity: sha512-eZ33jfxjj0It8tkY+I4gbKWfXvMmOvQvvraxVFSLcTjZWCjdWMLBnevk48qw9AQIwIHFp58vZc59vH9Qwdq7mw==}
-    engines: {node: '>=14'}
+  liquidjs@10.25.0:
+    resolution: {integrity: sha512-XpO7AiGULTG4xcTlwkcTI5JreFG7b6esLCLp+aUSh7YuQErJZEoUXre9u9rbdb0057pfWG4l0VursvLd5Q/eAw==}
+    engines: {node: '>=16'}
     hasBin: true
 
   listr2@9.0.5:
@@ -17380,7 +17380,7 @@ snapshots:
     dependencies:
       uc.micro: 2.1.0
 
-  liquidjs@10.20.1:
+  liquidjs@10.25.0:
     dependencies:
       commander: 10.0.1
 
