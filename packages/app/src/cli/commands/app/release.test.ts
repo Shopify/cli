@@ -70,4 +70,10 @@ describe('app release --force deprecation warning', () => {
 
     expect(renderWarning).not.toHaveBeenCalled()
   })
+
+  test('does not show deprecation warning when only --allow-deletes is passed', async () => {
+    await Release.run(['--version', 'v1.0.0', '--allow-deletes'])
+
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
 })
