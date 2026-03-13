@@ -23,6 +23,7 @@ import GenerateSchema from './commands/app/generate/schema.js'
 import ImportExtensions from './commands/app/import-extensions.js'
 import AppInfo from './commands/app/info.js'
 import Init from './commands/app/init.js'
+import Validate from './commands/app/validate.js'
 import Release from './commands/app/release.js'
 import VersionsList from './commands/app/versions/list.js'
 import WebhookTrigger from './commands/app/webhook/trigger.js'
@@ -55,6 +56,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'app:import-extensions': ImportExtensions,
   'app:info': AppInfo,
   'app:init': Init,
+  'app:validate': Validate,
   'app:release': Release,
   'app:config:link': ConfigLink,
   'app:config:use': ConfigUse,
