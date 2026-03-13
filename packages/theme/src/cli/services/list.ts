@@ -50,7 +50,7 @@ export async function list(options: Options, adminSession: AdminSession) {
     if (role) {
       formattedRole = `[${role}]`
       if ([developmentTheme, hostTheme].includes(`${id}`)) {
-        formattedRole += ' [yours]'
+        formattedRole += ' [current]'
       }
     }
     return [name, formattedRole, `#${id}`]
