@@ -40,7 +40,7 @@ const AppProxyTransformConfig: CustomTransformationConfig = {
       appUrl = (appConfiguration as CurrentAppConfiguration)?.application_url
     }
     return {
-      url: prependApplicationUrl(appProxyConfig.app_proxy.url, appUrl),
+      url: prependApplicationUrl(removeTrailingSlash(appProxyConfig.app_proxy.url) as string, appUrl),
       subpath: appProxyConfig.app_proxy.subpath,
       prefix: appProxyConfig.app_proxy.prefix,
     }

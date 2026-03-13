@@ -72,6 +72,18 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
+
+  /**
+   * Top-level keys this spec declares in its schema. Used for slicing the app config
+   * into per-spec portions without running a parse. Includes all schema shape keys
+   * (including base keys like name, type, etc.) — pick() intersects with what's
+   * actually present in the raw config.
+   *
+   * For locally-defined specs: computed from the Zod schema shape.
+   * For contract-based specs: computed from the JSON Schema properties after remote merge.
+   * For specs without a ZodObject schema (e.g. zod.any()): empty until set externally.
+   */
+  declaredKeys: string[]
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,
@@ -188,6 +200,7 @@ interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseCo
 export function createExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): ExtensionSpecification<TConfiguration> {
+  const schema = spec.schema ?? (BaseSchema as ZodSchemaType<TConfiguration>)
   const defaults = {
     // these two fields are going to be overridden by the extension specification API response,
     // but we need them to have a default value for tests
@@ -196,7 +209,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
     surface: 'test-surface',
     partnersWebIdentifier: spec.identifier,
-    schema: BaseSchema as ZodSchemaType<TConfiguration>,
+    schema,
     registrationLimit: blocks.extensions.defaultRegistrationLimit,
     transform: spec.transformLocalToRemote,
     reverseTransform: spec.transformRemoteToLocal,
@@ -204,6 +217,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
+    declaredKeys: getDeclaredKeysFromSchema(schema),
   }
   const merged = {...defaults, ...spec}
 
@@ -355,4 +369,21 @@ function appConfigTransform(
 export function configWithoutFirstClassFields(config: JsonMapType): JsonMapType {
   const {type, handle, uid, path, extensions, ...configWithoutFirstClassFields} = config
   return configWithoutFirstClassFields
+}
+
+/**
+ * Extract the top-level keys a Zod schema declares. Returns all keys from the schema shape
+ * (including inherited base keys like name, type, etc.). For non-ZodObject schemas (e.g. zod.any()),
+ * returns an empty array — the caller must set declaredKeys from another source (e.g. JSON Schema).
+ */
+function getDeclaredKeysFromSchema(schema: ZodSchemaType<unknown>): string[] {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const shape = (schema as any)?._def?.shape
+  if (typeof shape === 'function') {
+    return Object.keys(shape())
+  }
+  if (typeof shape === 'object' && shape !== null) {
+    return Object.keys(shape)
+  }
+  return []
 }

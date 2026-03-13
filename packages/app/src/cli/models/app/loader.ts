@@ -16,6 +16,8 @@ import {
   AppHiddenConfig,
   normalizeExtensionDirectories,
 } from './app.js'
+import {sliceConfigForSpec, findUnclaimedKeys} from './config/slice.js'
+import {validateSpecConfig} from './config/validate.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -718,39 +720,62 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
-          const specConfiguration = parseConfigurationObjectAgainstSpecification(
-            specification,
-            configPath,
-            appConfiguration,
-            this.abortOrReport.bind(this),
-          )
+          // Slice the raw config to extract only this spec's keys (deep copy)
+          const slice = sliceConfigForSpec(appConfiguration, specification)
+          const sliceKeys = Object.keys(slice)
+          if (sliceKeys.length === 0) return [null, []] as const
 
-          if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
+          // Validate the slice — errors only, no data shaping
+          const errors = validateSpecConfig(slice, specification)
+          if (errors.length > 0) {
+            this.abortOrReport(
+              outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
+                configPath,
+              )}:\n\n${parseHumanReadableError(errors)}`,
+              undefined,
+              configPath,
+            )
+            return [null, []] as const
+          }
 
-          const instance = await this.createExtensionInstance(
-            specification.identifier,
-            specConfiguration,
-            configPath,
+          // Create instance directly with the slice — no second parse
+          const entryPath = await this.findEntryPath(directory, specification)
+          const instance = new ExtensionInstance({
+            configuration: slice,
+            configurationPath: configPath,
+            entryPath,
             directory,
-          ).then((extensionInstance) =>
-            this.validateConfigurationExtensionInstance(
-              appConfiguration.client_id,
-              appConfiguration,
-              extensionInstance,
-            ),
+            specification,
+          })
+
+          // Preserve devUUID from previous app (for reload consistency)
+          const previousExtension = this.previousApp?.allExtensions.find((ext) => ext.handle === instance.handle)
+          if (previousExtension) {
+            instance.devUUID = previousExtension.devUUID
+          }
+
+          // Spec-level business rule validation (separate from schema validation)
+          if (specification.validate) {
+            const validateResult = await instance.validate()
+            if (validateResult.isErr()) {
+              this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configPath)
+            }
+          }
+
+          // Check that deploy payload is non-empty (same as validateConfigurationExtensionInstance)
+          const validInstance = await this.validateConfigurationExtensionInstance(
+            appConfiguration.client_id,
+            appConfiguration,
+            instance,
           )
-          return [instance, Object.keys(specConfiguration)] as const
+          return [validInstance, sliceKeys] as const
         }),
     )
 
-    // get all the keys from appConfiguration that aren't used by any of the results
-
-    const unusedKeys = Object.keys(appConfiguration)
-      .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
-      .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'organization_id']
-        return !configKeysThatAreNeverModules.includes(key)
-      })
+    const unusedKeys = findUnclaimedKeys(
+      appConfiguration,
+      extensionInstancesWithKeys.map(([_, keys]) => keys),
+    )
 
     if (unusedKeys.length > 0 && this.mode !== 'local') {
       this.abortOrReport(

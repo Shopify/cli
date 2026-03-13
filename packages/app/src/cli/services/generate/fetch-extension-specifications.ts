@@ -11,6 +11,7 @@ import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {HandleInvalidAdditionalProperties, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
+import {SchemaObject} from 'ajv'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -65,33 +66,36 @@ async function mergeLocalAndRemoteSpecs(
   // If the local spec is missing, and the remote one has a validation schema, create a new local spec using contracts
   const updated = remote.map(async (remoteSpec) => {
     let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
-    if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
-      const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
-      const hasLocalization = normalisedSchema.properties?.localization !== undefined
+    // Normalize the remote JSON Schema contract (if present) for validation and key extraction
+    let contractSchema: SchemaObject | undefined
+    if (remoteSpec.validationSchema?.jsonSchema) {
+      contractSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
+    }
+
+    if (!localSpec && contractSchema) {
+      const hasLocalization = contractSchema.properties?.localization !== undefined
       localSpec = createContractBasedModuleSpecification({
         identifier: remoteSpec.identifier,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
       })
       localSpec.uidStrategy = remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single'
+      // Contract-based specs use zod.any() — declaredKeys comes from the JSON Schema
+      localSpec.declaredKeys = Object.keys(contractSchema.properties ?? {})
     }
     if (!localSpec) return undefined
 
     const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
       FlattenedRemoteSpecification
 
-    // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
-    let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
-    switch (merged.uidStrategy) {
-      case 'uuid':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-      case 'single':
-        handleInvalidAdditionalProperties = 'strip'
-        break
-      case 'dynamic':
-        handleInvalidAdditionalProperties = 'fail'
-        break
+    // Store normalized contract schema for use by validateSpecConfig
+    if (contractSchema) {
+      ;(merged as RemoteAwareExtensionSpecification & {contractSchema: SchemaObject}).contractSchema = contractSchema
     }
+
+    // All specs use 'fail' mode — AJV rejects invalid data, never strips.
+    // Single specs use validateSpecConfig() for validation (no AJV stripping needed).
+    // UUID and dynamic specs already used 'fail'.
+    const handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'fail'
 
     const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
 
