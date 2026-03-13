@@ -14,7 +14,6 @@ interface Options {
  * @returns A promise that resolves when the CLI has been launched.
  */
 export async function launchCLI(options: Options): Promise<void> {
-  const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
   const oclif = await import('@oclif/core')
   const {ShopifyConfig} = await import('./custom-oclif-loader.js')
@@ -37,6 +36,8 @@ export async function launchCLI(options: Options): Promise<void> {
     await oclif.default.flush()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
+    // Defer error-handler import to the error path (saves ~380ms on happy path)
+    const {errorHandler} = await import('./error-handler.js')
     await errorHandler(error as Error)
     return oclif.default.Errors.handle(error as Error)
   }
