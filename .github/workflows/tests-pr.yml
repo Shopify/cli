@@ -241,6 +241,8 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
       - name: Run and save test coverage
         uses: ./.github/actions/run-and-save-test-coverage
         with:
