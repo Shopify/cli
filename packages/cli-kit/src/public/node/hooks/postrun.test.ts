@@ -47,7 +47,9 @@ describe('autoUpgradeIfNeeded', () => {
     vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(false)
     vi.mocked(runCLIUpgrade).mockRejectedValue(new Error('upgrade failed'))
-    vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('💡 Version 3.100.0 available! Run `npm install -g @shopify/cli@latest`')
+    vi.mocked(getOutputUpdateCLIReminder).mockReturnValue(
+      '💡 Version 3.100.0 available! Run `npm install -g @shopify/cli@latest`',
+    )
 
     await autoUpgradeIfNeeded()
 
