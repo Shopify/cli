@@ -30,6 +30,11 @@ const external = [
   // typescript compiler (~9MB) is pulled in by @ts-morph/common and json-schema-to-typescript.
   // It's available at runtime since it's a project dependency.
   'typescript',
+  // polaris + polaris-icons are ~2.1MB, only used for GraphiQL HTML template rendering.
+  // Available at runtime as dependencies.
+  '@shopify/polaris',
+  '@shopify/polaris-icons',
+  '@shopify/polaris-tokens',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
