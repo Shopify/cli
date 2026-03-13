@@ -38,6 +38,15 @@ const external = [
   // react-dom (~1.3MB) only used for GraphiQL template server-side rendering.
   // ink uses its own react-reconciler, not react-dom.
   'react-dom',
+  // vscode language services are ~2MB, used by theme language server.
+  // Available as transitive dependencies at runtime.
+  'vscode-css-languageservice',
+  'vscode-json-languageservice',
+  'vscode-languageserver',
+  'vscode-languageserver-protocol',
+  'vscode-languageserver-textdocument',
+  'vscode-languageserver-types',
+  'vscode-uri',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
