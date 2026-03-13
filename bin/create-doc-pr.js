@@ -1,3 +1,5 @@
+// eslint-disable-next-line n/shebang
+#!/usr/bin/env node
 
 import {fileURLToPath} from "node:url"
 import {createRequire} from 'node:module'
