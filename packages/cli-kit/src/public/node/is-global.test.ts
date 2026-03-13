@@ -2,7 +2,7 @@ import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI, installGlobalCL
 import {terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
-import {beforeEach, describe, expect, test, vi, afterEach} from 'vitest'
+import {describe, expect, test, vi, afterEach} from 'vitest'
 
 vi.mock('./system.js')
 vi.mock('./ui.js')
