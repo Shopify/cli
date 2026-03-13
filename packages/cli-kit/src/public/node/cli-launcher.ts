@@ -14,11 +14,11 @@ interface Options {
  * @returns A promise that resolves when the CLI has been launched.
  */
 export async function launchCLI(options: Options): Promise<void> {
-  const {isDevelopment} = await import('./context/local.js')
   const oclif = await import('@oclif/core')
   const {ShopifyConfig} = await import('./custom-oclif-loader.js')
 
-  if (isDevelopment()) {
+  // Inline isDevelopment check to avoid importing context/local.js chain
+  if (process.env.SHOPIFY_CLI_ENV === 'development') {
     oclif.default.settings.debug = true
   }
 
