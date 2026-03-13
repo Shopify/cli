@@ -55,22 +55,6 @@ export class ShopifyConfig extends Config {
   }
 
   /**
-   * Override runHook to skip init hooks for lightweight commands (help, version).
-   * These commands don't need app-init (LocalStorage, COMMAND_RUN_ID) or hydrogen-init.
-   */
-  // @ts-expect-error: overriding with looser types for hook interception
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async runHook(event: string, opts: any, timeout?: number, captureErrors?: boolean): Promise<any> {
-    if (event === 'init' && this.lazyCommandLoader) {
-      const id = opts?.id as string | undefined
-      if (id === 'help' || id === 'version') {
-        return {successes: [], failures: []}
-      }
-    }
-    return super.runHook(event, opts, timeout, captureErrors)
-  }
-
-  /**
    * Override runCommand to use lazy loading when available.
    * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
    * we directly import only the needed command module.
@@ -90,20 +74,18 @@ export class ShopifyConfig extends Config {
           commandClass.id = id
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-
-          // Skip heavy hooks for lightweight commands that don't need analytics
-          const isLightCommand = id === 'help' || id === 'version'
-          if (!isLightCommand) {
-            // Fire prerun hook in background (analytics metadata setup).
-            const prerunPromise = this.runHook('prerun', {argv, Command: commandClass})
-            const result = (await commandClass.run(argv, this)) as T
-            await prerunPromise
-            // eslint-disable-next-line no-void
-            void this.runHook('postrun', {argv, Command: commandClass, result})
-            return result
-          }
-          // Fast path: run command directly without hooks
+          // Fire prerun hook in background (analytics metadata setup).
+          // Don't await - it runs in parallel with command execution.
+          // By the time postrun needs the metadata, it will be ready.
+          const prerunPromise = this.runHook('prerun', {argv, Command: commandClass})
+          // Execute the command
           const result = (await commandClass.run(argv, this)) as T
+          // Ensure prerun completed before postrun reads analytics metadata
+          await prerunPromise
+          // Fire postrun hook (analytics, deprecation checks) without blocking.
+          // Analytics is best-effort; the user shouldn't wait for it.
+          // eslint-disable-next-line no-void
+          void this.runHook('postrun', {argv, Command: commandClass, result})
           return result
         }
       }
