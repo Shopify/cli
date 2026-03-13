@@ -35,6 +35,9 @@ const external = [
   '@shopify/polaris',
   '@shopify/polaris-icons',
   '@shopify/polaris-tokens',
+  // react-dom (~1.3MB) only used for GraphiQL template server-side rendering.
+  // ink uses its own react-reconciler, not react-dom.
+  'react-dom',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
