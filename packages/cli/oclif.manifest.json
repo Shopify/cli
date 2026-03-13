@@ -7822,7 +7822,7 @@
       ],
       "args": {
       },
-      "description": "Upgrades Shopify CLI.",
+      "description": "Upgrades Shopify CLI using your package manager.",
       "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
       "enableJsonFlag": false,
       "flags": {
