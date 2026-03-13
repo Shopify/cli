@@ -458,6 +458,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           managementExperience: 'cli',
           registrationLimit: spec.uidStrategy.appModuleLimit,
           uidIsClientProvided: spec.uidStrategy.isClientProvided,
+          uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
         },
         experience: experience(spec.identifier),
         validationSchema: spec.validationSchema,
@@ -1354,6 +1355,26 @@ export async function allowedTemplates(
 
 function experience(identifier: string): 'configuration' | 'extension' {
   return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
+}
+
+/**
+ * Maps the backend uidStrategy __typename to the CLI UidStrategy value.
+ * The __typename is always present in the response because the GraphQL document
+ * selects it, even though the generated TypeScript type doesn't expose it directly.
+ *
+ * Type names come from the app-management GraphQL schema's UidStrategy union.
+ */
+function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' | undefined {
+  switch (typename) {
+    case 'UidStrategiesDynamic':
+      return 'dynamic'
+    case 'UidStrategiesStatic':
+      return 'single'
+    case 'UidStrategiesClientProvided':
+      return 'uuid'
+    default:
+      return undefined
+  }
 }
 
 function mapBusinessPlatformStoresToOrganizationStores(

@@ -72,12 +72,21 @@ async function mergeLocalAndRemoteSpecs(
         identifier: remoteSpec.identifier,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
       })
-      localSpec.uidStrategy = remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single'
+      // Seed uidStrategy for contract specs using uidIsClientProvided as fallback (Partners API path).
+      // This will be overridden below if the backend provides a typename-derived value.
+      localSpec.uidStrategy =
+        remoteSpec.options.uidStrategy ?? (remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single')
     }
     if (!localSpec) return undefined
 
     const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
       FlattenedRemoteSpecification
+
+    // Always prefer the backend-derived uidStrategy (from __typename) when available.
+    // This correctly overrides the local spec's default (e.g. channel_config defaults to 'uuid'
+    // locally but the backend defines it as 'single').
+    // Falls back to the local spec value for the Partners API path (no __typename available).
+    merged.uidStrategy = merged.options.uidStrategy ?? localSpec.uidStrategy ?? 'single'
 
     // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
     let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
