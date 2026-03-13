@@ -2237,10 +2237,7 @@ describe('load', () => {
       {
         webhooks: {
           api_version: '2024-01',
-          subscriptions: [
-            {topics: ['orders/create'], uri: 'https://example.com'},
-            {topics: ['orders/delete'], uri: 'https://example.com'},
-          ],
+          subscriptions: [{topics: ['orders/create', 'orders/delete'], uri: 'https://example.com'}],
         },
         name: 'for-testing-webhooks',
       },
@@ -3062,39 +3059,10 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const expandedWebhookConfig: WebhooksConfig = {
-      api_version: '2021-07',
-      subscriptions: [
-        {
-          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          topics: ['products/create'],
-        },
-        {
-          uri: 'arn:aws:events:us-west-2::event-source/aws.partner/shopify.com/1234567890/SOME_PATH',
-          topics: ['products/update'],
-        },
-        {
-          uri: 'https://example.com',
-          topics: ['products/create'],
-        },
-        {
-          uri: 'https://example.com',
-          topics: ['products/update'],
-        },
-        {
-          uri: 'pubsub://my-project-123:my-topic',
-          topics: ['products/create'],
-        },
-        {
-          uri: 'pubsub://my-project-123:my-topic',
-          topics: ['products/update'],
-        },
-      ],
-    }
-
     const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
     expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
+    // Without the parse-time mergeAllWebhooks transform, subscriptions preserve their raw multi-topic form
+    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {

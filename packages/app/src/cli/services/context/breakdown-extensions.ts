@@ -19,6 +19,7 @@ import {ExtensionSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
+import {mergeAllWebhooks} from '../../models/extensions/specifications/transform/app_config_webhook.js'
 import {throwUidMappingError} from '../../prompts/uid-mapping-error.js'
 import {deepCompare, deepDifference} from '@shopify/cli-kit/common/object'
 import {zod} from '@shopify/cli-kit/node/schema'
@@ -196,30 +197,12 @@ async function resolveRemoteConfigExtensionIdentifiersBreakdown(
       : app.configuration
   ) as CurrentAppConfiguration
 
-  // modify relative path webhook subscriptions to include app url so client vs server diff checking is consistent
-  if (baselineConfig?.webhooks?.subscriptions?.length) {
-    baselineConfig.webhooks.subscriptions = baselineConfig.webhooks.subscriptions.map((subscription) => {
-      if (subscription.uri.startsWith('/')) {
-        subscription.uri = `${removeTrailingSlash(baselineConfig.application_url)}${subscription.uri}`
-      }
-      return subscription
-    })
+  // Build comparison-ready configs with normalized webhooks — derived copies only,
+  // originals are never mutated (baselineConfig may reference app.configuration).
+  const comparisonBaseline = normalizeWebhooksForComparison(baselineConfig)
+  const comparisonRemote = normalizeWebhooksForComparison(remoteConfig)
 
-    // Sort webhook subscriptions by uri & topics in both baseline and remote config
-    // Ensuring that deepCompare will not fail if the order is different
-    baselineConfig.webhooks.subscriptions.sort((webhookA, webhookB) => {
-      const keyA = webhookA.uri + (webhookA.topics?.sort().join(',') ?? '')
-      const keyB = webhookB.uri + (webhookB.topics?.sort().join(',') ?? '')
-      return keyA.localeCompare(keyB)
-    })
-    remoteConfig.webhooks?.subscriptions?.sort((webhookA, webhookB) => {
-      const keyA = webhookA.uri + (webhookA.topics?.sort().join(',') ?? '')
-      const keyB = webhookB.uri + (webhookB.topics?.sort().join(',') ?? '')
-      return keyA.localeCompare(keyB)
-    })
-  }
-
-  const diffFieldNames = buildDiffFieldNames(baselineConfig, remoteConfig, app.configSchema)
+  const diffFieldNames = buildDiffFieldNames(comparisonBaseline, comparisonRemote, app.configSchema)
 
   // List of field included in the config except the ones that only affect the CLI and are not pushed to the server
   // (versioned fields)
@@ -438,4 +421,37 @@ function loadDashboardIdentifiersBreakdown(currentRegistrations: RemoteSource[],
     toUpdate: [],
     unchanged: toUpdate,
   }
+}
+
+/**
+ * Creates a comparison-ready copy of a config with webhook subscriptions normalized:
+ * - Exploded to one-topic-per-subscription (via mergeAllWebhooks)
+ * - Relative URIs expanded to absolute (using application_url)
+ * - Sorted by URI + topics for stable comparison
+ *
+ * Returns a new object — the input is never mutated.
+ */
+function normalizeWebhooksForComparison<T extends {application_url?: string; webhooks?: {subscriptions?: unknown[]}}>(
+  config: T,
+): T {
+  if (!config?.webhooks?.subscriptions?.length) return config
+
+  const subscriptions = config.webhooks.subscriptions as Parameters<typeof mergeAllWebhooks>[0]
+  const applicationUrl = 'application_url' in config ? (config.application_url as string) : undefined
+
+  // Normalize to canonical one-topic-per-subscription form, expand relative URIs
+  const normalized = (mergeAllWebhooks(subscriptions) ?? []).map((subscription) =>
+    subscription.uri.startsWith('/') && applicationUrl
+      ? {...subscription, uri: `${removeTrailingSlash(applicationUrl)}${subscription.uri}`}
+      : subscription,
+  )
+
+  // Sort by URI + topics for order-independent comparison (without mutating topics arrays)
+  const sorted = [...normalized].sort((webhookA, webhookB) => {
+    const keyA = webhookA.uri + [...(webhookA.topics ?? [])].sort().join(',')
+    const keyB = webhookB.uri + [...(webhookB.topics ?? [])].sort().join(',')
+    return keyA.localeCompare(keyB)
+  })
+
+  return {...config, webhooks: {...config.webhooks, subscriptions: sorted}}
 }
