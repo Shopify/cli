@@ -82,8 +82,10 @@ export class ShopifyConfig extends Config {
           const result = (await commandClass.run(argv, this)) as T
           // Ensure prerun completed before postrun reads analytics metadata
           await prerunPromise
-          // Run postrun hook (analytics, deprecation checks)
-          await this.runHook('postrun', {argv, Command: commandClass, result})
+          // Fire postrun hook (analytics, deprecation checks) without blocking.
+          // Analytics is best-effort; the user shouldn't wait for it.
+          // eslint-disable-next-line no-void
+          void this.runHook('postrun', {argv, Command: commandClass, result})
           return result
         }
       }
