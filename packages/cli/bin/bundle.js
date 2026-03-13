@@ -41,6 +41,9 @@ const external = [
   // @oclif/table pulls in ink@5 + react@18 + react-reconciler@0.29.2 (~1.8MB).
   // Externalizing it avoids duplicate react ecosystem.
   '@oclif/table',
+  // lodash (~700KB input). Available as a runtime dependency.
+  'lodash',
+
   // vscode language services are ~2MB, used by theme language server.
   // Available as transitive dependencies at runtime.
   'vscode-css-languageservice',
