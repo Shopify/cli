@@ -118,6 +118,31 @@ const external = [
   'pathe',
   'which',
   'figures',
+  // Test infrastructure leaked via cli-hydrogen mock files
+  'vitest',
+  // More runtime deps
+  '@shopify/oxygen-cli',
+  '@apidevtools/json-schema-ref-parser',
+  'json-schema-to-typescript',
+  'express',
+  'h3',
+  'chokidar',
+  'fs-extra',
+  'source-map',
+  'color-json',
+  'deepmerge',
+  'env-paths',
+  'tempy',
+  'proper-lockfile',
+  'is-interactive',
+  'latest-version',
+  'get-port-please',
+  'mrmime',
+  'gradient-string',
+  'is-executable',
+  'macaddress',
+  'network-interfaces',
+  'diff',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually

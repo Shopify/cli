@@ -65,4 +65,28 @@ Everything in the repo. Key files:
 - typescript bundled just for ts-morph
 
 ## What's Been Tried
-(Nothing yet — baseline measurement)
+
+### Kept (cumulative 93.4% reduction: 131,236 → 8,724 KB)
+1. **Replace brotli JS with native zlib** (-5,904 KB): Used Node.js built-in `zlib.brotliCompressSync`
+2. **Enable minifyWhitespace** (-14,112 KB): Zero-risk esbuild config change
+3. **Externalize prettier** (-11,712 KB): Only used in 1 place for formatting generated types
+4. **Externalize ts-morph** (-23,140 KB): Used by Hydrogen, already lazy-loaded via dynamic import
+5. **Externalize typescript** (-19,176 KB): Was embedded by @ts-morph/common
+6. **Disable source maps** (-35,752 KB): 63% of bundle was .map files. Stack traces still readable.
+7. **Enable minifyIdentifiers** (-4,664 KB): Full minification enabled
+8. **Externalize polaris + polaris-icons + polaris-tokens** (-1,132 KB): Only used for GraphiQL HTML
+9. **Externalize react-dom** (-524 KB): Only used for GraphiQL SSR, not by ink
+10. **Externalize vscode language services** (-992 KB): Theme language server deps
+11. **Externalize @oclif/table** (-424 KB): Avoided bundling duplicate ink@5/react@18
+12. **Externalize lodash** (-112 KB): Partial savings (deep imports already tree-shake)
+13. **Externalize @opentelemetry** (-416 KB): Metrics packages
+14. **Externalize theme-check/language-server + ohm-js + liquid-html-parser** (-1,136 KB)
+15. **Externalize ink, react, react-reconciler, ajv, archiver, liquidjs, etc** (-1,100 KB)
+16. **Exclude test files from entry points** (-348 KB): 11 .test.ts files were being bundled
+17. **Externalize @oclif/core, graphql, zod, and 20+ more deps** (-1,868 KB)
+
+### Discarded
+- **Externalize graphql+graphql-request** (without @oclif/core): Caused cli-launcher test timeout
+
+### Key Insight
+The "externalize" approach is the main win. Since the CLI is installed via npm/pnpm, all deps are in node_modules at runtime. Bundling them into the dist output just duplicates them. The bundle should only contain the project's own source code glue.
