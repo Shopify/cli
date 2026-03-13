@@ -39,6 +39,7 @@ export const lockfilesByManager: Record<PackageManager, Lockfile | undefined> = 
   pnpm: pnpmLockfile,
   bun: bunLockfile,
   unknown: undefined,
+  homebrew: undefined,
 }
 export type Lockfile = 'yarn.lock' | 'package-lock.json' | 'pnpm-lock.yaml' | 'bun.lockb'
 
@@ -53,7 +54,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
 /**
  * A union that represents the package managers available.
  */
-export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'unknown'] as const
+export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'unknown', 'homebrew'] as const
 export type PackageManager = (typeof packageManager)[number]
 
 /**
@@ -529,6 +530,7 @@ export async function addNPMDependencies(
       await installDependencies(options, argumentsToAddDependenciesWithBun(dependenciesWithVersion, options.type))
       await installDependencies(options, ['install'])
       break
+    case 'homebrew':
     case 'unknown':
       throw new UnknownPackageManagerError()
   }
