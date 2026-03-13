@@ -1,4 +1,5 @@
 import {fileURLToPath} from 'node:url'
+import {ShopifyConfig} from './custom-oclif-loader.js'
 import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
 interface Options {
@@ -47,8 +48,6 @@ function normalizeArgv(argv: string[], commandIDs: string[], findCommand: (id: s
  * unless help is actually requested. This saves ~50ms for non-help commands.
  */
 export async function launchCLI(options: Options): Promise<void> {
-  const {ShopifyConfig} = await import('./custom-oclif-loader.js')
-
   // Inline isDevelopment check to avoid importing context/local.js chain
   if (process.env.SHOPIFY_CLI_ENV === 'development') {
     const oclif = await import('@oclif/core')
