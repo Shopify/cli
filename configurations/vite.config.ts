@@ -36,7 +36,7 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
       clearMocks: true,
       mockReset: true, // Note: In Vitest 3.0, mockReset restores the original implementation
       setupFiles: [path.join(__dirname, './vitest/setup.js')],
-      reporters: ['verbose', 'hanging-process'],
+      reporters: process.env.CI ? ['default'] : ['verbose', 'hanging-process'],
       pool: poolStrategy,
       coverage: {
         provider: 'istanbul',

@@ -147,13 +147,45 @@ jobs:
         run: 'test -z "$(git status --porcelain "docs-shopify.dev/generated/*.json" )" || { echo -e "Run (pnpm build-dev-docs) before pushing new commands or flags." ; exit 1; }'
 
   unit-tests:
-    name: 'Unit tests with Node ${{ matrix.node }} in ${{ matrix.os }}'
+    name: "Unit tests with Node ${{ matrix.node }} in ${{ matrix.os }}${{ matrix.shard != '' && format(' (shard {0})', matrix.shard) || '' }}"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       matrix:
         os: [ 'ubuntu-latest', 'windows-latest', 'macos-latest' ]
         node: [ '20.14.0', '22.2.0', '24.1.0' ]
+        shard: [ '' ]
+        include:
+          # Add sharding for Windows jobs to reduce wall-clock time
+          - os: windows-latest
+            node: '20.14.0'
+            shard: '1/2'
+          - os: windows-latest
+            node: '20.14.0'
+            shard: '2/2'
+          - os: windows-latest
+            node: '22.2.0'
+            shard: '1/2'
+          - os: windows-latest
+            node: '22.2.0'
+            shard: '2/2'
+          - os: windows-latest
+            node: '24.1.0'
+            shard: '1/2'
+          - os: windows-latest
+            node: '24.1.0'
+            shard: '2/2'
+        exclude:
+          # Exclude the non-sharded Windows entries (replaced by sharded ones above)
+          - os: windows-latest
+            node: '20.14.0'
+            shard: ''
+          - os: windows-latest
+            node: '22.2.0'
+            shard: ''
+          - os: windows-latest
+            node: '24.1.0'
+            shard: ''
     steps:
       - uses: actions/checkout@v3
         with:
@@ -165,7 +197,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm vitest run
+        run: pnpm vitest run ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
         env:
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"

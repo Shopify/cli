@@ -1,1 +1,2 @@
 {"type":"config","name":"Optimize CI time for Shopify CLI (slowest check: Unit tests on Windows)","metricName":"slowest_ci_job_min","metricUnit":"m","bestDirection":"lower"}
+{"run":1,"commit":"b48b2c8","metric":8.7,"metrics":{"local_test_s":77,"win_node20_min":8.7,"win_node22_min":8.3,"win_node24_min":8.5,"test_coverage_min":7.4},"status":"keep","description":"Baseline: slowest CI job is Unit tests Node 20 on Windows at 8.7m. Windows jobs: 8.7m/8.3m/8.5m. Ubuntu ~4.6-4.9m. macOS ~3.8-5.5m. Test Coverage 7.4m. Local: 77s.","timestamp":1773398971072,"segment":0}
