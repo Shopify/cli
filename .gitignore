@@ -209,4 +209,4 @@ bin/p
 .vitest-reports/
 report.json
 coverage/
-.vitest-blob-reports/
+vitest-blob-reports/

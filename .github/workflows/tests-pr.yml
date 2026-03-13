@@ -245,14 +245,14 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Unit tests with coverage (shard)
-        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=.vitest-blob-reports/blob.json --shard ${{ matrix.shard }}
+        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=vitest-blob-reports/blob.json --shard ${{ matrix.shard }}
         env:
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
       - uses: actions/upload-artifact@v4
         with:
-          name: coverage-blob-${{ strategy.job-index }}
-          path: .vitest-blob-reports/
+          name: coverage-blob-${{ matrix.shard == '1/2' && '1' || '2' }}
+          path: vitest-blob-reports/
           retention-days: 1
 
   test-coverage-merge:
@@ -274,10 +274,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           pattern: coverage-blob-*
-          path: .vitest-blob-reports
+          path: vitest-blob-reports
           merge-multiple: true
       - name: Merge coverage reports
-        run: pnpm vitest --mergeReports .vitest-blob-reports --reporter=json --outputFile=./coverage/report.json --coverage --coverage.all=false
+        run: pnpm vitest --mergeReports vitest-blob-reports --reporter=json --outputFile=./coverage/report.json --coverage --coverage.all=false
       - name: Convert coverage to Jest
         run: ./bin/save-coverage-file.js
       - name: Take copy of report as new baseline for branch
