@@ -2,40 +2,61 @@
 
 ## Current State
 - Baseline: 610ms → Current: 160ms (74% improvement, all universal)
-- Startup chunk size: ~352KB (12 chunks, minified)
-- With V8 compile cache: ~150ms stable
-- Profile: 40ms V8 compile (cached ~5ms), 40ms CJS shims, 20ms oclif eval, ~60ms oclif.run()
+- Startup chunk size: ~355KB (12 chunks, minified)
+- With V8 compile cache (warm): 150-160ms stable
+- Version command: ~145ms, --version flag: ~60ms
+- Help benchmark has ±20ms variance due to 10ms /usr/bin/time granularity
 
-## Proven Techniques (already applied)
+## Profile (160ms warm, `help`):
+- 48ms: CJS shim wrappers (__esm pattern, called per chunk)
+- 28ms: GC + microtask queue + misc
+- 14ms: oclif core evaluation
+- 10ms: help-specific chunk loading
+- 9ms: Node builtin module loading (realm)
+- 8ms: undici (fetch internals, from global-agent)
+- 6ms: V8 compile (from cache — was 40ms cold)
+- rest: spread across many chunks
+
+## Proven Techniques (all applied)
 - Separate bootstrap from index.ts (don't load all commands upfront)
-- Lazy command loading via registry
+- Lazy command loading via registry (command-registry.ts)
 - Lazy prerun/postrun/init hooks (fire-and-forget after command)
+- Custom lightweight dispatcher (bypasses oclif.run() for known commands)
 - Deferred error-handler (only on error path)
-- TypeScript compiler externalized from bundle
+- TypeScript compiler externalized from bundle (~9MB savings)
 - Native Node.js builtins instead of cli-kit wrappers in hot path
 - process.exit(0) to skip waiting for analytics/network
 - V8 compile cache (module.enableCompileCache())
 - Full minification (whitespace + identifiers)
 - Lazy ui.js/error-handler/notifications-system in base-command
+- Inlined terminalSupportsPrompting (avoids system.js→execa chain)
+- Lazy environments.js in base-command
+- Static ShopifyConfig import (eliminates async hop)
 
-## Ideas to Explore
+## Remaining Ideas (diminishing returns)
 
-### Medium Impact
-- **Reduce oclif.run() overhead**: oclif.run() takes ~95-115ms. Profile what's slow inside it. Config.load() reuse check, Performance markers, normalizeArgv — any optimizable?
-- **Preload oclif Help class**: For help command specifically, oclif loads Help class + formatting (ejs, string-width, wrap-ansi) lazily. Could preload during config.load().
-- **Override oclif.run() with lighter dispatcher**: Bypass oclif's run() for known commands. Issue: normalizeArgv (space-separated topics) requires oclif internals. CJS/ESM interop broke dynamic import of @oclif/core/help.
-- **Single-file bundle with custom wrapper**: Instead of esbuild splitting, create a custom bundle that concatenates modules with async-compatible wrappers. Complex but could eliminate CJS shim overhead.
+### Possible 10-20ms wins
+- **Reduce oclif help rendering**: Pre-render help at build time. Cache formatted help string. Only for help.
+- **Single-chunk bootstrap**: Custom esbuild plugin to merge startup chunks into one file. Reduces __esm overhead.
+- **Lighter oclif core**: Fork/patch oclif to lazy-load help module, remove performance markers, simplify config loading.
 
-### Low Impact (diminishing returns at 160ms)
-- **V8 snapshot**: Create a snapshot of the loaded module graph. Would reduce cold start to ~50ms. Complex to implement and maintain.
-- **Inline oclif manifest into bundle**: Include manifest as JS object instead of JSON file read. Saves ~5ms.
-- **Reduce CJS shim overhead**: 40ms for CJS→ESM bridge. Inherent cost of esbuild ESM splitting.
+### Likely <5ms wins
+- **Inline oclif manifest into bundle**: Include as JS object instead of JSON file read.
+- **Type-only imports in output.ts**: Change PackageManager/TokenItem to `import type`. Didn't help in testing.
+- **NODE_COMPILE_CACHE env var**: Already using enableCompileCache(). Env var adds nothing.
 
-### Tried and Didn't Work
-- ~~Pre-warm hook modules~~ (ESM loader is single-threaded, adds contention)
-- ~~Lazy session.js in analytics~~ (sequential dynamic import is slower than parallel static)
-- ~~Defer global-agent~~ (only 72KB, no measurable impact at this code size)
-- ~~Skip hydrogen plugin when not installed~~ (oclif handles missing plugins quickly)
-- ~~Replace help command with oclif built-in~~ (worse and inconsistent)
-- ~~Reduce entry points~~ (from 51→30: chunk count changed but no wall time improvement)
-- ~~splitting: false in esbuild~~ (INCOMPATIBLE: dynamic imports create top-level await inside non-async __esm() wrappers → SyntaxError. cli-kit uses `await import()` pervasively. CJS format incompatible with "type": "module")
+### Dead ends (tried, confirmed no improvement)
+- ~~splitting: false in esbuild~~ (INCOMPATIBLE: dynamic imports → SyntaxError)
+- ~~Defer global-agent~~ (no wall-time impact at current code size)
+- ~~Skip hydrogen plugin when not installed~~ (oclif handles quickly)
+- ~~Reduce entry points~~ (chunk boundaries change but no timing improvement)
+- ~~Pre-warm hook modules~~ (ESM single-threaded, adds contention)
+- ~~Lazy session.js~~ (sequential worse than parallel static)
+- ~~Type-only PackageManager import~~ (chunk structure unchanged, no help)
+- ~~Bypass oclif.run() for help~~ (normalizeArgv interop issues; still needed for help/topics)
+
+## Architecture Notes
+- 12 startup chunks is the minimum with current esbuild splitting + ESM
+- CJS shim overhead (48ms) is inherent to esbuild's ESM splitting approach
+- Compile cache reduces V8 compile from 40ms→6ms but needs warm-up runs
+- oclif help rendering (~80ms) dominates the help benchmark; actual commands are ~60ms faster
