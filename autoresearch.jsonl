@@ -1,1 +1,2 @@
 {"type":"config","name":"Reduce Shopify CLI bundle size (packages/cli/dist)","metricName":"bundle_kb","metricUnit":"kb","bestDirection":"lower"}
+{"run":1,"commit":"74a2dbe","metric":131236,"metrics":{"js_kb":48772,"maps_kb":77696,"assets_kb":4768},"status":"keep","description":"Baseline: 131,236 KB total (JS: 48,772, maps: 77,696, assets: 4,768). Checks pass.","timestamp":1773412888317,"segment":0}
