@@ -1526,5 +1526,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.experience === 'configuration')
 }

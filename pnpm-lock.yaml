@@ -792,7 +792,7 @@ importers:
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.2
-        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.12))(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@18.3.12))(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
@@ -13753,6 +13753,16 @@ snapshots:
       '@types/react': 18.3.12
       '@types/react-dom': 18.3.7(@types/react@18.3.12)
 
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@18.3.12))(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.28.6
+      '@testing-library/dom': 10.4.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.12
+      '@types/react-dom': 19.2.3(@types/react@18.3.12)
+
   '@theguild/federation-composition@0.21.3(graphql@16.10.0)':
     dependencies:
       constant-case: 3.0.4
@@ -14226,6 +14236,15 @@ snapshots:
     optionalDependencies:
       msw: 2.12.10(@types/node@22.19.11)(typescript@5.9.3)
       vite: 6.4.1(@types/node@18.19.70)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.2)
+
+  '@vitest/mocker@3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.2))':
+    dependencies:
+      '@vitest/spy': 3.2.4
+      estree-walker: 3.0.3
+      magic-string: 0.30.21
+    optionalDependencies:
+      msw: 2.12.10(@types/node@22.19.11)(typescript@5.9.3)
+      vite: 6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.2)
 
   '@vitest/pretty-format@3.2.4':
     dependencies:
@@ -19772,7 +19791,7 @@ snapshots:
     dependencies:
       '@types/chai': 5.2.3
       '@vitest/expect': 3.2.4
-      '@vitest/mocker': 3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@18.19.70)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.2))
+      '@vitest/mocker': 3.2.4(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(vite@6.4.1(@types/node@22.19.11)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.2))
       '@vitest/pretty-format': 3.2.4
       '@vitest/runner': 3.2.4
       '@vitest/snapshot': 3.2.4

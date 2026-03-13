@@ -711,7 +711,8 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
-        .filter((specification) => specification.uidStrategy === 'single')
+        .filter((specification) => specification.experience === 'configuration')
+        .filter((specification) => specification.identifier !== WebhookSubscriptionSpecIdentifier)
         .map(async (specification) => {
           const specConfiguration = parseConfigurationObjectAgainstSpecification(
             specification,

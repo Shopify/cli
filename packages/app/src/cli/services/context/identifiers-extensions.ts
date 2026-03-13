@@ -40,7 +40,7 @@ export async function ensureExtensionsIds(
 ) {
   let remoteExtensions = initialRemoteExtensions
   const identifiers = options.envIdentifiers.extensions ?? {}
-  const localExtensions = options.app.allExtensions.filter((ext) => ext.isUUIDStrategyExtension)
+  const localExtensions = options.app.allExtensions.filter((ext) => ext.specification.experience === 'extension')
 
   const uiExtensionsToMigrate = getModulesToMigrate(localExtensions, remoteExtensions, identifiers, UIModulesMap)
   const flowExtensionsToMigrate = getModulesToMigrate(localExtensions, dashboardExtensions, identifiers, FlowModulesMap)

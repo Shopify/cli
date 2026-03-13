@@ -59,7 +59,7 @@ export function remoteAppConfigurationExtensionContent(
   flags: Flag[],
 ) {
   let remoteAppConfig: {[key: string]: unknown} = {}
-  const configSpecifications = specifications.filter((spec) => spec.uidStrategy !== 'uuid')
+  const configSpecifications = specifications.filter((spec) => spec.experience === 'configuration')
   configRegistrations.forEach((module) => {
     const configSpec = configSpecifications.find(
       (spec) => spec.identifier === module.specification?.identifier.toLowerCase(),

@@ -5,11 +5,7 @@ import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_dif
 import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {
-  extensionTypeStrategy,
-  fetchAppRemoteConfiguration,
-  remoteAppConfigurationExtensionContent,
-} from '../app/select-app.js'
+import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
@@ -352,7 +348,7 @@ function loadExtensionsIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter(
-    (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
+    (ext) => ext.specification?.experience === 'extension',
   )
 
   // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
