@@ -27,6 +27,9 @@ const external = [
   // ts-morph + typescript are ~19MB. Used by Hydrogen for JS/TS transpilation.
   // Already lazily loaded via dynamic import, safe to externalize.
   'ts-morph',
+  // typescript compiler (~9MB) is pulled in by @ts-morph/common and json-schema-to-typescript.
+  // It's available at runtime since it's a project dependency.
+  'typescript',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
