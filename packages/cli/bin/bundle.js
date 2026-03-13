@@ -61,6 +61,17 @@ const external = [
   'vscode-languageserver-textdocument',
   'vscode-languageserver-types',
   'vscode-uri',
+  // Theme language server / check packages. Available as transitive deps.
+  '@shopify/theme-check-common',
+  '@shopify/theme-check-node',
+  '@shopify/theme-check-docs-updater',
+  '@shopify/theme-language-server-common',
+  '@shopify/theme-language-server-node',
+  // ohm-js (~389KB), used by liquid-html-parser for theme checks
+  'ohm-js',
+  '@shopify/liquid-html-parser',
+  // @vscode/web-custom-data (~321KB), data files for language services
+  '@vscode/web-custom-data',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
