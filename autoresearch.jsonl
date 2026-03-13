@@ -7,3 +7,4 @@
 {"run":6,"commit":"fc207c2","metric":950,"metrics":{"import_ms":0},"status":"keep","description":"Add postrun hook back (was missing - analytics broken). Lazy postrun imports. Honest measurement with all hooks: 1840ms → 950ms (48% faster)","timestamp":1773402286316,"segment":0}
 {"run":7,"commit":"pending","metric":1060,"metrics":{"import_ms":0},"status":"discard","description":"Lazy error-handler and prerun imports. Sequential dynamic imports are slower than parallel static imports. Reverted.","timestamp":1773404332027,"segment":0}
 {"type":"config","name":"Shopify CLI Faster Startup (corrected baseline)","metricName":"total_ms","metricUnit":"ms","bestDirection":"lower"}
+{"run":2,"commit":"085a748","metric":560,"metrics":{"user_ms":410},"status":"keep","description":"Defer error-handler import to catch block. Saves ~380ms cold load on happy path. 600ms → 560ms wall, 420ms → 410ms user.","timestamp":1773404764990,"segment":0}
