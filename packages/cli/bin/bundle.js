@@ -38,6 +38,9 @@ const external = [
   // react-dom (~1.3MB) only used for GraphiQL template server-side rendering.
   // ink uses its own react-reconciler, not react-dom.
   'react-dom',
+  // @oclif/table pulls in ink@5 + react@18 + react-reconciler@0.29.2 (~1.8MB).
+  // Externalizing it avoids duplicate react ecosystem.
+  '@oclif/table',
   // vscode language services are ~2MB, used by theme language server.
   // Available as transitive dependencies at runtime.
   'vscode-css-languageservice',
