@@ -1,7 +1,10 @@
 #!/usr/bin/env node
 
-import runCLI from '../dist/bootstrap.js'
+import {enableCompileCache} from 'node:module'
+
+enableCompileCache()
 
 process.removeAllListeners('warning')
 
+const {default: runCLI} = await import('../dist/bootstrap.js')
 runCLI({development: false})
