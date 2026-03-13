@@ -55,6 +55,22 @@ export class ShopifyConfig extends Config {
   }
 
   /**
+   * Override runHook to skip init hooks for lightweight commands (help, version).
+   * These commands don't need app-init (LocalStorage, COMMAND_RUN_ID) or hydrogen-init.
+   */
+  // @ts-expect-error: overriding with looser types for hook interception
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async runHook(event: string, opts: any, timeout?: number, captureErrors?: boolean): Promise<any> {
+    if (event === 'init' && this.lazyCommandLoader) {
+      const id = opts?.id as string | undefined
+      if (id === 'help' || id === 'version') {
+        return {successes: [], failures: []}
+      }
+    }
+    return super.runHook(event, opts, timeout, captureErrors)
+  }
+
+  /**
    * Override runCommand to use lazy loading when available.
    * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
    * we directly import only the needed command module.
