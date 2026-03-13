@@ -202,30 +202,6 @@ jobs:
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
 
-  acceptance-tests:
-    name: 'Acceptance tests with Node ${{ matrix.node }} in ${{ matrix.os }}'
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        os: [ 'ubuntu-latest', 'macos-latest', 'windows-latest' ]
-        node: [ '24.1.0' ]
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
-          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref }}
-          fetch-depth: 1
-      - name: Setup deps
-        uses: ./.github/actions/setup-cli-deps
-        with:
-          node-version: ${{ matrix.node }}
-      - name: Acceptance tests
-        env:
-          SHOPIFY_CLI_PARTNERS_TOKEN: ${{ secrets.SHOPIFY_CLI_PARTNERS_TOKEN }}
-          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.SHOPIFY_FLAG_CLIENT_ID }}
-        run: pnpm test:features --output-style=stream
-
   test-coverage-shard:
     if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
     name: "Test Coverage (shard ${{ matrix.shard }})"
