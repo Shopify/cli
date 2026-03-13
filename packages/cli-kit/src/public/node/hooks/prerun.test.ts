@@ -1,28 +1,46 @@
-import {parseCommandContent, checkForNewVersionInBackground} from './prerun.js'
-import {checkForNewVersion} from '../node-package-manager.js'
-import {describe, expect, test, vi} from 'vitest'
+import {parseCommandContent, warnOnAvailableUpgrade} from './prerun.js'
+import {checkForCachedNewVersion, packageManagerFromUserAgent} from '../node-package-manager.js'
+import {cacheClear} from '../../../private/node/conf-store.js'
+import {mockAndCaptureOutput} from '../testing/output.js'
+
+import {describe, expect, test, vi, afterEach, beforeEach} from 'vitest'
 
 vi.mock('../node-package-manager')
 
-describe('checkForNewVersionInBackground', () => {
-  test('calls checkForNewVersion for stable versions', () => {
-    vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
+beforeEach(() => {
+  cacheClear()
+})
 
-    checkForNewVersionInBackground()
+afterEach(() => {
+  mockAndCaptureOutput().clear()
+  cacheClear()
+})
 
-    expect(checkForNewVersion).toHaveBeenCalledWith('@shopify/cli', expect.any(String), {cacheExpiryInHours: 24})
+describe('warnOnAvailableUpgrade', () => {
+  test('displays latest version and an install command when a newer exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.0.10')
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('npm')
+    const installReminder = '💡 Version 3.0.10 available! Run `npm install @shopify/cli@latest`'
+
+    // When
+    await warnOnAvailableUpgrade()
+
+    // Then
+    expect(outputMock.warn()).toMatch(installReminder)
   })
 
-  test('skips check for pre-release versions', () => {
-    vi.stubEnv('SHOPIFY_CLI_VERSION', '0.0.0-snapshot-abc')
+  test('displays nothing when no newer version exists', async () => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
 
-    // Create a fresh module environment with stubbed version
-    vi.doMock('../../common/version.js', () => ({CLI_KIT_VERSION: '0.0.0-snapshot-abc'}))
+    // When
+    await warnOnAvailableUpgrade()
 
-    checkForNewVersionInBackground()
-
-    vi.unstubAllEnvs()
-    vi.doUnmock('../../common/version.js')
+    // Then
+    expect(outputMock.warn()).toEqual('')
   })
 })
 

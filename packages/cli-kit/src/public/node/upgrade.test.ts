@@ -1,103 +1,129 @@
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
-import {checkForCachedNewVersion} from './node-package-manager.js'
-import {cliInstallCommand, versionToAutoUpgrade, runCLIUpgrade} from './upgrade.js'
-import {exec} from './system.js'
-import {vi, describe, test, expect, beforeEach} from 'vitest'
+import {packageManagerFromUserAgent} from './node-package-manager.js'
+import {cliInstallCommand} from './upgrade.js'
+import {vi, describe, test, expect} from 'vitest'
 
 vi.mock('./is-global.js')
 vi.mock('./node-package-manager.js')
-vi.mock('./system.js')
-vi.mock('../../private/node/conf-store.js')
 
 describe('cliInstallCommand', () => {
-  test('returns undefined when process is not global', () => {
-    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+  test('says to install globally via npm if the current process is globally installed and no package manager is provided', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
 
+    // When
     const got = cliInstallCommand()
 
-    expect(got).toBeUndefined()
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "npm install -g @shopify/cli@latest"
+    `)
   })
 
-  test('returns brew upgrade command for homebrew', () => {
+  test('says to install globally via yarn if the current process is globally installed and yarn is the global package manager', () => {
+    // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
-
-    const got = cliInstallCommand()
-
-    expect(got).toMatchInlineSnapshot(`"brew upgrade shopify-cli"`)
-  })
-
-  test('returns yarn global add for yarn', () => {
-    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('yarn')
 
+    // When
     const got = cliInstallCommand()
 
-    expect(got).toMatchInlineSnapshot(`"yarn global add @shopify/cli@latest"`)
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "yarn global add @shopify/cli@latest"
+    `)
   })
 
-  test('returns npm install -g for npm', () => {
+  test('says to install globally via npm if the current process is globally installed and npm is the global package manager', () => {
+    // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
 
+    // When
     const got = cliInstallCommand()
 
-    expect(got).toMatchInlineSnapshot(`"npm install -g @shopify/cli@latest"`)
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "npm install -g @shopify/cli@latest"
+    `)
   })
 
-  test('returns pnpm add -g for pnpm', () => {
+  test('says to install globally via pnpm if the current process is globally installed and pnpm is the global package manager', () => {
+    // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
 
+    // When
     const got = cliInstallCommand()
 
-    expect(got).toMatchInlineSnapshot(`"pnpm add -g @shopify/cli@latest"`)
-  })
-})
-
-describe('versionToAutoUpgrade', () => {
-  beforeEach(() => {
-    vi.unstubAllEnvs()
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "pnpm add -g @shopify/cli@latest"
+    `)
   })
 
-  test('returns undefined when no newer version is cached', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue(undefined)
+  test('says to install locally via npm if the current process is locally installed and no package manager is provided', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown')
 
-    const got = versionToAutoUpgrade()
+    // When
+    const got = cliInstallCommand()
 
-    expect(got).toBeUndefined()
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "npm install @shopify/cli@latest"
+    `)
   })
 
-  test('returns version when SHOPIFY_CLI_FORCE_AUTO_UPGRADE is set', () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.100.0')
-    vi.stubEnv('SHOPIFY_CLI_FORCE_AUTO_UPGRADE', '1')
+  test('says to install locally via yarn if the current process is locally installed and yarn is the global package manager', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('yarn')
 
-    const got = versionToAutoUpgrade()
+    // When
+    const got = cliInstallCommand()
 
-    expect(got).toBe('3.100.0')
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "yarn add @shopify/cli@latest"
+    `)
   })
 
-  test('returns undefined when auto-upgrade is not enabled', async () => {
-    vi.mocked(checkForCachedNewVersion).mockReturnValue('3.100.0')
-
-    const {getAutoUpgradeEnabled} = await import('../../private/node/conf-store.js')
-    vi.mocked(getAutoUpgradeEnabled).mockReturnValue(false)
-
-    const got = versionToAutoUpgrade()
-
-    expect(got).toBeUndefined()
-  })
-})
-
-describe('runCLIUpgrade', () => {
-  test('calls exec with the install command for global installs', async () => {
-    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+  test('says to install locally via npm if the current process is locally installed and npm is the global package manager', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
-    vi.mocked(exec).mockResolvedValue(undefined)
 
-    await runCLIUpgrade()
+    // When
+    const got = cliInstallCommand()
 
-    expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "npm install @shopify/cli@latest"
+    `)
+  })
+
+  test('says to install locally via pnpm if the current process is locally installed and pnpm is the global package manager', () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+    vi.mocked(packageManagerFromUserAgent).mockReturnValue('unknown')
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
+
+    // When
+    const got = cliInstallCommand()
+
+    // Then
+    expect(got).toMatchInlineSnapshot(`
+      "pnpm add @shopify/cli@latest"
+    `)
   })
 })

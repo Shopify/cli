@@ -7822,8 +7822,8 @@
       ],
       "args": {
       },
-      "description": "Upgrades Shopify CLI.",
-      "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
+      "description": "Shows details on how to upgrade Shopify CLI.",
+      "descriptionWithMarkdown": "Shows details on how to upgrade Shopify CLI.",
       "enableJsonFlag": false,
       "flags": {
       },
@@ -7835,7 +7835,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-      "summary": "Upgrades Shopify CLI."
+      "summary": "Shows details on how to upgrade Shopify CLI."
     },
     "version": {
       "aliases": [
