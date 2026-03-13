@@ -69,7 +69,7 @@ esBuild({
   treeShaking: true,
   minifyWhitespace: true,
   minifySyntax: true,
-  minifyIdentifiers: false,
+  minifyIdentifiers: true,
 
   plugins: [
     ShopifyVSCodePlugin,
