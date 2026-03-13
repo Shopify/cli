@@ -1,14 +1,21 @@
-import {loadEnvironment, environmentFilePath} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
 import {outputContent, outputResult, outputToken} from './output.js'
-import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
+
+/**
+ * Inlined from system.js to avoid loading execa/which/cross-spawn chain (~50KB).
+ * system.js is only needed for process spawning, not for this simple TTY check.
+ */
+function terminalSupportsPrompting(): boolean {
+  if (isTruthy(process.env.CI)) return false
+  return Boolean(process.stdin.isTTY && process.stdout.isTTY)
+}
 
 import {Command, Config, Errors} from '@oclif/core'
 import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
@@ -146,6 +153,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
 
     if (!environmentsFileName) return originalResult
 
+    const {environmentFilePath} = await import('./environments.js')
     const environmentFileExists = await environmentFilePath(environmentsFileName, {from: flags.path})
 
     // Handle both string and array cases for environment flag
@@ -205,6 +213,7 @@ This flag is required in non-interactive terminal environments, such as a CI env
     environmentsFileName: string,
     specifiedEnvironment: string | undefined,
   ): Promise<{environment: JsonMap | undefined; isDefaultEnvironment: boolean}> {
+    const {loadEnvironment} = await import('./environments.js')
     if (specifiedEnvironment) {
       const environment = await loadEnvironment(specifiedEnvironment, environmentsFileName, {from: path})
       return {environment, isDefaultEnvironment: false}
