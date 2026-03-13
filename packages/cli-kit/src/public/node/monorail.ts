@@ -63,6 +63,12 @@ export interface Schemas {
       cmd_all_timing_prompts_ms?: Optional<number>
       cmd_all_timing_active_ms?: Optional<number>
 
+      // Auto-upgrade
+      cmd_all_auto_upgrade_triggered?: Optional<boolean>
+      cmd_all_auto_upgrade_skipped_reason?: Optional<string>
+      cmd_all_auto_upgrade_success?: Optional<boolean>
+      cmd_all_auto_upgrade_package_manager?: Optional<string>
+
       // Any extension related command
       cmd_extensions_binary_from_source?: Optional<boolean>
 
