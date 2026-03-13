@@ -26,6 +26,8 @@ export interface ExecOptions {
   externalErrorHandler?: (error: unknown) => Promise<void>
   // Ignored on Windows
   background?: boolean
+  // Maximum time in milliseconds to wait for the process to exit
+  timeout?: number
 }
 
 /**
@@ -311,6 +313,7 @@ function buildExec(
     windowsHide: false,
     detached: options?.background,
     cleanup: !options?.background,
+    timeout: options?.timeout,
     ...execaOptions,
   })
   outputDebug(`Running system process${options?.background ? ' in background' : ''}:

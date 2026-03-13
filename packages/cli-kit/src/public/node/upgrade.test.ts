@@ -2,7 +2,8 @@ import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-glob
 import {checkForCachedNewVersion} from './node-package-manager.js'
 import {cliInstallCommand, versionToAutoUpgrade, runCLIUpgrade} from './upgrade.js'
 import {exec} from './system.js'
-import {vi, describe, test, expect, beforeEach} from 'vitest'
+import {mockAndCaptureOutput} from './testing/output.js'
+import {vi, describe, test, expect, beforeEach, afterEach} from 'vitest'
 
 vi.mock('./is-global.js')
 vi.mock('./node-package-manager.js')
@@ -45,14 +46,19 @@ describe('cliInstallCommand', () => {
     expect(got).toMatchInlineSnapshot(`"npm install -g @shopify/cli@latest"`)
   })
 
-  test('returns pnpm add -g for pnpm', () => {
+  test('returns pnpm add --global for pnpm (v8+ compatible)', () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('pnpm')
 
     const got = cliInstallCommand()
 
-    expect(got).toMatchInlineSnapshot(`"pnpm add -g @shopify/cli@latest"`)
+    expect(got).toMatchInlineSnapshot(`"pnpm add --global @shopify/cli@latest"`)
   })
+})
+
+afterEach(() => {
+  mockAndCaptureOutput().clear()
+  vi.unstubAllEnvs()
 })
 
 describe('versionToAutoUpgrade', () => {
@@ -98,7 +104,7 @@ describe('versionToAutoUpgrade', () => {
 })
 
 describe('runCLIUpgrade', () => {
-  test('calls exec with the install command for global installs', async () => {
+  test('calls exec with the install command for global npm installs', async () => {
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
     vi.mocked(exec).mockResolvedValue(undefined)
@@ -106,5 +112,33 @@ describe('runCLIUpgrade', () => {
     await runCLIUpgrade()
 
     expect(exec).toHaveBeenCalledWith('npm', ['install', '-g', '@shopify/cli@latest'], {stdio: 'inherit'})
+  })
+
+  test('calls exec with 120s timeout for homebrew installs', async () => {
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+    vi.mocked(exec).mockResolvedValue(undefined)
+
+    await runCLIUpgrade()
+
+    expect(exec).toHaveBeenCalledWith(
+      'brew',
+      ['upgrade', 'shopify-cli'],
+      expect.objectContaining({stdio: 'inherit', timeout: 120_000}),
+    )
+  })
+
+  test('warns and re-throws on homebrew timeout', async () => {
+    const outputMock = mockAndCaptureOutput()
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+
+    const timeoutError = Object.assign(new Error('timed out'), {timedOut: true})
+    vi.mocked(exec).mockImplementation(async (_cmd, _args, opts) => {
+      if (opts?.externalErrorHandler) await opts.externalErrorHandler(timeoutError)
+    })
+
+    await expect(runCLIUpgrade()).rejects.toThrow()
+    expect(outputMock.warn()).toContain('timed out')
   })
 })
