@@ -245,7 +245,7 @@ jobs:
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
       - name: Unit tests with coverage (shard)
-        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=vitest-blob-reports/blob.json --shard ${{ matrix.shard }}
+        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=vitest-blob-reports/blob-${{ matrix.shard == '1/2' && '1' || '2' }}.json --shard ${{ matrix.shard }}
         env:
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
