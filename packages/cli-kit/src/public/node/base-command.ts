@@ -1,14 +1,11 @@
-import {errorHandler, registerCleanBugsnagErrorsFromWithinPlugins} from './error-handler.js'
 import {loadEnvironment, environmentFilePath} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {renderInfo, renderWarning} from './ui.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
-import {showNotificationsIfNeeded} from './notifications-system.js'
 import {setCurrentCommandId} from './global-context.js'
 import {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
@@ -45,6 +42,7 @@ abstract class BaseCommand extends Command {
 
   async catch(error: Error & {skipOclifErrorHandling: boolean}): Promise<void> {
     error.skipOclifErrorHandling = true
+    const {errorHandler} = await import('./error-handler.js')
     await errorHandler(error, this.config)
     return Errors.handle(error)
   }
@@ -54,10 +52,12 @@ abstract class BaseCommand extends Command {
     setCurrentCommandId(this.id ?? '')
     if (!isDevelopment()) {
       // This function runs just prior to `run`
+      const {registerCleanBugsnagErrorsFromWithinPlugins} = await import('./error-handler.js')
       await registerCleanBugsnagErrorsFromWithinPlugins(this.config)
     }
     await removeDuplicatedPlugins(this.config)
     this.showNpmFlagWarning()
+    const {showNotificationsIfNeeded} = await import('./notifications-system.js')
     await showNotificationsIfNeeded()
     return super.init()
   }
@@ -71,13 +71,16 @@ abstract class BaseCommand extends Command {
     const possibleNpmEnvVars = commandFlags.map((key) => `npm_config_${underscore(key).replace(/^no_/, '')}`)
 
     if (possibleNpmEnvVars.some((flag) => process.env[flag] !== undefined)) {
-      renderWarning({
-        body: [
-          'NPM scripts require an extra',
-          {command: '--'},
-          'separator to pass the flags. Example:',
-          {command: 'npm run dev -- --reset'},
-        ],
+      // eslint-disable-next-line no-void
+      void import('./ui.js').then(({renderWarning}) => {
+        renderWarning({
+          body: [
+            'NPM scripts require an extra',
+            {command: '--'},
+            'separator to pass the flags. Example:',
+            {command: 'npm run dev -- --reset'},
+          ],
+        })
       })
     }
   }
@@ -254,9 +257,12 @@ function reportEnvironmentApplication<
   if (Object.keys(changes).length === 0) return
 
   const items = Object.entries(changes).map(([name, value]) => `${name}: ${value}`)
-  renderInfo({
-    headline: ['Using applicable flags from', {userInput: environmentName}, 'environment:'],
-    body: [{list: {items}}],
+  // eslint-disable-next-line no-void
+  void import('./ui.js').then(({renderInfo}) => {
+    renderInfo({
+      headline: ['Using applicable flags from', {userInput: environmentName}, 'environment:'],
+      body: [{list: {items}}],
+    })
   })
 }
 
@@ -342,6 +348,7 @@ async function removeDuplicatedPlugins(config: Config): Promise<void> {
   const pluginsToRemove = plugins.filter((plugin) => bundlePlugins.includes(plugin.name))
   if (pluginsToRemove.length > 0) {
     const commandsToRun = pluginsToRemove.map((plugin) => `  - shopify plugins remove ${plugin.name}`).join('\n')
+    const {renderWarning} = await import('./ui.js')
     renderWarning({
       headline: `Unsupported plugins detected: ${pluginsToRemove.map((plugin) => plugin.name).join(', ')}`,
       body: [
