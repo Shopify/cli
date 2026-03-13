@@ -78,9 +78,54 @@ export type Scalars = {
   URL: { input: string; output: string; }
 };
 
+/** Operators for user filter queries. */
+export type Operator =
+  /** Between operator. */
+  | 'BETWEEN'
+  /** Equals operator. */
+  | 'EQUALS'
+  /** In operator. */
+  | 'IN';
+
 export type OrganizationUserProvisionShopAccessInput = {
   /** The shop to provision the requester on. */
   shopifyShopId: Scalars['PropertyPublicID']['input'];
+};
+
+/** Field options for filtering shop queries. */
+export type ShopFilterField =
+  /**
+   * The phase of the client transfer process. Requires
+   * `store_type=client_transfer`. Values: `in_development`, `pending`, `completed`.
+   */
+  | 'CLIENT_TRANSFER_PHASE'
+  /**
+   * The status of the collaborator relationship. Requires
+   * `store_type=collaborator`. Values: `active`, `access_pending`, `expired`.
+   */
+  | 'COLLABORATOR_RELATIONSHIP_STATUS'
+  /** The GID of the counterpart organization. Requires `store_type=client_transfer` or `store_type=collaborator`. */
+  | 'COUNTERPART_ORGANIZATION_ID'
+  /**
+   * The plan of the shop. Values: `basic`, `grow`, `plus`, `frozen`, `advanced`,
+   * `inactive`, `cancelled`, `client_transfer`, `plus_client_transfer`,
+   * `development_legacy`, `custom`, `fraudulent`, `staff`, `trial`,
+   * `plus_development`, `retail`, `shop_pay_commerce_components`, `non_profit`.
+   */
+  | 'SHOP_PLAN'
+  /** The active/inactive status of the shop. Values: `active`, `inactive`. */
+  | 'STORE_STATUS'
+  /**
+   * The type of the shop. Values: `development`, `production`, `app_development`,
+   * `development_superset`, `client_transfer`, `collaborator`.
+   */
+  | 'STORE_TYPE';
+
+/** Represents a single filter option for shop queries. */
+export type ShopFilterInput = {
+  field: ShopFilterField;
+  operator: Operator;
+  value: Scalars['String']['input'];
 };
 
 export type Store =
