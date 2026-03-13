@@ -200,7 +200,7 @@ jobs:
         run: pnpm vitest run ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
         env:
           VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
+          VITEST_MAX_THREADS: "6"
 
   acceptance-tests:
     name: 'Acceptance tests with Node ${{ matrix.node }} in ${{ matrix.os }}'
