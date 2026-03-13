@@ -1,4 +1,4 @@
-import {appendToTokenItem, TokenItem, tokenItemToString} from './components/TokenizedText.js'
+import {appendToTokenItem, TokenItem, tokenItemToString} from './components/token-utils.js'
 
 export function messageWithPunctuation(message: TokenItem) {
   const messageToString = tokenItemToString(message)

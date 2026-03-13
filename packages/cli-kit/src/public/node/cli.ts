@@ -1,5 +1,6 @@
 import {isTruthy} from './context/utilities.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
+import type {LazyCommandLoader} from './custom-oclif-loader.js'
 import {cacheClear} from '../../private/node/conf-store.js'
 import {environmentVariables} from '../../private/node/constants.js'
 
@@ -14,6 +15,8 @@ interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
   development: boolean
+  /** Optional lazy command loader for on-demand command loading */
+  lazyCommandLoader?: LazyCommandLoader
 }
 
 async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.versions) {
@@ -77,7 +80,7 @@ function forceNoColor(argv: string[] = process.argv, env: NodeJS.ProcessEnv = pr
  */
 export async function runCLI(
   options: RunCLIOptions & {runInCreateMode?: boolean},
-  launchCLI: (options: {moduleURL: string}) => Promise<void> = defaultLaunchCli,
+  launchCLI: (options: {moduleURL: string; lazyCommandLoader?: LazyCommandLoader}) => Promise<void> = defaultLaunchCli,
   argv: string[] = process.argv,
   env: NodeJS.ProcessEnv = process.env,
   versions: NodeJS.ProcessVersions = process.versions,
@@ -88,7 +91,7 @@ export async function runCLI(
   }
   forceNoColor(argv, env)
   await exitIfOldNodeVersion(versions)
-  return launchCLI({moduleURL: options.moduleURL})
+  return launchCLI({moduleURL: options.moduleURL, lazyCommandLoader: options.lazyCommandLoader})
 }
 
 async function addInitToArgvWhenRunningCreateCLI(

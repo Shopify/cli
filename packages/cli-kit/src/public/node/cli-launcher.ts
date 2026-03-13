@@ -1,8 +1,10 @@
 import {fileURLToPath} from 'node:url'
+import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
 interface Options {
   moduleURL: string
   argv?: string[]
+  lazyCommandLoader?: LazyCommandLoader
 }
 
 /**
@@ -25,6 +27,11 @@ export async function launchCLI(options: Options): Promise<void> {
     // Use a custom OCLIF config to customize the behavior of the CLI
     const config = new ShopifyConfig({root: fileURLToPath(options.moduleURL)})
     await config.load()
+
+    // Enable lazy command loading if a loader is provided
+    if (options.lazyCommandLoader) {
+      config.setLazyCommandLoader(options.lazyCommandLoader)
+    }
 
     await oclif.default.run(options.argv, config)
     await oclif.default.flush()

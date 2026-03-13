@@ -5,7 +5,16 @@ import {execaSync} from 'execa'
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/interfaces'
 
+/**
+ * Optional lazy command loader function.
+ * If set, ShopifyConfig will use it to load individual commands on demand
+ * instead of importing the entire COMMANDS module (which triggers loading all packages).
+ */
+export type LazyCommandLoader = (id: string) => Promise<typeof Command | undefined>
+
 export class ShopifyConfig extends Config {
+  private lazyCommandLoader?: LazyCommandLoader
+
   constructor(options: Options) {
     if (isDevelopment()) {
       const currentPath = cwd()
@@ -35,6 +44,46 @@ export class ShopifyConfig extends Config {
 
       this.determinePriority = this.customPriority
     }
+  }
+
+  /**
+   * Set a lazy command loader that will be used to load individual command classes on demand,
+   * bypassing the default oclif behavior of importing the entire COMMANDS module.
+   */
+  setLazyCommandLoader(loader: LazyCommandLoader): void {
+    this.lazyCommandLoader = loader
+  }
+
+  /**
+   * Override runCommand to use lazy loading when available.
+   * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
+   * we directly import only the needed command module.
+   */
+  async runCommand<T = unknown>(
+    id: string,
+    argv: string[] = [],
+    cachedCommand: Command.Loadable | null = null,
+  ): Promise<T> {
+    if (this.lazyCommandLoader) {
+      const cmd = cachedCommand ?? this.findCommand(id)
+      if (cmd) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const commandClass = await this.lazyCommandLoader(id) as any
+        if (commandClass) {
+          // Set the required properties on the command class
+          commandClass.id = id
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
+          // Run prerun hook
+          await this.runHook('prerun', {argv, Command: commandClass})
+          // Execute the command
+          const result = (await commandClass.run(argv, this)) as T
+          return result
+        }
+      }
+    }
+    // Fall back to default behavior if lazy loader is not set or command not found
+    return super.runCommand<T>(id, argv, cachedCommand)
   }
 
   customPriority(commands: Command.Loadable[]): Command.Loadable | undefined {

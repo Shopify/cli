@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import runCLI from '../dist/index.js'
+import runCLI from '../dist/bootstrap.js'
 
 process.removeAllListeners('warning')
 

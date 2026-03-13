@@ -1,6 +1,6 @@
 import {takeRandomFromArray} from './array.js'
 import {unstyled} from '../node/output.js'
-import {Token, TokenItem} from '../../private/node/ui/components/TokenizedText.js'
+import {Token, TokenItem} from '../../private/node/ui/components/token-utils.js'
 
 import {camelCase, capitalCase, constantCase, paramCase, snakeCase, pascalCase} from 'change-case'
 

@@ -1,1 +1,2 @@
 {"type":"config","name":"Shopify CLI Faster Startup","metricName":"total_ms","metricUnit":"ms","bestDirection":"lower"}
+{"run":1,"commit":"6dec3db","metric":1840,"metrics":{"import_ms":1494},"status":"keep","description":"Baseline: shopify version takes ~1840ms. Import alone is ~1494ms.","timestamp":1773400439568,"segment":0}
