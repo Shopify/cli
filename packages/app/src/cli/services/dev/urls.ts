@@ -187,7 +187,7 @@ export async function updateURLs(
   }
 
   if (localApp && localApp.configuration.client_id === apiKey) {
-    const configFile = await TomlFile.read(localApp.configuration.path)
+    const configFile = await TomlFile.read(localApp.configPath)
     const patch: {[key: string]: unknown} = {
       application_url: urls.applicationUrl,
       auth: {redirect_urls: urls.redirectUrlWhitelist},
@@ -250,7 +250,7 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
         ...localConfiguration.build,
         automatically_update_urls_on_dev: shouldUpdateURLs,
       }
-      const configFile = await TomlFile.read(options.localApp.configuration.path)
+      const configFile = await TomlFile.read(options.localApp.configPath)
       await configFile.patch({build: {automatically_update_urls_on_dev: shouldUpdateURLs}})
     } else {
       setCachedAppInfo({directory: options.appDirectory, updateURLs: shouldUpdateURLs})

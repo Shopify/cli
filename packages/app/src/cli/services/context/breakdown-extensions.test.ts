@@ -258,7 +258,6 @@ const API_VERSION_SPEC: AppModuleVersion = {
 }
 
 const APP_CONFIGURATION: CurrentAppConfiguration = {
-  path: 'shopify.app.development.toml',
   name: 'my app',
   client_id: '12345',
   webhooks: {
@@ -839,7 +838,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('returns the list of the local config versioned top level fields', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',
@@ -885,7 +883,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('when the same local config and remote app module type exists and have same values it will be returned in the existing list', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',
@@ -975,7 +972,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('when the same local config and remote app module type exists and have different values it will be returned in the update list', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',
@@ -1064,7 +1060,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('when a new local config app module type exists it will be returned in the new list', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',
@@ -1121,7 +1116,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('when a remote config app module type not exists locally it will be returned in the delete list', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',
@@ -1817,7 +1811,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('all local configuration will be returned in the new list', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',
@@ -1857,7 +1850,6 @@ describe('configExtensionsIdentifiersBreakdown', () => {
     test('when the include_config_on_deploy is not true the configuration breakdown info is not returned', async () => {
       // Given
       const configuration = {
-        path: 'shopify.app.development.toml',
         name: 'my app',
         client_id: '12345',
         application_url: 'https://myapp.com',

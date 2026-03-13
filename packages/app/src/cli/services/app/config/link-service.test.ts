@@ -140,7 +140,6 @@ embedded = false
         pos: {
           embedded: false,
         },
-        path: expect.stringMatching(/\/shopify.app.toml$/),
       })
       expect(content).toEqual(expectedContent)
     })

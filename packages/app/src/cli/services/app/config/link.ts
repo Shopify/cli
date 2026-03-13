@@ -359,7 +359,6 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
       },
       {
         client_id: remoteApp.apiKey,
-        path: configFilePath,
         ...remoteAppConfiguration,
       },
       replaceLocalArrayStrategy,
@@ -381,7 +380,7 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
 
   // Always output using the canonical schema
   const schema = getAppVersionedSchema(specifications)
-  await writeAppConfigurationFile(mergedAppConfiguration, schema)
+  await writeAppConfigurationFile(mergedAppConfiguration, schema, configFilePath)
   setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
 
   return mergedAppConfiguration

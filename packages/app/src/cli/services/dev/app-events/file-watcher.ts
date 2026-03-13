@@ -87,7 +87,7 @@ export class FileWatcher {
   async start(): Promise<void> {
     const extensionDirectories = [...(this.app.configuration.extension_directories ?? ['extensions'])]
     const fullExtensionDirectories = extensionDirectories.map((directory) => joinPath(this.app.directory, directory))
-    const watchPaths = [this.app.configuration.path, ...fullExtensionDirectories]
+    const watchPaths = [this.app.configPath, ...fullExtensionDirectories]
 
     // Get all watched files from extensions
     const allWatchedFiles = this.getAllWatchedFiles()
@@ -230,7 +230,7 @@ export class FileWatcher {
   private readonly handleFileEvent = (event: string, path: string) => {
     const startTime = startHRTime()
     const normalizedPath = normalizePath(path)
-    const isConfigAppPath = path === this.app.configuration.path
+    const isConfigAppPath = path === this.app.configPath
     const isExtensionToml = path.endsWith('.extension.toml')
 
     outputDebug(`🌀: ${event} ${path.replace(this.app.directory, '')}\n`)
@@ -266,7 +266,7 @@ export class FileWatcher {
     isUnknownExtension: boolean,
   ) {
     const isExtensionToml = path.endsWith('.extension.toml')
-    const isConfigAppPath = path === this.app.configuration.path
+    const isConfigAppPath = path === this.app.configPath
 
     switch (event) {
       case 'change':

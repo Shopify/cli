@@ -1,6 +1,6 @@
 import spec, {type AppProxyConfigType} from './app_config_app_proxy.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
-import {AppConfigurationWithoutPath} from '../../app/app.js'
+import {AppConfiguration} from '../../app/app.js'
 import {describe, expect, test} from 'vitest'
 
 describe('app_config_app_proxy', () => {
@@ -41,7 +41,7 @@ describe('app_config_app_proxy', () => {
       // When
       const result = appConfigSpec.transformLocalToRemote!(object, {
         application_url: 'https://my-app-url.com/',
-      } as unknown as AppConfigurationWithoutPath)
+      } as unknown as AppConfiguration)
 
       // Then
       expect(result).toMatchObject({

@@ -24,7 +24,6 @@ async function parseConfigAsCurrentApp(schema: zod.ZodTypeAny, filePath: string)
  */
 
 const REALISTIC_CONFIG = {
-  path: '/tmp/project/shopify.app.toml',
   client_id: '12345',
   name: 'My Test App',
   application_url: 'https://myapp.example.com',
@@ -90,13 +89,13 @@ describe('Config pipeline snapshots', () => {
       const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write
-      await writeAppConfigurationFile({...REALISTIC_CONFIG, path: filePath}, schema)
+      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, schema, filePath)
 
       // Read back through the full parse pipeline (which fires Zod transforms)
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
 
       // Second write from the parsed (transformed) config
-      await writeAppConfigurationFile(parsedConfig, schema)
+      await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
 
       // Snapshot the round-tripped output — it differs from the first write
@@ -113,14 +112,14 @@ describe('Config pipeline snapshots', () => {
       const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write + read + second write (reordering happens here)
-      await writeAppConfigurationFile({...REALISTIC_CONFIG, path: filePath}, schema)
+      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, schema, filePath)
       const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsed1, schema)
+      await writeAppConfigurationFile(parsed1, schema, filePath)
       const secondWrite = await readFile(filePath)
 
       // Third write from re-read — should be identical to second
       const parsed2 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsed2, schema)
+      await writeAppConfigurationFile(parsed2, schema, filePath)
       const thirdWrite = await readFile(filePath)
 
       expect(thirdWrite).toEqual(secondWrite)
@@ -134,7 +133,6 @@ describe('Config pipeline snapshots', () => {
 
       const config = {
         ...REALISTIC_CONFIG,
-        path: filePath,
         webhooks: {
           api_version: '2024-01',
           subscriptions: [
@@ -160,13 +158,13 @@ describe('Config pipeline snapshots', () => {
       }
 
       // Snapshot the first write
-      await writeAppConfigurationFile(config, schema)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
       const firstWrite = await readFile(filePath)
       expect(firstWrite).toMatchSnapshot()
 
       // Round-trip to verify reordering behavior on the most complex fixture
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema)
+      await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
       expect(secondWrite).toMatchSnapshot()
     })
@@ -179,7 +177,6 @@ describe('Config pipeline snapshots', () => {
 
       const config = {
         ...REALISTIC_CONFIG,
-        path: filePath,
         webhooks: {
           api_version: '2024-01',
           subscriptions: [
@@ -192,11 +189,11 @@ describe('Config pipeline snapshots', () => {
       }
 
       // Write, read, write
-      await writeAppConfigurationFile(config, schema)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
       const firstWrite = await readFile(filePath)
 
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema)
+      await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
 
       expect(secondWrite).toEqual(firstWrite)
@@ -209,7 +206,6 @@ describe('Config pipeline snapshots', () => {
       const {schema} = await buildVersionedAppSchema()
 
       const config = {
-        path: filePath,
         client_id: '12345',
         name: 'Minimal App',
         application_url: 'https://example.com',
@@ -222,7 +218,7 @@ describe('Config pipeline snapshots', () => {
         },
       } satisfies CurrentAppConfiguration
 
-      await writeAppConfigurationFile(config, schema)
+      await writeAppConfigurationFile(config, schema, filePath)
       const content = await readFile(filePath)
       expect(content).toMatchSnapshot()
     })
@@ -235,7 +231,6 @@ describe('Config pipeline snapshots', () => {
 
       const config = {
         ...REALISTIC_CONFIG,
-        path: filePath,
         webhooks: {
           api_version: '2024-01',
           subscriptions: [
@@ -245,11 +240,11 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config, schema)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
       const firstWrite = await readFile(filePath)
 
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema)
+      await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
 
       expect(firstWrite).toMatchSnapshot()
@@ -264,7 +259,6 @@ describe('Config pipeline snapshots', () => {
 
       const config = {
         ...REALISTIC_CONFIG,
-        path: filePath,
         webhooks: {
           api_version: '2024-01',
           subscriptions: [
@@ -274,11 +268,11 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config, schema)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
       const firstWrite = await readFile(filePath)
 
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema)
+      await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
 
       expect(firstWrite).toMatchSnapshot()
@@ -293,7 +287,6 @@ describe('Config pipeline snapshots', () => {
 
       const config = {
         ...REALISTIC_CONFIG,
-        path: filePath,
         webhooks: {
           api_version: '2024-01',
           subscriptions: [
@@ -306,11 +299,11 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config, schema)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
       const firstWrite = await readFile(filePath)
 
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema)
+      await writeAppConfigurationFile(parsedConfig, schema, filePath)
       const secondWrite = await readFile(filePath)
 
       // After round-trip, compliance and regular topics should be split into separate subscriptions

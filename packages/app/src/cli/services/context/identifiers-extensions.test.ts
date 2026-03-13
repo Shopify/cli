@@ -107,7 +107,6 @@ const LOCAL_APP = (
     name: 'my-app',
     directory: '/app',
     configuration: {
-      path: '/shopify.app.toml',
       client_id: 'test-client-id',
       name: 'my-app',
       application_url: 'https://example.com',

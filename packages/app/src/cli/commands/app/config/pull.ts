@@ -30,16 +30,17 @@ This command reuses the existing linked app and organization and skips all inter
       userProvidedConfigName: flags.config,
     })
 
-    const {configuration} = await pull({
+    const {configuration, configPath} = await pull({
       directory: flags.path,
       configName: flags.config,
+      configPath: app.configPath,
       configuration: app.configuration,
       remoteApp,
     })
 
     renderSuccess({
       headline: `Pulled latest configuration for "${configuration.name}"`,
-      body: `Updated ${basename(configuration.path)} with the remote data.`,
+      body: `Updated ${basename(configPath)} with the remote data.`,
     })
 
     return {app}
