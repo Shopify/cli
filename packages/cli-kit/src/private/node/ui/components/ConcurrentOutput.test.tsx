@@ -262,6 +262,41 @@ describe('ConcurrentOutput', () => {
     expect(logColumns[1]?.length).toBe(25 + 2)
   })
 
+  test('renders large chunks split into batches without dropping lines', async () => {
+    // Given - simulate a large stack trace (>100 lines) arriving as a single write
+    const processSync = new Synchronizer()
+    const lineCount = 250
+    const largeOutput = Array.from({length: lineCount}, (_, i) => `line ${i + 1}`).join('\n')
+
+    const processes = [
+      {
+        prefix: 'pos-ext',
+        action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
+          stdout.write(largeOutput)
+          processSync.resolve()
+        },
+      },
+    ]
+
+    // When - keepRunningAfterProcessesResolve prevents the component from unmounting
+    // before all setImmediate-batched state updates have been applied
+    const renderInstance = render(
+      <ConcurrentOutput
+        processes={processes}
+        abortSignal={new AbortController().signal}
+        keepRunningAfterProcessesResolve
+      />,
+    )
+    await processSync.promise
+    await waitForContent(renderInstance, `line ${lineCount}`)
+
+    // Then - all lines should be rendered
+    const frame = unstyled(renderInstance.lastFrame()!)
+    for (let i = 1; i <= lineCount; i++) {
+      expect(frame).toContain(`line ${i}`)
+    }
+  })
+
   test('rejects with the error thrown inside one of the processes', async () => {
     // Given
     const backendProcess = {
