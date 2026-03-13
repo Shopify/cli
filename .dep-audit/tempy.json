@@ -1,0 +1,16 @@
+{
+  "name": "tempy",
+  "packages_declaring": [
+    "cli-kit",
+    "e2e",
+    "features"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in three packages. cli-kit/src/public/node/fs.ts imports `temporaryDirectory` and `temporaryDirectoryTask` and wraps them as `tempDirectory()` and `inTemporaryDirectory()`. packages/features/steps/environment.steps.ts calls `temporaryDirectory()` directly. packages/e2e declares the dependency (v^1.0.1) but no import was found in its source files.",
+  "replacement_effort": "small",
+  "how_to_remove": "Both functions map directly to Node.js built-ins: `temporaryDirectory()` is equivalent to `fs.mkdtempSync(path.join(os.tmpdir(), ''))` and `temporaryDirectoryTask(cb)` is equivalent to creating a temp dir, calling the callback, then cleaning up in a finally block. Replace the two call sites in cli-kit/fs.ts and features/environment.steps.ts with inline Node.js code; remove the e2e package declaration. Total change is ~15 lines.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node.js `fs.mkdtemp` / `fs.mkdtempSync` combined with `os.tmpdir()` provide identical functionality with zero dependencies. The wrapper in cli-kit/fs.ts already abstracts the API, so callers would be unaffected by the swap.",
+  "dependabot_bumps_24m": 13
+}

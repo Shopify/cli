@@ -1,0 +1,14 @@
+{
+  "name": "debug",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported once in packages/eslint-plugin-cli/rules/no-inline-graphql.js via `require('debug')('eslint-plugin-cli:no-inline-graphql')`. Used on a single line inside checkKnownFailuresIfShouldFail() to emit a namespaced debug log when a violation is detected.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The single debug() call can be replaced by a conditional `if (process.env.DEBUG?.includes('eslint-plugin-cli')) console.error(...)` or simply removed, since it is a developer-facing diagnostic line inside an ESLint rule that most users never enable. No other rule files in the package use debug.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The entire usage is one diagnostic log line in one ESLint rule file. Replacing it with a short inline conditional on process.env.DEBUG eliminates the dependency entirely with zero functional regression for end users.",
+  "dependabot_bumps_24m": 13
+}

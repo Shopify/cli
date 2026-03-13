@@ -1,0 +1,14 @@
+{
+  "name": "@cucumber/messages",
+  "packages_declaring": [
+    "@shopify/features"
+  ],
+  "used": "no",
+  "usage_summary": "Declared as a devDependency in packages/features/package.json at version 30.1.0, but there are zero direct imports or requires of '@cucumber/messages' or '@cucumber/messages/' anywhere in packages/. It is a peer dependency of @cucumber/cucumber and @cucumber/pretty-formatter — its presence in package.json pins the version to satisfy those peers, but the project code itself never imports it directly.",
+  "replacement_effort": "n/a",
+  "how_to_remove": "Remove the explicit '@cucumber/messages': '30.1.0' entry from packages/features/package.json. The version will then be resolved transitively through @cucumber/cucumber. If the peer version requirement is already satisfied by @cucumber/cucumber's own dependency tree, the explicit pin is unnecessary. Verify compatibility with pnpm after removal.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Not directly imported anywhere in source code. The explicit pin in package.json exists only to satisfy peer dependency resolution. Removing the explicit declaration and relying on the transitive resolution from @cucumber/cucumber is safe and reduces direct dependency surface.",
+  "dependabot_bumps_24m": 0
+}

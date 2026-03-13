@@ -1,0 +1,14 @@
+{
+  "name": "supports-hyperlinks",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/cli-kit/src/private/node/ui/components/Link.tsx (production) and its test file. Used to detect whether the terminal supports OSC 8 hyperlinks via `supportsHyperlinks.stdout`; the Link React component falls back to plain-text rendering when not supported.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace with a one-liner inline check using `process.env.TERM_PROGRAM` / `process.env.COLORTERM` heuristics, or inline the single boolean property that is used (`supportsHyperlinks.stdout`). The package itself is tiny (~50 lines); copying its logic into a local utility or using `ansi-escapes`'s own hyperlink support detection would be trivial. Only one production call site.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package is only used for a single boolean check (`supportsHyperlinks.stdout`). That logic can be inlined in a few lines using environment-variable heuristics (the same approach the package uses internally), removing one external dependency.",
+  "dependabot_bumps_24m": 0
+}

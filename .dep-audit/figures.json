@@ -1,0 +1,14 @@
+{
+  "name": "figures",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in 7 files within cli-kit. The public shim (cli-kit/src/public/node/figures.ts) simply re-exports the default export. Five UI component files (TextInput.tsx, TextPrompt.tsx, SelectInput.tsx, PromptLayout.tsx, DangerousConfirmationPrompt.tsx, ConcurrentOutput.tsx) import it directly and use a small set of symbols: figures.tick, figures.cross, figures.square, figures.arrowUp, figures.arrowDown. Only 5 distinct symbol names are accessed across all consumers.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The 5 used symbols (tick ✔, cross ✖, square ▪, arrowUp ↑, arrowDown ↓) can be inlined as a small hand-rolled object in the figures.ts shim file, with the same Unicode fallbacks figures itself provides for Windows. Delete the import and replace with a plain const object. No other files need to change since they all import through the shim or via the package name (which resolves identically). Total change: ~10 lines in figures.ts.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Only 5 Unicode symbols are used. These can be inlined trivially as a static object in the existing figures.ts shim, removing an external ESM-only dependency with no runtime benefit over a ~10-line inline constant.",
+  "dependabot_bumps_24m": 0
+}

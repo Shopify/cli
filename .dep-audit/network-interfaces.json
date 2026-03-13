@@ -1,0 +1,14 @@
+{
+  "name": "network-interfaces",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in a single call site: packages/cli-kit/src/public/node/vendor/dev_server/dev-server-2024.ts line 55, calling `ni.fromIp(backendIp, {internal: true, ipVersion: 4})` to verify that a resolved IP belongs to a local network interface. The vendor/dev_server directory is a Shopify-internal dev tooling adapter. A hand-written type declaration exists at network-interfaces.d.ts alongside it.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace the `ni.fromIp(backendIp, ...)` call with a Node.js built-in equivalent using `os.networkInterfaces()`. Iterate its entries, flatten to IPv4 addresses, and check that `backendIp` is present among them. This is ~5–10 lines of code replacing the one call. Remove the `network-interfaces` entry from cli-kit/package.json and delete the co-located network-interfaces.d.ts stub.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node.js `os.networkInterfaces()` (available since Node 0.6, stable in all supported versions) exposes the same data that network-interfaces wraps. The package has 0 releases in 24 months and is effectively abandoned. A small inline replacement covers the single call site.",
+  "dependabot_bumps_24m": 0
+}

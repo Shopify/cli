@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-tsdoc",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Directly required in config.js line 4 (`const tsdocPlugin = require('eslint-plugin-tsdoc')`), registered as the 'tsdoc' plugin in the plugins object (config.js line 283), and the rule 'tsdoc/syntax': 'error' is active in baseRules (config.js line 179). This enforces TSDoc comment syntax validation across all TypeScript files in the monorepo.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Remove the require() call and plugin registration from config.js, remove the 'tsdoc/syntax': 'error' rule from baseRules, and remove the dependency from package.json. The functionality (TSDoc comment syntax enforcement) would need to be replaced by either: (a) switching to eslint-plugin-jsdoc's tag validation rules (jsdoc is already a dependency and already used for public API files), or (b) accepting that TSDoc syntax is no longer enforced. Option (a) would require some rule configuration work to replicate tsdoc/syntax coverage with jsdoc equivalents.",
+  "removal_candidate": "no",
+  "replacement_dependency": "eslint-plugin-jsdoc",
+  "replacement_reason": "The plugin is actively wired up and enforcing TSDoc syntax as an error across all TS files. Removing it would lower documentation quality. The replacement effort is medium because jsdoc plugin (already present) could cover similar ground but would require rule-by-rule configuration audit. The package has very low release velocity (only ~2 releases in 24 months) which is a maintainability concern, but the current version (0.4.0) is stable and the functionality is narrow enough that version drift is low risk.",
+  "dependabot_bumps_24m": 29
+}

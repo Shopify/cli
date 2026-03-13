@@ -1,0 +1,18 @@
+{
+  "name": "react",
+  "packages_declaring": [
+    "app",
+    "cli-kit",
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit",
+    "ui-extensions-test-utils"
+  ],
+  "used": "yes",
+  "usage_summary": "Heavily used across the monorepo in two distinct contexts: (1) Terminal UI via `ink` — cli-kit (66 files) and app (30 files) use React as the rendering engine for Ink-based terminal components (prompts, banners, task lists, concurrent output, dev UI, logs UI, function replay UI, GraphiQL templates). React is imported directly in every .tsx component file. (2) Browser UI — ui-extensions-dev-console (many component files), ui-extensions-server-kit (context providers, hooks), and ui-extensions-test-utils (render helpers) all use React for the browser-side dev console. No subpath imports of 'react/' were found.",
+  "replacement_effort": "large",
+  "how_to_remove": "React cannot be removed without replacing the entire Ink-based terminal UI layer (cli-kit) and the browser dev console (ui-extensions-dev-console). Ink is built on React; replacing it would require either switching to a different terminal UI framework (e.g. Blessed, Clack) or rewriting all prompts/output components as plain Node.js streams. The browser dev console would need to be rewritten in vanilla JS or a different framework. This touches 100+ source files across 5 packages.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "React is a fundamental architectural dependency — it powers both the Ink terminal UI (cli-kit, app) and the browser dev console (ui-extensions-dev-console). Replacing it would be a full rewrite of the UI layer across the monorepo. Not a viable removal candidate.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "graphql",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The 'parse' function from the 'graphql' package is imported in two files: packages/app/src/cli/services/execute-operation.ts and packages/app/src/cli/services/graphql/common.ts. It is used to parse raw GraphQL query strings into DocumentNode ASTs for validation (checking operation count, operation kind) and for passing to adminRequestDoc. The package is also a peer/required dependency of graphql-request, which uses it internally for document resolution via resolveRequestDocument.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Removing 'graphql' is not straightforward because: (1) graphql-request's resolveRequestDocument and TypedDocumentNode integration rely on it at runtime; (2) the two call sites using parse() perform non-trivial AST-level validation (counting OperationDefinition nodes, reading the 'operation' field). Replacing parse() would require either a lightweight GraphQL parser or hand-rolled regex/heuristic validation. Additionally dropping graphql-request (which bundles graphql as a peer dep) would be required for full removal.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "graphql is a mandatory peer dependency of graphql-request and is directly used for AST parsing and validation in the execute-operation feature. It cannot be removed independently of graphql-request, and has had 3 releases in the last 24 months (16.9.0, 16.10.0, 16.10.0-alpha releases in 2024-2025), indicating an actively maintained project.",
+  "dependabot_bumps_24m": 11
+}

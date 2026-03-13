@@ -1,0 +1,14 @@
+{
+  "name": "chalk",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Heavily used throughout cli-kit. `colors.ts` re-exports the entire chalk instance as the public `@shopify/cli-kit/node/colors` surface used by app, theme, and features packages (20+ import sites). Directly imported in three UI components: SelectInput.tsx (chalk.bold for search match highlighting), TextInput.tsx (chalk.inverse / chalk.dim for cursor rendering), and Link.tsx (chalk.dim for fallback URL display). Table/Table.tsx imports the `ForegroundColor` type from chalk for its column colour prop type.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require replacing the entire `@shopify/cli-kit/node/colors` public API (re-exported across 20+ import sites in app, theme, and features), rewriting ANSI styling in three Ink UI components, and finding an alternative ForegroundColor type source. The most feasible path is migrating to `ansi-colors` (already used in packages/features) or `kleur`, but the breadth of the public surface makes this a multi-package breaking change.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "chalk is actively maintained (3 releases in the last 24 months), is the foundational colour API for the entire CLI output layer, and has 20+ import sites across multiple packages. Replacement effort is large.",
+  "dependabot_bumps_24m": 3
+}

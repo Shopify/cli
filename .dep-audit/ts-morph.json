@@ -1,0 +1,14 @@
+{
+  "name": "ts-morph",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used exclusively in packages/cli-kit/bin/refresh-code-documentation.ts, a developer tooling script (not shipped as part of the published package). It uses `Project`, `FunctionDeclaration`, and `JSDocTag` to parse the TypeScript AST and rewrite JSDoc `@example` tags on public render functions.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Replacing ts-morph would require either (a) using the raw TypeScript compiler API directly (verbose, significant boilerplate) or (b) a different AST manipulation library. The script is non-trivial: it reads TSConfig, navigates the AST, filters functions, reads/removes/adds JSDoc tags, and saves the project. Rewriting with the raw TS compiler API or an alternative like `@ts-morph/bootstrap` would be a medium-sized rewrite of ~90 lines of logic.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The replacement effort is medium and the dependency is scoped to a single dev-tooling script. The risk/reward of replacing it does not justify the effort. ts-morph is actively maintained and appropriate for this use case.",
+  "dependabot_bumps_24m": 1
+}

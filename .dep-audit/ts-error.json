@@ -1,0 +1,14 @@
+{
+  "name": "ts-error",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Re-exported from packages/cli-kit/src/public/node/error.ts as `export {ExtendableError} from 'ts-error'`. Consumed in four places: cli-kit/session/exchange.ts (two subclasses), cli-kit/plugins/tunnel.ts (one subclass), cli-kit/result.ts (instanceof check), and packages/app/src/cli/services/dev/extension/localization.ts (throws an instance).",
+  "replacement_effort": "trivial",
+  "how_to_remove": "ts-error's ExtendableError is a single-class shim that fixes the `instanceof` chain for Error subclasses in ES5 targets. Modern TypeScript with ES2015+ targets handles this natively. Replace the re-export in error.ts with a locally defined class: `export class ExtendableError extends Error { constructor(message?: string) { super(message); this.name = new.target.name; } }`. No downstream call sites need to change.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The entire package provides one class (~10 lines) that is now unnecessary with ES2015+ targets. Inlining eliminates the dependency with a trivial one-time change in a single file.",
+  "dependabot_bumps_24m": 0
+}

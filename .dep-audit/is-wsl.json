@@ -1,0 +1,14 @@
+{
+  "name": "is-wsl",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported dynamically in one production function: isWsl() in packages/cli-kit/src/public/node/system.ts. The function does `const wsl = await import('is-wsl'); return wsl.default`. It is lazy-loaded (dynamic import) to avoid the file-read overhead on non-WSL platforms. isWsl() is called to decide how to open URLs in WSL environments (falling back to powershell.exe or cmd.exe instead of xdg-open).",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Inline the WSL detection logic. The is-wsl package checks: (1) process.platform === 'linux', (2) the existence and content of /proc/version containing 'microsoft' or 'WSL'. This is a ~5-line inline implementation. Replace the dynamic import with a native fs.readFileSync('/proc/version') check guarded by process.platform === 'linux'. Remove is-wsl from package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The WSL detection algorithm is trivial and well-documented: check /proc/version for 'microsoft'/'WSL' on linux. The package itself is a thin wrapper around exactly that logic. Inlining it is a small, low-risk change confined to one function in system.ts.",
+  "dependabot_bumps_24m": 0
+}

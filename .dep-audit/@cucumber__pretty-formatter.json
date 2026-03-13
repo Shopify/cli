@@ -1,0 +1,14 @@
+{
+  "name": "@cucumber/pretty-formatter",
+  "packages_declaring": [
+    "@shopify/features"
+  ],
+  "used": "yes",
+  "usage_summary": "Referenced by name string (not a JS import) in packages/features/cucumber.js line 8: format: ['@cucumber/pretty-formatter']. This is a cucumber-js formatter plugin loaded by the runner at runtime via the format configuration key. No TypeScript/JS import statement exists because cucumber loads formatters by package name string.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Change the format entry in packages/features/cucumber.js from '@cucumber/pretty-formatter' to one of the built-in cucumber-js formatters such as 'progress' or 'summary', then remove the '@cucumber/pretty-formatter' entry from devDependencies in packages/features/package.json. Alternatively, '@cucumber/pretty-formatter' could be replaced with a different community formatter by swapping the string and dependency.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The only usage is a single string in the cucumber.js config file selecting the output format. Switching to a built-in cucumber-js formatter (progress, summary, html, json) requires a one-line config change and removes the dependency entirely. The effort is trivial.",
+  "dependabot_bumps_24m": 42
+}

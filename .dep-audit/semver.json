@@ -1,0 +1,14 @@
+{
+  "name": "semver",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in two cli-kit source files: node-package-manager.ts imports SemVer (class for comparison via .compare()) and semverSatisfies (range check for package version requirements); version.ts imports satisfies to gate global CLI usage on versions >=3.59.0. Both usages involve semantic version parsing, comparison, and range satisfaction checks.",
+  "replacement_effort": "small",
+  "how_to_remove": "Node.js does not have a built-in semver parser, but the usage is limited to three call sites: two SemVer.compare() calls and two satisfies(version, range) calls. These can be replaced with the lightweight `compare-versions` package (zero-dependency, ~800 bytes), or inlined with a simple regex-based comparator. The range syntax used is simple (>=x.y.z) so a custom implementation would be trivial. Estimated effort: ~20–40 lines or a swap to compare-versions.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "compare-versions",
+  "replacement_reason": "Only three call sites using basic comparison and a simple range check. compare-versions covers all these cases with zero transitive dependencies and a much smaller footprint than the full semver package.",
+  "dependabot_bumps_24m": 56
+}

@@ -1,0 +1,15 @@
+{
+  "name": "fs-extra",
+  "packages_declaring": [
+    "cli-kit",
+    "features"
+  ],
+  "used": "yes",
+  "usage_summary": "Two distinct usage patterns: (1) In `cli-kit/src/public/node/fs.ts` via the `fs-extra/esm` subpath, six functions are imported: `copy`, `ensureFile`, `ensureFileSync`, `remove`, `removeSync`, `move`. These are thin wrappers re-exported as `copyFile`, `touchFile`, `touchFileSync`, `removeFile`, `removeFileSync`, `moveFile`. (2) In `packages/features/steps/` (E2E test helpers), `fs-extra` is imported as a default `fs` object and used for `ensureFile`, `appendFile`, `pathExistsSync`, `existsSync`, `readFile` — all convenience methods not available on `node:fs` directly (`pathExistsSync`, `ensureFile`).",
+  "replacement_effort": "medium",
+  "how_to_remove": "For cli-kit: replace `copy` with `fs/promises.cp` (Node 16.7+), `ensureFile`/`ensureFileSync` with mkdir+writeFile sequences, `remove`/`removeSync` with `fs/promises.rm({recursive:true,force:true})` / `fs.rmSync`, and `move` with `fs/promises.rename` (with a cross-device fallback using cp+rm). For features: replace `pathExistsSync` with `fs.existsSync`, `ensureFile` with a mkdir+writeFile pattern. Changes touch ~6 source files and require careful cross-device/cross-platform handling for `move`. The @ts-ignore suppression on the esm import is a signal the current integration is already fragile.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The effort is medium because several fs-extra convenience functions (`ensureFile`, `move` with cross-device support, `remove` with recursive force) require non-trivial Node built-in sequences, and the codebase has already had to use `// @ts-ignore` to work around the ESM subpath export. The work is feasible but spans multiple files with correctness risk on Windows edge cases.",
+  "dependabot_bumps_24m": 0
+}

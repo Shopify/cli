@@ -1,0 +1,14 @@
+{
+  "name": "get-port-please",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in `cli-kit/src/public/node/tcp.ts` (and its test). Two functions are called: `port.getRandomPort(host)` to obtain a free random port, and `port.checkPort(portNumber, host)` to verify a specific port is available. The wrapper also explicitly hard-codes `host='localhost'` to work around a known bug in get-port-please where it misbehaves when the HOST env var is set.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace with a small inline helper that opens a TCP server on port 0 (Node net module), records the assigned port, then closes the server — a well-known pattern that requires ~15 lines. The `checkPortAvailability` function can be replaced by attempting a connection on `net.createServer().listen(port, host)`. The wrapper in tcp.ts already isolates all calls behind `getAvailableTCPPort` and `checkPortAvailability`, so callers need no changes. Remove get-port-please from cli-kit's package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node's built-in `net` module can fully provide random-port and port-check functionality. The existing comment in tcp.ts acknowledging a HOST env-var bug in the library is an additional motivation to remove the dependency.",
+  "dependabot_bumps_24m": 56
+}

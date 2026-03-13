@@ -1,0 +1,14 @@
+{
+  "name": "find-up",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in a single location: cli-kit/src/public/node/fs.ts imports findUp as internalFindUp from 'find-up'. It is exposed through the public findPathUp() function, which wraps it with path normalization. findPathUp() is called across the codebase wherever a config file or package.json needs to be located by walking up the directory tree.",
+  "replacement_effort": "small",
+  "how_to_remove": "Node.js has no built-in find-up equivalent, but the functionality is a simple recursive directory walk (check for file existence, move to parent, stop at root). A self-contained ~20-line async helper can replace find-up entirely within fs.ts, behind the existing findPathUp() wrapper. The public API stays unchanged. Alternatively, the locate-path or escalade packages are lighter options. Low risk since the call is already isolated behind a single wrapper function.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The dependency is used only through a single wrapper function. Inlining a small recursive path-walker (~20 lines using fs/promises.access and path.dirname) eliminates the dependency with negligible effort and no API changes to callers.",
+  "dependabot_bumps_24m": 0
+}

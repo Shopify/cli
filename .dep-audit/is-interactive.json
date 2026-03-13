@@ -1,0 +1,14 @@
+{
+  "name": "is-interactive",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in one production file: packages/cli-kit/src/public/node/context/local.ts. The function isTerminalInteractive() is a thin one-liner that calls isInteractive() from this package and returns the result. isInteractive() checks process.stdout.isTTY and process.env.TERM !== 'dumb' in a cross-platform way. isTerminalInteractive() is used widely throughout cli-kit and other packages to gate interactive UI rendering.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Inline the check: replace `return isInteractive()` with `return Boolean(process.stdout.isTTY) && process.env.TERM !== 'dumb'` (or the equivalent two-liner). The is-interactive package source is ~10 lines. Remove the import and the dependency from package.json. The existing isTerminalInteractive() wrapper means the change is contained to one call-site in local.ts.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The entire package is a ~10-line utility around process.stdout.isTTY and TERM env var checks. Node.js exposes both natively. Inlining the logic eliminates the external dependency with trivial effort.",
+  "dependabot_bumps_24m": 0
+}

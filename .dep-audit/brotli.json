@@ -1,0 +1,14 @@
+{
+  "name": "brotli",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/archiver.ts (dynamic import) to compress a tar archive into a .br file via brotli.default.compress(). Also imported directly in the integration test archiver.integration.test.ts. There is a single call site: `brotli.default.compress(tarContent, { quality: 7, mode: 0 })`.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace with Node.js built-in zlib.brotliCompress (available since Node 10.16). The call is a single synchronous compression of a Buffer; the equivalent is `zlib.brotliCompressSync(tarContent, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 7, [zlib.constants.BROTLI_PARAM_MODE]: zlib.constants.BROTLI_MODE_GENERIC } })`. Remove the `brotli` import and its @types package, update the integration test, and delete the dependency from cli-kit/package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node.js >=10.16 ships zlib.brotliCompressSync which covers the exact call surface used here. The brotli npm package has had zero releases in the last 24 months (last published 2019), making it a maintenance liability. Migration is a single-site code change.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,15 @@
+{
+  "name": "chokidar",
+  "packages_declaring": [
+    "app",
+    "theme"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in three production files across two packages. In app: packages/app/src/cli/services/dev/app-events/file-watcher.ts imports FSWatcher type and dynamically imports chokidar to watch app config + extension directories with debounce/ignore logic; this is the core file-watching engine for `shopify app dev`. In theme: packages/theme/src/cli/utilities/theme-fs.ts and theme-ext-environment/theme-ext-fs.ts each dynamically import chokidar to watch theme asset directories for add/change/unlink events. Two test files (app and theme) also import it for mocking.",
+  "replacement_effort": "large",
+  "how_to_remove": "Node.js 22 ships `fs.watch` with recursive support, but it lacks the maturity, cross-platform reliability, and glob/ignore API that chokidar provides (particularly on macOS FSEvents and Linux inotify). The three production watcher call sites each use chokidar-specific options (ignored glob patterns, persistent, ignoreInitial, the FSWatcher type). Migration to Node built-ins would require significant cross-platform testing and likely reimplementing parts of chokidar's stabilisation logic. An alternative would be migrating to `@parcel/watcher`, but that is an equally large refactor.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "chokidar is used as the foundational file-watching engine for both `app dev` and `theme dev` workflows across two packages. It has 2 releases in the last 24 months and remains the de-facto standard for reliable cross-platform file watching in Node.js CLIs. Replacement effort is large and risk is high.",
+  "dependabot_bumps_24m": 56
+}

@@ -1,0 +1,14 @@
+{
+  "name": "open",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in exactly one production call site: packages/cli-kit/src/public/node/system.ts `openURL()` function. It is dynamically imported (`await import('open')`) and its default export is called with a URL string. The wrapper function is a public API exported from cli-kit.",
+  "replacement_effort": "small",
+  "how_to_remove": "The 'open' package is a thin cross-platform wrapper around `xdg-open` (Linux), `open` (macOS), and `start` (Windows). Replacing it requires ~20-30 lines of platform-detection logic using Node.js `child_process.spawn` and `process.platform`. This is well-understood, has no dependencies, and is a single function. Effort is small but not trivial because Windows shell escaping and error handling must be replicated correctly.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The functionality (open a URL in the default browser) can be inlined as a small platform-switch using Node's built-in `child_process.spawn`. The 'open' package itself is essentially that, at ~150 lines. Given the single call site and well-documented platform behaviour, inlining removes one external dependency with minimal risk.",
+  "dependabot_bumps_24m": 0
+}

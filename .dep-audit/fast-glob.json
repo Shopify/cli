@@ -1,0 +1,14 @@
+{
+  "name": "fast-glob",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in cli-kit/src/public/node/fs.ts as the backing implementation for the public glob() and globSync() functions. Both the async (dynamic import) and sync (static import fastGlobLib.sync) paths are exercised. The Pattern and Options types from fast-glob are also re-exported in the public API. The glob() function is called in ~147 files across the monorepo via the @shopify/cli-kit/node/fs abstraction. Additionally used directly in build scripts (cli/bin/bundle.js, create-app/bin/bundle.js, cli-kit/scripts/build-api-docs.js) and in feature test steps.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Node.js 22+ provides fs.glob() / fs.globSync() as a built-in (but it lacks many options fast-glob supports, such as 'dot', 'ignore', 'absolute', 'stats'). Alternatively, the glob package (isaacs/node-glob) is a well-maintained drop-in that covers the same patterns. The fs.ts wrapper already abstracts the API, so the replacement would be internal to that file and the build scripts. Medium effort because the option-mapping between fast-glob's API and any replacement must be validated across many call sites.",
+  "removal_candidate": "no",
+  "replacement_dependency": "glob",
+  "replacement_reason": "fast-glob is the backbone of the public glob() API consumed by ~147 files. Replacing it requires validating option compatibility across all call sites. The dependency has been stable and is unlikely to cause issues. Consider replacing with the npm 'glob' package (which wraps Node's built-in) only as part of a deliberate modernisation effort.",
+  "dependabot_bumps_24m": 55
+}

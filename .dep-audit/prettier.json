@@ -1,0 +1,15 @@
+{
+  "name": "prettier",
+  "packages_declaring": [
+    "app",
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in one production file in the 'app' package: packages/app/src/cli/utilities/file-formatter.ts exports a single `formatContent()` function that calls `prettier.format(content, options)`. That function is called in exactly one place: packages/app/src/cli/models/extensions/specifications/ui_extension.ts to format generated TypeScript type definitions. In 'eslint-plugin-cli', prettier is listed as a devDependency but only `eslint-config-prettier` is required in source (config.js); prettier itself is not directly imported.",
+  "replacement_effort": "small",
+  "how_to_remove": "The single production use is formatting generated TypeScript source with options {parser: 'typescript', singleQuote: true}. This could be replaced by: (a) dropping formatting of generated types entirely (lowest effort, output is consumed programmatically), or (b) switching to a lighter alternative such as `dprint` (wasm-based, much smaller install) or simply calling the TypeScript compiler's printer API. Either path touches one wrapper file (file-formatter.ts) and one call site (ui_extension.ts). The eslint-plugin-cli devDependency can be removed without any source change.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The sole production use is formatting auto-generated TypeScript that is not shown to users, so dropping formatting is the simplest path. If formatting must be preserved, dprint or @typescript-eslint/parser's built-in printer are lighter alternatives. The eslint-plugin-cli devDependency is already unused in source.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "global-agent",
+  "packages_declaring": [
+    "cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Single import in `packages/cli/src/index.ts`: `createGlobalProxyAgent` is called at bootstrap time with `{environmentVariableNamespace: 'SHOPIFY_', forceGlobalAgent: true, socketConnectionTimeout: 60000}`. This installs a global HTTP/HTTPS agent that reads `SHOPIFY_HTTP_PROXY` / `SHOPIFY_HTTPS_PROXY` env vars, enabling proxy support for all outbound requests made by node-fetch and other HTTP clients in the process.",
+  "replacement_effort": "medium",
+  "how_to_remove": "The global-agent package is unmaintained (last release was v3.0.0 in 2021). A drop-in replacement is `undici`'s `ProxyAgent` or the `hpagent` package, but neither provides the same one-call global monkey-patching. An alternative is `global-tunnel-ng` or `proxy-from-env` + a custom bootstrap. Because the project uses `node-fetch` (which does not use the native http.globalAgent path that global-agent patches), any replacement must also patch node-fetch's default agent. This makes the migration medium effort: the bootstrap logic in index.ts is a single call but the replacement requires understanding how node-fetch agent resolution works and testing proxy scenarios.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The feature (transparent HTTP proxy via env vars) is genuinely needed for enterprise/corporate network users. While global-agent is stale, replacing it requires a medium-effort, correctness-sensitive change to the HTTP bootstrap. This warrants a dedicated investigation rather than a simple removal.",
+  "dependabot_bumps_24m": 0
+}

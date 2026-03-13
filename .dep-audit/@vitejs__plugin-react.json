@@ -1,0 +1,15 @@
+{
+  "name": "@vitejs/plugin-react",
+  "packages_declaring": [
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Actively used in both declaring packages. In packages/ui-extensions-dev-console/vite.config.mts (line 2): `import react from '@vitejs/plugin-react'` and used as `plugins: [react()]`. In packages/ui-extensions-server-kit/vite.config.mts (lines 3, 49): same import pattern, used in the plugins array alongside a custom createEntryFiles plugin. Both packages build/serve React-based UI: the dev console is a React app, and ui-extensions-server-kit is a React component library that needs JSX transformation at build time.",
+  "replacement_effort": "small",
+  "how_to_remove": "If removal is desired: replace with @vitejs/plugin-react-swc (uses SWC instead of Babel for faster transforms) as a drop-in replacement — change the import and package.json dep in both vite.config.mts files. Alternatively, if the React dependency for these packages is being removed entirely, the plugin can be dropped and the plugins array updated. Effort is 'small' because it is a 2-file change if swapping to SWC, or requires broader React removal work if eliminating React altogether.",
+  "removal_candidate": "no",
+  "replacement_dependency": "@vitejs/plugin-react-swc",
+  "replacement_reason": "The package is actively imported and used in both vite configs for React JSX transformation. It cannot be removed without also removing React from these packages. If a speed improvement is desired, @vitejs/plugin-react-swc is a drop-in replacement using SWC instead of Babel, but it would be an upgrade not a removal.",
+  "dependabot_bumps_24m": 0
+}

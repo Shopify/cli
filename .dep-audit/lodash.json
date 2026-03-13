@@ -1,0 +1,14 @@
+{
+  "name": "lodash",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used heavily across 7 source files in cli-kit. Subpath imports cover: isEqual (lang.ts, object.ts), pickBy, mapValues, differenceWith, fromPairs, toPairs, get, set, unset, isEmpty (object.ts), groupBy, partition (collection.ts), uniqBy, difference (array.ts), memoize, debounce, throttle (function.ts), cloneDeep (json-schema.ts), sortBy (SelectInput.tsx), difference (refresh-code-documentation.ts). Type imports from the root package are also used (Dictionary, ObjectIterator, PropertyPath, ValueKeyIteratee, List, ValueIteratee, DebouncedFunc, DebounceSettings, ThrottleSettings). All are thin wrappers re-exporting lodash functionality via public cli-kit APIs.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Replace each lodash function with a native equivalent or a small focused package: isEqual -> fast-deep-equal or structured clone + JSON comparison; cloneDeep -> structuredClone (Node 17+); debounce/throttle -> can be inlined (~20 lines each) or replaced with p-debounce; memoize -> simple Map-based wrapper; groupBy/partition/uniqBy/difference -> native Array reduce/filter/Set operations. The lodash TypeScript types (Dictionary, List, DebouncedFunc, etc.) used in public function signatures are the highest-friction part as they appear in exported APIs and would require defining local equivalents or adjusting caller signatures. Estimate 15-20 files to touch across cli-kit.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The usage spans 7 source files including exported public APIs that use lodash types in their signatures (e.g. Dictionary<T>, List<T>, DebouncedFunc<T>). Replacing all call sites plus the type surface is a medium-sized refactor with non-trivial risk of breaking callers in other packages. Lodash 4.x is stable and unmaintained but has no known security issues; deferring removal until the team can allocate a focused cleanup sprint is lower risk than a rushed replacement.",
+  "dependabot_bumps_24m": 2
+}

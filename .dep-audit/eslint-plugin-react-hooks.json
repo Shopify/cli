@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-react-hooks",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Declared in eslint-plugin-cli/package.json but NOT directly required/registered in config.js. The root eslint.config.js references no explicit 'react-hooks/*' rule names directly, but the @shopify/eslint-plugin/lib/config/react.js (which is NOT spread in config.js) does register the react-hooks plugin and enable 'react-hooks/rules-of-hooks' and 'react-hooks/exhaustive-deps'. So the react-hooks rules are currently not active in the linting configuration. The package is transitively required by @shopify/eslint-plugin when its react config is loaded, but that config is not being used. Same latent-bug category as eslint-plugin-react.",
+  "replacement_effort": "small",
+  "how_to_remove": "Same two-path decision as eslint-plugin-react: (1) Remove if the react linting integration is considered unneeded — drop from package.json. (2) Keep and fix — register react-hooks plugin in config.js alongside the react plugin and enable rules-of-hooks / exhaustive-deps rules. Note: eslint-plugin-react-hooks v5+ is included in the React package itself (react package), so it may not need to be a standalone dependency in the future.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The react-hooks rules (rules-of-hooks, exhaustive-deps) are important correctness checks for the React UI components in cli-kit. Though currently not wired up, the intent is clearly to have them active. Dropping the package would require abandoning hooks-correctness linting. Keep alongside eslint-plugin-react and fix the plugin registration.",
+  "dependabot_bumps_24m": 37
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@babel/core",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "no",
+  "usage_summary": "Not imported or required anywhere in packages/ source files. The only Babel reference in eslint-plugin-cli is the string '@babel/no-unused-expressions': 'off' in config.js, which is an ESLint rule name (string key), not a runtime import of @babel/core. The appearance in packages/features/steps/node-deps.steps.ts is a test fixture listing shared dependency names, not an import. @babel/core is a stale dependency in eslint-plugin-cli's package.json.",
+  "replacement_effort": "n/a",
+  "how_to_remove": "Remove the '@babel/core' entry from the 'dependencies' field in packages/eslint-plugin-cli/package.json, then remove it from the sharedDependencies array in packages/features/steps/node-deps.steps.ts and run pnpm install to update pnpm-lock.yaml.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "@babel/core is never imported or required at runtime; the sole string reference '@babel/no-unused-expressions' is an ESLint rule name that does not need @babel/core to be installed (it is satisfied by @babel/eslint-plugin if needed, or can simply be removed since the rule is already turned off).",
+  "dependabot_bumps_24m": 17
+}

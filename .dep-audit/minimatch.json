@@ -1,0 +1,14 @@
+{
+  "name": "minimatch",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in one place: packages/cli-kit/src/public/node/fs.ts imports `minimatch` and re-exports it as a public `matchGlob(key, pattern, options?)` helper. The options type `MatchGlobOptions` exposes `matchBase` and `noglobstar` flags. There are no subpath imports.",
+  "replacement_effort": "small",
+  "how_to_remove": "Option A: Switch to `micromatch` (already common in the Node.js ecosystem and used by many tools like fast-glob) — API is nearly identical. Option B: Since `fast-glob` is already a direct dependency in cli-kit, use `micromatch.isMatch()` which fast-glob itself bundles. Option C: Node.js 22+ provides `path.matchesGlob()` (stable in v22.10+) for simple cases, though it doesn't support the full minimatch feature set. Whichever replacement is chosen, only `fs.ts` and its tests need updating.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "micromatch",
+  "replacement_reason": "Only one call site in fs.ts wraps minimatch. micromatch has a compatible API (`micromatch.isMatch(key, pattern)`) and is already indirectly present in the dependency tree via fast-glob. Alternatively, since this repo targets Node 20+, `path.matchesGlob` (available since Node 22.10) could be evaluated once Node version is bumped.",
+  "dependabot_bumps_24m": 58
+}

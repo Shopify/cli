@@ -1,0 +1,15 @@
+{
+  "name": "bottleneck",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in five API client modules in cli-kit (api/functions.ts, api/partners.ts, api/app-dev.ts, api/app-management.ts, api/webhooks.ts). Each module creates its own Bottleneck instance configured with minTime: 150ms and maxConcurrent: 10 to enforce the 10 req/s rate limit against Shopify's GraphQL APIs. The limiter.schedule() call wraps every outbound GraphQL request. This is a critical production rate-limiting mechanism.",
+  "total_releases_24m_note": "Could not fetch NPM registry data: Bash and WebFetch tools are unavailable in this session.",
+  "replacement_effort": "medium",
+  "how_to_remove": "No Node.js built-in provides minTime + maxConcurrent rate limiting. Alternatives: (a) write a custom rate limiter using a token-bucket/semaphore pattern (~50-100 lines); (b) use 'p-throttle' + 'p-limit' (two small packages) to replicate minTime and maxConcurrent independently. With five call sites, each needing both concurrency limiting and minimum interval enforcement, this is medium effort. The existing Bottleneck configuration is simple (only two options used), which lowers the risk of a custom implementation.",
+  "removal_candidate": "no",
+  "replacement_dependency": "p-throttle",
+  "replacement_reason": "p-throttle (interval-based throttle) combined with p-limit (concurrency limiter) would replicate Bottleneck's minTime + maxConcurrent semantics, but the replacement is a medium-effort refactor across five modules and is lower priority than other removals.",
+  "dependabot_bumps_24m": 0
+}

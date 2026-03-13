@@ -1,0 +1,14 @@
+{
+  "name": "zod",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Deeply embedded throughout the monorepo. cli-kit/src/public/node/schema.ts re-exports zod as `zod` and provides deepStrict() and errorsToString() helpers built on ZodObject / ZodOptional / z. This re-export is consumed by 60+ files across cli-kit, app, and other packages for all runtime configuration parsing and validation: app loader (parseConfigurationFile, parseConfigurationObject), all extension specification schemas (ui_extension, payments_app_extension, flow_action, webhooks, etc.), session schema, notifications-system, and more. Zod types (ZodType, ZodIssueBase, z.infer) are part of public function signatures throughout.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require replacing every schema definition (z.object, z.string, z.array, z.enum, z.union, z.optional, etc.) across 60+ files spanning multiple packages, updating all parse call sites, and reimplementing deepStrict() and errorsToString(). Feasible alternatives (valibot, arktype) exist but the migration would touch core data-model files and carry high regression risk.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Zod is the foundational runtime validation library for the entire CLI. It is re-exported from cli-kit and used in 60+ files for configuration parsing, extension specifications, session schemas, and webhook validation. Replacement effort is large and risk is high.",
+  "dependabot_bumps_24m": 56
+}

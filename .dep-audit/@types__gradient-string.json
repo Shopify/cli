@@ -1,0 +1,14 @@
+{
+  "name": "@types/gradient-string",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The runtime package gradient-string is imported directly in packages/cli-kit/src/private/node/ui/components/TextAnimation.tsx. gradient-string@2.0.2 does not ship its own .d.ts files, so @types/gradient-string provides the necessary type declarations.",
+  "replacement_effort": "small",
+  "how_to_remove": "Not a removal candidate — still needed. If gradient-string ever ships bundled types or is replaced, remove @types/gradient-string from cli-kit devDependencies at the same time.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "gradient-string is actively used and does not bundle its own types. @types/gradient-string has had 0 releases in the last 24 months (the @types package is essentially stable/complete), but the underlying package is still in use so the type package must be retained.",
+  "dependabot_bumps_24m": 27
+}

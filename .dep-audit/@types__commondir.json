@@ -1,0 +1,15 @@
+{
+  "name": "@types/commondir",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying package 'commondir' is imported in packages/cli-kit/src/public/node/path.ts (line 1: `import commondir from 'commondir'`). The commondir package (v1.0.1, last published circa 2014) ships no bundled TypeScript types (no 'types' field in its package.json), so @types/commondir is required for TypeScript compilation.",
+  "total_releases_24m_note": "Could not fetch npm registry: network access (Bash/WebFetch) was unavailable in this session.",
+  "replacement_effort": "small",
+  "how_to_remove": "The 'commondir' package computes the common parent directory for an array of paths. It is a tiny, abandoned package (single 21-line function, last published ~2014). The functionality can be inlined as a small utility function in path.ts itself (no external dependency needed), or replaced with a modern alternative that ships types. Removing both 'commondir' and '@types/commondir' requires implementing ~5-10 lines of path logic in path.ts. Effort is 'small'.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The 'commondir' package is a tiny, unmaintained (~2014) utility. Its functionality (finding the common parent of a list of paths) can be trivially inlined, eliminating the runtime dep and the @types package entirely. This also reduces supply-chain risk from an abandoned package.",
+  "dependabot_bumps_24m": 27
+}

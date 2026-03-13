@@ -1,0 +1,14 @@
+{
+  "name": "@typescript-eslint/eslint-plugin",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Declared as a direct dependency in packages/eslint-plugin-cli/package.json at version 8.56.1. However, no source file in eslint-plugin-cli directly requires or imports '@typescript-eslint/eslint-plugin'. The plugin rules are referenced only as string rule keys (e.g. '@typescript-eslint/no-explicit-any') in config.js. The actual plugin and parser are loaded transitively via @shopify/eslint-plugin (v50) which depends on the unified 'typescript-eslint' package (v8.56.1), which in turn depends on @typescript-eslint/eslint-plugin. The direct declaration in eslint-plugin-cli/package.json is therefore redundant — the package is already supplied transitively. The config.js comment on line 257 even notes 'Spread the Shopify configs (these already include typescript-eslint plugin)'.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Remove '@typescript-eslint/eslint-plugin' from the dependencies in packages/eslint-plugin-cli/package.json. No code changes required — the package will continue to be provided transitively via @shopify/eslint-plugin -> typescript-eslint -> @typescript-eslint/eslint-plugin. Also update packages/features/steps/node-deps.steps.ts which lists '@typescript-eslint/parser' in sharedDependencies (a related cleanup). Run `pnpm install` and `pnpm run lint` to confirm nothing breaks.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Already provided transitively through @shopify/eslint-plugin v50's dependency on the unified 'typescript-eslint' package. The direct declaration is redundant duplication.",
+  "dependabot_bumps_24m": 2
+}

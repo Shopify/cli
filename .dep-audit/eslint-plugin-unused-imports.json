@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-unused-imports",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Directly required in config.js line 3 (`const unusedImportsPlugin = require('eslint-plugin-unused-imports')`), registered as the 'unused-imports' plugin in the plugins object (config.js line 282), and the rule 'unused-imports/no-unused-imports': 'error' is active in baseRules (config.js line 117). This enforces removal of unused import statements across all TypeScript files.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Remove the require() call and plugin registration from config.js, remove the 'unused-imports/no-unused-imports': 'error' rule, and remove from package.json. The equivalent functionality is already partially covered by '@typescript-eslint/no-unused-vars' (already configured in baseRules lines 183-194 as an error). The specific unused-imports rule targets import declarations more precisely — the switch to @typescript-eslint/no-unused-vars with 'varsIgnorePattern' and ensuring imports are included would cover the same ground. Alternatively, @typescript-eslint v7+ added 'no-unused-import' as a dedicated rule.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The functionality (flagging unused imports) is already substantially covered by the existing '@typescript-eslint/no-unused-vars' rule configured in config.js. The 'unused-imports/no-unused-imports' rule is additive but not unique. With @typescript-eslint already configured to catch unused vars including imports, removing this plugin represents trivial effort — verify no gaps by running lint before/after, and adjust @typescript-eslint/no-unused-vars config if any import-specific patterns need tuning.",
+  "dependabot_bumps_24m": 0
+}

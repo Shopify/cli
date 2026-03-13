@@ -1,0 +1,14 @@
+{
+  "name": "@oclif/plugin-commands",
+  "packages_declaring": [
+    "cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli/src/index.ts. The package's commands export is imported as PluginCommandsCommands and spread into the top-level COMMANDS map exported from the cli package. The single command it contributes is 'commands' (i.e. `shopify commands`), which lists all available CLI commands in a table/tree view. The import is a named import of {commands}, and the commands object is also iterated to attach a customPluginName property. No subpath imports exist.",
+  "replacement_effort": "small",
+  "how_to_remove": "The plugin contributes only one command: 'commands'. To remove the dependency, implement a first-party replacement command in packages/cli/src/cli/commands/commands.ts that reads this.config.commands and renders a table (the existing cli-kit UI primitives already support this). The replacement logic is ~50–80 lines of TypeScript — straightforward given that the oclif implementation itself is only ~140 lines of compiled JS. Remove the import and the customPluginName iteration block from index.ts, remove the package from packages/cli/package.json, and add the new command to the COMMANDS map.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The sole contribution is a single 'commands' listing command. This can be implemented in-house with negligible effort using cli-kit's existing renderTable/renderInfo primitives and the oclif Config.commands array that is already available at runtime. Removing it also eliminates an external dependency that injects its own lodash/object-treeify transitive dependencies.",
+  "dependabot_bumps_24m": 2
+}

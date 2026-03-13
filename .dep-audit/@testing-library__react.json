@@ -1,0 +1,17 @@
+{
+  "name": "@testing-library/react",
+  "packages_declaring": [
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit",
+    "ui-extensions-test-utils"
+  ],
+  "used": "yes",
+  "usage_summary": "Used directly in 8 source files across 3 packages. (1) packages/ui-extensions-test-utils/src/render.tsx imports `render` and `RenderResult` and re-exports them as the package's public render helper; (2) packages/ui-extensions-test-utils/src/renderHook.tsx imports `renderHook` and `RenderHookResult` and re-exports them similarly. These two wrappers form the core of the @shopify/ui-extensions-test-utils public API used throughout the monorepo. (3) packages/ui-extensions-server-kit/src/context/ExtensionServerProvider.test.tsx imports `renderHook` and `act` directly to test the ExtensionServerProvider context. (4-8) Five test files in packages/ui-extensions-dev-console import `screen`, `fireEvent`, `render`, and/or `act` directly: Extensions.test.tsx, ExtensionRow.test.tsx, AppHomeRow.test.tsx, Backdrop.test.tsx, and Tooltip.test.tsx.",
+  "replacement_effort": "medium",
+  "how_to_remove": "The dependency is central to the test-utils package's public API and used directly in multiple test files across three packages. Removal would require: 1. Replacing the two wrapper functions in ui-extensions-test-utils (render.tsx, renderHook.tsx) with implementations based on an alternative (e.g. Vitest's built-in component testing utilities or @testing-library/preact if applicable). 2. Updating all 5 direct usages in ui-extensions-dev-console tests to use the replacement API — the imports of `screen`, `fireEvent`, `render`, `act` would need to point elsewhere. 3. Updating the direct usage in ui-extensions-server-kit/ExtensionServerProvider.test.tsx. The @testing-library/react API (render, screen, fireEvent, act, renderHook) is deeply embedded in the test patterns across these packages. While Vitest does provide a jsdom environment, it does not ship its own render helpers — a replacement library would still be needed, making this a like-for-like swap rather than a true removal.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The effort is classified as medium. The dependency is actively used across three packages with 8 direct import sites forming the backbone of React component and hook testing. There is no drop-in replacement available that would not require touching every test file. The library is healthy, actively maintained, and is the de-facto standard for React component testing. Removal without a replacement would leave the packages untestable at the component level.",
+  "_note_releases": "Live npm registry was not accessible during this audit. The installed version in pnpm-lock.yaml is 16.3.2 (declared as ^16.3.2). Based on the known release history (v15.x in early 2024 through v16.x by mid-2025), there are approximately 10-14 releases in the 24-month window. The total_releases_24m field is set to -1 to indicate the value could not be verified against the live registry.",
+  "dependabot_bumps_24m": 0
+}

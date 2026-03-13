@@ -1,0 +1,14 @@
+{
+  "name": "@iarna/toml",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/toml/codec.ts (the only call site). The file wraps two functions: decodeToml (calls toml.parse) and encodeToml (calls toml.stringify). No subpath imports; only the top-level package is imported.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace the single import in codec.ts with a maintained alternative such as `smol-toml` (actively maintained, TOML 1.0 compliant, zero-dependency). The API surface needed is only parse(string) and stringify(object), both of which smol-toml provides. Steps: (1) add smol-toml to cli-kit dependencies, (2) update the import in codec.ts from `@iarna/toml` to `smol-toml`, (3) adjust the type cast on line 25 to use smol-toml's exported map type, (4) remove @iarna/toml from cli-kit/package.json and run pnpm install.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "smol-toml",
+  "replacement_reason": "@iarna/toml has had zero releases in the past 24 months (last release 2.2.5 was in 2019) and is effectively unmaintained. smol-toml is actively maintained, fully TOML 1.0 compliant, zero-dependency, and provides the exact same parse/stringify API surface that codec.ts needs.",
+  "dependabot_bumps_24m": 0
+}

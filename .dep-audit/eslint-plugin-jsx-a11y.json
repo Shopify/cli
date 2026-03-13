@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-jsx-a11y",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "no",
+  "usage_summary": "Declared as a dependency in packages/eslint-plugin-cli/package.json but never imported or referenced anywhere in config.js, index.js, or any other source file in the package. No a11y rules appear in baseRules or testFileRules. The plugin is completely unused.",
+  "replacement_effort": "n/a",
+  "how_to_remove": "Delete the 'eslint-plugin-jsx-a11y' entry from the dependencies section of packages/eslint-plugin-cli/package.json and run pnpm install. No source code changes required.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package is declared but never used. It can be deleted with no code changes required.",
+  "dependabot_bumps_24m": 56
+}

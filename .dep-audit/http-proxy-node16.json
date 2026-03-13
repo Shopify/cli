@@ -1,0 +1,14 @@
+{
+  "name": "http-proxy-node16",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in a single file: packages/app/src/cli/utilities/app/http-reverse-proxy.ts. The package is lazy-imported (dynamic import) to avoid blocking the ESM module graph since it is CJS. httpProxy.default.createProxyServer() is called once to create a proxy instance; proxy.web() is used for HTTP request forwarding; proxy.ws() is used for WebSocket upgrade forwarding. The proxy type Server is imported as a type-only import for the function signatures. The entire usage is contained within ~100 lines.",
+  "replacement_effort": "small",
+  "how_to_remove": "The functionality (HTTP + WebSocket reverse proxying to a target URL) can be replaced with Node.js built-in http/https modules plus the 'http-proxy' package (the upstream from which http-proxy-node16 is forked), or with a lightweight alternative such as 'http-proxy-middleware' (express-compatible) or a manual pipe using http.request() and socket upgrades. The usage is isolated to one ~100-line file with a clear interface (createProxyServer, proxy.web, proxy.ws). http-proxy-node16 is a Node 16-compatibility fork of the original http-proxy; the upstream http-proxy package now supports modern Node versions and is a direct drop-in replacement.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "http-proxy",
+  "replacement_reason": "http-proxy-node16 is a maintenance fork created solely to fix Node 16 compatibility issues in the original http-proxy package. The upstream http-proxy package (v1.18+) now works on all current Node versions and has an identical API (createProxyServer, proxy.web, proxy.ws). Switching requires changing only the import string and the package.json entry. The package has had 0 releases in 24 months (locked at 1.0.6), confirming it is unmaintained.",
+  "dependabot_bumps_24m": 0
+}

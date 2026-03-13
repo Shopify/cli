@@ -1,0 +1,14 @@
+{
+  "name": "msw",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used exclusively in test files (devDependency). Two test files import from msw and msw/node: packages/cli-kit/src/public/node/http.test.ts (imports setupServer from msw/node; delay, http, HttpResponse from msw) and packages/cli-kit/src/public/node/api/graphql.test.ts (imports setupServer from msw/node; graphql, HttpResponse from msw). No production source files use msw. Declared as a devDependency at ^2.7.1, resolved to 2.12.10 in the lock file. The installed version is msw@2.12.10 (latest in the 2.x line as of early 2026).",
+  "replacement_effort": "medium",
+  "how_to_remove": "msw is the de-facto standard for mocking HTTP in Node.js test suites and has no direct equivalent with the same ergonomics. Replacing it would require rewriting the two test files to use lower-level approaches: either (a) vi.mock() on the fetch/http module with manual response stubs, or (b) a lightweight HTTP server (e.g. using Node's built-in `http.createServer`) as the mock backend. The graphql.test.ts file is particularly complex with typed GraphQL handler setup. Effort is 'medium' because the tests themselves are sophisticated and rely on msw's request interception model.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "msw is test-only (devDependency) so it has zero impact on production bundle size or security surface. It is actively maintained (v2.x saw frequent releases in 2024-2025), widely adopted in the JavaScript ecosystem, and provides the cleanest API for HTTP mock testing in Node.js. There is no compelling reason to replace it; the effort would outweigh any benefit.",
+  "dependabot_bumps_24m": 0
+}

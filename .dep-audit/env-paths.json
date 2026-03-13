@@ -1,0 +1,14 @@
+{
+  "name": "env-paths",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Single import in packages/cli-kit/src/private/node/constants.ts: `import envPaths from 'env-paths'`. Called twice: `envPaths(identifier).cache` for the cache folder (guarded by XDG_CACHE_HOME check) and `envPaths(identifier).log` for the logs folder. No subpath imports.",
+  "replacement_effort": "small",
+  "how_to_remove": "env-paths resolves platform-specific directories: on macOS `~/Library/Caches/<name>` and `~/Library/Logs/<name>`, on Linux `~/.cache/<name>` and `~/.local/share/logs/<name>`, on Windows `%LOCALAPPDATA%/<name>/Cache` and `%LOCALAPPDATA%/<name>/Log`. A ~25-line inline function using `process.platform`, `os.homedir()`, and `process.env` (LOCALAPPDATA, XDG_CACHE_HOME, XDG_STATE_HOME) replaces it completely. Only two call sites need the `.cache` and `.log` properties.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "env-paths has had zero releases since January 2023 (last version 3.0.0) and is effectively unmaintained. The usage is limited to two property accesses (.cache, .log) for platform-specific directories. An inline implementation using os.homedir() and process.platform covers all three supported platforms with minimal code.",
+  "dependabot_bumps_24m": 0
+}

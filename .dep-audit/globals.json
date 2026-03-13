@@ -1,0 +1,14 @@
+{
+  "name": "globals",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in `packages/eslint-plugin-cli/config.js`: `globals.node` and `globals.es2021` are spread into the ESLint flat config's `languageOptions.globals` section. This tells the TypeScript ESLint parser which global identifiers are available in Node.js and ES2021 environments, suppressing false-positive 'undefined variable' lint errors.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The `globals` package is the standard peer dependency of `eslint` flat config and is already re-exported via several ESLint plugins the project uses (`@typescript-eslint/eslint-plugin`, `eslint`). It is extremely lightweight and actively maintained. If removal were desired, the `globals.node` and `globals.es2021` objects could be inlined as plain key-value objects listing the global names, but this would require manual maintenance. In practice this dependency should be kept — it is a zero-risk, purpose-built utility with no meaningful overhead.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "globals is the canonical ESLint ecosystem package for this purpose, is actively maintained, has no transitive dependencies, and is essentially zero-cost. There is no reason to remove or replace it.",
+  "dependabot_bumps_24m": 0
+}

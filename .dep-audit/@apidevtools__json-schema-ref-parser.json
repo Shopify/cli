@@ -1,0 +1,14 @@
+{
+  "name": "@apidevtools/json-schema-ref-parser",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/cli-kit/src/public/node/json-schema.ts as $RefParser. Used in exactly one function, normaliseJsonSchema(), which calls $RefParser.dereference(parsedSchema, {resolve: {external: false}}) to inline internal $ref pointers in a JSON schema object. This function is called in two places: packages/app/src/cli/utilities/json-schema.ts and packages/app/src/cli/services/generate/fetch-extension-specifications.ts.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace the single $RefParser.dereference() call in normaliseJsonSchema() with a small (~30-line) recursive function that walks the schema object, resolves internal $ref strings against the root schema (e.g. '#/definitions/Foo'), and substitutes them inline. No external resolution is needed (the existing call already passes {resolve: {external: false}}). After implementing and testing the inline resolver, remove the @apidevtools/json-schema-ref-parser dependency from packages/cli-kit/package.json and run pnpm install.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The dependency is used for a single, narrow operation: in-memory dereferencing of internal $ref pointers with no external resolution. This is straightforwardly replaceable with a small recursive utility function, making the dependency unnecessary. Inlining also eliminates a transitive dependency chain and removes a large package from the bundle.",
+  "dependabot_bumps_24m": 13
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@types/ws",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "ws is imported in 5 source files in the app package: WebSocket and WebSocketServer from 'ws' in websocket.ts, websocket.test.ts, http-reverse-proxy.test.ts, and handlers.ts/handlers.test.ts. ws@8.18.0 does not ship its own .d.ts files (confirmed via pnpm store), so @types/ws provides the necessary type declarations.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Not a removal candidate while ws is in use. If ws is replaced with a WebSockets package that bundles types (e.g. uWebSockets.js, or the native WebSocket available in Node.js >= 22), @types/ws can be removed from app devDependencies.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "ws is actively used for WebSocket server functionality in the app package's extension dev server and does not bundle its own types.",
+  "dependabot_bumps_24m": 40
+}

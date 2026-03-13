@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-prettier",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Not directly required in config.js, but loaded transitively via @shopify/eslint-plugin's configs.prettier spread (shopifyPlugin.configs.prettier in config.js line 260). That upstream config requires eslint-plugin-prettier and enables the 'prettier/prettier' rule as an error. The explicit declaration in eslint-plugin-cli's package.json is redundant but makes the dependency resolvable even if @shopify/eslint-plugin's peer resolution changes.",
+  "replacement_effort": "small",
+  "how_to_remove": "Drop the explicit 'eslint-plugin-prettier' entry from eslint-plugin-cli/package.json. The package will still be available transiently through @shopify/eslint-plugin (which requires it in its own prettier config). If @shopify/eslint-plugin ever stops bundling it, the 'prettier/prettier' rule would silently stop applying. Alternatively, switch to relying solely on eslint-config-prettier (already also used) which disables conflicting rules without running prettier as a lint rule — a pattern recommended by the prettier project itself.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The explicit declaration is redundant since @shopify/eslint-plugin already pulls in eslint-plugin-prettier. Removing the direct dep reduces surface area without any functional change. If the team wants to drop prettier-as-a-lint-rule entirely, eslint-config-prettier (already present) is sufficient for disabling conflicting rules.",
+  "dependabot_bumps_24m": 0
+}

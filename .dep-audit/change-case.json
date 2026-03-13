@@ -1,0 +1,14 @@
+{
+  "name": "change-case",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in a single file: packages/cli-kit/src/public/common/string.ts. Six named exports are imported: camelCase, capitalCase, constantCase, paramCase, snakeCase, pascalCase. Each is wrapped in a one-line public helper function (camelize, capitalizeWords, hyphenate, underscore, constantize, pascalize) that forms part of the cli-kit public API exported via `@shopify/cli-kit/common/string`. These helpers are called from multiple packages across the monorepo.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Replace all six change-case functions with inline implementations using regex-based transformations. Each individual transform is ~5–10 lines of regex logic; edge-case parity (Unicode, numbers, consecutive uppercase, etc.) requires careful testing. The wrappers are part of the public cli-kit API so no call-site changes are needed, but the underlying implementations must be thoroughly validated against the existing test suite.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "change-case is actively maintained (8 releases in the last 24 months). Although the six functions could theoretically be inlined, the effort is medium due to edge-case coverage requirements, and there is no compelling maintenance reason to remove a healthy dependency that provides a clean, well-tested API.",
+  "dependabot_bumps_24m": 0
+}

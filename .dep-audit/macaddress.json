@@ -1,0 +1,14 @@
+{
+  "name": "macaddress",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in exactly one place: packages/cli-kit/src/public/node/context/local.ts exports a `macAddress()` function that calls `macaddress.one()` to retrieve the first MAC address. This is consumed for analytics device-ID hashing (confirmed by analytics.test.ts and error-handler.test.ts mock references).",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Node.js's built-in `os.networkInterfaces()` returns all network interface details including MAC addresses. A two-line replacement: `Object.values(os.networkInterfaces()).flat().find(i => i && !i.internal && i.mac !== '00:00:00:00:00:00')?.mac ?? '00:00:00:00:00:00'`. This eliminates the dependency with no behavioral change. Alternatively the already-declared sibling dependency `network-interfaces` (v1.1.0 in package.json) can serve the same role.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The single call `macaddress.one()` can be replaced with 2-3 lines using Node.js `os.networkInterfaces()` (built-in, no new dependency needed). macaddress@0.5.3 is pinned to an exact version and the npm package has seen very few releases historically, making it a low-value transitive dependency worth removing.",
+  "dependabot_bumps_24m": 0
+}

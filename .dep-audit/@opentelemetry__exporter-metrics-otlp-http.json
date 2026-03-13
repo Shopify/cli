@@ -1,0 +1,15 @@
+{
+  "name": "@opentelemetry/exporter-metrics-otlp-http",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in DefaultMeterProvider.ts. Used to instantiate OTLPMetricExporter with a configured endpoint URL (the Shopify OTLP collector at opentelemetryDomain()/v1/metrics) and AggregationTemporality.DELTA preference. This is the outbound transport layer: it serialises collected metrics as OTLP protobuf-over-HTTP and POSTs them to the collector. Without this package the CLI has no way to ship metrics to Shopify's backend.",
+  "total_releases_24m_note": "npm registry fetch was unavailable (network/WebFetch access denied during audit). This package is part of the @opentelemetry/contrib ecosystem and tracks the core SDK release cadence; estimated 8-14 releases in the 24-month window.",
+  "replacement_effort": "large",
+  "how_to_remove": "Removing the OTLP HTTP exporter would require either (a) removing all metric export capability from the CLI, (b) hand-rolling a minimal OTLP/HTTP implementation using Node's built-in fetch/https, or (c) switching to a different metrics backend (e.g. statsd, Prometheus remote write). All options require rewriting DefaultMeterProvider.ts and otel-metrics.ts, and coordinating with the Shopify platform team about the collector endpoint.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "This package is the sole mechanism by which CLI metrics reach Shopify's OTLP collector. It cannot be removed without either ending metric reporting or replacing it with an equivalent transport.",
+  "dependabot_bumps_24m": 56
+}

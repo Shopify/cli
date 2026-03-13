@@ -1,0 +1,14 @@
+{
+  "name": "@types/express",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying 'express' package (v4.21.2) is imported and its TypeScript types are actively used in app/src/cli/services/dev/graphiql/server.ts. The file uses 'express.Request' and 'express.Response' as explicit type annotations in two function signatures (corsMiddleware and failIfUnmatchedKey). express@4.x ships no bundled TypeScript declarations (no 'types' or 'typings' field in its package.json), so @types/express is required for type-safe usage.",
+  "replacement_effort": "small",
+  "how_to_remove": "express@5 ships bundled TypeScript declarations. Upgrading express from 4.21.2 to express@5 would make @types/express redundant. The API surface used in server.ts (app.get, app.post, app.use, app.listen, express.Request, express.Response, bodyParser) is broadly compatible with express@5, so the migration effort is small (update import, adjust any breaking API changes, drop @types/express devDependency from app/package.json).",
+  "removal_candidate": "yes",
+  "replacement_dependency": "express@5",
+  "replacement_reason": "express@5 ships bundled TypeScript declarations, eliminating the need for @types/express. Only one file in one package uses express types, making this a small migration.",
+  "dependabot_bumps_24m": 27
+}

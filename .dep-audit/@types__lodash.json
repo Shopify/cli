@@ -1,0 +1,14 @@
+{
+  "name": "@types/lodash",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "lodash is heavily used across cli-kit: direct type imports from 'lodash' (Dictionary, ObjectIterator, PropertyPath, ValueKeyIteratee, List, ValueIteratee, DebouncedFunc, DebounceSettings, ThrottleSettings) appear in object.ts, collection.ts, array.ts, and function.ts; subpath imports (lodash/sortBy.js, lodash/isEqual.js, etc.) appear in ~20 files. lodash@4.17.23 does not ship its own .d.ts files.",
+  "replacement_effort": "large",
+  "how_to_remove": "Not a removal candidate. To eliminate the dependency, replace all lodash usage with native JS equivalents or a typed-by-default alternative (e.g. es-toolkit). This would require touching ~20 source files across cli-kit.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "lodash is pervasively used and does not bundle types. Replacement would require a large refactor across cli-kit.",
+  "dependabot_bumps_24m": 50
+}

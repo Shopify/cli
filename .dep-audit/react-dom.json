@@ -1,0 +1,17 @@
+{
+  "name": "react-dom",
+  "packages_declaring": [
+    "app",
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit",
+    "ui-extensions-test-utils"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in four distinct call sites: (1) packages/ui-extensions-dev-console/src/main.tsx imports createRoot from react-dom/client to mount the browser SPA. (2) packages/app/src/cli/services/dev/graphiql/templates/graphiql.tsx imports renderToStaticMarkup from react-dom/server to generate static HTML for the GraphiQL template. (3) packages/app/src/cli/services/dev/graphiql/templates/unauthorized.tsx also uses renderToStaticMarkup from react-dom/server. (4) packages/ui-extensions-server-kit/src/ExtensionServerClient/ExtensionServerClient.test.ts mocks react-dom/test-utils for testing. Also declared as devDependency in ui-extensions-server-kit and ui-extensions-test-utils (for @testing-library/react). The direct react-dom import (not subpath) appears only in Modal.tsx (createPortal).",
+  "replacement_effort": "large",
+  "how_to_remove": "react-dom is required by: the dev-console SPA entry point (createRoot), the GraphiQL HTML template generator (renderToStaticMarkup in app), and the Modal component (createPortal). Removing it would require: replacing renderToStaticMarkup with a different HTML-generation approach (e.g. a template literal or a lightweight SSR alternative), replacing the dev-console SPA mount, and inlining portal behaviour. These changes span 3 packages and are tightly coupled to the React architecture. Additionally, @testing-library/react (used in tests across multiple packages) requires react-dom.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "react-dom is a required peer of React itself in the browser context and is needed for createRoot (SPA mount), createPortal (Modal), and renderToStaticMarkup (GraphiQL HTML). It is also a transitive requirement of @testing-library/react used widely in tests. Removing it is only viable if React itself is removed from all browser-facing packages, which is classified as large effort.",
+  "dependabot_bumps_24m": 13
+}

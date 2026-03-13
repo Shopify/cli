@@ -1,0 +1,16 @@
+{
+  "name": "execa",
+  "packages_declaring": [
+    "cli-kit",
+    "eslint-plugin-cli",
+    "e2e"
+  ],
+  "used": "yes",
+  "usage_summary": "Heavily used across cli-kit (system.ts, os.ts, git.ts, is-global.ts, custom-oclif-loader.ts) for all subprocess execution — execa(), execaCommand(), execaSync(), and ExecaChildProcess are imported directly. Also used in e2e test setup (cli.ts, auth.ts, create-test-apps.ts, cleanup-test-apps.ts) to run CLI commands. Declared in eslint-plugin-cli's package.json but no source-file import found there. The cli-kit system.ts wraps execa into the public exec/captureOutput/buildExec API consumed by ~100+ files indirectly.",
+  "replacement_effort": "large",
+  "how_to_remove": "Replace execa with Node.js built-in child_process (spawn/spawnSync/execSync via util.promisify). The system.ts abstraction already wraps execa so the public API surface would stay the same, but the internal rewrite must replicate: stream piping, signal/abort handling, detached/background processes, reject:false semantics, ExecaChildProcess typing, and cross-platform windowsHide. The execaCommand() call in system.ts requires its own command-string-to-args parser (partially present). Approximately 300–400 lines across 6 files would need careful rewriting plus full test coverage review. In e2e the direct execa() calls could be replaced with child_process.spawn wrappers straightforwardly, but the cli-kit core is the blocker.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node.js built-in child_process could replace execa, but the migration effort is large due to deep integration into the process-execution layer. The convenience features execa provides (structured result, abort integration, stream piping, cross-platform handling) would all need manual reimplementation. Not worth removing without a broader refactor initiative.",
+  "dependabot_bumps_24m": 1
+}

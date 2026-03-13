@@ -1,0 +1,14 @@
+{
+  "name": "react-transition-group",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in two files in the Modal component. Modal.tsx wraps dialog/backdrop in a <TransitionGroup> (appear/enter/exit). Dialog.tsx wraps the dialog panel in a <CSSTransition> with a 200ms fade-up animation, applying classNames from Dialog.module.scss for enter/exit CSS transitions.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace <TransitionGroup> in Modal.tsx with a React Fragment (it is only used as a thin wrapper to enable CSSTransition children). Replace <CSSTransition> in Dialog.tsx with a CSS-only approach: keep the enter/exit class names already defined in Dialog.module.scss and apply them directly via a local boolean state (isEntering/isExiting) toggled by useEffect. The animation logic is entirely CSS-driven; the library only adds/removes class names on mount/unmount. Approx 30–40 lines of React + hook code.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The library's sole job here is toggling CSS class names on mount/unmount transitions. The same effect can be achieved with a small custom hook that applies the enter/exit classes and calls onClose after the transition ends, eliminating the dependency entirely.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "n-gram",
+  "packages_declaring": [
+    "plugin-did-you-mean"
+  ],
+  "used": "yes",
+  "usage_summary": "Only `bigram` is imported and called twice in packages/plugin-did-you-mean/src/index.ts (lines 44 and 48) to compute character bigrams for fuzzy command matching. No subpath imports. No other files in the monorepo use this package.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Inline a one-line bigram helper directly in packages/plugin-did-you-mean/src/index.ts: `const bigram = (s: string) => Array.from({length: s.length - 1}, (_, i) => s.slice(i, i + 2))`. Remove the import and the `n-gram` entry from plugin-did-you-mean/package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The entire usage is a single `bigram(str)` call pattern that is trivially reproducible as a one-liner using Array.from. The package has had 0 releases in the last 24 months, indicating it is unmaintained. Inlining eliminates an external dependency with no functional risk.",
+  "dependabot_bumps_24m": 0
+}

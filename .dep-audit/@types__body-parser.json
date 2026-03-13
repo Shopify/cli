@@ -1,0 +1,15 @@
+{
+  "name": "@types/body-parser",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying package 'body-parser' is imported in packages/app/src/cli/services/dev/graphiql/server.ts (line 5: `import bodyParser from 'body-parser'`). The body-parser package ships no bundled TypeScript types (no 'types' field in its package.json), so @types/body-parser is required for TypeScript compilation. @types/body-parser@1.19.6 is installed (declared as ^1.19.2 in app/package.json) and depends on @types/connect and @types/node.",
+  "total_releases_24m_note": "Could not fetch npm registry: network access (Bash/WebFetch) was unavailable in this session.",
+  "replacement_effort": "medium",
+  "how_to_remove": "To remove, you would need to: (1) replace 'body-parser' with a middleware that ships bundled types (e.g. express v5 includes its own body parsing, or use the built-in express.json()/express.urlencoded() which are already typed via @types/express), or (2) write local ambient declarations. In graphiql/server.ts, body-parser is used for JSON and URL-encoded body parsing via express middleware — this could be replaced with express's own built-in parsers, which would be a small refactor.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The underlying 'body-parser' package is actively used and ships no bundled types. However, the functionality could be migrated to express's built-in body parsing (express.json()/express.urlencoded()), which would eliminate the need for both body-parser and @types/body-parser. That refactor is 'small' but out of scope for a pure types audit.",
+  "dependabot_bumps_24m": 27
+}

@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-react",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Declared in eslint-plugin-cli/package.json but NOT directly required/registered in config.js. The root eslint.config.js has a config block for 'src/private/node/ui/components/**/*.tsx' (lines 114-178) that references 'react/*' rules (e.g. react/function-component-definition, react/jsx-boolean-value, etc.), with a comment saying these 'rely on plugins already defined in cli config'. However, config.js does not register the 'react' plugin — this is likely a latent bug where those rules are silently ignored. The package IS required by @shopify/eslint-plugin/lib/config/react.js, but that config is not spread in config.js (only typescript, node, and prettier configs are spread). The codebase has ~50+ tsx files in packages/cli-kit/src/private/node/ui/components/ that would benefit from these rules.",
+  "replacement_effort": "small",
+  "how_to_remove": "Two options: (1) If the react/* lint rules in root eslint.config.js are dead/unintentional — remove the dependency from package.json and delete the react-rules block in eslint.config.js. (2) If the rules are intentional — they need to be made functional by registering the react plugin in config.js (requiring eslint-plugin-react and adding it to the plugins object), which means keeping the dependency but fixing the integration. Removal without fixing requires auditing whether the TSX components actually depend on any of those rules being enforced.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The codebase has substantial React/TSX UI components in cli-kit. The react/* rules in eslint.config.js appear to be intentionally configured (even if currently broken due to missing plugin registration). Removing the dependency would require also removing all react/* rule references from eslint.config.js, which reduces linting coverage for TSX files. A better path is fixing the integration rather than removing the dependency.",
+  "dependabot_bumps_24m": 56
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@vitest/coverage-istanbul",
+  "packages_declaring": [
+    "app",
+    "cli-kit",
+    "cli",
+    "create-app",
+    "plugin-cloudflare",
+    "plugin-did-you-mean",
+    "theme"
+  ],
+  "used": "yes",
+  "usage_summary": "Used as the coverage provider across all major CLI packages. The shared configurations/vite.config.ts (line 42) sets `coverage.provider: 'istanbul'`, which requires @vitest/coverage-istanbul to be installed. All seven packages plus the workspace root (package.json) declare it as a devDependency at ^3.1.4. It is not imported directly in source files — vitest loads it dynamically at test-time when coverage is requested. Without this package, running `vitest --coverage` would fail with a missing provider error.",
+  "replacement_effort": "small",
+  "how_to_remove": "To switch to the alternative v8 provider: 1. Change `provider: 'istanbul'` to `provider: 'v8'` in configurations/vite.config.ts. 2. Replace '@vitest/coverage-istanbul' with '@vitest/coverage-v8' in package.json and all seven package.json files. 3. Note that istanbul and v8 have different coverage semantics (v8 uses native V8 engine coverage, istanbul instruments source). If removal without replacement is desired, remove the entire coverage config block from vite.config.ts and remove the devDependencies — but that eliminates code coverage reporting.",
+  "removal_candidate": "no",
+  "replacement_dependency": "@vitest/coverage-v8",
+  "replacement_reason": "Actively required by the shared vitest/vite config for all test coverage runs. Cannot be removed without either switching providers (to @vitest/coverage-v8, which is a small migration) or disabling coverage entirely. The effort is 'small' for a provider swap, but the package itself is essential to the current setup.",
+  "dependabot_bumps_24m": 34
+}

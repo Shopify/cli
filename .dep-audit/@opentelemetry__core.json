@@ -1,0 +1,15 @@
+{
+  "name": "@opentelemetry/core",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in InstantaneousMetricReader.ts (production) and InstantaneousMetricReader.test.ts (test). Only one symbol is used: ExportResultCode, an enum whose SUCCESS value is compared against the result of exporter.export() to detect export failures and log diagnostics. This is the thinnest usage among all six OTel packages.",
+  "total_releases_24m_note": "npm registry fetch was unavailable (network/WebFetch access denied during audit). @opentelemetry/core is a peer of @opentelemetry/sdk-metrics and releases in lockstep with the broader SDK; estimated 8-12 releases in the 24-month window.",
+  "replacement_effort": "large",
+  "how_to_remove": "ExportResultCode could theoretically be inlined as a local enum (trivial to replicate: SUCCESS=0, FAILED=1), but @opentelemetry/core cannot be removed without also removing the entire OTel stack because it is declared as a direct dependency coordinating with sdk-metrics internals. Any standalone extraction of ExportResultCode would still leave the rest of the stack intact. Full removal requires eliminating the entire metrics subsystem (same as @opentelemetry/api).",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Although the single imported symbol (ExportResultCode) could be inlined trivially, the surrounding OTel stack that makes it necessary cannot be removed without a larger architectural decision. Removing core in isolation while keeping sdk-metrics would cause peer-dependency conflicts.",
+  "dependabot_bumps_24m": 56
+}

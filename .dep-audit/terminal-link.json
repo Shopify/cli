@@ -1,0 +1,14 @@
+{
+  "name": "terminal-link",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/cli-kit/src/private/node/content-tokens.ts. Used in `LinkContentToken.output()` to produce an OSC 8 hyperlink string with a custom fallback renderer. The fallback option is the main reason for the dependency over a raw `ansiEscapes.link()` call.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace with a direct call to `ansiEscapes.link(text, url)` (already present in the codebase via the Link.tsx component) plus a manual terminal-support check (see supports-hyperlinks above). The fallback logic (5 lines) can be inlined. Only one production call site in content-tokens.ts.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "ansi-escapes",
+  "replacement_reason": "ansi-escapes is already used in the codebase (Link.tsx uses `ansiEscapes.link`) and covers the OSC 8 link generation. Inlining the fallback eliminates the terminal-link dependency entirely.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "form-data",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Three import sites in cli-kit: (1) `FormData` default export in `public/node/http.ts` to expose a `formData()` factory function; (2) `FormData` default export in `public/node/http.test.ts` used for an instanceof check; (3) `Headers` named export in `private/node/api.ts` used only as a TypeScript type constraint on generic functions (`T extends {headers: Headers; status: number}`). The runtime `Headers` instances in tests are created with the global `new Headers()` (from Node 18+), not from form-data directly.",
+  "replacement_effort": "small",
+  "how_to_remove": "1) Replace `FormData` from `form-data` with the global `FormData` available in Node 18+ (no import needed). 2) Replace `import {Headers} from 'form-data'` in api.ts with the global `Headers` type or a structural type `{forEach(cb: (v: string, k: string) => void): void}`. 3) Update the instanceof check in http.test.ts to use the global `FormData`. 4) Remove `form-data` from cli-kit's package.json. Scope: 3 files, ~5 line changes.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node 18+ ships both FormData and Headers as globals. The project already targets Node 18+ (evidenced by use of AbortSignal.timeout and fs/promises). Removing form-data eliminates a dependency whose only unique value was polyfilling these globals.",
+  "dependabot_bumps_24m": 14
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@luckycatfactory/esbuild-graphql-loader",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/app/src/cli/services/extensions/bundle.ts as an esbuild plugin (graphqlLoaderPlugin). It is registered unconditionally as the first plugin in the getPlugins() function via graphqlLoaderPlugin.default(), enabling .graphql file imports when bundling UI extensions. It is also mocked in two test files (bundle.test.ts and app-watcher-esbuild.test.ts).",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace the import and usage of graphqlLoaderPlugin.default() in packages/app/src/cli/services/extensions/bundle.ts with an inline esbuild plugin. A graphql loader plugin is ~20 lines of code: an onLoad handler for the filter /\\.graphql$/ that reads the file, wraps it in a gql template literal (or uses graphql-tag's gql), and exports the parsed DocumentNode. Update the two test mocks accordingly. Remove the dependency from packages/app/package.json and run pnpm install.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package has had zero releases in the last 24 months (last release was 3.8.1 on 2022-12-26, over 3 years ago) and shows no signs of active maintenance. The functionality it provides — an esbuild plugin that transforms .graphql files into importable JS modules — is straightforward (~20 lines) and can be inlined directly in bundle.ts using the graphql package already present in the dependency tree, eliminating the abandoned third-party dependency entirely.",
+  "dependabot_bumps_24m": 0
+}

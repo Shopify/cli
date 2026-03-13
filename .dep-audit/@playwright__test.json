@@ -1,0 +1,15 @@
+{
+  "name": "@playwright/test",
+  "packages_declaring": [
+    "e2e"
+  ],
+  "used": "yes",
+  "usage_summary": "Heavily used across the entire e2e package. `defineConfig` is imported in packages/e2e/playwright.config.ts to configure the test runner (workers, retries, reporters, timeouts, trace/screenshot settings). The `expect` function and `Page`/`Browser` types are imported in every spec file under packages/e2e/tests/ (app-deploy.spec.ts, app-dev-server.spec.ts, app-scaffold.spec.ts, smoke-pty.spec.ts, smoke.spec.ts, toml-config-invalid.spec.ts, toml-config.spec.ts), plus helper files packages/e2e/setup/env.ts, packages/e2e/setup/auth.ts, and packages/e2e/helpers/browser-login.ts. The 13 files that import from '@playwright/test' cover the entire test infrastructure of the e2e package — it is the test runner itself.",
+  "replacement_effort": "large",
+  "how_to_remove": "The entire e2e package is built around the Playwright runner. Replacing it would require migrating all test fixtures, custom CLI fixtures (cliFixture in setup/cli.ts), browser-login helpers, and spec files to a different end-to-end framework (e.g. Cypress, WebdriverIO). The browser-based login flow (packages/e2e/helpers/browser-login.ts) uses Playwright's Page API and browser automation features. All 7 spec files would need to be rewritten. The playwright.config.ts configuration (reporters, workers, retries, global timeouts) would need equivalent config in the replacement framework. This is a full framework swap with no trivial migration path.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The effort is classified as large because @playwright/test IS the e2e test framework — every fixture, helper, and spec file depends on it. There is no way to remove it without replacing the entire e2e test suite. The dependency is actively maintained by Microsoft, has a healthy release cadence, and is the industry standard for browser-based end-to-end testing. Removal would eliminate all end-to-end test coverage.",
+  "_note_releases": "Live npm registry was not accessible during this audit. The installed version in pnpm-lock.yaml is 1.58.2 (declared as ^1.50.0). Based on Playwright's documented release history (approximately monthly releases) and the version range 1.41.x (Mar 2024) through 1.58.x (early 2026), there are approximately 18-20 releases in the 24-month window. The total_releases_24m field is set to -1 to indicate the value could not be verified against the live registry.",
+  "dependabot_bumps_24m": 0
+}

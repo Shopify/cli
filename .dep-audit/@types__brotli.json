@@ -1,0 +1,15 @@
+{
+  "name": "@types/brotli",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying package 'brotli' is used in packages/cli-kit/src/public/node/archiver.ts via a dynamic import (`const brotli = await import('brotli')` at line 186) for tar+brotli compression, and also imported directly in the integration test packages/cli-kit/src/public/node/archiver.integration.test.ts (line 7). The brotli package ships no bundled TypeScript types (no 'types' field in its package.json), so @types/brotli is required for TypeScript compilation of both the production and test code.",
+  "total_releases_24m_note": "Could not fetch npm registry: network access (Bash/WebFetch) was unavailable in this session.",
+  "replacement_effort": "small",
+  "how_to_remove": "The 'brotli' package (devongovett/brotli.js) is a pure-JS port, last published in 2015 (v1.3.3). Node.js has had native brotli compression in its built-in 'zlib' module since v10.16.0 (via zlib.brotliCompress/zlib.brotliCompressSync). Replacing the import with Node's built-in zlib would eliminate both 'brotli' and '@types/brotli'. The call site is small (one compress call with quality/mode options). Effort is 'small': one production usage in archiver.ts and one test file to update.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The 'brotli' package dependency (and thus @types/brotli) can be eliminated by switching to Node.js's built-in zlib.brotliCompress/brotliCompressSync, which requires no @types package and is available in all Node versions this project supports. This is a small refactor with a well-understood replacement.",
+  "dependabot_bumps_24m": 0
+}

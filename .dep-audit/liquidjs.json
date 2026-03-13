@@ -1,0 +1,14 @@
+{
+  "name": "liquidjs",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/liquid.ts (line 15 import). The `Liquid` engine is instantiated in `renderLiquidTemplate` and `recursiveLiquidTemplateCopy`. These functions are called from 35 source files across packages including app, theme, cli, and cli-kit itself. `renderLiquidTemplate` renders `.liquid` template strings with data, and `recursiveLiquidTemplateCopy` traverses a template directory and processes every `.liquid` file (used for scaffold/init commands). The theme package also uses it directly for Liquid rendering in the Shopify storefront theme developer workflow.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require replacing the Liquid template engine entirely across 35 call sites in app, theme, cli, and cli-kit packages. The theme package in particular depends on full Liquid semantics (filters, tags, includes) matching Shopify's storefront Liquid. No Node.js built-in templating engine can substitute; alternatives like Nunjucks or Handlebars use incompatible syntax. This is not a feasible replacement without significant rework of all template files and the theme developer workflow.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "liquidjs is deeply embedded across 35 files in multiple packages and is the correct implementation of Shopify's Liquid template language. It is essential for the theme development workflow and the scaffold/init template system. There is no viable drop-in replacement.",
+  "dependabot_bumps_24m": 57
+}

@@ -1,0 +1,14 @@
+{
+  "name": "copy-to-clipboard",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported once in packages/ui-extensions-dev-console/src/sections/Extensions/components/QRCodeModal/QRCodeModal.tsx. Used in a single onClick handler: `copyToClipboard(qrCodeURL)` writes the QR code URL to the system clipboard and returns a boolean indicating success.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace the single call with the browser-native Clipboard API: `await navigator.clipboard.writeText(qrCodeURL)`. The component already uses React hooks (useCallback), so converting the handler to async and wrapping in a try/catch is a one-line change. Alternatively the Web Clipboard API is already available in Chromium-based Electron / browser contexts that ui-extensions-dev-console targets.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The Web Clipboard API (navigator.clipboard.writeText) is a browser built-in that covers the single use case. copy-to-clipboard is only needed as a legacy fallback for IE/old Safari; the dev console does not need to support those environments.",
+  "dependabot_bumps_24m": 0
+}

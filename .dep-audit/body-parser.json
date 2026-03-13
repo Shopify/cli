@@ -1,0 +1,15 @@
+{
+  "name": "body-parser",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/app/src/cli/services/dev/graphiql/server.ts at line 177 as app.use(bodyParser.json()) to parse JSON request bodies for the GraphiQL POST endpoint (/graphiql/graphql.json). This is the sole call site. Express 4.x (version 4.21.2 is declared) bundles body-parser and re-exports it as express.json(), making the standalone package redundant.",
+  "total_releases_24m_note": "Could not fetch NPM registry data: Bash and WebFetch tools are unavailable in this session.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace the single line 'app.use(bodyParser.json())' with 'app.use(express.json())'. Remove the import 'import bodyParser from body-parser' from server.ts. Remove 'body-parser' from packages/app/package.json dependencies. express.json() is available in Express 4.x and is identical in behaviour.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Express 4.x (already a declared dependency) provides express.json() which is body-parser's json() middleware re-exported. No additional package needed.",
+  "dependabot_bumps_24m": 16
+}

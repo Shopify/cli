@@ -1,0 +1,14 @@
+{
+  "name": "@ast-grep/napi",
+  "packages_declaring": [
+    "cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Not imported anywhere in packages/cli's own TypeScript source. It is listed in the esbuild external array in packages/cli/bin/bundle.js (so the bundler skips it) and also listed under ignoreDependencies in the root package.json Knip config (acknowledging there are no direct TS imports). The actual runtime consumer is the bundled external dependency @shopify/cli-hydrogen, whose compiled dist/lib/ast.js performs a dynamic import('@ast-grep/napi') for AST-based code transformations. packages/cli declares version 0.33.0 directly; cli-hydrogen pulls in 0.34.1 transitively.",
+  "replacement_effort": "large",
+  "how_to_remove": "Cannot be removed from packages/cli without also removing or replacing the @shopify/cli-hydrogen dependency (or upgrading it to a version that no longer relies on @ast-grep/napi). The dependency is a native binary (NAPI) used by cli-hydrogen's AST transformation utilities; replacing it would require either forking cli-hydrogen or waiting for an upstream change. If cli-hydrogen itself were removed, then @ast-grep/napi and the esbuild external entry in bundle.js could also be dropped.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The dependency is actively used at runtime by @shopify/cli-hydrogen for AST code transformations. It is a native binary module that cannot be trivially replaced with a Node.js built-in. Removal would require changes to an upstream external dependency.",
+  "dependabot_bumps_24m": 29
+}

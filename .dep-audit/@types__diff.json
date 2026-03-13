@@ -1,0 +1,15 @@
+{
+  "name": "@types/diff",
+  "packages_declaring": [
+    "app",
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying 'diff' package (v5.2.2) is used in three source files. Two files in cli-kit (src/private/node/content-tokens.ts and src/public/node/output.ts) import only the 'Change' type via 'import type {Change} from \"diff\"'. One file in app (src/cli/services/app/env/pull.ts) imports the runtime function 'diffLines' from 'diff'. The diff package (v5.x) does NOT ship bundled TypeScript declarations (no 'types' or 'typings' field in its package.json), so @types/diff is required for all three import sites.",
+  "replacement_effort": "n/a",
+  "how_to_remove": "Cannot remove — @types/diff is actively needed because diff@5.x ships no bundled types. Removal would break type-checking in cli-kit/src/private/node/content-tokens.ts, cli-kit/src/public/node/output.ts, and app/src/cli/services/app/env/pull.ts. The only alternative is to migrate from 'diff' to a TypeScript-native library (e.g. 'diff-match-patch' or 'fast-diff' with bundled types), which is a medium-size refactor.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "diff@5.x has no bundled types; @types/diff is necessary for type-safe use of Change and diffLines across two packages.",
+  "dependabot_bumps_24m": 49
+}

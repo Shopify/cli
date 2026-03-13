@@ -1,0 +1,14 @@
+{
+  "name": "yaml",
+  "packages_declaring": [
+    "theme"
+  ],
+  "used": "yes",
+  "usage_summary": "Used only in packages/theme/src/cli/services/check.ts (3 call sites). All usages call YAML.stringify() to serialise plain JS objects to YAML for output: (1) stringifying check settings for a config file comment block, (2) generating an initial .theme-check.yml config, (3) rendering check results as YAML output. There is no YAML.parse() call. Note: the string 'yaml' also appears in packages/app/src/cli/models/extensions/specifications/channel.ts but only as a file extension literal, not as a package import.",
+  "replacement_effort": "small",
+  "how_to_remove": "All three usages call only YAML.stringify() on simple objects. This can be replaced with a hand-rolled serialiser for the simple key-value / nested-object shapes involved, or by switching to the lighter-weight js-yaml (which is likely already a transitive dependency via @shopify/theme-check-node). Alternatively, a ~20-line recursive stringifier covers the object shapes used here.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "js-yaml",
+  "replacement_reason": "Only YAML.stringify is used, on simple object shapes, in a single file. js-yaml is already a common transitive dependency in the monorepo and exposes a compatible dump() API, making substitution a near-trivial find-and-replace.",
+  "dependabot_bumps_24m": 56
+}

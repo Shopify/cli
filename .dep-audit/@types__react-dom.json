@@ -1,0 +1,16 @@
+{
+  "name": "@types/react-dom",
+  "packages_declaring": [
+    "app",
+    "ui-extensions-dev-console",
+    "ui-extensions-test-utils"
+  ],
+  "used": "yes",
+  "usage_summary": "react-dom is actively used: createPortal from 'react-dom' in ui-extensions-dev-console/Modal.tsx; createRoot from 'react-dom/client' in ui-extensions-dev-console/main.tsx; renderToStaticMarkup from 'react-dom/server' in app graphiql templates. react-dom@19.2.4 does not ship its own .d.ts files.",
+  "replacement_effort": "large",
+  "how_to_remove": "Not removable while react-dom is used. react-dom does not bundle its own types. @types/react-dom must be retained in all three packages.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "react-dom is used for DOM rendering and server-side rendering in app and ui-extensions-dev-console. It does not bundle type declarations.",
+  "dependabot_bumps_24m": 6
+}

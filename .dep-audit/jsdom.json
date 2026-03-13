@@ -1,0 +1,15 @@
+{
+  "name": "jsdom",
+  "packages_declaring": [
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Not imported directly in any source file — no `import 'jsdom'` or `require('jsdom')` exists anywhere under packages/. It is used implicitly as the Vitest test environment: both packages/ui-extensions-dev-console/vite.config.mts and packages/ui-extensions-server-kit/vite.config.mts set `test.environment: 'jsdom'`, which causes Vitest to load jsdom to simulate a browser DOM for React component testing.",
+  "replacement_effort": "small",
+  "how_to_remove": "Switch the vitest `environment` from `'jsdom'` to `'happy-dom'` in both vite.config.mts files and replace `\"jsdom\": \"^25.0.0\"` with `\"happy-dom\"` in both package.json devDependencies. happy-dom is a lighter-weight DOM implementation that is the standard Vitest alternative. Some test helpers relying on jsdom-specific behaviour (e.g. exact error messages) may need minor adjustment.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "happy-dom",
+  "replacement_reason": "jsdom is only used as a Vitest test environment for DOM simulation in two React packages. happy-dom is a faster, maintained alternative that Vitest officially recommends and supports natively. The switch is mechanical (one config key per package) with minimal risk of test breakage.",
+  "dependabot_bumps_24m": 2
+}

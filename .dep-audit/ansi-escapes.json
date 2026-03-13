@@ -1,0 +1,15 @@
+{
+  "name": "ansi-escapes",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/private/node/ui/components/Link.tsx to emit OSC 8 terminal hyperlink escape sequences via ansiEscapes.link(label, url). This is the only call site. It is guarded by a supportsHyperlinks.stdout check so it only fires in terminals that support clickable links.",
+  "total_releases_24m_note": "Could not fetch NPM registry data: Bash and WebFetch tools are unavailable in this session.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The single usage is ansiEscapes.link(label, url) which generates the string '\\u001B]8;;{url}\\u0007{label}\\u001B]8;;\\u0007'. This can be inlined as a one-liner utility function with no external dependency: (label, url) => `\\u001B]8;;${url}\\u0007${label}\\u001B]8;;\\u0007`. Remove the import from Link.tsx, add the inline helper, and remove the package from cli-kit's package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The only feature used is OSC 8 hyperlink generation, a trivially inlineable 2-line function. No external package is needed.",
+  "dependabot_bumps_24m": 52
+}

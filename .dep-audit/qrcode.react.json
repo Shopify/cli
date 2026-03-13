@@ -1,0 +1,14 @@
+{
+  "name": "qrcode.react",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in one component: packages/ui-extensions-dev-console/src/sections/Extensions/components/QRCodeModal/QRCodeModal.tsx. Imports QRCodeCanvas (aliased as QRCode) and renders a 170×170 QR code for extension preview URLs (mobile and POS deep-links). No subpath imports.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace with the `qrcode` package (pure Node/browser, no React wrapper) and render the QR code into a <canvas> or <img> via a useEffect, or switch to the lighter `react-qr-code` (SVG-based, zero extra deps). The QRCodeModal component is self-contained (~100 LOC) so the change is isolated to that one file.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "react-qr-code",
+  "replacement_reason": "react-qr-code is SVG-based, has no peer-deps beyond React, is actively maintained, and the API is a near-identical drop-in (<QRCode value={url} size={170} />). Alternatively, if the team wants to remove all wrapper libs, the bare `qrcode` package can generate a data-URL rendered in an <img> tag with ~5 lines of useEffect.",
+  "dependabot_bumps_24m": 1
+}

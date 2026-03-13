@@ -1,0 +1,14 @@
+{
+  "name": "commondir",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported once in packages/cli-kit/src/public/node/path.ts. Used inside relativizePath() to find the common ancestor of two paths before deciding whether to return the relative or absolute form. relativizePath() is itself called from 9 files across cli-kit, app and theme packages (18 call-sites total).",
+  "replacement_effort": "trivial",
+  "how_to_remove": "commondir's entire published source is ~15 lines. The one call site is `commondir([path, dir])` which returns the longest common path prefix. This can be inlined directly in relativizePath() using Node's built-in `path.resolve` and string splitting, or by importing `pathe` (already a direct dependency) utilities. No other file needs to change.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package is a tiny utility (< 20 lines) that has had no releases in years. The single call site in relativizePath() is trivially replaceable with an inline implementation using Node built-ins or the existing pathe dependency.",
+  "dependabot_bumps_24m": 0
+}

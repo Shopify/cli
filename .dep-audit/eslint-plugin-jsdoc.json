@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-jsdoc",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/eslint-plugin-cli/config.js and registered as the 'jsdoc' plugin. One rule is enforced: 'jsdoc/require-returns-description': 'error' (line 180 of config.js). The plugin itself exposes many rules but only one is activated.",
+  "replacement_effort": "small",
+  "how_to_remove": "Only one rule ('jsdoc/require-returns-description') is used. This rule enforces that @returns JSDoc tags include a description. It could be replaced by the tsdoc plugin's syntax rule (already present) or removed entirely if the team is comfortable relying only on TypeScript types. Alternatively the single rule check could be implemented as a small custom rule (~30 lines). Effort is small.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Only one rule is used from a large plugin. The rule can be inlined as a custom rule or replaced by stricter tsdoc/syntax checks from the already-present eslint-plugin-tsdoc.",
+  "dependabot_bumps_24m": 14
+}

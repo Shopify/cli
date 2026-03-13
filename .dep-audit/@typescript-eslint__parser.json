@@ -1,0 +1,14 @@
+{
+  "name": "@typescript-eslint/parser",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Declared as a direct dependency in packages/eslint-plugin-cli/package.json at version 8.56.1. No source file in eslint-plugin-cli directly requires or imports '@typescript-eslint/parser' — it is used implicitly as the ESLint parser when ESLint processes TypeScript files, activated by the languageOptions.parserOptions block in config.js line 271-278 via the @shopify/eslint-plugin typescript config spread. The actual parser is loaded transitively: @shopify/eslint-plugin (v50) -> typescript-eslint (v8.56.1) -> @typescript-eslint/parser (v8.56.1). The direct declaration in eslint-plugin-cli is redundant. Additionally, packages/features/steps/node-deps.steps.ts includes '@typescript-eslint/parser' in the sharedDependencies version-consistency check, meaning that test will need updating if the dep is removed from eslint-plugin-cli.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "1. Remove '@typescript-eslint/parser' from dependencies in packages/eslint-plugin-cli/package.json. 2. Remove '@typescript-eslint/parser' from the sharedDependencies array in packages/features/steps/node-deps.steps.ts (line 38) since this dep will no longer be directly declared. 3. Run `pnpm install` and `pnpm run lint` to confirm ESLint still works correctly via the transitive path.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Already provided transitively through @shopify/eslint-plugin v50's dependency on the unified 'typescript-eslint' package. The direct declaration is redundant. The sharedDependencies version-check in the features integration test is a secondary concern that must be cleaned up alongside removal.",
+  "dependabot_bumps_24m": 13
+}

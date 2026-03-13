@@ -1,0 +1,14 @@
+{
+  "name": "json-schema-to-typescript",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/app/src/cli/models/extensions/specifications/type-generation.ts. The `compile` function is called in `formatJsonSchemaType` (line 327) to convert a JSON Schema object into a TypeScript type declaration string. This is invoked from `createToolsTypeDefinition`, which generates TypeScript types for `shopify.tools.register` based on tool definitions read from a tools.json file in UI extensions. The generated types are written into .d.ts declaration files consumed by extension developers.",
+  "replacement_effort": "medium",
+  "how_to_remove": "The `compile` function performs full JSON Schema -> TypeScript type conversion including $ref resolution, allOf/anyOf/oneOf composition, and nested object handling. Replacing it would require either: (a) writing a bespoke recursive JSON-Schema-to-TS emitter covering the subset of schemas actually used by tools.json (medium effort, risk of regressions for edge-case schemas), or (b) switching to an alternative such as `json-schema-to-ts` (type-level only, no runtime compile), `quicktype-core`, or `@sinclair/typebox`. None is a drop-in replacement for the runtime `compile(schema, name)` API. An audit of real tools.json schemas in the wild would be needed before committing to any alternative.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The functionality (runtime JSON Schema -> TypeScript type string generation) is non-trivial to inline. The dependency is actively needed for a developer-facing feature (tools type generation for UI extensions) and no lightweight built-in alternative exists.",
+  "dependabot_bumps_24m": 0
+}

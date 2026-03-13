@@ -1,0 +1,14 @@
+{
+  "name": "@types/proper-lockfile",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "proper-lockfile is imported directly in packages/app/src/cli/services/build/extension.ts and its test file. proper-lockfile@4.1.2 does not ship its own .d.ts files, so @types/proper-lockfile (pinned to 4.1.4 in app devDependencies) provides the necessary type declarations.",
+  "replacement_effort": "small",
+  "how_to_remove": "Not a removal candidate while proper-lockfile is in use. If proper-lockfile is replaced (e.g. with a package that bundles types), remove @types/proper-lockfile from app devDependencies simultaneously.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "proper-lockfile is actively used in the app package build service and does not bundle its own types. The @types package had 0 releases in the last 24 months (stable/complete), but must be retained.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@oclif/plugin-plugins",
+  "packages_declaring": [
+    "cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli/src/index.ts. Both the commands and hooks exports are imported. The commands object (plugins, plugins:inspect, plugins:install, plugins:link, plugins:reset, plugins:uninstall, plugins:update) is spread into the top-level COMMANDS map. The hooks export is re-exported directly from the cli package as PluginHook (consumed by oclif's plugin lifecycle). Additionally, index.ts mutates two of the contributed commands before export: PluginPluginsCommands.plugins.hidden = true (hides the base 'plugins' listing command) and PluginPluginsCommands['plugins:install'].description = '' (clears a machine-specific path from the description). All seven commands are iterated to set customPluginName.",
+  "replacement_effort": "medium",
+  "how_to_remove": "The package contributes the entire user-facing plugin management surface: install, uninstall, link, update, inspect, reset, and the update hook. Removing it entirely would mean either (a) dropping plugin management support from the CLI altogether, or (b) implementing these seven commands in-house. Option (a) is viable if the team determines that the existing user-installed-plugins feature (which allows end-users to extend the CLI at runtime) is not a supported use case — noting that the 'plugins' command is already hidden and 'plugins:install' has its description cleared, suggesting the team is actively de-emphasising this surface. Option (b) requires reimplementing npm/yarn package installation logic, the oclif plugin data-directory management, and the update hook — roughly a medium effort. If dropping: remove the import from index.ts, remove the hooks re-export, remove the package from packages/cli/package.json.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Although the 'plugins' command is hidden and install description is cleared (signals of intentional de-emphasis), the package still contributes a hooks.update export that is re-exported from the cli package and consumed by the oclif lifecycle. Removing it risks breaking the CLI's update flow. The seven commands also represent non-trivial npm/plugin-management logic that would require meaningful reimplementation effort. This warrants a deliberate product decision before removal rather than a clean mechanical extraction, putting effort at 'medium' and the candidate at 'no' until the team confirms plugin management is no longer a supported feature.",
+  "dependabot_bumps_24m": 2
+}

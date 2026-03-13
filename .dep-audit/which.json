@@ -1,0 +1,15 @@
+{
+  "name": "which",
+  "packages_declaring": [
+    "app",
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in three distinct call sites across cli-kit and app. (1) cli-kit/src/public/node/system.ts: which.sync() to check if a command resolves to a local directory binary before executing it (security guard). (2) cli-kit/src/public/node/version.ts: which.sync('shopify', {all: true}) to find all globally-installed shopify binaries. (3) app/src/cli/utilities/mkcert.ts: which('mkcert', {nothrow: true}) to check if mkcert is already on PATH before downloading it.",
+  "replacement_effort": "small",
+  "how_to_remove": "Node 18.19+ provides import('node:child_process').execFileSync with which-like PATH resolution, but a direct drop-in is `node:child_process` + manual PATH splitting. Alternatively the lightweight `locate-path` or a hand-rolled PATH scan using `fs.accessSync` could replace all three call sites. The total surface area is small — three call sites with well-understood semantics.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "All three usages (sync PATH lookup, find-all PATH lookup, nothrow PATH lookup) can be implemented with a small helper using Node's built-in `node:child_process` / `node:fs` / `process.env.PATH` without adding a new dependency.",
+  "dependabot_bumps_24m": 0
+}

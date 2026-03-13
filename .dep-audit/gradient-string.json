@@ -1,0 +1,14 @@
+{
+  "name": "gradient-string",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in exactly one file: packages/cli-kit/src/private/node/ui/components/TextAnimation.tsx. The default export is called as a factory with two HSV colour objects to produce an ANSI-colour gradient function, which is then applied to each animation frame of the 'rainbow' text animation component. The component cycles hue values on a 35 ms interval to produce a scrolling rainbow effect in the terminal.",
+  "replacement_effort": "small",
+  "how_to_remove": "Inline the gradient logic directly in TextAnimation.tsx using the 'chalk' package (already a dependency of cli-kit) and HSV-to-RGB conversion (a small pure function). The entire surface is a single private component with one call site; no public API is exposed. Alternatively, the feature could be removed entirely if the rainbow animation is cosmetic-only.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "chalk",
+  "replacement_reason": "chalk is already a declared dependency in cli-kit and supports 256-colour / truecolor ANSI output. A small HSV-to-RGB helper (~15 lines) plus chalk.rgb() calls would fully replace gradient-string's usage here. gradient-string itself has had zero releases in the last 24 months (latest pinned version is 2.0.2, which predates the window), indicating an unmaintained project.",
+  "dependabot_bumps_24m": 0
+}

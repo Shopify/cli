@@ -1,0 +1,14 @@
+{
+  "name": "@types/semver",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "semver is imported in two cli-kit files: SemVer and satisfies (semverSatisfies) from 'semver' in node-package-manager.ts, and satisfies from 'semver' in version.ts. semver@7.6.3 does not ship its own .d.ts files (confirmed via pnpm store), so @types/semver provides the necessary type declarations.",
+  "replacement_effort": "small",
+  "how_to_remove": "Not a removal candidate while semver is in use. Alternatively, note that semver v7.x could be replaced with native Node.js 22+ semver support, but that would require a minimum Node version bump.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "semver is used for version comparison in cli-kit and does not bundle its own types. @types/semver must be retained.",
+  "dependabot_bumps_24m": 27
+}

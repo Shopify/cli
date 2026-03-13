@@ -1,0 +1,15 @@
+{
+  "name": "@opentelemetry/semantic-conventions",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in DefaultMeterProvider.ts. One symbol used: SemanticResourceAttributes.SERVICE_NAME (the string constant 'service.name'), which is used as the key when constructing the OTel Resource that labels every exported metric with the service name 'shopify-cli'.",
+  "total_releases_24m_note": "npm registry fetch was unavailable (network/WebFetch access denied during audit). This package is stable and changes infrequently; estimated 4-8 releases in the 24-month window.",
+  "replacement_effort": "small",
+  "how_to_remove": "SemanticResourceAttributes.SERVICE_NAME is simply the string literal 'service.name'. It could be inlined as a string constant in DefaultMeterProvider.ts with a one-line change, eliminating this dependency in isolation without touching any other file. However, the broader OTel stack it supports still depends on the other five packages.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The single used value (SERVICE_NAME = 'service.name') can be inlined as a string literal. Removing this package requires only a one-line change in DefaultMeterProvider.ts, making it the only member of the OTel group that is a genuine removal candidate on its own merits.",
+  "dependabot_bumps_24m": 56
+}

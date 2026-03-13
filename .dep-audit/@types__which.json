@@ -1,0 +1,15 @@
+{
+  "name": "@types/which",
+  "packages_declaring": [
+    "app",
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "which is imported directly in 6 source files: system.ts and system.test.ts in cli-kit, version.ts and version.test.ts in cli-kit, and mkcert.ts and mkcert.test.ts in app. which@4.0.0 does not ship its own .d.ts files (confirmed via pnpm store), so @types/which provides the necessary type declarations.",
+  "replacement_effort": "small",
+  "how_to_remove": "Not a removal candidate while which is in use. If which is replaced with a typed alternative, remove @types/which from both app and cli-kit devDependencies.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "which is actively used across app and cli-kit and does not bundle its own types. @types/which must be retained in both packages.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,16 @@
+{
+  "name": "esbuild",
+  "packages_declaring": [
+    "app",
+    "cli",
+    "create-app"
+  ],
+  "used": "yes",
+  "usage_summary": "Deeply integrated across the app package. Runtime imports in: (1) packages/app/src/cli/services/extensions/bundle.ts — `context`, `formatMessagesSync` for bundling UI extensions; (2) packages/app/src/cli/services/dev/app-events/app-watcher-esbuild.ts — `BuildContext`, `context` for incremental dev-mode rebuilds; (3) packages/app/src/cli/services/function/build.ts — `build`, `BuildResult` for building JS functions; (4) packages/app/src/cli/services/dev/app-events/app-event-watcher.ts — `formatMessagesSync`, `Message` for error formatting. Also used as the bundler for cli and create-app self-build scripts (packages/cli/bin/bundle.js, packages/create-app/bin/bundle.js). The `esbuild` feature flag string appears in 7+ extension specification files controlling which extensions get bundled.",
+  "replacement_effort": "large",
+  "how_to_remove": "esbuild is the core bundler for extension compilation (UI extensions, JS functions) and the CLI's own build pipeline. Replacing it would require adopting an alternative bundler (e.g. Rollup, Vite, SWC) across all extension types, rewriting the incremental watch/rebuild context management in ESBuildContextManager, and updating the self-bundling scripts. The `esbuild` feature flag is structural to the extension specification system. This is a multi-week refactor touching dozens of files.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "esbuild is a core infrastructure dependency with deep integration across bundle, watch, and build pipelines. It is actively maintained with ~30 releases in the 24-month window and has no viable drop-in replacement. The replacement effort is large.",
+  "dependabot_bumps_24m": 24
+}

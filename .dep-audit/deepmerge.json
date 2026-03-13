@@ -1,0 +1,14 @@
+{
+  "name": "deepmerge",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Single call site in packages/cli-kit/src/public/common/object.ts. The exported `deepMergeObjects` wrapper calls `deepMerge(lhs, rhs, {arrayMerge})` — a thin one-liner wrapper around the library's default export. No subpath imports.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace the single `deepMerge(lhs, rhs, {arrayMerge})` call in object.ts with a small inline recursive merge function (~15 lines) or with structuredClone + a custom array-merge strategy. The surrounding `deepMergeObjects` signature stays unchanged, so no callers need updating.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "deepmerge has had zero releases since October 2022 (last version 4.3.1). The single usage is a trivial one-liner that is easily inlined. Removing it reduces supply-chain risk from an unmaintained package.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "latest-version",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/node-package-manager.ts (line 12 import, line 714 call). The single call site is `getLatestNPMPackageVersion(name)` which wraps `latestVersion(name)` in a timing wrapper. This function is used to check whether a newer version of a CLI package is available (upgrade notifications). The test file mocks it with `vi.mock('latest-version')`.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace the `latestVersion(name)` call with a direct fetch to the npm registry: `fetch('https://registry.npmjs.org/' + name + '/latest').then(r => r.json()).then(d => d.version)`. This is a one-function change in node-package-manager.ts. Remove the `import latestVersion from 'latest-version'` statement and the `\"latest-version\": \"7.0.0\"` entry from cli-kit's package.json. Update the test mock to mock the fetch call instead.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "latest-version is a thin wrapper around a single npm registry fetch. Node.js 18+ ships `fetch` as a global built-in, making the dependency entirely redundant. The replacement is a one-liner fetch call.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "express",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in exactly one file: packages/app/src/cli/services/dev/graphiql/server.ts. The server sets up a small HTTP server with GET and POST routes for GraphiQL, serving static files, handling CORS, proxying GraphQL requests, and managing OAuth tokens. It uses express(), app.get(), app.post(), app.use(), bodyParser.json(), res.sendFile(), and express.Request/Response types. The server is started with app.listen() and the returned http.Server is used by callers.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace with Node.js built-in http.createServer() plus manual routing (~6 routes), or use a minimal alternative like fastify or hono. The route count is very small (5 GET, 1 POST). The bodyParser.json() middleware can be replaced with JSON.parse on the readable body stream. express.Request/Response types would be replaced with http.IncomingMessage/ServerResponse. Estimated effort: ~100 lines of targeted rewriting in a single file, low risk.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The usage is isolated to a single small server file with only 6 routes and no advanced express features. Node.js built-in http module is sufficient for this use case, eliminating a heavy dependency (express + body-parser) from the app package.",
+  "dependabot_bumps_24m": 32
+}

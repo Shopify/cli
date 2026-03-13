@@ -1,0 +1,14 @@
+{
+  "name": "@bugsnag/js",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Actively used in packages/cli-kit/src/public/node/error-handler.ts for error reporting. The Bugsnag client is imported as the default export plus the Event type. It is initialised via Bugsnag.start() (pointing at Shopify-internal endpoints, not bugsnag.com), used via Bugsnag.notify() to report handled/unhandled errors, and extended via Bugsnag.addOnError() to clean stack-frame paths and attach CLI metadata. Three exported public functions depend on it: sendErrorToBugsnag, registerCleanBugsnagErrorsFromWithinPlugins, and addBugsnagMetadata. The current pinned version in use is 8.6.0.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Replace the three Bugsnag-dependent functions with direct HTTP POST calls to the same Shopify-internal endpoints (https://error-analytics-production.shopifysvc.com). The payload format must match the Bugsnag Error Reporting API JSON schema. Stack-trace cleaning and metadata enrichment logic already lives in the surrounding code and can be reused. The rate-limiting and environment-guard logic is already independent of the Bugsnag client. Tests mocking @bugsnag/js in error-handler.test.ts would need to be rewritten to mock the new HTTP client instead. Estimated scope: replace ~80 lines of Bugsnag API calls with a lightweight fetch/http wrapper, update types, and update tests.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The replacement would require implementing and validating a custom Bugsnag API payload builder against Shopify-internal relay endpoints. That is non-trivial due to the structured event envelope, session tracking hooks, and the need to exactly reproduce the on-error plugin mechanism used for stack-trace normalisation. The effort is classified as medium, so the feasibility rules indicate this is not a removal candidate at this time. If Shopify decides to migrate to a different error-monitoring service (e.g. Sentry) the effort could be re-evaluated, but a simple removal without a replacement would silently drop all production error reporting.",
+  "dependabot_bumps_24m": 56
+}

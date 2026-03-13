@@ -1,0 +1,14 @@
+{
+  "name": "diff",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Two distinct usage patterns: (1) packages/app/src/cli/services/app/env/pull.ts imports `diffLines` and calls it at runtime to produce a Change[] array for display. (2) packages/cli-kit/src/private/node/content-tokens.ts and packages/cli-kit/src/public/node/output.ts import only the `Change` TypeScript type — no runtime call. The actual diff-processing logic (iterating added/removed/unchanged parts) lives in LinesDiffContentToken.output().",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace `diffLines` with Node.js's built-in or a micro-implementation. A ~30-line Myers/line-diff function is sufficient given the narrow use-case (comparing two .env file strings). The `Change` type can be replaced with a local interface `{ value: string; added?: boolean; removed?: boolean }`. All three files would need updating, but the surface is narrow.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Only one runtime call site (diffLines on .env file strings). The `Change` type is used in two other files but only as a TypeScript type annotation, replaceable with a local interface. The diff library is moderately active (~2 releases in 24 months) but the functionality needed is narrow enough to inline.",
+  "dependabot_bumps_24m": 58
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@testing-library/jest-dom",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/ui-extensions-dev-console/tests/setup.ts via the subpath import `@testing-library/jest-dom/vitest`. This single import extends Vitest's expect with custom DOM matchers (e.g. toBeInTheDocument, toHaveTextContent). The matchers are then consumed indirectly throughout the dev-console test files — notably in packages/ui-extensions-dev-console/src/sections/Extensions/Extensions.test.tsx which calls `expect(screen.queryByRole('table')).not.toBeInTheDocument()`, a matcher that only exists because of this setup import.",
+  "replacement_effort": "small",
+  "how_to_remove": "1. Remove `@testing-library/jest-dom` from devDependencies in packages/ui-extensions-dev-console/package.json. 2. Remove the import line from packages/ui-extensions-dev-console/tests/setup.ts. 3. Replace any `toBeInTheDocument()` assertions in tests with standard Vitest alternatives: `not.toBeNull()` or checking `screen.queryByRole(...)` against null. A grep for `toBeInTheDocument` across the dev-console test files shows it is used in at least Extensions.test.tsx; a full search is recommended before removal. 4. Replace any other jest-dom matchers (toHaveTextContent, toHaveClass, toBeDisabled, etc.) found in the test files with equivalent Vitest DOM assertions or manual element property checks.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The dependency is used only in a single setup file to extend Vitest matchers. The jest-dom matchers it provides (toBeInTheDocument, toHaveTextContent, etc.) can be replaced with native Vitest/DOM assertions at small effort. The scope is limited to one package and the changes are mechanical. Vitest itself has good built-in support for DOM assertions with jsdom, making the jest-dom extension layer unnecessary.",
+  "_note_releases": "Live npm registry was not accessible during this audit. The installed version in pnpm-lock.yaml is 6.9.1 (declared as ^6.9.1). Based on the known release history (v6.4 in early 2024 through v6.9.x by mid-2025), there are approximately 8-12 releases in the 24-month window. The total_releases_24m field is set to -1 to indicate the value could not be verified against the live registry.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "ws",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Core WebSocket server for the extension dev server in app. Used in two production files: (1) app/src/cli/services/dev/extension/websocket.ts imports WebSocketServer to create a no-server WebSocket server that handles HTTP upgrade events and pings clients. (2) app/src/cli/services/dev/extension/websocket/handlers.ts imports RawData, WebSocket, and WebSocketServer for message dispatch, upgrade handling, and broadcasting payloads to all connected clients. Also used directly in app/src/cli/utilities/app/http-reverse-proxy.test.ts for test assertions.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Node 22 ships a built-in WebSocket client (--experimental-websocket) but no WebSocket *server*. The only viable drop-in is switching to the `undici` WebSocket (client only) or migrating to a different server library. The ws API surface used here (WebSocketServer, noServer mode, handleUpgrade, ws.send, ws.ping, ws.readyState, wss.clients) is fairly broad, making this a medium-effort rewrite.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Node.js does not provide a built-in WebSocket *server*, and the ws usage is non-trivial (server-side only, uses noServer mode, handleUpgrade, client tracking, and ping). Replacing it would require a comparable third-party library or a significant custom implementation.",
+  "dependabot_bumps_24m": 59
+}

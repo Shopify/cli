@@ -1,0 +1,14 @@
+{
+  "name": "node-abort-controller",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/cli-kit/src/public/node/abort.ts (the only file that imports from node-abort-controller). The file re-exports `AbortController` and `AbortSignal` as thin subclasses of the polyfill. These re-exports are in turn imported by 27 files across the monorepo via @shopify/cli-kit/node/abort. The original comment explains the polyfill was added because AbortController was added in Node 15 and the minimum version was Node 14.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The repo already requires Node >=20.10.0 (cli-kit/package.json engines field). AbortController and AbortSignal are global built-ins in Node 20. Update packages/cli-kit/src/public/node/abort.ts to `export class AbortController extends globalThis.AbortController {}` and `export class AbortSignal extends globalThis.AbortSignal {}` (or remove the intermediate subclasses entirely and re-export globals directly). Remove the `node-abort-controller` dependency from cli-kit/package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package was a polyfill for Node <15. The codebase now requires Node >=20.10.0, where AbortController and AbortSignal are stable globals. The polyfill is entirely redundant. The package has had 0 releases in the last 24 months. Removing it requires changing only one file (abort.ts) with no functional change to the 27 consumers.",
+  "dependabot_bumps_24m": 0
+}

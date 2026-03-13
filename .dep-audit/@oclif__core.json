@@ -1,0 +1,19 @@
+{
+  "name": "@oclif/core",
+  "packages_declaring": [
+    "app",
+    "cli-kit",
+    "cli",
+    "plugin-cloudflare",
+    "plugin-did-you-mean",
+    "theme"
+  ],
+  "used": "yes",
+  "usage_summary": "Extremely deeply used throughout the monorepo. The CLI's entire command/flag/hook architecture is built on @oclif/core abstractions. Specific usages include: (1) Command base class — every command in app, theme, cli, plugin-did-you-mean, and cli-kit extends or calls @oclif/core Command directly (74 source files import the exact package name, 18 more use @oclif/core/interfaces and @oclif/core/parser subpath exports); (2) Flags / Args — nearly every command file imports Flags or Args from @oclif/core for flag definition; (3) Config / Interfaces — cli-kit's ShopifyConfig extends Config, custom-oclif-loader wraps Options/Config, error-handler uses Interfaces.Config and settings, analytics files read Config; (4) Hook typing — prerun, postrun, deprecations hooks, plugin-did-you-mean index all import Hook or Command from @oclif/core; (5) cli-launcher dynamically imports @oclif/core and calls oclif.default.run / oclif.default.flush to boot the entire CLI.",
+  "replacement_effort": "large",
+  "how_to_remove": "Not feasible without replacing the entire CLI framework. @oclif/core provides the Command base class, flag/arg parsing, Config loading, Hook infrastructure, and the run/flush lifecycle. Every command across all six declaring packages would need to be rewritten against a different framework (e.g., commander, yargs, or a bespoke solution). The custom ShopifyConfig subclass, environment-flag merging in BaseCommand, and the fanout-hooks system in cli-kit are all tightly coupled to @oclif/core internals. A migration would be equivalent to a full CLI framework replacement — at minimum several engineer-months of work.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "@oclif/core is the foundational framework for the entire Shopify CLI. Removing it would require rebuilding the command dispatch, flag parsing, plugin loading, hook, and config subsystems from scratch. The coupling is pervasive across all major packages and test suites.",
+  "dependabot_bumps_24m": 10
+}

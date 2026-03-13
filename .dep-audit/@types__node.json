@@ -1,0 +1,14 @@
+{
+  "name": "@types/node",
+  "packages_declaring": [
+    "e2e"
+  ],
+  "used": "yes",
+  "usage_summary": "The e2e package uses Node.js built-in APIs extensively: 'path' and 'fs' are imported directly in setup/env.ts, and NodeJS.ProcessEnv is referenced as a global type. At least 10 e2e source files reference Node.js globals (process, Buffer, path, fs, child_process). @types/node is pinned to 18.19.70 in e2e/package.json.",
+  "replacement_effort": "n/a",
+  "how_to_remove": "Not removable — Node.js built-in APIs have no JS replacement. The version pin (18.x) could be updated to match the minimum Node engine (>=20.10.0). No removal path exists while the project uses Node.js built-ins.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "@types/node is essential for typing Node.js built-in modules and globals in the e2e package.",
+  "dependabot_bumps_24m": 50
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@opentelemetry/sdk-metrics",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The most heavily used of the six packages. Imported in 4 production files and 1 test file. Symbols used: MeterProvider (base class for DefaultMeterProvider, used as interface type in BaseOtelService), MetricReader (base class for InstantaneousMetricReader), ExplicitBucketHistogramAggregation and View (histogram bucket configuration in BaseOtelService.addView), AggregationTemporality and ConsoleMetricExporter (DefaultMeterProvider constructor), and PushMetricExporter/ViewOptions/ResourceMetrics types across types.ts and tests. This is the core SDK that wires together the MeterProvider, readers, aggregations, and exporters.",
+  "total_releases_24m_note": "npm registry fetch was unavailable (network/WebFetch access denied during audit). This is the main OTel JS metrics SDK; releases are frequent and coordinated across the suite; estimated 8-14 releases in the 24-month window.",
+  "replacement_effort": "large",
+  "how_to_remove": "sdk-metrics is the foundation of the entire vendor/otel-js subtree. Removing it would require rewriting or deleting all 8 files in that subtree and the otel-metrics.ts private module. There is no smaller-footprint drop-in that provides MeterProvider + MetricReader + OTLP-compatible aggregation in Node.js.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "This is the central dependency the entire metrics subsystem is built on. Removal is only feasible as part of a complete removal or wholesale replacement of the CLI's OTel metrics pipeline.",
+  "dependabot_bumps_24m": 56
+}

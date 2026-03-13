@@ -1,0 +1,15 @@
+{
+  "name": "graphql-request",
+  "packages_declaring": [
+    "app",
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Heavily used across the entire GraphQL client layer. In cli-kit: GraphQLClient (for instantiation), rawRequest, RequestDocument, resolveRequestDocument, Variables, ClientError are imported in packages/cli-kit/src/public/node/api/graphql.ts — the central GraphQL execution engine. ClientError and Variables are also imported in api.ts, api.test.ts, and all individual API modules (admin.ts, app-dev.ts, app-management.ts, business-platform.ts, functions.ts, partners.ts, webhooks.ts, themes/api.test.ts). In app: gql tag is imported in ~20+ GraphQL query definition files under packages/app/src/cli/api/graphql/; ClientError and Variables are used in execute-operation.ts, dev-session.ts, admin-as-app.ts, and the app-management-client.",
+  "replacement_effort": "large",
+  "how_to_remove": "graphql-request is deeply embedded in the entire GraphQL transport layer. Replacing it would require: rewriting the central graphqlRequest/graphqlRequestDoc functions in cli-kit to use fetch() directly; replacing the gql tag in ~20 query files (either with template literals or a different tagged-template from the 'graphql' package itself); replacing the ClientError type/instanceof checks in ~8 files with a custom error class; replacing the Variables type in ~10 files. This is a large coordinated refactor touching the core networking layer.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "graphql-request is the foundational HTTP client for all GraphQL API communication in the CLI. It provides typed request/response handling, error classification (ClientError), and document resolution. Replacement would require significant effort across both cli-kit and app packages. The package has ~5 releases in the 24-month window, showing active maintenance.",
+  "dependabot_bumps_24m": 0
+}

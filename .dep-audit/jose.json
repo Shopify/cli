@@ -1,0 +1,14 @@
+{
+  "name": "jose",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in exactly one place: packages/cli-kit/src/private/node/session/exchange.ts. The sole call is `jose.decodeJwt(result.id_token).sub` on line 218, which decodes a JWT id_token to extract the `sub` (user ID) claim during an OAuth token exchange. No JWT verification (signature checking) is performed — only payload decoding.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace the single `jose.decodeJwt` call with a two-line inline decoder: the JWT payload is the base64url-encoded middle segment of the token, so `JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString()).sub` is equivalent. Remove the `import * as jose from 'jose'` import and the `\"jose\"` entry from cli-kit's package.json. No other files are affected.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The only usage is decoding (not verifying) a JWT payload, which requires nothing more than a base64url decode plus JSON.parse — both available in Node.js built-ins (Buffer). The full jose library (JOSE standard: JWS, JWE, JWK, JWT) is massive overkill for this single decode-only call.",
+  "dependabot_bumps_24m": 13
+}

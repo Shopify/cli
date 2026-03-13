@@ -1,0 +1,14 @@
+{
+  "name": "@types/global-agent",
+  "packages_declaring": [
+    "cli"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying 'global-agent' package (v3.0.0) is imported in packages/cli/src/index.ts with 'import {createGlobalProxyAgent} from \"global-agent\"'. global-agent@3.0.0 ships no bundled TypeScript declarations (no 'types' or 'typings' field in package.json; the package was originally built with Flow types), so @types/global-agent is required for type-safe use of createGlobalProxyAgent.",
+  "replacement_effort": "small",
+  "how_to_remove": "global-agent is last published at v3.0.0 (2021) and is effectively unmaintained. The functionality (bootstrapping a global HTTP/HTTPS proxy from environment variables such as GLOBAL_AGENT_HTTP_PROXY) is minimal — only 'createGlobalProxyAgent()' is called with no arguments in the CLI entry point. Replacement options: (1) switch to 'hpagent' or 'undici' proxy support configured at the fetch/http layer, or (2) use the 'proxy-from-env' + manual Agent wiring pattern. Given the single call site with no arguments, replacement effort is small. Removing both global-agent and @types/global-agent together is a small change.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "hpagent",
+  "replacement_reason": "global-agent is unmaintained (last release 2021) and @types/global-agent mirrors a dead package. Replacing with an actively maintained proxy solution (e.g. hpagent) and dropping both runtime and @types dependencies is a small, targeted change at a single call site.",
+  "dependabot_bumps_24m": 0
+}

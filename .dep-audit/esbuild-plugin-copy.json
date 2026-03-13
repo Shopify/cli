@@ -1,0 +1,15 @@
+{
+  "name": "esbuild-plugin-copy",
+  "packages_declaring": [
+    "cli",
+    "create-app"
+  ],
+  "used": "yes",
+  "usage_summary": "Actively used in both packages/cli/bin/bundle.js and packages/create-app/bin/bundle.js. The copy() plugin is invoked inside esBuild() to copy static assets (wasm files, yml configs, template dirs, asset directories) to the dist/ output folder during the production bundle step.",
+  "replacement_effort": "medium",
+  "how_to_remove": "esbuild has a native 'copy' loader (already used for .node files) but it only handles file extensions, not glob-based asset copy with flexible source/destination mappings. Replacing esbuild-plugin-copy would require either: (a) writing a custom esbuild plugin (~50-80 lines) that uses fast-glob (already a dependency) to resolve and copy assets via Node fs.cp/fs.copyFile, or (b) moving all asset copying to a post-build shell/Node script. The cli bundle has 9 separate copy operations with complex glob patterns including nested dirs and wasm files; create-app has 2. Effort is medium due to the number of distinct asset copy operations and need to preserve globbyOptions (e.g. dot: true).",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Replacement would require a custom esbuild plugin or post-build script. The effort is medium and the dependency is actively maintained. Keeping it is lower risk than a custom implementation.",
+  "dependabot_bumps_24m": 0
+}

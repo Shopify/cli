@@ -1,0 +1,14 @@
+{
+  "name": "eslint-plugin-no-catch-all",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/eslint-plugin-cli/config.js as noCatchAllPlugin, registered as the 'no-catch-all' plugin, and the rule 'no-catch-all/no-catch-all': 'error' is enforced in baseRules (line 46). The rule prevents catch clauses that catch all exceptions without narrowing the error type.",
+  "replacement_effort": "small",
+  "how_to_remove": "The plugin exposes a single rule (no-catch-all). The functionality — disallowing bare catch(e) without type narrowing — overlaps significantly with the TypeScript ESLint rule '@typescript-eslint/use-unknown-in-catch-callback-variable' which is already declared in config.js but currently set to 'off'. Enabling that TS-eslint rule and removing this plugin would cover the same intent. Effort is small: flip 'off' to 'error' for '@typescript-eslint/use-unknown-in-catch-callback-variable', remove the plugin import and registration, remove the rule, and drop the package.json dependency.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "@typescript-eslint/eslint-plugin",
+  "replacement_reason": "'@typescript-eslint/use-unknown-in-catch-callback-variable' (already a declared dependency, currently set to 'off') covers the same enforcement. Switching to it eliminates the external dependency with a one-line config change.",
+  "dependabot_bumps_24m": 0
+}

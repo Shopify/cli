@@ -1,0 +1,14 @@
+{
+  "name": "@vitest/eslint-plugin",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Actively used in packages/eslint-plugin-cli/config.js: directly required via `const vitestPlugin = require('@vitest/eslint-plugin')` (line 2), then registered as the 'vitest' plugin in the ESLint flat config plugins object (line 281), and three of its rules are enforced: 'vitest/consistent-test-it' (error, enforces use of `test` not `it`), 'vitest/max-nested-describe' (error, max 2), 'vitest/no-disabled-tests' (error), and 'vitest/prefer-expect-resolves' (error). These rules are active on all .ts/.tsx files across the monorepo via the shared eslint config.",
+  "replacement_effort": "small",
+  "how_to_remove": "If removal is desired: 1. Remove `const vitestPlugin = require('@vitest/eslint-plugin')` from config.js. 2. Remove the `vitest: vitestPlugin` entry from the plugins object. 3. Remove the four 'vitest/*' rules from baseRules in config.js. 4. Remove '@vitest/eslint-plugin' from package.json dependencies in eslint-plugin-cli. The four rules being removed would reduce test-file quality enforcement (consistent test naming, nesting limits, no skipped tests). Alternatively, replicate equivalent rules manually using custom rules in eslint-plugin-cli. Effort is 'small' — only config.js needs editing.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Actively required and used to enforce vitest-specific linting rules across the entire monorepo. The rules it provides (consistent-test-it, max-nested-describe, no-disabled-tests, prefer-expect-resolves) are actively enforced as errors and represent intentional quality gates. Removing it would degrade test discipline enforcement with no equivalent replacement available.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "mrmime",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/mimes.ts which imports `lookup` and `mimes` from mrmime. The file exports two public functions: `lookupMimeType(fileName)` (calls `lookup()`) and `setMimeTypes(newTypes)` (mutates the `mimes` dictionary). There is a commented-out line suggesting an earlier attempt to swap to a different mime library. No subpath imports.",
+  "replacement_effort": "small",
+  "how_to_remove": "Option A: Replace with `mime` (mime@4) which is actively maintained and has a similar API: `import mime from 'mime'; mime.getType(fileName)`. The mutable `mimes` dictionary would need a small shim using `mime.define()`. Option B: Replace with `mime-types` (well-established, widely used). Option C: For the limited use case (extension -> MIME type lookup), inline a small static map of the MIME types actually needed by the codebase. Only `mimes.ts` and its consumers require changes.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "mime",
+  "replacement_reason": "mrmime is pinned to 1.0.1 (an old version; current is 2.x). The usage is confined to a single 24-line file with two simple functions. The `mime` package (v4) is a well-maintained drop-in replacement with an equivalent lookup API. The mutable dictionary feature (`setMimeTypes`) maps cleanly to `mime.define()`.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,14 @@
+{
+  "name": "stacktracey",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in two cli-kit source files: FatalError.tsx uses StackTracey to parse an Error, resolve source lines via .withSources(), filter out @oclif/core frames, and shorten file paths for display in the Ink terminal UI. error-handler.ts uses it to parse a raw stack string, call .clean(), and reformat individual frames before sending to Bugsnag. Both usages rely on source-map resolution and frame filtering APIs.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Would need to replicate: (1) parsing Error.stack into structured frames, (2) .withSources() source-map resolution for dev-mode display, (3) .clean() noise-frame filtering, (4) per-frame callee/fileShort/sourceLine accessors. Node.js v12+ has Error.prepareStackTrace but lacks source-map resolution. A combination of `error-stack-parser` (frame parsing) and `source-map` (resolution) could replace it, but the integration work across two distinct use cases (terminal display vs Bugsnag reporting) makes this a medium effort.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The source-map resolution and structured frame filtering are non-trivial to replicate. The library is doing meaningful work in both the terminal error display and the Bugsnag stack cleanup pipelines. Medium replacement effort pushes this out of removal candidate territory.",
+  "dependabot_bumps_24m": 0
+}

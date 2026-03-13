@@ -1,0 +1,15 @@
+{
+  "name": "strip-ansi",
+  "packages_declaring": [
+    "cli-kit",
+    "e2e"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in four source files across two packages. In cli-kit: ConcurrentOutput.tsx calls stripAnsi() on each chunk of subprocess output before splitting into display lines; output.ts imports it (likely for length calculations or clean log output). In e2e: helpers/strip-ansi.ts re-exports it as a named export to work around the ESM-only default export; create-test-apps.ts imports that re-export to clean CLI output during test app creation.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The strip-ansi v7+ package is ESM-only and exports a single function that applies the regex /[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))/g to the input string. This one-liner can be inlined as a shared utility (e.g. in cli-kit/src/private/node/ansi.ts) and imported wherever needed. The e2e re-export wrapper already isolates the dependency surface.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The entire package is a single regex applied to a string. Inlining the regex as a small utility function eliminates the dependency with zero behaviour change and removes the ESM interop wrapper currently needed in the e2e package.",
+  "dependabot_bumps_24m": 0
+}

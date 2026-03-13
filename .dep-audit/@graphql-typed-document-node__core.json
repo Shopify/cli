@@ -1,0 +1,15 @@
+{
+  "name": "@graphql-typed-document-node/core",
+  "packages_declaring": [
+    "app",
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "TypedDocumentNode<TResult, TVariables> is imported in 8 hand-written API wrapper files in cli-kit (graphql.ts, partners.ts, admin.ts, app-dev.ts, app-management.ts, business-platform.ts, functions.ts, webhooks.ts) and in ~50 auto-generated GraphQL document files across both packages (app and cli-kit). In the hand-written files it is used as a type annotation for the 'query' parameter of typed request helpers. In the generated files it is used solely as a cast target ('as unknown as DocumentNode<Result, Variables>'). The package itself is types-only — it ships no runtime JavaScript; it exports a single TypeScript interface that extends graphql's DocumentNode with two phantom type parameters.",
+  "replacement_effort": "medium",
+  "how_to_remove": "1. Define a local equivalent interface (e.g. in cli-kit's graphql.ts): 'interface TypedDocumentNode<TResult, TVariables> extends DocumentNode { __apiType?: (v: TVariables) => TResult }'. 2. Update the 8 hand-written API files to import this local type instead of @graphql-typed-document-node/core. 3. Update the graphql-codegen configuration (root package.json uses @graphql-codegen/typed-document-node 6.1.0) to use a custom scalar/plugin or the 'importDocumentNodeExternallyFrom' option pointing at the local definition, then regenerate all ~50 generated files. 4. Remove the dependency from packages/app/package.json and packages/cli-kit/package.json. Note: graphql-request's own .d.ts files import TypedDocumentNode from this package, so it will remain a transitive type dependency until graphql-request is upgraded to a version that bundles its own equivalent.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The interface can be inlined locally (2-line definition), making an external package unnecessary. However the effort is 'medium' because ~50 auto-generated files import the type and the codegen pipeline (graphql-codegen config + @graphql-codegen/typed-document-node plugin) would need to be reconfigured to emit the local import path instead, followed by a full regeneration pass. The package has had zero releases in the last 24 months (pinned at 3.2.0 since 2022), meaning it is frozen/stable — it poses low maintenance risk and the removal pain exceeds the benefit at this time.",
+  "dependabot_bumps_24m": 0
+}

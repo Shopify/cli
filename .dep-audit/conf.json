@@ -1,0 +1,14 @@
+{
+  "name": "conf",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in packages/cli-kit/src/public/node/local-storage.ts and wrapped in the LocalStorage<T> class. LocalStorage is consumed by 17 files (161 references total) across cli-kit, app, theme and plugin-did-you-mean packages. conf handles JSON serialisation, atomic writes, cross-platform config directory resolution, file locking, and migration support.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would need a drop-in replacement that provides atomic JSON persistence, per-project config directory resolution (XDG/AppData/Library), file locking, and schema migrations. None of this is available from Node built-ins. The LocalStorage abstraction already isolates callers, so the swap would touch only local-storage.ts and conf-store.ts, but the replacement library selection, testing across platforms, and handling the migration of existing on-disk files makes this a sizeable undertaking.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "conf is an actively maintained, purpose-built library providing exactly what Shopify CLI needs for persistent local config (atomic writes, platform-aware paths, typed schema). The effort to replace it with a custom or alternative solution is large and the risk of regressions on Windows/macOS/Linux is high.",
+  "dependabot_bumps_24m": 0
+}

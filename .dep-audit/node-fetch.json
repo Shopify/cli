@@ -1,0 +1,14 @@
+{
+  "name": "node-fetch",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Deeply integrated in packages/cli-kit/src/public/node/http.ts: the default export `nodeFetch` is the actual HTTP transport for `fetch()`, `shopifyFetch()`, and `downloadFile()`; `FetchError`, `Request`, `Response`, `RequestInfo`, and `RequestInit` are re-exported from node-fetch and form the public API surface of cli-kit. These types/exports are imported in 6 files directly (device-authorization.ts, exchange.test.ts, github.test.ts, http-reverse-proxy.test.ts, http.ts x3), and the `Response` type is used throughout many more files via cli-kit re-exports. node-fetch v3 also supplies streaming body via `res.body.pipe(file)` in downloadFile.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Node >=18 ships a global `fetch` that is spec-compliant (WHATWG Fetch). Migrating requires: (1) replacing `nodeFetch(url, opts)` calls in http.ts with `globalThis.fetch(url, opts)`; (2) replacing node-fetch types (`RequestInfo`, `RequestInit`, `Response`, `Request`, `FetchError`) with the built-in globals or re-exporting them from a thin shim; (3) updating `downloadFile` since the built-in Response body is a Web ReadableStream, not a Node.js Readable — piping to a file write stream needs `node:stream` adaptation (e.g. `Readable.fromWeb(res.body).pipe(file)`); (4) verifying the HTTPS agent injection pattern works with undici (the underlying engine); (5) updating the 6 direct node-fetch import sites in tests and session code. This is straightforward but touches core networking infrastructure and requires careful testing.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Replacement with Node built-in fetch is feasible (Node >=20 is already required) but rated medium effort due to the streaming body API difference in downloadFile, the need to retype the public API surface, and the risk surface of core HTTP infrastructure. Not a quick win — recommend a dedicated migration task rather than treating it as a simple removal.",
+  "dependabot_bumps_24m": 0
+}

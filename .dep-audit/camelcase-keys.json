@@ -1,0 +1,14 @@
+{
+  "name": "camelcase-keys",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in two production files in packages/app/src/cli/services/app-logs/: (1) utils.ts calls camelcaseKeys({...appLogWithoutCursor, payload, localTime, storeName}) to transform a flat object of snake_case API fields before JSON serialisation; (2) poll-app-logs.ts calls camelcaseKeys(payload) to convert a raw function-run log payload into a FunctionRunLog constructor argument. Also imported in two corresponding test files.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace the two `camelcaseKeys(obj)` call sites with a small inline helper (10–15 lines) that recursively converts snake_case keys to camelCase using String.prototype.replace. Alternatively, vendor the single-function logic directly in the app-logs utilities. The `camelCase` function already available from the `change-case` package (declared in cli-kit and re-exported as `camelize`) can be used as the key transformer. Remove the `camelcase-keys` entry from app/package.json.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The two call sites pass flat or single-level objects; shallow camelCase conversion is trivial to inline. The monorepo already has `change-case`'s `camelCase` function available via cli-kit's `camelize` export, so no new dependency is needed. camelcase-keys has had no releases in the past 24 months.",
+  "dependabot_bumps_24m": 0
+}

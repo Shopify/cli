@@ -1,0 +1,15 @@
+{
+  "name": "ajv",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/json-schema.ts to compile and run JSON Schema validators. The Ajv instance is configured with allowUnionTypes, allErrors, and verbose mode, and it is used extensively to validate TOML/JSON config objects against JSON Schema contracts (including a custom 'x-taplo' keyword). The validator cache, union-error simplification, and zod-like error conversion all depend on Ajv's ErrorObject and ValidateFunction types. Ajv is the only JSON Schema validator in the codebase.",
+  "total_releases_24m_note": "Could not fetch NPM registry data: Bash and WebFetch tools are unavailable in this session.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Replace with a Node.js-native alternative such as @cfworker/json-schema or switch entirely to zod schemas (already used elsewhere in cli-kit). The json-schema.ts module is ~290 lines of custom error-normalisation logic tightly coupled to Ajv's ErrorObject shape (instancePath, schemaPath, params, parentSchema, data). Rewriting this logic against a different validator's error format, or migrating all callers to zod, would require medium effort. The union-error scoring algorithm (simplifyUnionErrors) relies on creating nested Ajv validator instances dynamically, so it would need a full rewrite.",
+  "removal_candidate": "no",
+  "replacement_dependency": "zod",
+  "replacement_reason": "zod is already the primary validation library across cli-kit and provides equivalent schema validation with native TypeScript types. Migrating JSON Schema validation callers to zod would eliminate ajv entirely, but is a medium-effort refactor.",
+  "dependabot_bumps_24m": 26
+}

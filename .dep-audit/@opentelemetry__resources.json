@@ -1,0 +1,15 @@
+{
+  "name": "@opentelemetry/resources",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in DefaultMeterProvider.ts. One symbol used: Resource, which is instantiated with a SERVICE_NAME attribute (sourced from @opentelemetry/semantic-conventions) and passed to the MeterProvider constructor as the resource descriptor. This attaches service identity metadata to every exported metric data point.",
+  "total_releases_24m_note": "npm registry fetch was unavailable (network/WebFetch access denied during audit). Releases in lockstep with @opentelemetry/sdk-metrics; estimated 8-12 releases in the 24-month window.",
+  "replacement_effort": "large",
+  "how_to_remove": "The Resource constructor call could technically be replaced by passing a plain object if MeterProvider's API allowed it, but the sdk-metrics MeterProvider requires an actual Resource instance. Removal requires eliminating the entire OTel stack, not just this one package.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Tightly coupled to @opentelemetry/sdk-metrics MeterProvider constructor. Cannot be substituted without replacing the SDK itself.",
+  "dependabot_bumps_24m": 56
+}

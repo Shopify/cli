@@ -1,0 +1,14 @@
+{
+  "name": "node-pty",
+  "packages_declaring": [
+    "e2e"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in four e2e scripts and the main CLI fixture: packages/e2e/setup/cli.ts (type import + dynamic import for `spawn()`), packages/e2e/setup/auth.ts (dynamic import), packages/e2e/scripts/create-test-apps.ts (two dynamic imports), and packages/e2e/scripts/cleanup-test-apps.ts (one dynamic import). The fixture uses node-pty to spawn PTY processes so that interactive CLI prompts (ink/react-based UIs) can be driven programmatically: writing keystrokes, waiting for output patterns, and capturing terminal output. All imports are dynamic to allow Phase 1 (non-interactive) e2e tests to run without node-pty being present.",
+  "replacement_effort": "large",
+  "how_to_remove": "There is no Node built-in that allocates a pseudo-terminal. Alternatives are: (a) @lydell/node-pty (maintained fork); (b) xterm-headless + child_process; (c) redesign interactive e2e tests to avoid PTY by using --no-interactive flags and execa. Option (c) would require significant changes to how the e2e suite drives the CLI. node-pty is a native addon requiring native compilation — but within the e2e package it is isolated and does not affect production bundles.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "There is no substitute that provides a real PTY without a native addon. The e2e test suite's interactive-mode testing (waiting for ink-rendered prompts, sending keystrokes) fundamentally depends on PTY behaviour. Replacing it would require either a maintained fork (like @lydell/node-pty) which is a low-risk swap, or a large-scale redesign of interactive e2e tests. Rated large effort to fully remove; a fork swap to @lydell/node-pty would be small if the API is drop-in.",
+  "dependabot_bumps_24m": 0
+}

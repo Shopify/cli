@@ -1,0 +1,14 @@
+{
+  "name": "typedoc",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used exclusively in packages/cli-kit/scripts/build-api-docs.js — a standalone doc-generation script that is not part of the production build or test pipeline. It calls TypeDocApp.bootstrapWithPlugins() and app.generateDocs() to emit HTML API docs into docs/api/cli-kit. No source file under src/ imports typedoc.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Delete or replace packages/cli-kit/scripts/build-api-docs.js. If API docs are still needed, the script could be replaced with a simpler alternative (e.g. tsdoc + api-extractor) or the docs pipeline could be moved to a dedicated CI job that installs typedoc independently without it being a declared dependency of cli-kit.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Used only in an optional doc-generation script, not in any production or test code. Removing it from the package.json dependency list has zero runtime impact.",
+  "dependabot_bumps_24m": 35
+}

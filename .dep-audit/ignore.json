@@ -1,0 +1,15 @@
+{
+  "name": "ignore",
+  "packages_declaring": [
+    "app",
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in 3 production files: (1) packages/app/src/cli/models/app/loader.ts — checks if a config file path is gitignored before loading; (2) packages/app/src/cli/services/dev/app-events/file-watcher.ts — creates and applies per-extension Ignore instances based on .gitignore files to decide whether to emit watch events; (3) packages/cli-kit/src/public/node/git.ts — addToGitIgnore() uses it to detect whether an entry is already covered by existing gitignore patterns before appending. All call-sites use ignore.default().add(...).ignores(path).",
+  "replacement_effort": "medium",
+  "how_to_remove": "The `ignore` package faithfully replicates gitignore rule matching (negation, trailing slashes, double-star globs, allowRelativePaths). Node.js has no built-in equivalent. Replacing it would require either calling `git check-ignore` via child_process (feasible but adds process-spawn overhead on every watch event in file-watcher.ts) or vendoring/reimplementing the gitignore spec. The file-watcher usage is the hardest because it maintains stateful per-extension Ignore instances called on every file-system event. Effort is medium.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "No Node.js built-in implements gitignore pattern matching. The `git check-ignore` subprocess alternative is available but would require refactoring the hot-path file-watcher; it is not a drop-in swap. The package itself is at a stable version (6.0.2) with near-zero maintenance burden.",
+  "dependabot_bumps_24m": 0
+}

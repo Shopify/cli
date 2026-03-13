@@ -1,0 +1,15 @@
+{
+  "name": "@types/archiver",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying package 'archiver' is imported in packages/cli-kit/src/public/node/archiver.ts (line 4: `import archiver from 'archiver'`). The archiver package ships no bundled TypeScript types (no 'types' field, no .d.ts in its published files list), so @types/archiver provides the type declarations required for TypeScript compilation. Version is pinned exactly to 5.3.2 matching the underlying archiver@5.3.2.",
+  "total_releases_24m_note": "Could not fetch npm registry: network access (Bash/WebFetch) was unavailable in this session.",
+  "replacement_effort": "medium",
+  "how_to_remove": "To remove, you would need to either: (1) replace the 'archiver' dependency with an alternative that ships bundled TypeScript types (e.g. 'archiver' v6+ if it ever adds types, or a different archiving library), or (2) write local ambient declarations in a .d.ts file within cli-kit. The archiver usage is non-trivial — it is used for both zip and tar+brotli compression across packages/cli-kit/src/public/node/archiver.ts — so swapping the underlying library requires validating the archiving API surface.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The underlying 'archiver' package is actively used and ships no bundled types. @types/archiver is required for TypeScript compilation. Removal would break the build unless the underlying package is swapped for one that bundles types.",
+  "dependabot_bumps_24m": 0
+}

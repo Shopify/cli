@@ -1,0 +1,14 @@
+{
+  "name": "ink",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Core UI rendering framework. Used across 43 source files in packages/cli-kit/src/private/node/ui/** and related public surfaces. Imports include Box, Text, Static, Key, DOMElement, measureElement, useApp, useInput, useStdin, useStdout, render (as inkRender), and RenderOptions. The entire interactive terminal UI layer — all prompts (Select, Autocomplete, Text, DangerousConfirmation), output components (Alert, Banner, ConcurrentOutput, FatalError, Tasks, LoadingBar, Table, TokenizedText, etc.), hooks (use-abort-signal, use-async-and-unmount, use-exit-on-ctrl-c, use-layout), and the testing harness — is built on top of ink. packages/cli-kit/src/public/node/ink.ts re-exports ink primitives as part of the public API.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require replacing the entire React-based terminal rendering layer with a different approach (e.g. raw ANSI escape sequences, a different TUI library such as blessed/neo-blessed, or prompts/enquirer for prompt-only needs). The codebase has 43 files with ink imports, ~20 React components, 4 custom hooks, a dedicated testing harness, and a public re-export API. This is a multi-week rewrite with significant regression risk.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "ink is the foundational dependency for all interactive terminal UI in cli-kit. There is no viable drop-in replacement and the cost of rewriting all components is large. The dependency is actively maintained (version 6.2.0, released 2024).",
+  "dependabot_bumps_24m": 0
+}

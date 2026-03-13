@@ -1,0 +1,15 @@
+{
+  "name": "@types/fs-extra",
+  "packages_declaring": [
+    "cli-kit",
+    "features"
+  ],
+  "used": "yes",
+  "usage_summary": "The underlying 'fs-extra' package is used in three source files across two packages. cli-kit/src/public/node/fs.ts imports from 'fs-extra/esm' (subpath import). features/steps/create-app.steps.ts and features/steps/app.steps.ts both import 'fs from \"fs-extra\"' as a default import. The installed fs-extra (v11.1.0) ships no bundled TypeScript declarations (no 'types' or 'typings' field in package.json), so @types/fs-extra is required for type-safe usage in all three files.",
+  "replacement_effort": "n/a",
+  "how_to_remove": "Cannot remove — @types/fs-extra is actively needed because fs-extra@11.x ships no bundled types. Removal would break type-checking in cli-kit/src/public/node/fs.ts and two files in features. Possible long-term strategy: cli-kit already wraps fs-extra functions in its own public API (node/fs.ts), so fs-extra could be replaced by native Node.js fs/promises for those wrapped functions, eventually eliminating the fs-extra dependency entirely. The features package uses fs-extra directly for convenience; replacing with node:fs/promises is trivial per file but requires auditing all usage.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "fs-extra@11.x ships no bundled types and is actively used across two packages. Removal of @types/fs-extra would require first eliminating or replacing the fs-extra dependency itself.",
+  "dependabot_bumps_24m": 1
+}

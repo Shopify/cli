@@ -1,0 +1,14 @@
+{
+  "name": "react-router-dom",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in exactly one file: packages/ui-extensions-dev-console/src/foundation/Routes/Routes.tsx. Imports BrowserRouter, Routes, and Route from react-router-dom to render a single catch-all route (<Route path='*' element={<Extensions />} />). No other component in the package imports from react-router-dom; the custom useNavigate hook does NOT use react-router-dom — it emits a WebSocket event instead.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "The entire routing setup is a BrowserRouter wrapping a single wildcard route. Remove the Routes.tsx wrapper entirely and render <Extensions /> directly. Because BrowserRouter is not used for navigation (the custom useNavigate hook bypasses it), removing it has no functional impact. Delete the Routes component and update its single call-site (likely App.tsx or main.tsx) to render Extensions directly.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "There is only one route (path='*') so no routing logic is actually needed. The custom useNavigate hook emits WebSocket events and does not depend on react-router-dom at all. The dependency adds ~25 kB to the dev-console bundle for zero routing benefit.",
+  "dependabot_bumps_24m": 48
+}

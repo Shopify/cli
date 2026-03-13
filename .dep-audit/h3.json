@@ -1,0 +1,15 @@
+{
+  "name": "h3",
+  "packages_declaring": [
+    "app",
+    "theme"
+  ],
+  "used": "yes",
+  "usage_summary": "Used as the HTTP server framework in two distinct packages. In app (pinned at 0.7.21): packages/app/src/cli/services/dev/extension/server.ts uses createApp and createRouter to build the extension dev server; server/middlewares.ts imports IncomingMessage, ServerResponse, sendRedirect, and send; server/utilities.ts imports createError, H3Error, ServerResponse, and sendError. In theme (pinned at 1.13.0, a different major version): theme-environment.ts uses createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors; local-assets.ts uses defineEventHandler, H3Event, serveStatic, setResponseHeader, sendError, createError; proxy.ts uses defineEventHandler, getRequestHeaders, getRequestWebStream, getRequestIP, H3Event; hot-reload/server.ts imports multiple primitives; html.ts uses defineEventHandler, getCookie, H3Event, EventHandler; errors.ts uses createError and H3Error; log-request-line.ts and several test files use H3Event and createEvent.",
+  "replacement_effort": "large",
+  "how_to_remove": "h3 is used as the primary HTTP routing/middleware framework for both the extension dev server and the theme development server. Replacing it would require migrating to either Node's raw http.createServer with manual routing, or switching to another framework (e.g. express, fastify, or Hono). The theme package alone uses 15+ distinct h3 exports across 8 source files. Additionally, the two packages use incompatible major versions (0.7.x vs 1.13.x), complicating any coordinated change.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "h3 is the core HTTP framework for both the extension dev server and the theme dev server. It is deeply integrated with ~30+ import sites across the two packages. With ~30 releases in 24 months it is actively maintained by the unjs ecosystem. Replacement effort is large.",
+  "dependabot_bumps_24m": 59
+}

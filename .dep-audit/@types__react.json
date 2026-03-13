@@ -1,0 +1,18 @@
+{
+  "name": "@types/react",
+  "packages_declaring": [
+    "app",
+    "cli-kit",
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit",
+    "ui-extensions-test-utils"
+  ],
+  "used": "yes",
+  "usage_summary": "React (JSX/TSX) is used in 147+ source files across app, cli-kit, ui-extensions-dev-console, ui-extensions-server-kit, and ui-extensions-test-utils. react@19.2.4 (used in app and cli-kit) and react@18.x (used in ui-extensions packages) do not ship their own .d.ts files. All five packages declare @types/react in devDependencies.",
+  "replacement_effort": "large",
+  "how_to_remove": "Not removable while React is used. React does not bundle its own types (confirmed: react@19.2.4 package.json has no types field and no .d.ts files). @types/react must be retained in all five packages.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "React is the core UI framework used monorepo-wide. Neither react@18 nor react@19 bundles type declarations, so @types/react is essential across all five packages.",
+  "dependabot_bumps_24m": 2
+}

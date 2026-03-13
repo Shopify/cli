@@ -1,0 +1,14 @@
+{
+  "name": "proper-lockfile",
+  "packages_declaring": [
+    "app"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in one production file: packages/app/src/cli/services/build/extension.ts. The `buildFunctionExtension()` function acquires a filesystem lock via `lockfile.lock(extension.directory, {retries: 20, lockfilePath})` before building a Wasm function extension, preventing concurrent builds from clobbering each other. The lock is released in a finally block. The test file mocks the entire module with `vi.mock('proper-lockfile')`.",
+  "replacement_effort": "small",
+  "how_to_remove": "The usage is a single `lockfile.lock()` / `releaseLock()` pair. Node.js 18+ provides `fs.openSync` with the `O_EXCL` flag for advisory locking on most platforms, but cross-platform reliability is limited. Lighter-weight alternatives include: (a) 'lockfile' (npm, minimal), (b) 'proper-lockfile' could be replaced by a manual stale-PID lock file using `fs.writeFileSync` + retry loop (~30 lines). Effort is small: one production file, one lock acquisition site.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The locking pattern (write a PID file, retry on contention, auto-expire stale locks) is straightforward to implement with Node.js built-ins in ~30 lines. proper-lockfile itself has had no releases since 2020, meaning it is effectively unmaintained. Its last major version (4.x) is stable but carries risk for future Node.js compatibility. Inlining the lock logic removes the dependency entirely.",
+  "dependabot_bumps_24m": 0
+}

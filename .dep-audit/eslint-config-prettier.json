@@ -1,0 +1,14 @@
+{
+  "name": "eslint-config-prettier",
+  "packages_declaring": [
+    "eslint-plugin-cli"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported and used in packages/eslint-plugin-cli/config.js. The imported object (eslintConfigPrettier) is spread directly into the flat config array exported by the module (line 292: eslintConfigPrettier). It disables all ESLint rules that would conflict with Prettier formatting.",
+  "replacement_effort": "small",
+  "how_to_remove": "The @shopify/eslint-plugin already pulls in eslint-plugin-prettier and includes a .prettier config spread. Check whether shopifyPlugin.configs.prettier already includes eslint-config-prettier's rule-disabling config. If so, the explicit spread of eslintConfigPrettier is redundant and can be deleted along with the require() import and the package dependency. If not, the ~200 rule overrides it provides could be inlined as a rules object — tedious but straightforward. Either way, effort is small.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "@shopify/eslint-plugin's prettier config may already cover this; if not, the rules can be inlined or the dependency kept as it is a tiny zero-logic config package. Net effort to remove is small.",
+  "dependabot_bumps_24m": 0
+}

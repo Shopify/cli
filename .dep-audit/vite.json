@@ -1,0 +1,15 @@
+{
+  "name": "vite",
+  "packages_declaring": [
+    "ui-extensions-dev-console",
+    "ui-extensions-server-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Central build and test tool for both ui-extensions packages. ui-extensions-dev-console/vite.config.mts uses defineConfig() with the React plugin to compile the dev-console React app. ui-extensions-server-kit/vite.config.mts uses defineConfig() to build the library in CJS+ESM formats and also uses a custom Vite plugin (Plugin type imported from 'vite') defined in scripts/create-entry-files.ts. Both packages use vitest (which runs under Vite) as the test runner via the 'test' key in their vite config.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require replacing both the build pipeline (switching to esbuild, rollup, or tsup) and the test runner (switching to jest or node --test). The custom create-entry-files Vite plugin would also need to be rewritten. Significant effort across two packages.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Vite is the foundational build and test infrastructure for the ui-extensions packages. Replacing it is a large multi-step migration with no compelling reason to do so.",
+  "dependabot_bumps_24m": 55
+}

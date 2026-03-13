@@ -1,0 +1,14 @@
+{
+  "name": "react-toastify",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in three files within ui-extensions-dev-console: (1) Toast.tsx renders <ToastContainer> and imports the CSS bundle (react-toastify/dist/ReactToastify.css); (2) PreviewLink.tsx calls toast() to show a notification; (3) QRCodeModal.tsx calls toast() to confirm URL copy. All usage is within the ui-extensions-dev-console browser app.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace ToastContainer + toast() with a lightweight custom implementation: a React context holding a toast queue (array of {id, message}), a fixed-position container component that renders them with a CSS transition, and a dismiss-after-timeout effect. Alternatively use `sonner` (modern, tiny, framework-agnostic) which has the same imperative toast() API. Changes span 3 source files (~40 LOC total import sites) plus one new context/component.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "sonner",
+  "replacement_reason": "react-toastify v9/v10 carries a ~32 kB CSS bundle and ~15 kB JS. The dev-console only uses two toast() call-sites and a single ToastContainer. `sonner` is a smaller, modern alternative with the same imperative API, or the team can inline a ~60-line custom toast context since requirements are minimal (bottom-center, dark theme, no progress bar, close-on-click).",
+  "dependabot_bumps_24m": 1
+}

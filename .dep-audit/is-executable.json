@@ -1,0 +1,14 @@
+{
+  "name": "is-executable",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported in exactly one file: packages/cli-kit/src/public/node/github.test.ts (a test file). It is used only to assert that a downloaded binary has executable permissions after `downloadGitHubRelease` sets them. Production code (packages/cli-kit/src/public/node/fs.ts) already implements fileHasExecutablePermissions() using Node.js fs.access(path, fs.constants.X_OK) natively; liquid.ts uses that wrapper. The package is not used anywhere in production source files.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "In github.test.ts, replace `import {isExecutable} from 'is-executable'` and the `isExecutable(targetPath)` call with the already-existing `fileHasExecutablePermissions` from '@shopify/cli-kit/node/fs' (which uses fs.access + X_OK internally). Remove is-executable from cli-kit/package.json dependencies. One-line change in one test file.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The production equivalent (fileHasExecutablePermissions using fs.access/X_OK) already exists in cli-kit/src/public/node/fs.ts. The test simply needs to import that wrapper instead of the external package. Zero new code required.",
+  "dependabot_bumps_24m": 0
+}

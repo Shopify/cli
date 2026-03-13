@@ -1,0 +1,14 @@
+{
+  "name": "dotenv",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Single import in packages/cli-kit/src/public/node/dot-env.ts: `import {parse} from 'dotenv'`. The `parse` function is called once in `readAndParseDotEnv` to convert a file's string content into a key-value Record<string,string>. No subpath imports. The rest of dot-env.ts (patchEnvFile, writeDotEnv) is implemented from scratch without dotenv.",
+  "replacement_effort": "small",
+  "how_to_remove": "The `parse` function maps `KEY=VALUE` lines to an object. Node 20.6+ ships `--env-file` flag support but no programmatic `parse` API. A ~20-line regex-based parser handling comments, quoted values, and multiline strings covers the .env spec subset the codebase already handles in patchEnvFile. Alternatively, the existing `patchEnvFile` parsing logic (already in dot-env.ts) could be refactored into a standalone `parse` equivalent.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "Only the `parse` function is used, and the file already contains hand-written .env line parsing logic in `patchEnvFile`. Consolidating into a shared inline parser removes the external dependency with minimal effort. dotenv is actively maintained (~5 releases in 24 months) but the narrow usage does not justify the dependency.",
+  "dependabot_bumps_24m": 10
+}

@@ -1,0 +1,14 @@
+{
+  "name": "pathe",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Heavily used across the codebase. packages/cli-kit/src/public/node/path.ts re-exports almost the entire 'pathe' API (relative, dirname, join, normalize, resolve, basename, extname, parse, isAbsolute) plus uses it in fs.ts (sep, join) and system.ts (delimiter). All downstream packages (features, eslint-plugin-cli) that import path utilities get them transitively via cli-kit's path.ts. Direct imports of 'pathe' also appear in packages/features (5 step files) and packages/eslint-plugin-cli/rules/no-error-factory-functions.js.",
+  "replacement_effort": "large",
+  "how_to_remove": "pathe is a drop-in replacement for Node's 'path' module that normalises Windows backslashes to forward slashes on all platforms. Replacing it requires auditing every call site in path.ts, fs.ts, system.ts, and all direct consumers (features/*.ts, eslint-plugin-cli) to ensure POSIX-normalisation semantics are preserved. Node's built-in 'node:path/posix' could serve the same role, but all usages would need to be switched and the cwd() function in path.ts would need explicit posix normalisation. The blast radius is large given that cli-kit/path.ts is a foundational module consumed by almost every package in the monorepo.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "Replacement effort is large. The package provides a safe cross-platform POSIX-path API used throughout the entire monorepo via cli-kit's path.ts abstraction. The benefit of removing it is low (it is a tiny, stable, zero-dependency library) while the risk of subtle Windows path breakage from switching to raw node:path is high.",
+  "dependabot_bumps_24m": 55
+}

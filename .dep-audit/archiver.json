@@ -1,0 +1,15 @@
+{
+  "name": "archiver",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in packages/cli-kit/src/public/node/archiver.ts for two distinct operations: (1) archiver('zip') to produce ZIP archives for deployment (the zip() function is a core part of the CLI deploy path); (2) archiver('tar') as the first stage of a Brotli-compressed tar archive (brotliCompress()). Both functions rely on archiver's streaming pipe API, directory-entry appending, and archive.finalize(). The module is a public export of cli-kit.",
+  "total_releases_24m_note": "Could not fetch NPM registry data: Bash and WebFetch tools are unavailable in this session.",
+  "replacement_effort": "medium",
+  "how_to_remove": "Node.js has no built-in ZIP writer. Options: (a) replace with the 'jszip' or 'adm-zip' package for ZIP creation; (b) use Node.js built-in 'zlib' + 'tar' (node-tar) for the tar/brotli path. Both functions use archiver's streaming model and custom per-file append logic to handle race conditions (files read into Buffers before finalize). Rewriting against a different streaming API requires medium effort, particularly preserving the directory-entry ordering and the race-condition guard.",
+  "removal_candidate": "no",
+  "replacement_dependency": "jszip",
+  "replacement_reason": "jszip is a widely-used, actively-maintained ZIP library that can replace archiver for the ZIP path. The tar path could use Node's built-in zlib with node-tar, but the combined rewrite is medium complexity.",
+  "dependabot_bumps_24m": 0
+}

@@ -1,0 +1,15 @@
+{
+  "name": "node-stream-zip",
+  "packages_declaring": [
+    "cli-kit",
+    "theme"
+  ],
+  "used": "yes",
+  "usage_summary": "Used only in test files to read and verify zip archives produced by other code. Specifically: packages/cli-kit/src/public/node/archiver.integration.test.ts (imports StreamZip to enumerate entries in a generated .zip) and packages/theme/src/cli/services/package.test.ts (require('node-stream-zip') to inspect a packaged theme zip). No production source file imports it; the production archiver uses the 'archiver' package for writing zips.",
+  "replacement_effort": "trivial",
+  "how_to_remove": "Replace node-stream-zip in both test files with Node.js built-in zlib + fs (reading a zip for verification) or with the already-present 'archiver' package's streaming API, or use the lightweight 'unzipper' package. The tests only enumerate zip entries, so a trivial helper using Node's native `fs.readFileSync` + a pure-JS zip parser (e.g. `fflate`) would suffice. Two files, one call-site each.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "fflate",
+  "replacement_reason": "fflate is a zero-dependency, pure-JS zip reader/writer (ESM + CJS) that can replace the StreamZip entry-enumeration pattern in the two test files with minimal code change. Alternatively the tests could use the native Node.js `zlib` streams combined with `archiver`'s own reading helpers, keeping the dependency count flat.",
+  "dependabot_bumps_24m": 0
+}

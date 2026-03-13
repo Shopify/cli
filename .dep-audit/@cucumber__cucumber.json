@@ -1,0 +1,14 @@
+{
+  "name": "@cucumber/cucumber",
+  "packages_declaring": [
+    "@shopify/features"
+  ],
+  "used": "yes",
+  "usage_summary": "Deeply used across the entire @shopify/features acceptance-test package. The cucumber-js CLI binary is invoked via the 'cucumber' npm script. In source: setWorldConstructor (world/index.ts), Given/After/setDefaultTimeout (environment.steps.ts), When/Then (app.steps.ts, commands.steps.ts, create-app.steps.ts, github-actions.steps.ts, node-deps.steps.ts, theme.steps.ts), and Then (cli.steps.ts). All 8 step files and the world constructor import from this package. It also drives the 5 .feature scenario files.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require replacing the entire BDD/acceptance test framework. All 8 step files and the world constructor would need to be rewritten using a different runner (e.g. Vitest, Jest, or a custom Node test harness). The .feature Gherkin files would either need to be removed or re-expressed as plain test specs. This is a full rewrite of the integration/acceptance test layer.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package is the core runtime for the entire acceptance test suite. Replacement effort is large and there is no drop-in alternative that would preserve the Gherkin .feature files without a major rewrite.",
+  "dependabot_bumps_24m": 28
+}

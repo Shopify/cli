@@ -1,0 +1,14 @@
+{
+  "name": "sass",
+  "packages_declaring": [
+    "ui-extensions-dev-console"
+  ],
+  "used": "yes",
+  "usage_summary": "Not imported directly in any TypeScript/JavaScript source file; however, the ui-extensions-dev-console package contains 21 *.scss / *.module.scss files spread across all components and foundation layers. Vite automatically invokes the sass preprocessor when it encounters .scss imports in the component files (e.g. `import styles from './Modal.module.scss'`). Removing sass would break the entire build.",
+  "replacement_effort": "large",
+  "how_to_remove": "Would require rewriting all 21 SCSS files to plain CSS or migrating to a CSS-in-JS / CSS Modules without SCSS syntax. The SCSS files use nesting, variables, and modular imports across the component library. This is a large design-system-level refactor.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "The package is a build-time dependency essential for the SCSS-based component styling in ui-extensions-dev-console. Replacement would require full CSS migration — not worth the effort.",
+  "dependabot_bumps_24m": 46
+}

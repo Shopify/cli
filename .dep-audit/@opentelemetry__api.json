@@ -1,0 +1,15 @@
+{
+  "name": "@opentelemetry/api",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Used in 5 production source files and 1 test file within the vendor/otel-js subtree plus cli-kit's private otel-metrics module. Imported symbols: ValueType and diag (otel-metrics.ts), diag/DiagConsoleLogger/DiagLogLevel (DefaultOtelService.ts), MetricAttributes type (BaseOtelService.ts, types.ts), diag (InstantaneousMetricReader.ts, validators.ts). The diag global logger is set on service construction and disabled on shutdown; ValueType.INT is used when registering counter and histogram metric descriptors.",
+  "total_releases_24m_note": "npm registry fetch was unavailable (network/WebFetch access denied during audit). Based on knowledge cutoff, the @opentelemetry/api package tracks a stable 1.x series and typically releases ~4-6 times per year; estimated 8-12 releases in the 24-month window.",
+  "replacement_effort": "large",
+  "how_to_remove": "Cannot be removed in isolation. The entire vendor/otel-js subtree (8 files: DefaultOtelService, DefaultMeterProvider, BaseOtelService, InstantaneousMetricReader, types, validators, throttle, utils) plus packages/cli-kit/src/private/node/otel-metrics.ts would need to be deleted or replaced. The otel-metrics.ts module is called from the CLI command lifecycle to record cli_commands_total, cli_commands_duration_ms, and cli_commands_wall_clock_elapsed_ms metrics to a Shopify OTLP collector endpoint. A full replacement would require either (a) removing metric telemetry entirely, (b) rewriting against a different metrics SDK, or (c) hand-rolling an OTLP HTTP exporter. All options require substantial cross-file changes.",
+  "removal_candidate": "no",
+  "replacement_dependency": "none",
+  "replacement_reason": "No lightweight drop-in replacement covers the full OTel metrics pipeline (MeterProvider + OTLP HTTP export + resource labelling). Removing the dependency requires removing or replacing the entire metrics subsystem, which is a deliberate product decision rather than a dependency hygiene task.",
+  "dependabot_bumps_24m": 56
+}

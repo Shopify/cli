@@ -1,0 +1,14 @@
+{
+  "name": "color-json",
+  "packages_declaring": [
+    "cli-kit"
+  ],
+  "used": "yes",
+  "usage_summary": "Imported once in packages/cli-kit/src/private/node/content-tokens.ts as the renderer inside JsonContentToken.output(). It syntax-highlights a JSON value for terminal output. outputToken.json() is called from 14 files across cli-kit and app packages, so the token itself is widely used even though the import of color-json is a single point.",
+  "replacement_effort": "small",
+  "how_to_remove": "Replace the single call `cjs(stringifyMessage(this.value) ?? {})` in JsonContentToken.output() with a small inline coloriser using the already-present `colors` (ansi-colors / chalk) helper: pretty-print via JSON.stringify then apply color.cyan/yellow/green on keys, strings and numbers respectively, or simply use `JSON.stringify(..., null, 2)` with no coloring. The fallback already exists in the catch block. No callers need to change.",
+  "removal_candidate": "yes",
+  "replacement_dependency": "none",
+  "replacement_reason": "The functionality (syntax-colored JSON for terminal output) can be replicated with a ~20-line inline helper using the ansi-colors/chalk instance already imported in the same package, eliminating an unmaintained single-purpose dependency.",
+  "dependabot_bumps_24m": 0
+}
