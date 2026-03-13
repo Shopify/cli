@@ -21,6 +21,9 @@ const external = [
   'lightningcss',
   // These two are binary dependencies from Hydrogen that can't be bundled
   '@ast-grep/napi',
+  // prettier is ~4MB and only used in one place for formatting generated types.
+  // It's externalized to avoid bundling — will use dynamic import at runtime.
+  'prettier',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
