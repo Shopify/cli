@@ -1,5 +1,20 @@
 # @shopify/app
 
+## 3.93.0
+
+### Minor Changes
+
+- f7c2de7: Add `shopify organization list` command to list Shopify organizations you have access to. Supports `--json` flag for structured output.
+
+### Patch Changes
+
+- 0bef4a6: Fix crash when organization is not found in app-management-client by throwing NoOrgError instead of accessing properties on undefined
+- 280da79: Enable non-interactive `app init` via a new `--organization-id` flag and not prompting to link to an existing app if `--name` is provided.
+- Updated dependencies [5dd39d0]
+  - @shopify/theme@3.93.0
+  - @shopify/cli-kit@3.93.0
+  - @shopify/plugin-cloudflare@3.93.0
+
 ## 3.92.0
 
 ### Minor Changes
@@ -308,7 +323,6 @@
 - aebbc75: Fix: Pin GraphiQL CSS version to match JS version
 - c3a5189: Bug-fix: Handling mis-configured extension TOML files
 - acc904f: Bump Shopify/theme-tools packages to
-
   - Fix validation for static blocks in JSON templates
   - Introduce ability the disable theme checks for the next Liquid statement
 
@@ -833,7 +847,6 @@
 - ca218cd31: Use a random port for GraphiQL when the default one is not available
 - ca218cd31: Do not show api-key flag deprecation warning when using SHOPIFY_API_KEY
 - ca218cd31: Bump Shopify/theme-tools packages
-
   - TL;DR
     - (New) `ValidJson` check - JSON schema validation on `.json` files
     - (New) Section/block schema `t:` translation completion

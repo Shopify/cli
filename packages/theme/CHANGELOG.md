@@ -1,5 +1,12 @@
 # @shopify/theme
 
+## 3.93.0
+
+### Patch Changes
+
+- 5dd39d0: Fix Cart rate limiting issue
+  - @shopify/cli-kit@3.93.0
+
 ## 3.92.0
 
 ### Patch Changes
@@ -185,7 +192,6 @@
 - 02b417b: Ensure all theme commands accept the --path flag
 - 9b52391: Add /listings folder to theme package command
 - 5188073: Improvement and fixes when handling multi-environment commands
-
   - Fixes a bug where passing a single environment to multi-env commands would cause it to fail if the environment didn't have all of the required attributes for multi-env
   - Updates output when running multi-env commands to ensure the results from each command don't overlap one another
 
@@ -248,7 +254,6 @@
 - eaa8b7c: Fix an issue with hot-reloading the compiled assets (scripts.js, block-scripts.js, etc)
 - 44e8bc7: Improved theme upload ordering to ensure layout files are uploaded before templates
 - acc904f: Bump Shopify/theme-tools packages to
-
   - Fix validation for static blocks in JSON templates
   - Introduce ability the disable theme checks for the next Liquid statement
 
@@ -611,7 +616,6 @@
 - ca218cd31: Update theme selection text for `shopify theme push` command
 - ca218cd31: Improve Glob Pattern subdirectory mismatch error handling
 - ca218cd31: Bump Shopify/theme-tools packages
-
   - TL;DR
     - (New) `ValidJson` check - JSON schema validation on `.json` files
     - (New) Section/block schema `t:` translation completion
