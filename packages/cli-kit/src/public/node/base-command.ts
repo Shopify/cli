@@ -5,7 +5,7 @@ import {outputContent, outputResult, outputToken} from './output.js'
 import {hashString} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {setCurrentCommandId} from './global-context.js'
-import {JsonMap} from '../../private/common/json.js'
+import type {JsonMap} from '../../private/common/json.js'
 import {underscore} from '../common/string.js'
 
 /**
@@ -18,7 +18,7 @@ function terminalSupportsPrompting(): boolean {
 }
 
 import {Command, Config, Errors} from '@oclif/core'
-import {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
+import type {OutputFlags, Input, ParserOutput, FlagInput, OutputArgs} from '@oclif/core/parser'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type ArgOutput = OutputArgs<any>
