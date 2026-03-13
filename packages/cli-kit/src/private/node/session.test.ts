@@ -40,7 +40,6 @@ const validIdentityToken: IdentityToken = {
   expiresAt: futureDate,
   scopes: ['scope', 'scope2'],
   userId,
-  alias: userId,
 }
 
 const validTokens: OAuthSession = {
@@ -180,7 +179,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(fetchSessions).toHaveBeenCalledOnce()
   })
 
-  test('falls back to userId when email fetch fails', async () => {
+  test('leaves alias undefined when email fetch fails', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
@@ -194,9 +193,8 @@ The CLI is currently unable to prompt for reauthentication.`,
     expect(businessPlatformRequest).toHaveBeenCalled()
     expect(storeSessions).toHaveBeenCalledOnce()
 
-    // Verify the session was stored with userId as alias (fallback)
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![userId]!.identity.alias).toBeUndefined()
 
     expect(got).toEqual(validTokens)
   })
@@ -207,7 +205,7 @@ The CLI is currently unable to prompt for reauthentication.`,
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
 
     // When
-    const got = await ensureAuthenticated(defaultApplications)
+    await ensureAuthenticated(defaultApplications)
 
     // Then
     expect(businessPlatformRequest).toHaveBeenCalledWith(expect.any(String), 'access_token')
@@ -666,7 +664,32 @@ describe('ensureAuthenticated email fetch functionality', () => {
     expect(got).toEqual(validTokens)
   })
 
-  test('uses userId as alias when email is not available', async () => {
+  test('preserves existing alias during token refresh error fallback when email fetch fails', async () => {
+    // Given
+    const sessionsWithAlias: Sessions = {
+      [fqdn]: {
+        [userId]: {
+          identity: {...validIdentityToken, alias: 'my-custom-alias'},
+          applications: {},
+        },
+      },
+    }
+    const tokenResponseError = new InvalidGrantError()
+    vi.mocked(validateSession).mockResolvedValueOnce('needs_refresh')
+    vi.mocked(fetchSessions).mockResolvedValue(sessionsWithAlias)
+    vi.mocked(refreshAccessToken).mockRejectedValueOnce(tokenResponseError)
+    vi.mocked(businessPlatformRequest).mockRejectedValueOnce(new Error('API Error'))
+
+    // When
+    const got = await ensureAuthenticated(defaultApplications)
+
+    // Then
+    const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
+    expect(storedSession[fqdn]![userId]!.identity.alias).toBe('my-custom-alias')
+    expect(got).toEqual(validTokens)
+  })
+
+  test('leaves alias undefined when email is not available', async () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('needs_full_auth')
     vi.mocked(fetchSessions).mockResolvedValue(undefined)
@@ -681,7 +704,7 @@ describe('ensureAuthenticated email fetch functionality', () => {
 
     // Then
     const storedSession = vi.mocked(storeSessions).mock.calls[0]![0]
-    expect(storedSession[fqdn]![userId]!.identity.alias).toBe(userId)
+    expect(storedSession[fqdn]![userId]!.identity.alias).toBeUndefined()
     expect(got).toEqual(validTokens)
   })
 })
