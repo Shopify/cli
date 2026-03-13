@@ -74,10 +74,14 @@ export class ShopifyConfig extends Config {
           commandClass.id = id
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-          // Run prerun hook
-          await this.runHook('prerun', {argv, Command: commandClass})
+          // Fire prerun hook in background (analytics metadata setup).
+          // Don't await - it runs in parallel with command execution.
+          // By the time postrun needs the metadata, it will be ready.
+          const prerunPromise = this.runHook('prerun', {argv, Command: commandClass})
           // Execute the command
           const result = (await commandClass.run(argv, this)) as T
+          // Ensure prerun completed before postrun reads analytics metadata
+          await prerunPromise
           // Run postrun hook (analytics, deprecation checks)
           await this.runHook('postrun', {argv, Command: commandClass, result})
           return result
