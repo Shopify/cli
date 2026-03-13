@@ -89,7 +89,13 @@ export async function runCLI(
     await addInitToArgvWhenRunningCreateCLI(options, argv)
   }
   forceNoColor(argv, env)
-  await exitIfOldNodeVersion(versions)
+  // Inline old Node version check to avoid async function call overhead.
+  // exitIfOldNodeVersion only renders an error for Node < 18.
+  const nodeMajor = Number(versions.node.split('.')[0])
+  if (nodeMajor < 18) {
+    await exitIfOldNodeVersion(versions)
+    return
+  }
   return launchCLI({moduleURL: options.moduleURL, lazyCommandLoader: options.lazyCommandLoader})
 }
 
