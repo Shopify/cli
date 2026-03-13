@@ -1,5 +1,6 @@
 import Deploy from './deploy.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {OrganizationSource} from '../../models/organization.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -22,7 +23,11 @@ describe('app deploy --force deprecation warning', () => {
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
       developerPlatformClient: testDeveloperPlatformClient(),
-      organization: {id: '1', businessName: 'test', website: '', apps: {nodes: []}, zeroPartyData: false, appsNext: false},
+      organization: {
+        id: '1',
+        businessName: 'test',
+        source: OrganizationSource.Partners,
+      },
     })
     vi.mocked(deploy).mockResolvedValue({app: testAppLinked()})
   })
@@ -59,8 +64,14 @@ describe('app deploy --force deprecation warning', () => {
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
-  test('does not show deprecation warning when only --allow-deletes is passed', async () => {
+  test('does not show deprecation warning when --allow-updates and --allow-deletes are passed', async () => {
     await Deploy.run(['--allow-updates', '--allow-deletes'])
+
+    expect(renderWarning).not.toHaveBeenCalled()
+  })
+
+  test('does not show deprecation warning when only --allow-deletes is passed', async () => {
+    await Deploy.run(['--allow-deletes'])
 
     expect(renderWarning).not.toHaveBeenCalled()
   })

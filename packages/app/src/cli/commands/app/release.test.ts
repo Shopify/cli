@@ -1,5 +1,6 @@
 import Release from './release.js'
 import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../../models/app/app.test-data.js'
+import {OrganizationSource} from '../../models/organization.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 
@@ -22,7 +23,11 @@ describe('app release --force deprecation warning', () => {
       app: testAppLinked(),
       remoteApp: testOrganizationApp(),
       developerPlatformClient: testDeveloperPlatformClient(),
-      organization: {id: '1', businessName: 'test', website: '', apps: {nodes: []}, zeroPartyData: false, appsNext: false},
+      organization: {
+        id: '1',
+        businessName: 'test',
+        source: OrganizationSource.Partners,
+      },
     })
     vi.mocked(release).mockResolvedValue(undefined)
   })
@@ -59,8 +64,8 @@ describe('app release --force deprecation warning', () => {
     expect(renderWarning).not.toHaveBeenCalled()
   })
 
-  test('does not show deprecation warning when no force flags are passed', async () => {
-    await Release.run(['--version', 'v1.0.0', '--allow-updates'])
+  test('does not show deprecation warning when --allow-updates and --allow-deletes are passed', async () => {
+    await Release.run(['--version', 'v1.0.0', '--allow-updates', '--allow-deletes'])
 
     expect(renderWarning).not.toHaveBeenCalled()
   })
