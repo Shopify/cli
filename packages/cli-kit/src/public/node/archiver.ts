@@ -6,6 +6,7 @@ import {createWriteStream, readFileSync, writeFileSync} from 'fs'
 import {readFile} from 'fs/promises'
 import {tmpdir} from 'os'
 import {randomUUID} from 'crypto'
+import {brotliCompressSync, constants as zlibConstants} from 'zlib'
 
 interface ZipOptions {
   /**
@@ -183,15 +184,12 @@ export async function brotliCompress(options: BrotliOptions): Promise<void> {
     })
 
     const tarContent = readFileSync(tempTarPath)
-    const brotli = await import('brotli')
-    const compressed = brotli.default.compress(tarContent, {
-      quality: 7,
-      mode: 0,
+    const compressed = brotliCompressSync(tarContent, {
+      params: {
+        [zlibConstants.BROTLI_PARAM_QUALITY]: 7,
+        [zlibConstants.BROTLI_PARAM_MODE]: zlibConstants.BROTLI_MODE_GENERIC,
+      },
     })
-
-    if (!compressed) {
-      throw new Error('Brotli compression failed')
-    }
 
     writeFileSync(options.outputPath, compressed)
   } finally {
