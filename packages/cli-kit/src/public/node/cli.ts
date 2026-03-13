@@ -1,7 +1,6 @@
 import {isTruthy} from './context/utilities.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
 import type {LazyCommandLoader} from './custom-oclif-loader.js'
-import {cacheClear} from '../../private/node/conf-store.js'
 import {environmentVariables} from '../../private/node/constants.js'
 
 import {Flags} from '@oclif/core'
@@ -155,6 +154,7 @@ export const jsonFlag = {
 /**
  * Clear the CLI cache, used to store some API responses and handle notifications status
  */
-export function clearCache(): void {
+export async function clearCache(): Promise<void> {
+  const {cacheClear} = await import('../../private/node/conf-store.js')
   cacheClear()
 }

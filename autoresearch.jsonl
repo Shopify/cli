@@ -1,2 +1,3 @@
 {"type":"config","name":"Shopify CLI Faster Startup","metricName":"total_ms","metricUnit":"ms","bestDirection":"lower"}
 {"run":1,"commit":"6dec3db","metric":1840,"metrics":{"import_ms":1494},"status":"keep","description":"Baseline: shopify version takes ~1840ms. Import alone is ~1494ms.","timestamp":1773400439568,"segment":0}
+{"run":2,"commit":"1ba8c37","metric":710,"metrics":{"import_ms":0},"status":"keep","description":"Lazy command loading: separate bootstrap.ts, extract token-utils, move hooks to individual files, lazy command registry. 1840ms → 710ms (61% faster)","timestamp":1773401477099,"segment":0}
