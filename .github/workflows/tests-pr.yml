@@ -202,6 +202,17 @@ jobs:
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
 
+  unit-tests-gate:
+    name: "Unit tests"
+    needs: unit-tests
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verify all unit tests passed
+        if: needs.unit-tests.result != 'success'
+        run: exit 1
+
   test-coverage-shard:
     if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
     name: "Test Coverage (shard ${{ matrix.shard }})"
