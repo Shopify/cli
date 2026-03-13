@@ -29,10 +29,8 @@
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "test:e2e": "nx run-many --target=build --projects=cli,create-app --skip-nx-cache && pnpm --filter e2e exec playwright test",
-    "test:features": "pnpm nx run features:test",
-    "test:regenerate-snapshots": "nx build cli && packages/features/snapshots/regenerate.sh",
     "test:unit": "pnpm vitest run",
-    "test": "pnpm vitest run && pnpm nx run features:test",
+    "test": "pnpm vitest run",
     "type-check:affected": "nx affected --target=type-check",
     "type-check": "nx run-many --target=type-check --all --skip-nx-cache",
     "update-bugsnag": "bin/update-bugsnag.js"
@@ -173,7 +171,6 @@
           "graphql.config.ts"
         ],
         "ignoreBinaries": [
-          "packages/features/snapshots/regenerate.sh",
           "bin/*",
           "shopify",
           "shopify-nightly",
@@ -318,15 +315,6 @@
           "**/src/index.ts"
         ],
         "project": "**/*.{ts,tsx}"
-      },
-      "packages/features": {
-        "entry": [
-          "**/cucumber.js",
-          "**/world/index.ts",
-          "**/steps/*.ts",
-          "**/lib/*.ts"
-        ],
-        "project": "**/*.ts"
       }
     }
   }

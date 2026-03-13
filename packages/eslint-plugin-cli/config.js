@@ -297,14 +297,6 @@ const config = [
     rules: testFileRules,
   },
 
-  // Features package - allow console for test utilities
-  {
-    files: ['**/packages/features/**/*.ts'],
-    rules: {
-      'no-console': 'off',
-    },
-  },
-
   // JS bin files - different rules apply
   {
     files: ['**/bin/*.js'],
