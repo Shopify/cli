@@ -1,0 +1,1 @@
+{"type":"config","name":"Optimize CI time for Shopify CLI (slowest check: Unit tests on Windows)","metricName":"slowest_ci_job_min","metricUnit":"m","bestDirection":"lower"}
