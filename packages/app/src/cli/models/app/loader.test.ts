@@ -3487,6 +3487,19 @@ describe('WebhooksSchema', () => {
 describe('getAppConfigurationState', () => {
   test.each([
     [
+      `scopes = "  write_xyz,     write_abc    "`,
+      {
+        state: 'template-only',
+        configSource: 'cached',
+        configurationFileName: 'shopify.app.toml',
+        appDirectory: expect.any(String),
+        configurationPath: expect.stringMatching(/shopify.app.toml$/),
+        startingOptions: {
+          scopes: '  write_xyz,     write_abc    ',
+        },
+      },
+    ],
+    [
       `client_id="abcdef"`,
       {
         basicConfiguration: {

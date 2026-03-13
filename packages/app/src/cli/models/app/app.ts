@@ -13,6 +13,7 @@ import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {WebhookSubscription} from '../extensions/specifications/types/app_config_webhook.js'
+import {normalizeDelimitedString} from '@shopify/cli-kit/common/string'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
@@ -73,6 +74,31 @@ export const AppSchema = zod
   .passthrough()
 
 /**
+ * Schema for loading template config during app init.
+ * Uses passthrough() to allow any extra keys from full-featured templates
+ * (e.g., metafields, metaobjects, webhooks) without strict validation.
+ */
+export const TemplateConfigSchema = zod
+  .object({
+    scopes: zod.string().optional(),
+    access_scopes: zod
+      .object({
+        scopes: zod.string(),
+      })
+      .optional(),
+    web_directories: zod.array(zod.string()).optional(),
+  })
+  .passthrough()
+
+export type TemplateConfig = zod.infer<typeof TemplateConfigSchema>
+
+export function getTemplateScopesArray(config: TemplateConfig): string[] {
+  const scopesString = normalizeDelimitedString(config.scopes ?? config.access_scopes?.scopes)
+  if (!scopesString || scopesString.length === 0) return []
+  return scopesString.split(',').map((scope) => scope.trim())
+}
+
+/**
  * Hidden configuration for an app. Stored inside ./shopify/project.json
  * This is a set of values that are needed by the CLI that are not part of the app configuration.
  * These are not meant to be git tracked and the user doesn't need to know about their existence.
@@ -127,7 +153,7 @@ export function getAppVersionedSchema(
  * @param config - a configuration file
  */
 export function getAppScopes(config: CurrentAppConfiguration): string {
-  return config.access_scopes?.scopes ?? ''
+  return normalizeDelimitedString(config.access_scopes?.scopes) ?? ''
 }
 
 /**
