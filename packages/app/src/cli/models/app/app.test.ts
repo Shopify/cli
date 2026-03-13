@@ -4,6 +4,7 @@ import {
   getAppScopes,
   getAppScopesArray,
   getUIExtensionRendererVersion,
+  normalizeExtensionDirectories,
   validateExtensionsHandlesInCollection,
   validateFunctionExtensionsWithUiHandle,
 } from './app.js'
@@ -58,31 +59,36 @@ const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
 }
 
 describe('app schema validation', () => {
-  test('extension_directories should be transformed to double asterisks', () => {
+  test('extension_directories preserves raw values without transformation', () => {
     const config = {
       ...CORRECT_CURRENT_APP_SCHEMA,
       extension_directories: ['extensions/*'],
     }
     const parsed = AppSchema.parse(config)
-    expect(parsed.extension_directories).toEqual(['extensions/**'])
+    expect(parsed.extension_directories).toEqual(['extensions/*'])
+  })
+})
+
+describe('normalizeExtensionDirectories', () => {
+  test('converts single trailing wildcard to double asterisks', () => {
+    expect(normalizeExtensionDirectories(['extensions/*'])).toEqual(['extensions/**'])
   })
 
-  test('extension_directories is not transformed if it ends with double asterisks', () => {
-    const config = {
-      ...CORRECT_CURRENT_APP_SCHEMA,
-      extension_directories: ['extensions/**'],
-    }
-    const parsed = AppSchema.parse(config)
-    expect(parsed.extension_directories).toEqual(['extensions/**'])
+  test('preserves double asterisks', () => {
+    expect(normalizeExtensionDirectories(['extensions/**'])).toEqual(['extensions/**'])
   })
 
-  test('extension_directories is not transformed if it doesnt end with a wildcard', () => {
-    const config = {
-      ...CORRECT_CURRENT_APP_SCHEMA,
-      extension_directories: ['extensions'],
-    }
-    const parsed = AppSchema.parse(config)
-    expect(parsed.extension_directories).toEqual(['extensions'])
+  test('does not transform paths without wildcards', () => {
+    expect(normalizeExtensionDirectories(['extensions'])).toEqual(['extensions'])
+  })
+
+  test('strips trailing path separators before fixing wildcards', () => {
+    expect(normalizeExtensionDirectories(['extensions/'])).toEqual(['extensions'])
+    expect(normalizeExtensionDirectories(['extensions\\'])).toEqual(['extensions'])
+  })
+
+  test('returns undefined for undefined input', () => {
+    expect(normalizeExtensionDirectories(undefined)).toBeUndefined()
   })
 })
 

@@ -1,5 +1,5 @@
 /* eslint-disable no-case-declarations */
-import {AppLinkedInterface} from '../../../models/app/app.js'
+import {AppLinkedInterface, normalizeExtensionDirectories} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
 import {dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
@@ -85,7 +85,9 @@ export class FileWatcher {
    * This ensures the watcher picks up any changes in what files need to be watched.
    */
   async start(): Promise<void> {
-    const extensionDirectories = [...(this.app.configuration.extension_directories ?? ['extensions'])]
+    const extensionDirectories = [
+      ...(normalizeExtensionDirectories(this.app.configuration.extension_directories) ?? ['extensions']),
+    ]
     const fullExtensionDirectories = extensionDirectories.map((directory) => joinPath(this.app.directory, directory))
     const watchPaths = [this.app.configPath, ...fullExtensionDirectories]
 
