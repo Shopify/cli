@@ -8,6 +8,8 @@ import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import {AsyncLocalStorage} from 'node:async_hooks'
 
+const MAX_LINES_PER_BATCH = 100
+
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
   prefixColumnSize?: number
@@ -141,16 +143,38 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
 
           const index = addPrefix(prefix, prefixes)
 
-          const lines = shouldStripAnsi ? stripAnsi(log).split(/\n/) : log.split(/\n/)
-          setProcessOutput((previousProcessOutput) => [
-            ...previousProcessOutput,
-            {
-              color: lineColor(index),
-              prefix,
-              lines,
-            },
-          ])
-          next()
+          const allLines = shouldStripAnsi ? stripAnsi(log).split(/\n/) : log.split(/\n/)
+
+          if (allLines.length <= MAX_LINES_PER_BATCH) {
+            setProcessOutput((previousProcessOutput) => [
+              ...previousProcessOutput,
+              {color: lineColor(index), prefix, lines: allLines},
+            ])
+            next()
+            return
+          }
+
+          // For large chunks (e.g. big stack traces), split into batches and yield
+          // between each via setImmediate so the event loop can process keyboard
+          // events (q, p, etc.) between renders instead of blocking.
+          const batches: string[][] = []
+          for (let i = 0; i < allLines.length; i += MAX_LINES_PER_BATCH) {
+            batches.push(allLines.slice(i, i + MAX_LINES_PER_BATCH))
+          }
+
+          const scheduleBatch = (batchIndex: number) => {
+            if (batchIndex >= batches.length) {
+              next()
+              return
+            }
+            setProcessOutput((previousProcessOutput) => [
+              ...previousProcessOutput,
+              {color: lineColor(index), prefix, lines: batches[batchIndex]!},
+            ])
+            setImmediate(() => scheduleBatch(batchIndex + 1))
+          }
+
+          scheduleBatch(0)
         },
       })
     },
