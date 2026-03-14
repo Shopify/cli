@@ -1,6 +1,7 @@
 import {
+  addTypeDefinition,
+  assertTargetsResolvable,
   findAllImportedFiles,
-  createTypeDefinition,
   findNearestTsConfigDir,
   parseApiVersion,
   createToolsTypeDefinition,
@@ -11,7 +12,6 @@ import {NewExtensionPointSchemaType, NewExtensionPointsSchema, BaseSchema, Metaf
 import {loadLocalesConfig} from '../../../utilities/extensions/locales-configuration.js'
 import {getExtensionPointTargetSurface} from '../../../services/dev/extension/utilities.js'
 import {ExtensionInstance} from '../extension-instance.js'
-import {formatContent} from '../../../utilities/file-formatter.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {copyFile, fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
@@ -182,7 +182,7 @@ const uiExtensionSpec = createExtensionSpecification({
       }) !== undefined
     )
   },
-  contributeToSharedTypeFile: async (extension, typeDefinitionsByFile) => {
+  contributeToSharedTypeFile: async (extension, typeDefinitionsByFile, appDirectory = extension.directory) => {
     if (!isRemoteDomExtension(extension.configuration)) {
       return
     }
@@ -259,7 +259,7 @@ const uiExtensionSpec = createExtensionSpecification({
 
     // Third pass: generate type definitions for all files
     for await (const [filePath, targets] of fileToTargetsMap.entries()) {
-      const tsConfigDir = await findNearestTsConfigDir(filePath, extension.directory)
+      const tsConfigDir = await findNearestTsConfigDir(filePath, appDirectory)
       if (!tsConfigDir) continue
 
       const typeFilePath = joinPath(tsConfigDir, 'shopify.d.ts')
@@ -297,19 +297,20 @@ const uiExtensionSpec = createExtensionSpecification({
             )
           }
         }
-        let typeDefinition = createTypeDefinition({
+        assertTargetsResolvable({
+          fullPath: filePath,
+          typeFilePath,
+          targets: uniqueTargets,
+          apiVersion: configuration.api_version,
+        })
+
+        addTypeDefinition(typeDefinitionsByFile, {
           fullPath: filePath,
           typeFilePath,
           targets: uniqueTargets,
           apiVersion: configuration.api_version,
           toolsTypeDefinition,
         })
-        if (typeDefinition) {
-          const currentTypes = typeDefinitionsByFile.get(typeFilePath) ?? new Set<string>()
-          typeDefinition = await formatContent(typeDefinition, {parser: 'typescript', singleQuote: true})
-          currentTypes.add(typeDefinition)
-          typeDefinitionsByFile.set(typeFilePath, currentTypes)
-        }
       } catch (error) {
         // Only throw if this is an entry point file (required)
         const isEntryPoint = configuration.extension_points.some(

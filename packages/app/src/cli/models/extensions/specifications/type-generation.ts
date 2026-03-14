@@ -1,5 +1,6 @@
+import {formatContent} from '../../../utilities/file-formatter.js'
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
+import {dirname, isSubpath, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import ts from 'typescript'
 import {compile} from 'json-schema-to-typescript'
@@ -165,6 +166,14 @@ interface CreateTypeDefinitionOptions {
   toolsTypeDefinition?: string
 }
 
+interface SharedTypeDefinition {
+  apiVersion: string
+  targets: Set<string>
+  toolsTypeDefinition?: string
+}
+
+export type TypeDefinitionsByFile = Map<string, Map<string, SharedTypeDefinition>>
+
 /**
  * Builds the shopify API type based on targets and optional tools type.
  * Returns null if no targets are provided.
@@ -185,7 +194,7 @@ function buildShopifyType(targets: string[], toolsTypeDefinition?: string): stri
   return null
 }
 
-export function createTypeDefinition({
+function createTypeDefinition({
   fullPath,
   typeFilePath,
   targets,
@@ -193,19 +202,7 @@ export function createTypeDefinition({
   toolsTypeDefinition,
 }: CreateTypeDefinitionOptions): string | null {
   try {
-    // Validate that all targets can be resolved
-    for (const target of targets) {
-      try {
-        require.resolve(`@shopify/ui-extensions/${target}`, {paths: [fullPath, typeFilePath]})
-      } catch (_) {
-        const {year, month} = parseApiVersion(apiVersion) ?? {year: 2025, month: 10}
-        // Throw specific error for the target that failed, matching the original getSharedTypeDefinition behavior
-        throw new AbortError(
-          `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
-          `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~${year}.${month}.0, in your dependencies.`,
-        )
-      }
-    }
+    assertTargetsResolvable({fullPath, typeFilePath, targets, apiVersion})
 
     const relativePath = relativizePath(fullPath, dirname(typeFilePath))
 
@@ -236,22 +233,101 @@ export function createTypeDefinition({
   }
 }
 
-export async function findNearestTsConfigDir(
-  fromFile: string,
-  extensionDirectory: string,
-): Promise<string | undefined> {
+export function assertTargetsResolvable({
+  fullPath,
+  typeFilePath,
+  targets,
+  apiVersion,
+}: Omit<CreateTypeDefinitionOptions, 'toolsTypeDefinition'>) {
+  for (const target of targets) {
+    try {
+      require.resolve(`@shopify/ui-extensions/${target}`, {paths: [fullPath, typeFilePath]})
+    } catch (_) {
+      const {year, month} = parseApiVersion(apiVersion) ?? {year: 2025, month: 10}
+      throw new AbortError(
+        `Type reference for ${target} could not be found. You might be using the wrong @shopify/ui-extensions version.`,
+        `Fix the error by ensuring you have the correct version of @shopify/ui-extensions, for example ~${year}.${month}.0, in your dependencies.`,
+      )
+    }
+  }
+}
+
+export function addTypeDefinition(
+  typeDefinitionsByFile: TypeDefinitionsByFile,
+  {fullPath, typeFilePath, targets, apiVersion, toolsTypeDefinition}: CreateTypeDefinitionOptions,
+) {
+  const currentTypeDefinitions = typeDefinitionsByFile.get(typeFilePath) ?? new Map<string, SharedTypeDefinition>()
+  const existingTypeDefinition = currentTypeDefinitions.get(fullPath)
+
+  if (existingTypeDefinition) {
+    targets.forEach((target) => existingTypeDefinition.targets.add(target))
+    existingTypeDefinition.toolsTypeDefinition ??= toolsTypeDefinition
+    if (isApiVersionNewer(apiVersion, existingTypeDefinition.apiVersion)) {
+      existingTypeDefinition.apiVersion = apiVersion
+    }
+  } else {
+    currentTypeDefinitions.set(fullPath, {
+      apiVersion,
+      targets: new Set(targets),
+      toolsTypeDefinition,
+    })
+  }
+
+  typeDefinitionsByFile.set(typeFilePath, currentTypeDefinitions)
+}
+
+export async function renderTypeDefinitions(
+  typeDefinitionsByPath: Map<string, SharedTypeDefinition>,
+  typeFilePath: string,
+): Promise<Set<string>> {
+  const sortedTypeDefinitions = Array.from(typeDefinitionsByPath.entries()).sort(([left], [right]) =>
+    left.localeCompare(right),
+  )
+  const renderedTypeDefinitions = await Promise.all(
+    sortedTypeDefinitions.map(async ([fullPath, definition]) => {
+      const typeDefinition = createTypeDefinition({
+        fullPath,
+        typeFilePath,
+        targets: Array.from(definition.targets).sort(),
+        apiVersion: definition.apiVersion,
+        toolsTypeDefinition: definition.toolsTypeDefinition,
+      })
+
+      if (!typeDefinition) return undefined
+      return formatContent(typeDefinition, {parser: 'typescript', singleQuote: true})
+    }),
+  )
+
+  return new Set(renderedTypeDefinitions.filter((typeDefinition): typeDefinition is string => Boolean(typeDefinition)))
+}
+
+export async function findNearestTsConfigDir(fromFile: string, appDirectory: string): Promise<string | undefined> {
   const fromDirectory = dirname(fromFile)
   const tsconfigPath = await findPathUp('tsconfig.json', {cwd: fromDirectory, type: 'file'})
 
   if (tsconfigPath) {
-    // Normalize both paths for cross-platform comparison
-    const normalizedTsconfigPath = resolvePath(tsconfigPath)
-    const normalizedExtensionDirectory = resolvePath(extensionDirectory)
+    const normalizedTsconfigDirectory = resolvePath(dirname(tsconfigPath))
+    const normalizedAppDirectory = resolvePath(appDirectory)
 
-    if (normalizedTsconfigPath.startsWith(normalizedExtensionDirectory)) {
-      return dirname(tsconfigPath)
+    if (isSubpath(normalizedAppDirectory, normalizedTsconfigDirectory)) {
+      return normalizedTsconfigDirectory
     }
   }
+}
+
+function isApiVersionNewer(nextVersion: string, currentVersion: string) {
+  const next = parseApiVersion(nextVersion)
+  const current = parseApiVersion(currentVersion)
+
+  if (!next || !current) {
+    return false
+  }
+
+  if (next.year !== current.year) {
+    return next.year > current.year
+  }
+
+  return next.month > current.month
 }
 
 interface ToolDefinition {
