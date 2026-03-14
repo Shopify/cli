@@ -23,6 +23,17 @@ export class Stdin extends EventEmitter {
   constructor(options: {isTTY?: boolean} = {}) {
     super()
     this.isTTY = options.isTTY ?? true
+
+    // When a 'readable' listener is added and there's pending data,
+    // re-emit 'readable' so the new listener can read it. This mirrors
+    // real Node streams where buffered data is available to new readers,
+    // and prevents dropped input when data is written before Ink's
+    // useInput effect registers its listener.
+    this.on('newListener', (event: string) => {
+      if (event === 'readable' && this.data !== null) {
+        setImmediate(() => this.emit('readable'))
+      }
+    })
   }
 
   write = (data: string) => {

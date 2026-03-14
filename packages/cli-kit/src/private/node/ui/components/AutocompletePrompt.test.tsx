@@ -1,7 +1,6 @@
 import {AutocompletePrompt, SearchResults} from './AutocompletePrompt.js'
 import {
   getLastFrameAfterUnmount,
-  sendInputAndWait,
   sendInputAndWaitForChange,
   sendInputAndWaitForContent,
   waitForInputsToBeReady,
@@ -286,8 +285,9 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
 
     await sendInputAndWaitForContent(renderInstance, 'No results found', 'a')
-    // prompt doesn't change when enter is pressed
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    // prompt doesn't change when enter is pressed — yield to let React
+    // 19's scheduler process any batched updates from the keypress
+    await sendInputAndWaitForContent(renderInstance, 'No results found', ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[46m█[49m[39m
@@ -328,12 +328,11 @@ describe('AutocompletePrompt', async () => {
   test('has a loading state', async () => {
     const onEnter = vi.fn()
 
+    // Use a promise that never resolves so the loading state persists
+    // for the entire test, eliminating timing races with React 19's
+    // batched rendering on slow CI runners.
     const search = () => {
-      return new Promise<SearchResults<string>>((resolve) => {
-        setTimeout(() => {
-          resolve({data: [{label: 'a', value: 'b'}]})
-        }, 2000)
-      })
+      return new Promise<SearchResults<string>>(() => {})
     }
 
     const renderInstance = render(
@@ -347,9 +346,9 @@ describe('AutocompletePrompt', async () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'Loading...', 'a')
-    // prompt doesn't change when enter is pressed
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    // prompt doesn't change when enter is pressed — yield to let React
+    // 19's scheduler process any batched updates from the keypress
+    await sendInputAndWaitForContent(renderInstance, 'Loading...', ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[46m█[49m[39m
