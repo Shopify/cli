@@ -1,5 +1,6 @@
 import {gql} from 'graphql-request'
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
 export const ExtensionSpecificationsQuery = gql`
   query fetchSpecifications($apiKey: String!) {
     extensionSpecifications(apiKey: $apiKey) {
@@ -40,6 +41,7 @@ export interface RemoteSpecification {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
     uidIsClientProvided: boolean
+    uidStrategy?: 'single' | 'dynamic' | 'uuid'
   }
   features?: {
     argo?: {
