@@ -1,4 +1,5 @@
 import {setupDevSessionProcess, pushUpdatesForDevSession} from './dev-session-process.js'
+import {DevSessionEventLog} from './dev-session-event-log.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DeveloperPlatformClient} from '../../../../utilities/developer-platform-client.js'
 import {AppLinkedInterface} from '../../../../models/app/app.js'
@@ -671,6 +672,27 @@ describe('pushUpdatesForDevSession', () => {
     expect(stdout.write).toHaveBeenCalledWith(expect.stringContaining('Updated dev preview on test.myshopify.com'))
     expect(stdout.write).not.toHaveBeenCalledWith(expect.stringContaining('Another developer'))
     expect(stdout.write).not.toHaveBeenCalledWith(expect.stringContaining('taken ownership of this dev preview'))
+  })
+
+  test('writes lifecycle events to event log when provided', async () => {
+    // Given
+    const eventLog = {
+      write: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn(),
+    } as unknown as DevSessionEventLog
+    options.eventLog = eventLog
+
+    // When
+    await pushUpdatesForDevSession({stderr, stdout, abortSignal: abortController.signal}, {...options, eventLog})
+    await appWatcher.start({stdout, stderr, signal: abortController.signal})
+    await flushPromises()
+
+    // Then - event log should have received lifecycle events during create
+    const writtenEvents = vi.mocked(eventLog.write).mock.calls.map((call) => call[0].event)
+    expect(writtenEvents).toContain('session-starting')
+    expect(writtenEvents).toContain('session-created')
+    // Status events from statusManager updates
+    expect(writtenEvents).toContain('status-success')
   })
 
   test('retries failed events along with newly received events', async () => {

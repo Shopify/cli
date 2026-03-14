@@ -8,6 +8,7 @@ import {WebProcess, setupWebProcesses} from './web.js'
 import {DevSessionProcess, setupDevSessionProcess} from './dev-session/dev-session-process.js'
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
+import {DevSessionEventLog} from './dev-session/dev-session-event-log.js'
 import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
@@ -24,7 +25,7 @@ import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
-import {outputInfo} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputInfo} from '@shopify/cli-kit/node/output'
 import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess extends BaseProcess<{
@@ -123,6 +124,15 @@ export async function setupDevProcesses({
     ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
     : undefined
 
+  const eventLog = new DevSessionEventLog(reloadedApp.directory)
+  const eventLogReady = await eventLog
+    .init()
+    .then(() => true)
+    .catch((error) => {
+      outputDebug(`Dev session event logging unavailable: ${error instanceof Error ? error.message : String(error)}`)
+      return false
+    })
+
   const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
 
   const processes = [
@@ -174,6 +184,7 @@ export async function setupDevProcesses({
           appPreviewURL: appPreviewUrl,
           appLocalProxyURL: devConsoleURL,
           devSessionStatusManager,
+          eventLog: eventLogReady ? eventLog : undefined,
         })
       : await setupDraftableExtensionsProcess({
           localApp: reloadedApp,
