@@ -10,7 +10,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {readFile, touchFile, writeFile, fileExistsSync, rmdir, fileExists} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -126,6 +126,74 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions
 
+// Duration in milliseconds after which a lock is considered stale (default: 10 seconds)
+// This should be long enough to allow for slow builds but short enough to recover from crashes
+const LOCK_STALE_MS = 10000
+
+// Signals that should trigger lock cleanup
+const CLEANUP_SIGNALS: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP']
+
+/**
+ * Registers signal handlers to release the lock on abnormal termination.
+ * Returns a cleanup function to remove the handlers when the lock is released normally.
+ */
+function registerLockCleanupHandlers(releaseLock: () => Promise<void>): () => void {
+  const handlers = new Map<NodeJS.Signals, NodeJS.SignalsListener>()
+
+  for (const signal of CLEANUP_SIGNALS) {
+    const handler: NodeJS.SignalsListener = () => {
+      outputDebug(`Received ${signal}, releasing build lock...`)
+      // Use sync-style cleanup since we're in a signal handler
+      // The lock release is async but we need to at least initiate it
+      releaseLock()
+        .catch((err) => outputDebug(`Failed to release lock on ${signal}: ${err}`))
+        .finally(() => {
+          // Re-emit the signal after cleanup so the process can terminate normally
+          // Remove our handler first to avoid infinite loop
+          process.removeListener(signal, handler)
+          process.kill(process.pid, signal)
+        })
+    }
+    handlers.set(signal, handler)
+    process.on(signal, handler)
+  }
+
+  // Return cleanup function to remove handlers
+  return () => {
+    for (const [signal, handler] of handlers) {
+      process.removeListener(signal, handler)
+    }
+  }
+}
+
+/**
+ * Removes a stale lockfile if it exists and is not actively held.
+ * This handles cases where a previous build process crashed without releasing the lock.
+ */
+async function cleanupStaleLock(lockfilePath: string): Promise<void> {
+  if (await fileExists(lockfilePath)) {
+    try {
+      // Check if the lock is stale (no active process holding it)
+      const isLocked = await lockfile.check(lockfilePath, {stale: LOCK_STALE_MS, lockfilePath})
+      if (!isLocked) {
+        // Lock exists but is stale - remove it
+        outputDebug(`Removing stale build lock: ${lockfilePath}`)
+        await rmdir(lockfilePath, {force: true})
+      }
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      // If check fails (e.g., ENOENT, corrupted lock), try to remove the lock anyway
+      outputDebug(`Failed to check lock status, attempting cleanup: ${lockfilePath}`)
+      try {
+        await rmdir(lockfilePath, {force: true})
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        // Ignore cleanup errors - the lock acquisition will fail with a clear message if needed
+      }
+    }
+  }
+}
+
 /**
  * Builds a function extension
  * @param extension - The function extension to build.
@@ -136,15 +204,30 @@ export async function buildFunctionExtension(
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
   const lockfilePath = joinPath(extension.directory, '.build-lock')
-  let releaseLock
+
+  // Clean up any stale locks from crashed builds before attempting to acquire
+  await cleanupStaleLock(lockfilePath)
+
+  let releaseLock: () => Promise<void>
+  let removeSignalHandlers: () => void
   try {
-    releaseLock = await lockfile.lock(extension.directory, {retries: 20, lockfilePath})
+    releaseLock = await lockfile.lock(extension.directory, {
+      retries: {
+        retries: 3,
+        minTimeout: 100,
+        maxTimeout: 1000,
+      },
+      stale: LOCK_STALE_MS,
+      lockfilePath,
+    })
+    // Register signal handlers to release lock on SIGINT, SIGTERM, SIGHUP
+    removeSignalHandlers = registerLockCleanupHandlers(releaseLock)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     outputDebug(`Failed to acquire function build lock: ${error.message}`)
     throw new AbortError('Failed to build function.', 'This is likely due to another in-progress build.', [
       'Ensure there are no other function builds in-progress.',
-      'Delete the `.build-lock` file in your function directory.',
+      `If no other build is running, delete the \`${lockfilePath}\` directory and try again.`,
     ])
   }
 
@@ -189,6 +272,8 @@ export async function buildFunctionExtension(
     newError.errors = error.errors
     throw newError
   } finally {
+    // Remove signal handlers before releasing lock (normal termination path)
+    removeSignalHandlers()
     await releaseLock()
   }
 }
