@@ -7,7 +7,12 @@ import Command from '../base-command.js'
 import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {fetchNotificationsInBackground} from '../notifications-system.js'
 import {isPreReleaseVersion} from '../version.js'
-import {Hook} from '@oclif/core'
+import {reportAnalyticsEvent} from '../analytics.js'
+import {postRunHookHasCompleted} from './postrun.js'
+import {normalizeStoreFqdn} from '../context/fqdn.js'
+import {hashString} from '../crypto.js'
+import * as metadata from '../metadata.js'
+import {Hook, Interfaces} from '@oclif/core'
 
 export declare interface CommandContent {
   command: string
@@ -25,6 +30,8 @@ export const hook: Hook.Prerun = async (options) => {
   await warnOnAvailableUpgrade()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
+  await extractStoreMetadata(options.argv)
+  interceptProcessExit(options.config)
   fetchNotificationsInBackground(options.Command.id)
 }
 
@@ -88,9 +95,49 @@ function findAlias(aliases: string[]) {
   }
 }
 
-/**
- * Warns the user if there is a new version of the CLI available
- */
+export function interceptProcessExit(config: Interfaces.Config): void {
+  const originalExit = process.exit.bind(process) as (code?: number) => never
+  // @ts-expect-error - overriding process.exit signature
+  process.exit = (code?: number) => {
+    process.exit = originalExit
+    if (!postRunHookHasCompleted()) {
+      process.exitCode = code ?? 0
+      reportAnalyticsEvent({config, exitMode: code === 0 ? 'ok' : 'unexpected_error'}).finally(() => {
+        originalExit(code)
+      })
+      return
+    }
+    originalExit(code)
+  }
+}
+
+export async function extractStoreMetadata(argv: string[]): Promise<void> {
+  let store: string | undefined
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]!
+    if ((arg === '--shop' || arg === '-s') && argv[i + 1]) {
+      store = argv[i + 1]
+      break
+    }
+    if (arg.startsWith('--shop=')) {
+      store = arg.slice('--shop='.length)
+      break
+    }
+  }
+  if (!store) {
+    store = process.env.SHOPIFY_SHOP
+  }
+  if (!store) return
+
+  try {
+    const storeFqdn = normalizeStoreFqdn(store)
+    await metadata.addPublicMetadata(() => ({store_fqdn_hash: hashString(storeFqdn)}))
+    await metadata.addSensitiveMetadata(() => ({store_fqdn: storeFqdn}))
+  } catch {
+    // noop - store normalization may fail for invalid values
+  }
+}
+
 export async function warnOnAvailableUpgrade(): Promise<void> {
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
