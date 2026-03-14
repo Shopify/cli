@@ -1,23 +1,62 @@
-import {fileExistsSync} from './fs.js'
-import {cwd, joinPath, sniffForPath} from './path.js'
-import {isDevelopment} from './context/local.js'
-import {execaSync} from 'execa'
+// Use native Node.js modules instead of cli-kit wrappers to avoid pulling in
+// heavy dependency chains (fs.js → fs-extra, execa, etc.) that add ~550KB of chunks.
 import {Command, Config} from '@oclif/core'
 import {Options} from '@oclif/core/interfaces'
+import {existsSync} from 'node:fs'
+// eslint-disable-next-line no-restricted-imports
+import {join} from 'node:path'
+// eslint-disable-next-line no-restricted-imports
+import {execFileSync} from 'node:child_process'
+
+/**
+ * Optional lazy command loader function.
+ * If set, ShopifyConfig will use it to load individual commands on demand
+ * instead of importing the entire COMMANDS module (which triggers loading all packages).
+ */
+export type LazyCommandLoader = (id: string) => Promise<typeof Command | undefined>
+
+/**
+ * Check if CLI is in development mode.
+ * Inlined to avoid importing context/local.js and its dependency chain.
+ */
+function isDev(): boolean {
+  return process.env.SHOPIFY_CLI_ENV === 'development'
+}
+
+/**
+ * Extract --path flag value from argv.
+ * Inlined to avoid importing path.js and its dependency chain.
+ *
+ * @param argv - The process argv to search for the --path flag.
+ * @returns The path value if found, undefined otherwise.
+ */
+function sniffPath(argv = process.argv): string | undefined {
+  const idx = argv.indexOf('--path')
+  if (idx === -1) {
+    const arg = argv.find((item) => item.startsWith('--path='))
+    return arg?.split('=')[1]
+  }
+  const flag = argv[idx + 1]
+  if (!flag || flag.startsWith('-')) return undefined
+  return flag
+}
 
 export class ShopifyConfig extends Config {
-  constructor(options: Options) {
-    if (isDevelopment()) {
-      const currentPath = cwd()
+  private lazyCommandLoader?: LazyCommandLoader
 
-      let path = sniffForPath() ?? currentPath
+  constructor(options: Options) {
+    if (isDev()) {
+      // eslint-disable-next-line @shopify/cli/no-process-cwd
+      const currentPath = process.cwd()
+
+      let path = sniffPath() ?? currentPath
       // Hydrogen CI uses `hydrogen/hydrogen` path, while local dev uses `shopify/hydrogen`.
       const currentPathMightBeHydrogenMonorepo = /(shopify|hydrogen)\/hydrogen/i.test(currentPath)
       const ignoreHydrogenMonorepo = process.env.IGNORE_HYDROGEN_MONOREPO
       if (currentPathMightBeHydrogenMonorepo && !ignoreHydrogenMonorepo) {
-        path = execaSync('npm', ['prefix']).stdout.trim()
+        path = execFileSync('npm', ['prefix'], {encoding: 'utf8'}).trim()
       }
-      if (fileExistsSync(joinPath(path, 'package.json'))) {
+      if (existsSync(join(path, 'package.json'))) {
         // Hydrogen is bundled, but we still want to support loading it as an external plugin for two reasons:
         // 1. To allow users to use an older version of Hydrogen. (to not force upgrades)
         // 2. To allow the Hydrogen team to load a local version for testing.
@@ -30,11 +69,85 @@ export class ShopifyConfig extends Config {
 
     super(options)
 
-    if (isDevelopment()) {
+    if (isDev()) {
       // @ts-expect-error: This is a private method that we are overriding. OCLIF doesn't provide a way to extend it.
 
       this.determinePriority = this.customPriority
     }
+  }
+
+  /**
+   * Set a lazy command loader that will be used to load individual command classes on demand,
+   * bypassing the default oclif behavior of importing the entire COMMANDS module.
+   *
+   * @param loader - The lazy command loader function.
+   */
+  setLazyCommandLoader(loader: LazyCommandLoader): void {
+    this.lazyCommandLoader = loader
+  }
+
+  /**
+   * Override runHook to make init hooks non-blocking for faster startup.
+   * Init hooks (app-init, hydrogen-init) set up LocalStorage and check hydrogen —
+   * these are setup tasks that don't need to complete before commands run.
+   *
+   * @param event - The hook event name.
+   * @param opts - Options to pass to the hook.
+   * @param timeout - Optional timeout for the hook.
+   * @param captureErrors - Whether to capture errors instead of throwing.
+   * @returns The hook result with successes and failures arrays.
+   */
+  // @ts-expect-error: overriding with looser types for hook interception
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async runHook(event: string, opts: any, timeout?: number, captureErrors?: boolean): Promise<any> {
+    if (event === 'init' && this.lazyCommandLoader) {
+      // Fire init hooks in background — they'll complete before process exits
+      // eslint-disable-next-line no-void
+      void super.runHook(event, opts, timeout, captureErrors)
+      return {successes: [], failures: []}
+    }
+    return super.runHook(event, opts, timeout, captureErrors)
+  }
+
+  /**
+   * Override runCommand to use lazy loading when available.
+   * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
+   * we directly import only the needed command module.
+   *
+   * @param id - The command ID to run.
+   * @param argv - The arguments to pass to the command.
+   * @param cachedCommand - An optional cached command loadable.
+   * @returns The command result.
+   */
+  async runCommand<T = unknown>(
+    id: string,
+    argv: string[] = [],
+    cachedCommand: Command.Loadable | null = null,
+  ): Promise<T> {
+    if (this.lazyCommandLoader) {
+      const cmd = cachedCommand ?? this.findCommand(id)
+      if (cmd) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const commandClass = (await this.lazyCommandLoader(id)) as any
+        if (commandClass) {
+          commandClass.id = id
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
+          // Execute the command first — give it exclusive CPU time.
+          const result = (await commandClass.run(argv, this)) as T
+          // Fire prerun + postrun AFTER command completes. Both are fire-and-forget.
+          // Analytics is best-effort; process.exit(0) in bootstrap may terminate
+          // before these complete, which is fine.
+          // eslint-disable-next-line no-void
+          void this.runHook('prerun', {argv, Command: commandClass}).then(() => {
+            // eslint-disable-next-line no-void
+            void this.runHook('postrun', {argv, Command: commandClass, result})
+          })
+          return result
+        }
+      }
+    }
+    return super.runCommand<T>(id, argv, cachedCommand)
   }
 
   customPriority(commands: Command.Loadable[]): Command.Loadable | undefined {
@@ -49,38 +162,31 @@ export class ShopifyConfig extends Config {
 
       // If there is an external cli-hydrogen plugin, its commands should take priority over bundled ('core') commands
       if (aCommand.pluginType === 'core' && bCommand.pluginAlias === '@shopify/cli-hydrogen') {
-        // If b is hydrogen and a is core sort b first
         return 1
       }
 
       if (aCommand.pluginAlias === '@shopify/cli-hydrogen' && bCommand.pluginType === 'core') {
-        // If a is hydrogen and b is core sort a first
         return -1
       }
 
       // All other cases are the default implementation from the private `determinePriority` method
       // When both plugin types are 'core' plugins sort based on index
       if (aCommand.pluginType === 'core' && bCommand.pluginType === 'core') {
-        // If b appears first in the pjson.plugins sort it first
         return aIndex - bIndex
       }
 
-      // if b is a core plugin and a is not sort b first
       if (bCommand.pluginType === 'core' && aCommand.pluginType !== 'core') {
         return 1
       }
 
-      // if a is a core plugin and b is not sort a first
       if (aCommand.pluginType === 'core' && bCommand.pluginType !== 'core') {
         return -1
       }
 
-      // if a is a jit plugin and b is not sort b first
       if (aCommand.pluginType === 'jit' && bCommand.pluginType !== 'jit') {
         return 1
       }
 
-      // if b is a jit plugin and a is not sort a first
       if (bCommand.pluginType === 'jit' && aCommand.pluginType !== 'jit') {
         return -1
       }

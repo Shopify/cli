@@ -1,9 +1,8 @@
 import {isTruthy} from './context/utilities.js'
 import {launchCLI as defaultLaunchCli} from './cli-launcher.js'
-import {cacheClear} from '../../private/node/conf-store.js'
 import {environmentVariables} from '../../private/node/constants.js'
-
 import {Flags} from '@oclif/core'
+import type {LazyCommandLoader} from './custom-oclif-loader.js'
 
 /**
  * IMPORTANT NOTE: Imports in this module are dynamic to ensure that "setupEnvironmentVariables" can dynamically
@@ -14,6 +13,8 @@ interface RunCLIOptions {
   /** The value of import.meta.url of the CLI executable module */
   moduleURL: string
   development: boolean
+  /** Optional lazy command loader for on-demand command loading */
+  lazyCommandLoader?: LazyCommandLoader
 }
 
 async function exitIfOldNodeVersion(versions: NodeJS.ProcessVersions = process.versions) {
@@ -77,7 +78,7 @@ function forceNoColor(argv: string[] = process.argv, env: NodeJS.ProcessEnv = pr
  */
 export async function runCLI(
   options: RunCLIOptions & {runInCreateMode?: boolean},
-  launchCLI: (options: {moduleURL: string}) => Promise<void> = defaultLaunchCli,
+  launchCLI: (options: {moduleURL: string; lazyCommandLoader?: LazyCommandLoader}) => Promise<void> = defaultLaunchCli,
   argv: string[] = process.argv,
   env: NodeJS.ProcessEnv = process.env,
   versions: NodeJS.ProcessVersions = process.versions,
@@ -87,8 +88,14 @@ export async function runCLI(
     await addInitToArgvWhenRunningCreateCLI(options, argv)
   }
   forceNoColor(argv, env)
-  await exitIfOldNodeVersion(versions)
-  return launchCLI({moduleURL: options.moduleURL})
+  // Inline old Node version check to avoid async function call overhead.
+  // exitIfOldNodeVersion only renders an error for Node < 18.
+  const nodeMajor = Number(versions.node.split('.')[0])
+  if (nodeMajor < 18) {
+    await exitIfOldNodeVersion(versions)
+    return
+  }
+  return launchCLI({moduleURL: options.moduleURL, lazyCommandLoader: options.lazyCommandLoader})
 }
 
 async function addInitToArgvWhenRunningCreateCLI(
@@ -152,6 +159,7 @@ export const jsonFlag = {
 /**
  * Clear the CLI cache, used to store some API responses and handle notifications status
  */
-export function clearCache(): void {
+export async function clearCache(): Promise<void> {
+  const {cacheClear} = await import('../../private/node/conf-store.js')
   cacheClear()
 }

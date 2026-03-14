@@ -1,11 +1,18 @@
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import ts from 'typescript'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
+import type ts from 'typescript'
+
+async function loadTypeScript(): Promise<typeof ts> {
+  // typescript is CJS; dynamic import wraps it as { default: ... }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mod: any = await import('typescript')
+  return mod.default ?? mod
+}
 
 const require = createRequire(import.meta.url)
 
@@ -17,18 +24,21 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-function loadTsConfig(startPath: string): {compilerOptions: ts.CompilerOptions; configPath: string | undefined} {
-  const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
+async function loadTsConfig(
+  startPath: string,
+): Promise<{compilerOptions: ts.CompilerOptions; configPath: string | undefined}> {
+  const tsModule = await loadTypeScript()
+  const configPath = tsModule.findConfigFile(startPath, tsModule.sys.fileExists.bind(tsModule.sys), 'tsconfig.json')
   if (!configPath) {
     return {compilerOptions: {}, configPath: undefined}
   }
 
-  const configFile = ts.readConfigFile(configPath, ts.sys.readFile.bind(ts.sys))
+  const configFile = tsModule.readConfigFile(configPath, tsModule.sys.readFile.bind(tsModule.sys))
   if (configFile.error) {
     return {compilerOptions: {}, configPath}
   }
 
-  const parsedConfig = ts.parseJsonConfigFileContent(configFile.config, ts.sys, dirname(configPath))
+  const parsedConfig = tsModule.parseJsonConfigFileContent(configFile.config, tsModule.sys, dirname(configPath))
 
   return {compilerOptions: parsedConfig.options, configPath}
 }
@@ -65,52 +75,57 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
 
 async function parseAndResolveImports(filePath: string): Promise<string[]> {
   try {
+    const tsModule = await loadTypeScript()
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
 
-    // Load TypeScript configuration once
-    const {compilerOptions} = loadTsConfig(filePath)
+    const {compilerOptions} = await loadTsConfig(filePath)
 
-    // Determine script kind based on file extension
-    let scriptKind = ts.ScriptKind.JSX
+    let scriptKind = tsModule.ScriptKind.JSX
     if (filePath.endsWith('.ts')) {
-      scriptKind = ts.ScriptKind.TS
+      scriptKind = tsModule.ScriptKind.TS
     } else if (filePath.endsWith('.tsx')) {
-      scriptKind = ts.ScriptKind.TSX
+      scriptKind = tsModule.ScriptKind.TSX
     }
 
-    const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true, scriptKind)
+    const sourceFile = tsModule.createSourceFile(filePath, content, tsModule.ScriptTarget.Latest, true, scriptKind)
 
     const processedImports = new Set<string>()
     const importPaths: string[] = []
 
     const visit = (node: ts.Node): void => {
-      if (ts.isImportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+      if (
+        tsModule.isImportDeclaration(node) &&
+        node.moduleSpecifier &&
+        tsModule.isStringLiteral(node.moduleSpecifier)
+      ) {
         importPaths.push(node.moduleSpecifier.text)
-      } else if (ts.isCallExpression(node) && node.expression.kind === ts.SyntaxKind.ImportKeyword) {
+      } else if (tsModule.isCallExpression(node) && node.expression.kind === tsModule.SyntaxKind.ImportKeyword) {
         const firstArg = node.arguments[0]
-        if (firstArg && ts.isStringLiteral(firstArg)) {
+        if (firstArg && tsModule.isStringLiteral(firstArg)) {
           importPaths.push(firstArg.text)
         }
-      } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+      } else if (
+        tsModule.isExportDeclaration(node) &&
+        node.moduleSpecifier &&
+        tsModule.isStringLiteral(node.moduleSpecifier)
+      ) {
         importPaths.push(node.moduleSpecifier.text)
       }
 
-      ts.forEachChild(node, visit)
+      tsModule.forEachChild(node, visit)
     }
 
     visit(sourceFile)
 
     for (const importPath of importPaths) {
-      // Skip if already processed
       if (!importPath || processedImports.has(importPath)) {
         continue
       }
 
       processedImports.add(importPath)
 
-      // Use TypeScript's module resolution to resolve potential "paths" configurations
-      const resolvedModule = ts.resolveModuleName(importPath, filePath, compilerOptions, ts.sys)
+      const resolvedModule = tsModule.resolveModuleName(importPath, filePath, compilerOptions, tsModule.sys)
       if (resolvedModule.resolvedModule?.resolvedFileName) {
         const resolvedPath = resolvedModule.resolvedModule.resolvedFileName
 
@@ -118,7 +133,6 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
           resolvedPaths.push(resolvedPath)
         }
       } else {
-        // Fallback to manual resolution for edge cases
         // eslint-disable-next-line no-await-in-loop
         const fallbackPath = await fallbackResolve(importPath, dirname(filePath))
         if (fallbackPath) {
@@ -129,7 +143,6 @@ async function parseAndResolveImports(filePath: string): Promise<string[]> {
 
     return resolvedPaths
   } catch (error) {
-    // Re-throw AbortError as-is, wrap other errors
     if (error instanceof AbortError) {
       throw error
     }

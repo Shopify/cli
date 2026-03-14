@@ -21,6 +21,9 @@ const external = [
   'lightningcss',
   // These two are binary dependencies from Hydrogen that can't be bundled
   '@ast-grep/napi',
+  // TypeScript compiler is ~9MB and only used by oclif for parsing tsconfig in dev mode.
+  // Keep it external to reduce startup chunk size dramatically.
+  'typescript',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -58,9 +61,9 @@ esBuild({
   splitting: true,
   // these tree shaking and minify options remove any in-source tests from the bundle
   treeShaking: true,
-  minifyWhitespace: false,
+  minifyWhitespace: true,
   minifySyntax: true,
-  minifyIdentifiers: false,
+  minifyIdentifiers: true,
 
   plugins: [
     ShopifyVSCodePlugin,
