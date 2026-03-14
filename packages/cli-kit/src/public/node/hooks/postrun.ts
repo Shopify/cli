@@ -1,8 +1,11 @@
 import {postrun as deprecationsHook} from './deprecations.js'
 import {reportAnalyticsEvent} from '../analytics.js'
-import {outputDebug} from '../output.js'
+import {outputDebug, outputWarn} from '../output.js'
+import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from '../upgrade.js'
 import BaseCommand from '../base-command.js'
 import * as metadata from '../metadata.js'
+import {CLI_KIT_VERSION} from '../../common/version.js'
+import {isMajorVersionChange} from '../version.js'
 
 import {Command, Hook} from '@oclif/core'
 
@@ -26,6 +29,34 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   const command = Command.id.replace(/:/g, ' ')
   outputDebug(`Completed command ${command}`)
   postRunHookCompleted = true
+
+  if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
+}
+
+/**
+ * Auto-upgrades the CLI after a command completes, if a newer version is available.
+ *
+ * @returns Resolves when the upgrade attempt (or fallback warning) is complete.
+ */
+export async function autoUpgradeIfNeeded(): Promise<void> {
+  const newerVersion = versionToAutoUpgrade()
+  if (!newerVersion) return
+  if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
+    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    return
+  }
+
+  try {
+    await runCLIUpgrade()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    const errorMessage = `Auto-upgrade failed: ${error}`
+    outputDebug(errorMessage)
+    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    // Report to Observe as a handled error without showing anything extra to the user
+    const {sendErrorToBugsnag} = await import('../error-handler.js')
+    await sendErrorToBugsnag(new Error(errorMessage), 'expected_error')
+  }
 }
 
 /**
