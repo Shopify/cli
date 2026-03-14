@@ -39,12 +39,12 @@ describe('getHtmlHandler', async () => {
     lastRequestedPath: '',
   } as unknown as DevServerContext
 
-  test('sets lastRequestedPath to the rendering URL', async () => {
+  test('sets lastRequestedPath when Sec-Fetch-Mode is navigate', async () => {
     const handler = getHtmlHandler(theme, ctx)
 
     expect(ctx.lastRequestedPath).toStrictEqual('')
 
-    const event = createH3Event('GET', '/search?q=foo&options%5Bprefix%5D=last')
+    const event = createH3Event('GET', '/search?q=foo&options%5Bprefix%5D=last', {'sec-fetch-mode': 'navigate'})
 
     vi.mocked(render).mockResolvedValueOnce(
       new Response('', {
@@ -58,6 +58,24 @@ describe('getHtmlHandler', async () => {
     await handler(event)
 
     expect(ctx.lastRequestedPath).toStrictEqual('/search?q=foo&options%5Bprefix%5D=last')
+  })
+
+  test('does not update lastRequestedPath when Sec-Fetch-Mode is not navigate', async () => {
+    const handler = getHtmlHandler(theme, ctx)
+    ctx.lastRequestedPath = '/previous-page'
+
+    const event = createH3Event('GET', '/search/suggest?q=foo&resources[type]=product', {'sec-fetch-mode': 'cors'})
+
+    vi.mocked(render).mockResolvedValueOnce(
+      new Response('', {
+        status: 200,
+        headers: {'x-request-id': 'test-request-id'},
+      }),
+    )
+
+    await handler(event)
+
+    expect(ctx.lastRequestedPath).toStrictEqual('/previous-page')
   })
 
   test('the development server session recovers when a theme id mismatch occurs', async () => {
