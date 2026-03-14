@@ -148,10 +148,7 @@
     "ignoreBinaries": [
       "playwright"
     ],
-    "ignoreDependencies": [
-      "@shopify/theme-check-node",
-      "@shopify/theme-check-docs-updater"
-    ],
+    "ignoreDependencies": [],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli",
       "packages/e2e"
@@ -200,6 +197,7 @@
           "**/graphql/**/generated/*.ts"
         ],
         "ignoreDependencies": [
+          "@graphql-typed-document-node/core",
           "@shopify/plugin-cloudflare"
         ],
         "vite": {
@@ -216,7 +214,94 @@
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
-          "@ast-grep/napi"
+          "@apidevtools/json-schema-ref-parser",
+          "@ast-grep/napi",
+          "@bugsnag/js",
+          "@graphql-typed-document-node/core",
+          "@iarna/toml",
+          "@oclif/table",
+          "@opentelemetry/api",
+          "@opentelemetry/core",
+          "@opentelemetry/exporter-metrics-otlp-http",
+          "@opentelemetry/otlp-transformer",
+          "@opentelemetry/resources",
+          "@opentelemetry/sdk-metrics",
+          "@opentelemetry/semantic-conventions",
+          "@shopify/liquid-html-parser",
+          "@shopify/oxygen-cli",
+          "@shopify/polaris",
+          "@shopify/polaris-icons",
+          "@shopify/polaris-tokens",
+          "@shopify/theme-check-common",
+          "@shopify/theme-language-server-common",
+          "@shopify/theme-language-server-node",
+          "@shopify/toml-patch",
+          "@vscode/web-custom-data",
+          "ajv",
+          "archiver",
+          "bottleneck",
+          "chalk",
+          "change-case",
+          "chokidar",
+          "color-json",
+          "conf",
+          "deepmerge",
+          "diff",
+          "dotenv",
+          "env-paths",
+          "execa",
+          "express",
+          "figures",
+          "find-up",
+          "fs-extra",
+          "get-port-please",
+          "got",
+          "gradient-string",
+          "graphql",
+          "graphql-request",
+          "h3",
+          "ink",
+          "is-executable",
+          "is-interactive",
+          "jose",
+          "js-yaml",
+          "json-schema-to-typescript",
+          "latest-version",
+          "liquidjs",
+          "lodash",
+          "macaddress",
+          "minimatch",
+          "mrmime",
+          "network-interfaces",
+          "node-fetch",
+          "ohm-js",
+          "open",
+          "pathe",
+          "prettier",
+          "proper-lockfile",
+          "react",
+          "react-dom",
+          "react-reconciler",
+          "semver",
+          "source-map",
+          "stacktracey",
+          "strip-ansi",
+          "supports-hyperlinks",
+          "tempy",
+          "terminal-link",
+          "ts-morph",
+          "vscode-css-languageservice",
+          "vscode-json-languageservice",
+          "vscode-languageserver",
+          "vscode-languageserver-protocol",
+          "vscode-languageserver-textdocument",
+          "vscode-languageserver-types",
+          "vscode-uri",
+          "which",
+          "ws",
+          "yaml",
+          "yoga-wasm-web",
+          "zod"
         ],
         "vite": {
           "config": [
@@ -289,6 +374,9 @@
         "ignoreBinaries": [
           "open"
         ],
+        "ignoreDependencies": [
+          "@graphql-typed-document-node/core"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -307,10 +395,7 @@
           "**/scripts/*.ts!",
           "**/src/testing/index.ts"
         ],
-        "project": "**/*.{ts,tsx}!",
-        "ignoreDependencies": [
-          "react-dom"
-        ]
+        "project": "**/*.{ts,tsx}!"
       },
       "packages/ui-extensions-test-utils": {
         "entry": [
