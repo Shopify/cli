@@ -11,6 +11,7 @@ import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {configurationFileNames} from '../../constants.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {generateMetaobjectTypes} from '../../services/dev/type-generation/metaobject-types.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {WebhookSubscription} from '../extensions/specifications/types/app_config_webhook.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -487,6 +488,9 @@ export class App<
       }
       writeFileSync(typeFilePath, typeContent)
     })
+
+    // Generate metaobject types from app configuration
+    await generateMetaobjectTypes(this.configuration, this.directory)
   }
 
   get includeConfigOnDeploy() {
