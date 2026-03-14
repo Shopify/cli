@@ -206,3 +206,7 @@ packages/cli-kit/src/cli/api/graphql/*/*_schema.graphql
 
 # Local dev alias scripts
 bin/p
+.vitest-reports/
+report.json
+coverage/
+vitest-blob-reports/

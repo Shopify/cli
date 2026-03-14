@@ -8,7 +8,7 @@ runs:
   using: "composite"
   steps:
     - name: Unit tests with coverage
-      run: pnpm vitest run --coverage --reporter json --outputFile ./coverage/report.json
+      run: pnpm vitest run --coverage --coverage.all=false --reporter=json --outputFile=./coverage/report.json
       shell: bash
       env:
         VITEST_MIN_THREADS: "1"
