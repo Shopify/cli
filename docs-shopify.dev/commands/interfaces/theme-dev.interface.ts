@@ -91,6 +91,12 @@ export interface themedev {
   '--path <value>'?: string
 
   /**
+   * Use polling to detect file changes. Use this when file system events are unreliable, such as with build tools that preserve timestamps, Docker volumes, or network filesystems.
+   * @environment SHOPIFY_FLAG_POLL
+   */
+  '--poll'?: ''
+
+  /**
    * Local port to serve theme preview from.
    * @environment SHOPIFY_FLAG_PORT
    */
