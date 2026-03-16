@@ -58,8 +58,6 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
           'clearTimeout',
           'setInterval',
           'clearInterval',
-          'setImmediate',
-          'clearImmediate',
           'Date',
         ],
       },

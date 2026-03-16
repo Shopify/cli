@@ -503,7 +503,7 @@ describe('Dev', () => {
 
     // Then
     // Wait long enough for multiple polling cycles
-    await sleep(0.1)
+    await sleep(0.03)
 
     // enable should be called once at startup
     expect(developerPreview.enable).toHaveBeenCalledTimes(1)
@@ -550,7 +550,7 @@ describe('Dev', () => {
 
     // Then
     // Wait long enough for multiple polling cycles
-    await sleep(0.1)
+    await sleep(0.03)
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
