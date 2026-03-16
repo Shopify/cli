@@ -337,8 +337,8 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-      vi.mocked(fs.fileExists).mockImplementation(async (p) =>
-        typeof p === 'string' && p.startsWith('/test/extension'),
+      vi.mocked(fs.fileExists).mockImplementation(
+        async (path) => typeof path === 'string' && path.startsWith('/test/extension'),
       )
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
@@ -613,8 +613,8 @@ describe('executeIncludeAssetsStep', () => {
       // Source files exist; destination paths don't yet (so findUniqueDestPath
       // resolves on the first candidate without looping). Individual tests can
       // override for specific scenarios.
-      vi.mocked(fs.fileExists).mockImplementation(async (p) =>
-        typeof p === 'string' && p.startsWith('/test/extension'),
+      vi.mocked(fs.fileExists).mockImplementation(
+        async (path) => typeof path === 'string' && path.startsWith('/test/extension'),
       )
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
@@ -630,16 +630,12 @@ describe('executeIncludeAssetsStep', () => {
           configuration: {
             extensions: [
               {
-                targeting: [
-                  {target: 'admin.app.intent.link', tools: './tools.json', url: '/editor'},
-                ],
+                targeting: [{target: 'admin.app.intent.link', tools: './tools.json', url: '/editor'}],
               },
             ],
           },
         } as unknown as ExtensionInstance,
       }
-
-
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -696,8 +692,6 @@ describe('executeIncludeAssetsStep', () => {
           },
         } as unknown as ExtensionInstance,
       }
-
-
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -762,8 +756,6 @@ describe('executeIncludeAssetsStep', () => {
           },
         } as unknown as ExtensionInstance,
       }
-
-
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -861,9 +853,7 @@ describe('executeIncludeAssetsStep', () => {
         type: 'include_assets',
         config: {
           generateManifest: true,
-          inclusions: [
-            {type: 'pattern', baseDir: 'public', include: ['**/*']},
-          ],
+          inclusions: [{type: 'pattern', baseDir: 'public', include: ['**/*']}],
         },
       }
 
@@ -883,8 +873,6 @@ describe('executeIncludeAssetsStep', () => {
           configuration: {targeting: {tools: './tools.json', instructions: './instructions.md'}},
         } as unknown as ExtensionInstance,
       }
-
-
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -929,9 +917,7 @@ describe('executeIncludeAssetsStep', () => {
         type: 'include_assets',
         config: {
           generateManifest: true,
-          inclusions: [
-            {type: 'configKey', key: 'targeting.tools', anchor: 'targeting'},
-          ],
+          inclusions: [{type: 'configKey', key: 'targeting.tools', anchor: 'targeting'}],
         },
       }
 
@@ -939,9 +925,7 @@ describe('executeIncludeAssetsStep', () => {
       await executeIncludeAssetsStep(step, contextWithConfig)
 
       // Then — warning logged, inclusion treated as root entry
-      expect(mockStdout.write).toHaveBeenCalledWith(
-        expect.stringContaining('anchor without groupBy (or vice versa)'),
-      )
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('anchor without groupBy (or vice versa)'))
       const manifestContent = JSON.parse(vi.mocked(fs.writeFile).mock.calls[0]![1] as string)
       expect(manifestContent).toHaveProperty('tools')
     })
@@ -958,8 +942,6 @@ describe('executeIncludeAssetsStep', () => {
           },
         } as unknown as ExtensionInstance,
       }
-
-
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
@@ -1007,8 +989,6 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-
-
       const step: LifecycleStep = {
         id: 'gen-manifest',
         name: 'Generate Manifest',
@@ -1047,9 +1027,7 @@ describe('executeIncludeAssetsStep', () => {
           ...mockExtension,
           outputPath: '/test/output/extension.js',
           configuration: {
-            extensions: [
-              {targeting: [{target: 'admin.intent.link', tools: './tools.json'}]},
-            ],
+            extensions: [{targeting: [{target: 'admin.intent.link', tools: './tools.json'}]}],
           },
         } as unknown as ExtensionInstance,
       }
@@ -1089,9 +1067,7 @@ describe('executeIncludeAssetsStep', () => {
         extension: {
           ...mockExtension,
           configuration: {
-            extensions: [
-              {targeting: [{target: 'admin.intent.link', tools: './tools.json'}]},
-            ],
+            extensions: [{targeting: [{target: 'admin.intent.link', tools: './tools.json'}]}],
           },
         } as unknown as ExtensionInstance,
       }
@@ -1138,9 +1114,7 @@ describe('executeIncludeAssetsStep', () => {
           configuration: {
             extensions: [
               {
-                targeting: [
-                  {target: 'admin.intent.link', tools: './tools.json', url: '/editor'},
-                ],
+                targeting: [{target: 'admin.intent.link', tools: './tools.json', url: '/editor'}],
               },
             ],
           },

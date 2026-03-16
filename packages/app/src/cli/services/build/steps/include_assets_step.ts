@@ -150,7 +150,7 @@ export async function executeIncludeAssetsStep(
           entry.preserveStructure,
           sanitizedDest,
         )
-        result.pathMap.forEach((v, k) => aggregatedPathMap.set(k, v))
+        result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
         return result.filesCopied
       }
 
@@ -223,8 +223,12 @@ async function findUniqueDestPath(dir: string, filename: string): Promise<string
   const ext = extname(filename)
   const base = ext ? filename.slice(0, -ext.length) : filename
   let counter = 1
+  // Sequential loop is intentional: each iteration must check the previous
+  // result before proceeding to avoid race conditions on concurrent copies.
+
   while (true) {
     const next = joinPath(dir, `${base}-${counter}${ext}`)
+    // eslint-disable-next-line no-await-in-loop
     if (!(await fileExists(next))) return next
     counter++
   }
@@ -283,6 +287,7 @@ async function copyConfigKeyEntry(
   const pathMap = new Map<string, string>()
   let filesCopied = 0
 
+  /* eslint-disable no-await-in-loop */
   for (const sourcePath of uniquePaths) {
     const fullPath = joinPath(baseDir, sourcePath)
     const exists = await fileExists(fullPath)
@@ -317,6 +322,7 @@ async function copyConfigKeyEntry(
       filesCopied += copied.length
     }
   }
+  /* eslint-enable no-await-in-loop */
 
   return {filesCopied, pathMap}
 }
@@ -396,6 +402,7 @@ function buildRelativeEntry(item: {[key: string]: unknown}, relPath: string): {[
 
   const tokens = tokenizePath(relPath)
   const [head, ...rest] = tokens
+  if (!head) return item
   const restPath = rest.map((t) => `${t.name}${t.flatten ? '[]' : ''}`).join('.')
 
   const value = item[head.name]
@@ -403,9 +410,7 @@ function buildRelativeEntry(item: {[key: string]: unknown}, relPath: string): {[
   if (head.flatten) {
     // Array segment: map over each element with the remaining path
     if (!Array.isArray(value)) return {[head.name]: value}
-    const mapped = (value as {[key: string]: unknown}[]).map((el) =>
-      restPath ? buildRelativeEntry(el, restPath) : el,
-    )
+    const mapped = (value as {[key: string]: unknown}[]).map((el) => (restPath ? buildRelativeEntry(el, restPath) : el))
     return {[head.name]: mapped}
   }
 
@@ -438,8 +443,8 @@ function resolveManifestPaths(value: unknown, pathMap: Map<string, string>): unk
   if (Array.isArray(value)) return value.map((el) => resolveManifestPaths(el, pathMap))
   if (value !== null && typeof value === 'object') {
     const result: {[key: string]: unknown} = {}
-    for (const [k, v] of Object.entries(value as {[key: string]: unknown})) {
-      result[k] = resolveManifestPaths(v, pathMap)
+    for (const [key, val] of Object.entries(value as {[key: string]: unknown})) {
+      result[key] = resolveManifestPaths(val, pathMap)
     }
     return result
   }
@@ -489,9 +494,7 @@ async function generateManifestFile(
 
   // Step 1: partition configKey inclusions
   type ConfigKeyEntry = z.infer<typeof ConfigKeyEntrySchema>
-  const configKeyInclusions = config.inclusions.filter(
-    (entry): entry is ConfigKeyEntry => entry.type === 'configKey',
-  )
+  const configKeyInclusions = config.inclusions.filter((entry): entry is ConfigKeyEntry => entry.type === 'configKey')
 
   type AnchoredEntry = ConfigKeyEntry & {anchor: string; groupBy: string}
 
