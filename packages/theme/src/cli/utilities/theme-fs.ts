@@ -319,6 +319,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         ignored: DEFAULT_IGNORE_PATTERNS,
         persistent: !process.env.SHOPIFY_UNIT_TEST,
         ignoreInitial: true,
+        ...(options?.poll ? {usePolling: true, useFsEvents: false} : {}),
       })
 
       watcher

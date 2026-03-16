@@ -30,6 +30,7 @@ export interface ThemeFileSystemOptions {
   listing?: string
   noDelete?: boolean
   notify?: string
+  poll?: boolean
 }
 
 /**

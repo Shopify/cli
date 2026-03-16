@@ -40,6 +40,7 @@ interface DevOptions {
   only: string[]
   notify?: string
   listing?: string
+  poll?: boolean
 }
 
 export async function dev(options: DevOptions) {
@@ -83,6 +84,7 @@ export async function dev(options: DevOptions) {
     listing: options.listing,
     noDelete: options.noDelete,
     notify: options.notify,
+    poll: options.poll,
   })
 
   const host = options.host ?? DEFAULT_HOST
