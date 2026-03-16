@@ -321,6 +321,57 @@ describe('extractImportPaths', () => {
       })
     })
   })
+
+  describe('large files', () => {
+    // 128KB read limit means ~5,800 lines of 'export type T = string\n' (22 bytes each)
+    const linesExceedingReadLimit = 6000
+
+    test('extracts imports from the top of large files', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const largeFile = joinPath(tmpDir, 'large-types.ts')
+        const smallFile = joinPath(tmpDir, 'small.ts')
+
+        await writeFile(smallFile, 'export const x = 1')
+        const padding = 'export type T = string\n'.repeat(linesExceedingReadLimit)
+        await writeFile(largeFile, `import { x } from './small'\n${padding}`)
+
+        const imports = extractImportPaths(largeFile)
+        expect(imports).toContain(smallFile)
+      })
+    })
+
+    test('does not find imports buried past the 128KB read limit', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const largeFile = joinPath(tmpDir, 'large-types.ts')
+        const buriedFile = joinPath(tmpDir, 'buried.ts')
+
+        await writeFile(buriedFile, 'export const buried = 1')
+        const padding = 'export type T = string\n'.repeat(linesExceedingReadLimit)
+        await writeFile(largeFile, `${padding}import { buried } from './buried'`)
+
+        const imports = extractImportPaths(largeFile)
+        expect(imports).not.toContain(buriedFile)
+      })
+    })
+
+    test('follows imports found in the top of large files recursively', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const mainFile = joinPath(tmpDir, 'main.ts')
+        const largeFile = joinPath(tmpDir, 'large-types.ts')
+        const deepFile = joinPath(tmpDir, 'deep.ts')
+
+        await writeFile(deepFile, 'export const deep = 1')
+        const padding = 'export type T = string\n'.repeat(linesExceedingReadLimit)
+        await writeFile(largeFile, `import { deep } from './deep'\n${padding}`)
+        await writeFile(mainFile, `import { T } from './large-types'`)
+
+        const imports = extractImportPathsRecursively(mainFile)
+        expect(imports).toContain(mainFile)
+        expect(imports).toContain(largeFile)
+        expect(imports).toContain(deepFile)
+      })
+    })
+  })
 })
 
 describe('extractImportPathsRecursively', () => {

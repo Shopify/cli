@@ -1,5 +1,12 @@
-import {readFileSync, fileExistsSync, isDirectorySync} from './fs.js'
+import {fileExistsSync, isDirectorySync} from './fs.js'
 import {dirname, joinPath} from './path.js'
+import {openSync, readSync, closeSync} from 'fs'
+
+// Only read the first 128KB of each file for import scanning. This covers
+// ~3,000+ lines which is more than enough to capture all static imports.
+// Generated type files (e.g. graphql-codegen) can be tens of megabytes and
+// reading them fully takes several seconds on some machines.
+const MAX_READ_SIZE = 128 * 1024
 
 // Caches direct import results per file path to avoid redundant file reads and parsing
 // when multiple extensions import the same shared code.
@@ -27,6 +34,17 @@ function cachedIsDir(path: string): boolean {
   return result
 }
 
+function readFileContent(filePath: string): string {
+  const fd = openSync(filePath, 'r')
+  try {
+    const buffer = Buffer.alloc(MAX_READ_SIZE)
+    const bytesRead = readSync(fd, buffer, 0, MAX_READ_SIZE, 0)
+    return buffer.subarray(0, bytesRead).toString()
+  } finally {
+    closeSync(fd)
+  }
+}
+
 /**
  * Clears all import-scanning caches (direct imports, recursive results, and filesystem stats).
  * Should be called when watched files change so that rescanning picks up updated imports.
@@ -49,7 +67,7 @@ export function extractImportPaths(filePath: string): string[] {
   const cached = directImportsCache.get(filePath)
   if (cached) return cached
 
-  const content = readFileSync(filePath).toString()
+  const content = readFileContent(filePath)
   const ext = filePath.substring(filePath.lastIndexOf('.'))
 
   let result: string[]
