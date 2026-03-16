@@ -59,7 +59,7 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       // If the assertion fails, wait a bit and try again
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
       await expect(fetch(`${protocol}://localhost:${ports.proxyPort}/path1`, {agent})).rejects.toThrow()
     }
   })

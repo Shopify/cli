@@ -348,7 +348,7 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'Loading...', 'a')
     // prompt doesn't change when enter is pressed
-    await new Promise((resolve) => setTimeout(resolve, 100))
+    await new Promise((resolve) => setTimeout(resolve, 10))
     await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`

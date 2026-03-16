@@ -310,7 +310,7 @@ describe('ConcurrentOutput', () => {
       />,
     )
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 50))
     expect(renderInstance.waitUntilExit().isRejected()).toBe(false)
   })
 
@@ -354,7 +354,7 @@ describe('ConcurrentOutput', () => {
       />,
     )
 
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 50))
 
     expect(renderInstance.waitUntilExit().isFulfilled()).toBe(false)
   })

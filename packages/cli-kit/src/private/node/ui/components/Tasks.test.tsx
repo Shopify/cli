@@ -77,7 +77,7 @@ describe('Tasks', () => {
   test('it supports subtasks', async () => {
     // Given
     const firstSubtaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
     })
 
     const secondSubtaskFunction = vi.fn(async () => {})
@@ -115,11 +115,11 @@ describe('Tasks', () => {
   test('supports skipping', async () => {
     // Given
     const firstTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
     })
 
     const secondTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
     })
 
     const firstTask = {
@@ -145,11 +145,11 @@ describe('Tasks', () => {
   test('supports skipping a subtask', async () => {
     // Given
     const firstSubTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
     })
 
     const secondSubTaskFunction = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
     })
 
     const firstTask = {
@@ -416,5 +416,5 @@ describe('Tasks', () => {
 })
 
 async function taskHasRendered() {
-  await new Promise((resolve) => setTimeout(resolve, 100))
+  await new Promise((resolve) => setTimeout(resolve, 10))
 }
