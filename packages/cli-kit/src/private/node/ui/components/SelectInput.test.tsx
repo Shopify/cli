@@ -153,7 +153,7 @@ describe('SelectInput', async () => {
 
     await waitForInputsToBeReady()
     // nothing changes when pressing a key that doesn't exist
-    await sendInputAndWait(renderInstance, 100, '4')
+    await sendInputAndWait(renderInstance, 10, '4')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36mFirst[39m
@@ -325,7 +325,7 @@ describe('SelectInput', async () => {
 
     await waitForInputsToBeReady()
     // input doesn't change on shortcut pressed
-    await sendInputAndWait(renderInstance, 100, '2')
+    await sendInputAndWait(renderInstance, 10, '2')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "[36m>[39m  [36mFirst[39m
@@ -477,7 +477,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[0])
   })
@@ -502,8 +502,8 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, ARROW_DOWN)
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await sendInputAndWait(renderInstance, 10, ARROW_DOWN)
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[1])
   })
@@ -531,7 +531,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 's')
+    await sendInputAndWait(renderInstance, 10, 's')
 
     expect(onSubmit).toHaveBeenCalledWith(items[1])
   })
@@ -567,7 +567,7 @@ describe('SelectInput', async () => {
          [2mPress ↑↓ arrows to select, enter to confirm.[22m"
     `)
 
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[2])
   })
@@ -603,7 +603,7 @@ describe('SelectInput', async () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[0])
   })
@@ -642,7 +642,7 @@ describe('SelectInput', async () => {
          [2mPress ↑↓ arrows to select, enter or a shortcut to confirm.[22m"
     `)
 
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[2])
   })
@@ -671,7 +671,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 's')
+    await sendInputAndWait(renderInstance, 10, 's')
 
     expect(onSubmit).not.toHaveBeenCalled()
   })
