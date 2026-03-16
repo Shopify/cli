@@ -1,0 +1,1 @@
+{"type":"config","name":"Faster pnpm test:unit for Shopify CLI","metricName":"wall_clock_s","metricUnit":"s","bestDirection":"lower"}
