@@ -176,8 +176,8 @@ importers:
         specifier: 3.92.0
         version: link:../theme
       '@shopify/theme-check-node':
-        specifier: 3.23.0
-        version: 3.23.0
+        specifier: 3.24.0
+        version: 3.24.0
       '@shopify/toml-patch':
         specifier: 0.3.0
         version: 0.3.0
@@ -684,11 +684,11 @@ importers:
         specifier: 3.92.0
         version: link:../cli-kit
       '@shopify/theme-check-node':
-        specifier: 3.23.0
-        version: 3.23.0
+        specifier: 3.24.0
+        version: 3.24.0
       '@shopify/theme-language-server-node':
-        specifier: 2.20.0
-        version: 2.20.0
+        specifier: 2.20.2
+        version: 2.20.2
       chokidar:
         specifier: 3.6.0
         version: 3.6.0
@@ -3551,8 +3551,8 @@ packages:
     resolution: {integrity: sha512-4p6c2Xlt5TVAACM/YD6dcEioKeCpHwv5n65TOIGQaFhRUsA3yRFrbD+8G2TSfeW60QIZchzvRQ7xwYjljGajlA==}
     hasBin: true
 
-  '@shopify/liquid-html-parser@2.9.0':
-    resolution: {integrity: sha512-bkI4tLbU47YUxpgbMa9fgeJjFEMvRNEFL644Yk0ZKo5H1IRzU4pPyCQ6PkGvb0JJnt7OZ+RDGvb6ZLCnAR2Z/A==}
+  '@shopify/liquid-html-parser@2.9.2':
+    resolution: {integrity: sha512-2XJYqHaZxEBwuufGhzIZ0M6m9YA4HS7YlVOiZtYanFgkmoQeJm1c0JhKcuCXU5C1pc2M0rt1XzBX8SgWv7l8Ww==}
 
   '@shopify/oxygen-cli@4.6.18':
     resolution: {integrity: sha512-LxJUkHL1Oudxy712XHTBd1se3Gq2w+/FYVyj5rAmyiNSFfbXD3zHWHjB5zbeeFjbRIPhbJW3OgRjJgn7VIo8EA==}
@@ -3583,28 +3583,28 @@ packages:
       react: ^18.0.0
       react-dom: ^18.0.0
 
-  '@shopify/theme-check-common@3.23.0':
-    resolution: {integrity: sha512-g3aR7vw/hulA/ugGG8htRyoqiPsBhxEkQzVGivX5L1ymPYGFxt6ZwdhkpNLUEw+rWwP6fqnUoSjipbPtjYZjIQ==}
+  '@shopify/theme-check-common@3.24.0':
+    resolution: {integrity: sha512-gbUsv+vK7GeZNkA30wXKc5ncZjLMJZquI9K6CZR0jJaArV+/dAc9zGA73nqyiIgEGd2pw0S/Vly6FgBIVcPmMg==}
 
-  '@shopify/theme-check-docs-updater@3.23.0':
-    resolution: {integrity: sha512-nfbRgouM3Adm9Zbljf3YHHi3YXVGHC45VJUkyVZ9T1d47RL1XfPzpximUai7OKA8CdN+SSYV2b9aBXb/T6QADA==}
+  '@shopify/theme-check-docs-updater@3.24.0':
+    resolution: {integrity: sha512-IX8jEMke6uaL6KiUerBoy6xkV7LTFmY5HKmZuiAQPfd2IP1q280T5jaYzYa52vqy85JDja4HGxMQItiwJG3J4w==}
     hasBin: true
 
-  '@shopify/theme-check-node@3.23.0':
-    resolution: {integrity: sha512-EfzHWaXeq0ei/8wyuwh9qOUIkZbzFvTHjAB4BfbQpBZHbX82OUTCfhxSMsS7rqvk+mVSeaiMPq9ZVPf5iHri7w==}
+  '@shopify/theme-check-node@3.24.0':
+    resolution: {integrity: sha512-8AQLCoLxeREWENc4ELGQbn1GkZO6lVVKxhAPSeXEg9VGI/oc1G+fPXEdN4VnExqW5aP/dJCAnb/JH89bkIrm4Q==}
 
-  '@shopify/theme-graph@0.2.1':
-    resolution: {integrity: sha512-S1DFAb71NqVzOr89Jh3OjVrT7tP/e0gbJHKp1gRG1/dGW7T0xCvZZGkhgNU04x5qJGY7umAkzI4oCvQWpv1ogg==}
+  '@shopify/theme-graph@0.2.3':
+    resolution: {integrity: sha512-UsnAJlBmG5b7L4FqL8An+RWqLvAd/hCD52H+RUMb/xECkfRnrjOOOVRrPVYOawRhd56Wu3XNjkLdP2WHS25OKQ==}
     hasBin: true
 
   '@shopify/theme-hot-reload@0.0.18':
     resolution: {integrity: sha512-l+IBuk+rG5T+5PKYyPrwgh7PDCxmEMpBFJeen6PM+h6RI4CDhAGRaiwUo5eN1o1JX51HdHHCts3rTEW+KUgq+Q==}
 
-  '@shopify/theme-language-server-common@2.20.0':
-    resolution: {integrity: sha512-NgkFR+UnvvJ2rtB1buYyEs4ed0sZuEe4g7Fu92UamKrJxAh3iWXnFtcLkPulIEgilNRN6PPp38f6mnVA/cBZrA==}
+  '@shopify/theme-language-server-common@2.20.2':
+    resolution: {integrity: sha512-Cc6IU2e250l0jfRtlxaEtPJ0qfjiFwHBq2hfcozRcX2vYMzcbgNDVeVsmApMFXSe5K/vthA2plzrijy2IG1MOw==}
 
-  '@shopify/theme-language-server-node@2.20.0':
-    resolution: {integrity: sha512-8iYQrzGdkmSIzG0XVKyKhksW75EV6zQfthQlkKeDPkn4//B5qCR4ftITc5igLx+ootOYG905ex/FyWy+yhsOlg==}
+  '@shopify/theme-language-server-node@2.20.2':
+    resolution: {integrity: sha512-BA4IzknQLspg+j7k9NnYgfLKMaCF8MMJp6larzL6sF916Hf1Fp8dOdsw4cG5floCUSYJPjaL9q+2rayEeMJsUw==}
 
   '@shopify/toml-patch@0.3.0':
     resolution: {integrity: sha512-ruv2FT17FW3CfWx8jXEyfx3xZDdo22PDaFQ9R7QYOovXQbgQCIKY+5QjGVBA7jsyLm+Wa2ngVANmt7MS0M/g+w==}
@@ -12869,7 +12869,7 @@ snapshots:
       globby: 11.1.0
       typescript: 5.9.3
 
-  '@shopify/liquid-html-parser@2.9.0':
+  '@shopify/liquid-html-parser@2.9.2':
     dependencies:
       line-column: 1.0.2
       ohm-js: 17.5.0
@@ -12910,41 +12910,42 @@ snapshots:
       react-fast-compare: 3.2.2
       react-transition-group: 4.4.5(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
-  '@shopify/theme-check-common@3.23.0':
+  '@shopify/theme-check-common@3.24.0':
     dependencies:
-      '@shopify/liquid-html-parser': 2.9.0
+      '@shopify/liquid-html-parser': 2.9.2
       cross-fetch: 4.1.0
       jsonc-parser: 3.3.1
       line-column: 1.0.2
       lodash: 4.17.23
-      minimatch: 9.0.8
+      minimatch: 10.2.4
       vscode-json-languageservice: 5.7.2
       vscode-uri: 3.1.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-check-docs-updater@3.23.0':
+  '@shopify/theme-check-docs-updater@3.24.0':
     dependencies:
-      '@shopify/theme-check-common': 3.23.0
+      '@shopify/theme-check-common': 3.24.0
       env-paths: 2.2.1
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-check-node@3.23.0':
+  '@shopify/theme-check-node@3.24.0':
     dependencies:
-      '@shopify/theme-check-common': 3.23.0
-      '@shopify/theme-check-docs-updater': 3.23.0
+      '@shopify/theme-check-common': 3.24.0
+      '@shopify/theme-check-docs-updater': 3.24.0
       glob: 8.1.0
       vscode-uri: 3.1.0
       yaml: 2.7.0
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-graph@0.2.1':
+  '@shopify/theme-graph@0.2.3':
     dependencies:
-      '@shopify/liquid-html-parser': 2.9.0
-      '@shopify/theme-check-common': 3.23.0
+      '@shopify/liquid-html-parser': 2.9.2
+      '@shopify/theme-check-common': 3.24.0
+      '@shopify/theme-check-node': 3.24.0
       acorn: 8.16.0
       acorn-walk: 8.3.5
       vscode-uri: 3.1.0
@@ -12953,11 +12954,11 @@ snapshots:
 
   '@shopify/theme-hot-reload@0.0.18': {}
 
-  '@shopify/theme-language-server-common@2.20.0':
+  '@shopify/theme-language-server-common@2.20.2':
     dependencies:
-      '@shopify/liquid-html-parser': 2.9.0
-      '@shopify/theme-check-common': 3.23.0
-      '@shopify/theme-graph': 0.2.1
+      '@shopify/liquid-html-parser': 2.9.2
+      '@shopify/theme-check-common': 3.24.0
+      '@shopify/theme-graph': 0.2.3
       '@vscode/web-custom-data': 0.4.13
       vscode-css-languageservice: 6.3.2
       vscode-json-languageservice: 5.7.2
@@ -12967,11 +12968,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-language-server-node@2.20.0':
+  '@shopify/theme-language-server-node@2.20.2':
     dependencies:
-      '@shopify/theme-check-docs-updater': 3.23.0
-      '@shopify/theme-check-node': 3.23.0
-      '@shopify/theme-language-server-common': 2.20.0
+      '@shopify/theme-check-docs-updater': 3.24.0
+      '@shopify/theme-check-node': 3.24.0
+      '@shopify/theme-language-server-common': 2.20.2
       glob: 8.1.0
       node-fetch: 2.7.0
       vscode-languageserver: 8.1.0
