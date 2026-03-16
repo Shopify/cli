@@ -176,11 +176,12 @@ export async function executeIncludeAssetsStep(
       }),
   )
 
+  const counts = [configKeyCount, ...otherCounts]
+
   if (config.generateManifest) {
     const configKeyEntries = config.inclusions.filter((e) => e.type === 'configKey')
     await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap)
   }
 
-  const counts = [configKeyCount, ...otherCounts]
   return {filesCopied: counts.reduce<number>((sum, count) => sum + (count ?? 0), 0)}
 }
