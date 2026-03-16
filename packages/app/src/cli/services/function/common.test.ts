@@ -17,6 +17,8 @@ import {renderAutocompletePrompt, renderFatalError} from '@shopify/cli-kit/node/
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {isTerminalInteractive} from '@shopify/cli-kit/node/context/local'
 import {fileExists} from '@shopify/cli-kit/node/fs'
+import type {Project} from '../../models/project/project.js'
+import type {ActiveConfig} from '../../models/project/active-config.js'
 
 vi.mock('../app-context.js')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -36,6 +38,8 @@ beforeEach(async () => {
     developerPlatformClient: testDeveloperPlatformClient(),
     specifications: [],
     organization: testOrganization(),
+    project: {} as unknown as Project,
+    activeConfig: {isLinked: true, hiddenConfig: {}} as unknown as ActiveConfig,
   })
   vi.mocked(renderFatalError).mockReturnValue('')
   vi.mocked(renderAutocompletePrompt).mockResolvedValue(ourFunction)

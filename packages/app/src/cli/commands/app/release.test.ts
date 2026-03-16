@@ -29,6 +29,8 @@ describe('app release --force deprecation warning', () => {
         source: OrganizationSource.Partners,
       },
       specifications: [],
+      project: {} as any,
+      activeConfig: {} as any,
     })
     vi.mocked(release).mockResolvedValue(undefined)
   })

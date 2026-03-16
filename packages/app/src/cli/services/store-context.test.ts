@@ -15,6 +15,8 @@ import {vi, describe, test, expect} from 'vitest'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {inTemporaryDirectory, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import type {Project} from '../models/project/project.js'
+import type {ActiveConfig} from '../models/project/active-config.js'
 
 vi.mock('./dev/fetch')
 vi.mock('./dev/select-store')
@@ -43,6 +45,8 @@ describe('storeContext', () => {
     developerPlatformClient: mockDeveloperPlatformClient,
     remoteApp: testOrganizationApp(),
     specifications: [],
+    project: {} as unknown as Project,
+    activeConfig: {isLinked: true, hiddenConfig: {}} as unknown as ActiveConfig,
   }
 
   test('uses explicitly provided storeFqdn', async () => {

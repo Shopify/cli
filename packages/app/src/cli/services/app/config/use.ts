@@ -1,7 +1,6 @@
-import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
+import {getAppConfigurationFileName, getAppConfigurationContext} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
-import {AppConfiguration, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileExists} from '@shopify/cli-kit/node/fs'
@@ -47,11 +46,8 @@ export default async function use({
 
   const configFileName = (await getConfigFileName(directory, configName)).valueOrAbort()
 
-  const {configuration} = await loadAppConfiguration({
-    userProvidedConfigName: configFileName,
-    directory,
-  })
-  setCurrentConfigPreference(configuration, {configFileName, directory})
+  const {activeConfig} = await getAppConfigurationContext(directory, configFileName)
+  setCurrentConfigPreference(activeConfig.file.content, {configFileName, directory})
 
   if (shouldRenderSuccess) {
     renderSuccess({
@@ -63,18 +59,18 @@ export default async function use({
 }
 
 /**
- * Sets the prefered app configuration file to use from now on.
+ * Sets the preferred app configuration file to use from now on.
  *
- * @param configuration - The configuration taken from this file. Used to ensure we're not remembering a malformed or incomplete configuration.
- * @returns - Nothing, but does confirm that the configuration is an up to date one (and not fresh from a template).
+ * Only reads `client_id` from the configuration — full schema validation
+ * is deferred to the next command that actually loads the app.
  */
 export function setCurrentConfigPreference(
-  configuration: AppConfiguration,
+  configuration: {client_id?: string},
   options: {
     configFileName: string
     directory: string
   },
-): asserts configuration is CurrentAppConfiguration {
+): void {
   const {configFileName, directory} = options
   if (configuration.client_id) {
     setCachedAppInfo({

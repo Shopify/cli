@@ -7,11 +7,15 @@ import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppConfigurationState, loadAppUsingConfigurationState, loadApp} from '../models/app/loader.js'
+import {getAppConfigurationContext, loadApp, loadAppFromContext} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {basename} from '@shopify/cli-kit/node/path'
+import {BugError} from '@shopify/cli-kit/node/error'
+import type {ActiveConfig} from '../models/project/active-config.js'
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -19,6 +23,8 @@ export interface LoadedAppContextOutput {
   developerPlatformClient: DeveloperPlatformClient
   organization: Organization
   specifications: RemoteAwareExtensionSpecification[]
+  project: Project
+  activeConfig: ActiveConfig
 }
 
 /**
@@ -68,26 +74,29 @@ export async function linkedAppContext({
   userProvidedConfigName,
   unsafeReportMode = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
-  // Get current app configuration state
-  let configState = await getAppConfigurationState(directory, userProvidedConfigName)
+  let {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 
-  if (!configState.isLinked || forceRelink) {
-    const configName = forceRelink ? undefined : configState.configurationFileName
+  if (!activeConfig.isLinked || forceRelink) {
+    const configName = forceRelink ? undefined : basename(activeConfig.file.path)
     const result = await link({directory, apiKey: clientId, configName})
     remoteApp = result.remoteApp
-    configState = result.state
+    // Re-load project and re-select active config since link may have written new config
+    const reloaded = await getAppConfigurationContext(directory, result.configFileName)
+    project = reloaded.project
+    activeConfig = reloaded.activeConfig
   }
 
-  // If the clientId is provided, update the configuration state with the new clientId
-  if (clientId && clientId !== configState.basicConfiguration.client_id) {
-    configState.basicConfiguration.client_id = clientId
+  // Determine the effective client ID
+  const configClientId = activeConfig.file.content.client_id
+  if (typeof configClientId !== 'string' || configClientId.length === 0) {
+    throw new BugError(`Active config at ${activeConfig.file.path} is marked as linked but has no client_id`)
   }
+  const effectiveClientId = clientId ?? configClientId
 
   // Fetch the remote app, using a different clientID if provided via flag.
   if (!remoteApp) {
-    const apiKey = configState.basicConfiguration.client_id
-    remoteApp = await appFromIdentifiers({apiKey})
+    remoteApp = await appFromIdentifiers({apiKey: effectiveClientId})
   }
   const developerPlatformClient = remoteApp.developerPlatformClient
 
@@ -96,11 +105,14 @@ export async function linkedAppContext({
   // Fetch the remote app's specifications
   const specifications = await fetchSpecifications({developerPlatformClient, app: remoteApp})
 
-  // Load the local app using the configuration state and the remote app's specifications
-  const localApp = await loadAppUsingConfigurationState(configState, {
+  // Load the local app using the pre-resolved context and the remote app's specifications
+  const localApp = await loadAppFromContext({
+    project,
+    activeConfig,
     specifications,
     remoteFlags: remoteApp.flags,
     mode: unsafeReportMode ? 'report' : 'strict',
+    clientIdOverride: clientId && clientId !== configClientId ? clientId : undefined,
   })
 
   // If the remoteApp is the same as the linked one, update the cached info.
@@ -120,7 +132,7 @@ export async function linkedAppContext({
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
 
-  return {app: localApp, remoteApp, developerPlatformClient, specifications, organization}
+  return {project, activeConfig, app: localApp, remoteApp, developerPlatformClient, specifications, organization}
 }
 
 async function logMetadata(app: {apiKey: string}, organization: Organization, resetUsed: boolean) {

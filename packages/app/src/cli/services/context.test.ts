@@ -18,14 +18,13 @@ import {
 import {getAppIdentifiers} from '../models/app/identifiers.js'
 import {selectOrganizationPrompt} from '../prompts/dev.js'
 import {
-  DEFAULT_CONFIG,
   testDeveloperPlatformClient,
   testAppWithConfig,
   testOrganizationApp,
   testThemeExtensions,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
-import {AppConfigurationState, getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
+import {getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import * as loadSpecifications from '../models/extensions/load-specifications.js'
 import {
@@ -75,18 +74,6 @@ const STORE1: OrganizationStore = {
   transferDisabled: true,
   convertableToPartnerTest: true,
   provisionable: true,
-}
-
-const state: AppConfigurationState = {
-  basicConfiguration: {
-    ...DEFAULT_CONFIG,
-    client_id: APP2.apiKey,
-  },
-  appDirectory: 'tmp',
-  configurationPath: 'shopify.app.toml',
-  configSource: 'flag',
-  configurationFileName: 'shopify.app.toml',
-  isLinked: true,
 }
 
 const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployOptions => {
@@ -172,7 +159,7 @@ beforeEach(async () => {
   vi.mocked(link).mockResolvedValue({
     configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     remoteApp: APP2,
-    state,
+    configFileName: 'shopify.app.toml',
   })
 
   // this is needed because using importActual to mock the ui module

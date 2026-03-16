@@ -1,13 +1,15 @@
 import {Project} from './project.js'
 import {resolveDotEnv, resolveHiddenConfig} from './config-selection.js'
-import {AppHiddenConfig, BasicAppConfigurationWithoutModules} from '../app/app.js'
-import {AppConfigurationFileName, AppConfigurationState, getConfigurationPath} from '../app/loader.js'
+import {AppHiddenConfig} from '../app/app.js'
+import {getAppConfigurationFileName} from '../app/config-file-naming.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 /** @public */
 export type ConfigSource = 'flag' | 'cached' | 'default'
@@ -81,40 +83,16 @@ export async function selectActiveConfig(project: Project, userProvidedConfigNam
     source = 'default'
   }
 
-  // Resolve the config file name and verify it exists
-  const {configurationPath, configurationFileName} = await getConfigurationPath(project.directory, configName)
-
-  // Look up the TomlFile from the project's pre-loaded files
+  // Resolve the config file name and look it up in the project's pre-loaded files
+  const configurationFileName = getAppConfigurationFileName(configName)
   const file = project.appConfigByName(configurationFileName)
   if (!file) {
-    // Fallback: the project didn't discover this file (shouldn't happen, but be safe)
-    const fallbackFile = await TomlFile.read(configurationPath)
-    return buildActiveConfig(project, fallbackFile, source)
+    throw new AbortError(
+      outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(project.directory)}.`,
+    )
   }
 
   return buildActiveConfig(project, file, source)
-}
-
-/**
- * Bridge from the new Project/ActiveConfig model to the legacy AppConfigurationState.
- *
- * This allows callers that still consume AppConfigurationState to work with
- * the new selection logic without changes.
- * @public
- */
-export function toAppConfigurationState(
-  project: Project,
-  activeConfig: ActiveConfig,
-  basicConfiguration: BasicAppConfigurationWithoutModules,
-): AppConfigurationState {
-  return {
-    appDirectory: project.directory,
-    configurationPath: activeConfig.file.path,
-    basicConfiguration,
-    configSource: activeConfig.source,
-    configurationFileName: basename(activeConfig.file.path) as AppConfigurationFileName,
-    isLinked: activeConfig.isLinked,
-  }
 }
 
 async function buildActiveConfig(project: Project, file: TomlFile, source: ConfigSource): Promise<ActiveConfig> {

@@ -1,11 +1,6 @@
 import use, {UseOptions} from './use.js'
-import {
-  buildVersionedAppSchema,
-  testApp,
-  testAppWithConfig,
-  testDeveloperPlatformClient,
-} from '../../../models/app/app.test-data.js'
-import {getAppConfigurationFileName, loadAppConfiguration} from '../../../models/app/loader.js'
+import {testApp, testAppWithConfig, testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
+import {getAppConfigurationFileName, getAppConfigurationContext} from '../../../models/app/loader.js'
 import {clearCurrentConfigFile, setCachedAppInfo} from '../../local-storage.js'
 import {selectConfigFile} from '../../../prompts/config.js'
 import {describe, expect, test, vi} from 'vitest'
@@ -19,6 +14,21 @@ vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context.js')
+
+function mockContext(directory: string, configuration: Record<string, unknown>) {
+  vi.mocked(getAppConfigurationContext).mockResolvedValue({
+    project: {} as any,
+    activeConfig: {
+      file: {
+        path: joinPath(directory, 'shopify.app.toml'),
+        content: configuration,
+      },
+      source: 'flag',
+      isLinked: Boolean(configuration.client_id),
+      hiddenConfig: {},
+    } as any,
+  })
+}
 
 describe('use', () => {
   test('clears currentConfiguration when reset is true', async () => {
@@ -38,7 +48,7 @@ describe('use', () => {
       // Then
       expect(clearCurrentConfigFile).toHaveBeenCalledWith(tmp)
       expect(setCachedAppInfo).not.toHaveBeenCalled()
-      expect(loadAppConfiguration).not.toHaveBeenCalled()
+      expect(getAppConfigurationContext).not.toHaveBeenCalled()
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'Cleared current configuration.',
         body: [
@@ -77,18 +87,9 @@ describe('use', () => {
       }
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.no-id.toml')
 
-      const {schema: configSchema} = await buildVersionedAppSchema()
       const appWithoutClientID = testApp()
-      // Create a configuration without client_id to test the error case
       const {client_id: clientId, ...configWithoutClientId} = appWithoutClientID.configuration
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory: tmp,
-        configPath: joinPath(tmp, 'shopify.app.no-id.toml'),
-        configuration: configWithoutClientId as any,
-        configSchema,
-        specifications: [],
-        remoteFlags: [],
-      })
+      mockContext(tmp, configWithoutClientId)
 
       // When
       const result = use(options)
@@ -120,13 +121,38 @@ describe('use', () => {
     "message": "Expected array, received string"
   }
 ]'`)
-      vi.mocked(loadAppConfiguration).mockRejectedValue(error)
+      vi.mocked(getAppConfigurationContext).mockRejectedValue(error)
 
       // When
       const result = use(options)
 
       // Then
       await expect(result).rejects.toThrow(error)
+    })
+  })
+
+  test('accepts syntactically valid config with client_id even if schema-incomplete', async () => {
+    // The use() command intentionally does NOT run full schema validation.
+    // It only requires syntactically valid TOML + a client_id.
+    // Full validation is deferred to the next command that loads the app.
+    await inTemporaryDirectory(async (tmp) => {
+      // Given — config has client_id but is missing required fields like application_url
+      createConfigFile(tmp, 'shopify.app.minimal.toml')
+      const options: UseOptions = {
+        directory: tmp,
+        configName: 'minimal',
+      }
+      vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.minimal.toml')
+      mockContext(tmp, {client_id: 'some-id'})
+
+      // When
+      await use(options)
+
+      // Then — config is accepted and cached
+      expect(setCachedAppInfo).toHaveBeenCalledWith({
+        directory: tmp,
+        configFile: 'shopify.app.minimal.toml',
+      })
     })
   })
 
@@ -149,15 +175,7 @@ describe('use', () => {
           application_url: 'https://example.com',
         },
       })
-      const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory: tmp,
-        configPath: joinPath(tmp, 'shopify.app.staging.toml'),
-        configuration: app.configuration,
-        configSchema,
-        specifications: [],
-        remoteFlags: [],
-      })
+      mockContext(tmp, app.configuration)
 
       // When
       await use(options)
@@ -191,15 +209,7 @@ describe('use', () => {
           webhooks: {api_version: '2023-04'},
         },
       })
-      const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory: tmp,
-        configPath: joinPath(tmp, 'shopify.app.local.toml'),
-        configuration: app.configuration,
-        configSchema,
-        specifications: [],
-        remoteFlags: [],
-      })
+      mockContext(tmp, app.configuration)
 
       // When
       await use(options)
@@ -235,15 +245,7 @@ describe('use', () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
       const {configuration} = testApp({})
-      const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory,
-        configPath: joinPath(directory, 'shopify.app.something.toml'),
-        configuration,
-        configSchema,
-        specifications: [],
-        remoteFlags: [],
-      })
+      mockContext(directory, configuration)
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
       const options = {
@@ -266,15 +268,7 @@ describe('use', () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
       const {configuration} = testApp({})
-      const {schema: configSchema} = await buildVersionedAppSchema()
-      vi.mocked(loadAppConfiguration).mockResolvedValue({
-        directory,
-        configPath: joinPath(directory, 'shopify.app.something.toml'),
-        configuration,
-        configSchema,
-        specifications: [],
-        remoteFlags: [],
-      })
+      mockContext(directory, configuration)
       vi.mocked(getAppConfigurationFileName).mockReturnValue('shopify.app.something.toml')
       createConfigFile(directory, 'shopify.app.something.toml')
       const options = {

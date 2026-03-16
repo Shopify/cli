@@ -34,7 +34,7 @@ export default class ConfigLink extends AppLinkedCommand {
       directory: flags.path,
       clientId: undefined,
       forceRelink: false,
-      userProvidedConfigName: result.state.configurationFileName,
+      userProvidedConfigName: result.configFileName,
     })
 
     return {app}

@@ -74,6 +74,8 @@ client_id="test-api-key"`
         developerPlatformClient: expect.any(Object),
         specifications: [],
         organization: mockOrganization,
+        project: expect.any(Object),
+        activeConfig: expect.any(Object),
       })
       expect(link).not.toHaveBeenCalled()
     })
@@ -152,22 +154,12 @@ client_id="test-api-key"`
 
       vi.mocked(link).mockResolvedValue({
         remoteApp: mockRemoteApp,
-        state: {
-          appDirectory: tmp,
-          configurationPath: `${tmp}/shopify.app.toml`,
-          configSource: 'cached',
-          configurationFileName: 'shopify.app.toml',
-          isLinked: true,
-          basicConfiguration: {
-            client_id: 'test-api-key',
-          },
-        },
+        configFileName: 'shopify.app.toml',
         configuration: {
           client_id: 'test-api-key',
           name: 'test-app',
-          application_url: 'https://test-app.com',
-          embedded: false,
-        },
+          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+        } as any,
       })
 
       // When
@@ -218,7 +210,7 @@ client_id="test-api-key"`
 name = "test-app"
 client_id="test-api-key"`
       await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
+      const loadSpy = vi.spyOn(loader, 'loadAppFromContext')
 
       // When
       await linkedAppContext({
@@ -231,7 +223,7 @@ client_id="test-api-key"`
 
       // Then
       expect(vi.mocked(addUidToTomlsIfNecessary)).not.toHaveBeenCalled()
-      expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'report'}))
+      expect(loadSpy).toHaveBeenCalledWith(expect.objectContaining({mode: 'report'}))
       loadSpy.mockRestore()
     })
   })
@@ -243,7 +235,7 @@ client_id="test-api-key"`
 name = "test-app"
 client_id="test-api-key"`
       await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadAppUsingConfigurationState')
+      const loadSpy = vi.spyOn(loader, 'loadAppFromContext')
 
       // When
       await linkedAppContext({
@@ -255,7 +247,7 @@ client_id="test-api-key"`
 
       // Then
       expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
-      expect(loadSpy).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({mode: 'strict'}))
+      expect(loadSpy).toHaveBeenCalledWith(expect.objectContaining({mode: 'strict'}))
       loadSpy.mockRestore()
     })
   })
