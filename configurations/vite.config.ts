@@ -48,7 +48,7 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
       snapshotFormat: {
         escapeString: true,
       },
-      includeSource: ['**/src/**/*.{ts,tsx}'],
+
       sequence: {
         hooks: 'list',
       },

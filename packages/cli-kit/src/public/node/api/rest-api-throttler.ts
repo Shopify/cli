@@ -144,7 +144,7 @@ interface ThrottlingState {
 
 const _throttlingState: Record<string, ThrottlingState> = {}
 
-function extractRetryDelayMsFromResponse(response: RestResponse): number {
+export function extractRetryDelayMsFromResponse(response: RestResponse): number {
   const retryAfterStr = header(response, 'retry-after')
   const retryAfter = tryParseInt(retryAfterStr)
 
@@ -174,7 +174,7 @@ export async function delayAwareRetry(
   })
 }
 
-function extractApiCallLimitFromResponse(response: RestResponse): [number, number] | undefined {
+export function extractApiCallLimitFromResponse(response: RestResponse): [number, number] | undefined {
   const apiCallLimit = header(response, 'x-shopify-shop-api-call-limit')
 
   const [used, limit] = apiCallLimit
@@ -200,111 +200,4 @@ function header(response: RestResponse, name: string): string {
   return ''
 }
 
-if (import.meta.vitest) {
-  const {describe, test, expect, beforeEach} = import.meta.vitest
-  let response: RestResponse
 
-  beforeEach(() => {
-    response = {
-      json: {},
-      status: 200,
-      headers: {},
-    }
-  })
-
-  describe('retryAfter', () => {
-    test('when the "retry-after" header value is valid', async () => {
-      // Given
-      response.headers = {
-        'retry-after': ['2.0'],
-      }
-
-      // When
-      const retryAfterDelay = extractRetryDelayMsFromResponse(response)
-
-      // Then
-      expect(retryAfterDelay).toBe(2)
-    })
-
-    test('when the "retry-after" header value is not present', async () => {
-      // Given
-      response.headers = {
-        'retry-after': [],
-      }
-
-      // When
-      const retryAfterDelay = extractRetryDelayMsFromResponse(response)
-
-      // Then
-      expect(retryAfterDelay).toBe(0)
-    })
-
-    test('when the "retry-after" header value is valid', async () => {
-      // Given
-      response.headers = {
-        'retry-after': ['invalid'],
-      }
-
-      // When
-      const retryAfterDelay = extractRetryDelayMsFromResponse(response)
-
-      // Then
-      expect(retryAfterDelay).toBe(0)
-    })
-
-    test('when the "retry-after" header is not present', async () => {
-      // Given
-      response.headers = {}
-
-      // When
-      const retryAfterDelay = extractRetryDelayMsFromResponse(response)
-
-      // Then
-      expect(retryAfterDelay).toBe(0)
-    })
-  })
-
-  describe('apiCallLimit', () => {
-    test('when the "x-shopify-shop-api-call-limit" header is valid', async () => {
-      // Given
-      response.headers = {
-        'x-shopify-shop-api-call-limit': ['10/40'],
-      }
-
-      // When
-      const callLimit = extractApiCallLimitFromResponse(response)
-
-      const [used, limit] = callLimit!
-
-      // Then
-      expect(used).toBe(10)
-      expect(limit).toBe(40)
-    })
-
-    test('when the "x-shopify-shop-api-call-limit" header is invalid', async () => {
-      // Given
-      response.headers = {
-        'x-shopify-shop-api-call-limit': ['foo/bar'],
-      }
-
-      // When
-      const callLimit = extractApiCallLimitFromResponse(response)
-
-      // Then
-      expect(callLimit).toBeUndefined()
-    })
-
-    test('when the "x-shopify-shop-api-call-limit" header is not formatted as expected', async () => {
-      // Given
-      response.headers = {
-        'x-shopify-shop-api-call-limit': ['/10'],
-      }
-
-      // When
-      const callLimit = extractApiCallLimitFromResponse(response)
-
-      // Then
-      expect(callLimit).toBeUndefined()
-    })
-  })
-}
