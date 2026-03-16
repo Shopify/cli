@@ -114,7 +114,7 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
       ...app.configuration.build,
       dev_store_url: store.shopDomain,
     }
-    const configFile = await TomlFile.read(app.configuration.path)
+    const configFile = await TomlFile.read(app.configPath)
     await configFile.patch({build: {dev_store_url: store.shopDomain}})
   }
 
@@ -226,7 +226,7 @@ export async function warnIfScopesDifferBeforeDev({
     renderWarning({
       headline: [`The scopes in your TOML don't match the scopes in your Partner Dashboard`],
       body: [
-        `Scopes in ${basename(localApp.configuration.path)}:`,
+        `Scopes in ${basename(localApp.configPath)}:`,
         scopesMessage(getAppScopesArray(localApp.configuration)),
         '\n',
         'Scopes in Partner Dashboard:',
@@ -437,7 +437,7 @@ async function launchDevProcesses({
     appURL: config.localApp.devApplicationURLs?.applicationUrl,
     appName: config.remoteApp.title,
     organizationName: config.commandOptions.organization.businessName,
-    configPath: config.localApp.configuration.path,
+    configPath: config.localApp.configPath,
   })
 }
 

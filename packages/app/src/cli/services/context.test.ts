@@ -80,7 +80,6 @@ const STORE1: OrganizationStore = {
 const state: AppConfigurationState = {
   basicConfiguration: {
     ...DEFAULT_CONFIG,
-    path: 'shopify.app.toml',
     client_id: APP2.apiKey,
   },
   appDirectory: 'tmp',
@@ -171,7 +170,7 @@ beforeEach(async () => {
     path: '',
   } as unknown as TomlFile)
   vi.mocked(link).mockResolvedValue({
-    configuration: testAppWithConfig({config: {path: 'shopify.app.toml', client_id: APP2.apiKey}}).configuration,
+    configuration: testAppWithConfig({config: {client_id: APP2.apiKey}}).configuration,
     remoteApp: APP2,
     state,
   })

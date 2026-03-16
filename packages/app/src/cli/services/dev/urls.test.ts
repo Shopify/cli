@@ -336,7 +336,7 @@ describe('shouldOrPromptUpdateURLs', () => {
       currentURLs,
       appDirectory: '/path',
       apiKey: 'api-key',
-      localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}, 'current') as AppLinkedInterface,
+      localApp: testApp({configuration: {...DEFAULT_CONFIG, client_id: 'different'}}) as AppLinkedInterface,
       developerPlatformClient: testDeveloperPlatformClient(),
       newURLs: {
         applicationUrl: 'https://example.com/home',
@@ -356,7 +356,7 @@ describe('shouldOrPromptUpdateURLs', () => {
 
   test('updates the config file if current config client matches remote', async () => {
     // Given
-    const localApp = testApp({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}}, 'current')
+    const localApp = testApp({configuration: {...DEFAULT_CONFIG, client_id: 'api-key'}})
     const options = {
       currentURLs,
       appDirectory: '/path',

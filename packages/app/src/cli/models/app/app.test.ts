@@ -29,7 +29,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
 const CORRECT_CURRENT_APP_SCHEMA: CurrentAppConfiguration = {
-  path: '',
   name: 'app 1',
   client_id: '12345',
   extension_directories: ['extensions/*'],
@@ -574,14 +573,11 @@ describe('allExtensions', () => {
 
   test('keeps declarative webhook config when flag is enabled', async () => {
     const webhookExtensions = await testWebhookExtensions({complianceTopics: true})
-    const app = testApp(
-      {
-        configuration: CORRECT_CURRENT_APP_SCHEMA,
-        allExtensions: webhookExtensions,
-        remoteFlags: [],
-      },
-      'current',
-    )
+    const app = testApp({
+      configuration: CORRECT_CURRENT_APP_SCHEMA,
+      allExtensions: webhookExtensions,
+      remoteFlags: [],
+    })
 
     const webhookConfig = app.allExtensions.find((ext) => ext.handle === 'webhooks')!
       .configuration as unknown as WebhookTestConfig
@@ -596,33 +592,27 @@ describe('allExtensions', () => {
 
   test('includes configuration extensions when include_config_on_deploy is enabled', async () => {
     const configExtension = await testAppAccessConfigExtension()
-    const app = testApp(
-      {
-        configuration: CORRECT_CURRENT_APP_SCHEMA,
-        allExtensions: [configExtension],
-      },
-      'current',
-    )
+    const app = testApp({
+      configuration: CORRECT_CURRENT_APP_SCHEMA,
+      allExtensions: [configExtension],
+    })
 
     expect(app.allExtensions).toContain(configExtension)
   })
 
   test('includes configuration extensions by default when include_config_on_deploy is undefined', async () => {
     const configExtension = await testAppAccessConfigExtension()
-    const app = testApp(
-      {
-        configuration: {
-          ...CORRECT_CURRENT_APP_SCHEMA,
-          build: {
-            automatically_update_urls_on_dev: true,
-            dev_store_url: 'https://google.com',
-            include_config_on_deploy: undefined,
-          },
+    const app = testApp({
+      configuration: {
+        ...CORRECT_CURRENT_APP_SCHEMA,
+        build: {
+          automatically_update_urls_on_dev: true,
+          dev_store_url: 'https://google.com',
+          include_config_on_deploy: undefined,
         },
-        allExtensions: [configExtension],
       },
-      'current',
-    )
+      allExtensions: [configExtension],
+    })
 
     expect(app.allExtensions).toContain(configExtension)
   })
@@ -637,13 +627,10 @@ describe('allExtensions', () => {
       },
     }
     const configExtension = await testAppAccessConfigExtension()
-    const app = testApp(
-      {
-        configuration,
-        allExtensions: [configExtension],
-      },
-      'current',
-    )
+    const app = testApp({
+      configuration,
+      allExtensions: [configExtension],
+    })
 
     expect(app.allExtensions).toHaveLength(0)
   })

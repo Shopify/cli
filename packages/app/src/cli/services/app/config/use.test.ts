@@ -83,6 +83,7 @@ describe('use', () => {
       const {client_id: clientId, ...configWithoutClientId} = appWithoutClientID.configuration
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
+        configPath: joinPath(tmp, 'shopify.app.no-id.toml'),
         configuration: configWithoutClientId as any,
         configSchema,
         specifications: [],
@@ -151,6 +152,7 @@ describe('use', () => {
       const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
+        configPath: joinPath(tmp, 'shopify.app.staging.toml'),
         configuration: app.configuration,
         configSchema,
         specifications: [],
@@ -192,6 +194,7 @@ describe('use', () => {
       const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory: tmp,
+        configPath: joinPath(tmp, 'shopify.app.local.toml'),
         configuration: app.configuration,
         configSchema,
         specifications: [],
@@ -231,10 +234,11 @@ describe('use', () => {
   test('renders warning when warning message is specified', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
-      const {configuration} = testApp({}, 'current')
+      const {configuration} = testApp({})
       const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory,
+        configPath: joinPath(directory, 'shopify.app.something.toml'),
         configuration,
         configSchema,
         specifications: [],
@@ -261,10 +265,11 @@ describe('use', () => {
   test('does not render success when shouldRenderSuccess is false', async () => {
     await inTemporaryDirectory(async (directory) => {
       // Given
-      const {configuration} = testApp({}, 'current')
+      const {configuration} = testApp({})
       const {schema: configSchema} = await buildVersionedAppSchema()
       vi.mocked(loadAppConfiguration).mockResolvedValue({
         directory,
+        configPath: joinPath(directory, 'shopify.app.something.toml'),
         configuration,
         configSchema,
         specifications: [],

@@ -208,7 +208,7 @@ async function mockSuccessfulCommandExecution(identifier: string, existingExtens
       extensionsForType: (_spec: {identifier: string; externalIdentifier: string}) => existingExtensions,
       allExtensions: existingExtensions,
     },
-    config: {path: joinPath(appRoot, 'shopify.app.toml')},
+    config: {},
   })
 
   const allExtensionTemplates = testRemoteExtensionTemplates

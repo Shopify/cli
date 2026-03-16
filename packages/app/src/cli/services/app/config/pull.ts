@@ -13,11 +13,13 @@ import {basename} from '@shopify/cli-kit/node/path'
 interface PullOptions {
   directory: string
   configName?: string
+  configPath: string
   configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
 }
 
 interface PullOutput {
+  configPath: string
   configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
 }
@@ -26,7 +28,7 @@ interface PullOutput {
  * Refresh an already-linked app configuration without prompting for org/app.
  */
 export default async function pull(options: PullOptions): Promise<PullOutput> {
-  const {directory, configName, configuration, remoteApp} = options
+  const {directory, configName, configPath, configuration, remoteApp} = options
 
   if (!configuration.client_id) {
     throw new AbortError(
@@ -54,8 +56,7 @@ export default async function pull(options: PullOptions): Promise<PullOutput> {
 
   const localAppOptions = await loadLocalAppOptions(linkOptions, specifications, flags, remoteApp.apiKey)
 
-  // Decide which config file to overwrite: the configuration should always have a path here.
-  const configFileName: AppConfigurationFileName = basename(configuration.path) as AppConfigurationFileName
+  const configFileName: AppConfigurationFileName = basename(configPath) as AppConfigurationFileName
 
   const mergedConfiguration = await overwriteLocalConfigFileWithRemoteAppConfiguration({
     remoteApp,
@@ -67,5 +68,5 @@ export default async function pull(options: PullOptions): Promise<PullOutput> {
     localAppOptions,
   })
 
-  return {configuration: mergedConfiguration, remoteApp}
+  return {configPath, configuration: mergedConfiguration, remoteApp}
 }
