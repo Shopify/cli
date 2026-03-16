@@ -337,9 +337,11 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-      vi.mocked(fs.fileExists).mockResolvedValue(true)
-      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-      vi.mocked(fs.glob).mockResolvedValue(['file.js'])
+      vi.mocked(fs.fileExists).mockImplementation(async (p) =>
+        typeof p === 'string' && p.startsWith('/test/extension'),
+      )
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
 
       const step: LifecycleStep = {
         id: 'copy-tools',
@@ -353,10 +355,10 @@ describe('executeIncludeAssetsStep', () => {
       // When
       await executeIncludeAssetsStep(step, contextWithNestedConfig)
 
-      // Then — all three tools paths resolved and copied
-      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/tools-a.js', '/test/output')
-      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/tools-b.js', '/test/output')
-      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/tools-c.js', '/test/output')
+      // Then — all three tools paths resolved and copied (file paths → copyFile)
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/tools-a.js', '/test/output/tools-a.js')
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/tools-b.js', '/test/output/tools-b.js')
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/tools-c.js', '/test/output/tools-c.js')
     })
 
     test('skips silently when [] flatten key resolves to a non-array', async () => {
@@ -601,6 +603,584 @@ describe('executeIncludeAssetsStep', () => {
       expect(result.filesCopied).toBe(5)
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/manifest.json', '/test/output/manifest.json')
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/theme', '/test/output')
+    })
+  })
+
+  describe('manifest generation', () => {
+    beforeEach(() => {
+      vi.mocked(fs.writeFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+      // Source files exist; destination paths don't yet (so findUniqueDestPath
+      // resolves on the first candidate without looping). Individual tests can
+      // override for specific scenarios.
+      vi.mocked(fs.fileExists).mockImplementation(async (p) =>
+        typeof p === 'string' && p.startsWith('/test/extension'),
+      )
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue([])
+    })
+
+    test('writes manifest.json with a single configKey inclusion using anchor and groupBy', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {
+                targeting: [
+                  {target: 'admin.app.intent.link', tools: './tools.json', url: '/editor'},
+                ],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      expect(writeFileCall[0]).toBe('/test/output/manifest.json')
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({
+        'admin.app.intent.link': {
+          tools: 'tools.json',
+        },
+      })
+    })
+
+    test('merges multiple inclusions per target when they share the same anchor and groupBy', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {
+                targeting: [
+                  {
+                    target: 'admin.app.intent.link',
+                    tools: './tools.json',
+                    instructions: './instructions.md',
+                    url: '/editor',
+                    intents: [{type: 'application/email', action: 'open', schema: './email-schema.json'}],
+                  },
+                ],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].instructions',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].intents[].schema',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — url is NOT in the manifest because no inclusion references it
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({
+        'admin.app.intent.link': {
+          tools: 'tools.json',
+          instructions: 'instructions.md',
+          intents: [{schema: 'email-schema.json'}],
+        },
+      })
+    })
+
+    test('produces one manifest key per targeting entry when multiple entries exist', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {
+                targeting: [
+                  {target: 'admin.intent.link', tools: './tools-a.js', intents: [{schema: './schema1.json'}]},
+                  {target: 'admin.other.target', tools: './tools-b.js', intents: [{schema: './schema2.json'}]},
+                ],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].intents[].schema',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — two top-level keys, one per targeting entry
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({
+        'admin.intent.link': {
+          tools: 'tools-a.js',
+          intents: [{schema: 'schema1.json'}],
+        },
+        'admin.other.target': {
+          tools: 'tools-b.js',
+          intents: [{schema: 'schema2.json'}],
+        },
+      })
+    })
+
+    test('does NOT write manifest.json when generateManifest is false (default)', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {
+                targeting: [{target: 'admin.intent.link', tools: './tools.json'}],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      // No generateManifest field — defaults to false
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then
+      expect(fs.writeFile).not.toHaveBeenCalled()
+    })
+
+    test('does NOT write manifest.json when generateManifest is true but all inclusions are pattern/static', async () => {
+      // Given — pattern and static entries never contribute to the manifest
+      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/logo.png'])
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {type: 'pattern', baseDir: 'public', include: ['**/*']},
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — no configKey inclusions → no manifest written
+      expect(fs.writeFile).not.toHaveBeenCalled()
+    })
+
+    test('writes root-level manifest entry from non-anchored configKey inclusion', async () => {
+      // Given — configKey without anchor/groupBy contributes at manifest root
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {targeting: {tools: './tools.json', instructions: './instructions.md'}},
+        } as unknown as ExtensionInstance,
+      }
+
+
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {type: 'configKey', key: 'targeting.tools'},
+            {type: 'configKey', key: 'targeting.instructions'},
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — root-level keys use last path segment; values are output-relative paths
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const manifestContent = JSON.parse(vi.mocked(fs.writeFile).mock.calls[0]![1] as string)
+      expect(manifestContent).toEqual({
+        tools: 'tools.json',
+        instructions: 'instructions.md',
+      })
+    })
+
+    test('logs a warning and treats inclusion as root-level when only anchor is set (no groupBy)', async () => {
+      // Given — inclusion has anchor but no groupBy
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {targeting: {tools: './tools.json'}},
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {type: 'configKey', key: 'targeting.tools', anchor: 'targeting'},
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — warning logged, inclusion treated as root entry
+      expect(mockStdout.write).toHaveBeenCalledWith(
+        expect.stringContaining('anchor without groupBy (or vice versa)'),
+      )
+      const manifestContent = JSON.parse(vi.mocked(fs.writeFile).mock.calls[0]![1] as string)
+      expect(manifestContent).toHaveProperty('tools')
+    })
+
+    test('writes an empty manifest when anchor resolves to a non-array value', async () => {
+      // Given — "extensions" is a plain string, not an array; the [] flatten marker
+      // returns undefined, so the anchor group is skipped and the manifest is empty
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: 'not-an-array',
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — the anchor group was skipped; manifest.json is written but contains no entries
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({})
+    })
+
+    test('skips items whose groupBy field is not a string', async () => {
+      // Given — one entry has a numeric target, the other has a valid string target
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {
+                targeting: [
+                  {target: 42, tools: './tools-bad.js'},
+                  {target: 'admin.link', tools: './tools-good.js'},
+                ],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — only the string-keyed entry appears
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({
+        'admin.link': {tools: 'tools-good.js'},
+      })
+      expect(manifestContent).not.toHaveProperty('42')
+    })
+
+    test('writes manifest.json to outputDir derived from extension.outputPath', async () => {
+      // Given — outputPath is a file, so outputDir is its dirname (/test/output)
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          outputPath: '/test/output/extension.js',
+          configuration: {
+            extensions: [
+              {targeting: [{target: 'admin.intent.link', tools: './tools.json'}]},
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — manifest is placed under /test/output, which is dirname of extension.js
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      expect(writeFileCall[0]).toBe('/test/output/manifest.json')
+    })
+
+    test('still copies files AND writes manifest when generateManifest is true', async () => {
+      // Given
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {targeting: [{target: 'admin.intent.link', tools: './tools.json'}]},
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.glob).mockResolvedValue([])
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              key: 'extensions[].targeting[].tools',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — file copying happened AND manifest was written
+      // joinPath normalises './tools.json' → 'tools.json', so the resolved source path has no leading './'
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/tools.json', '/test/output/tools.json')
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({
+        'admin.intent.link': {tools: 'tools.json'},
+      })
+    })
+
+    test('includes the full item when anchor equals key (relPath is empty string)', async () => {
+      // Given — anchor === key, so stripAnchorPrefix returns "" and buildRelativeEntry returns the whole item
+      const contextWithConfig = {
+        ...mockContext,
+        extension: {
+          ...mockExtension,
+          configuration: {
+            extensions: [
+              {
+                targeting: [
+                  {target: 'admin.intent.link', tools: './tools.json', url: '/editor'},
+                ],
+              },
+            ],
+          },
+        } as unknown as ExtensionInstance,
+      }
+
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generateManifest: true,
+          inclusions: [
+            {
+              type: 'configKey',
+              // anchor === key → the whole targeting item becomes the manifest value
+              key: 'extensions[].targeting[]',
+              anchor: 'extensions[].targeting[]',
+              groupBy: 'target',
+            },
+          ],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, contextWithConfig)
+
+      // Then — manifest value is the full targeting object (including url)
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const writeFileCall = vi.mocked(fs.writeFile).mock.calls[0]!
+      const manifestContent = JSON.parse(writeFileCall[1] as string)
+      expect(manifestContent).toEqual({
+        'admin.intent.link': {
+          target: 'admin.intent.link',
+          tools: './tools.json',
+          url: '/editor',
+        },
+      })
     })
   })
 })
