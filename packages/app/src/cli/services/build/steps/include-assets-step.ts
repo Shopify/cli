@@ -1,3 +1,4 @@
+import {generateManifestFile} from './include-assets/generate-manifest.js'
 import {copyByPattern} from './include-assets/copy-by-pattern.js'
 import {copySourceEntry} from './include-assets/copy-source-entry.js'
 import {copyConfigKeyEntry} from './include-assets/copy-config-key-entry.js'
@@ -35,12 +36,19 @@ const StaticEntrySchema = z.object({
  *
  * Resolves a path (or array of paths) from the extension configuration and
  * copies the directory contents into the output. Silently skipped when the
- * key is absent.
+ * key is absent. Respects `preserveStructure` and `destination` the same way
+ * as the static entry.
+ *
+ * `anchor` and `groupBy` are optional fields used for manifest generation.
+ * When both are present, this entry participates in `generateManifestFile`.
  */
 const ConfigKeyEntrySchema = z.object({
   type: z.literal('configKey'),
   key: z.string(),
   destination: z.string().optional(),
+  preserveStructure: z.boolean().default(false),
+  anchor: z.string().optional(),
+  groupBy: z.string().optional(),
 })
 
 const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, StaticEntrySchema, ConfigKeyEntrySchema])
@@ -49,11 +57,34 @@ const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, S
  * Configuration schema for include_assets step.
  *
  * `inclusions` is a flat array of entries, each with a `type` discriminant
- * (`'static'`, `'configKey'`, or `'pattern'`). All entries are processed in parallel.
+ * (`'static'`, `'configKey'`, or `'pattern'`). `configKey` entries run
+ * sequentially (to avoid filesystem race conditions on shared output paths),
+ * then `pattern` and `static` entries run in parallel.
+ *
+ * When `generateManifest` is `true`, a `manifest.json` file is written to the
+ * output directory after all inclusions complete. Only `configKey` entries
+ * that have both `anchor` and `groupBy` set participate in manifest generation.
  */
-const IncludeAssetsConfigSchema = z.object({
-  inclusions: z.array(InclusionEntrySchema),
-})
+const IncludeAssetsConfigSchema = z
+  .object({
+    inclusions: z.array(InclusionEntrySchema),
+    generateManifest: z.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    for (const [i, entry] of data.inclusions.entries()) {
+      if (entry.type === 'configKey') {
+        const hasAnchor = entry.anchor !== undefined
+        const hasGroupBy = entry.groupBy !== undefined
+        if (hasAnchor !== hasGroupBy) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: '`anchor` and `groupBy` must both be set or both be omitted',
+            path: ['inclusions', i],
+          })
+        }
+      }
+    }
+  })
 
 /**
  * Executes an include_assets build step.
@@ -63,6 +94,7 @@ const IncludeAssetsConfigSchema = z.object({
  * - `type: 'static'` — copy a file or directory into the output.
  * - `type: 'configKey'` — resolve a path from the extension's
  *   config and copy into the output; silently skipped if absent.
+ *   Runs sequentially to avoid filesystem race conditions.
  * - `type: 'pattern'` — glob-based file selection from a source directory
  *   (defaults to extension root when `source` is omitted).
  */
@@ -76,51 +108,79 @@ export async function executeIncludeAssetsStep(
   // parent. When outputPath has no extension, it IS the output directory.
   const outputDir = extname(extension.outputPath) ? dirname(extension.outputPath) : extension.outputPath
 
-  const counts = await Promise.all(
-    config.inclusions.map(async (entry) => {
-      const warn = (msg: string) => options.stdout.write(msg)
-      const sanitizedDest = entry.destination !== undefined ? sanitizeRelativePath(entry.destination, warn) : undefined
+  const aggregatedPathMap = new Map<string, string | string[]>()
 
-      if (entry.type === 'pattern') {
-        const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
-        const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
-        return copyByPattern(
-          {
-            sourceDir,
-            outputDir: destinationDir,
-            patterns: entry.include,
-            ignore: entry.ignore ?? [],
-          },
-          options,
-        )
-      }
+  // configKey entries run sequentially: copyConfigKeyEntry uses findUniqueDestPath
+  // which checks filesystem state before writing. Running two configKey entries in
+  // parallel against the same output directory can cause both to see the same
+  // candidate path as free and silently overwrite each other.
+  let configKeyCount = 0
+  for (const entry of config.inclusions) {
+    if (entry.type !== 'configKey') continue
+    const warn = (msg: string) => options.stdout.write(msg)
+    const rawDest = entry.destination !== undefined ? sanitizeRelativePath(entry.destination, warn) : undefined
+    const sanitizedDest = rawDest === '' ? undefined : rawDest
+    // eslint-disable-next-line no-await-in-loop
+    const result = await copyConfigKeyEntry(
+      {
+        key: entry.key,
+        baseDir: extension.directory,
+        outputDir,
+        context,
+        preserveStructure: entry.preserveStructure,
+        destination: sanitizedDest,
+      },
+      options,
+    )
+    result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
+    configKeyCount += result.filesCopied
+  }
 
-      if (entry.type === 'configKey') {
-        return copyConfigKeyEntry(
-          {
-            key: entry.key,
-            baseDir: extension.directory,
-            outputDir,
-            context,
-            destination: sanitizedDest,
-          },
-          options,
-        )
-      }
+  // pattern and static entries do not use findUniqueDestPath and do not
+  // contribute to the pathMap, so they are safe to run in parallel.
+  const otherCounts = await Promise.all(
+    config.inclusions
+      .filter((entry) => entry.type !== 'configKey')
+      .map(async (entry) => {
+        const warn = (msg: string) => options.stdout.write(msg)
+        const rawDest = entry.destination !== undefined ? sanitizeRelativePath(entry.destination, warn) : undefined
+        const sanitizedDest = rawDest === '' ? undefined : rawDest
 
-      if (entry.type === 'static') {
-        return copySourceEntry(
-          {
-            source: entry.source,
-            destination: sanitizedDest,
-            baseDir: extension.directory,
-            outputDir,
-          },
-          options,
-        )
-      }
-    }),
+        if (entry.type === 'pattern') {
+          const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
+          const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
+          return copyByPattern(
+            {
+              sourceDir,
+              outputDir: destinationDir,
+              patterns: entry.include,
+              ignore: entry.ignore ?? [],
+              preserveStructure: entry.preserveStructure,
+            },
+            options,
+          )
+        }
+
+        if (entry.type === 'static') {
+          return copySourceEntry(
+            {
+              source: entry.source,
+              destination: sanitizedDest,
+              baseDir: extension.directory,
+              outputDir,
+              preserveStructure: entry.preserveStructure,
+            },
+            options,
+          )
+        }
+      }),
   )
 
+  if (config.generateManifest) {
+    const configKeyEntries = config.inclusions.filter((e) => e.type === 'configKey')
+    await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap)
+  }
+
+  const counts = [configKeyCount, ...otherCounts]
   return {filesCopied: counts.reduce<number>((sum, count) => sum + (count ?? 0), 0)}
 }
