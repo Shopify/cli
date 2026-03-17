@@ -1,5 +1,5 @@
-import {describe, test, expect, beforeEach} from 'vitest'
 import {extractRetryDelayMsFromResponse, extractApiCallLimitFromResponse} from './rest-api-throttler.js'
+import {describe, test, expect, beforeEach} from 'vitest'
 import type {RestResponse} from './admin.js'
 
 let response: RestResponse

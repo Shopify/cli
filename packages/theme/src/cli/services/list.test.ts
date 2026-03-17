@@ -90,18 +90,18 @@ describe('list', () => {
     await list({json: true}, session)
 
     expect(mockOutput.info()).toMatchInlineSnapshot(`
-    "[
-      {
-        \\"id\\": 1,
-        \\"name\\": \\"Theme 1\\",
-        \\"role\\": \\"live\\"
-      },
-      {
-        \\"id\\": 2,
-        \\"name\\": \\"Theme 2\\",
-        \\"role\\": \\"\\"
-      }
-    ]"
-  `)
+      "[
+        {
+          "id": 1,
+          "name": "Theme 1",
+          "role": "live"
+        },
+        {
+          "id": 2,
+          "name": "Theme 2",
+          "role": ""
+        }
+      ]"
+    `)
   })
 })

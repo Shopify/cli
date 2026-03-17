@@ -267,7 +267,7 @@ describe('setupDevServer', () => {
       expect(res.getHeader('content-type')).toEqual('text/css')
       // The URL is proxied:
       expect(body.toString()).toMatchInlineSnapshot(
-        `".some-class { background: url(\\"/cdn/path/to/assets/file2.css\\") }"`,
+        `".some-class { background: url("/cdn/path/to/assets/file2.css") }"`,
       )
     })
 
@@ -435,9 +435,9 @@ describe('setupDevServer', () => {
                 var __blocks__ = {};
 
                 (function () {
-                  var element = document.getElementById(\\"blocks-script\\");
-                  var attribute = element ? element.getAttribute(\\"data-blocks\\") : \\"\\";
-                  var blocks = attribute.split(\\",\\").filter(Boolean);
+                  var element = document.getElementById("blocks-script");
+                  var attribute = element ? element.getAttribute("data-blocks") : "";
+                  var blocks = attribute.split(",").filter(Boolean);
 
                   for (var i = 0; i < blocks.length; i++) {
                     __blocks__[blocks[i]] = true;
@@ -445,24 +445,24 @@ describe('setupDevServer', () => {
                 })();
 
                 (function () {
-                  if (!__blocks__[\\"another-block\\"] && !Shopify.designMode) return;
+                  if (!__blocks__["another-block"] && !Shopify.designMode) return;
                   try {
                     /* blocks/another-block.liquid */
 
                       console.log('This is another block script');
-                    ${keepIndent}
+                    
                   } catch (e) {
                     console.error(e);
                   }
                 })();
 
                 (function () {
-                  if (!__blocks__[\\"test-block\\"] && !Shopify.designMode) return;
+                  if (!__blocks__["test-block"] && !Shopify.designMode) return;
                   try {
                     /* blocks/test-block.liquid */
 
                       console.log('This is block script');
-                    ${keepIndent}
+                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -520,9 +520,9 @@ describe('setupDevServer', () => {
                 var __snippets__ = {};
 
                 (function () {
-                  var element = document.getElementById(\\"snippets-script\\");
-                  var attribute = element ? element.getAttribute(\\"data-snippets\\") : \\"\\";
-                  var snippets = attribute.split(\\",\\").filter(Boolean);
+                  var element = document.getElementById("snippets-script");
+                  var attribute = element ? element.getAttribute("data-snippets") : "";
+                  var snippets = attribute.split(",").filter(Boolean);
 
                   for (var i = 0; i < snippets.length; i++) {
                     __snippets__[snippets[i]] = true;
@@ -530,24 +530,24 @@ describe('setupDevServer', () => {
                 })();
 
                 (function () {
-                  if (!__snippets__[\\"another-snippet\\"] && !Shopify.designMode) return;
+                  if (!__snippets__["another-snippet"] && !Shopify.designMode) return;
                   try {
                     /* snippets/another-snippet.liquid */
 
                       console.log('This is another snippet script');
-                    ${keepIndent}
+                    
                   } catch (e) {
                     console.error(e);
                   }
                 })();
 
                 (function () {
-                  if (!__snippets__[\\"test-snippet\\"] && !Shopify.designMode) return;
+                  if (!__snippets__["test-snippet"] && !Shopify.designMode) return;
                   try {
                     /* snippets/test-snippet.liquid */
 
                       console.log('This is snippet script');
-                    ${keepIndent}
+                    
                   } catch (e) {
                     console.error(e);
                   }
@@ -604,9 +604,9 @@ describe('setupDevServer', () => {
                 var __sections__ = {};
 
                 (function () {
-                  var element = document.getElementById(\\"sections-script\\");
-                  var attribute = element ? element.getAttribute(\\"data-sections\\") : \\"\\";
-                  var sections = attribute.split(\\",\\").filter(Boolean);
+                  var element = document.getElementById("sections-script");
+                  var attribute = element ? element.getAttribute("data-sections") : "";
+                  var sections = attribute.split(",").filter(Boolean);
 
                   for (var i = 0; i < sections.length; i++) {
                     __sections__[sections[i]] = true;
@@ -614,24 +614,24 @@ describe('setupDevServer', () => {
                 })();
 
                 (function () {
-                  if (!__sections__[\\"another-section\\"] && !Shopify.designMode) return;
+                  if (!__sections__["another-section"] && !Shopify.designMode) return;
                   try {
                     /* sections/another-section.liquid */
 
                       console.log('This is another section script');
-                    ${keepIndent}
+                    
                   } catch (e) {
                     console.error(e);
                   }
                 })();
 
                 (function () {
-                  if (!__sections__[\\"test-section\\"] && !Shopify.designMode) return;
+                  if (!__sections__["test-section"] && !Shopify.designMode) return;
                   try {
                     /* sections/test-section.liquid */
 
                       console.log('This is section script');
-                    ${keepIndent}
+                    
                   } catch (e) {
                     console.error(e);
                   }

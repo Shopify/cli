@@ -50,10 +50,6 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
         reporter: ['text', 'json', 'lcov'],
         exclude: ['**/src/**/vendor/**'],
       },
-      snapshotFormat: {
-        escapeString: true,
-      },
-
       sequence: {
         hooks: 'list',
       },

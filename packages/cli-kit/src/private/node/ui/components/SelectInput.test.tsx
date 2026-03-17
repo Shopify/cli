@@ -502,7 +502,7 @@ describe('SelectInput', async () => {
     const renderInstance = render(<SelectInput items={items} onChange={() => {}} onSubmit={onSubmit} />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 10, ARROW_DOWN)
+    await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
     await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(onSubmit).toHaveBeenCalledWith(items[1])

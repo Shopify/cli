@@ -587,9 +587,9 @@ describe('AutocompletePrompt', async () => {
     await sendInputAndWaitForContent(renderInstance, 'slash', '\\')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?   [36m\\\\[46m█[49m[39m
+      "?  Associate your project with the org Castile Ventures?   [36m\\[46m█[49m[39m
 
-      [36m>[39m  [36mwith\\\\slash[39m
+      [36m>[39m  [36mwith\\slash[39m
 
 
 

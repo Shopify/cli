@@ -144,6 +144,12 @@ interface ThrottlingState {
 
 const _throttlingState: Record<string, ThrottlingState> = {}
 
+/**
+ * Extracts the retry delay in milliseconds from the response's `retry-after` header.
+ *
+ * @param response - The response object.
+ * @returns The retry delay in milliseconds, or 0 if not present/invalid.
+ */
 export function extractRetryDelayMsFromResponse(response: RestResponse): number {
   const retryAfterStr = header(response, 'retry-after')
   const retryAfter = tryParseInt(retryAfterStr)
@@ -174,6 +180,12 @@ export async function delayAwareRetry(
   })
 }
 
+/**
+ * Extracts the API call limit (used/total) from the response's `x-shopify-shop-api-call-limit` header.
+ *
+ * @param response - The response object.
+ * @returns A tuple of [used, limit], or undefined if the header is missing/invalid.
+ */
 export function extractApiCallLimitFromResponse(response: RestResponse): [number, number] | undefined {
   const apiCallLimit = header(response, 'x-shopify-shop-api-call-limit')
 
@@ -199,5 +211,3 @@ function header(response: RestResponse, name: string): string {
 
   return ''
 }
-
-

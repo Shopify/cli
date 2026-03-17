@@ -105,9 +105,9 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
   })
@@ -132,9 +132,9 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app:custom key: color owner_type: PRODUCT
       [product.metafields.custom.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
   })
@@ -184,14 +184,14 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
 
       [product.metafields.app.color.validations]
       min = 5
       max = 50
-      choices = [\\"red\\", \\"blue\\", \\"green\\"]
+      choices = ["red", "blue", "green"]
       "
     `)
   })
@@ -220,12 +220,12 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
-      access.admin = \\"merchant_read_write\\"
-      access.storefront = \\"public_read\\"
-      access.customer_account = \\"read\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
+      access.admin = "merchant_read_write"
+      access.storefront = "public_read"
+      access.customer_account = "read"
       "
     `)
   })
@@ -254,9 +254,9 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
       capabilities.admin_filterable = true
       "
     `)
@@ -302,21 +302,21 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
 
       # namespace: $app key: size owner_type: PRODUCT
       [product.metafields.app.size]
-      name = \\"Size\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Size"
+      type = "single_line_text_field"
+      description = "The color of the product"
 
       # namespace: $app key: vip_status owner_type: CUSTOMER
       [customer.metafields.app.vip_status]
-      name = \\"VIP Status\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "VIP Status"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
   })
@@ -336,7 +336,7 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields]
-      foo = \\"single_line_text_field\\"
+      foo = "single_line_text_field"
       "
     `)
   })
@@ -392,21 +392,21 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test]
-      name = \\"A test\\"
-      description = \\"A test metaobject\\"
-      display_name_field = \\"title\\"
-      access.admin = \\"merchant_read_write\\"
-      access.storefront = \\"public_read\\"
+      name = "A test"
+      description = "A test metaobject"
+      display_name_field = "title"
+      access.admin = "merchant_read_write"
+      access.storefront = "public_read"
       capabilities.translatable = true
       capabilities.publishable = true
       capabilities.renderable = true
-      capabilities.renderable_meta_title_field = \\"title\\"
-      capabilities.renderable_meta_description_field = \\"description\\"
+      capabilities.renderable_meta_title_field = "title"
+      capabilities.renderable_meta_description_field = "description"
 
       [metaobjects.app.test.fields.title]
-      type = \\"single_line_text_field\\"
-      description = \\"The title of the test metaobject\\"
-      name = \\"Title\\"
+      type = "single_line_text_field"
+      description = "The title of the test metaobject"
+      name = "Title"
       required = true
 
       [metaobjects.app.test.fields.title.validations]
@@ -458,13 +458,13 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields]
-      foo = \\"single_line_text_field\\"
+      foo = "single_line_text_field"
 
       # namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
   })
@@ -490,8 +490,8 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: samename owner_type: PRODUCT
       [product.metafields.app.samename]
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
     // Should not contain name since it equals key
@@ -524,16 +524,16 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
 
       [product.metafields.app.color.validations]
-      simple_string = \\"test\\"
+      simple_string = "test"
       simple_number = 42
       simple_boolean = true
-      array_strings = [\\"a\\", \\"b\\"]
-      complex_object = '{\\"nested\\":{\\"value\\":123}}'
+      array_strings = ["a", "b"]
+      complex_object = '{"nested":{"value":123}}'
       "
     `)
   })
@@ -558,8 +558,8 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
+      name = "Color"
+      type = "single_line_text_field"
       "
     `)
     expect(result.tomlContent).not.toContain('description =')
@@ -585,9 +585,9 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
   })
@@ -618,8 +618,8 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields.price_field]
-      type = \\"money\\"
-      name = \\"Price\\"
+      type = "money"
+      name = "Price"
       "
     `)
   })
@@ -647,9 +647,9 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
 
       [product.metafields.app.color.validations]
       min = 5
@@ -676,7 +676,7 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields]
-      foo = \\"single_line_text_field\\"
+      foo = "single_line_text_field"
       "
     `)
   })
@@ -698,7 +698,7 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields]
-      foo = \\"single_line_text_field\\"
+      foo = "single_line_text_field"
       "
     `)
   })
@@ -741,11 +741,11 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields.price_field]
-      type = \\"list.metaobject_reference<$app:referenced_into>\\"
-      name = \\"Price\\"
+      type = "list.metaobject_reference<$app:referenced_into>"
+      name = "Price"
 
       [metaobjects.app.test.fields.price_field.validations]
-      \\"list.max\\" = 3
+      "list.max" = 3
       "
     `)
   })
@@ -785,8 +785,8 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:test
       [metaobjects.app.test.fields.price_field]
-      type = \\"mixed_reference<$app:referenced_into,$app:referenced_into2>\\"
-      name = \\"Price\\"
+      type = "mixed_reference<$app:referenced_into,$app:referenced_into2>"
+      name = "Price"
       "
     `)
   })
@@ -815,9 +815,9 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
       "
     `)
   })
@@ -839,10 +839,10 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# type: $app:app
       [metaobjects.app.app]
-      name = \\"test\\"
+      name = "test"
 
       [metaobjects.app.app.fields]
-      foo = \\"single_line_text_field\\"
+      foo = "single_line_text_field"
       "
     `)
   })
@@ -874,13 +874,13 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
 
       [product.metafields.app.color.validations]
       valid_json = 42
-      invalid_json = \\"this is not valid json {{\\"
+      invalid_json = "this is not valid json {{"
       "
     `)
   })
@@ -911,12 +911,12 @@ describe('processDeclarativeDefinitionNodes', () => {
     expect(result.tomlContent).toMatchInlineSnapshot(`
       "# namespace: $app key: color owner_type: PRODUCT
       [product.metafields.app.color]
-      name = \\"Color\\"
-      type = \\"single_line_text_field\\"
-      description = \\"The color of the product\\"
-      access.admin = \\"merchant_read_write\\"
-      access.storefront = \\"public_read\\"
-      access.customer_account = \\"read_write\\"
+      name = "Color"
+      type = "single_line_text_field"
+      description = "The color of the product"
+      access.admin = "merchant_read_write"
+      access.storefront = "public_read"
+      access.customer_account = "read_write"
       "
     `)
   })
@@ -940,7 +940,7 @@ plain line`
       [
         "[90m# comment line[39m",
         "[32m[section.header][39m",
-        "key = \\"value\\"",
+        "key = "value"",
         "plain line",
       ]
     `)
@@ -1350,11 +1350,11 @@ describe('importDeclarativeDefinitions', () => {
 
       # type: $app:new
       [metaobjects.app.new.fields]
-      field = \\"single_line_text_field\\"
+      field = "single_line_text_field"
 
       # namespace: $app key: new owner_type: PRODUCT
       [product.metafields.app.new]
-      type = \\"single_line_text_field\\"
+      type = "single_line_text_field"
       "
     `)
     outputMock.clear()
@@ -1387,19 +1387,19 @@ describe('importDeclarativeDefinitions', () => {
 
       # type: $app:existing
       [metaobjects.app.existing.fields]
-      field = \\"single_line_text_field\\"
+      field = "single_line_text_field"
 
       # type: $app:new
       [metaobjects.app.new.fields]
-      field = \\"single_line_text_field\\"
+      field = "single_line_text_field"
 
       # namespace: $app key: existing owner_type: PRODUCT
       [product.metafields.app.existing]
-      type = \\"single_line_text_field\\"
+      type = "single_line_text_field"
 
       # namespace: $app key: new owner_type: PRODUCT
       [product.metafields.app.new]
-      type = \\"single_line_text_field\\"
+      type = "single_line_text_field"
       "
     `)
     outputMock.clear()

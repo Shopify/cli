@@ -6,7 +6,7 @@ exports[`Replay > renders a stream of lines from function-runner output, and sho
             Input            
 
 {
-  \\"someInput\\": \\"someInput\\"
+  "someInput": "someInput"
 }
 
 
@@ -22,7 +22,7 @@ Fifth line!
            Output           
 
 {
-  \\"someOutput\\": \\"someOutput\\"
+  "someOutput": "someOutput"
 }
 
 
@@ -38,7 +38,7 @@ Size: 1KB
             Input            
 
 {
-  \\"someInput\\": \\"someInput\\"
+  "someInput": "someInput"
 }
 
 
@@ -54,7 +54,7 @@ Fifth line!
            Output           
 
 {
-  \\"someOutput\\": \\"someOutput\\"
+  "someOutput": "someOutput"
 }
 
 
@@ -80,7 +80,7 @@ exports[`Replay > renders error in the bottom bar when present 1`] = `
             Input            
 
 {
-  \\"someInput\\": \\"someInput\\"
+  "someInput": "someInput"
 }
 
 
@@ -96,7 +96,7 @@ Fifth line!
            Output           
 
 {
-  \\"someOutput\\": \\"someOutput\\"
+  "someOutput": "someOutput"
 }
 
 
@@ -112,7 +112,7 @@ Size: 1KB
             Input            
 
 {
-  \\"someInput\\": \\"someInput\\"
+  "someInput": "someInput"
 }
 
 
@@ -128,7 +128,7 @@ Fifth line!
            Output           
 
 {
-  \\"someOutput\\": \\"someOutput\\"
+  "someOutput": "someOutput"
 }
 
 

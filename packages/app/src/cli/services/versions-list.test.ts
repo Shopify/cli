@@ -200,18 +200,18 @@ View all 31 app versions in the Test Dashboard ( https://test.shopify.com/org-id
     expect(mockOutput.info()).toMatchInlineSnapshot(`
       "[
         {
-          \\"message\\": \\"message\\",
-          \\"versionTag\\": \\"versionTag\\",
-          \\"status\\": \\"active\\",
-          \\"createdAt\\": \\"2021-01-01 00:00:00\\",
-          \\"createdBy\\": \\"createdBy\\"
+          "message": "message",
+          "versionTag": "versionTag",
+          "status": "active",
+          "createdAt": "2021-01-01 00:00:00",
+          "createdBy": "createdBy"
         },
         {
-          \\"message\\": \\"long message with more than 15 characters\\",
-          \\"versionTag\\": \\"versionTag 3\\",
-          \\"status\\": \\"released\\",
-          \\"createdAt\\": \\"2021-01-01 00:00:00\\",
-          \\"createdBy\\": \\"createdBy 3\\"
+          "message": "long message with more than 15 characters",
+          "versionTag": "versionTag 3",
+          "status": "released",
+          "createdAt": "2021-01-01 00:00:00",
+          "createdBy": "createdBy 3"
         }
       ]"
     `)
