@@ -145,6 +145,9 @@ importers:
       vitest:
         specifier: ^3.1.4
         version: 3.2.4(@types/node@18.19.70)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@18.19.70)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.2)
+      zod:
+        specifier: 3.24.4
+        version: 3.24.4
 
   packages/app:
     dependencies:
