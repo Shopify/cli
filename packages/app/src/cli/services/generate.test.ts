@@ -51,7 +51,7 @@ describe('generate', () => {
 
   beforeEach(async () => {
     const allSpecs = await loadLocalExtensionsSpecifications()
-    specifications = allSpecs.map((spec) => spec as RemoteAwareExtensionSpecification)
+    specifications = allSpecs.map((spec) => spec.markAsRemoteLoaded())
     developerPlatformClient = testDeveloperPlatformClient()
   })
 

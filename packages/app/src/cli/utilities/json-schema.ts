@@ -28,24 +28,26 @@ const JsonSchemaBaseProperties = {
 
 /**
  * Factory returning a function that can parse a configuration object against a locally defined zod schema, and a remotely defined JSON schema based contract
- * @param merged - The merged specification object from the remote and local sources
+ * @param spec - The local extension specification
+ * @param remoteSpec - The remote specification containing the validation schema
  * @returns A function that can parse a configuration object
  */
 export async function unifiedConfigurationParserFactory(
-  merged: RemoteAwareExtensionSpecification & FlattenedRemoteSpecification,
+  spec: RemoteAwareExtensionSpecification,
+  remoteSpec: FlattenedRemoteSpecification,
   handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip',
 ) {
-  const contractJsonSchema = merged.validationSchema?.jsonSchema
+  const contractJsonSchema = remoteSpec.validationSchema?.jsonSchema
   if (contractJsonSchema === undefined || isEmpty(JSON.parse(contractJsonSchema))) {
-    return merged.parseConfigurationObject
+    return spec.parseConfigurationObject
   }
   const contract = await normaliseJsonSchema(contractJsonSchema)
   contract.properties = {...JsonSchemaBaseProperties, ...contract.properties}
-  const extensionIdentifier = merged.identifier
+  const extensionIdentifier = spec.identifier
 
   const parseConfigurationObject = (config: object): ParseConfigurationResult<BaseConfigType> => {
     // First we parse with zod. This may also change the format of the data.
-    const zodParse = merged.parseConfigurationObject(config)
+    const zodParse = spec.parseConfigurationObject(config)
 
     // Then, even if this failed, we try to validate against the contract.
     const zodValidatedData = zodParse.state === 'ok' ? zodParse.data : undefined

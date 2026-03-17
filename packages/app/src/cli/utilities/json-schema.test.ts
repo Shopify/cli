@@ -1,4 +1,6 @@
 import {unifiedConfigurationParserFactory} from './json-schema.js'
+import {ExtensionSpecification} from '../models/extensions/specification.js'
+import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {describe, test, expect} from 'vitest'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
@@ -18,19 +20,23 @@ describe('unifiedConfigurationParserFactory', () => {
     }
   }
 
-  test('falls back to zod parser when no JSON schema is provided', async () => {
-    // Given
-    const merged = {
+  function buildTestInputs(validationSchema?: {jsonSchema: string} | undefined | null) {
+    const spec = {
       identifier: randomUUID(),
       parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: undefined,
-    }
+    } as unknown as ExtensionSpecification & {loadedRemoteSpecs: true}
+    const remoteSpec = {
+      validationSchema,
+    } as unknown as FlattenedRemoteSpecification
+    return {spec, remoteSpec}
+  }
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+  test('falls back to zod parser when no JSON schema is provided', async () => {
+    const {spec, remoteSpec} = buildTestInputs(undefined)
+
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
     const result = parser({type: 'product_subscription'})
 
-    // Then
     expect(result).toEqual({
       state: 'ok',
       data: {type: 'product_subscription'},
@@ -39,20 +45,11 @@ describe('unifiedConfigurationParserFactory', () => {
   })
 
   test('falls back to zod parser when JSON schema is empty', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{}',
-      },
-    }
+    const {spec, remoteSpec} = buildTestInputs({jsonSchema: '{}'})
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
     const result = parser({type: 'product_subscription'})
 
-    // Then
     expect(result).toEqual({
       state: 'ok',
       data: {type: 'product_subscription'},
@@ -61,20 +58,13 @@ describe('unifiedConfigurationParserFactory', () => {
   })
 
   test('validates with both zod and JSON schema when both succeed', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}}}',
-      },
-    }
+    const {spec, remoteSpec} = buildTestInputs({
+      jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}}}',
+    })
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
     const result = parser({type: 'product_subscription'})
 
-    // Then
     expect(result).toEqual({
       state: 'ok',
       data: {type: 'product_subscription'},
@@ -83,20 +73,13 @@ describe('unifiedConfigurationParserFactory', () => {
   })
 
   test('returns errors when zod validation fails', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}}}',
-      },
-    }
+    const {spec, remoteSpec} = buildTestInputs({
+      jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}}}',
+    })
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
     const result = parser({type: 'invalid'})
 
-    // Then
     expect(result.state).toBe('error')
     expect(result.data).toBeUndefined()
     expect(result.errors).toHaveLength(1)
@@ -104,20 +87,13 @@ describe('unifiedConfigurationParserFactory', () => {
   })
 
   test('returns errors when JSON schema validation fails', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}},"required":["price"]}',
-      },
-    }
+    const {spec, remoteSpec} = buildTestInputs({
+      jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}},"required":["price"]}',
+    })
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
     const result = parser({type: 'product_subscription'})
 
-    // Then
     expect(result.state).toBe('error')
     expect(result.data).toBeUndefined()
     expect(result.errors).toBeDefined()
@@ -126,20 +102,13 @@ describe('unifiedConfigurationParserFactory', () => {
   })
 
   test('combines errors from both validations', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}},"required":["price"]}',
-      },
-    }
+    const {spec, remoteSpec} = buildTestInputs({
+      jsonSchema: '{"type":"object","properties":{"type":{"type":"string"}},"required":["price"]}',
+    })
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
     const result = parser({type: 'invalid'})
 
-    // Then
     expect(result.state).toBe('error')
     expect(result.data).toBeUndefined()
     expect(result.errors).toBeDefined()
@@ -153,19 +122,13 @@ describe('unifiedConfigurationParserFactory', () => {
   })
 
   test('adds base properties to the JSON schema', async () => {
-    // Given
-    const merged = {
-      identifier: randomUUID(),
-      parseConfigurationObject: mockParseConfigurationObject,
-      validationSchema: {
-        jsonSchema: '{"type":"object","properties":{"custom":{"type":"string"}}}',
-      },
-    }
+    const {spec, remoteSpec} = buildTestInputs({
+      jsonSchema: '{"type":"object","properties":{"custom":{"type":"string"}}}',
+    })
 
-    // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(spec, remoteSpec)
 
-    // Then - base properties should be accepted
+    // base properties should be accepted
     const result = parser({
       type: 'product_subscription',
       handle: 'test-handle',

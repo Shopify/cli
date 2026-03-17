@@ -33,7 +33,7 @@ import {
   DeveloperPlatformClient,
   selectDeveloperPlatformClient,
 } from '../utilities/developer-platform-client.js'
-import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
+
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {afterEach, beforeAll, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -146,10 +146,7 @@ const mockTomlFileRemove = vi.fn()
 
 beforeAll(async () => {
   const localSpecs = await loadSpecifications.loadLocalExtensionsSpecifications()
-  const mockedRemoteSpecs = localSpecs.map((spec) => ({
-    ...spec,
-    loadedRemoteSpecs: true,
-  })) as RemoteAwareExtensionSpecification[]
+  const mockedRemoteSpecs = localSpecs.map((spec) => spec.markAsRemoteLoaded())
   vi.mocked(fetchSpecifications).mockResolvedValue(mockedRemoteSpecs)
 })
 
