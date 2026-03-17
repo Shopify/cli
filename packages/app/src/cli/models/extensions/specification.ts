@@ -59,7 +59,7 @@ type BuildConfig =
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
-export interface ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
+export class ExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> {
   identifier: string
   externalIdentifier: string
   externalName: string
@@ -72,6 +72,9 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
+  uidStrategy: UidStrategy
+  appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+
   getBundleExtensionStdinContent?: (config: TConfiguration) => {main: string; assets?: Asset[]}
   deployConfig?: (
     config: TConfiguration,
@@ -82,37 +85,22 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
-  hasExtensionPointTarget?(config: TConfiguration, target: string): boolean
-  appModuleFeatures: (config?: TConfiguration) => ExtensionFeature[]
+  hasExtensionPointTarget?: (config: TConfiguration, target: string) => boolean
   getDevSessionUpdateMessages?: (config: TConfiguration) => Promise<string[]>
   patchWithAppDevURLs?: (config: TConfiguration, urls: ApplicationURLs) => void
-
-  /**
-   * If required, convert configuration from the format used in the local filesystem to that expected by the platform.
-   *
-   * @param localContent - Content taken from the local filesystem
-   * @returns Transformed configuration to send to the platform in place of the locally provided content
-   */
   transformLocalToRemote?: (localContent: object, appConfiguration: AppConfiguration) => object
-
-  /**
-   * If required, convert configuration from the platform to the format used locally in the filesystem.
-   *
-   * @param remoteContent - Platform provided content taken from an instance of this module
-   * @param existingAppConfiguration - Existing app configuration on the filesystem that this transformed content may be merged with
-   * @param options - Additional options to be used in the transformation
-   * @returns Transformed configuration to use in place of the platform provided content
-   */
   transformRemoteToLocal?: (remoteContent: object, options?: {flags?: Flag[]}) => object
+  contributeToSharedTypeFile?: (
+    extension: ExtensionInstance<TConfiguration>,
+    typeDefinitionsByFile: Map<string, Set<string>>,
+  ) => Promise<void>
+  copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
 
-  uidStrategy: UidStrategy
+  schema: ZodSchemaType<TConfiguration>
 
   /**
    * Have this specification contribute to the schema used to validate app configuration. For specifications that don't
    * form part of app config, they can return the schema unchanged.
-   *
-   * @param appConfigSchema - The schema used to validate app configuration. This will usually be the output from calling this function for another specification
-   * @returns The schema used to validate app configuration, with this specification's schema merged in
    */
   contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => ZodSchemaType<unknown>
 
@@ -121,15 +109,63 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    */
   parseConfigurationObject: (configurationObject: object) => ParseConfigurationResult<TConfiguration>
 
-  contributeToSharedTypeFile?: (
-    extension: ExtensionInstance<TConfiguration>,
-    typeDefinitionsByFile: Map<string, Set<string>>,
-  ) => Promise<void>
+  constructor(spec: CreateExtensionSpecType<TConfiguration>) {
+    this.schema = spec.schema ?? (BaseSchema as ZodSchemaType<TConfiguration>)
+    this.identifier = spec.identifier
+    this.appModuleFeatures = spec.appModuleFeatures
+    this.additionalIdentifiers = spec.additionalIdentifiers ?? []
+    this.partnersWebIdentifier = spec.partnersWebIdentifier ?? spec.identifier
+    // These fields are overridden by the extension specification API response,
+    // but we need them to have a default value for tests
+    this.externalIdentifier = `${spec.identifier}_external`
+    this.externalName = capitalize(spec.identifier.replace(/_/g, ' '))
+    this.surface = 'test-surface'
+    this.registrationLimit = blocks.extensions.defaultRegistrationLimit
+    this.experience = spec.experience ?? 'extension'
+    this.uidStrategy = spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid')
+    this.buildConfig = spec.buildConfig ?? {mode: 'none'}
 
-  /**
-   * Copy static assets from the extension directory to the output path
-   */
-  copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
+    this.group = spec.group
+    this.dependency = spec.dependency
+    this.graphQLType = spec.graphQLType
+    this.getBundleExtensionStdinContent = spec.getBundleExtensionStdinContent
+    this.deployConfig = spec.deployConfig
+    this.validate = spec.validate
+    this.preDeployValidation = spec.preDeployValidation
+    this.buildValidation = spec.buildValidation
+    this.hasExtensionPointTarget = spec.hasExtensionPointTarget
+    this.getDevSessionUpdateMessages = spec.getDevSessionUpdateMessages
+    this.patchWithAppDevURLs = spec.patchWithAppDevURLs
+    this.transformLocalToRemote = spec.transformLocalToRemote
+    this.transformRemoteToLocal = spec.transformRemoteToLocal
+    this.contributeToSharedTypeFile = spec.contributeToSharedTypeFile
+    this.copyStaticAssets = spec.copyStaticAssets
+
+    const schema = this.schema
+    const uidStrategy = this.uidStrategy
+    this.contributeToAppConfigurationSchema = (appConfigSchema: ZodSchemaType<unknown>) => {
+      if (uidStrategy !== 'single') {
+        return appConfigSchema
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (appConfigSchema as any).merge(schema)
+    }
+    this.parseConfigurationObject = (configurationObject: object) => {
+      const parseResult = schema.safeParse(configurationObject)
+      if (!parseResult.success) {
+        return {
+          state: 'error',
+          data: undefined,
+          errors: parseResult.error.errors,
+        }
+      }
+      return {
+        state: 'ok',
+        data: parseResult.data,
+        errors: undefined,
+      }
+    }
+  }
 }
 
 /**
@@ -166,73 +202,10 @@ interface CreateExtensionSpecType<TConfiguration extends BaseConfigType = BaseCo
   schema?: ZodSchemaType<TConfiguration>
 }
 
-/**
- * Create a new ui extension spec.
- *
- * Everything but "identifer" is optional.
- * ```ts
- * identifier: string // unique identifier for the extension type
- * externalIdentifier: string // identifier used externally (default: same as "identifier")
- * partnersWebIdentifier: string // identifier used in the partners web UI (default: same as "identifier")
- * surface?: string // surface where the extension is going to be rendered (default: 'unknown')
- * dependency?: {name: string; version: string} // dependency to be added to the extension's package.json
- * graphQLType?: string // GraphQL type of the extension (default: same as "identifier")
- * schema?: ZodSchemaType<TConfiguration> // schema used to validate the extension's configuration (default: BaseUIExtensionSchema)
- * getBundleExtensionStdinContent?: (configuration: TConfiguration) => string // function to generate the content of the stdin file used to bundle the extension
- * validate?: (configuration: TConfiguration, directory: string) => Promise<Result<undefined, Error>> // function to validate the extension's configuration
- * preDeployValidation?: (configuration: TConfiguration) => Promise<void> // function to validate the extension's configuration before deploying it
- * deployConfig?: (configuration: TConfiguration, directory: string) => Promise<{[key: string]: unknown}> // function to generate the extensions configuration payload to be deployed
- * hasExtensionPointTarget?: (configuration: TConfiguration, target: string) => boolean // function to determine if the extension has a given extension point target
- * ```
- */
 export function createExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: CreateExtensionSpecType<TConfiguration>,
 ): ExtensionSpecification<TConfiguration> {
-  const defaults = {
-    // these two fields are going to be overridden by the extension specification API response,
-    // but we need them to have a default value for tests
-    externalIdentifier: `${spec.identifier}_external`,
-    additionalIdentifiers: [],
-    externalName: capitalize(spec.identifier.replace(/_/g, ' ')),
-    surface: 'test-surface',
-    partnersWebIdentifier: spec.identifier,
-    schema: BaseSchema as ZodSchemaType<TConfiguration>,
-    registrationLimit: blocks.extensions.defaultRegistrationLimit,
-    transform: spec.transformLocalToRemote,
-    reverseTransform: spec.transformRemoteToLocal,
-    experience: spec.experience ?? 'extension',
-    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
-    getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
-    buildConfig: spec.buildConfig ?? {mode: 'none'},
-  }
-  const merged = {...defaults, ...spec}
-
-  return {
-    ...merged,
-    contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => {
-      if (merged.uidStrategy !== 'single') {
-        // no change
-        return appConfigSchema
-      }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (appConfigSchema as any).merge(merged.schema)
-    },
-    parseConfigurationObject: (configurationObject: unknown) => {
-      const parseResult = merged.schema.safeParse(configurationObject)
-      if (!parseResult.success) {
-        return {
-          state: 'error',
-          data: undefined,
-          errors: parseResult.error.errors,
-        }
-      }
-      return {
-        state: 'ok',
-        data: parseResult.data,
-        errors: undefined,
-      }
-    },
-  }
+  return new ExtensionSpecification(spec)
 }
 
 /**
