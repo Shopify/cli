@@ -8,7 +8,7 @@ import stripAnsi from 'strip-ansi'
 import {Writable} from 'stream'
 import {AsyncLocalStorage} from 'node:async_hooks'
 
-const MAX_LINES_PER_BATCH = 100
+const MAX_LINES_PER_BATCH = 20
 
 export interface ConcurrentOutputProps {
   processes: OutputProcess[]
