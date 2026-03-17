@@ -63,6 +63,31 @@ const IncludeAssetsConfigSchema = z.object({
 })
 
 /**
+ * Removes any '..' traversal segments from a relative destination path and
+ * emits a warning if any were found. Preserves normal '..' that only navigate
+ * within the path (e.g. 'foo/../bar' → 'bar') but never allows the result to
+ * escape the output root.
+ */
+function sanitizeDestination(input: string, warn: (msg: string) => void): string {
+  const segments = input.split('/')
+  const stack: string[] = []
+  let stripped = false
+  for (const seg of segments) {
+    if (seg === '..') {
+      stripped = true
+      stack.pop()
+    } else if (seg !== '.') {
+      stack.push(seg)
+    }
+  }
+  const result = stack.join('/')
+  if (stripped) {
+    warn(`Warning: destination '${input}' contains '..' path traversal - sanitized to '${result || '.'}'\n`)
+  }
+  return result
+}
+
+/**
  * Executes an include_assets build step.
  *
  * Iterates over `config.inclusions` and dispatches each entry by type:
@@ -85,9 +110,13 @@ export async function executeIncludeAssetsStep(
 
   const counts = await Promise.all(
     config.inclusions.map(async (entry) => {
+      const warn = (msg: string) => options.stdout.write(msg)
+      const sanitizedDest =
+        entry.destination !== undefined ? sanitizeDestination(entry.destination, warn) : undefined
+
       if (entry.type === 'pattern') {
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
-        const destinationDir = entry.destination ? joinPath(outputDir, entry.destination) : outputDir
+        const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
         const result = await copyByPattern(
           sourceDir,
           destinationDir,
@@ -107,13 +136,13 @@ export async function executeIncludeAssetsStep(
           context,
           options,
           entry.preserveStructure,
-          entry.destination,
+          sanitizedDest,
         )
       }
 
       return copySourceEntry(
         entry.source,
-        entry.destination,
+        sanitizedDest,
         extension.directory,
         outputDir,
         options,
@@ -247,6 +276,13 @@ async function copyByPattern(
     files.map(async (filepath) => {
       const relPath = preserveStructure ? relativePath(sourceDir, filepath) : basename(filepath)
       const destPath = joinPath(outputDir, relPath)
+
+      if (relativePath(outputDir, destPath).startsWith('..')) {
+        options.stdout.write(
+          `Warning: skipping '${filepath}' - resolved destination is outside the output directory\n`,
+        )
+        return
+      }
 
       if (filepath === destPath) return
 
