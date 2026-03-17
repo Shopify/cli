@@ -4,7 +4,7 @@ import {ExtensionSpecification, isAppConfigSpecification} from '../../models/ext
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 
-export function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
+function extensionTypeStrategy(specs: ExtensionSpecification[], type?: string) {
   if (!type) return
   const spec = specs.find(
     (spec) =>
