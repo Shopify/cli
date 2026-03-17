@@ -1,6 +1,7 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
+import {ClientSteps} from '../../services/build/client-steps.js'
 
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
@@ -53,9 +54,14 @@ export interface BuildAsset {
   static?: boolean
 }
 
-type BuildConfig =
-  | {mode: 'ui' | 'theme' | 'function' | 'tax_calculation' | 'none'}
-  | {mode: 'copy_files'; filePatterns: string[]; ignoredFilePatterns?: string[]}
+type BuildMode = 'copy_files' | 'theme' | 'function' | 'ui' | 'tax_calculation' | 'hosted_app_home' | 'none'
+
+interface BuildConfig {
+  mode: BuildMode
+  filePatterns?: string[]
+  ignoredFilePatterns?: string[]
+}
+
 /**
  * Extension specification with all the needed properties and methods to load an extension.
  */
@@ -69,6 +75,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   surface: string
   registrationLimit: number
   experience: ExtensionExperience
+  clientSteps?: ClientSteps
   buildConfig: BuildConfig
   dependency?: string
   graphQLType?: string
@@ -203,6 +210,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     experience: spec.experience ?? 'extension',
     uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
+    clientSteps: spec.clientSteps,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
   const merged = {...defaults, ...spec}
@@ -245,6 +253,8 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
 export function createConfigExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(spec: {
   identifier: string
   schema: ZodSchemaType<TConfiguration>
+  clientSteps?: ClientSteps
+  buildConfig?: BuildConfig
   appModuleFeatures?: (config?: TConfiguration) => ExtensionFeature[]
   transformConfig: TransformationConfig | CustomTransformationConfig
   uidStrategy?: UidStrategy
@@ -262,18 +272,24 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
     transformRemoteToLocal: resolveReverseAppConfigTransform(spec.schema, spec.transformConfig),
     experience: 'configuration',
     uidStrategy: spec.uidStrategy ?? 'single',
+    clientSteps: spec.clientSteps,
+    buildConfig: spec.buildConfig ?? {mode: 'none'},
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     patchWithAppDevURLs: spec.patchWithAppDevURLs,
   })
 }
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
-  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig'>,
+  spec: Pick<
+    CreateExtensionSpecType<TConfiguration>,
+    'identifier' | 'appModuleFeatures' | 'clientSteps' | 'buildConfig'
+  >,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
+    clientSteps: spec.clientSteps,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
