@@ -70,6 +70,7 @@ async function mergeLocalAndRemoteSpecs(
       const hasLocalization = normalisedSchema.properties?.localization !== undefined
       localSpec = createContractBasedModuleSpecification({
         identifier: remoteSpec.identifier,
+        uidStrategy: remoteSpec.options.uidStrategy,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
       })
       // Seed uidStrategy for contract specs using uidIsClientProvided as fallback (Partners API path).

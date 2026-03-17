@@ -215,7 +215,13 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
   return {
     ...merged,
     contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => {
-      if (!isAppConfigSpecification(merged) || !merged.schema._def.shape) {
+      const isConfig = isAppConfigSpecification(merged)
+      const hasSchema = merged.schema._def.shape !== undefined
+      // This filters out webhook subscription specifications from contributing to the app configuration schema
+      const hasSingleUidStrategy = merged.uidStrategy === 'single'
+
+      const canContribute = isConfig && hasSchema && hasSingleUidStrategy
+      if (!canContribute) {
         // no change
         return appConfigSchema
       }
@@ -273,13 +279,17 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 }
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
-  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig'>,
+  spec: Pick<
+    CreateExtensionSpecType<TConfiguration>,
+    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy'
+  >,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
+    uidStrategy: spec.uidStrategy,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
