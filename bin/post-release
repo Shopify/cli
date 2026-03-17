@@ -29,3 +29,6 @@ fi
 # Create a PR to update the docs
 ./bin/create-doc-pr.js
 
+# Create a PR to add the release notification
+./bin/create-notification-pr.js
+

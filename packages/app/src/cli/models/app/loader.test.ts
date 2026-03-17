@@ -13,7 +13,7 @@ import {
   loadHiddenConfig,
 } from './loader.js'
 import {parseHumanReadableError} from './error-parsing.js'
-import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
+import {App, AppConfiguration, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
@@ -2908,8 +2908,7 @@ describe('parseConfigurationObject', () => {
     const abortOrReport = vi.fn()
 
     const {schema} = await buildVersionedAppSchema()
-    const {path, ...toParse} = configurationObject
-    await parseConfigurationObject(schema, 'tmp', toParse, abortOrReport)
+    await parseConfigurationObject(schema, 'tmp', configurationObject, abortOrReport)
 
     expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
   })
@@ -3479,7 +3478,7 @@ describe('WebhooksSchema', () => {
     )} in tmp:\n\n${parseHumanReadableError(err)}`
     const abortOrReport = vi.fn()
 
-    const {path, ...toParse} = getWebhookConfig(webhookConfigOverrides)
+    const toParse = getWebhookConfig(webhookConfigOverrides)
     const parsedConfiguration = await parseConfigurationObject(WebhooksSchema, 'tmp', toParse, abortOrReport)
     return {abortOrReport, expectedFormatted, parsedConfiguration}
   }
@@ -3491,7 +3490,6 @@ describe('getAppConfigurationState', () => {
       `client_id="abcdef"`,
       {
         basicConfiguration: {
-          path: expect.stringMatching(/shopify.app.toml$/),
           client_id: 'abcdef',
         },
         isLinked: true,
@@ -3502,7 +3500,6 @@ describe('getAppConfigurationState', () => {
       something_extra="keep"`,
       {
         basicConfiguration: {
-          path: expect.stringMatching(/shopify.app.toml$/),
           client_id: 'abcdef',
           something_extra: 'keep',
         },
@@ -3513,7 +3510,6 @@ describe('getAppConfigurationState', () => {
       `client_id=""`,
       {
         basicConfiguration: {
-          path: expect.stringMatching(/shopify.app.toml$/),
           client_id: '',
         },
         isLinked: false,
@@ -3692,9 +3688,8 @@ describe('loadHiddenConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configuration = {
-        path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: '12345',
-      }
+      } as AppConfiguration
       await writeFile(joinPath(tmpDir, '.gitignore'), '')
 
       // When
@@ -3714,9 +3709,8 @@ describe('loadHiddenConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configuration = {
-        path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: '12345',
-      }
+      } as AppConfiguration
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
       await writeFile(
@@ -3739,9 +3733,8 @@ describe('loadHiddenConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configuration = {
-        path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: 'not-found',
-      }
+      } as AppConfiguration
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
       await writeFile(
@@ -3763,9 +3756,8 @@ describe('loadHiddenConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configuration = {
-        path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: 'not-found',
-      }
+      } as AppConfiguration
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
       await writeFile(
@@ -3787,9 +3779,8 @@ describe('loadHiddenConfig', () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       const configuration = {
-        path: joinPath(tmpDir, 'shopify.app.toml'),
         client_id: '12345',
-      }
+      } as AppConfiguration
       const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
       await mkdir(dirname(hiddenConfigPath))
       await writeFile(hiddenConfigPath, 'invalid json')

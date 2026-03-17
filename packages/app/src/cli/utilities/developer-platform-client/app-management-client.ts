@@ -7,6 +7,7 @@ import {
   OrganizationExpFlagsQueryVariables,
   OrganizationExpFlags,
 } from '../../api/graphql/business-platform-organizations/generated/organization_exp_flags.js'
+import {NoOrgError} from '../../services/dev/fetch.js'
 import {environmentVariableNames} from '../../constants.js'
 import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
@@ -411,7 +412,11 @@ export class AppManagementClient implements DeveloperPlatformClient {
       this.orgFromId(organizationId),
       this.appsForOrg(organizationId),
     ])
-    return {organization: organization!, apps, hasMorePages}
+    if (!organization) {
+      const {accountInfo} = await this.session()
+      throw new NoOrgError(accountInfo, organizationId)
+    }
+    return {organization, apps, hasMorePages}
   }
 
   async appsForOrg(organizationId: string, term = ''): Promise<Paginateable<{apps: MinimalOrganizationApp[]}>> {

@@ -1772,6 +1772,28 @@ describe('organizations', () => {
   })
 })
 
+describe('orgAndApps', () => {
+  test('throws NoOrgError if organization is not found', async () => {
+    // Given
+    const client = AppManagementClient.getInstance()
+    client.businessPlatformToken = () => Promise.resolve('business-platform-token')
+    client.session = () => Promise.resolve({token: '', accountInfo: {type: 'UnknownAccount'}}) as any
+
+    vi.mocked(businessPlatformRequestDoc).mockResolvedValue({
+      currentUserAccount: {organization: null},
+    })
+    vi.mocked(appManagementRequestDoc).mockResolvedValue({
+      appsConnection: {edges: [], pageInfo: {hasNextPage: false}},
+    })
+
+    // When
+    const got = () => client.orgAndApps('1')
+
+    // Then
+    await expect(got).rejects.toThrow('No Organization found')
+  })
+})
+
 describe('singleton pattern', () => {
   test('getInstance returns the same instance', () => {
     // Given/When

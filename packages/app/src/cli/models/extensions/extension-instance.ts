@@ -21,7 +21,7 @@ import {
 import {bundleThemeExtension, copyFilesForExtension} from '../../services/extensions/bundle.js'
 import {Identifiers} from '../app/identifiers.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
-import {AppConfigurationWithoutPath} from '../app/app.js'
+import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
 import {ok} from '@shopify/cli-kit/node/result'
 import {constantize, slugify} from '@shopify/cli-kit/common/string'
@@ -590,14 +590,14 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
 
 interface ExtensionDeployConfigOptions {
   apiKey: string
-  appConfiguration: AppConfigurationWithoutPath
+  appConfiguration: AppConfiguration
 }
 
 interface ExtensionBundleConfigOptions {
   identifiers: Identifiers
   developerPlatformClient: DeveloperPlatformClient
   apiKey: string
-  appConfiguration: AppConfigurationWithoutPath
+  appConfiguration: AppConfiguration
 }
 
 interface BundleConfig {

@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 set -euo pipefail
 
@@ -6,4 +6,4 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # regenerate commands snapshot file
-node ../../cli/bin/dev.js commands --tree > commands.txt
+node ../../cli/bin/dev.js commands --tree > ../data/snapshots/commands.txt

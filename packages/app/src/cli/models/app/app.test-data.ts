@@ -1,7 +1,7 @@
 import {
   App,
   AppSchema,
-  AppConfigurationWithoutPath,
+  AppConfiguration,
   AppInterface,
   AppLinkedInterface,
   CurrentAppConfiguration,
@@ -82,7 +82,6 @@ import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 export const DEFAULT_CONFIG = {
-  path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
   client_id: 'api-key',
   name: 'my app',
@@ -96,7 +95,7 @@ export const DEFAULT_CONFIG = {
   },
 }
 
-export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
+export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const getConfig = () => {
     return DEFAULT_CONFIG as CurrentAppConfiguration
   }
@@ -104,6 +103,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
   const newApp = new App({
     name: app.name ?? 'App',
     directory: app.directory ?? '/tmp/project',
+    configPath: app.configPath ?? '/tmp/project/shopify.app.toml',
     packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
     nodeDependencies: app.nodeDependencies ?? {},
@@ -137,7 +137,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 }
 
 export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
-  return testApp(app, 'current') as AppLinkedInterface
+  return testApp(app) as AppLinkedInterface
 }
 
 interface TestAppWithConfigOptions {
@@ -188,7 +188,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export const placeholderAppConfiguration: AppConfigurationWithoutPath = {
+export const placeholderAppConfiguration: AppConfiguration = {
   client_id: '',
 }
 

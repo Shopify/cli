@@ -24,7 +24,9 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
   return defineEventHandler((event) => {
     const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
 
-    ctx.lastRequestedPath = event.path
+    if (isNavigationRequest(event)) {
+      ctx.lastRequestedPath = event.path
+    }
 
     const shouldRenderUploadErrorPage =
       ctx.options.errorOverlay !== 'silent' && ctx.localThemeFileSystem.uploadErrors.size > 0
@@ -158,6 +160,11 @@ function createErrorPageResponse(
 function isKnownRenderingRequest(event: H3Event) {
   const searchParams = new URLSearchParams(event.path.split('?')[1])
   return ['section_id', 'sections', 'app_block_id'].some((key) => searchParams.has(key))
+}
+
+/** Determines if a request is a user navigation type via sec-fetch-mode header. */
+function isNavigationRequest(event: H3Event): boolean {
+  return event.headers.get('sec-fetch-mode') === 'navigate'
 }
 
 async function tryProxyRequest(event: H3Event, ctx: DevServerContext, response: Response) {
