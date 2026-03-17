@@ -85,6 +85,7 @@
 * [`shopify theme metafields pull`](#shopify-theme-metafields-pull)
 * [`shopify theme open`](#shopify-theme-open)
 * [`shopify theme package`](#shopify-theme-package)
+* [`shopify theme preview`](#shopify-theme-preview)
 * [`shopify theme profile`](#shopify-theme-profile)
 * [`shopify theme publish`](#shopify-theme-publish)
 * [`shopify theme pull`](#shopify-theme-pull)
@@ -2540,6 +2541,41 @@ DESCRIPTION
 
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.
+```
+
+## `shopify theme preview`
+
+Applies JSON overrides to a theme and returns a preview URL.
+
+```
+USAGE
+  $ shopify theme preview --overrides <value> -t <value> [-e <value>...] [--no-color] [--open] [--password <value>]
+    [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
+
+FLAGS
+  -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+  -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
+                                myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
+  -t, --theme=<value>           (required) [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --open                    [env: SHOPIFY_FLAG_OPEN] Automatically launch the theme preview in your default web
+                                browser.
+      --overrides=<value>       (required) [env: SHOPIFY_FLAG_OVERRIDES] Path to a JSON overrides file.
+      --password=<value>        [env: SHOPIFY_CLI_THEME_TOKEN] Password generated from the Theme Access app or an Admin
+                                API token.
+      --path=<value>            [env: SHOPIFY_FLAG_PATH] The path where you want to run the command. Defaults to the
+                                current working directory.
+      --preview-id=<value>      [env: SHOPIFY_FLAG_PREVIEW_ID] An existing preview identifier to update instead of
+                                creating a new preview.
+      --verbose                 [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Applies JSON overrides to a theme and returns a preview URL.
+
+  Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.
+
+  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id`
+  to update an existing preview instead of creating a new one.
 ```
 
 ## `shopify theme profile`
