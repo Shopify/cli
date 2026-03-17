@@ -33,6 +33,7 @@ describe('createContractBasedModuleSpecification', () => {
     // When
     const got = createContractBasedModuleSpecification({
       identifier: 'test',
+      uidStrategy: 'uuid',
       appModuleFeatures: () => ['localization'],
     })
 

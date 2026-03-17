@@ -109,7 +109,7 @@ export async function extensionsIdentifiersReleaseBreakdown(
     extensions
       .filter(
         (extension) =>
-          !isAppConfigSpecification(extension.specification) &&
+          extension.specification.experience === 'extension' &&
           extension.specification.identifier !== 'webhook_subscription',
       )
       .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle, undefined))
@@ -347,9 +347,10 @@ function loadExtensionsIdentifiersBreakdown(
   specs: ExtensionSpecification[],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const extensionModules = activeAppVersion?.appModuleVersions.filter(
-    (ext) => ext.specification && !isAppConfigSpecification(ext.specification),
-  )
+  const extensionModules = activeAppVersion?.appModuleVersions.filter((ext) => {
+    const spec = specs.find((spec) => spec.identifier === ext.specification?.identifier)
+    return spec && !isAppConfigSpecification(spec)
+  })
 
   // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
   // In Partners, we keep the legacy match of only UUID.

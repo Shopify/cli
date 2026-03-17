@@ -205,8 +205,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     transform: spec.transformLocalToRemote,
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
-    uidStrategy:
-      spec.uidStrategy ?? (isAppConfigSpecification({experience: spec.experience ?? 'extension'}) ? 'single' : 'uuid'),
+    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
