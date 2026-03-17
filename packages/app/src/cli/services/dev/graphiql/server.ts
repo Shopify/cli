@@ -10,9 +10,27 @@ import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {createHmac, timingSafeEqual} from 'crypto'
 import {Server} from 'http'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
+
+/**
+ * Derives a deterministic GraphiQL authentication key from the app's API secret and store FQDN.
+ * The key is stable across dev server restarts (so browser tabs survive restarts)
+ * but is not guessable without the app secret.
+ */
+export function deriveGraphiQLKey(apiSecret: string, storeFqdn: string): string {
+  return createHmac('sha256', apiSecret).update(`graphiql:${storeFqdn}`).digest('hex')
+}
+
+/**
+ * Resolves the GraphiQL authentication key. Uses the explicitly provided key
+ * if non-empty, otherwise derives one deterministically from the app secret.
+ */
+export function resolveGraphiQLKey(providedKey: string | undefined, apiSecret: string, storeFqdn: string): string {
+  return providedKey?.trim() || deriveGraphiQLKey(apiSecret, storeFqdn)
+}
 
 const require = createRequire(import.meta.url)
 
@@ -50,15 +68,21 @@ export function setupGraphiQLServer({
   appUrl,
   apiKey,
   apiSecret,
-  key,
+  key: providedKey,
   storeFqdn,
 }: SetupGraphiQLServerOptions): Server {
+  // Always require an authentication key. If not explicitly provided, derive one
+  // deterministically from apiSecret + storeFqdn so the key is stable across restarts
+  // (browser tabs survive dev server restarts) but not guessable without the app secret.
+  const key = resolveGraphiQLKey(providedKey, apiSecret, storeFqdn)
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
   const app = express()
 
   function failIfUnmatchedKey(str: string, res: express.Response): boolean {
-    if (!key || str === key) return false
-    res.status(404).send(`Invalid path ${res.req.originalUrl}`)
+    const strBuffer = Buffer.from(str ?? '')
+    const keyBuffer = Buffer.from(key)
+    if (strBuffer.length === keyBuffer.length && timingSafeEqual(strBuffer, keyBuffer)) return false
+    res.status(404).type('text/plain').send(`Invalid path ${res.req.originalUrl}`)
     return true
   }
 
@@ -116,7 +140,8 @@ export function setupGraphiQLServer({
     )
   }
 
-  app.get('/graphiql/status', (_req, res) => {
+  app.get('/graphiql/status', (req, res) => {
+    if (failIfUnmatchedKey(req.query.key as string, res)) return
     fetchApiVersionsWithTokenRefresh()
       .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl}))
       .catch(() => res.send({status: 'UNAUTHENTICATED'}))

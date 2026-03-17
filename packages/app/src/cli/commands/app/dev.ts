@@ -83,7 +83,7 @@ export default class Dev extends AppLinkedCommand {
     'graphiql-key': Flags.string({
       hidden: true,
       description:
-        'Key used to authenticate GraphiQL requests. Should be specified if exposing GraphiQL on a publicly accessible URL. By default, no key is required.',
+        'Key used to authenticate GraphiQL requests. By default, a key is automatically derived from the app secret. Use this flag to override with a custom key.',
       env: 'SHOPIFY_FLAG_GRAPHIQL_KEY',
     }),
   }

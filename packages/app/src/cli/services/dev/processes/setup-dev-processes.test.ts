@@ -8,6 +8,7 @@ import {pushUpdatesForDraftableExtensions} from './draftable-extension.js'
 import {pushUpdatesForDevSession} from './dev-session/dev-session-process.js'
 import {runThemeAppExtensionsServer} from './theme-app-extension.js'
 import {launchAppWatcher} from './app-watcher-process.js'
+import {resolveGraphiQLKey} from '../graphiql/server.js'
 import {
   testAppAccessConfigExtension,
   testAppConfigExtensions,
@@ -310,6 +311,71 @@ describe('setup-dev-processes', () => {
         },
       },
     })
+  })
+
+  test('auto-derives a graphiql key when none is provided', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'store.myshopify.io'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
+      directory: '',
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      subscriptionProductUrl: '/products/999999',
+      checkoutCartUrl: '/cart/999999:1',
+      tunnel: {mode: 'auto'},
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+    const localApp = testAppWithConfig({config: {}})
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecretKeys: [{secret: 'api-secret'}],
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+      developerPlatformClient,
+    }
+
+    // No graphiqlKey provided — should auto-derive one
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+    })
+
+    const expectedKey = resolveGraphiQLKey(undefined, 'api-secret', storeFqdn)
+
+    // The graphiql process should use the resolved key
+    const graphiqlProcess = res.processes.find((process) => process.type === 'graphiql')
+    expect(graphiqlProcess).toBeDefined()
+    expect((graphiqlProcess!.options as {key: string}).key).toBe(expectedKey)
+
+    // The graphiql URL should include the resolved key
+    expect(res.graphiqlUrl).toBe(`http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(expectedKey)}`)
   })
 
   test('process list includes dev-session when useDevSession is true', async () => {
