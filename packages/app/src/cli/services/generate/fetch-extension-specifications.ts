@@ -35,25 +35,22 @@ export async function fetchSpecifications({
 }: FetchSpecificationsOptions): Promise<RemoteAwareExtensionSpecification[]> {
   const result: RemoteSpecification[] = await developerPlatformClient.specifications(app)
 
-  const extensionSpecifications: FlattenedRemoteSpecification[] = result
+  const remoteSpecifications: FlattenedRemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
     .map((spec) => {
-      const newSpec = spec as FlattenedRemoteSpecification
       // WORKAROUND: The identifiers in the API are different for these extensions to the ones the CLI
       // has been using so far. This is a workaround to keep the CLI working until the API is updated.
       if (spec.identifier === 'theme_app_extension') spec.identifier = 'theme'
       if (spec.identifier === 'subscription_management') spec.identifier = 'product_subscription'
-      newSpec.registrationLimit = spec.options.registrationLimit
-      newSpec.surface = spec.features?.argo?.surface
-
-      // Hardcoded value for the post purchase extension because the value is wrong in the API
-      if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
-
-      return newSpec
+      return {
+        ...spec,
+        registrationLimit: spec.options.registrationLimit,
+        surface: spec.features?.argo?.surface,
+      }
     })
 
   const local = await loadLocalExtensionsSpecifications()
-  const updatedSpecs = await mergeLocalAndRemoteSpecs(local, extensionSpecifications)
+  const updatedSpecs = await mergeLocalAndRemoteSpecs(local, remoteSpecifications)
   return [...updatedSpecs]
 }
 
@@ -61,8 +58,6 @@ async function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
 ): Promise<RemoteAwareExtensionSpecification[]> {
-  // Iterate over the remote specs and merge them with the local ones
-  // If the local spec is missing, and the remote one has a validation schema, create a new local spec using contracts
   const updated = remote.map(async (remoteSpec) => {
     let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
     if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
@@ -71,17 +66,15 @@ async function mergeLocalAndRemoteSpecs(
       localSpec = createContractBasedModuleSpecification({
         identifier: remoteSpec.identifier,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
+        uidStrategy: remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single',
       })
-      localSpec.uidStrategy = remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single'
     }
     if (!localSpec) return undefined
 
-    const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
-      FlattenedRemoteSpecification
+    const remoteAwareSpec = localSpec.applyRemoteSpecification(remoteSpec)
 
-    // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
     let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
-    switch (merged.uidStrategy) {
+    switch (remoteAwareSpec.uidStrategy) {
       case 'uuid':
         handleInvalidAdditionalProperties = 'fail'
         break
@@ -93,12 +86,13 @@ async function mergeLocalAndRemoteSpecs(
         break
     }
 
-    const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
+    remoteAwareSpec.parseConfigurationObject = await unifiedConfigurationParserFactory(
+      remoteAwareSpec,
+      remoteSpec,
+      handleInvalidAdditionalProperties,
+    )
 
-    return {
-      ...merged,
-      parseConfigurationObject,
-    }
+    return remoteAwareSpec
   })
 
   const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(await Promise.all(updated))

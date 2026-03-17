@@ -1,7 +1,7 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
 import {blocks} from '../../constants.js'
-
+import {FlattenedRemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {loadLocalesConfig} from '../../utilities/extensions/locales-configuration.js'
@@ -166,6 +166,29 @@ export class ExtensionSpecification<TConfiguration extends BaseConfigType = Base
       }
     }
   }
+
+  loadedRemoteSpecs?: true
+
+  applyRemoteSpecification(remoteSpec: FlattenedRemoteSpecification): RemoteAwareExtensionSpecification<TConfiguration> {
+    this.registrationLimit = remoteSpec.registrationLimit
+    this.externalIdentifier = remoteSpec.externalIdentifier
+    this.externalName = remoteSpec.externalName
+    this.experience = remoteSpec.experience as ExtensionExperience
+    if (remoteSpec.surface) {
+      this.surface = remoteSpec.surface
+    }
+    // WORKAROUND: The value from the API is wrong for this extension
+    if (remoteSpec.identifier === 'checkout_post_purchase') {
+      this.surface = 'post_purchase'
+    }
+    this.loadedRemoteSpecs = true
+    return this as RemoteAwareExtensionSpecification<TConfiguration>
+  }
+
+  markAsRemoteLoaded(): RemoteAwareExtensionSpecification<TConfiguration> {
+    this.loadedRemoteSpecs = true
+    return this as RemoteAwareExtensionSpecification<TConfiguration>
+  }
 }
 
 /**
@@ -241,12 +264,13 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 }
 
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
-  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig'>,
+  spec: Pick<CreateExtensionSpecType<TConfiguration>, 'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy'>,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
+    uidStrategy: spec.uidStrategy,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)

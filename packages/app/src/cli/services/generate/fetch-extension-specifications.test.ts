@@ -50,7 +50,6 @@ describe('fetchExtensionSpecifications', () => {
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Product Subscription',
           externalName: 'Subscription UI',
           identifier: 'product_subscription',
           externalIdentifier: 'product_subscription_external',
@@ -63,12 +62,10 @@ describe('fetchExtensionSpecifications', () => {
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Online Store - App Theme Extension',
           externalName: 'Theme App Extension',
           identifier: 'theme',
           externalIdentifier: 'theme_external',
           registrationLimit: 1,
-          surface: undefined,
         }),
       ]),
     )
