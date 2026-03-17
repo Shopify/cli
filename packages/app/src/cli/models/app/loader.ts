@@ -20,7 +20,7 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, RemoteAwareExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
@@ -711,7 +711,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig) {
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
-        .filter((specification) => specification.experience === 'configuration')
+        .filter((specification) => isAppConfigSpecification(specification))
         .filter((specification) => specification.identifier !== WebhookSubscriptionSpecIdentifier)
         .map(async (specification) => {
           const specConfiguration = parseConfigurationObjectAgainstSpecification(

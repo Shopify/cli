@@ -32,6 +32,10 @@ export interface CustomTransformationConfig {
 }
 
 type ExtensionExperience = 'extension' | 'configuration'
+
+export function isAppConfigSpecification(spec: {experience: string}): boolean {
+  return spec.experience === 'configuration'
+}
 type UidStrategy = 'single' | 'dynamic' | 'uuid'
 
 export enum AssetIdentifier {
@@ -201,7 +205,8 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
     transform: spec.transformLocalToRemote,
     reverseTransform: spec.transformRemoteToLocal,
     experience: spec.experience ?? 'extension',
-    uidStrategy: spec.uidStrategy ?? (spec.experience === 'configuration' ? 'single' : 'uuid'),
+    uidStrategy:
+      spec.uidStrategy ?? (isAppConfigSpecification({experience: spec.experience ?? 'extension'}) ? 'single' : 'uuid'),
     getDevSessionUpdateMessages: spec.getDevSessionUpdateMessages,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
   }
@@ -210,7 +215,7 @@ export function createExtensionSpecification<TConfiguration extends BaseConfigTy
   return {
     ...merged,
     contributeToAppConfigurationSchema: (appConfigSchema: ZodSchemaType<unknown>) => {
-      if (merged.uidStrategy !== 'single') {
+      if (!isAppConfigSpecification(merged) || !merged.schema._def.shape) {
         // no change
         return appConfigSchema
       }

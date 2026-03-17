@@ -67,7 +67,7 @@ describe('load', () => {
 
   // Helper to get only real extensions (not configuration extensions)
   function getRealExtensions(app: AppInterface) {
-    return app.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
+    return app.allExtensions.filter((ext) => !ext.isAppConfigExtension)
   }
 
   /**

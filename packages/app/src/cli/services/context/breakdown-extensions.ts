@@ -11,7 +11,7 @@ import {
   AllAppExtensionRegistrationsQuerySchema,
   RemoteExtensionRegistrations,
 } from '../../api/graphql/all_app_extension_registrations.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecification, isAppConfigSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
@@ -109,7 +109,7 @@ export async function extensionsIdentifiersReleaseBreakdown(
     extensions
       .filter(
         (extension) =>
-          extension.specification.experience === 'extension' &&
+          !isAppConfigSpecification(extension.specification) &&
           extension.specification.identifier !== 'webhook_subscription',
       )
       .map((extension) => buildExtensionBreakdownInfo(extension.registrationTitle, undefined))
@@ -348,7 +348,7 @@ function loadExtensionsIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter(
-    (ext) => ext.specification?.experience === 'extension',
+    (ext) => ext.specification && !isAppConfigSpecification(ext.specification),
   )
 
   // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
