@@ -49,7 +49,6 @@ export const CONFIG_EXTENSION_IDS: string[] = [
 
   // Hardcoded identifiers that don't exist locally.
   'data',
-  'purchase_options',
   'admin',
 ]
 
