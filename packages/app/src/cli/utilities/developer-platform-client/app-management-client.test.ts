@@ -5,6 +5,7 @@ import {
   diffAppModules,
   encodedGidFromOrganizationIdForBP,
   encodedGidFromShopId,
+  uidStrategyFromTypename,
   versionDeepLink,
 } from './app-management-client.js'
 import {OrganizationBetaFlagsQuerySchema} from './app-management-client/graphql/organization_beta_flags.js'
@@ -1814,5 +1815,23 @@ describe('singleton pattern', () => {
 
     // Then
     expect(instance1).not.toBe(instance2)
+  })
+})
+
+describe('uidStrategyFromTypename', () => {
+  test('maps UidStrategiesDynamic to dynamic', () => {
+    expect(uidStrategyFromTypename('UidStrategiesDynamic')).toBe('dynamic')
+  })
+
+  test('maps UidStrategiesStatic to single', () => {
+    expect(uidStrategyFromTypename('UidStrategiesStatic')).toBe('single')
+  })
+
+  test('maps UidStrategiesClientProvided to uuid', () => {
+    expect(uidStrategyFromTypename('UidStrategiesClientProvided')).toBe('uuid')
+  })
+
+  test('returns undefined for unknown typename', () => {
+    expect(uidStrategyFromTypename('UnknownStrategy')).toBeUndefined()
   })
 })

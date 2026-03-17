@@ -1369,7 +1369,7 @@ function experience(identifier: string): 'configuration' | 'extension' {
  *
  * Type names come from the app-management GraphQL schema's UidStrategy union.
  */
-function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' | undefined {
+export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' | undefined {
   switch (typename) {
     case 'UidStrategiesDynamic':
       return 'dynamic'
