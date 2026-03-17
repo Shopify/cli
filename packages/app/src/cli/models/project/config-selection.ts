@@ -6,22 +6,23 @@ import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configurati
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {relativePath} from '@shopify/cli-kit/node/path'
 
 /**
  * Resolve the config-specific dotenv file for an active config.
  *
  * shopify.app.toml → .env
- * shopify.app.staging.toml → .env.staging
+ * shopify.app.staging.toml → .env.staging (no fallback to .env)
  *
- * Falls back to the default .env if the config-specific one doesn't exist.
+ * Non-default configs only load their config-specific dotenv file.
+ * This prevents base .env values from leaking into non-default configs.
  * @public
  */
 export function resolveDotEnv(project: Project, activeConfigPath: string): DotEnvFile | undefined {
   const shorthand = getAppConfigurationShorthand(activeConfigPath)
   if (shorthand) {
     const specificName = `${dotEnvFileNames.production}.${shorthand}`
-    const specific = project.dotenvFiles.get(specificName)
-    if (specific) return specific
+    return project.dotenvFiles.get(specificName)
   }
   return project.dotenvFiles.get(dotEnvFileNames.production)
 }
@@ -75,19 +76,21 @@ export function extensionFilesForConfig(project: Project, activeConfig: TomlFile
   if (!Array.isArray(configDirs) || configDirs.length === 0) {
     // Default: extensions/* — filter project files by path prefix
     return project.extensionConfigFiles.filter((file) => {
-      const relPath = file.path.replace(project.directory, '').replace(/^\//, '')
+      const relPath = relativePath(project.directory, file.path)
       return relPath.startsWith('extensions/')
     })
   }
 
-  // Filter to files that are within the active config's declared directories
+  // Filter to files within the active config's declared directories.
+  // Glob patterns are reduced to prefixes (e.g., "custom/*" → "custom/").
+  // This is a simplification — complex globs like "foo/*/bar" will over-match.
+  // In practice, only simple directory patterns are used in app configs.
   const dirPrefixes = (configDirs as string[]).map((dir) => {
-    // Remove trailing glob (e.g., "custom/*" → "custom/")
     return dir.replace(/\*.*$/, '')
   })
 
   return project.extensionConfigFiles.filter((file) => {
-    const relPath = file.path.replace(project.directory, '').replace(/^\//, '')
+    const relPath = relativePath(project.directory, file.path)
     return dirPrefixes.some((prefix) => relPath.startsWith(prefix))
   })
 }
@@ -106,7 +109,7 @@ export function webFilesForConfig(project: Project, activeConfig: TomlFile): Tom
   const dirPrefixes = (configDirs as string[]).map((dir) => dir.replace(/\*.*$/, ''))
 
   return project.webConfigFiles.filter((file) => {
-    const relPath = file.path.replace(project.directory, '').replace(/^\//, '')
+    const relPath = relativePath(project.directory, file.path)
     return dirPrefixes.some((prefix) => relPath.startsWith(prefix))
   })
 }

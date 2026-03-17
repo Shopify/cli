@@ -36,16 +36,16 @@ describe('resolveDotEnv', () => {
     })
   })
 
-  test('falls back to default .env when config-specific dotenv missing', async () => {
+  test('returns undefined for non-default config when config-specific dotenv missing', async () => {
     await inTemporaryDirectory(async (dir) => {
       await writeFile(joinPath(dir, '.env'), 'KEY=default')
       await writeFile(joinPath(dir, 'shopify.app.staging.toml'), 'client_id = "staging"')
       const project = await setupProject(dir)
 
+      // Non-default configs do not fall back to .env — prevents value leakage across configs
       const dotenv = resolveDotEnv(project, joinPath(dir, 'shopify.app.staging.toml'))
 
-      expect(dotenv).toBeDefined()
-      expect(dotenv!.variables.KEY).toBe('default')
+      expect(dotenv).toBeUndefined()
     })
   })
 

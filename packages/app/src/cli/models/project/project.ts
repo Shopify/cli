@@ -10,6 +10,7 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 const APP_CONFIG_GLOB = 'shopify.app*.toml'
@@ -177,7 +178,7 @@ async function discoverAppConfigFiles(directory: string): Promise<TomlFile[]> {
   const pattern = joinPath(directory, APP_CONFIG_GLOB)
   const paths = await glob(pattern)
   const validPaths = paths.filter((filePath) => APP_CONFIG_REGEX.test(basename(filePath)))
-  return Promise.all(validPaths.map((filePath) => TomlFile.read(filePath)))
+  return readTomlFilesSafe(validPaths)
 }
 
 async function discoverExtensionFiles(directory: string, extensionDirectories?: string[]): Promise<TomlFile[]> {
@@ -185,7 +186,7 @@ async function discoverExtensionFiles(directory: string, extensionDirectories?: 
   const patterns = dirs.map((dir) => joinPath(directory, dir, EXTENSION_TOML))
   patterns.push(`!${joinPath(directory, NODE_MODULES_EXCLUDE)}`)
   const paths = await glob(patterns)
-  return Promise.all(paths.map((filePath) => TomlFile.read(filePath)))
+  return readTomlFilesSafe(paths)
 }
 
 async function discoverWebFiles(directory: string, webDirectories?: string[]): Promise<TomlFile[]> {
@@ -193,7 +194,27 @@ async function discoverWebFiles(directory: string, webDirectories?: string[]): P
   const patterns = dirs.map((dir) => joinPath(directory, dir, WEB_TOML))
   patterns.push(`!${joinPath(directory, NODE_MODULES_EXCLUDE)}`)
   const paths = await glob(patterns)
-  return Promise.all(paths.map((filePath) => TomlFile.read(filePath)))
+  return readTomlFilesSafe(paths)
+}
+
+/**
+ * Read TOML files, skipping any that fail to parse.
+ * This prevents a malformed inactive config or extension TOML
+ * from blocking the active config from loading.
+ */
+async function readTomlFilesSafe(paths: string[]): Promise<TomlFile[]> {
+  const results = await Promise.all(
+    paths.map(async (filePath) => {
+      try {
+        return await TomlFile.read(filePath)
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        outputDebug(`Skipping malformed TOML file: ${filePath}`)
+        return undefined
+      }
+    }),
+  )
+  return results.filter((file): file is TomlFile => file !== undefined)
 }
 
 /** Discover all .env* files in the project root */

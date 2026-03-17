@@ -852,6 +852,8 @@ type LinkedConfigurationSource =
   | 'flag'
   // Config file came from the cache (i.e. app use)
   | 'cached'
+  // No flag or cache — fell through to the default (shopify.app.toml)
+  | 'default'
 
 type ConfigurationLoadResultMetadata = {
   allClientIdsByConfigName: {[key: string]: string}

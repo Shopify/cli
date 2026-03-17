@@ -159,6 +159,47 @@ describe('Project', () => {
       })
     })
 
+    test('skips malformed inactive app config without blocking active config', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        await writeAppToml(dir, 'client_id = "good"')
+        await writeAppToml(dir, '{{invalid toml content', 'shopify.app.broken.toml')
+
+        const project = await Project.load(dir)
+
+        // The broken config is skipped, but the valid one is loaded
+        expect(project.appConfigFiles).toHaveLength(1)
+        expect(project.appConfigFiles[0]!.content.client_id).toBe('good')
+      })
+    })
+
+    test('skips malformed extension TOML without blocking project load', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        await writeAppToml(dir, 'client_id = "abc"')
+        await writeExtensionToml(dir, 'good-ext', 'type = "function"\nname = "good"')
+        await writeExtensionToml(dir, 'bad-ext', '{{broken toml')
+
+        const project = await Project.load(dir)
+
+        // Only the valid extension is loaded
+        expect(project.extensionConfigFiles).toHaveLength(1)
+        expect(project.extensionConfigFiles[0]!.content.name).toBe('good')
+      })
+    })
+
+    test('skips malformed web TOML without blocking project load', async () => {
+      await inTemporaryDirectory(async (dir) => {
+        await writeAppToml(dir, 'client_id = "abc"')
+        await writeWebToml(dir, 'good-web', 'name = "good"\nroles = ["backend"]')
+        await writeWebToml(dir, 'bad-web', '{{broken toml')
+
+        const project = await Project.load(dir)
+
+        // Only the valid web config is loaded
+        expect(project.webConfigFiles).toHaveLength(1)
+        expect(project.webConfigFiles[0]!.content.name).toBe('good')
+      })
+    })
+
     test('handles missing dotenv gracefully', async () => {
       await inTemporaryDirectory(async (dir) => {
         await writeAppToml(dir, 'client_id = "abc"')

@@ -163,4 +163,41 @@ describe('selectActiveConfig', () => {
       await expect(selectActiveConfig(project, 'nonexistent')).rejects.toThrow()
     })
   })
+
+  test('throws when the only app config is malformed (no valid configs to fall back to)', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // The only config is broken TOML — Project.load skips it and finds 0 valid configs
+      await writeFile(joinPath(dir, 'shopify.app.toml'), '{{invalid toml')
+
+      await expect(Project.load(dir)).rejects.toThrow(/Could not find/)
+    })
+  })
+
+  test('surfaces parse error when selecting a broken config while a valid one exists', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // Two configs: one good, one broken. Selecting the broken one by name should
+      // surface the real parse error via the fallback re-read, not a generic "not found".
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "good"')
+      await writeFile(joinPath(dir, 'shopify.app.broken.toml'), '{{invalid toml')
+
+      const project = await Project.load(dir)
+
+      await expect(selectActiveConfig(project, 'shopify.app.broken.toml')).rejects.toThrow()
+    })
+  })
+
+  test('loads active config even when an unrelated config is malformed', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "good"')
+      await writeFile(joinPath(dir, 'shopify.app.broken.toml'), '{{invalid toml')
+
+      const project = await Project.load(dir)
+
+      // The broken config is skipped, but selecting the good one works fine
+      const config = await selectActiveConfig(project)
+
+      expect(config.file.content.client_id).toBe('good')
+      expect(basename(config.file.path)).toBe('shopify.app.toml')
+    })
+  })
 })

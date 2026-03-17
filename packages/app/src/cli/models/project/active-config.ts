@@ -10,7 +10,7 @@ import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 
 /** @public */
-export type ConfigSource = 'flag' | 'cached'
+export type ConfigSource = 'flag' | 'cached' | 'default'
 
 /**
  * The selected app configuration — one specific TOML from the project's
@@ -53,7 +53,6 @@ export interface ActiveConfig {
  */
 export async function selectActiveConfig(project: Project, userProvidedConfigName?: string): Promise<ActiveConfig> {
   let configName = userProvidedConfigName
-  const source: ConfigSource = configName ? 'flag' : 'cached'
 
   // Check cache for previously selected config
   const cachedConfigName = getCachedAppInfo(project.directory)?.configFile
@@ -71,6 +70,16 @@ export async function selectActiveConfig(project: Project, userProvidedConfigNam
   }
 
   configName = configName ?? cachedConfigName
+
+  // Determine source after resolution so it reflects the actual selection path
+  let source: ConfigSource
+  if (userProvidedConfigName) {
+    source = 'flag'
+  } else if (configName) {
+    source = 'cached'
+  } else {
+    source = 'default'
+  }
 
   // Resolve the config file name and verify it exists
   const {configurationPath, configurationFileName} = await getConfigurationPath(project.directory, configName)
