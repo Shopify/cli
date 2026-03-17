@@ -69,7 +69,7 @@ describe('TextAnimation', () => {
     stdout.columns = 120
     resizeHandler()
 
-    await new Promise((resolve) => setTimeout(resolve, 50))
+    await new Promise((resolve) => setTimeout(resolve, 10))
 
     renderInstance.unmount()
   })

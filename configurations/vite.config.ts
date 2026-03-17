@@ -28,6 +28,11 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
   }
 
   return defineConfig({
+    define: {
+      'process.env.SHOPIFY_UNIT_TEST': '"1"',
+      'process.env.FORCE_HYPERLINK': '"0"',
+      'process.env.FORCE_COLOR': '"1"',
+    },
     resolve: {
       alias: aliases(packagePath) as AliasOptions,
     },
