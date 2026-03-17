@@ -19,130 +19,17 @@ const external = [
   // esbuild can't be bundled per design
   'esbuild',
   'lightningcss',
-  // These two are binary dependencies from Hydrogen that can't be bundled
+  // Binary dependencies from Hydrogen that can't be bundled
   '@ast-grep/napi',
-  // prettier is ~4MB and only used in one place for formatting generated types.
-  // It's externalized to avoid bundling — will use dynamic import at runtime.
+  // prettier is ~4MB and only used for formatting generated types.
+  // Lazily loaded via dynamic import, safe to externalize.
   'prettier',
   // ts-morph + typescript are ~19MB. Used by Hydrogen for JS/TS transpilation.
   // Already lazily loaded via dynamic import, safe to externalize.
   'ts-morph',
-  // typescript compiler (~9MB) is pulled in by @ts-morph/common and json-schema-to-typescript.
-  // It's available at runtime since it's a project dependency.
+  // typescript compiler (~9MB) is pulled in by ts-morph and json-schema-to-typescript.
+  // Available at runtime as a project dependency.
   'typescript',
-  // polaris + polaris-icons are ~2.1MB, only used for GraphiQL HTML template rendering.
-  // Available at runtime as dependencies.
-  '@shopify/polaris',
-  '@shopify/polaris-icons',
-  '@shopify/polaris-tokens',
-  // react-dom (~1.3MB) only used for GraphiQL template server-side rendering.
-  // ink uses its own react-reconciler, not react-dom.
-  'react-dom',
-  // @oclif/table pulls in ink@5 + react@18 + react-reconciler@0.29.2 (~1.8MB).
-  // Externalizing it avoids duplicate react ecosystem.
-  '@oclif/table',
-  // lodash (~700KB input). Available as a runtime dependency.
-  'lodash',
-  // @opentelemetry packages (~1.3MB input). Available as runtime dependencies.
-  '@opentelemetry/api',
-  '@opentelemetry/core',
-  '@opentelemetry/exporter-metrics-otlp-http',
-  '@opentelemetry/otlp-transformer',
-  '@opentelemetry/resources',
-  '@opentelemetry/sdk-metrics',
-  '@opentelemetry/semantic-conventions',
-
-  // vscode language services are ~2MB, used by theme language server.
-  // Available as transitive dependencies at runtime.
-  'vscode-css-languageservice',
-  'vscode-json-languageservice',
-  'vscode-languageserver',
-  'vscode-languageserver-protocol',
-  'vscode-languageserver-textdocument',
-  'vscode-languageserver-types',
-  'vscode-uri',
-  // Theme language server / check packages. Available as transitive deps.
-  '@shopify/theme-check-common',
-  '@shopify/theme-check-node',
-  '@shopify/theme-check-docs-updater',
-  '@shopify/theme-language-server-common',
-  '@shopify/theme-language-server-node',
-  // ohm-js (~389KB), used by liquid-html-parser for theme checks
-  'ohm-js',
-  '@shopify/liquid-html-parser',
-  // @vscode/web-custom-data (~321KB), data files for language services
-  '@vscode/web-custom-data',
-  // Additional transitive dependencies available at runtime
-  'ink',
-  'react',
-  'react-reconciler',
-  'yoga-wasm-web',
-  'ajv',
-  'archiver',
-  'liquidjs',
-  'semver',
-  'yaml',
-  'js-yaml',
-  'execa',
-  // CLI framework
-  '@oclif/core',
-  '@oclif/plugin-commands',
-  '@oclif/plugin-plugins',
-  // HTTP/networking
-  'node-fetch',
-  'got',
-  // Misc large deps
-  'zod',
-  'jose',
-  'conf',
-  'ws',
-  '@bugsnag/js',
-  '@iarna/toml',
-  '@shopify/toml-patch',
-  'graphql',
-  'graphql-request',
-  'graphql-tag',
-  '@graphql-typed-document-node/core',
-  'bottleneck',
-  'fast-glob',
-  'minimatch',
-  'chalk',
-  'change-case',
-  'dotenv',
-  'stacktracey',
-  'strip-ansi',
-  'supports-hyperlinks',
-  'terminal-link',
-  'find-up',
-  'open',
-  'pathe',
-  'which',
-  'figures',
-  // Test infrastructure leaked via cli-hydrogen mock files
-  'vitest',
-  // More runtime deps
-  '@shopify/oxygen-cli',
-  '@apidevtools/json-schema-ref-parser',
-  'json-schema-to-typescript',
-  'express',
-  'h3',
-  'chokidar',
-  'fs-extra',
-  'source-map',
-  'color-json',
-  'deepmerge',
-  'env-paths',
-  'tempy',
-  'proper-lockfile',
-  'is-interactive',
-  'latest-version',
-  'get-port-please',
-  'mrmime',
-  'gradient-string',
-  'is-executable',
-  'macaddress',
-  'network-interfaces',
-  'diff',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -175,7 +62,7 @@ esBuild({
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
-  sourcemap: false,
+  sourcemap: 'external',
   loader: {'.node': 'copy'},
   splitting: true,
   // these tree shaking and minify options remove any in-source tests from the bundle
