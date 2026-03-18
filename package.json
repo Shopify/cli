@@ -215,9 +215,7 @@
         "ignoreDependencies": [
           "@ast-grep/napi",
           "@shopify/theme-check-docs-updater",
-          "@shopify/theme-check-node",
-          "prettier",
-          "ts-morph"
+          "@shopify/theme-check-node"
         ],
         "vite": {
           "config": [

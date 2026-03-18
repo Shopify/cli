@@ -19,17 +19,8 @@ const external = [
   // esbuild can't be bundled per design
   'esbuild',
   'lightningcss',
-  // Binary dependencies from Hydrogen that can't be bundled
+  // These two are binary dependencies from Hydrogen that can't be bundled
   '@ast-grep/napi',
-  // prettier is ~4MB and only used for formatting generated types.
-  // Lazily loaded via dynamic import, safe to externalize.
-  'prettier',
-  // ts-morph + typescript are ~19MB. Used by Hydrogen for JS/TS transpilation.
-  // Already lazily loaded via dynamic import, safe to externalize.
-  'ts-morph',
-  // typescript compiler (~9MB) is pulled in by ts-morph and json-schema-to-typescript.
-  // Available at runtime as a project dependency.
-  'typescript',
 ]
 
 // yoga wasm file is not bundled by esbuild, so we need to copy it manually
@@ -49,7 +40,7 @@ const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
 esBuild({
   bundle: true,
-  entryPoints: (await glob('./src/**/*.ts')).filter(f => !f.includes('.test.')),
+  entryPoints: ['./src/index.ts'],
   outdir: './dist',
   platform: 'node',
   format: 'esm',
@@ -62,7 +53,7 @@ esBuild({
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
-  sourcemap: 'external',
+  sourcemap: true,
   loader: {'.node': 'copy'},
   splitting: true,
   // these tree shaking and minify options remove any in-source tests from the bundle
