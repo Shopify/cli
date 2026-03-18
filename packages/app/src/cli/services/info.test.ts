@@ -260,7 +260,7 @@ describe('info', () => {
 
       // Verify backward-compat: project fields injected into JSON output
       const rawResult = JSON.parse((result as TokenizedString).value)
-      expect(rawResult.packageManager).toBe('npm')
+      expect(rawResult.packageManager).toBe('yarn')
       expect(rawResult.nodeDependencies).toEqual({})
       expect(rawResult.usesWorkspaces).toBe(false)
     })
