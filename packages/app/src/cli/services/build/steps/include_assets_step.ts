@@ -111,8 +111,7 @@ export async function executeIncludeAssetsStep(
   const counts = await Promise.all(
     config.inclusions.map(async (entry) => {
       const warn = (msg: string) => options.stdout.write(msg)
-      const sanitizedDest =
-        entry.destination !== undefined ? sanitizeDestination(entry.destination, warn) : undefined
+      const sanitizedDest = entry.destination !== undefined ? sanitizeDestination(entry.destination, warn) : undefined
 
       if (entry.type === 'pattern') {
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
@@ -278,9 +277,7 @@ async function copyByPattern(
       const destPath = joinPath(outputDir, relPath)
 
       if (relativePath(outputDir, destPath).startsWith('..')) {
-        options.stdout.write(
-          `Warning: skipping '${filepath}' - resolved destination is outside the output directory\n`,
-        )
+        options.stdout.write(`Warning: skipping '${filepath}' - resolved destination is outside the output directory\n`)
         return
       }
 
