@@ -194,7 +194,9 @@
       "packages/app": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "src/cli/services/docs/generate-schema-docs.ts",
+          "src/cli/services/docs/schema-to-docs.ts"
         ],
         "project": "**/*.{ts,tsx}!",
         "ignore": [
