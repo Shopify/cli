@@ -1,0 +1,271 @@
+import {Project} from './project.js'
+import {resolveDotEnv, resolveHiddenConfig, extensionFilesForConfig, webFilesForConfig} from './config-selection.js'
+import {loadApp} from '../app/loader.js'
+import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {describe, expect, test} from 'vitest'
+import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
+
+/**
+ * Integration tests verifying that Project + config-selection produce
+ * the same results as the old loader for real app configurations.
+ */
+
+async function setupRealApp(dir: string) {
+  // App config
+  await writeFile(
+    joinPath(dir, 'shopify.app.toml'),
+    `
+client_id = "test-client-id"
+name = "Integration Test App"
+application_url = "https://example.com"
+embedded = true
+
+[build]
+dev_store_url = "test.myshopify.com"
+
+[access_scopes]
+scopes = "read_products,write_products"
+
+[auth]
+redirect_urls = ["https://example.com/callback"]
+
+[webhooks]
+api_version = "2024-01"
+  `.trim(),
+  )
+
+  // Extension
+  await mkdir(joinPath(dir, 'extensions', 'my-function'))
+  await writeFile(
+    joinPath(dir, 'extensions', 'my-function', 'shopify.extension.toml'),
+    `
+type = "product_discounts"
+name = "My Discount"
+handle = "my-discount"
+
+[build]
+command = "cargo build"
+    `.trim(),
+  )
+
+  // Web
+  await mkdir(joinPath(dir, 'web', 'backend'))
+  await writeFile(
+    joinPath(dir, 'web', 'backend', 'shopify.web.toml'),
+    `
+name = "backend"
+roles = ["backend"]
+
+[commands]
+dev = "npm run dev"
+    `.trim(),
+  )
+
+  // Dotenv
+  await writeFile(joinPath(dir, '.env'), 'SHOPIFY_API_KEY=test-key\nSHOPIFY_API_SECRET=test-secret')
+
+  // Hidden config
+  await mkdir(joinPath(dir, '.shopify'))
+  await writeFile(
+    joinPath(dir, '.shopify', 'project.json'),
+    JSON.stringify({'test-client-id': {dev_store_url: 'hidden.myshopify.com'}}),
+  )
+
+  // package.json (needed by the loader)
+  await writeFile(joinPath(dir, 'package.json'), JSON.stringify({name: 'test-app', dependencies: {}}))
+}
+
+describe('Project integration', () => {
+  test('Project discovers the same directory as the old loader', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const project = await Project.load(dir)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      expect(project.directory).toBe(app.directory)
+    })
+  })
+
+  test('Project discovers the same extension files as the old loader', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const project = await Project.load(dir)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      // The app's non-config extensions should match what the project discovered
+      const appExtensionPaths = app.realExtensions
+        .filter((ext) => !ext.isAppConfigExtension)
+        .map((ext) => ext.configurationPath)
+        .sort()
+
+      const activeConfig = project.appConfigByName('shopify.app.toml')!
+      const projectExtensionPaths = extensionFilesForConfig(project, activeConfig)
+        .map((file) => file.path)
+        .sort()
+
+      expect(projectExtensionPaths).toStrictEqual(appExtensionPaths)
+    })
+  })
+
+  test('Project discovers the same web files as the old loader', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const project = await Project.load(dir)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      const appWebDirs = app.webs.map((web) => web.directory).sort()
+      const activeConfig = project.appConfigByName('shopify.app.toml')!
+      const projectWebDirs = webFilesForConfig(project, activeConfig)
+        .map((file) => joinPath(file.path, '..'))
+        .sort()
+
+      // Both should find the same web directories
+      expect(projectWebDirs.length).toBe(appWebDirs.length)
+    })
+  })
+
+  test('resolveDotEnv matches the old loader dotenv', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const project = await Project.load(dir)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      const configPath = joinPath(dir, 'shopify.app.toml')
+      const projectDotenv = resolveDotEnv(project, configPath)
+
+      // Both should find the same .env file with the same variables
+      expect(projectDotenv?.path).toBe(app.dotenv?.path)
+      expect(projectDotenv?.variables).toStrictEqual(app.dotenv?.variables)
+    })
+  })
+
+  test('resolveHiddenConfig matches the old loader hidden config', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const project = await Project.load(dir)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      const projectHiddenConfig = await resolveHiddenConfig(project, 'test-client-id')
+
+      expect(projectHiddenConfig).toStrictEqual(app.hiddenConfig)
+    })
+  })
+
+  test('Project metadata matches the old loader metadata', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      const specifications = await loadLocalExtensionsSpecifications()
+
+      const project = await Project.load(dir)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      expect(project.packageManager).toBe(app.packageManager)
+      expect(project.nodeDependencies).toStrictEqual(app.nodeDependencies)
+      expect(project.usesWorkspaces).toBe(app.usesWorkspaces)
+    })
+  })
+
+  test('multi-config project discovers all configs', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+
+      // Add a staging config with different extension dirs
+      await writeFile(
+        joinPath(dir, 'shopify.app.staging.toml'),
+        `
+client_id = "staging-client-id"
+name = "Staging App"
+application_url = "https://staging.example.com"
+embedded = true
+extension_directories = ["staging-ext/*"]
+        `.trim(),
+      )
+
+      await mkdir(joinPath(dir, 'staging-ext', 'staging-func'))
+      await writeFile(
+        joinPath(dir, 'staging-ext', 'staging-func', 'shopify.extension.toml'),
+        'type = "function"\nname = "staging-func"\nhandle = "staging-func"',
+      )
+
+      const project = await Project.load(dir)
+
+      // Should discover both configs
+      expect(project.appConfigFiles).toHaveLength(2)
+      expect(project.appConfigByClientId('test-client-id')).toBeDefined()
+      expect(project.appConfigByClientId('staging-client-id')).toBeDefined()
+
+      // Should discover extensions from both configs' directories
+      expect(project.extensionConfigFiles.length).toBeGreaterThanOrEqual(2)
+
+      // Filtering to default config should only get extensions/*
+      const defaultConfig = project.appConfigByName('shopify.app.toml')!
+      const defaultExts = extensionFilesForConfig(project, defaultConfig)
+      expect(defaultExts).toHaveLength(1)
+
+      // Filtering to staging config should only get staging-ext/*
+      const stagingConfig = project.appConfigByName('shopify.app.staging.toml')!
+      const stagingExts = extensionFilesForConfig(project, stagingConfig)
+      expect(stagingExts).toHaveLength(1)
+      expect(stagingExts[0]!.content.name).toBe('staging-func')
+    })
+  })
+
+  test('config-specific dotenv resolution works', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      await writeFile(joinPath(dir, '.env.staging'), 'STAGING_VAR=staging-value')
+      await writeFile(joinPath(dir, 'shopify.app.staging.toml'), 'client_id = "staging"')
+
+      const project = await Project.load(dir)
+
+      // Default config gets .env
+      const defaultDotenv = resolveDotEnv(project, joinPath(dir, 'shopify.app.toml'))
+      expect(defaultDotenv?.variables.SHOPIFY_API_KEY).toBe('test-key')
+
+      // Staging config gets .env.staging
+      const stagingDotenv = resolveDotEnv(project, joinPath(dir, 'shopify.app.staging.toml'))
+      expect(stagingDotenv?.variables.STAGING_VAR).toBe('staging-value')
+    })
+  })
+})

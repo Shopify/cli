@@ -860,6 +860,8 @@ type LinkedConfigurationSource =
   | 'flag'
   // Config file came from the cache (i.e. app use)
   | 'cached'
+  // No flag or cache — fell through to the default (shopify.app.toml)
+  | 'default'
 
 type ConfigurationLoadResultMetadata = {
   allClientIdsByConfigName: {[key: string]: string}
@@ -912,7 +914,6 @@ export async function getAppConfigurationState(
   let configName = userProvidedConfigName
 
   const appDirectory = await getAppDirectory(workingDirectory)
-  const configSource: LinkedConfigurationSource = configName ? 'flag' : 'cached'
 
   const cachedCurrentConfigName = getCachedAppInfo(appDirectory)?.configFile
   const cachedCurrentConfigPath = cachedCurrentConfigName ? joinPath(appDirectory, cachedCurrentConfigName) : null
@@ -927,6 +928,16 @@ export async function getAppConfigurationState(
   }
 
   configName = configName ?? cachedCurrentConfigName
+
+  // Determine source after resolution so it reflects the actual selection path
+  let configSource: LinkedConfigurationSource
+  if (userProvidedConfigName) {
+    configSource = 'flag'
+  } else if (configName) {
+    configSource = 'cached'
+  } else {
+    configSource = 'default'
+  }
 
   const {configurationPath, configurationFileName} = await getConfigurationPath(appDirectory, configName)
   const file = await loadConfigurationFileContent(configurationPath)
