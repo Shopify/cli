@@ -1,0 +1,4 @@
+name = "Subscription Link"
+type = "subscription_link_extension"
+
+pattern = "example"

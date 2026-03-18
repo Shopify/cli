@@ -1,0 +1,32 @@
+name = "Admin Link"
+type = "admin_link"
+
+description = "example"
+[[targeting]]
+url = "example"
+target = "admin.abandoned-checkout-details.action.link"
+tools = "example"
+instructions = "example"
+[targeting.build_manifest]
+[targeting.build_manifest.assets]
+[targeting.build_manifest.assets.tools]
+filepath = "example"
+module = "example"
+static = true
+
+[targeting.build_manifest.assets.instructions]
+filepath = "example"
+module = "example"
+static = true
+
+[[targeting.build_manifest.assets.intents]]
+filepath = "example"
+module = "example"
+static = true
+
+
+
+[[targeting.intents]]
+action = "example"
+type = "example"
+schema = "example"

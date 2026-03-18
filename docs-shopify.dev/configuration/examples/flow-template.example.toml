@@ -1,0 +1,42 @@
+name = "Flow Template"
+type = "flow_template"
+
+uid = "example"
+description = "example"
+api_version = "example"
+extension_points = "example"
+[capabilities]
+network_access = true
+block_progress = true
+api_access = true
+[capabilities.collect_buyer_consent]
+sms_marketing = true
+customer_privacy = true
+
+[capabilities.iframe]
+sources = ["example"]
+
+
+[supported_features]
+runs_offline = true
+
+[settings]
+[[settings.fields]]
+key = "example"
+name = "example"
+description = "example"
+required = true
+default_value = "example"
+type = "example"
+validations = "example"
+marketingActivityCreateUrl = "example"
+marketingActivityDeleteUrl = "example"
+
+
+[template]
+categories = ["example"]
+module = "example"
+require_app = true
+discoverable = true
+allow_one_click_activate = true
+enabled = true

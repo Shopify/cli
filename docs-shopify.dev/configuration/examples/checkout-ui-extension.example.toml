@@ -1,0 +1,28 @@
+name = "Checkout Extension"
+type = "checkout_ui_extension"
+
+uid = "example"
+description = "example"
+api_version = "example"
+extension_points = ["example"]
+[capabilities]
+network_access = true
+block_progress = true
+api_access = true
+[capabilities.collect_buyer_consent]
+sms_marketing = true
+customer_privacy = true
+
+[capabilities.iframe]
+sources = ["example"]
+
+
+[supported_features]
+runs_offline = true
+
+[settings]
+fields = "example"
+
+[[metafields]]
+namespace = "example"
+key = "example"

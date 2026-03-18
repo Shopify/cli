@@ -1,0 +1,10 @@
+name = "Webhooks Subscriptions"
+type = "webhook_subscription"
+
+topic = "example"
+actions = ["example"]
+api_version = "example"
+uri = "example"
+include_fields = ["example"]
+filter = "example"
+payload_query = "example"

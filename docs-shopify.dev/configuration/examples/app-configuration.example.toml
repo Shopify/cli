@@ -1,0 +1,187 @@
+# Global
+client_id = "example"
+extension_directories = ["example"]
+web_directories = ["example"]
+name = "example"
+handle = "example"
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "example"
+include_config_on_deploy = true
+
+
+# App access
+[access]
+[access.admin]
+direct_api_mode = "online"
+embedded_app_direct_api_access = true
+
+
+[access_scopes]
+scopes = "example"
+required_scopes = ["example"]
+optional_scopes = ["example"]
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = ["example"]
+
+
+# Imperative Webhooks Api Version
+[webhooks]
+api_version = "example"
+[webhooks.privacy_compliance]
+customer_deletion_url = "example"
+customer_data_request_url = "example"
+shop_deletion_url = "example"
+
+[[webhooks.subscriptions]]
+topics = ["example"]
+actions = ["example"]
+uri = "example"
+include_fields = ["example"]
+filter = "example"
+payload_query = "example"
+name = "example"
+compliance_topics = ["example"]
+
+
+
+# App Proxy
+[app_proxy]
+url = "example"
+subpath = "example"
+prefix = "example"
+
+
+# Point Of Sale Configuration
+[pos]
+embedded = true
+
+
+# App Home
+application_url = "example"
+embedded = true
+[app_preferences]
+url = "example"
+
+
+# Channel Configuration
+create_legacy_channel_on_app_install = true
+
+# Customer Authentication
+[customer_authentication]
+redirect_uris = ["example"]
+javascript_origins = ["example"]
+logout_urls = ["example"]
+
+
+# Custom data
+[metafields]
+api_version = "2025-04"
+
+[company]
+[company.metafields]
+
+
+[company_location]
+[company_location.metafields]
+
+
+[payment_customization]
+[payment_customization.metafields]
+
+
+[validation]
+[validation.metafields]
+
+
+[customer]
+[customer.metafields]
+standard_metafields = ["example"]
+
+
+[delivery_customization]
+[delivery_customization.metafields]
+
+
+[draft_order]
+[draft_order.metafields]
+
+
+[gift_card_transaction]
+[gift_card_transaction.metafields]
+
+
+[market]
+[market.metafields]
+
+
+[cart_transform]
+[cart_transform.metafields]
+
+
+[collection]
+[collection.metafields]
+
+
+[product]
+[product.metafields]
+standard_metafields = ["example"]
+
+
+[variant]
+[variant.metafields]
+standard_metafields = ["example"]
+
+
+[selling_plan]
+[selling_plan.metafields]
+
+
+[article]
+[article.metafields]
+
+
+[blog]
+[blog.metafields]
+
+
+[page]
+[page.metafields]
+
+
+[fulfillment_constraint_rule]
+[fulfillment_constraint_rule.metafields]
+
+
+[order_routing_location_rule]
+[order_routing_location_rule.metafields]
+
+
+[discount]
+[discount.metafields]
+
+
+[order]
+[order.metafields]
+
+
+[location]
+[location.metafields]
+
+
+[shop]
+[shop.metafields]
+
+
+[delivery_method]
+[delivery_method.metafields]
+
+
+[delivery_option_generator]
+[delivery_option_generator.metafields]
+
+
+[metaobjects]
+standard_metaobjects = ["example"]
