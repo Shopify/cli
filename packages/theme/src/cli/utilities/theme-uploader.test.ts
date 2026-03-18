@@ -560,6 +560,110 @@ describe('theme-uploader', () => {
     )
   })
 
+  test('should not remove failed uploads from unsyncedFileKeys', async () => {
+    // Given
+    const remoteChecksums = [
+      ...MINIMUM_THEME_ASSETS.map((asset) => ({key: asset.key, checksum: '0'})),
+      {key: 'assets/success.liquid', checksum: 'remote-checksum-a'},
+      {key: 'assets/failure.liquid', checksum: 'remote-checksum-b'},
+    ]
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([
+        ['assets/success.liquid', {checksum: 'local-checksum-a', key: 'assets/success.liquid'}],
+        ['assets/failure.liquid', {checksum: 'local-checksum-b', key: 'assets/failure.liquid'}],
+      ]),
+    )
+
+    vi.mocked(bulkUploadThemeAssets)
+      .mockResolvedValueOnce([
+        {
+          key: 'assets/success.liquid',
+          success: true,
+          errors: {},
+          operation: Operation.Upload,
+          asset: {key: 'assets/success.liquid', checksum: 'local-checksum-a'},
+        },
+        {
+          key: 'assets/failure.liquid',
+          success: false,
+          errors: {asset: ['THROTTLED']},
+          operation: Operation.Upload,
+          asset: {key: 'assets/failure.liquid', checksum: 'local-checksum-b'},
+        },
+      ])
+      .mockResolvedValue([
+        {
+          key: 'assets/failure.liquid',
+          success: false,
+          errors: {asset: ['THROTTLED']},
+          operation: Operation.Upload,
+          asset: {key: 'assets/failure.liquid', checksum: 'local-checksum-b'},
+        },
+      ])
+
+    // When
+    const {renderThemeSyncProgress} = uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(themeFileSystem.unsyncedFileKeys.has('assets/failure.liquid')).toBe(true)
+    expect(themeFileSystem.unsyncedFileKeys.has('assets/success.liquid')).toBe(false)
+  })
+
+  test('should remove file from unsyncedFileKeys when retry succeeds', async () => {
+    // Given
+    const remoteChecksums = [
+      ...MINIMUM_THEME_ASSETS.map((asset) => ({key: asset.key, checksum: '0'})),
+      {key: 'assets/flaky.liquid', checksum: 'remote-checksum'},
+    ]
+    const themeFileSystem = fakeThemeFileSystem(
+      'tmp',
+      new Map([['assets/flaky.liquid', {checksum: 'local-checksum', key: 'assets/flaky.liquid'}]]),
+    )
+
+    vi.mocked(bulkUploadThemeAssets)
+      // First attempt: failure
+      .mockResolvedValueOnce([
+        {
+          key: 'assets/flaky.liquid',
+          success: false,
+          errors: {asset: ['THROTTLED']},
+          operation: Operation.Upload,
+          asset: {key: 'assets/flaky.liquid', checksum: 'local-checksum'},
+        },
+      ])
+      // Retry: success
+      .mockResolvedValueOnce([
+        {
+          key: 'assets/flaky.liquid',
+          success: true,
+          errors: {},
+          operation: Operation.Upload,
+          asset: {key: 'assets/flaky.liquid', checksum: 'local-checksum'},
+        },
+      ])
+
+    // When
+    const {renderThemeSyncProgress} = uploadTheme(
+      remoteTheme,
+      adminSession,
+      remoteChecksums,
+      themeFileSystem,
+      uploadOptions,
+    )
+    await renderThemeSyncProgress()
+
+    // Then
+    expect(themeFileSystem.unsyncedFileKeys.has('assets/flaky.liquid')).toBe(false)
+  })
+
   test('should not delete or upload files specified by the --ignore flag', async () => {
     // Given
     const remote = [
