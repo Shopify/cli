@@ -1,0 +1,31 @@
+name = "Web Pixel Extension"
+type = "web_pixel_extension"
+
+uid = "example"
+description = "example"
+api_version = "example"
+extension_points = "example"
+settings = "example"
+runtime_context = "example"
+version = "example"
+configuration = "example"
+[capabilities]
+network_access = true
+block_progress = true
+api_access = true
+[capabilities.collect_buyer_consent]
+sms_marketing = true
+customer_privacy = true
+
+[capabilities.iframe]
+sources = ["example"]
+
+
+[supported_features]
+runs_offline = true
+
+[customer_privacy]
+analytics = true
+preferences = true
+marketing = true
+sale_of_data = "enabled"

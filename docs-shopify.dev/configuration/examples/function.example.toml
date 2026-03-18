@@ -1,0 +1,61 @@
+name = "function"
+type = "function"
+
+uid = "example"
+description = "example"
+api_version = "example"
+extension_points = "example"
+configuration_ui = true
+[capabilities]
+network_access = true
+block_progress = true
+api_access = true
+[capabilities.collect_buyer_consent]
+sms_marketing = true
+customer_privacy = true
+
+[capabilities.iframe]
+sources = ["example"]
+
+
+[supported_features]
+runs_offline = true
+
+[settings]
+[[settings.fields]]
+key = "example"
+name = "example"
+description = "example"
+required = true
+default_value = "example"
+type = "example"
+validations = "example"
+marketingActivityCreateUrl = "example"
+marketingActivityDeleteUrl = "example"
+
+
+[build]
+command = "example"
+path = "example"
+watch = "example"
+wasm_opt = true
+typegen_command = "example"
+
+[ui]
+enable_create = true
+handle = "example"
+[ui.paths]
+create = "example"
+details = "example"
+
+
+[input]
+[input.variables]
+namespace = "example"
+key = "example"
+
+
+[[targeting]]
+target = "example"
+input_query = "example"
+export = "example"

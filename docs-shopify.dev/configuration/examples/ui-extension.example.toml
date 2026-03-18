@@ -1,0 +1,83 @@
+name = "UI Extension"
+type = "ui_extension"
+
+uid = "example"
+description = "example"
+api_version = "example"
+[capabilities]
+network_access = true
+block_progress = true
+api_access = true
+[capabilities.collect_buyer_consent]
+sms_marketing = true
+customer_privacy = true
+
+[capabilities.iframe]
+sources = ["example"]
+
+
+[supported_features]
+runs_offline = true
+
+[settings]
+[[settings.fields]]
+key = "example"
+name = "example"
+description = "example"
+required = true
+default_value = "example"
+type = "example"
+validations = "example"
+marketingActivityCreateUrl = "example"
+marketingActivityDeleteUrl = "example"
+
+
+[[extension_points]]
+target = "example"
+module = "example"
+tools = "example"
+instructions = "example"
+default_placement = "example"
+[extension_points.should_render]
+module = "example"
+
+[extension_points.urls]
+edit = "example"
+
+[extension_points.capabilities]
+allow_direct_linking = true
+
+[extension_points.preloads]
+chat = "example"
+
+[[extension_points.metafields]]
+namespace = "example"
+key = "example"
+
+
+[[targeting]]
+target = "example"
+module = "example"
+tools = "example"
+instructions = "example"
+default_placement = "example"
+[targeting.should_render]
+module = "example"
+
+[targeting.urls]
+edit = "example"
+
+[targeting.capabilities]
+allow_direct_linking = true
+
+[targeting.preloads]
+chat = "example"
+
+[[targeting.metafields]]
+namespace = "example"
+key = "example"
+
+
+[[metafields]]
+namespace = "example"
+key = "example"

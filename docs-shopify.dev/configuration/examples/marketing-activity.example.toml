@@ -1,0 +1,16 @@
+name = "Marketing Activity"
+type = "marketing_activity"
+
+title = "example"
+description = "example"
+api_path = "example"
+tactic = "ad"
+marketing_channel = "social"
+referring_domain = "example"
+is_automation = true
+use_external_editor = true
+fields = ["example"]
+[preview_data]
+[[preview_data.types]]
+label = "example"
+value = "example"
