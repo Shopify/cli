@@ -223,7 +223,7 @@ async function discoverDotEnvFiles(directory: string): Promise<Map<string, DotEn
   const paths = await glob(pattern, {dot: true})
   const validPaths = paths.filter((filePath) => {
     const fileName = basename(filePath)
-    return fileName === '.env' || /^\.env\.\w+$/.test(fileName)
+    return fileName === '.env' || /^\.env\.[\w-]+$/.test(fileName)
   })
 
   const entries = await Promise.all(

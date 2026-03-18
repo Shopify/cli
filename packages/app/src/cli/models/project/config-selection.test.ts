@@ -58,6 +58,18 @@ describe('resolveDotEnv', () => {
       expect(dotenv).toBeUndefined()
     })
   })
+
+  test('returns config-specific dotenv for hyphenated config name', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, '.env.my-staging'), 'KEY=my-staging')
+      await writeFile(joinPath(dir, 'shopify.app.my-staging.toml'), 'client_id = "x"')
+      const project = await setupProject(dir)
+
+      const dotenv = resolveDotEnv(project, joinPath(dir, 'shopify.app.my-staging.toml'))
+
+      expect(dotenv!.variables.KEY).toBe('my-staging')
+    })
+  })
 })
 
 describe('resolveHiddenConfig', () => {
