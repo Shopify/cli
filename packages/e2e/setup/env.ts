@@ -16,6 +16,8 @@ export interface E2EEnv {
   storeFqdn: string
   /** Secondary app client ID for config link tests */
   secondaryClientId: string
+  /** Storefront password for password-protected stores (empty string if not set) */
+  storePassword: string
   /** Environment variables to pass to CLI processes */
   processEnv: NodeJS.ProcessEnv
   /** Temporary directory root for this worker */
@@ -93,6 +95,7 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
       const clientId = process.env.SHOPIFY_FLAG_CLIENT_ID ?? ''
       const storeFqdn = process.env.E2E_STORE_FQDN ?? ''
       const secondaryClientId = process.env.E2E_SECONDARY_CLIENT_ID ?? ''
+      const storePassword = process.env.E2E_STORE_PASSWORD ?? ''
 
       const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(directories.root, '.e2e-tmp')
       fs.mkdirSync(tmpBase, {recursive: true})
@@ -117,12 +120,16 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
       if (storeFqdn) {
         processEnv.SHOPIFY_FLAG_STORE = storeFqdn
       }
+      if (storePassword) {
+        processEnv.SHOPIFY_FLAG_STORE_PASSWORD = storePassword
+      }
 
       const env: E2EEnv = {
         partnersToken,
         clientId,
         storeFqdn,
         secondaryClientId,
+        storePassword,
         processEnv,
         tempDir,
       }

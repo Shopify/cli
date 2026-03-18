@@ -1,0 +1,73 @@
+name: Theme E2E
+
+on:
+  pull_request:
+    paths:
+      - 'packages/theme/**'
+      - 'packages/cli-kit/src/public/node/themes/**'
+      - 'packages/e2e/tests/theme-*.spec.ts'
+      - 'packages/e2e/setup/theme*.ts'
+  workflow_dispatch:
+
+concurrency:
+  group: theme-e2e-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  DEBUG: '1'
+  SHOPIFY_CLI_ENV: development
+  SHOPIFY_CONFIG: debug
+  PNPM_VERSION: '10.11.1'
+  BUNDLE_WITHOUT: 'test:development'
+  GH_TOKEN: ${{ secrets.SHOPIFY_GH_READ_CONTENT_TOKEN }}
+  GH_TOKEN_SHOP: ${{ secrets.SHOP_GH_READ_CONTENT_TOKEN }}
+  DEFAULT_NODE_VERSION: '24.1.0'
+
+jobs:
+  theme-e2e-tests:
+    name: 'Theme E2E tests'
+    if: github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.event.repository.full_name }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.merge_group.head_ref || github.ref }}
+          fetch-depth: 1
+      - name: Setup deps
+        uses: ./.github/actions/setup-cli-deps
+        with:
+          node-version: ${{ env.DEFAULT_NODE_VERSION }}
+      - name: Build
+        run: pnpm nx run-many --all --skip-nx-cache --target=build --output-style=stream
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium
+        working-directory: packages/e2e
+      - name: Rebuild node-pty
+        run: pnpm rebuild node-pty
+      - name: Run Theme E2E tests
+        working-directory: packages/e2e
+        env:
+          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.E2E_CLIENT_ID }}
+          E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
+          E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
+          E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
+          E2E_SECONDARY_CLIENT_ID: ${{ secrets.E2E_SECONDARY_CLIENT_ID }}
+          E2E_STORE_PASSWORD: ${{ secrets.E2E_STORE_PASSWORD }}
+        run: npx playwright test theme-
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: theme-playwright-report
+          path: packages/e2e/playwright-report/
+          retention-days: 14
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: theme-playwright-results
+          path: packages/e2e/test-results/
+          retention-days: 14
