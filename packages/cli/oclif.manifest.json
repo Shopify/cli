@@ -3499,26 +3499,6 @@
       "pluginType": "core",
       "strict": true
     },
-    "docs:generate-schema": {
-      "aliases": [
-      ],
-      "args": {
-      },
-      "customPluginName": "@shopify/app",
-      "description": "Generate TOML configuration schema documentation",
-      "enableJsonFlag": false,
-      "flags": {
-      },
-      "hasDynamicHelp": false,
-      "hidden": true,
-      "hiddenAliases": [
-      ],
-      "id": "docs:generate-schema",
-      "pluginAlias": "@shopify/cli",
-      "pluginName": "@shopify/cli",
-      "pluginType": "core",
-      "strict": true
-    },
     "doctor-release": {
       "aliases": [
       ],
