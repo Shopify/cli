@@ -257,6 +257,12 @@ describe('info', () => {
       const extensionsIdentifiers = resultObject.allExtensions.map((extension) => extension.localIdentifier)
       expect(extensionsIdentifiers).toContain('handle-for-extension-1')
       expect(extensionsIdentifiers).not.toContain('point_of_sale')
+
+      // Verify backward-compat: project fields injected into JSON output
+      const rawResult = JSON.parse((result as TokenizedString).value)
+      expect(rawResult.packageManager).toBe('npm')
+      expect(rawResult.nodeDependencies).toEqual({})
+      expect(rawResult.usesWorkspaces).toBe(false)
     })
   })
 })

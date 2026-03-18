@@ -98,7 +98,7 @@ export const DEFAULT_CONFIG = {
   },
 }
 
-export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
+export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const getConfig = () => {
     return DEFAULT_CONFIG as CurrentAppConfiguration
   }
@@ -134,7 +134,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
 }
 
 export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
-  return testApp(app, 'current') as AppLinkedInterface
+  return testApp(app) as AppLinkedInterface
 }
 
 interface TestAppWithConfigOptions {
