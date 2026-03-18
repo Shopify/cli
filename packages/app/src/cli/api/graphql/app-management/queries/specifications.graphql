@@ -5,6 +5,7 @@ query fetchSpecifications($organizationId: ID!) {
     externalIdentifier
     features
     uidStrategy {
+      __typename
       appModuleLimit
       isClientProvided
     }

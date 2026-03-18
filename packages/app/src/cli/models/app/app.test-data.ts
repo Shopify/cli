@@ -74,7 +74,7 @@ import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/function
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
-import {ExtensionSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Session} from '@shopify/cli-kit/node/session'
@@ -1526,5 +1526,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
+  return (await loadLocalExtensionsSpecifications()).filter(isAppConfigSpecification)
 }

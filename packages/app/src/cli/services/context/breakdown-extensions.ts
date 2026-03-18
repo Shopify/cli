@@ -5,17 +5,13 @@ import {AppVersionsDiffExtensionSchema} from '../../api/graphql/app_versions_dif
 import {AppInterface, CurrentAppConfiguration, filterNonVersionedAppFields} from '../../models/app/app.js'
 import {MinimalOrganizationApp} from '../../models/organization.js'
 import {IdentifiersExtensions} from '../../models/app/identifiers.js'
-import {
-  extensionTypeStrategy,
-  fetchAppRemoteConfiguration,
-  remoteAppConfigurationExtensionContent,
-} from '../app/select-app.js'
+import {fetchAppRemoteConfiguration, remoteAppConfigurationExtensionContent} from '../app/select-app.js'
 import {AppVersion, AppModuleVersion, DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {
   AllAppExtensionRegistrationsQuerySchema,
   RemoteExtensionRegistrations,
 } from '../../api/graphql/all_app_extension_registrations.js'
-import {ExtensionSpecification} from '../../models/extensions/specification.js'
+import {ExtensionSpecification, isAppConfigSpecification} from '../../models/extensions/specification.js'
 import {rewriteConfiguration} from '../app/write-app-configuration-file.js'
 import {AppConfigurationUsedByCli} from '../../models/extensions/specifications/types/app_config.js'
 import {removeTrailingSlash} from '../../models/extensions/specifications/validation/common.js'
@@ -351,9 +347,10 @@ function loadExtensionsIdentifiersBreakdown(
   specs: ExtensionSpecification[],
   developerPlatformClient: DeveloperPlatformClient,
 ) {
-  const extensionModules = activeAppVersion?.appModuleVersions.filter(
-    (ext) => extensionTypeStrategy(specs, ext.specification?.identifier) === 'uuid',
-  )
+  const extensionModules = activeAppVersion?.appModuleVersions.filter((ext) => {
+    const spec = specs.find((spec) => spec.identifier === ext.specification?.identifier)
+    return spec && !isAppConfigSpecification(spec)
+  })
 
   // In AppManagement, matching has to be via UID, but we acccept UUID matches if the UID is empty (migration pending)
   // In Partners, we keep the legacy match of only UUID.
