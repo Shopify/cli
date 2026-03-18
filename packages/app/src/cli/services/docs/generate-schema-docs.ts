@@ -34,7 +34,7 @@ const SKIP_APP_CONFIG_SPECS = new Set([
 /**
  * Generate TOML configuration schema documentation files.
  *
- * Authenticates against the Partners API, fetches extension specifications,
+ * Authenticates via the developer platform APIs, fetches extension specifications,
  * and writes doc/interface/example files for app config and extensions.
  *
  * @param basePath - Absolute path to the output directory (e.g. `<repo>/docs-shopify.dev/configuration`)
