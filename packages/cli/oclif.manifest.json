@@ -6953,6 +6953,13 @@
           "name": "environment",
           "type": "option"
         },
+        "json": {
+          "allowNo": false,
+          "description": "Output the preview URL and identifier as JSON.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "name": "json",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",

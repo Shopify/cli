@@ -4,6 +4,7 @@ import {fetchDevServerSession} from '../utilities/theme-environment/dev-server-s
 import {createThemePreview, updateThemePreview} from '../utilities/theme-previews/preview.js'
 import {describe, expect, test, vi} from 'vitest'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
+import {collectedLogs, clearCollectedLogs} from '@shopify/cli-kit/node/output'
 import {fileExistsSync, readFile} from '@shopify/cli-kit/node/fs'
 
 vi.mock('../utilities/theme-environment/dev-server-session.js')
@@ -84,6 +85,7 @@ describe('devWithOverrideFile', () => {
       themeId: expectedThemeId,
       previewIdentifier: expectedPreviewId,
       open: false,
+      json: false,
     })
 
     // Then
@@ -120,6 +122,7 @@ describe('devWithOverrideFile', () => {
       overrideJson: '/bad.json',
       themeId: '123',
       open: false,
+      json: false,
     }).catch((err) => err)
     expect(error.message).toBe('Failed to parse override file: /bad.json')
     expect(error.tryMessage).toMatch(/not valid json/i)
@@ -166,10 +169,43 @@ describe('devWithOverrideFile', () => {
       overrideJson: '/overrides.json',
       themeId: '789',
       open: false,
+      json: false,
       password: 'shptka_abc123',
     })
 
     // Then
     expect(fetchDevServerSession).toHaveBeenCalledWith('789', adminSession, 'shptka_abc123')
+  })
+
+  test('outputs JSON when json flag is true', async () => {
+    // Given
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+    vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
+    vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
+    clearCollectedLogs()
+
+    // When
+    await devWithOverrideFile({adminSession, overrideJson: '/overrides.json', themeId: '789', open: false, json: true})
+
+    // Then
+    const expectedJson = JSON.stringify({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
+    expect(collectedLogs.info).toContainEqual(expectedJson)
+    expect(renderSuccess).not.toHaveBeenCalled()
+  })
+
+  test('renders success body by default when json flag is omitted', async () => {
+    // Given
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    vi.mocked(readFile).mockResolvedValue(Buffer.from(JSON.stringify({templates: {}})))
+    vi.mocked(fetchDevServerSession).mockResolvedValue(mockSession)
+    vi.mocked(createThemePreview).mockResolvedValue({url: expectedPreviewUrl, preview_identifier: expectedPreviewId})
+    clearCollectedLogs()
+
+    // When
+    await devWithOverrideFile({adminSession, overrideJson: '/overrides.json', themeId: '789', open: false})
+
+    // Then
+    expect(renderSuccess).toHaveBeenCalled()
   })
 })

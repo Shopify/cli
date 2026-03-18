@@ -2549,14 +2549,15 @@ Applies JSON overrides to a theme and returns a preview URL.
 
 ```
 USAGE
-  $ shopify theme preview --overrides <value> -t <value> [-e <value>...] [--no-color] [--open] [--password <value>]
-    [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
+  $ shopify theme preview --overrides <value> -t <value> [-e <value>...] [--json] [--no-color] [--open] [--password
+    <value>] [--path <value>] [--preview-id <value>] [-s <value>] [--verbose]
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           (required) [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
+      --json                    [env: SHOPIFY_FLAG_JSON] Output the preview URL and identifier as JSON.
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --open                    [env: SHOPIFY_FLAG_OPEN] Automatically launch the theme preview in your default web
                                 browser.
