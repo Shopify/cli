@@ -86,7 +86,7 @@ export function extensionFilesForConfig(project: Project, activeConfig: TomlFile
   // This is a simplification — complex globs like "foo/*/bar" will over-match.
   // In practice, only simple directory patterns are used in app configs.
   const dirPrefixes = (configDirs as string[]).map((dir) => {
-    return dir.replace(/\*.*$/, '')
+    return dir.replace(/\*.*$/, '').replace(/\/?$/, '/')
   })
 
   return project.extensionConfigFiles.filter((file) => {
@@ -106,7 +106,7 @@ export function webFilesForConfig(project: Project, activeConfig: TomlFile): Tom
     return project.webConfigFiles
   }
 
-  const dirPrefixes = (configDirs as string[]).map((dir) => dir.replace(/\*.*$/, ''))
+  const dirPrefixes = (configDirs as string[]).map((dir) => dir.replace(/\*.*$/, '').replace(/\/?$/, '/'))
 
   return project.webConfigFiles.filter((file) => {
     const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
