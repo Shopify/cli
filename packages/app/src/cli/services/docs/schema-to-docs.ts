@@ -258,7 +258,7 @@ function interfaceName(slug: string): string {
 
 function tsTypeForField(field: SchemaField): string {
   if (field.enumValues) {
-    return field.enumValues.map((val) => `'${val}'`).join(' | ')
+    return field.enumValues.map((val) => `'${escapeSingleQuotes(val)}'`).join(' | ')
   }
   if (field.isArray && field.nested) {
     return `${interfaceName(field.name)}Item[]`
