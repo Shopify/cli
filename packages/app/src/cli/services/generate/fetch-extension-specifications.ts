@@ -90,6 +90,8 @@ async function mergeLocalAndRemoteSpecs(
     merged.uidStrategy = merged.options.uidStrategy ?? localSpec.uidStrategy ?? 'single'
 
     // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
+    // DEPRECATED: not all single specs are config specs.
+    // Should be removed once we can get the experience from the API.
     let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
     switch (merged.uidStrategy) {
       case 'uuid':
@@ -101,6 +103,11 @@ async function mergeLocalAndRemoteSpecs(
       case 'dynamic':
         handleInvalidAdditionalProperties = 'fail'
         break
+    }
+
+    // If the experience is 'configuration', force strip.
+    if (merged.experience === 'configuration') {
+      handleInvalidAdditionalProperties = 'strip'
     }
 
     const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
