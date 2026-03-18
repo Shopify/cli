@@ -9,6 +9,7 @@ import {DevSessionProcess, setupDevSessionProcess} from './dev-session/dev-sessi
 import {AppLogsSubscribeProcess, setupAppLogsPollingProcess} from './app-logs-polling.js'
 import {AppWatcherProcess, setupAppWatcherProcess} from './app-watcher-process.js'
 import {DevSessionStatusManager} from './dev-session/dev-session-status-manager.js'
+import {resolveGraphiQLKey} from '../graphiql/server.js'
 import {environmentVariableNames} from '../../../constants.js'
 import {AppLinkedInterface, getAppScopes, WebType} from '../../../models/app/app.js'
 
@@ -119,8 +120,9 @@ export async function setupDevProcesses({
   const useDevConsole = is1PDev && anyPreviewableExtensions
   const previewURL = useDevConsole ? devConsoleURL : appPreviewUrl
 
+  const resolvedGraphiqlKey = resolveGraphiQLKey(graphiqlKey, apiSecret, storeFqdn)
   const graphiqlURL = shouldRenderGraphiQL
-    ? `http://localhost:${graphiqlPort}/graphiql${graphiqlKey ? `?key=${graphiqlKey}` : ''}`
+    ? `http://localhost:${graphiqlPort}/graphiql?key=${encodeURIComponent(resolvedGraphiqlKey)}`
     : undefined
 
   const devSessionStatusManager = new DevSessionStatusManager({isReady: false, previewURL, graphiqlURL})
@@ -142,7 +144,7 @@ export async function setupDevProcesses({
           port: graphiqlPort,
           apiKey,
           apiSecret,
-          key: graphiqlKey,
+          key: resolvedGraphiqlKey,
           storeFqdn,
         })
       : undefined,

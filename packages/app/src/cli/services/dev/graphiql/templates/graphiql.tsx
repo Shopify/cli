@@ -51,7 +51,7 @@ interface GraphiQLTemplateOptions {
   apiVersions: string[]
   appName: string
   appUrl: string
-  key?: string
+  key: string
   storeFqdn: string
 }
 
@@ -248,7 +248,7 @@ export function graphiqlTemplate({
         ReactDOM.render(
           React.createElement(GraphiQL, {
             fetcher: GraphiQL.createFetcher({
-              url: '{{url}}/graphiql/graphql.json?key=${key ?? ''}&api_version=' + apiVersion,
+              url: '{{url}}/graphiql/graphql.json?key=${encodeURIComponent(key)}&api_version=' + apiVersion,
             }),
             defaultEditorToolsVisibility: true,
             {% if query %}
@@ -320,7 +320,7 @@ export function graphiqlTemplate({
 
       // Verify the current store/app connection
       setInterval(function() {
-        fetch('{{ url }}/graphiql/status')
+        fetch('{{ url }}/graphiql/status?key=${encodeURIComponent(key)}')
           .then(async function(response) {
             const {status, storeFqdn, appName, appUrl} = await response.json()
             appIsInstalled = status === 'OK'
