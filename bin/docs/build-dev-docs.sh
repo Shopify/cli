@@ -39,6 +39,8 @@ if [ "$HAS_SCHEMA_DOCS" = true ]; then
 fi
 
 # Generate all reference entity docs in a single pass
+# Note: $GENERATE_DOCS_INPUT is intentionally unquoted — it may contain two space-separated
+# paths that must split into separate arguments for --input.
 npx generate-docs --overridePath ./bin/docs/typeOverride.json --input $GENERATE_DOCS_INPUT --output $OUTPUT_DIR
 eval $CLEANUP
 

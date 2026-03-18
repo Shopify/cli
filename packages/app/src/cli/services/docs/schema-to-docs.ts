@@ -92,7 +92,12 @@ function resolveComposite(prop: JsonSchemaProperty): JsonSchemaProperty {
   if (prop.allOf && prop.allOf.length > 0) {
     let merged: JsonSchemaProperty = {}
     for (const sub of prop.allOf) {
-      merged = {...merged, ...sub, properties: {...(merged.properties ?? {}), ...(sub.properties ?? {})}}
+      merged = {
+        ...merged,
+        ...sub,
+        properties: {...(merged.properties ?? {}), ...(sub.properties ?? {})},
+        required: [...(merged.required ?? []), ...(sub.required ?? [])],
+      }
     }
     return {...prop, ...merged, allOf: undefined}
   }
