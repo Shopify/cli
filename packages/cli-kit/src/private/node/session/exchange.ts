@@ -15,6 +15,44 @@ export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
 class InvalidTargetError extends AbortError {}
 
+export interface ExchangeScopes {
+  admin: string[]
+  partners: string[]
+  storefront: string[]
+  businessPlatform: string[]
+  appManagement: string[]
+}
+
+/**
+ * Given an identity token, request an application token.
+ * @param identityToken - access token obtained in a previous step
+ * @param store - the store to use, only needed for admin API
+ * @returns An array with the application access tokens.
+ */
+export async function exchangeAccessForApplicationTokens(
+  identityToken: IdentityToken,
+  scopes: ExchangeScopes,
+  store?: string,
+): Promise<Record<string, ApplicationToken>> {
+  const token = identityToken.accessToken
+
+  const [partners, storefront, businessPlatform, admin, appManagement] = await Promise.all([
+    requestAppToken('partners', token, scopes.partners),
+    requestAppToken('storefront-renderer', token, scopes.storefront),
+    requestAppToken('business-platform', token, scopes.businessPlatform),
+    store ? requestAppToken('admin', token, scopes.admin, store) : {},
+    requestAppToken('app-management', token, scopes.appManagement),
+  ])
+
+  return {
+    ...partners,
+    ...storefront,
+    ...businessPlatform,
+    ...admin,
+    ...appManagement,
+  }
+}
+
 /**
  * Given an expired access token, refresh it to get a new one.
  */
