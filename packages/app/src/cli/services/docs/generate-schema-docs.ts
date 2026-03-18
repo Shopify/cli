@@ -1,6 +1,3 @@
-import {appFromIdentifiers} from '../../services/context.js'
-import {fetchSpecifications} from '../../services/generate/fetch-extension-specifications.js'
-import {AppSchema} from '../../models/app/app.js'
 import {
   extractFieldsFromSpec,
   zodSchemaToFields,
@@ -12,6 +9,9 @@ import {
   generateExtensionInterfaceFile,
   generateExtensionExampleToml,
 } from './schema-to-docs.js'
+import {appFromIdentifiers} from '../context.js'
+import {fetchSpecifications} from '../generate/fetch-extension-specifications.js'
+import {AppSchema} from '../../models/app/app.js'
 
 /* eslint-disable @nx/enforce-module-boundaries -- internal tooling, not lazy-loaded at runtime */
 import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
