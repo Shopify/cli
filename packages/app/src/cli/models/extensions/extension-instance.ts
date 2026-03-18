@@ -34,6 +34,8 @@ import {outputDebug} from '@shopify/cli-kit/node/output'
 import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {uniq} from '@shopify/cli-kit/common/array'
 
+// DEPRECATED. We should get the experience from the specification instead of hardcoding it based on the identifier.
+// This is a temporary solution to avoid breaking changes while we update the API and the specifications query.
 export const CONFIG_EXTENSION_IDS: string[] = [
   AppAccessSpecIdentifier,
   AppHomeSpecIdentifier,
@@ -44,6 +46,10 @@ export const CONFIG_EXTENSION_IDS: string[] = [
   WebhookSubscriptionSpecIdentifier,
   WebhooksSpecIdentifier,
   EventsSpecIdentifier,
+
+  // Hardcoded identifiers that don't exist locally.
+  'data',
+  'admin',
 ]
 
 /**
@@ -121,7 +127,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   get isAppConfigExtension() {
-    return ['single', 'dynamic'].includes(this.specification.uidStrategy)
+    return this.specification.experience === 'configuration'
   }
 
   get isFlow() {
