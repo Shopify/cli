@@ -76,7 +76,7 @@ export function extensionFilesForConfig(project: Project, activeConfig: TomlFile
   if (!Array.isArray(configDirs) || configDirs.length === 0) {
     // Default: extensions/* — filter project files by path prefix
     return project.extensionConfigFiles.filter((file) => {
-      const relPath = relativePath(project.directory, file.path)
+      const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
       return relPath.startsWith('extensions/')
     })
   }
@@ -90,7 +90,7 @@ export function extensionFilesForConfig(project: Project, activeConfig: TomlFile
   })
 
   return project.extensionConfigFiles.filter((file) => {
-    const relPath = relativePath(project.directory, file.path)
+    const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
     return dirPrefixes.some((prefix) => relPath.startsWith(prefix))
   })
 }
@@ -109,7 +109,7 @@ export function webFilesForConfig(project: Project, activeConfig: TomlFile): Tom
   const dirPrefixes = (configDirs as string[]).map((dir) => dir.replace(/\*.*$/, ''))
 
   return project.webConfigFiles.filter((file) => {
-    const relPath = relativePath(project.directory, file.path)
+    const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
     return dirPrefixes.some((prefix) => relPath.startsWith(prefix))
   })
 }
