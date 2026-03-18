@@ -21,12 +21,6 @@ import type {AppConfigSection, MergedSpec} from './schema-to-docs.js'
 /* eslint-enable @nx/enforce-module-boundaries */
 
 /**
- * The client ID of the e2e test app. Used to authenticate and fetch specs.
- * This is the same value used in packages/e2e/.env (SHOPIFY_FLAG_CLIENT_ID).
- */
-const E2E_CLIENT_ID = 'c7e63b628cf2a97f4fca7a3dc122a5ef'
-
-/**
  * App config specs to skip in docs — these share a schema with another spec and
  * would produce duplicate sections. Their fields are already covered by the other spec.
  */
@@ -44,10 +38,11 @@ const SKIP_APP_CONFIG_SPECS = new Set([
  * and writes doc/interface/example files for app config and extensions.
  *
  * @param basePath - Absolute path to the output directory (e.g. `<repo>/docs-shopify.dev/configuration`)
+ * @param clientId - The app client ID to authenticate with
  */
-export async function generateSchemaDocs(basePath: string): Promise<void> {
+export async function generateSchemaDocs(basePath: string, clientId: string): Promise<void> {
   outputInfo('Authenticating and fetching app...')
-  const app = await appFromIdentifiers({apiKey: E2E_CLIENT_ID})
+  const app = await appFromIdentifiers({apiKey: clientId})
   const {developerPlatformClient} = app
 
   outputInfo('Fetching extension specifications...')
