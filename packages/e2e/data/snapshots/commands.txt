@@ -102,6 +102,7 @@
 │  │  └─ pull
 │  ├─ open
 │  ├─ package
+│  ├─ preview
 │  ├─ profile
 │  ├─ publish
 │  ├─ pull

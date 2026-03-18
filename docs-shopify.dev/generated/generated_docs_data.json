@@ -7158,6 +7158,132 @@
     "related": []
   },
   {
+    "name": "theme preview",
+    "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
+    "overviewPreviewDescription": "Applies JSON overrides to a theme and returns a preview URL.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "theme preview",
+            "code": "shopify theme preview [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "theme preview"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `theme preview` command:",
+        "type": "themepreview",
+        "typeDefinitions": {
+          "themepreview": {
+            "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+            "name": "themepreview",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--open",
+                "value": "\"\"",
+                "description": "Automatically launch the theme preview in your default web browser.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_OPEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--overrides <value>",
+                "value": "string",
+                "description": "Path to a JSON overrides file.",
+                "environmentValue": "SHOPIFY_FLAG_OVERRIDES"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--password <value>",
+                "value": "string",
+                "description": "Password generated from the Theme Access app or an Admin API token.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_CLI_THEME_TOKEN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path where you want to run the command. Defaults to the current working directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--preview-id <value>",
+                "value": "string",
+                "description": "An existing preview identifier to update instead of creating a new preview.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PREVIEW_ID"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-e, --environment <value>",
+                "value": "string",
+                "description": "The environment to apply to the current command.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_ENVIRONMENT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-t, --theme <value>",
+                "value": "string",
+                "description": "Theme ID or name of the remote theme.",
+                "environmentValue": "SHOPIFY_FLAG_THEME_ID"
+              }
+            ],
+            "value": "export interface themepreview {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Path to a JSON overrides file.\n   * @environment SHOPIFY_FLAG_OVERRIDES\n   */\n  '--overrides <value>': string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * An existing preview identifier to update instead of creating a new preview.\n   * @environment SHOPIFY_FLAG_PREVIEW_ID\n   */\n  '--preview-id <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "theme",
+    "related": []
+  },
+  {
     "name": "theme profile",
     "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
     "overviewPreviewDescription": "Profile the Liquid rendering of a theme page.",
