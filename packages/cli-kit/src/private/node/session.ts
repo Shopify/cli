@@ -220,7 +220,7 @@ For applications:
 ${outputToken.json(applications)}
 `)
 
-  const validationResult = await validateSession(scopes, currentSession)
+  const validationResult = await validateSession(scopes, applications, currentSession)
 
   let newSession = {}
 
@@ -352,15 +352,33 @@ async function refreshTokens(session: Session, _applications: OAuthApplications)
  * @param fqdn - The identity FQDN.
  */
 async function tokensFor(applications: OAuthApplications, session: Session): Promise<OAuthSession> {
-  const token = session.identity.accessToken
-  return {
+  const tokens: OAuthSession = {
     userId: session.identity.userId,
-    admin: applications.adminApi ? {token, storeFqdn: applications.adminApi.storeFqdn} : undefined,
-    partners: applications.partnersApi ? token : undefined,
-    storefront: applications.storefrontRendererApi ? token : undefined,
-    businessPlatform: applications.businessPlatformApi ? token : undefined,
-    appManagement: applications.appManagementApi ? token : undefined,
   }
+
+  const pcatToken = session.identity.accessToken
+
+  if (applications.adminApi) {
+    tokens.admin = {token: pcatToken, storeFqdn: applications.adminApi.storeFqdn}
+  }
+
+  if (applications.partnersApi) {
+    tokens.partners = pcatToken
+  }
+
+  if (applications.storefrontRendererApi) {
+    tokens.storefront = pcatToken
+  }
+
+  if (applications.businessPlatformApi) {
+    tokens.businessPlatform = pcatToken
+  }
+
+  if (applications.appManagementApi) {
+    tokens.appManagement = pcatToken
+  }
+
+  return tokens
 }
 
 // Scope Helpers

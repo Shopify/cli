@@ -742,12 +742,15 @@ importers:
       '@shopify/ui-extensions-test-utils':
         specifier: 3.26.0
         version: link:../ui-extensions-test-utils
+<<<<<<< HEAD
       '@testing-library/jest-dom':
         specifier: ^6.9.1
         version: 6.9.1
       '@testing-library/react':
         specifier: ^16.3.2
         version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.12))(@types/react@18.3.12)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+=======
+>>>>>>> parent of aa7ad7f17b (Additional cleanup)
       '@types/react':
         specifier: 18.3.12
         version: 18.3.12
