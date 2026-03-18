@@ -84,13 +84,12 @@ export interface AppHiddenConfig {
  *
  * Try to avoid using this: generally you should be working with a more specific type.
  */
-export type AppConfiguration = zod.infer<typeof AppSchema> & {path: string}
-export type AppConfigurationWithoutPath = zod.infer<typeof AppSchema>
+export type AppConfiguration = zod.infer<typeof AppSchema>
 
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
-export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
+export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema>
 
 /**
  * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
@@ -103,12 +102,12 @@ export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
 export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppConfigurationUsedByCli
 
 /** Validation schema that produces a provided app configuration type */
-export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
+export type SchemaForConfig<TConfig> = ZodObjectOf<TConfig>
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
   allowDynamicallySpecifiedConfigs = true,
-): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
+): ZodObjectOf<CurrentAppConfiguration> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
 
@@ -144,7 +143,7 @@ export function appHiddenConfigPath(appDirectory: string) {
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */
 export function filterNonVersionedAppFields(configuration: object): string[] {
-  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path', 'organization_id')
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('organization_id')
   return Object.keys(configuration).filter((fieldName) => {
     return !builtInFieldNames.includes(fieldName)
   })
@@ -194,6 +193,7 @@ export interface AppConfigurationInterface<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > {
   directory: string
+  configPath: string
   configuration: TConfig
   configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
@@ -277,12 +277,13 @@ export class App<
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
+  configPath: string
   configuration: TConfig
   webs: Web[]
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: TModuleSpec[]
-  configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
+  configSchema: SchemaForConfig<TConfig>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
   devApplicationURLs?: ApplicationURLs
@@ -291,6 +292,7 @@ export class App<
   constructor({
     name,
     directory,
+    configPath,
     configuration,
     webs,
     modules,
@@ -304,6 +306,7 @@ export class App<
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
+    this.configPath = configPath
     this.configuration = configuration
     this.webs = webs
     this.dotenv = dotenv

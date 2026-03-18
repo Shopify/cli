@@ -1,7 +1,7 @@
 import {
   App,
   AppSchema,
-  AppConfigurationWithoutPath,
+  AppConfiguration,
   AppInterface,
   AppLinkedInterface,
   CurrentAppConfiguration,
@@ -106,6 +106,7 @@ export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' |
   const newApp = new App({
     name: app.name ?? 'App',
     directory: app.directory ?? '/tmp/project',
+    configPath: app.configPath ?? '/tmp/project/shopify.app.toml',
     configuration: app.configuration ?? getConfig(),
     webs: app.webs ?? [
       {
@@ -212,7 +213,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export const placeholderAppConfiguration: AppConfigurationWithoutPath = {
+export const placeholderAppConfiguration: AppConfiguration = {
   client_id: '',
 }
 

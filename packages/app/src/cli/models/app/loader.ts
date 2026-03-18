@@ -22,7 +22,7 @@ import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
-import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {findConfigFiles} from '../../prompts/config.js'
 import {WebhookSubscriptionSpecIdentifier} from '../extensions/specifications/app_config_webhook_subscription.js'
@@ -470,7 +470,8 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   }
 
   async loaded() {
-    const {configuration, directory, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
+    const {configuration, directory, configPath, configurationLoadResultMetadata, configSchema} =
+      this.loadedConfiguration
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
@@ -496,6 +497,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const appClass = new App({
       name,
       directory,
+      configPath,
       configuration,
       webs,
       modules: extensions,
@@ -728,11 +730,12 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   }
 
   private createWebhookSubscriptionInstances(directory: string, appConfiguration: TConfig) {
+    const configPath = this.loadedConfiguration.configPath
     const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
     if (!specification) return []
     const specConfiguration = parseConfigurationObject(
       WebhooksSchema,
-      appConfiguration.path,
+      configPath,
       appConfiguration,
       this.abortOrReport.bind(this),
     )
@@ -751,20 +754,21 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
 
     // Create 1 extension instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
-      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
+      return this.createExtensionInstance(specification.identifier, subscription, configPath, directory)
     })
 
     return instances
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig) {
+    const configPath = this.loadedConfiguration.configPath
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
         .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
           const specConfiguration = parseConfigurationObjectAgainstSpecification(
             specification,
-            appConfiguration.path,
+            configPath,
             appConfiguration,
             this.abortOrReport.bind(this),
           )
@@ -774,7 +778,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           const instance = await this.createExtensionInstance(
             specification.identifier,
             specConfiguration,
-            appConfiguration.path,
+            configPath,
             directory,
           ).then((extensionInstance) =>
             this.validateConfigurationExtensionInstance(
@@ -800,7 +804,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       this.abortOrReport(
         outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
         undefined,
-        appConfiguration.path,
+        configPath,
       )
     }
     return extensionInstancesWithKeys
