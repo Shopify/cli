@@ -15,7 +15,7 @@ export class InvalidGrantError extends ExtendableError {}
 export class InvalidRequestError extends ExtendableError {}
 class InvalidTargetError extends AbortError {}
 
-interface ExchangeScopes {
+export interface ExchangeScopes {
   admin: string[]
   partners: string[]
   storefront: string[]
