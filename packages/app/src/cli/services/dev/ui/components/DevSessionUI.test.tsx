@@ -142,7 +142,7 @@ describe('DevSessionUI', () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'p')
+    await sendInputAndWait(renderInstance, 10, 'p')
 
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
@@ -163,7 +163,7 @@ describe('DevSessionUI', () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'g')
+    await sendInputAndWait(renderInstance, 10, 'g')
 
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://graphiql.shopify.com')
@@ -455,7 +455,7 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // When
-    await sendInputAndWait(renderInstance, 100, 'a')
+    await sendInputAndWait(renderInstance, 10, 'a')
 
     // Then - info tab should be shown with app data
     const output = renderInstance.lastFrame()!

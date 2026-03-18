@@ -222,7 +222,7 @@ describe('Dev', () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'p')
+    await sendInputAndWait(renderInstance, 10, 'p')
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
 
@@ -280,7 +280,7 @@ describe('Dev', () => {
     const promise = renderInstance.waitUntilExit()
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, '\u0003')
+    await sendInputAndWait(renderInstance, 10, '\u0003')
 
     await promise
     // Then
@@ -439,7 +439,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'p')
+    await sendInputAndWait(renderInstance, 10, 'p')
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://shopify.com')
 
     // unmount so that polling is cleared after every test
@@ -503,7 +503,7 @@ describe('Dev', () => {
 
     // Then
     // Wait long enough for multiple polling cycles
-    await sleep(0.1)
+    await sleep(0.05)
 
     // enable should be called once at startup
     expect(developerPreview.enable).toHaveBeenCalledTimes(1)
@@ -550,7 +550,7 @@ describe('Dev', () => {
 
     // Then
     // Wait long enough for multiple polling cycles
-    await sleep(0.1)
+    await sleep(0.05)
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d/g, '0')).toMatchInlineSnapshot(`
       "00:00:00 │ backend │ first backend message
       00:00:00 │ backend │ second backend message
@@ -571,7 +571,7 @@ describe('Dev', () => {
 
     // Verify 'd' input doesn't trigger update when app doesn't support preview
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'd')
+    await sendInputAndWait(renderInstance, 10, 'd')
     expect(developerPreview.update).not.toHaveBeenCalled()
 
     // unmount so that polling is cleared after every test
@@ -597,7 +597,7 @@ describe('Dev', () => {
       />,
     )
 
-    await waitForInputsToBeReady()
+    await waitForContent(renderInstance, 'Failed to fetch')
 
     expect(unstyled(renderInstance.lastFrame()!).replace(/\d\d:\d\d:\d\d/g, '00:00:00')).toMatchInlineSnapshot(`
       "
@@ -652,7 +652,7 @@ describe('Dev', () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstance, 100, 'd')
+    await sendInputAndWait(renderInstance, 10, 'd')
     expect(developerPreview.update).toHaveBeenCalledOnce()
 
     await waitForContent(renderInstance, 'off')

@@ -1,5 +1,10 @@
 import {TabPanel, Tab} from './TabPanel.js'
-import {render, sendInputAndWait, waitForInputsToBeReady} from '@shopify/cli-kit/node/testing/ui'
+import {
+  render,
+  sendInputAndWait,
+  sendInputAndWaitForChange,
+  waitForInputsToBeReady,
+} from '@shopify/cli-kit/node/testing/ui'
 import React from 'react'
 import {describe, expect, test, vi} from 'vitest'
 import {unstyled} from '@shopify/cli-kit/node/output'
@@ -96,7 +101,7 @@ describe('TabPanel', () => {
     expect(renderInstance.lastFrame()!).toContain('First tab content')
 
     // Press 'b' to switch to second tab
-    await sendInputAndWait(renderInstance, 100, 'b')
+    await sendInputAndWaitForChange(renderInstance, 'b')
 
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
     expect(renderInstance.lastFrame()!).not.toContain('First tab content')
@@ -110,7 +115,7 @@ describe('TabPanel', () => {
     await waitForInputsToBeReady()
 
     // Press 'c' to trigger action tab
-    await sendInputAndWait(renderInstance, 100, 'c')
+    await sendInputAndWait(renderInstance, 10, 'c')
 
     expect(mockAction).toHaveBeenCalledOnce()
 
@@ -123,7 +128,7 @@ describe('TabPanel', () => {
     await waitForInputsToBeReady()
 
     // Press 'x' to trigger shortcut in active tab
-    await sendInputAndWait(renderInstance, 100, 'x')
+    await sendInputAndWait(renderInstance, 10, 'x')
 
     expect(mockShortcutAction).toHaveBeenCalledOnce()
 
@@ -152,12 +157,12 @@ describe('TabPanel', () => {
     await waitForInputsToBeReady()
 
     // Press 'y' while on tab 'a' - should not trigger second tab's shortcut
-    await sendInputAndWait(renderInstance, 100, 'y')
+    await sendInputAndWait(renderInstance, 10, 'y')
     expect(secondTabShortcut).not.toHaveBeenCalled()
 
     // Switch to tab 'b' and press 'y' - should trigger second tab's shortcut
-    await sendInputAndWait(renderInstance, 100, 'b')
-    await sendInputAndWait(renderInstance, 100, 'y')
+    await sendInputAndWaitForChange(renderInstance, 'b')
+    await sendInputAndWait(renderInstance, 10, 'y')
     expect(secondTabShortcut).toHaveBeenCalledOnce()
 
     renderInstance.unmount()
@@ -194,12 +199,12 @@ describe('TabPanel', () => {
     await waitForInputsToBeReady()
 
     // Press 'x' - condition is met, action should execute
-    await sendInputAndWait(renderInstance, 100, 'x')
+    await sendInputAndWait(renderInstance, 10, 'x')
     expect(conditionMet).toHaveBeenCalled()
     expect(actionWhenConditionMet).toHaveBeenCalledOnce()
 
     // Press 'y' - condition is not met, action should not execute
-    await sendInputAndWait(renderInstance, 100, 'y')
+    await sendInputAndWait(renderInstance, 10, 'y')
     expect(conditionNotMet).toHaveBeenCalled()
     expect(actionWhenConditionNotMet).not.toHaveBeenCalled()
 
@@ -216,7 +221,7 @@ describe('TabPanel', () => {
     expect(output).toContain('(a) First Tab')
 
     // Switch to second tab
-    await sendInputAndWait(renderInstance, 100, 'b')
+    await sendInputAndWaitForChange(renderInstance, 'b')
 
     // The display should update to show the new active tab
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
@@ -234,7 +239,7 @@ describe('TabPanel', () => {
     expect(renderInstance.lastFrame()!).toContain('First tab content')
 
     // Press 'b' - should not switch tabs since input is disabled
-    await sendInputAndWait(renderInstance, 100, 'b')
+    await sendInputAndWait(renderInstance, 10, 'b')
     expect(renderInstance.lastFrame()!).toContain('First tab content')
     expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
 
@@ -273,14 +278,14 @@ describe('TabPanel', () => {
     expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
 
     // Press right arrow to navigate to next content tab (skipping action tab)
-    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+    await sendInputAndWaitForChange(renderInstance, '\u001B[C')
 
     // Should now show second tab content
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
     expect(renderInstance.lastFrame()!).not.toContain('First tab content')
 
     // Press left arrow to navigate back to first tab
-    await sendInputAndWait(renderInstance, 100, '\u001B[D')
+    await sendInputAndWaitForChange(renderInstance, '\u001B[D')
 
     // Should be back to first tab content
     expect(renderInstance.lastFrame()!).toContain('First tab content')
@@ -311,22 +316,22 @@ describe('TabPanel', () => {
     expect(renderInstance.lastFrame()!).toContain('First tab content')
 
     // Press left arrow on leftmost tab - should loop to last tab (second tab)
-    await sendInputAndWait(renderInstance, 100, '\u001B[D')
+    await sendInputAndWaitForChange(renderInstance, '\u001B[D')
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
     expect(renderInstance.lastFrame()!).not.toContain('First tab content')
 
     // Navigate back to first tab
-    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+    await sendInputAndWaitForChange(renderInstance, '\u001B[C')
     expect(renderInstance.lastFrame()!).toContain('First tab content')
     expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
 
     // Navigate to second tab
-    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+    await sendInputAndWaitForChange(renderInstance, '\u001B[C')
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
     expect(renderInstance.lastFrame()!).not.toContain('First tab content')
 
     // Press right arrow on rightmost tab - should loop to first tab
-    await sendInputAndWait(renderInstance, 100, '\u001B[C')
+    await sendInputAndWaitForChange(renderInstance, '\u001B[C')
     expect(renderInstance.lastFrame()!).toContain('First tab content')
     expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
 
@@ -360,17 +365,17 @@ describe('TabPanel', () => {
     expect(renderInstance.lastFrame()!).toContain('First tab content')
 
     // Press tab key to navigate to next tab
-    await sendInputAndWait(renderInstance, 100, '\t')
+    await sendInputAndWaitForChange(renderInstance, '\t')
     expect(renderInstance.lastFrame()!).toContain('Second tab content')
     expect(renderInstance.lastFrame()!).not.toContain('First tab content')
 
     // Press tab key again to navigate to third tab
-    await sendInputAndWait(renderInstance, 100, '\t')
+    await sendInputAndWaitForChange(renderInstance, '\t')
     expect(renderInstance.lastFrame()!).toContain('Third tab content')
     expect(renderInstance.lastFrame()!).not.toContain('Second tab content')
 
     // Press tab key on last tab - should loop to first tab
-    await sendInputAndWait(renderInstance, 100, '\t')
+    await sendInputAndWaitForChange(renderInstance, '\t')
     expect(renderInstance.lastFrame()!).toContain('First tab content')
     expect(renderInstance.lastFrame()!).not.toContain('Third tab content')
 

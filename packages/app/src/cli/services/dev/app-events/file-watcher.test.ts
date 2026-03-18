@@ -707,7 +707,7 @@ describe('file-watcher events', () => {
         }
 
         // Wait for debounced events
-        await new Promise((resolve) => setTimeout(resolve, 300))
+        await new Promise((resolve) => setTimeout(resolve, 30))
 
         // Test passes if we reach here without hanging
         clearTimeout(timeout)

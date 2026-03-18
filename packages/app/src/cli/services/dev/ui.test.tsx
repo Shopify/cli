@@ -189,7 +189,7 @@ describe('ui', () => {
         devSessionStatusManager,
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       expect(vi.mocked(Dev)).toHaveBeenCalled()
       expect(concurrentProcess.action).not.toHaveBeenCalled()
@@ -235,7 +235,7 @@ describe('ui', () => {
         devSessionStatusManager,
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       expect(vi.mocked(DevSessionUI)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -286,7 +286,7 @@ describe('ui', () => {
         devSessionStatusManager,
       })
 
-      await new Promise((resolve) => setTimeout(resolve, 100))
+      await new Promise((resolve) => setTimeout(resolve, 10))
 
       // Get the onAbort callback that was passed to DevSessionUI
       const onAbort = vi.mocked(DevSessionUI).mock.calls[0]?.[0]?.onAbort

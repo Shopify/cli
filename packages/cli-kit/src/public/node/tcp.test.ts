@@ -31,7 +31,9 @@ describe('getAvailableTCPPort', () => {
     }
 
     // When/Then
-    await expect(() => getAvailableTCPPort()).rejects.toThrowError(new AbortError(errorMessage))
+    await expect(() => getAvailableTCPPort(undefined, {waitTimeInSeconds: 0})).rejects.toThrowError(
+      new AbortError(errorMessage),
+    )
   })
 
   test('returns the provided port when it is available', async () => {

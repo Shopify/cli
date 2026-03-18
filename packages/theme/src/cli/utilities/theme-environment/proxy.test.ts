@@ -47,8 +47,8 @@ describe('dev proxy', () => {
       expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
         "<html>
                 <head>
-                  <script src=\\"/cdn/path/to/assets/file1\\"></script>
-                  <link href=\\"/cdn/path/to/assets/file2\\"></link>
+                  <script src="/cdn/path/to/assets/file1"></script>
+                  <link href="/cdn/path/to/assets/file2"></link>
                 </head>
                 <body></body>
               </html>"
@@ -68,9 +68,9 @@ describe('dev proxy', () => {
       expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
         "<html>
                   <head>
-                    <script src=\\"/cdn/path/to/assets/file1\\"></script>
-                    <link href=\\"/cdn/path/to/assets/file1?v=123\\"></link>
-                    <link href=\\"https://cdn.shopify.com/path/to/assets/file2\\"></link>
+                    <script src="/cdn/path/to/assets/file1"></script>
+                    <link href="/cdn/path/to/assets/file1?v=123"></link>
+                    <link href="https://cdn.shopify.com/path/to/assets/file2"></link>
                   </head>
                   <body></body>
                 </html>"
@@ -90,9 +90,9 @@ describe('dev proxy', () => {
       expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
         "<html>
                   <head>
-                    <script src=\\"/ext/cdn/extensions/1aaaa11a-2b22-333c-4444-ee55555e55ee/0.0.0/assets/file-ext\\"></script>
-                    <link href=\\"/ext/cdn/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/assets/file-ext?v=123\\"></link>
-                    <link href=\\"https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/file2\\"></link>
+                    <script src="/ext/cdn/extensions/1aaaa11a-2b22-333c-4444-ee55555e55ee/0.0.0/assets/file-ext"></script>
+                    <link href="/ext/cdn/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/assets/file-ext?v=123"></link>
+                    <link href="https://cdn.shopify.com/extensions/1aaaa11a-2b22-333c-0000-ee55555e55ee/0.1.0/file2"></link>
                   </head>
                   <body></body>
                 </html>"
@@ -112,7 +112,7 @@ describe('dev proxy', () => {
         "
                 console.log('/cdn/path/to/assets/file1');
                 // Comment: /cdn/path/to/assets/file1 something
-                const url = \\"/cdn/path/to/assets/file1#zzz\\";
+                const url = "/cdn/path/to/assets/file1#zzz";
                 fetch(\`/cdn/path/to/assets/file1?q=123\`);
               "
       `,
@@ -125,7 +125,7 @@ describe('dev proxy', () => {
         `<https://my-store.myshopify.com/cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as="style"; rel="preload"`
 
       expect(injectCdnProxy(linkHeader, ctx)).toMatchInlineSnapshot(
-        `"<https://cdn.shopify.com>; rel=\\"preconnect\\", <https://cdn.shopify.com>; rel=\\"preconnect\\"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as=\\"style\\"; rel=\\"preload\\""`,
+        `"<https://cdn.shopify.com>; rel="preconnect", <https://cdn.shopify.com>; rel="preconnect"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as="style"; rel="preload""`,
       )
     })
 
@@ -141,7 +141,7 @@ describe('dev proxy', () => {
         "<html>
                 <head></head>
                 <body>
-                  <div data-shs-beacon-endpoint=\\"/api/collect\\"></div>
+                  <div data-shs-beacon-endpoint="/api/collect"></div>
                 </body>
               </html>"
       `)
@@ -166,8 +166,8 @@ describe('dev proxy', () => {
       expect(injectCdnProxy(content, ctx)).toMatchInlineSnapshot(`
         "<html>
                 <body>
-                  <div data-shs-beacon-endpoint=\\"/api/collect\\"></div>
-                  <span data-shs-beacon-endpoint=\\"/api/collect\\"></span>
+                  <div data-shs-beacon-endpoint="/api/collect"></div>
+                  <span data-shs-beacon-endpoint="/api/collect"></span>
                 </body>
               </html>"
       `)
@@ -225,17 +225,17 @@ describe('dev proxy', () => {
       await expect(patchedResponse.text()).resolves.toMatchInlineSnapshot(`
         "<html>
                   <head>
-                    <script src=\\"/cdn/path/to/assets/file1\\"></script>
-                    <script src=\\"/cdn/path/to/assets/file1\\"></script>
+                    <script src="/cdn/path/to/assets/file1"></script>
+                    <script src="/cdn/path/to/assets/file1"></script>
                   </head>
                   <body>
-                    <div data-base-url=\\"http://localhost:1337\\"></div>
+                    <div data-base-url="http://localhost:1337"></div>
                   </body>
                 </html>"
       `)
 
       expect(patchedResponse.headers.get('link')).toMatchInlineSnapshot(
-        `"<https://cdn.shopify.com>; rel=\\"preconnect\\", <https://cdn.shopify.com>; rel=\\"preconnect\\"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as=\\"style\\"; rel=\\"preload\\""`,
+        `"<https://cdn.shopify.com>; rel="preconnect", <https://cdn.shopify.com>; rel="preconnect"; crossorigin,</cdn/shop/t/10/assets/component-localization-form.css?v=120620094879297847921723560016>; as="style"; rel="preload""`,
       )
 
       expect(patchedResponse.headers.getSetCookie()).toMatchInlineSnapshot(

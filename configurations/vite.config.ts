@@ -13,7 +13,7 @@ interface ConfigOptions {
   poolStrategy: 'threads' | 'forks'
 }
 
-export default function config(packagePath: string, {poolStrategy}: ConfigOptions = {poolStrategy: 'forks'}) {
+export default function config(packagePath: string, {poolStrategy}: ConfigOptions = {poolStrategy: 'threads'}) {
   // always treat environment as one that doesn't support hyperlinks -- otherwise assertions are hard to keep consistent
   process.env.FORCE_HYPERLINK = '0'
   process.env.FORCE_COLOR = '1'
@@ -28,6 +28,11 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
   }
 
   return defineConfig({
+    define: {
+      'process.env.SHOPIFY_UNIT_TEST': '"1"',
+      'process.env.FORCE_HYPERLINK': '"0"',
+      'process.env.FORCE_COLOR': '"1"',
+    },
     resolve: {
       alias: aliases(packagePath) as AliasOptions,
     },
@@ -45,10 +50,6 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
         reporter: ['text', 'json', 'lcov'],
         exclude: ['**/src/**/vendor/**'],
       },
-      snapshotFormat: {
-        escapeString: true,
-      },
-      includeSource: ['**/src/**/*.{ts,tsx}'],
       sequence: {
         hooks: 'list',
       },
@@ -58,8 +59,6 @@ export default function config(packagePath: string, {poolStrategy}: ConfigOption
           'clearTimeout',
           'setInterval',
           'clearInterval',
-          'setImmediate',
-          'clearImmediate',
           'Date',
         ],
       },

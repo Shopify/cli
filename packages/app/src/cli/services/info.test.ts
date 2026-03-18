@@ -116,9 +116,9 @@ describe('info', () => {
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
         "{
-          \\"SHOPIFY_API_KEY\\": \\"api-key\\",
-          \\"SHOPIFY_API_SECRET\\": \\"api-secret\\",
-          \\"SCOPES\\": \\"my-scope\\"
+          "SHOPIFY_API_KEY": "api-key",
+          "SHOPIFY_API_SECRET": "api-secret",
+          "SCOPES": "my-scope"
         }"
       `)
     })

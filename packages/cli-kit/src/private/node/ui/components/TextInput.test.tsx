@@ -53,7 +53,7 @@ describe('TextInput', () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mH[27mello[39m"')
     // cursor can't go before the first character
-    await sendInputAndWait(renderInstance, 100, ARROW_LEFT)
+    await sendInputAndWait(renderInstance, 10, ARROW_LEFT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mH[27mello[39m"')
 
     await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
@@ -67,7 +67,7 @@ describe('TextInput', () => {
     await sendInputAndWaitForChange(renderInstance, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
     // cursor can't go after the last character
-    await sendInputAndWait(renderInstance, 100, ARROW_RIGHT)
+    await sendInputAndWait(renderInstance, 10, ARROW_RIGHT)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mHello[46m█[49m[39m"')
   })
 
@@ -106,7 +106,7 @@ describe('TextInput', () => {
     await sendInputAndWaitForChange(renderInstance, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
     // cannot delete after the value has been cleared
-    await sendInputAndWait(renderInstance, 100, DELETE)
+    await sendInputAndWait(renderInstance, 10, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[46m█[49m[39m"')
   })
 
@@ -170,7 +170,7 @@ describe('TextInput', () => {
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36mTe[7mt[27m[39m"')
     await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
     await sendInputAndWaitForChange(renderInstance, ARROW_LEFT)
-    await sendInputAndWait(renderInstance, 100, DELETE)
+    await sendInputAndWait(renderInstance, 10, DELETE)
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot('"[36m[7mT[27met[39m"')
   })
 

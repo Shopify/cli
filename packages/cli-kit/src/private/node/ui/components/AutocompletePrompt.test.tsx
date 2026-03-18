@@ -287,7 +287,7 @@ describe('AutocompletePrompt', async () => {
 
     await sendInputAndWaitForContent(renderInstance, 'No results found', 'a')
     // prompt doesn't change when enter is pressed
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[46m█[49m[39m
@@ -348,8 +348,8 @@ describe('AutocompletePrompt', async () => {
     await waitForInputsToBeReady()
     await sendInputAndWaitForContent(renderInstance, 'Loading...', 'a')
     // prompt doesn't change when enter is pressed
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    await sendInputAndWait(renderInstance, 100, ENTER)
+    await new Promise((resolve) => setTimeout(resolve, 10))
+    await sendInputAndWait(renderInstance, 10, ENTER)
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?   [36ma[46m█[49m[39m
@@ -587,9 +587,9 @@ describe('AutocompletePrompt', async () => {
     await sendInputAndWaitForContent(renderInstance, 'slash', '\\')
 
     expect(renderInstance.lastFrame()).toMatchInlineSnapshot(`
-      "?  Associate your project with the org Castile Ventures?   [36m\\\\[46m█[49m[39m
+      "?  Associate your project with the org Castile Ventures?   [36m\\[46m█[49m[39m
 
-      [36m>[39m  [36mwith\\\\slash[39m
+      [36m>[39m  [36mwith\\slash[39m
 
 
 

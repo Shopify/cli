@@ -370,7 +370,7 @@ describe('app-event-watcher', () => {
         await flushPromises()
 
         // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         // Then
         expect(generateTypesSpy).toHaveBeenCalled()
@@ -407,7 +407,7 @@ describe('app-event-watcher', () => {
         await flushPromises()
 
         // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         // Then - not called in watcher because it was already called during reloadApp
         expect(generateTypesSpy).not.toHaveBeenCalled()
@@ -444,7 +444,7 @@ describe('app-event-watcher', () => {
         await flushPromises()
 
         // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         // Then - not called in watcher because it was already called during reloadApp
         expect(generateTypesSpy).not.toHaveBeenCalled()
@@ -478,7 +478,7 @@ describe('app-event-watcher', () => {
         await flushPromises()
 
         // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 10))
 
         // Then - generateExtensionTypes should still be called when extensions are deleted
         // to clean up type definitions for the removed extension

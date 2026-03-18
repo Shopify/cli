@@ -94,7 +94,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
  * Wait for the component to be ready to accept input.
  */
 export function waitForInputsToBeReady() {
-  return new Promise((resolve) => setTimeout(resolve, 100))
+  return new Promise((resolve) => setTimeout(resolve, 10))
 }
 
 /**

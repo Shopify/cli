@@ -140,7 +140,7 @@ describe('Replay', () => {
     const promise = renderInstanceReplay.waitUntilExit()
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstanceReplay, 100, 'q')
+    await sendInputAndWait(renderInstanceReplay, 10, 'q')
 
     await promise
 
@@ -171,7 +171,7 @@ describe('Replay', () => {
     const promise = renderInstanceReplay.waitUntilExit()
 
     await waitForInputsToBeReady()
-    await sendInputAndWait(renderInstanceReplay, 100, '\u0003')
+    await sendInputAndWait(renderInstanceReplay, 10, '\u0003')
 
     await promise
     // Then
