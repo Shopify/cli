@@ -24,13 +24,7 @@ import {WebhooksSchema} from '../extensions/specifications/app_config_webhook_sc
 import {WebhooksConfig} from '../extensions/specifications/types/app_config_webhook.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {describe, expect, beforeEach, afterEach, beforeAll, test, vi} from 'vitest'
-import {
-  installNodeModules,
-  yarnLockfile,
-  pnpmLockfile,
-  PackageJson,
-  pnpmWorkspaceFile,
-} from '@shopify/cli-kit/node/node-package-manager'
+import {installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
@@ -39,7 +33,6 @@ import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {captureOutput} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../services/local-storage.js')
 // Mock captureOutput to prevent executing `npm prefix` inside getPackageManager

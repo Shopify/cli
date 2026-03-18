@@ -150,7 +150,7 @@ async function logMetadata(app: {apiKey: string}, organization: Organization, re
   }))
 }
 
-export interface LocalAppContextOutput {
+interface LocalAppContextOutput {
   app: AppInterface
   project: Project
 }

@@ -77,11 +77,11 @@ import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_ap
 import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
+import {Project} from '../project/project.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
-import {Project} from '../project/project.js'
 
 export const DEFAULT_CONFIG = {
   path: '/tmp/project/shopify.app.toml',
@@ -151,7 +151,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinked
   return app
 }
 
-export interface TestProjectOptions {
+interface TestProjectOptions {
   directory?: string
   packageManager?: PackageManager
   nodeDependencies?: Record<string, string>
