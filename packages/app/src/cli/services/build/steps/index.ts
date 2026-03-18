@@ -1,4 +1,4 @@
-import {executeIncludeAssetsStep} from './include_assets_step.js'
+import {executeIncludeAssetsStep} from './include-assets-step.js'
 import {executeBuildThemeStep} from './build-theme-step.js'
 import {executeBundleThemeStep} from './bundle-theme-step.js'
 import {executeBundleUIStep} from './bundle-ui-step.js'

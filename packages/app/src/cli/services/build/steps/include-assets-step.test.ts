@@ -1,4 +1,4 @@
-import {executeIncludeAssetsStep} from './include_assets_step.js'
+import {executeIncludeAssetsStep} from './include-assets-step.js'
 import {LifecycleStep, BuildContext} from '../client-steps.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
@@ -36,6 +36,7 @@ describe('executeIncludeAssetsStep', () => {
     test('copies directory contents to output root when no destination (preserveStructure defaults false)', async () => {
       // Given
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.glob).mockResolvedValue(['index.html', 'assets/logo.png'])
 
@@ -60,6 +61,7 @@ describe('executeIncludeAssetsStep', () => {
     test('preserves directory name when preserveStructure is true', async () => {
       // Given
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.glob).mockResolvedValue(['index.html', 'assets/logo.png'])
 
@@ -142,6 +144,7 @@ describe('executeIncludeAssetsStep', () => {
     test('handles multiple static entries in inclusions', async () => {
       // Given
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValueOnce(true).mockResolvedValueOnce(false)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
@@ -167,6 +170,56 @@ describe('executeIncludeAssetsStep', () => {
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/icon.png', '/test/output/assets/icon.png')
       expect(result.filesCopied).toBe(2)
     })
+
+    test('copies a file to output root when source is a file and no destination is given', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(false)
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: LifecycleStep = {
+        id: 'copy-readme',
+        name: 'Copy README',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'README.md'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/README.md', '/test/output/README.md')
+      expect(result.filesCopied).toBe(1)
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied README.md to README.md'))
+    })
+
+    test('copies a directory to explicit destination path', async () => {
+      // Given
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.mkdir).mockResolvedValue()
+
+      const step: LifecycleStep = {
+        id: 'copy-dist',
+        name: 'Copy Dist',
+        type: 'include_assets',
+        config: {
+          inclusions: [{type: 'static', source: 'dist', destination: 'assets/dist'}],
+        },
+      }
+
+      // When
+      const result = await executeIncludeAssetsStep(step, mockContext)
+
+      // Then
+      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/dist', '/test/output/assets/dist')
+      expect(result.filesCopied).toBe(1)
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied dist to assets/dist'))
+    })
   })
 
   describe('configKey entries', () => {
@@ -181,6 +234,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
 
@@ -212,6 +266,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
 
@@ -302,6 +357,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.glob).mockResolvedValue(['file.html'])
 
@@ -338,6 +394,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.glob).mockResolvedValue(['file.js'])
 
@@ -397,6 +454,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
@@ -572,6 +630,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(true)
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()

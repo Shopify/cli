@@ -1,5 +1,5 @@
 import {joinPath, dirname, extname, relativePath, basename} from '@shopify/cli-kit/node/path'
-import {glob, copyFile, copyDirectoryContents, fileExists, mkdir} from '@shopify/cli-kit/node/fs'
+import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
@@ -56,7 +56,7 @@ const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, S
  * Configuration schema for include_assets step.
  *
  * `inclusions` is a flat array of entries, each with a `type` discriminant
- * (`'files'` or `'pattern'`). All entries are processed in parallel.
+ * (`'static'`, `'configKey'`, or `'pattern'`). All entries are processed in parallel.
  */
 const IncludeAssetsConfigSchema = z.object({
   inclusions: z.array(InclusionEntrySchema),
@@ -69,7 +69,7 @@ const IncludeAssetsConfigSchema = z.object({
  * escape the output root.
  */
 function sanitizeDestination(input: string, warn: (msg: string) => void): string {
-  const segments = input.split('/')
+  const segments = input.replace(/\\/g, '/').split('/')
   const stack: string[] = []
   let stripped = false
   for (const seg of segments) {
@@ -92,9 +92,9 @@ function sanitizeDestination(input: string, warn: (msg: string) => void): string
  *
  * Iterates over `config.inclusions` and dispatches each entry by type:
  *
- * - `type: 'files'` with `source` — copy a file or directory into the output.
- * - `type: 'files'` with `configKey` — resolve a path from the extension's
- *   config and copy its directory into the output; silently skipped if absent.
+ * - `type: 'static'` — copy a file or directory into the output.
+ * - `type: 'configKey'` — resolve a path from the extension's
+ *   config and copy into the output; silently skipped if absent.
  * - `type: 'pattern'` — glob-based file selection from a source directory
  *   (defaults to extension root when `source` is omitted).
  */
@@ -111,8 +111,7 @@ export async function executeIncludeAssetsStep(
   const counts = await Promise.all(
     config.inclusions.map(async (entry) => {
       const warn = (msg: string) => options.stdout.write(msg)
-      const sanitizedDest =
-        entry.destination !== undefined ? sanitizeDestination(entry.destination, warn) : undefined
+      const sanitizedDest = entry.destination !== undefined ? sanitizeDestination(entry.destination, warn) : undefined
 
       if (entry.type === 'pattern') {
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
@@ -183,6 +182,14 @@ async function copySourceEntry(
     return 1
   }
 
+  if (!(await isDirectory(sourcePath))) {
+    const destPath = joinPath(outputDir, basename(sourcePath))
+    await mkdir(outputDir)
+    await copyFile(sourcePath, destPath)
+    options.stdout.write(`Copied ${source} to ${basename(sourcePath)}\n`)
+    return 1
+  }
+
   const destDir = preserveStructure ? joinPath(outputDir, basename(sourcePath)) : outputDir
   await copyDirectoryContents(sourcePath, destDir)
   const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
@@ -235,6 +242,13 @@ async function copyConfigKeyEntry(
         options.stdout.write(`Warning: path '${sourcePath}' does not exist, skipping\n`)
         return 0
       }
+      if (!(await isDirectory(fullPath))) {
+        const destPath = joinPath(effectiveOutputDir, basename(fullPath))
+        await mkdir(effectiveOutputDir)
+        await copyFile(fullPath, destPath)
+        options.stdout.write(`Copied '${sourcePath}' to ${basename(fullPath)}\n`)
+        return 1
+      }
       const destDir = preserveStructure ? joinPath(effectiveOutputDir, basename(fullPath)) : effectiveOutputDir
       await copyDirectoryContents(fullPath, destDir)
       const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
@@ -272,27 +286,57 @@ async function copyByPattern(
 
   await mkdir(outputDir)
 
-  await Promise.all(
-    files.map(async (filepath) => {
+  const duplicates = new Set<string>()
+  if (!preserveStructure) {
+    const basenames = files.map((fp) => basename(fp))
+    const seen = new Set<string>()
+    for (const name of basenames) {
+      if (seen.has(name)) {
+        duplicates.add(name)
+      } else {
+        seen.add(name)
+      }
+    }
+    if (duplicates.size > 0) {
+      const colliding = files.filter((fp) => duplicates.has(basename(fp)))
+      options.stdout.write(
+        `Warning: filename collision detected when flattening — the following files share a basename and will overwrite each other: ${colliding.join(', ')}\n`,
+      )
+    }
+  }
+
+  // When flattening and collisions exist, deduplicate so last-in-array deterministically wins
+  const filesToCopy =
+    !preserveStructure && duplicates.size > 0
+      ? files.filter((fp, idx) => {
+          const name = basename(fp)
+          if (!duplicates.has(name)) return true
+          const lastIdx = files.reduce((last, file, ii) => (basename(file) === name ? ii : last), -1)
+          return lastIdx === idx
+        })
+      : files
+
+  const copyResults = await Promise.all(
+    filesToCopy.map(async (filepath): Promise<number> => {
       const relPath = preserveStructure ? relativePath(sourceDir, filepath) : basename(filepath)
       const destPath = joinPath(outputDir, relPath)
 
       if (relativePath(outputDir, destPath).startsWith('..')) {
-        options.stdout.write(
-          `Warning: skipping '${filepath}' - resolved destination is outside the output directory\n`,
-        )
-        return
+        options.stdout.write(`Warning: skipping '${filepath}' - resolved destination is outside the output directory\n`)
+        return 0
       }
 
-      if (filepath === destPath) return
+      if (filepath === destPath) return 0
 
       await mkdir(dirname(destPath))
       await copyFile(filepath, destPath)
+      return 1
     }),
   )
 
-  options.stdout.write(`Copied ${files.length} file(s) from ${sourceDir} to ${outputDir}\n`)
-  return {filesCopied: files.length}
+  const copiedCount = copyResults.reduce((sum, count) => sum + count, 0)
+  options.stdout.write(`Copied ${copiedCount} file(s) from ${sourceDir} to ${outputDir}\n`)
+  return {filesCopied: copiedCount}
 }
 
 /**
