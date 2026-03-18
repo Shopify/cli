@@ -36,7 +36,7 @@ import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {isStorefrontPasswordProtected} from '@shopify/theme'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
-import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {adminFqdn, normalizeStoreFqdn, storeAdminUrl} from '@shopify/cli-kit/node/context/fqdn'
 
 vi.mock('../../context/identifiers.js')
 vi.mock('@shopify/cli-kit/node/session.js')
@@ -50,6 +50,8 @@ vi.mock('@shopify/cli-kit/node/context/fqdn', async (importOriginal) => {
   return {
     ...original,
     adminFqdn: vi.fn(),
+    normalizeStoreFqdn: vi.fn(original.normalizeStoreFqdn),
+    storeAdminUrl: vi.fn(original.storeAdminUrl),
   }
 })
 
@@ -308,6 +310,69 @@ describe('setup-dev-processes', () => {
           default: `http://localhost:${webPort}`,
           websocket: `http://localhost:${hmrPort}`,
         },
+      },
+    })
+  })
+
+  test('uses the admin-web preflight URL for local development stores', async () => {
+    const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient()
+    const storeFqdn = 'test.my.shop.dev'
+    const storeId = '123456789'
+    const remoteAppUpdated = true
+    const graphiqlPort = 1234
+    const commandOptions: DevConfig['commandOptions'] = {
+      ...appContextResult,
+      directory: '',
+      update: false,
+      commandConfig: new Config({root: ''}),
+      skipDependenciesInstallation: false,
+      tunnel: {mode: 'auto'},
+    }
+    const network: DevConfig['network'] = {
+      proxyUrl: 'https://example.com/proxy',
+      proxyPort: 444,
+      backendPort: 111,
+      frontendPort: 222,
+      currentUrls: {
+        applicationUrl: 'https://example.com/application',
+        redirectUrlWhitelist: ['https://example.com/redirect'],
+      },
+    }
+    const localApp = testAppWithConfig()
+    vi.spyOn(loader, 'reloadApp').mockResolvedValue(localApp)
+    vi.mocked(normalizeStoreFqdn).mockReturnValue('test.my.shop.dev')
+    vi.mocked(storeAdminUrl).mockReturnValue('admin.shop.dev/store/test')
+
+    const remoteApp: DevConfig['remoteApp'] = {
+      apiKey: 'api-key',
+      apiSecretKeys: [{secret: 'api-secret'}],
+      id: '1234',
+      title: 'App',
+      organizationId: '5678',
+      grantedScopes: [],
+      flags: [],
+      developerPlatformClient,
+    }
+
+    const res = await setupDevProcesses({
+      localApp,
+      commandOptions,
+      network,
+      remoteApp,
+      remoteAppUpdated,
+      storeFqdn,
+      storeId,
+      developerPlatformClient,
+      partnerUrlsUpdated: true,
+      graphiqlPort,
+      graphiqlKey: 'somekey',
+    })
+
+    expect(res.previewUrl).toBe('https://admin.shop.dev/store/test/extensions-dev/preview?client_id=api-key')
+    expect(res.processes[1]).toMatchObject({
+      type: 'graphiql',
+      options: {
+        appUrl: 'https://admin.shop.dev/store/test/extensions-dev/preview?client_id=api-key',
       },
     })
   })

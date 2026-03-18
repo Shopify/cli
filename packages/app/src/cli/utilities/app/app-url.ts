@@ -2,8 +2,12 @@ import {normalizeStoreFqdn, storeAdminUrl} from '@shopify/cli-kit/node/context/f
 
 export function buildAppURLForWeb(storeFqdn: string, apiKey: string) {
   const normalizedFQDN = normalizeStoreFqdn(storeFqdn)
-  const adminUrl = storeAdminUrl(normalizedFQDN)
-  return `https://${adminUrl}/admin/oauth/redirect_from_cli?client_id=${apiKey}`
+  const storeName = normalizedFQDN.split('.')[0]
+  const localAdminUrl = storeAdminUrl(normalizedFQDN)
+  const adminDomain = localAdminUrl === normalizedFQDN ? 'admin.shopify.com' : localAdminUrl.split('/')[0]
+  const searchParams = new URLSearchParams({client_id: apiKey})
+
+  return `https://${adminDomain}/store/${storeName}/extensions-dev/preview?${searchParams.toString()}`
 }
 
 export function buildAppURLForAdmin(storeFqdn: string, apiKey: string, adminDomain: string) {

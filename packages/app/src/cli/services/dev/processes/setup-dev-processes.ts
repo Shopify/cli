@@ -25,7 +25,7 @@ import {isTruthy} from '@shopify/cli-kit/node/context/utilities'
 import {firstPartyDev} from '@shopify/cli-kit/node/context/local'
 import {getEnvironmentVariables} from '@shopify/cli-kit/node/environment'
 import {outputInfo} from '@shopify/cli-kit/node/output'
-import {adminFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {adminFqdn, normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface ProxyServerProcess extends BaseProcess<{
   port: number
@@ -108,8 +108,10 @@ export async function setupDevProcesses({
 
   // appPreviewUrl is the direct app URL (used by GraphiQL and dev session fallback)
   // previewURL is what's shown to the user (may be dev console for 1P devs)
+  const isLocalStore = normalizeStoreFqdn(storeFqdn).endsWith('.my.shop.dev')
+
   let appPreviewUrl: string
-  if (is1PDev) {
+  if (is1PDev || isLocalStore) {
     appPreviewUrl = buildAppURLForWeb(storeFqdn, apiKey)
   } else {
     const adminDomain = await adminFqdn()
