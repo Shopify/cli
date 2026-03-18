@@ -120,7 +120,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   if (!configurationObject) return {...fallbackOutput, path: filepath}
 
   const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
-  // TODO: path is injected here as a transitional measure — ideally parseConfigurationFile
+  // Note: path is injected here as a transitional measure — ideally parseConfigurationFile
   // would return {config, path} as a tuple instead of merging path into the config object.
   // That would eliminate the need to strip it in loadAppFromContext and filter it in
   // createConfigExtensionInstances. Tracked as part of Phase 1 path extraction.
