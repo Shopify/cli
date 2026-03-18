@@ -37,7 +37,7 @@ Learn more in the docs: [Create an app](https://shopify.dev/apps/getting-started
 
 To work with themes, the CLI needs to be installed globally with:
 
-- `npm install -g @shopify/cli @shopify/theme`
+- `npm install -g @shopify/cli`
 
 You can also use do it through Homebrew on macOS: `brew tap shopify/shopify && brew install shopify-cli`
 
