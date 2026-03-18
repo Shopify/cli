@@ -16,7 +16,7 @@ import {WebhookSubscription} from '../extensions/specifications/types/app_config
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
+import {readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {
   fileExistsSync,
   fileRealPath,
@@ -84,12 +84,13 @@ export interface AppHiddenConfig {
  *
  * Try to avoid using this: generally you should be working with a more specific type.
  */
-export type AppConfiguration = zod.infer<typeof AppSchema>
+export type AppConfiguration = zod.infer<typeof AppSchema> & {path: string}
+export type AppConfigurationWithoutPath = zod.infer<typeof AppSchema>
 
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
-export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema>
+export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema> & {path: string}
 
 /**
  * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
@@ -102,12 +103,12 @@ export type CliBuildPreferences = BasicAppConfigurationWithoutModules['build']
 export type CurrentAppConfiguration = BasicAppConfigurationWithoutModules & AppConfigurationUsedByCli
 
 /** Validation schema that produces a provided app configuration type */
-export type SchemaForConfig<TConfig> = ZodObjectOf<TConfig>
+export type SchemaForConfig<TConfig extends {path: string}> = ZodObjectOf<Omit<TConfig, 'path'>>
 
 export function getAppVersionedSchema(
   specs: ExtensionSpecification[],
   allowDynamicallySpecifiedConfigs = true,
-): ZodObjectOf<CurrentAppConfiguration> {
+): ZodObjectOf<Omit<CurrentAppConfiguration, 'path'>> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const schema = specs.reduce<any>((schema, spec) => spec.contributeToAppConfigurationSchema(schema), AppSchema)
 
@@ -143,7 +144,7 @@ export function appHiddenConfigPath(appDirectory: string) {
  * Get the field names from the configuration that aren't found in the basic built-in app configuration schema.
  */
 export function filterNonVersionedAppFields(configuration: object): string[] {
-  const builtInFieldNames = Object.keys(AppSchema.shape).concat('organization_id')
+  const builtInFieldNames = Object.keys(AppSchema.shape).concat('path', 'organization_id')
   return Object.keys(configuration).filter((fieldName) => {
     return !builtInFieldNames.includes(fieldName)
   })
@@ -193,7 +194,6 @@ export interface AppConfigurationInterface<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > {
   directory: string
-  configPath: string
   configuration: TConfig
   configSchema: SchemaForConfig<TConfig>
   specifications: TModuleSpec[]
@@ -222,11 +222,8 @@ export interface AppInterface<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
-  packageManager: PackageManager
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
-  nodeDependencies: {[key: string]: string}
   webs: Web[]
-  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
@@ -236,7 +233,6 @@ export interface AppInterface<
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
   readonly devApplicationURLs?: ApplicationURLs
-  updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
@@ -264,11 +260,8 @@ type AppConstructor<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   name: string
-  packageManager: PackageManager
-  nodeDependencies: {[key: string]: string}
   webs: Web[]
   modules: ExtensionInstance[]
-  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: ExtensionSpecification[]
@@ -284,16 +277,12 @@ export class App<
   name: string
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
-  configPath: string
-  packageManager: PackageManager
   configuration: TConfig
-  nodeDependencies: {[key: string]: string}
   webs: Web[]
-  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: TModuleSpec[]
-  configSchema: SchemaForConfig<TConfig>
+  configSchema: ZodObjectOf<Omit<TConfig, 'path'>>
   remoteFlags: Flag[]
   realExtensions: ExtensionInstance[]
   devApplicationURLs?: ApplicationURLs
@@ -302,13 +291,9 @@ export class App<
   constructor({
     name,
     directory,
-    configPath,
-    packageManager,
     configuration,
-    nodeDependencies,
     webs,
     modules,
-    usesWorkspaces,
     dotenv,
     errors,
     specifications,
@@ -319,15 +304,11 @@ export class App<
   }: AppConstructor<TConfig, TModuleSpec>) {
     this.name = name
     this.directory = directory
-    this.configPath = configPath
-    this.packageManager = packageManager
     this.configuration = configuration
-    this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
     this.realExtensions = modules
     this.errors = errors
-    this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
@@ -379,11 +360,6 @@ export class App<
       handle: '',
       modules: getArrayRejectingUndefined(modules),
     }
-  }
-
-  async updateDependencies() {
-    const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
-    this.nodeDependencies = nodeDependencies
   }
 
   get hiddenConfig() {

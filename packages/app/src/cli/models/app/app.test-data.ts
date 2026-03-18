@@ -1,7 +1,7 @@
 import {
   App,
   AppSchema,
-  AppConfiguration,
+  AppConfigurationWithoutPath,
   AppInterface,
   AppLinkedInterface,
   CurrentAppConfiguration,
@@ -74,14 +74,17 @@ import {SchemaDefinitionByTargetQueryVariables} from '../../api/graphql/function
 import {SchemaDefinitionByApiTypeQueryVariables} from '../../api/graphql/functions/generated/schema-definition-by-api-type.js'
 import {AppHomeSpecIdentifier} from '../extensions/specifications/app_config_app_home.js'
 import {AppProxySpecIdentifier} from '../extensions/specifications/app_config_app_proxy.js'
-import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
+import {ExtensionSpecification} from '../extensions/specification.js'
 import {AppLogsOptions} from '../../services/app-logs/utils.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {Project} from '../project/project.js'
 
 export const DEFAULT_CONFIG = {
+  path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
   client_id: 'api-key',
   name: 'my app',
@@ -95,7 +98,7 @@ export const DEFAULT_CONFIG = {
   },
 }
 
-export function testApp(app: Partial<AppInterface> = {}): AppInterface {
+export function testApp(app: Partial<AppInterface> = {}, schemaType: 'current' | 'legacy' = 'legacy'): AppInterface {
   const getConfig = () => {
     return DEFAULT_CONFIG as CurrentAppConfiguration
   }
@@ -103,10 +106,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
   const newApp = new App({
     name: app.name ?? 'App',
     directory: app.directory ?? '/tmp/project',
-    configPath: app.configPath ?? '/tmp/project/shopify.app.toml',
-    packageManager: app.packageManager ?? 'yarn',
     configuration: app.configuration ?? getConfig(),
-    nodeDependencies: app.nodeDependencies ?? {},
     webs: app.webs ?? [
       {
         directory: '',
@@ -117,7 +117,6 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
       },
     ],
     modules: app.allExtensions ?? [],
-    usesWorkspaces: app.usesWorkspaces ?? false,
     dotenv: app.dotenv,
     errors: app.errors,
     specifications: app.specifications ?? [],
@@ -127,9 +126,6 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     devApplicationURLs: app.devApplicationURLs,
   })
 
-  if (app.updateDependencies) {
-    Object.getPrototypeOf(newApp).updateDependencies = app.updateDependencies
-  }
   if (app.extensionsForType) {
     Object.getPrototypeOf(newApp).extensionsForType = app.extensionsForType
   }
@@ -137,7 +133,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
 }
 
 export function testAppLinked(app: Partial<AppInterface> = {}): AppLinkedInterface {
-  return testApp(app) as AppLinkedInterface
+  return testApp(app, 'current') as AppLinkedInterface
 }
 
 interface TestAppWithConfigOptions {
@@ -153,6 +149,34 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinked
   } as CurrentAppConfiguration
 
   return app
+}
+
+export interface TestProjectOptions {
+  directory?: string
+  packageManager?: PackageManager
+  nodeDependencies?: Record<string, string>
+  usesWorkspaces?: boolean
+}
+
+/**
+ * Creates a minimal Project mock for testing.
+ * Use this when a service needs a Project for packageManager, usesWorkspaces, or directory.
+ */
+export function testProject(options: TestProjectOptions = {}): Project {
+  return {
+    directory: options.directory ?? '/tmp/project',
+    packageManager: options.packageManager ?? 'yarn',
+    nodeDependencies: options.nodeDependencies ?? {},
+    usesWorkspaces: options.usesWorkspaces ?? false,
+    appConfigFiles: [],
+    extensionConfigFiles: [],
+    webConfigFiles: [],
+    dotenvFiles: new Map(),
+    hiddenConfigRaw: {},
+    appConfigByName: () => undefined,
+    appConfigByClientId: () => undefined,
+    defaultAppConfig: undefined,
+  } as unknown as Project
 }
 
 export function getWebhookConfig(webhookConfigOverrides?: WebhooksConfig): CurrentAppConfiguration {
@@ -188,7 +212,7 @@ export function testOrganizationApp(app: Partial<OrganizationApp> = {}): Organiz
   return {...defaultApp, ...app}
 }
 
-export const placeholderAppConfiguration: AppConfiguration = {
+export const placeholderAppConfiguration: AppConfigurationWithoutPath = {
   client_id: '',
 }
 
@@ -1526,5 +1550,5 @@ export async function buildVersionedAppSchema() {
 }
 
 export async function configurationSpecifications() {
-  return (await loadLocalExtensionsSpecifications()).filter(isAppConfigSpecification)
+  return (await loadLocalExtensionsSpecifications()).filter((spec) => spec.uidStrategy === 'single')
 }

@@ -68,6 +68,7 @@ client_id="test-api-key"`
           configuration: {
             client_id: 'test-api-key',
             name: 'test-app',
+            path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
           },
         }),
         remoteApp: mockRemoteApp,
@@ -282,14 +283,14 @@ describe('localAppContext', () => {
 
       // Then
       expect(result).toBeDefined()
-      expect(result.name).toEqual(expect.any(String))
-      expect(result.directory).toEqual(normalizePath(tmp))
-      expect(result.configuration).toEqual(
+      expect(result.app.name).toEqual(expect.any(String))
+      expect(result.app.directory).toEqual(normalizePath(tmp))
+      expect(result.app.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app',
+          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
         }),
       )
-      expect(result.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.toml')))
       // Verify no network calls were made
       expect(appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetchOrgFromId).not.toHaveBeenCalled()
@@ -322,12 +323,12 @@ describe('localAppContext', () => {
 
       // Then
       expect(result).toBeDefined()
-      expect(result.configuration).toEqual(
+      expect(result.app.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app-custom',
+          path: normalizePath(joinPath(tmp, 'shopify.app.custom.toml')),
         }),
       )
-      expect(result.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.custom.toml')))
     })
   })
 
@@ -427,7 +428,7 @@ describe('localAppContext', () => {
       })
 
       // Then
-      const realExtensions = result.allExtensions.filter((ext) => !ext.isAppConfigExtension)
+      const realExtensions = result.app.allExtensions.filter((ext) => ext.specification.experience !== 'configuration')
       expect(realExtensions).toHaveLength(1)
       expect(realExtensions[0]).toEqual(
         expect.objectContaining({

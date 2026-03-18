@@ -24,6 +24,7 @@ import {
   testAppLinked,
   testOrganization,
   testOrganizationStore,
+  testProject,
 } from '../../../models/app/app.test-data.js'
 import {WebType} from '../../../models/app/app.js'
 import {ensureDeploymentIdsPresence} from '../../context/identifiers.js'
@@ -85,6 +86,7 @@ beforeEach(() => {
 
 const appContextResult = {
   app: testAppLinked(),
+  project: testProject(),
   remoteApp: testOrganizationApp(),
   developerPlatformClient: testDeveloperPlatformClient(),
   organization: testOrganization(),

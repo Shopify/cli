@@ -8,6 +8,7 @@ import {
   testUIExtension,
   testAppConfigExtensions,
   testAppLinked,
+  testProject,
 } from '../models/app/app.test-data.js'
 import {AppErrors} from '../models/app/loader.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
@@ -87,7 +88,10 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {...infoOptions(), webEnv: true})) as OutputMessage
+      const result = (await info(app, remoteApp, ORG1, testProject(), {
+        ...infoOptions(),
+        webEnv: true,
+      })) as OutputMessage
 
       // Then
       expect(unstyled(stringifyMessage(result))).toMatchInlineSnapshot(`
@@ -107,7 +111,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, {
+      const result = (await info(app, remoteApp, ORG1, testProject(), {
         ...infoOptions(),
         format: 'json',
         webEnv: true,
@@ -159,7 +163,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
       const uiData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const checkoutData = tabularDataSectionFromInfo(result, 'checkout_ui_extension_external')
 
@@ -207,7 +211,7 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = (await info(app, remoteApp, ORG1, infoOptions())) as AlertCustomSection[]
+      const result = (await info(app, remoteApp, ORG1, testProject(), infoOptions())) as AlertCustomSection[]
       const uiExtensionsData = tabularDataSectionFromInfo(result, 'ui_extension_external')
       const relevantExtension = extensionTitleRow(uiExtensionsData, 'handle-for-extension-1')
       const irrelevantExtension = extensionTitleRow(uiExtensionsData, 'point_of_sale')
@@ -241,7 +245,11 @@ describe('info', () => {
       vi.mocked(selectOrganizationPrompt).mockResolvedValue(ORG1)
 
       // When
-      const result = await info(app, remoteApp, ORG1, {format: 'json', webEnv: false, developerPlatformClient})
+      const result = await info(app, remoteApp, ORG1, testProject(), {
+        format: 'json',
+        webEnv: false,
+        developerPlatformClient,
+      })
 
       // Then
       expect(result).toBeInstanceOf(TokenizedString)
@@ -255,18 +263,13 @@ describe('info', () => {
 
 function mockApp({
   directory,
-  currentVersion = '2.2.2',
   configContents = 'scopes = "read_products"',
   app,
 }: {
   directory: string
-  currentVersion?: string
   configContents?: string
   app?: Partial<AppInterface>
 }): AppLinkedInterface {
-  const nodeDependencies: {[key: string]: string} = {}
-  nodeDependencies['@shopify/cli'] = currentVersion
-
   writeFileSync(joinPath(directory, 'shopify.app.toml'), configContents)
 
   return testAppLinked({
@@ -283,7 +286,6 @@ function mockApp({
       },
       extension_directories: ['extensions/*'],
     },
-    nodeDependencies,
     ...(app ? app : {}),
   })
 }

@@ -247,7 +247,7 @@ export async function loadLocalAppOptions(
           existingBuildOptions: configuration.build,
           existingConfig: {...configuration},
           appDirectory: app.directory,
-          packageManager: app.packageManager,
+          packageManager: result.packageManager,
         }
       }
       return {

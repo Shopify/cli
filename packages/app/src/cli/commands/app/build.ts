@@ -34,12 +34,12 @@ export default class Build extends AppUnlinkedCommand {
       cmd_app_dependency_installation_skipped: flags['skip-dependencies-installation'],
     }))
 
-    const app = await localAppContext({
+    const {app, project} = await localAppContext({
       directory: flags.path,
       userProvidedConfigName: flags.config,
     })
 
-    await build({app, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: clientId})
+    await build({app, project, skipDependenciesInstallation: flags['skip-dependencies-installation'], apiKey: clientId})
 
     return {app}
   }

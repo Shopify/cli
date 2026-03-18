@@ -15,6 +15,7 @@ import {
   testDeveloperPlatformClient,
   testAppLinked,
   testOrganization,
+  testProject,
 } from '../models/app/app.test-data.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
@@ -614,7 +615,13 @@ describe('deploy', () => {
       nextSteps: [
         [
           'Run',
-          {command: formatPackageManagerCommand(app.packageManager, 'shopify app release', `--version=${versionTag}`)},
+          {
+            command: formatPackageManagerCommand(
+              testProject().packageManager,
+              'shopify app release',
+              `--version=${versionTag}`,
+            ),
+          },
           'to release this version to users.',
         ],
       ],
@@ -650,7 +657,7 @@ describe('deploy', () => {
           title: 'Next steps',
           body: [
             '• Map extension IDs to other copies of your app by running',
-            {command: formatPackageManagerCommand(app.packageManager, 'shopify app deploy')},
+            {command: formatPackageManagerCommand(testProject().packageManager, 'shopify app deploy')},
             'for: ',
             {list: {items: ['shopify.app.prod.toml', 'shopify.app.stg.toml']}},
             "• Commit to source control to ensure your extension IDs aren't regenerated on the next deploy.",
@@ -728,6 +735,7 @@ async function testDeployBundle({
 
   await deploy({
     app,
+    project: testProject(),
     remoteApp,
     organization: testOrganization(),
     reset: false,

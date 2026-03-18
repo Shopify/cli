@@ -112,14 +112,15 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   filepath: string,
   abortOrReport: AbortOrReport = abort,
   preloadedContent?: JsonMapType,
-): Promise<zod.TypeOf<TSchema>> {
+): Promise<zod.TypeOf<TSchema> & {path: string}> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport))
 
   if (!configurationObject) return fallbackOutput
 
-  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  return {...configuration, path: filepath}
 }
 
 /**
@@ -351,6 +352,7 @@ export type OpaqueAppLoadResult =
       state: 'loaded-app'
       app: AppInterface
       configuration: CurrentAppConfiguration
+      packageManager: PackageManager
     }
   | {
       state: 'loaded-template'
@@ -392,14 +394,15 @@ export async function loadOpaqueApp(options: {
 }): Promise<OpaqueAppLoadResult> {
   // Try to load the app normally first
   try {
-    const app = await loadApp({
-      directory: options.directory,
-      userProvidedConfigName: options.configName,
+    const {project, activeConfig} = await getAppConfigurationContext(options.directory, options.configName)
+    const app = await loadAppFromContext({
+      project,
+      activeConfig,
       specifications: options.specifications,
       remoteFlags: options.remoteFlags,
       mode: options.mode ?? 'report',
     })
-    return {state: 'loaded-app', app, configuration: app.configuration}
+    return {state: 'loaded-app', app, configuration: app.configuration, packageManager: project.packageManager}
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
     // loadApp failed - try loading as raw template config
@@ -467,8 +470,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   }
 
   async loaded() {
-    const {configuration, directory, configPath, configurationLoadResultMetadata, configSchema} =
-      this.loadedConfiguration
+    const {configuration, directory, configurationLoadResultMetadata, configSchema} = this.loadedConfiguration
 
     await logMetadataFromAppLoadingProcess(configurationLoadResultMetadata)
 
@@ -479,14 +481,11 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const configName = configuration.name
     const configHandle: string | undefined = configuration.handle
     const name: string = configHandle ?? configName ?? ''
-    const nodeDependencies = this.project.nodeDependencies
-    const packageManager = this.project.packageManager
-    const usesWorkspaces = this.project.usesWorkspaces
 
     const hiddenConfig = await resolveHiddenConfig(this.project, configuration.client_id)
 
     if (!this.reloadState) {
-      await showMultipleCLIWarningIfNeeded(directory, nodeDependencies)
+      await showMultipleCLIWarningIfNeeded(directory, this.project.nodeDependencies)
     }
 
     const {webs, usedCustomLayout: usedCustomLayoutForWeb} = await this.loadWebs(
@@ -497,13 +496,9 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const appClass = new App({
       name,
       directory,
-      configPath,
-      packageManager,
       configuration,
-      nodeDependencies,
       webs,
       modules: extensions,
-      usesWorkspaces,
       dotenv,
       specifications: this.specifications,
       configSchema,
@@ -518,7 +513,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
 
     if (!this.errors.isEmpty()) appClass.errors = this.errors
 
-    await logMetadataForLoadedApp(appClass, {
+    await logMetadataForLoadedApp(appClass, this.project.usesWorkspaces, {
       usedCustomLayoutForWeb,
       usedCustomLayoutForExtensions: configuration.extension_directories !== undefined,
     })
@@ -735,10 +730,9 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private createWebhookSubscriptionInstances(directory: string, appConfiguration: TConfig) {
     const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
     if (!specification) return []
-    const configPath = this.loadedConfiguration.configPath
     const specConfiguration = parseConfigurationObject(
       WebhooksSchema,
-      configPath,
+      appConfiguration.path,
       appConfiguration,
       this.abortOrReport.bind(this),
     )
@@ -757,22 +751,20 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
 
     // Create 1 extension instance per subscription
     const instances = webhookSubscriptions.map(async (subscription) => {
-      return this.createExtensionInstance(specification.identifier, subscription, configPath, directory)
+      return this.createExtensionInstance(specification.identifier, subscription, appConfiguration.path, directory)
     })
 
     return instances
   }
 
   private async createConfigExtensionInstances(directory: string, appConfiguration: TConfig) {
-    const configPath = this.loadedConfiguration.configPath
     const extensionInstancesWithKeys = await Promise.all(
       this.specifications
-        .filter((specification) => isAppConfigSpecification(specification))
-        .filter((specification) => specification.identifier !== WebhookSubscriptionSpecIdentifier)
+        .filter((specification) => specification.uidStrategy === 'single')
         .map(async (specification) => {
           const specConfiguration = parseConfigurationObjectAgainstSpecification(
             specification,
-            configPath,
+            appConfiguration.path,
             appConfiguration,
             this.abortOrReport.bind(this),
           )
@@ -782,7 +774,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           const instance = await this.createExtensionInstance(
             specification.identifier,
             specConfiguration,
-            configPath,
+            appConfiguration.path,
             directory,
           ).then((extensionInstance) =>
             this.validateConfigurationExtensionInstance(
@@ -800,7 +792,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'organization_id']
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path', 'organization_id']
         return !configKeysThatAreNeverModules.includes(key)
       })
 
@@ -808,7 +800,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       this.abortOrReport(
         outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
         undefined,
-        configPath,
+        appConfiguration.path,
       )
     }
     return extensionInstancesWithKeys
@@ -1014,6 +1006,7 @@ export function isWebType(web: Web, type: WebType): boolean {
 
 async function logMetadataForLoadedApp(
   app: AppInterface,
+  usesWorkspaces: boolean,
   loadingStrategy: {
     usedCustomLayoutForWeb: boolean
     usedCustomLayoutForExtensions: boolean
@@ -1025,7 +1018,6 @@ async function logMetadataForLoadedApp(
   const appName = app.name
   const appDirectory = app.directory
   const sortedAppScopes = getAppScopesArray(app.configuration).sort()
-  const appUsesWorkspaces = app.usesWorkspaces
 
   await logMetadataForLoadedAppUsingRawValues(
     webs,
@@ -1034,7 +1026,7 @@ async function logMetadataForLoadedApp(
     appName,
     appDirectory,
     sortedAppScopes,
-    appUsesWorkspaces,
+    usesWorkspaces,
   )
 }
 

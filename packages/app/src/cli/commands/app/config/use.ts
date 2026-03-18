@@ -35,7 +35,7 @@ export default class ConfigUse extends AppUnlinkedCommand {
   public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags, args} = await this.parse(ConfigUse)
 
-    const app = await localAppContext({
+    const {app} = await localAppContext({
       directory: flags.path,
       userProvidedConfigName: args.config,
     })

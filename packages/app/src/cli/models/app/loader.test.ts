@@ -354,72 +354,9 @@ describe('load', () => {
     expect(app.name).toBe('config-name')
   })
 
-  test('defaults to npm as the package manager when the configuration is valid', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
+  // packageManager is now owned by Project and tested in project.test.ts
 
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.packageManager).toBe('npm')
-  })
-
-  test('defaults to yarn as the package manager when yarn.lock is present, the configuration is valid, and has no blocks', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const yarnLockPath = joinPath(tmpDir, yarnLockfile)
-    await writeFile(yarnLockPath, '')
-    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.packageManager).toBe('yarn')
-  })
-
-  test('defaults to pnpm as the package manager when pnpm lockfile is present, the configuration is valid, and has no blocks', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const pnpmLockPath = joinPath(tmpDir, pnpmLockfile)
-    await writeFile(pnpmLockPath, '')
-    vi.mocked(captureOutput).mockResolvedValue(tmpDir)
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.packageManager).toBe('pnpm')
-  })
-
-  test("identifies if the app doesn't use workspaces", async () => {
-    // Given
-    await writeConfig(appConfiguration)
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.usesWorkspaces).toBe(false)
-  })
-
-  test('identifies if the app uses yarn or npm workspaces', async () => {
-    // Given
-    await writeConfig(appConfiguration, {
-      workspaces: ['packages/*'],
-      name: 'my_app',
-      dependencies: {},
-      devDependencies: {},
-    })
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.usesWorkspaces).toBe(true)
-  })
+  // usesWorkspaces is now owned by Project and tested in project.test.ts
 
   test('checks for multiple CLI installations', async () => {
     // Given
@@ -435,19 +372,6 @@ describe('load', () => {
 
     // Then
     expect(showMultipleCLIWarningIfNeeded).toHaveBeenCalled()
-  })
-
-  test('identifies if the app uses pnpm workspaces', async () => {
-    // Given
-    await writeConfig(appConfiguration)
-    const pnpmWorkspaceFilePath = joinPath(tmpDir, pnpmWorkspaceFile)
-    await writeFile(pnpmWorkspaceFilePath, '')
-
-    // When
-    const app = await loadTestingApp()
-
-    // Then
-    expect(app.usesWorkspaces).toBe(true)
   })
 
   test('does not double-count webs defined in workspaces', async () => {
@@ -474,7 +398,6 @@ describe('load', () => {
     app = await loadTestingApp()
 
     // Then
-    expect(app.usesWorkspaces).toBe(true)
     expect(app.webs.length).toBe(1)
   }, 30000)
 
@@ -2552,9 +2475,6 @@ describe('load', () => {
       },
     })
     expect(reloadedApp.name).toBe(app.name)
-    expect(reloadedApp.packageManager).toBe(app.packageManager)
-    expect(reloadedApp.nodeDependencies).toEqual(app.nodeDependencies)
-    expect(reloadedApp.usesWorkspaces).toBe(app.usesWorkspaces)
   })
 
   test('call app.generateExtensionTypes', async () => {

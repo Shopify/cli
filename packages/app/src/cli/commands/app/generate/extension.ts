@@ -77,7 +77,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
 
     await checkFolderIsValidApp(flags.path)
 
-    const {app, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
+    const {app, project, specifications, remoteApp, developerPlatformClient} = await linkedAppContext({
       directory: flags.path,
       clientId: flags['client-id'],
       forceRelink: flags.reset,
@@ -92,6 +92,7 @@ export default class AppGenerateExtension extends AppLinkedCommand {
       template: flags.template,
       flavor: flags.flavor,
       app,
+      project,
       specifications,
       remoteApp,
       developerPlatformClient,

@@ -22,6 +22,7 @@ import {
   testAppWithConfig,
   testOrganizationApp,
   testThemeExtensions,
+  testProject,
 } from '../models/app/app.test-data.js'
 import metadata from '../metadata.js'
 import {getAppConfigurationFileName, isWebType, loadApp} from '../models/app/loader.js'
@@ -79,6 +80,7 @@ const STORE1: OrganizationStore = {
 const deployOptions = (app: AppLinkedInterface, reset = false, force = false): DeployOptions => {
   return {
     app,
+    project: testProject(),
     remoteApp: APP2,
     organization: ORG1,
     reset,
@@ -416,6 +418,7 @@ describe('ensureDeployContext', () => {
     // When
     const options = {
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,
@@ -458,6 +461,7 @@ describe('ensureDeployContext', () => {
     // When
     const options = {
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,
@@ -517,6 +521,7 @@ describe('ensureDeployContext', () => {
     // When
     const result = await ensureDeployContext({
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,
@@ -563,6 +568,7 @@ describe('ensureDeployContext', () => {
     // When
     const result = await ensureDeployContext({
       app,
+      project: testProject(),
       remoteApp: APP2,
       organization: ORG1,
       reset: false,

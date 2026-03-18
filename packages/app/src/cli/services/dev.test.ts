@@ -1,5 +1,10 @@
 import {warnIfScopesDifferBeforeDev, blockIfMigrationIncomplete} from './dev.js'
-import {testAppLinked, testDeveloperPlatformClient, testOrganizationApp} from '../models/app/app.test-data.js'
+import {
+  testAppLinked,
+  testDeveloperPlatformClient,
+  testOrganizationApp,
+  testProject,
+} from '../models/app/app.test-data.js'
 import {describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
@@ -33,7 +38,11 @@ describe('warnIfScopesDifferBeforeDev', () => {
     // When
     const mockOutput = mockAndCaptureOutput()
     mockOutput.clear()
-    await warnIfScopesDifferBeforeDev({...apps, developerPlatformClient})
+    await warnIfScopesDifferBeforeDev({
+      ...apps,
+      developerPlatformClient,
+      commandOptions: {project: testProject()} as any,
+    })
 
     // Then
     expect(mockOutput.warn()).toBe('')
@@ -47,7 +56,11 @@ describe('warnIfScopesDifferBeforeDev', () => {
     // When
     const mockOutput = mockAndCaptureOutput()
     mockOutput.clear()
-    await warnIfScopesDifferBeforeDev({...apps, developerPlatformClient})
+    await warnIfScopesDifferBeforeDev({
+      ...apps,
+      developerPlatformClient,
+      commandOptions: {project: testProject()} as any,
+    })
 
     // Then
     expect(mockOutput.warn()).toContain("The scopes in your TOML don't match")
@@ -61,7 +74,11 @@ describe('warnIfScopesDifferBeforeDev', () => {
     // When
     const mockOutput = mockAndCaptureOutput()
     mockOutput.clear()
-    await warnIfScopesDifferBeforeDev({...apps, developerPlatformClient})
+    await warnIfScopesDifferBeforeDev({
+      ...apps,
+      developerPlatformClient,
+      commandOptions: {project: testProject()} as any,
+    })
 
     // Then
     expect(mockOutput.warn()).toBe('')

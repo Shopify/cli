@@ -40,7 +40,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
 
     let functionExport = DEFAULT_FUNCTION_EXPORT
 
-    const app = await localAppContext({
+    const {app} = await localAppContext({
       directory: flags.path,
       userProvidedConfigName: flags.config,
     })
