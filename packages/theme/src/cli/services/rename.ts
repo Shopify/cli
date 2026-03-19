@@ -14,7 +14,7 @@ export interface RenameOptions {
 }
 
 export async function renameTheme(options: RenameOptions, adminSession: AdminSession) {
-  const newName = options.name || (await promptThemeName('New name for the theme'))
+  const newName = options.name ?? (await promptThemeName('New name for the theme'))
 
   const theme = await findOrSelectTheme(adminSession, {
     header: 'Select a theme to rename',

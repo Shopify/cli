@@ -109,7 +109,10 @@ function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
       return handleBlockScriptsJs(ctx, event, 'snippet')
     case 'scripts.js':
       return handleBlockScriptsJs(ctx, event, 'section')
+    case undefined:
+      break
     default:
+      break
   }
 }
 

@@ -6,6 +6,6 @@ export default class ClearCache extends Command {
   static hidden = true
 
   async run(): Promise<void> {
-    clearCache()
+    await clearCache()
   }
 }
