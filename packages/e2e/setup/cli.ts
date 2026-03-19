@@ -52,6 +52,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
           env: {...env.processEnv, ...opts.env},
+          extendEnv: false,
           timeout,
           reject: false,
         }
@@ -75,6 +76,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
           env: {...env.processEnv, ...opts.env},
+          extendEnv: false,
           timeout,
           reject: false,
         }

@@ -22,6 +22,8 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         return
       }
 
+      process.stdout.write('[e2e] Authenticating automatically — no action required.\n')
+
       // Clear any existing session
       await execa('node', [executables.cli, 'auth', 'logout'], {
         env: env.processEnv,
