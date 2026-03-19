@@ -385,6 +385,30 @@ describe('pollAppLogs', () => {
     expect(vi.getTimerCount()).toEqual(1)
   })
 
+  test('retries at 60s interval when resubscribe throws on 401', async () => {
+    // Given
+    const response = {errors: ['Unauthorized'], status: 401}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
+    const failingResubscribe = vi.fn().mockRejectedValue(new Error('Network error'))
+
+    // When
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      developerPlatformClient: mockedDeveloperPlatformClient,
+      resubscribeCallback: failingResubscribe,
+      storeName: 'storeName',
+      organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
+    })
+
+    // Then
+    expect(failingResubscribe).toHaveBeenCalled()
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
   test('displays error message, waits, and retries if error occurred', async () => {
     // Given
     const outputDebugSpy = vi.spyOn(output, 'outputDebug')

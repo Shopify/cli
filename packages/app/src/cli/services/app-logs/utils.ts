@@ -119,7 +119,12 @@ export const handleFetchAppLogsError = async (
     outputDebug(`Errors: ${errors.map((error) => error.message).join(', ')}`)
 
     if (errors.some((error) => error.status === 401)) {
-      nextJwtToken = await input.onResubscribe()
+      try {
+        nextJwtToken = await input.onResubscribe()
+      } catch (resubscribeError) {
+        outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
+        retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
+      }
     } else if (errors.some((error) => error.status === 429)) {
       retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
       input.onThrottle(retryIntervalMs)
