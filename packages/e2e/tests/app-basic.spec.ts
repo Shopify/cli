@@ -1,8 +1,8 @@
 import {appScaffoldFixture as test} from '../setup/app.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
-import {writeFileSync} from 'node:fs'
-import {join} from 'node:path'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import * as fs from 'fs'
 
 test.describe('App basic flow (no extensions)', () => {
   test('init, dev, execute, quit, clean, deploy, versions, config link, deploy to secondary', async ({
@@ -85,8 +85,8 @@ test.describe('App basic flow (no extensions)', () => {
     // causes renderTextPrompt to return '' → filenameFromName('') = 'shopify.app.toml' →
     // that file already exists → overwrite confirmation prompt hangs.
     // (--config and --client-id are mutually exclusive flags, so we can't pass both directly.)
-    writeFileSync(
-      join(appScaffold.appDir, 'shopify.app.secondary.toml'),
+    fs.writeFileSync(
+      joinPath(appScaffold.appDir, 'shopify.app.secondary.toml'),
       `client_id = "${env.secondaryClientId}"\n`,
     )
 

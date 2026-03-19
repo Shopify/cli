@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-imports */
 import {cliFixture} from './cli.js'
 import {executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
