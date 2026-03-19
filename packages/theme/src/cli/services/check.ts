@@ -135,12 +135,9 @@ export function sortOffenses(offenses: Offense[]): OffenseMap {
   const offensesByFile = offenses.reduce((acc: OffenseMap, offense: Offense) => {
     const {uri} = offense
     const filePath = pathUtils.fsPath(uri)
-    if (!acc[filePath]) {
-      acc[filePath] = []
-    }
+    acc[filePath] ??= []
 
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    acc[filePath]!.push(offense)
+    acc[filePath].push(offense)
     return acc
   }, {})
 

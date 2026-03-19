@@ -300,7 +300,7 @@ const uiExtensionSpec = createExtensionSpecification({
             )
           }
         }
-        let typeDefinition = createTypeDefinition({
+        let typeDefinition = await createTypeDefinition({
           fullPath: filePath,
           typeFilePath,
           targets: uniqueTargets,

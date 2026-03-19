@@ -21,9 +21,7 @@ import {
 } from '../../private/node/content-tokens.js'
 import {tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
 import {consoleLog, consoleWarn, output} from '../../private/node/output.js'
-
 import stripAnsi from 'strip-ansi'
-
 import {Writable} from 'stream'
 
 import type {Change} from 'diff'

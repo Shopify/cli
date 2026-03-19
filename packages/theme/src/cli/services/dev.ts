@@ -163,6 +163,8 @@ export function createKeypressHandler(
     }
 
     switch (key.name) {
+      case undefined:
+        break
       case 't':
         debouncedOpenURL(urls.local, 'localhost')
         break
