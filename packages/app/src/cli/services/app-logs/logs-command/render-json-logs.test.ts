@@ -101,6 +101,35 @@ describe('renderJsonLogs', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
+  test('should handle 401 with resubscribe failure and retry at throttle interval', async () => {
+    const mockErrorResponse = {
+      errors: [{status: 401, message: 'Unauthorized'}],
+    }
+    const pollAppLogsMock = vi.fn().mockResolvedValue(mockErrorResponse)
+    vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
+    const throttleRetryInterval = 60000
+    const handleFetchAppLogsErrorMock = vi.fn(() => {
+      return Promise.resolve({nextJwtToken: null, retryIntervalMs: throttleRetryInterval})
+    })
+    vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
+
+    const storeNameById = new Map<string, string>()
+    storeNameById.set('1', 'storeName')
+    await renderJsonLogs({
+      pollOptions: {cursor: 'cursor', filters: {status: undefined, sources: undefined}, jwtToken: 'jwtToken'},
+      options: {
+        variables: {shopIds: [], apiKey: ''},
+        developerPlatformClient: testDeveloperPlatformClient(),
+      },
+      storeNameById,
+      organizationId: 'organizationId',
+    })
+
+    expect(handleFetchAppLogsError).toHaveBeenCalled()
+    expect(pollAppLogs).toHaveBeenCalled()
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
   test('should handle error response and retry as expected', async () => {
     const mockErrorResponse = {
       errors: [{status: 500, message: 'Server Error'}],
