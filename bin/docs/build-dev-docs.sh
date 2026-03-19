@@ -6,11 +6,9 @@ if [ -d "docs-shopify.dev/configuration" ] && [ "$(ls -A docs-shopify.dev/config
   HAS_SCHEMA_DOCS=true
 fi
 
-# Step 1: Compile TypeScript for commands
-COMPILE_CMD_TS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node --target esNext"
-# Step 2: Compile TypeScript for schema docs (if present)
-COMPILE_SCHEMA_TS="npx tsc --project bin/docs/tsconfig.schema-docs.json --moduleResolution node --target esNext"
-# Step 3: Run generate-docs with all inputs at once so they end up in a single output file
+# Step 1: Compile TypeScript for all doc files (commands + configuration if present)
+COMPILE_DOCS_TS="npx tsc --project bin/docs/tsconfig.docs.json --moduleResolution node --target esNext"
+# Step 2: Run generate-docs with all inputs at once so they end up in a single output file
 GENERATE_DOCS_INPUT="./docs-shopify.dev/commands"
 CLEANUP="rm -rf docs-shopify.dev/commands/**/*.doc.js docs-shopify.dev/commands/*.doc.js"
 
@@ -28,12 +26,11 @@ fi
 echo $1
 echo "RUNNING"
 
-# Compile command docs TypeScript
-eval $COMPILE_CMD_TS
+# Compile all doc TypeScript (tsconfig.docs.json includes both commands and configuration)
+eval $COMPILE_DOCS_TS
 
-# Compile schema docs TypeScript if present, and add to input
+# Add configuration docs to input if present
 if [ "$HAS_SCHEMA_DOCS" = true ]; then
-  eval $COMPILE_SCHEMA_TS
   GENERATE_DOCS_INPUT="./docs-shopify.dev/commands ./docs-shopify.dev/configuration"
   CLEANUP="$CLEANUP && rm -rf docs-shopify.dev/configuration/**/*.doc.js docs-shopify.dev/configuration/*.doc.js"
 fi

@@ -204,6 +204,9 @@ export function extensionSlug(spec: MergedSpec): string {
   return spec.identifier.replace(/_/g, '-')
 }
 
+// Used to avoid generating `interface function { ... }` or `interface export { ... }` which would be
+// syntax errors. Extension slugs like "function" are real spec identifiers. Interface keys are already
+// quoted ('key': type) so they don't need this check — only the interface name itself does.
 const JS_RESERVED_WORDS = new Set([
   'break',
   'case',

@@ -1,9 +1,10 @@
 {
     "compilerOptions": {
-        "rootDir": "/",
+        "rootDir": "/"
     },
     "include": [
-        "../../docs-shopify.dev/commands/**/*.doc.ts"
+        "../../docs-shopify.dev/commands/**/*.doc.ts",
+        "../../docs-shopify.dev/configuration/**/*.doc.ts"
     ],
     "exclude": []
 }
