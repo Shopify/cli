@@ -65,11 +65,11 @@ client_id="test-api-key"`
       // Then
       expect(result).toEqual({
         app: expect.objectContaining({
-          configuration: {
+          configPath: normalizePath(joinPath(tmp, 'shopify.app.toml')),
+          configuration: expect.objectContaining({
             client_id: 'test-api-key',
             name: 'test-app',
-            path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
-          },
+          }),
         }),
         remoteApp: mockRemoteApp,
         developerPlatformClient: expect.any(Object),
@@ -288,9 +288,9 @@ describe('localAppContext', () => {
       expect(result.app.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app',
-          path: normalizePath(joinPath(tmp, 'shopify.app.toml')),
         }),
       )
+      expect(result.app.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.toml')))
       // Verify no network calls were made
       expect(appFromIdentifiers).not.toHaveBeenCalled()
       expect(fetchOrgFromId).not.toHaveBeenCalled()
@@ -326,9 +326,9 @@ describe('localAppContext', () => {
       expect(result.app.configuration).toEqual(
         expect.objectContaining({
           name: 'test-app-custom',
-          path: normalizePath(joinPath(tmp, 'shopify.app.custom.toml')),
         }),
       )
+      expect(result.app.configPath).toEqual(normalizePath(joinPath(tmp, 'shopify.app.custom.toml')))
     })
   })
 
