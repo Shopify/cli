@@ -210,7 +210,8 @@
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
           "**/bin/*.js!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "**/bootstrap.ts!"
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
