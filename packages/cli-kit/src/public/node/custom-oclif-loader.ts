@@ -58,6 +58,29 @@ export class ShopifyConfig extends Config {
   }
 
   /**
+   * Override runHook to make init hooks non-blocking for faster startup.
+   * Init hooks (app-init, hydrogen-init) set up LocalStorage and check hydrogen —
+   * these are setup tasks that don't need to complete before commands run.
+   *
+   * @param event - The hook event name.
+   * @param opts - Options to pass to the hook.
+   * @param timeout - Optional timeout for the hook.
+   * @param captureErrors - Whether to capture errors instead of throwing.
+   * @returns The hook result with successes and failures arrays.
+   */
+  // @ts-expect-error: overriding with looser types for hook interception
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async runHook(event: string, opts: any, timeout?: number, captureErrors?: boolean): Promise<any> {
+    if (event === 'init' && this.lazyCommandLoader) {
+      // Fire init hooks in background — they'll complete before process exits
+      // eslint-disable-next-line no-void
+      void super.runHook(event, opts, timeout, captureErrors)
+      return {successes: [], failures: []}
+    }
+    return super.runHook(event, opts, timeout, captureErrors)
+  }
+
+  /**
    * Override runCommand to use lazy loading when available.
    * Instead of calling cmd.load() which triggers loading ALL commands via index.js,
    * we directly import only the needed command module.
