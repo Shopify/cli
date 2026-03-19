@@ -320,7 +320,7 @@ async function executeCompleteFlow(applications: OAuthApplications, existingAlia
 
   // Preserve existing alias if available, otherwise try fetching email
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
-  const alias = existingAlias ?? (await fetchEmail(businessPlatformToken))
+  const alias = existingAlias ?? (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
 
   const session: Session = {
     identity: {
@@ -352,7 +352,7 @@ async function refreshTokens(session: Session, applications: OAuthApplications):
   )
 
   return {
-    identity: identityToken,
+    identity: {...identityToken, alias: session.identity.alias},
     applications: applicationTokens,
   }
 }
