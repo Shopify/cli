@@ -112,19 +112,14 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   filepath: string,
   abortOrReport: AbortOrReport = abort,
   preloadedContent?: JsonMapType,
-): Promise<zod.TypeOf<TSchema> & {path: string}> {
+): Promise<zod.TypeOf<TSchema>> {
   const fallbackOutput = {} as zod.TypeOf<TSchema>
 
   const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport))
 
-  if (!configurationObject) return {...fallbackOutput, path: filepath}
+  if (!configurationObject) return fallbackOutput
 
-  const configuration = parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
-  // Note: path is injected here as a transitional measure — ideally parseConfigurationFile
-  // would return {config, path} as a tuple instead of merging path into the config object.
-  // That would eliminate the need to strip it in loadAppFromContext and filter it in
-  // createConfigExtensionInstances. Tracked as part of Phase 1 path extraction.
-  return {...configuration, path: filepath}
+  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
 }
 
 /**
@@ -800,7 +795,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const unusedKeys = Object.keys(appConfiguration)
       .filter((key) => !extensionInstancesWithKeys.some(([_, keys]) => keys.includes(key)))
       .filter((key) => {
-        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'path', 'organization_id']
+        const configKeysThatAreNeverModules = [...Object.keys(AppSchema.shape), 'organization_id']
         return !configKeysThatAreNeverModules.includes(key)
       })
 

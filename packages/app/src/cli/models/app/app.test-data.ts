@@ -84,7 +84,6 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const DEFAULT_CONFIG = {
-  path: '/tmp/project/shopify.app.toml',
   application_url: 'https://myapp.com',
   client_id: 'api-key',
   name: 'my app',
