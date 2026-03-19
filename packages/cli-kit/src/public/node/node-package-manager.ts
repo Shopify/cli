@@ -9,7 +9,8 @@ import {outputToken, outputContent, outputDebug} from './output.js'
 import {PackageVersionKey, cacheRetrieve, cacheRetrieveOrRepopulate} from '../../private/node/conf-store.js'
 import {parseJSON} from '../common/json.js'
 
-import latestVersion from 'latest-version'
+// latest-version is loaded lazily to avoid ~113ms import cost at startup
+// import latestVersion from 'latest-version'
 import {SemVer, satisfies as semverSatisfies} from 'semver'
 
 import type {Writable} from 'stream'
@@ -710,7 +711,8 @@ export async function addResolutionOrOverride(directory: string, dependencies: R
  */
 async function getLatestNPMPackageVersion(name: string) {
   outputDebug(outputContent`Getting the latest version of NPM package: ${outputToken.raw(name)}`)
-  return runWithTimer('cmd_all_timing_network_ms')(() => {
+  return runWithTimer('cmd_all_timing_network_ms')(async () => {
+    const {default: latestVersion} = await import('latest-version')
     return latestVersion(name)
   })
 }

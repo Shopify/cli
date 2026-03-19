@@ -1,12 +1,3 @@
-import {CLI_KIT_VERSION} from '../../common/version.js'
-import {checkForNewVersion, checkForCachedNewVersion} from '../node-package-manager.js'
-import {startAnalytics} from '../../../private/node/analytics.js'
-import {outputDebug, outputWarn} from '../output.js'
-import {getOutputUpdateCLIReminder} from '../upgrade.js'
-import Command from '../base-command.js'
-import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
-import {fetchNotificationsInBackground} from '../notifications-system.js'
-import {isPreReleaseVersion} from '../version.js'
 import {Hook} from '@oclif/core'
 
 export declare interface CommandContent {
@@ -14,7 +5,9 @@ export declare interface CommandContent {
   topic?: string
   alias?: string
 }
+
 // This hook is called before each command run. More info: https://oclif.io/docs/hooks
+// Heavy imports are loaded in parallel via Promise.all to avoid sequential await overhead.
 export const hook: Hook.Prerun = async (options) => {
   const commandContent = parseCommandContent({
     id: options.Command.id,
@@ -22,10 +15,21 @@ export const hook: Hook.Prerun = async (options) => {
     pluginAlias: options.Command.plugin?.alias,
   })
   const args = options.argv
-  await warnOnAvailableUpgrade()
+
+  // Load heavy modules in parallel
+  const [{outputDebug}, analyticsMod, notificationsMod] = await Promise.all([
+    import('../output.js'),
+    import('../../../private/node/analytics.js'),
+    import('../notifications-system.js'),
+  ])
+
+  // Fire upgrade check in background (non-blocking)
+  // eslint-disable-next-line no-void
+  void warnOnAvailableUpgrade()
+
   outputDebug(`Running command ${commandContent.command}`)
-  await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
-  fetchNotificationsInBackground(options.Command.id)
+  await analyticsMod.startAnalytics({commandContent, args, commandClass: options.Command})
+  notificationsMod.fetchNotificationsInBackground(options.Command.id)
 }
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
@@ -90,10 +94,15 @@ function findAlias(aliases: string[]) {
  * Warns the user if there is a new version of the CLI available
  */
 export async function warnOnAvailableUpgrade(): Promise<void> {
+  const [{CLI_KIT_VERSION}, {isPreReleaseVersion}, {checkForNewVersion, checkForCachedNewVersion}] = await Promise.all([
+    import('../../common/version.js'),
+    import('../version.js'),
+    import('../node-package-manager.js'),
+  ])
+
   const cliDependency = '@shopify/cli'
   const currentVersion = CLI_KIT_VERSION
   if (isPreReleaseVersion(currentVersion)) {
-    // This is a nightly/snapshot/experimental version, so we don't want to check for updates
     return
   }
 
@@ -102,9 +111,14 @@ export async function warnOnAvailableUpgrade(): Promise<void> {
   void checkForNewVersion(cliDependency, currentVersion, {cacheExpiryInHours: 24})
 
   // Warn if we previously found a new version
+  const {runAtMinimumInterval} = await import('../../../private/node/conf-store.js')
   await runAtMinimumInterval('warn-on-available-upgrade', {days: 1}, async () => {
     const newerVersion = checkForCachedNewVersion(cliDependency, currentVersion)
     if (newerVersion) {
+      const [{outputWarn}, {getOutputUpdateCLIReminder}] = await Promise.all([
+        import('../output.js'),
+        import('../upgrade.js'),
+      ])
       outputWarn(getOutputUpdateCLIReminder(newerVersion))
     }
   })
