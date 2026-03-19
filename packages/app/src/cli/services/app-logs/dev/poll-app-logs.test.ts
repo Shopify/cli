@@ -387,6 +387,9 @@ describe('pollAppLogs', () => {
 
   test('retries at 60s interval when resubscribe throws on 401', async () => {
     // Given
+    const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const timeoutSpy = vi.spyOn(global, 'setTimeout')
     const response = {errors: ['Unauthorized'], status: 401}
     const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
       appLogs: vi.fn().mockResolvedValue(response),
@@ -406,6 +409,9 @@ describe('pollAppLogs', () => {
 
     // Then
     expect(failingResubscribe).toHaveBeenCalled()
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to resubscribe'))
+    expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.', stdout)
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 60000)
     expect(vi.getTimerCount()).toEqual(1)
   })
 

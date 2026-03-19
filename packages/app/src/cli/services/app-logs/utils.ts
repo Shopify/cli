@@ -124,6 +124,7 @@ export const handleFetchAppLogsError = async (
       } catch (resubscribeError) {
         outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
         retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
+        input.onThrottle(retryIntervalMs)
       }
     } else if (errors.some((error) => error.status === 429)) {
       retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
