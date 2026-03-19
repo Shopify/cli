@@ -101,7 +101,7 @@ describe('renderJsonLogs', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('should handle 401 with resubscribe failure and retry at throttle interval', async () => {
+  test('should retry at throttle interval when handleFetchAppLogsError returns null token', async () => {
     const mockErrorResponse = {
       errors: [{status: 401, message: 'Unauthorized'}],
     }
@@ -127,6 +127,7 @@ describe('renderJsonLogs', () => {
 
     expect(handleFetchAppLogsError).toHaveBeenCalled()
     expect(pollAppLogs).toHaveBeenCalled()
+    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), throttleRetryInterval)
     expect(vi.getTimerCount()).toEqual(1)
   })
 
