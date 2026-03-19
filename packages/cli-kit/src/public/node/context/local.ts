@@ -1,12 +1,20 @@
 import {isTruthy} from './utilities.js'
 import {getCIMetadata, isSet, Metadata} from '../../../private/node/context/utilities.js'
 import {defaultThemeKitAccessDomain, environmentVariables, pathConstants} from '../../../private/node/constants.js'
-import {fileExists} from '../fs.js'
-import {exec} from '../system.js'
-
 import macaddress from 'macaddress'
-
 import {homedir} from 'os'
+
+// Dynamic imports to avoid circular dependency: context/local → fs → output → context/local
+// fileExists and exec are only used in specific async functions, not at module init.
+async function lazyFileExists(path: string): Promise<boolean> {
+  const {fileExists} = await import('../fs.js')
+  return fileExists(path)
+}
+
+async function lazyExec(command: string, args: string[]): Promise<void> {
+  const {exec} = await import('../system.js')
+  await exec(command, args)
+}
 
 /**
  * It returns true if the terminal is interactive.
@@ -67,7 +75,7 @@ export async function isShopify(env = process.env): Promise<boolean> {
   if (Object.prototype.hasOwnProperty.call(env, environmentVariables.runAsUser)) {
     return !isTruthy(env[environmentVariables.runAsUser])
   }
-  const devInstalled = await fileExists(pathConstants.executables.dev)
+  const devInstalled = await lazyFileExists(pathConstants.executables.dev)
   return devInstalled
 }
 
@@ -216,7 +224,7 @@ export function cloudEnvironment(env: NodeJS.ProcessEnv = process.env): {
  */
 export async function hasGit(): Promise<boolean> {
   try {
-    await exec('git', ['--version'])
+    await lazyExec('git', ['--version'])
     return true
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
