@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-imports */
 import {cliFixture as test} from '../setup/cli.js'
 import {expect} from '@playwright/test'
 import * as path from 'path'
@@ -35,9 +36,6 @@ test.describe('Hydrogen basic flow (mock shop)', () => {
       },
     )
     const initOutput = initResult.stdout + initResult.stderr
-
-    // console.log('[e2e] hydrogen init output:\n', initOutput)
-
     expect(initResult.exitCode, `hydrogen init failed:\n${initOutput}`).toBe(0)
     expect(initOutput).toContain('Storefront setup complete!')
     expect(initOutput).toContain('Mock.shop')
@@ -50,13 +48,15 @@ test.describe('Hydrogen basic flow (mock shop)', () => {
     expect(buildResult.exitCode, `hydrogen build failed:\n${buildOutput}`).toBe(0)
 
     // Step 3: Start dev server and verify it serves requests
-    const port = 14712 // fixed port to avoid conflicts
+    // fixed port to avoid conflicts
+    const port = 14712
     const dev = await cli.spawn(['hydrogen', 'dev', '--path', hydrogenDir, '--port', String(port)], {
       env: {CI: ''},
     })
     try {
       await dev.waitForOutput('View Hydrogen app:', 3 * 60 * 1000)
 
+      // eslint-disable-next-line no-restricted-globals
       const response = await fetch(`http://localhost:${port}/`)
       expect(response.status, `hydrogen dev server returned unexpected status`).toBe(200)
     } finally {
