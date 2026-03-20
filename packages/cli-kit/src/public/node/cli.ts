@@ -62,6 +62,8 @@ function setupEnvironmentVariables(
 function forceNoColor(argv: string[] = process.argv, env: NodeJS.ProcessEnv = process.env) {
   if (
     argv.includes('--no-color') ||
+    argv.includes('--json') ||
+    argv.includes('-j') ||
     isTruthy(env.NO_COLOR) ||
     isTruthy(env.SHOPIFY_FLAG_NO_COLOR) ||
     env.TERM === 'dumb'
@@ -142,7 +144,7 @@ export const globalFlags = {
 export const jsonFlag = {
   json: Flags.boolean({
     char: 'j',
-    description: 'Output the result as JSON.',
+    description: 'Output the result as JSON. Automatically disables color output.',
     hidden: false,
     default: false,
     env: environmentVariables.json,
