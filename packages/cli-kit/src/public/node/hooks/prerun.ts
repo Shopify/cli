@@ -1,6 +1,7 @@
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {checkForNewVersion, checkForCachedNewVersion} from '../node-package-manager.js'
 import {startAnalytics} from '../../../private/node/analytics.js'
+import {showEnvVarDeprecationWarnings} from '../environment.js'
 import {outputDebug, outputWarn} from '../output.js'
 import {getOutputUpdateCLIReminder} from '../upgrade.js'
 import Command from '../base-command.js'
@@ -23,6 +24,7 @@ export const hook: Hook.Prerun = async (options) => {
   })
   const args = options.argv
   await warnOnAvailableUpgrade()
+  showEnvVarDeprecationWarnings()
   outputDebug(`Running command ${commandContent.command}`)
   await startAnalytics({commandContent, args, commandClass: options.Command as unknown as typeof Command})
   fetchNotificationsInBackground(options.Command.id)

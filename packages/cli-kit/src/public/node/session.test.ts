@@ -8,7 +8,7 @@ import {
   ensureAuthenticatedThemes,
 } from './session.js'
 
-import {getPartnersToken} from './environment.js'
+import {getCliToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
@@ -136,7 +136,7 @@ describe('ensureAuthenticatedPartners', () => {
       accessToken: partnersToken.accessToken,
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
-    vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getCliToken).mockReturnValue('custom_cli_token')
 
     // When
     const got = await ensureAuthenticatedPartners([])
@@ -253,7 +253,7 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
 
   test('returns app managment and business platform tokens if CLI token envvar is defined', async () => {
     // Given
-    vi.mocked(getPartnersToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getCliToken).mockReturnValue('custom_cli_token')
     vi.mocked(exchangeCliTokenForAppManagementAccessToken).mockResolvedValueOnce({
       accessToken: 'app-management-token',
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',

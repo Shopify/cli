@@ -142,7 +142,7 @@ import {
   AppLogsSubscribeMutationVariables,
 } from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {SourceExtension} from '../../api/graphql/app-management/generated/types.js'
-import {getPartnersToken} from '@shopify/cli-kit/node/environment'
+import {getCliToken} from '@shopify/cli-kit/node/environment'
 import {ensureAuthenticatedAppManagementAndBusinessPlatform, Session} from '@shopify/cli-kit/node/session'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
@@ -294,7 +294,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         unauthorizedHandler: this.createUnauthorizedHandler('businessPlatform'),
       })
 
-      if (getPartnersToken() && userInfoResult.currentUserAccount) {
+      if (getCliToken() && userInfoResult.currentUserAccount) {
         const organizations = userInfoResult.currentUserAccount.organizations.nodes.map((org) => ({
           name: org.name,
         }))

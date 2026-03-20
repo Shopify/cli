@@ -1,6 +1,6 @@
 import {shopifyFetch} from './http.js'
 import {nonRandomUUID} from './crypto.js'
-import {getPartnersToken} from './environment.js'
+import {getCliToken} from './environment.js'
 import {AbortError, BugError} from './error.js'
 import {outputContent, outputToken, outputDebug} from './output.js'
 import * as sessionStore from '../../private/node/session/store.js'
@@ -110,7 +110,7 @@ export async function ensureAuthenticatedPartners(
   outputDebug(outputContent`Ensuring that the user is authenticated with the Partners API with the following scopes:
 ${outputToken.json(scopes)}
 `)
-  const envToken = getPartnersToken()
+  const envToken = getCliToken()
   if (envToken) {
     const result = await exchangeCustomPartnerToken(envToken)
     return {token: result.accessToken, userId: result.userId}
@@ -141,7 +141,7 @@ export async function ensureAuthenticatedAppManagementAndBusinessPlatform(
 ${outputToken.json(appManagementScopes)}
 `)
 
-  const envToken = getPartnersToken()
+  const envToken = getCliToken()
   if (envToken) {
     const appManagmentToken = await exchangeCliTokenForAppManagementAccessToken(envToken)
     const businessPlatformToken = await exchangeCliTokenForBusinessPlatformAccessToken(envToken)
