@@ -2,6 +2,7 @@ import {pollAppLogs} from './poll-app-logs.js'
 import {PollOptions, SubscribeOptions, ErrorResponse, SuccessResponse} from '../types.js'
 import {
   POLLING_INTERVAL_MS,
+  MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES,
   handleFetchAppLogsError,
   subscribeToAppLogs,
   toFormattedAppLogJson,
@@ -14,15 +15,18 @@ export async function renderJsonLogs({
   options: {variables, developerPlatformClient},
   storeNameById,
   organizationId,
+  consecutiveResubscribeFailures = 0,
 }: {
   pollOptions: PollOptions
   options: SubscribeOptions
   storeNameById: Map<string, string>
   organizationId: string
+  consecutiveResubscribeFailures?: number
 }): Promise<void> {
   const response = await pollAppLogs({pollOptions, developerPlatformClient, organizationId})
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = pollOptions.jwtToken
+  let nextConsecutiveResubscribeFailures = consecutiveResubscribeFailures
 
   const errorResponse = response as ErrorResponse
 
@@ -40,10 +44,24 @@ export async function renderJsonLogs({
       },
     })
 
+    if (result.resubscribeFailed) {
+      nextConsecutiveResubscribeFailures += 1
+      if (nextConsecutiveResubscribeFailures >= MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES) {
+        outputInfo(
+          JSON.stringify({message: 'App log streaming session has expired. Please restart your dev session.'}),
+        )
+        return
+      }
+    } else {
+      nextConsecutiveResubscribeFailures = 0
+    }
+
     if (result.nextJwtToken) {
       nextJwtToken = result.nextJwtToken
     }
     retryIntervalMs = result.retryIntervalMs
+  } else {
+    nextConsecutiveResubscribeFailures = 0
   }
 
   const {cursor: nextCursor, appLogs} = response as SuccessResponse
@@ -76,6 +94,7 @@ export async function renderJsonLogs({
       },
       storeNameById,
       organizationId,
+      consecutiveResubscribeFailures: nextConsecutiveResubscribeFailures,
     }).catch((error) => {
       throw error
     })
