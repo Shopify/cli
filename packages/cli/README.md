@@ -318,9 +318,9 @@ USAGE
 
 FLAGS
   -c, --config=<value>              [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -f, --force                       [env: SHOPIFY_FLAG_FORCE] [Deprecated] Deploy without asking for confirmation.
-                                    Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD
-                                    environments instead.
+  -f, --force                       [env: SHOPIFY_FLAG_FORCE] Deploy without asking for confirmation. Equivalent to
+                                    --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is
+                                    --allow-updates.
       --allow-deletes               [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration
                                     without requiring user confirmation. For CI/CD environments, the recommended flag is
                                     --allow-updates.
@@ -901,8 +901,9 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -f, --force              [env: SHOPIFY_FLAG_FORCE] [Deprecated] Release without asking for confirmation. Equivalent to
-                           --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.
+  -f, --force              [env: SHOPIFY_FLAG_FORCE] Release without asking for confirmation. Equivalent to
+                           --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is
+                           --allow-updates.
       --allow-deletes      [env: SHOPIFY_FLAG_ALLOW_DELETES] Allows removing extensions and configuration without
                            requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.
       --allow-updates      [env: SHOPIFY_FLAG_ALLOW_UPDATES] Allows adding and updating extensions and configuration

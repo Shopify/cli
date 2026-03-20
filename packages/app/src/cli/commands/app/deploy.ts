@@ -8,7 +8,6 @@ import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 export default class Deploy extends AppLinkedCommand {
   static summary = 'Deploy your Shopify app.'
@@ -28,7 +27,7 @@ export default class Deploy extends AppLinkedCommand {
     force: Flags.boolean({
       hidden: false,
       description:
-        '[Deprecated] Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.',
+        'Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.',
       env: 'SHOPIFY_FLAG_FORCE',
       char: 'f',
     }),
@@ -79,19 +78,6 @@ export default class Deploy extends AppLinkedCommand {
 
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Deploy)
-
-    if (flags.force) {
-      renderWarning({
-        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in the next major release.'],
-        body: [
-          'Use',
-          {command: '--allow-updates'},
-          'for CI/CD environments, or',
-          {command: '--allow-updates --allow-deletes'},
-          'if you also want to allow removals.',
-        ],
-      })
-    }
 
     await metadata.addPublicMetadata(() => ({
       cmd_deploy_flag_message_used: Boolean(flags.message),
