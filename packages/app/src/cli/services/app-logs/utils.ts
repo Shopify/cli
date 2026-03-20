@@ -123,6 +123,7 @@ export const handleFetchAppLogsError = async (
     if (errors.some((error) => error.status === 401)) {
       try {
         nextJwtToken = await input.onResubscribe()
+        // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (resubscribeError) {
         outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
         retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS

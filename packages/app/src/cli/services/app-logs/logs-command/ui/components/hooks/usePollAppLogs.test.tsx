@@ -548,9 +548,7 @@ describe('usePollAppLogs', () => {
     // Flush React 19 batched state updates
     await vi.advanceTimersByTimeAsync(0)
 
-    expect(hook.lastResult?.errors).toEqual([
-      'App log streaming session has expired. Please restart your dev session.',
-    ])
+    expect(hook.lastResult?.errors).toEqual(['App log streaming session has expired. Please restart your dev session.'])
     // Polling should have stopped - no more timers scheduled
     expect(vi.getTimerCount()).toEqual(0)
   })
