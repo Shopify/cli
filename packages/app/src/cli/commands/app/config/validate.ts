@@ -2,7 +2,7 @@ import {appFlags} from '../../../flags.js'
 import {validateApp} from '../../../services/validate.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 
 export default class Validate extends AppLinkedCommand {
   static summary = 'Validate your app configuration and extensions.'
@@ -14,6 +14,7 @@ export default class Validate extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
+    ...jsonFlag,
   }
 
   public async run(): Promise<AppLinkedCommandOutput> {
@@ -27,7 +28,7 @@ export default class Validate extends AppLinkedCommand {
       unsafeTolerateErrors: true,
     })
 
-    await validateApp(app)
+    await validateApp(app, {json: flags.json})
 
     return {app}
   }

@@ -690,6 +690,15 @@
           "name": "config",
           "type": "option"
         },
+        "json": {
+          "allowNo": false,
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "type": "boolean"
+        },
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
