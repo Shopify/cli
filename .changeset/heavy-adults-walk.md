@@ -3,4 +3,4 @@
 '@shopify/app': minor
 ---
 
-Add support for SHOPIFY_CLI_TOKEN env var and add a deprecation warning for SHOPIFY_CLI_PARTNERS_TOKEN
+Add support for SHOPIFY_CLI_TOKEN env var as a new name for SHOPIFY_CLI_PARTNERS_TOKEN

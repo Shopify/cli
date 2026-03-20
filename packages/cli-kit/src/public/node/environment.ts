@@ -1,7 +1,6 @@
 import {nonRandomUUID} from './crypto.js'
 import {isTruthy} from './context/utilities.js'
 import {sniffForJson} from './path.js'
-import {renderWarning} from './ui.js'
 import {environmentVariables, systemEnvironmentVariables} from '../../private/node/constants.js'
 
 /**
@@ -27,24 +26,6 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
 export function getCliToken(): string | undefined {
   const env = getEnvironmentVariables()
   return env[environmentVariables.cliToken] ?? env[environmentVariables.partnersToken]
-}
-
-/**
- * Shows deprecation warnings for environment variables that have been renamed.
- * Currently warns when SHOPIFY_CLI_PARTNERS_TOKEN is used instead of SHOPIFY_CLI_TOKEN.
- */
-export function showEnvVarDeprecationWarnings(): void {
-  const env = getEnvironmentVariables()
-  if (env[environmentVariables.partnersToken]) {
-    renderWarning({
-      headline: [
-        'The environment variable',
-        {command: environmentVariables.partnersToken},
-        'has been deprecated and will eventually be removed.',
-      ],
-      body: ['Please use', {command: environmentVariables.cliToken}, 'instead.'],
-    })
-  }
 }
 
 /**
