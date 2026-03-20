@@ -32,6 +32,7 @@
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
 * [`shopify auth logout`](#shopify-auth-logout)
+* [`shopify auth whoami`](#shopify-auth-whoami)
 * [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
@@ -1076,6 +1077,18 @@ USAGE
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
+```
+
+## `shopify auth whoami`
+
+Displays the currently logged-in Shopify account.
+
+```
+USAGE
+  $ shopify auth whoami
+
+DESCRIPTION
+  Displays the currently logged-in Shopify account.
 ```
 
 ## `shopify commands`
