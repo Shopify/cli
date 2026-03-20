@@ -38,6 +38,9 @@ import FunctionInfo from './commands/app/function/info.js'
 import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
 import OrganizationList from './commands/organization/list.js'
 import StoreExecute from './commands/store/execute.js'
+import StoreBulkExecute from './commands/store/bulk/execute.js'
+import StoreBulkStatus from './commands/store/bulk/status.js'
+import StoreBulkCancel from './commands/store/bulk/cancel.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -80,6 +83,9 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'demo:watcher': DemoWatcher,
   'organization:list': OrganizationList,
   'store:execute': StoreExecute,
+  'store:bulk:execute': StoreBulkExecute,
+  'store:bulk:status': StoreBulkStatus,
+  'store:bulk:cancel': StoreBulkCancel,
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata

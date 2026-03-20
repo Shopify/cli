@@ -116,6 +116,24 @@ export function formatOperationInfo(options: {
 }
 
 /**
+ * Creates formatted info list items for store GraphQL operations (no org/app context).
+ *
+ * @param options - The operation context information
+ * @returns Array of formatted strings for display
+ */
+export function formatStoreOperationInfo(options: {storeFqdn: string; version?: string}): string[] {
+  const {storeFqdn, version} = options
+
+  const items = [`Store: ${storeFqdn}`]
+
+  if (version) {
+    items.push(`API version: ${version}`)
+  }
+
+  return items
+}
+
+/**
  * Checks if a GraphQL operation is a mutation.
  *
  * @param graphqlOperation - The GraphQL query or mutation string to check.
