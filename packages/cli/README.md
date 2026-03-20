@@ -579,7 +579,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
@@ -611,7 +611,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -l, --log=<value>        [env: SHOPIFY_FLAG_LOG] Specifies a log identifier to replay instead of selecting from a
                            list. The identifier is provided in the output of `shopify app dev` and is the suffix of the
                            log file name.
@@ -644,7 +644,7 @@ FLAGS
   -e, --export=<value>     [env: SHOPIFY_FLAG_EXPORT] Name of the WebAssembly export to invoke.
   -i, --input=<value>      [env: SHOPIFY_FLAG_INPUT] The input JSON to pass to the function. If omitted, standard input
                            is used.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your function directory.
@@ -805,7 +805,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
@@ -867,7 +867,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>...   [env: SHOPIFY_FLAG_STORE] Store URL. Must be an existing development or Shopify Plus sandbox
                            store.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
@@ -955,7 +955,7 @@ USAGE
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
@@ -1783,7 +1783,7 @@ USAGE
   $ shopify organization list [-j] [--no-color] [--verbose]
 
 FLAGS
-  -j, --json      [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json      [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --no-color  [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --verbose   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
@@ -2290,7 +2290,7 @@ FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
   -f, --force                   [env: SHOPIFY_FLAG_FORCE] Force the duplicate operation to run without prompts or
                                 confirmations.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -n, --name=<value>            [env: SHOPIFY_FLAG_NAME] Name of the newly duplicated theme.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2350,7 +2350,7 @@ USAGE
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Retrieve info from your development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
@@ -2429,7 +2429,7 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
       --id=<value>              [env: SHOPIFY_FLAG_ID] Only list theme with the given ID.
@@ -2589,7 +2589,7 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
@@ -2702,7 +2702,8 @@ FLAGS
   -d, --development                  [env: SHOPIFY_FLAG_DEVELOPMENT] Push theme files from your remote development
                                      theme.
   -e, --environment=<value>...       [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
-  -j, --json                         [env: SHOPIFY_FLAG_JSON] Output the result as JSON.
+  -j, --json                         [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color
+                                     output.
   -l, --live                         [env: SHOPIFY_FLAG_LIVE] Push theme files from your remote live theme.
   -n, --nodelete                     [env: SHOPIFY_FLAG_NODELETE] Prevent deleting remote files that don't exist
                                      locally.
