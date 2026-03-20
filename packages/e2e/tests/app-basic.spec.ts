@@ -21,13 +21,15 @@ test.describe('App basic flow (no extensions)', () => {
       flavor: 'javascript',
       packageManager: 'npm',
     })
-    expect(initResult.exitCode, `app init failed:\n${initResult.stdout}\n${initResult.stderr}`).toBe(0)
+    expect(initResult.exitCode, '‼️ Step 1 - app init failed').toBe(0)
 
     // Step 2: Start dev server via PTY
     // Unset CI so keyboard shortcuts are enabled in the Dev UI
     const dev = await cli.spawn(['app', 'dev', '--path', appScaffold.appDir], {env: {CI: ''}})
     try {
-      await dev.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
+      await dev.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000).catch((err: Error) => {
+        throw new Error(`‼️ Step 2 - app dev failed\n${err.message}`)
+      })
 
       // Step 3: Run a GraphQL query while the dev server is running
       const executeResult = await cli.exec(
@@ -35,20 +37,24 @@ test.describe('App basic flow (no extensions)', () => {
         {timeout: 60 * 1000},
       )
       const executeOutput = executeResult.stdout + executeResult.stderr
-      expect(executeResult.exitCode, `app execute failed:\n${executeOutput}`).toBe(0)
-      expect(executeOutput).toContain('shop')
+      expect(executeResult.exitCode, '‼️ Step 3 - app execute failed').toBe(0)
+      expect(executeOutput, '‼️ Step 3 - app execute: response missing "shop" field').toContain('shop')
 
       // Step 4: Press q to quit the dev server
       dev.sendKey('q')
-      const devExitCode = await dev.waitForExit(30_000)
-      expect(devExitCode).toBe(0)
+      const devExitCode = await dev.waitForExit(30_000).catch((err: Error) => {
+        throw new Error(`‼️ Step 4 - app dev did not exit after pressing q\n${err.message}`)
+      })
+      expect(devExitCode, '‼️ Step 4 - app dev quit failed').toBe(0)
     } finally {
       // Step 5: Always clean up the dev preview, even if the test fails
       dev.kill()
       const cleanResult = await cli.exec(['app', 'dev', 'clean', '--path', appScaffold.appDir])
       const cleanOutput = cleanResult.stdout + cleanResult.stderr
-      expect(cleanResult.exitCode, `dev clean failed:\n${cleanOutput}`).toBe(0)
-      expect(cleanOutput).toContain('Dev preview stopped')
+      expect(cleanResult.exitCode, '‼️ Step 5 - app dev clean failed').toBe(0)
+      expect(cleanOutput, '‼️ Step 5 - app dev clean: missing "Dev preview stopped" in output').toContain(
+        'Dev preview stopped',
+      )
     }
 
     // Step 6: Deploy the primary app
@@ -67,16 +73,15 @@ test.describe('App basic flow (no extensions)', () => {
       ],
       {timeout: 5 * 60 * 1000},
     )
-    const deployOutput = deployResult.stdout + deployResult.stderr
-    expect(deployResult.exitCode, `deploy failed:\n${deployOutput}`).toBe(0)
+    expect(deployResult.exitCode, '‼️ Step 6 - app deploy failed').toBe(0)
 
     // Step 7: List versions and verify our tag appears
     const listResult = await cli.exec(['app', 'versions', 'list', '--path', appScaffold.appDir, '--json'], {
       timeout: 60 * 1000,
     })
     const listOutput = listResult.stdout + listResult.stderr
-    expect(listResult.exitCode, `versions list failed:\n${listOutput}`).toBe(0)
-    expect(listOutput).toContain(versionTag)
+    expect(listResult.exitCode, '‼️ Step 7 - app versions list failed').toBe(0)
+    expect(listOutput, `‼️ Step 7 - app versions list: missing version tag "${versionTag}"`).toContain(versionTag)
 
     // Step 8: Config link to the secondary app
     // Pre-create a minimal TOML stub so getTomls() finds the secondary client ID and skips
@@ -94,9 +99,11 @@ test.describe('App basic flow (no extensions)', () => {
       ['app', 'config', 'link', '--path', appScaffold.appDir, '--client-id', env.secondaryClientId],
       {env: {CI: '', SHOPIFY_FLAG_CLIENT_ID: undefined}},
     )
-    await configLink.waitForOutput('is now linked to', 2 * 60 * 1000)
+    await configLink.waitForOutput('is now linked to', 2 * 60 * 1000).catch((err: Error) => {
+      throw new Error(`‼️ Step 8 - app config link failed\n${err.message}`)
+    })
     const configLinkExitCode = await configLink.waitForExit(30_000)
-    expect(configLinkExitCode, `config link failed:\n${configLink.getOutput()}`).toBe(0)
+    expect(configLinkExitCode, '‼️ Step 8 - app config link failed').toBe(0)
 
     // Step 9: Deploy to the secondary app using the linked config file
     const secondaryVersionTag = `e2e-secondary-v-${Date.now()}`
@@ -116,7 +123,6 @@ test.describe('App basic flow (no extensions)', () => {
       ],
       {timeout: 5 * 60 * 1000, env: {SHOPIFY_FLAG_CLIENT_ID: undefined}},
     )
-    const secondaryDeployOutput = secondaryDeployResult.stdout + secondaryDeployResult.stderr
-    expect(secondaryDeployResult.exitCode, `secondary deploy failed:\n${secondaryDeployOutput}`).toBe(0)
+    expect(secondaryDeployResult.exitCode, '‼️ Step 9 - app deploy (secondary) failed').toBe(0)
   })
 })
