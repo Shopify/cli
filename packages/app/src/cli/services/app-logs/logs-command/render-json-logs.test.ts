@@ -171,9 +171,11 @@ describe('renderJsonLogs', () => {
     const mockRetryInterval = 1000
     const handleFetchAppLogsErrorMock = vi.fn((input) => {
       input.onUnknownError(mockRetryInterval)
-      return new Promise<{retryIntervalMs: number; nextJwtToken: string | null}>((resolve, _reject) => {
-        resolve({nextJwtToken: 'new-jwt-token', retryIntervalMs: mockRetryInterval})
-      })
+      return new Promise<{retryIntervalMs: number; nextJwtToken: string | null; resubscribeFailed: boolean}>(
+        (resolve, _reject) => {
+          resolve({nextJwtToken: 'new-jwt-token', retryIntervalMs: mockRetryInterval, resubscribeFailed: false})
+        },
+      )
     })
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 
