@@ -1,5 +1,6 @@
 import {createExtensionSpecification} from '../specification.js'
 import {BaseSchema} from '../schemas.js'
+import {ExtensionInstance} from '../extension-instance.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fileSize} from '@shopify/cli-kit/node/fs'
@@ -10,6 +11,7 @@ const BUNDLE_SIZE_LIMIT = BUNDLE_SIZE_LIMIT_KB * kilobytes
 
 const dependency = '@shopify/web-pixels-extension'
 
+type WebPixelConfigType = zod.infer<typeof WebPixelSchema>
 const WebPixelSchema = BaseSchema.extend({
   runtime_context: zod.string(),
   version: zod.string().optional(),
@@ -32,6 +34,7 @@ const webPixelSpec = createExtensionSpecification({
   schema: WebPixelSchema,
   appModuleFeatures: (_) => ['esbuild', 'single_js_entry_path'],
   buildConfig: {mode: 'ui'},
+  getOutputRelativePath: (extension: ExtensionInstance<WebPixelConfigType>) => `dist/${extension.handle}.js`,
   deployConfig: async (config, _) => {
     return {
       runtime_context: config.runtime_context,
