@@ -392,9 +392,7 @@ describe('runGraphQLExecution', () => {
       version: '2024-07',
       responseOptions: {handleErrors: false},
     })
-    expect(renderSuccess).toHaveBeenCalledWith(
-      expect.objectContaining({headline: 'Operation succeeded.'}),
-    )
+    expect(renderSuccess).toHaveBeenCalledWith(expect.objectContaining({headline: 'Operation succeeded.'}))
   })
 
   test('parses variables from flag', async () => {
@@ -409,9 +407,7 @@ describe('runGraphQLExecution', () => {
       version: '2024-07',
     })
 
-    expect(adminRequestDoc).toHaveBeenCalledWith(
-      expect.objectContaining({variables: {key: 'value'}}),
-    )
+    expect(adminRequestDoc).toHaveBeenCalledWith(expect.objectContaining({variables: {key: 'value'}}))
   })
 
   test('writes output to file when outputFile specified', async () => {
@@ -442,9 +438,7 @@ describe('runGraphQLExecution', () => {
       version: '2024-07',
     })
 
-    expect(renderError).toHaveBeenCalledWith(
-      expect.objectContaining({headline: 'GraphQL operation failed.'}),
-    )
+    expect(renderError).toHaveBeenCalledWith(expect.objectContaining({headline: 'GraphQL operation failed.'}))
   })
 
   test('propagates non-ClientError errors', async () => {

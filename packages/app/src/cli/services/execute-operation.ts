@@ -25,7 +25,7 @@ interface ExecuteOperationInput {
   version?: string
 }
 
-export interface RunGraphQLExecutionInput {
+interface RunGraphQLExecutionInput {
   adminSession: AdminSession
   query: string
   variables?: string
@@ -34,7 +34,7 @@ export interface RunGraphQLExecutionInput {
   version: string
 }
 
-export async function parseVariables(
+async function parseVariables(
   variables?: string,
   variableFile?: string,
 ): Promise<{[key: string]: unknown} | undefined> {
