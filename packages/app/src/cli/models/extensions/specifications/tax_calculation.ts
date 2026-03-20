@@ -32,7 +32,8 @@ const spec = createExtensionSpecification({
   schema: TaxCalculationsSchema,
   appModuleFeatures: (_) => [],
   buildConfig: {mode: 'tax_calculation'},
-  getOutputRelativePath: (extension: ExtensionInstance<TaxCalculationsConfigType>) => joinPath('dist', `${extension.handle}.js`),
+  getOutputRelativePath: (extension: ExtensionInstance<TaxCalculationsConfigType>) =>
+    joinPath('dist', `${extension.handle}.js`),
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.production_api_base_url,
