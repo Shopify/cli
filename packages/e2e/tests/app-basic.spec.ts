@@ -1,8 +1,9 @@
+/* eslint-disable no-restricted-imports */
 import {appScaffoldFixture as test} from '../setup/app.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import * as fs from 'fs'
+import * as path from 'path'
 
 test.describe('App basic flow (no extensions)', () => {
   test('init, dev, execute, quit, clean, deploy, versions, config link, deploy to secondary', async ({
@@ -38,7 +39,7 @@ test.describe('App basic flow (no extensions)', () => {
       )
       const executeOutput = executeResult.stdout + executeResult.stderr
       expect(executeResult.exitCode, '‼️ Step 3 - app execute failed').toBe(0)
-      expect(executeOutput, '‼️ Step 3 - app execute: response missing "shop" field').toContain('shop')
+      expect(executeOutput, '‼️ Step 3 - app execute: response missing "shop" field').toContain('"shop"')
 
       // Step 4: Press q to quit the dev server
       dev.sendKey('q')
@@ -58,7 +59,7 @@ test.describe('App basic flow (no extensions)', () => {
     }
 
     // Step 6: Deploy the primary app
-    const versionTag = `e2e-v-${Date.now()}`
+    const versionTag = `QA-E2E-1st-${Date.now()}`
     const deployResult = await cli.exec(
       [
         'app',
@@ -91,7 +92,7 @@ test.describe('App basic flow (no extensions)', () => {
     // that file already exists → overwrite confirmation prompt hangs.
     // (--config and --client-id are mutually exclusive flags, so we can't pass both directly.)
     fs.writeFileSync(
-      joinPath(appScaffold.appDir, 'shopify.app.secondary.toml'),
+      path.join(appScaffold.appDir, 'shopify.app.secondary.toml'),
       `client_id = "${env.secondaryClientId}"\n`,
     )
 
@@ -106,7 +107,7 @@ test.describe('App basic flow (no extensions)', () => {
     expect(configLinkExitCode, '‼️ Step 8 - app config link failed').toBe(0)
 
     // Step 9: Deploy to the secondary app using the linked config file
-    const secondaryVersionTag = `e2e-secondary-v-${Date.now()}`
+    const secondaryVersionTag = `QA-E2E-2nd-${Date.now()}`
     const secondaryDeployResult = await cli.exec(
       [
         'app',

@@ -551,9 +551,6 @@ importers:
       '@playwright/test':
         specifier: ^1.50.0
         version: 1.58.2
-      '@shopify/cli-kit':
-        specifier: 3.92.0
-        version: link:../cli-kit
       '@types/node':
         specifier: 18.19.70
         version: 18.19.70
