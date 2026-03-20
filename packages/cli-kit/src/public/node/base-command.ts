@@ -86,16 +86,6 @@ abstract class BaseCommand extends Command {
     }
   }
 
-  private showDeprecatedFlagWarnings(parsedFlags: FlagOutput): void {
-    const commandVariables = this.constructor as unknown as {flags: JsonMap}
-    for (const [name, def] of Object.entries(commandVariables.flags ?? {})) {
-      const warning = (def as {deprecationWarning?: RenderAlertOptions}).deprecationWarning
-      if (warning && parsedFlags[name]) {
-        renderWarning(warning)
-      }
-    }
-  }
-
   protected exitWithTimestampWhenEnvVariablePresent() {
     if (isTruthy(process.env.SHOPIFY_CLI_ENV_STARTUP_PERFORMANCE_RUN)) {
       outputResult(`
@@ -142,6 +132,16 @@ This flag is required in non-interactive terminal environments, such as a CI env
         )
       }
     })
+  }
+
+  private showDeprecatedFlagWarnings(parsedFlags: FlagOutput): void {
+    const commandVariables = this.constructor as unknown as {flags: JsonMap}
+    for (const [name, def] of Object.entries(commandVariables.flags ?? {})) {
+      const warning = (def as {deprecationWarning?: RenderAlertOptions}).deprecationWarning
+      if (warning && parsedFlags[name]) {
+        renderWarning(warning)
+      }
+    }
   }
 
   private async resultWithEnvironment<
