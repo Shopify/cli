@@ -197,8 +197,10 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Unit tests
-        run: pnpm vitest run ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
+        run: pnpm vitest run ${{ env.POOL_OPTIONS }} ${{ env.SHARD_OPTIONS }}
         env:
+          POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
+          SHARD_OPTIONS: ${{ matrix.shard && format('--shard {0}', matrix.shard) || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
 
