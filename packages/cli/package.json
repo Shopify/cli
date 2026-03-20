@@ -123,6 +123,9 @@
         "description": "View the available UI kit components.",
         "hidden": true
       },
+      "store": {
+        "description": "Interact with Shopify stores."
+      },
       "plugins": {
         "hidden": true
       }

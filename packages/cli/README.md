@@ -74,6 +74,7 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -2062,6 +2063,41 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify store execute`
+
+Execute GraphQL queries and mutations against a store.
+
+```
+USAGE
+  $ shopify store execute -s <value> [--no-color] [--output-file <value>] [-q <value>] [--query-file <value>]
+    [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+
+FLAGS
+  -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string.
+  -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to execute
+                               against.
+  -v, --variables=<value>      [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or
+                               mutation, in JSON format.
+      --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file name where results should be written, instead of
+                               STDOUT.
+      --query-file=<value>     [env: SHOPIFY_FLAG_QUERY_FILE] Path to a file containing the GraphQL query or mutation.
+                               Can't be used with --query.
+      --variable-file=<value>  [env: SHOPIFY_FLAG_VARIABLE_FILE] Path to a file containing GraphQL variables in JSON
+                               format. Can't be used with --variables.
+      --verbose                [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>        [env: SHOPIFY_FLAG_VERSION] The API version to use for the query or mutation. Defaults to
+                               the latest stable version.
+
+DESCRIPTION
+  Execute GraphQL queries and mutations against a store.
+
+  Executes an Admin API GraphQL query or mutation on the specified store, authenticated as the current user.
+
+  Unlike "`app execute`" (https://shopify.dev/docs/api/shopify-cli/app/app-execute), this command does not require an
+  app to be linked or installed on the target store.
 ```
 
 ## `shopify theme check`
