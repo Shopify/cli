@@ -25,7 +25,7 @@ export interface apprelease {
   '-c, --config <value>'?: string
 
   /**
-   * Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.
+   * [Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.
    * @environment SHOPIFY_FLAG_FORCE
    */
   '-f, --force'?: ''
