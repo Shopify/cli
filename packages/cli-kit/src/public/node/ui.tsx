@@ -491,6 +491,7 @@ export async function renderTasks<TContext>(
     render(<Tasks tasks={tasks} onComplete={resolve} noProgressBar={noProgressBar} />, {
       ...renderOptions,
       exitOnCtrlC: false,
+      eraseOnExit: true,
     })
       .then(() => {})
       .catch(reject)
@@ -525,6 +526,7 @@ export async function renderSingleTask<T>({
     render(<SingleTask title={title} task={task} onComplete={resolve} onAbort={onAbort} />, {
       ...renderOptions,
       exitOnCtrlC: false,
+      eraseOnExit: true,
     }).catch(reject)
   })
 }
