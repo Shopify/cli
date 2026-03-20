@@ -20,6 +20,7 @@ import {Writable} from 'stream'
 export const POLLING_INTERVAL_MS = 450
 export const POLLING_ERROR_RETRY_INTERVAL_MS = 5 * 1000
 export const POLLING_THROTTLE_RETRY_INTERVAL_MS = 60 * 1000
+export const MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES = 5
 export const ONE_MILLION = 1000000
 export const LOG_TYPE_FUNCTION_RUN = 'function_run'
 export const LOG_TYPE_FUNCTION_NETWORK_ACCESS = 'function_network_access'
@@ -109,11 +110,12 @@ export interface AppLogsOptions {
 
 export const handleFetchAppLogsError = async (
   input: FetchAppLogsErrorOptions,
-): Promise<{retryIntervalMs: number; nextJwtToken: string | null}> => {
+): Promise<{retryIntervalMs: number; nextJwtToken: string | null; resubscribeFailed: boolean}> => {
   const {errors} = input.response
 
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = null
+  let resubscribeFailed = false
 
   if (errors.length > 0) {
     outputDebug(`Errors: ${errors.map((error) => error.message).join(', ')}`)
@@ -124,6 +126,7 @@ export const handleFetchAppLogsError = async (
       } catch (resubscribeError) {
         outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
         retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
+        resubscribeFailed = true
         input.onThrottle(retryIntervalMs)
       }
     } else if (errors.some((error) => error.status === 429)) {
@@ -135,7 +138,7 @@ export const handleFetchAppLogsError = async (
     }
   }
 
-  return {retryIntervalMs, nextJwtToken}
+  return {retryIntervalMs, nextJwtToken, resubscribeFailed}
 }
 
 export function sourcesForApp(app: AppInterface): string[] {
