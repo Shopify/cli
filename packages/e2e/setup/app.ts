@@ -78,10 +78,6 @@ export const appScaffoldFixture = authFixture.extend<{appScaffold: AppScaffold}>
           timeout: 5 * 60 * 1000,
         })
 
-        if (result.exitCode !== 0) {
-          return result
-        }
-
         const allOutput = `${result.stdout}\n${result.stderr}`
         const match = allOutput.match(/([\w-]+) is ready for you to build!/)
 
