@@ -35,11 +35,13 @@ const SingleTask = <T,>({task, title, onComplete, onAbort, noColor}: SingleTaskP
       .then((result) => {
         setIsDone(true)
         onComplete?.(result)
-        unmountInk()
+        // Defer unmount so React 19 can flush batched state updates
+        // before the component tree is torn down.
+        setImmediate(() => unmountInk())
       })
       .catch((error) => {
         setIsDone(true)
-        unmountInk(error)
+        setImmediate(() => unmountInk(error))
       })
   }, [task, unmountInk, onComplete])
 
