@@ -1,4 +1,4 @@
-import {prepareAppStoreContext, prepareExecuteContext} from './execute-command-helpers.js'
+import {prepareAppStoreContext, prepareExecuteContext, loadQuery} from './execute-command-helpers.js'
 import {linkedAppContext} from '../services/app-context.js'
 import {storeContext} from '../services/store-context.js'
 import {validateSingleOperation} from '../services/graphql/common.js'
@@ -86,6 +86,53 @@ describe('prepareAppStoreContext', () => {
       forceRelink: false,
       userProvidedConfigName: undefined,
     })
+  })
+})
+
+describe('loadQuery', () => {
+  test('returns query from --query flag', async () => {
+    const result = await loadQuery({query: 'query { shop { name } }'})
+    expect(result).toBe('query { shop { name } }')
+  })
+
+  test('throws AbortError when query flag is empty', async () => {
+    await expect(loadQuery({query: ''})).rejects.toThrow('--query flag value is empty')
+  })
+
+  test('throws AbortError when query flag is whitespace', async () => {
+    await expect(loadQuery({query: '   \n\t  '})).rejects.toThrow('--query flag value is empty')
+  })
+
+  test('reads query from file', async () => {
+    const queryFileContent = 'query { shop { name } }'
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(readFile).mockResolvedValue(queryFileContent as any)
+
+    const result = await loadQuery({'query-file': '/path/to/query.graphql'})
+
+    expect(fileExists).toHaveBeenCalledWith('/path/to/query.graphql')
+    expect(readFile).toHaveBeenCalledWith('/path/to/query.graphql', {encoding: 'utf8'})
+    expect(result).toBe(queryFileContent)
+  })
+
+  test('throws when query file does not exist', async () => {
+    vi.mocked(fileExists).mockResolvedValue(false)
+    await expect(loadQuery({'query-file': '/path/to/missing.graphql'})).rejects.toThrow('Query file not found')
+  })
+
+  test('throws when query file is empty', async () => {
+    vi.mocked(fileExists).mockResolvedValue(true)
+    vi.mocked(readFile).mockResolvedValue('' as any)
+    await expect(loadQuery({'query-file': '/path/to/empty.graphql'})).rejects.toThrow('is empty')
+  })
+
+  test('throws BugError when no query provided', async () => {
+    await expect(loadQuery({})).rejects.toThrow('exactlyOne constraint')
+  })
+
+  test('validates GraphQL syntax via validateSingleOperation', async () => {
+    await loadQuery({query: 'query { shop { name } }'})
+    expect(validateSingleOperation).toHaveBeenCalledWith('query { shop { name } }')
   })
 })
 

@@ -1,4 +1,4 @@
-import {executeOperation} from './execute-operation.js'
+import {executeOperation, runGraphQLExecution} from './execute-operation.js'
 import {createAdminSessionAsApp, resolveApiVersion, validateMutationStore} from './graphql/common.js'
 import {OrganizationApp, OrganizationSource, OrganizationStore} from '../models/organization.js'
 import {renderSuccess, renderError, renderSingleTask} from '@shopify/cli-kit/node/ui'
@@ -358,5 +358,105 @@ describe('executeOperation', () => {
 
     // Verify no API call was made - validation should fail before reaching the API
     expect(adminRequestDoc).not.toHaveBeenCalled()
+  })
+})
+
+describe('runGraphQLExecution', () => {
+  const mockAdminSession = {token: 'test-token', storeFqdn: 'test-store.myshopify.com'}
+
+  beforeEach(() => {
+    vi.mocked(renderSingleTask).mockImplementation(async ({task}) => {
+      return task(() => {})
+    })
+  })
+
+  afterEach(() => {
+    mockAndCaptureOutput().clear()
+  })
+
+  test('executes GraphQL operation and renders success', async () => {
+    const query = 'query { shop { name } }'
+    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+
+    await runGraphQLExecution({
+      adminSession: mockAdminSession,
+      query,
+      version: '2024-07',
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith({
+      query: expect.any(Object),
+      session: mockAdminSession,
+      variables: undefined,
+      version: '2024-07',
+      responseOptions: {handleErrors: false},
+    })
+    expect(renderSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({headline: 'Operation succeeded.'}),
+    )
+  })
+
+  test('parses variables from flag', async () => {
+    const query = 'query { shop { name } }'
+    const variables = '{"key":"value"}'
+    vi.mocked(adminRequestDoc).mockResolvedValue({})
+
+    await runGraphQLExecution({
+      adminSession: mockAdminSession,
+      query,
+      variables,
+      version: '2024-07',
+    })
+
+    expect(adminRequestDoc).toHaveBeenCalledWith(
+      expect.objectContaining({variables: {key: 'value'}}),
+    )
+  })
+
+  test('writes output to file when outputFile specified', async () => {
+    const query = 'query { shop { name } }'
+    const mockResult = {data: {shop: {name: 'Test Shop'}}}
+    vi.mocked(adminRequestDoc).mockResolvedValue(mockResult)
+
+    await runGraphQLExecution({
+      adminSession: mockAdminSession,
+      query,
+      outputFile: '/tmp/results.json',
+      version: '2024-07',
+    })
+
+    expect(writeFile).toHaveBeenCalledWith('/tmp/results.json', JSON.stringify(mockResult, null, 2))
+  })
+
+  test('handles ClientError gracefully', async () => {
+    const query = 'query { invalidField }'
+    const graphqlErrors = [{message: 'Field not found'}]
+    const clientError = new ClientError({errors: graphqlErrors} as any, {query: '', variables: {}})
+    ;(clientError as any).response = {errors: graphqlErrors}
+    vi.mocked(adminRequestDoc).mockRejectedValue(clientError)
+
+    await runGraphQLExecution({
+      adminSession: mockAdminSession,
+      query,
+      version: '2024-07',
+    })
+
+    expect(renderError).toHaveBeenCalledWith(
+      expect.objectContaining({headline: 'GraphQL operation failed.'}),
+    )
+  })
+
+  test('propagates non-ClientError errors', async () => {
+    const query = 'query { shop { name } }'
+    vi.mocked(adminRequestDoc).mockRejectedValue(new Error('Network error'))
+
+    await expect(
+      runGraphQLExecution({
+        adminSession: mockAdminSession,
+        query,
+        version: '2024-07',
+      }),
+    ).rejects.toThrow('Network error')
   })
 })
