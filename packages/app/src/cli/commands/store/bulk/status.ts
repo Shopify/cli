@@ -1,7 +1,4 @@
-import {
-  storeGetBulkOperationStatus,
-  storeListBulkOperations,
-} from '../../../services/store-bulk-operation-status.js'
+import {storeGetBulkOperationStatus, storeListBulkOperations} from '../../../services/store-bulk-operation-status.js'
 import {normalizeBulkOperationId} from '../../../services/bulk-operations/bulk-operation-status.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'

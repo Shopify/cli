@@ -5,4 +5,16 @@ export interface authlogin {
    * @environment SHOPIFY_FLAG_AUTH_ALIAS
    */
   '--alias <value>'?: string
+
+  /**
+   * Start the login flow without polling. Prints the auth URL and exits immediately.
+   * @environment SHOPIFY_FLAG_AUTH_NO_POLLING
+   */
+  '--no-polling'?: ''
+
+  /**
+   * Resume a previously started login flow.
+   * @environment SHOPIFY_FLAG_AUTH_RESUME
+   */
+  '--resume'?: ''
 }

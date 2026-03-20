@@ -15,10 +15,7 @@ describe('store bulk status command', () => {
   test('calls storeGetBulkOperationStatus when --id is provided', async () => {
     vi.mocked(storeGetBulkOperationStatus).mockResolvedValue()
 
-    await StoreBulkStatus.run(
-      ['--store', 'test-store.myshopify.com', '--id', '123'],
-      import.meta.url,
-    )
+    await StoreBulkStatus.run(['--store', 'test-store.myshopify.com', '--id', '123'], import.meta.url)
 
     expect(storeGetBulkOperationStatus).toHaveBeenCalledWith({
       storeFqdn: 'test-store.myshopify.com',
@@ -29,10 +26,7 @@ describe('store bulk status command', () => {
   test('calls storeListBulkOperations when --id is not provided', async () => {
     vi.mocked(storeListBulkOperations).mockResolvedValue()
 
-    await StoreBulkStatus.run(
-      ['--store', 'test-store.myshopify.com'],
-      import.meta.url,
-    )
+    await StoreBulkStatus.run(['--store', 'test-store.myshopify.com'], import.meta.url)
 
     expect(storeListBulkOperations).toHaveBeenCalledWith({
       storeFqdn: 'test-store.myshopify.com',

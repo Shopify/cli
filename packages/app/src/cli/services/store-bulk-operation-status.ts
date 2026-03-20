@@ -2,11 +2,11 @@ import {BulkOperation} from './bulk-operations/watch-bulk-operation.js'
 import {formatBulkOperationStatus} from './bulk-operations/format-bulk-operation-status.js'
 import {BULK_OPERATIONS_MIN_API_VERSION} from './bulk-operations/constants.js'
 import {extractBulkOperationId} from './bulk-operations/bulk-operation-status.js'
+import {formatStoreOperationInfo, resolveApiVersion} from './graphql/common.js'
 import {
   GetBulkOperationById,
   GetBulkOperationByIdQuery,
 } from '../api/graphql/bulk-operations/generated/get-bulk-operation-by-id.js'
-import {formatStoreOperationInfo, resolveApiVersion} from './graphql/common.js'
 import {
   ListBulkOperations,
   ListBulkOperationsQuery,

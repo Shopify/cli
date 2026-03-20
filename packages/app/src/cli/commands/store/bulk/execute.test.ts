@@ -11,9 +11,7 @@ describe('store bulk execute command', () => {
     vi.mocked(loadQuery).mockResolvedValue('query { shop { name } }')
     vi.mocked(storeExecuteBulkOperation).mockResolvedValue()
 
-    await expect(
-      StoreBulkExecute.run(['--query', 'query { shop { name } }'], import.meta.url),
-    ).rejects.toThrow()
+    await expect(StoreBulkExecute.run(['--query', 'query { shop { name } }'], import.meta.url)).rejects.toThrow()
 
     expect(storeExecuteBulkOperation).not.toHaveBeenCalled()
   })
@@ -27,9 +25,7 @@ describe('store bulk execute command', () => {
       import.meta.url,
     )
 
-    expect(loadQuery).toHaveBeenCalledWith(
-      expect.objectContaining({query: 'query { shop { name } }'}),
-    )
+    expect(loadQuery).toHaveBeenCalledWith(expect.objectContaining({query: 'query { shop { name } }'}))
     expect(storeExecuteBulkOperation).toHaveBeenCalledWith(
       expect.objectContaining({
         storeFqdn: 'test-store.myshopify.com',
@@ -61,10 +57,13 @@ describe('store bulk execute command', () => {
 
     await StoreBulkExecute.run(
       [
-        '--store', 'test-store.myshopify.com',
-        '--query', 'query { shop { name } }',
+        '--store',
+        'test-store.myshopify.com',
+        '--query',
+        'query { shop { name } }',
         '--watch',
-        '--output-file', '/tmp/out.jsonl',
+        '--output-file',
+        '/tmp/out.jsonl',
       ],
       import.meta.url,
     )
@@ -83,9 +82,12 @@ describe('store bulk execute command', () => {
 
     await StoreBulkExecute.run(
       [
-        '--store', 'test-store.myshopify.com',
-        '--query', 'mutation { productCreate { product { id } } }',
-        '--variables', '{"input": {"title": "test"}}',
+        '--store',
+        'test-store.myshopify.com',
+        '--query',
+        'mutation { productCreate { product { id } } }',
+        '--variables',
+        '{"input": {"title": "test"}}',
       ],
       import.meta.url,
     )
