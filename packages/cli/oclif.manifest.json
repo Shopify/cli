@@ -709,7 +709,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.",
+          "description": "[Deprecated] Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.",
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
           "name": "force",
@@ -2788,7 +2788,7 @@
         "force": {
           "allowNo": false,
           "char": "f",
-          "description": "Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. For CI/CD environments, the recommended flag is --allow-updates.",
+          "description": "[Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.",
           "env": "SHOPIFY_FLAG_FORCE",
           "hidden": false,
           "name": "force",
