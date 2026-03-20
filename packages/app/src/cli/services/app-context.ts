@@ -165,7 +165,7 @@ export async function localAppContext({
 }: LocalAppContextOptions): Promise<LocalAppContextOutput> {
   const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   const specifications = await loadLocalExtensionsSpecifications()
-  const app = await loadAppFromContext({project, activeConfig, specifications, ignoreUnknownExtensions: true})
+  const app = await loadAppFromContext({project, activeConfig, specifications, mode: 'local'})
 
   if (!app.errors.isEmpty()) {
     throw new AbortError(app.errors.toJSON()[0]!)
