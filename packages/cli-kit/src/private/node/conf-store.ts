@@ -26,12 +26,21 @@ interface Cache {
   [rateLimitKey: RateLimitKey]: CacheValue<number[]>
 }
 
+export interface PendingDeviceAuth {
+  deviceCode: string
+  interval: number
+  expiresAt: number
+  verificationUriComplete: string
+  scopes: string[]
+}
+
 export interface ConfSchema {
   sessionStore: string
   currentSessionId?: string
   devSessionStore?: string
   currentDevSessionId?: string
   cache?: Cache
+  pendingDeviceAuth?: PendingDeviceAuth
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -110,6 +119,27 @@ export function setCurrentSessionId(sessionId: string, config: LocalStorage<Conf
 export function removeCurrentSessionId(config: LocalStorage<ConfSchema> = cliKitStore()): void {
   outputDebug(outputContent`Removing current session ID...`)
   config.delete(currentSessionIdKey())
+}
+
+/**
+ * Get pending device auth state (used for non-interactive login flow).
+ */
+export function getPendingDeviceAuth(config: LocalStorage<ConfSchema> = cliKitStore()): PendingDeviceAuth | undefined {
+  return config.get('pendingDeviceAuth')
+}
+
+/**
+ * Stash pending device auth state for later resumption.
+ */
+export function setPendingDeviceAuth(auth: PendingDeviceAuth, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('pendingDeviceAuth', auth)
+}
+
+/**
+ * Clear pending device auth state.
+ */
+export function clearPendingDeviceAuth(config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.delete('pendingDeviceAuth')
 }
 
 type CacheValueForKey<TKey extends keyof Cache> = NonNullable<Cache[TKey]>['value']

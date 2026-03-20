@@ -4,6 +4,7 @@ import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'
 import Logout from './cli/commands/auth/logout.js'
 import Login from './cli/commands/auth/login.js'
+import Whoami from './cli/commands/auth/whoami.js'
 import CommandFlags from './cli/commands/debug/command-flags.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
@@ -140,6 +141,7 @@ export const COMMANDS: any = {
   help: HelpCommand,
   'auth:logout': Logout,
   'auth:login': Login,
+  'auth:whoami': Whoami,
   'debug:command-flags': CommandFlags,
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,

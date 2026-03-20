@@ -1054,10 +1054,13 @@ Logs you in to your Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>]
+  $ shopify auth login [--alias <value>] [--no-polling] [--resume]
 
 FLAGS
   --alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the session you want to login to.
+  --no-polling     [env: SHOPIFY_FLAG_AUTH_NO_POLLING] Start the login flow without polling. Prints the auth URL and
+                   exits immediately.
+  --resume         [env: SHOPIFY_FLAG_AUTH_RESUME] Resume a previously started login flow.
 
 DESCRIPTION
   Logs you in to your Shopify account.
