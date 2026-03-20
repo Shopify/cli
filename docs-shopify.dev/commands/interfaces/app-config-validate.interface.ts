@@ -13,6 +13,12 @@ export interface appconfigvalidate {
   '-c, --config <value>'?: string
 
   /**
+   * Output the result as JSON. Automatically disables color output.
+   * @environment SHOPIFY_FLAG_JSON
+   */
+  '-j, --json'?: ''
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */
