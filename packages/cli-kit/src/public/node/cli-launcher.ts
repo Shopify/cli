@@ -6,7 +6,7 @@ interface Options {
 }
 
 /**
- * Launches the CLI through our custom OCLIF loader.
+ * Launches the CLI.
  *
  * @param options - Options.
  * @returns A promise that resolves when the CLI has been launched.
@@ -14,23 +14,21 @@ interface Options {
 export async function launchCLI(options: Options): Promise<void> {
   const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
-  const oclif = await import('@oclif/core')
-  const {ShopifyConfig} = await import('./custom-oclif-loader.js')
+  const {Config, run, flush, Errors, settings} = await import('@oclif/core')
 
   if (isDevelopment()) {
-    oclif.default.settings.debug = true
+    settings.debug = true
   }
 
   try {
-    // Use a custom OCLIF config to customize the behavior of the CLI
-    const config = new ShopifyConfig({root: fileURLToPath(options.moduleURL)})
+    const config = new Config({root: fileURLToPath(options.moduleURL)})
     await config.load()
 
-    await oclif.default.run(options.argv, config)
-    await oclif.default.flush()
+    await run(options.argv, config)
+    await flush()
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (error) {
     await errorHandler(error as Error)
-    return oclif.default.Errors.handle(error as Error)
+    return Errors.handle(error as Error)
   }
 }
