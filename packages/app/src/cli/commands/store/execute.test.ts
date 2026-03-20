@@ -11,9 +11,7 @@ describe('store execute command', () => {
     vi.mocked(loadQuery).mockResolvedValue('query { shop { name } }')
     vi.mocked(storeExecuteOperation).mockResolvedValue()
 
-    await expect(
-      StoreExecute.run(['--query', 'query { shop { name } }'], import.meta.url),
-    ).rejects.toThrow()
+    await expect(StoreExecute.run(['--query', 'query { shop { name } }'], import.meta.url)).rejects.toThrow()
 
     expect(storeExecuteOperation).not.toHaveBeenCalled()
   })
@@ -27,9 +25,7 @@ describe('store execute command', () => {
       import.meta.url,
     )
 
-    expect(loadQuery).toHaveBeenCalledWith(
-      expect.objectContaining({query: 'query { shop { name } }'}),
-    )
+    expect(loadQuery).toHaveBeenCalledWith(expect.objectContaining({query: 'query { shop { name } }'}))
     expect(storeExecuteOperation).toHaveBeenCalledWith(
       expect.objectContaining({
         storeFqdn: 'test-store.myshopify.com',
