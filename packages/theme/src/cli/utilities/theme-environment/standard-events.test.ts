@@ -244,6 +244,14 @@ describe('injectStandardEventsInspector', () => {
     expect(injectStandardEventsInspector(html)).toBe(html)
   })
 
+  test('does not treat a plain inspector URL string as an existing inspector script', () => {
+    const html = `<html><head><script>window.inspectorUrl = "${standardEventsInspectorUrl}"</script></head><body></body></html>`
+
+    expect(injectStandardEventsInspector(html)).toBe(
+      `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script>window.inspectorUrl = "${standardEventsInspectorUrl}"</script></head><body></body></html>`,
+    )
+  })
+
   test('leaves standard-events.js unchanged when the inspector is already present', () => {
     const html = `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`
 

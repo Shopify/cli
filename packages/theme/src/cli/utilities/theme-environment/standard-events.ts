@@ -25,6 +25,12 @@ export const standardEventsRuntimeUrl = `${standardEventsBaseUrl}/standard-event
 export const standardEventsRuntimeDevUrl = `${standardEventsBaseUrl}/standard-events.dev.js`
 export const standardEventsInspectorUrl = `${standardEventsBaseUrl}/events-inspector.js`
 export const standardEventsInspectorScriptId = 'shopify-cli-standard-events-inspector'
+const standardEventsInspectorScriptRE = new RegExp(
+  `<script\\b[^>]*(?:\\bid=["']${escapeRegExp(standardEventsInspectorScriptId)}["']|\\bsrc=["']${escapeRegExp(
+    standardEventsInspectorUrl,
+  )}["'])[^>]*>`,
+  'i',
+)
 const standardEventsRuntimeRE = new RegExp(escapeRegExp(standardEventsRuntimeUrl), 'g')
 
 export async function prepareStandardEventsSupport(themeDirectory: string) {
@@ -76,7 +82,7 @@ export async function prepareStandardEventsSupport(themeDirectory: string) {
 }
 
 export function injectStandardEventsInspector(html: string) {
-  if (html.includes(standardEventsInspectorScriptId) || html.includes(standardEventsInspectorUrl)) {
+  if (standardEventsInspectorScriptRE.test(html)) {
     return html
   }
 
