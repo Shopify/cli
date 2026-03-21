@@ -77,6 +77,12 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
+    'standard-events': Flags.boolean({
+      description:
+        'Enable standard events types in assets and inject the standard events inspector into storefront HTML.',
+      env: 'SHOPIFY_FLAG_STANDARD_EVENTS',
+      default: false,
+    }),
     port: Flags.string({
       description: 'Local port to serve theme preview from.',
       env: 'SHOPIFY_FLAG_PORT',
@@ -179,6 +185,7 @@ You can run this command only in a directory that matches the [default Shopify t
       force: flags.force,
       open: flags.open,
       'theme-editor-sync': flags['theme-editor-sync'],
+      'standard-events': flags['standard-events'],
       noDelete: flags.nodelete,
       ignore,
       only,

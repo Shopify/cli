@@ -2,6 +2,7 @@ import {getErrorPage} from './hot-reload/error-page.js'
 import {render} from './storefront-renderer.js'
 import {getInMemoryTemplates, handleHotReloadScriptInjection} from './hot-reload/server.js'
 import {getProxyStorefrontHeaders, patchRenderingResponse, proxyStorefrontRequest} from './proxy.js'
+import {injectStandardEventsInspector} from './standard-events.js'
 import {extractFetchErrorInfo} from '../errors.js'
 import {logRequestLine} from '../log-request-line.js'
 import {getExtensionInMemoryTemplates} from '../theme-ext-environment/theme-ext-server.js'
@@ -144,7 +145,8 @@ function createErrorPageResponse(
   responseInit: ResponseInit,
   options: Parameters<typeof getErrorPage>[0],
 ) {
-  const errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx)
+  let errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx)
+  if (ctx.options.standardEvents) errorPageHtml = injectStandardEventsInspector(errorPageHtml)
 
   recordEvent('theme-service:error-page:rendered')
 
@@ -180,6 +182,11 @@ async function tryProxyRequest(event: H3Event, ctx: DevServerContext, response: 
 
   if (proxyResponse.status < 400) {
     outputDebug(`Proxy status: ${proxyResponse.status}. Returning proxy response.`)
+
+    if ((proxyResponse.headers.get('content-type') ?? '').includes('text/html')) {
+      return patchRenderingResponse(ctx, proxyResponse)
+    }
+
     return proxyResponse
   } else {
     outputDebug(`Proxy status: ${proxyResponse.status}. Returning render error.`)

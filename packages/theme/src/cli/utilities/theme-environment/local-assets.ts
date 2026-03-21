@@ -219,7 +219,7 @@ function getTagContent(file: ThemeAsset, tag: 'javascript' | 'stylesheet') {
 
   const contents = [`/* ${file.key} */`]
 
-  const tagContent = getLiquidTagContent(file.value ?? '', tag)
+  const tagContent = getLiquidTagContent(file.value ?? '', tag)?.trimEnd()
   if (tagContent) {
     contents.push(tagContent)
   }
