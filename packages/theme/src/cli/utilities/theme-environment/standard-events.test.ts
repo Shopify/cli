@@ -1,6 +1,7 @@
 import {
   injectStandardEventsInspector,
   prepareStandardEventsSupport,
+  rewriteStandardEventsRuntimeReferences,
   standardEventsDefinitionsUrl,
   standardEventsInspectorScriptId,
   standardEventsInspectorUrl,
@@ -229,11 +230,11 @@ describe('injectStandardEventsInspector', () => {
     )
   })
 
-  test('rewrites standard-events.js to standard-events.dev.js', () => {
+  test('does not rewrite standard-events.js when injecting the inspector', () => {
     const html = `<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`
 
     expect(injectStandardEventsInspector(html)).toBe(
-      `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script src="${standardEventsRuntimeDevUrl}"></script></head><body></body></html>`,
+      `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`,
     )
   })
 
@@ -243,11 +244,27 @@ describe('injectStandardEventsInspector', () => {
     expect(injectStandardEventsInspector(html)).toBe(html)
   })
 
-  test('still rewrites standard-events.js when the inspector is already present', () => {
+  test('leaves standard-events.js unchanged when the inspector is already present', () => {
     const html = `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`
 
-    expect(injectStandardEventsInspector(html)).toBe(
-      `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script src="${standardEventsRuntimeDevUrl}"></script></head><body></body></html>`,
+    expect(injectStandardEventsInspector(html)).toBe(html)
+  })
+})
+
+describe('rewriteStandardEventsRuntimeReferences', () => {
+  test('rewrites standard-events.js to standard-events.dev.js', () => {
+    const html = `<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`
+
+    expect(rewriteStandardEventsRuntimeReferences(html)).toBe(
+      `<html><head><script src="${standardEventsRuntimeDevUrl}"></script></head><body></body></html>`,
+    )
+  })
+
+  test('rewrites multiple standard-events.js references', () => {
+    const content = `"${standardEventsRuntimeUrl}" import("${standardEventsRuntimeUrl}")`
+
+    expect(rewriteStandardEventsRuntimeReferences(content)).toBe(
+      `"${standardEventsRuntimeDevUrl}" import("${standardEventsRuntimeDevUrl}")`,
     )
   })
 })

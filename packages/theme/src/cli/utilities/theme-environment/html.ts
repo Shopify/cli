@@ -146,7 +146,7 @@ function createErrorPageResponse(
   options: Parameters<typeof getErrorPage>[0],
 ) {
   let errorPageHtml = handleHotReloadScriptInjection(getErrorPage(options), ctx)
-  if (ctx.options.standardEvents) errorPageHtml = injectStandardEventsInspector(errorPageHtml)
+  if (ctx.options.standardEventsInspector) errorPageHtml = injectStandardEventsInspector(errorPageHtml)
 
   recordEvent('theme-service:error-page:rendered')
 

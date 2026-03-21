@@ -76,13 +76,11 @@ export async function prepareStandardEventsSupport(themeDirectory: string) {
 }
 
 export function injectStandardEventsInspector(html: string) {
-  const patchedHtml = rewriteStandardEventsRuntimeReferences(html)
-
-  if (patchedHtml.includes(standardEventsInspectorScriptId) || patchedHtml.includes(standardEventsInspectorUrl)) {
-    return patchedHtml
+  if (html.includes(standardEventsInspectorScriptId) || html.includes(standardEventsInspectorUrl)) {
+    return html
   }
 
-  return patchedHtml.replace(
+  return html.replace(
     headTagRE,
     (headTag: string) =>
       `${headTag}<script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script>`,

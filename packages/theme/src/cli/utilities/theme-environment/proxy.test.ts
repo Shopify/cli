@@ -35,7 +35,7 @@ describe('dev proxy', () => {
 
   const ctx = {
     session: {storeFqdn: 'my-store.myshopify.com', sessionCookies: {}},
-    options: {host: 'localhost', port: '1337', standardEvents: false},
+    options: {host: 'localhost', port: '1337', standardEventsDevBundle: false, standardEventsInspector: false},
     localThemeFileSystem: {files: new Map([['assets/file1', 'content']])},
     localThemeExtensionFileSystem: {files: new Map([['assets/file-ext', 'content']])},
   } as unknown as DevServerContext
@@ -128,7 +128,7 @@ describe('dev proxy', () => {
     test('rewrites standard events runtime URLs in JS files when enabled', () => {
       const standardEventsCtx = {
         ...ctx,
-        options: {...ctx.options, standardEvents: true},
+        options: {...ctx.options, standardEventsDevBundle: true},
       } as unknown as DevServerContext
       const content = `
         const runtimeUrl = "${standardEventsRuntimeUrl}";
@@ -273,7 +273,7 @@ describe('dev proxy', () => {
     test('injects the standard events inspector at the beginning of the head when enabled', async () => {
       const standardEventsCtx = {
         ...ctx,
-        options: {...ctx.options, standardEvents: true},
+        options: {...ctx.options, standardEventsInspector: true},
       } as unknown as DevServerContext
 
       const renderingResponse = new Response('<html><head><meta charset="utf-8"></head><body></body></html>')
@@ -282,6 +282,23 @@ describe('dev proxy', () => {
 
       await expect(patchedResponse.text()).resolves.toBe(
         `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><meta charset="utf-8"></head><body></body></html>`,
+      )
+    })
+
+    test('does not rewrite standard events runtime URLs when only the inspector is enabled', async () => {
+      const standardEventsCtx = {
+        ...ctx,
+        options: {...ctx.options, standardEventsInspector: true},
+      } as unknown as DevServerContext
+
+      const renderingResponse = new Response(
+        `<html><head><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`,
+      )
+
+      const patchedResponse = await patchRenderingResponse(standardEventsCtx, renderingResponse)
+
+      await expect(patchedResponse.text()).resolves.toBe(
+        `<html><head><script id="${standardEventsInspectorScriptId}" src="${standardEventsInspectorUrl}" defer></script><script src="${standardEventsRuntimeUrl}"></script></head><body></body></html>`,
       )
     })
 

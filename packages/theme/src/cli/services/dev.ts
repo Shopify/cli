@@ -33,7 +33,8 @@ interface DevOptions {
   host?: string
   port?: string
   force: boolean
-  'standard-events': boolean
+  'standard-events-inspector': boolean
+  'standard-events-types': boolean
   'theme-editor-sync': boolean
   'live-reload': LiveReload
   'error-overlay': ErrorOverlayMode
@@ -123,7 +124,8 @@ export async function dev(options: DevOptions) {
       port,
       open: options.open,
       liveReload: options['live-reload'],
-      standardEvents: options['standard-events'],
+      standardEventsDevBundle: true,
+      standardEventsInspector: options['standard-events-inspector'],
       noDelete: options.noDelete,
       ignore: options.ignore,
       only: options.only,
@@ -151,10 +153,10 @@ export async function dev(options: DevOptions) {
           openURLSafely(urls.local, 'development server')
         }
       }),
-    options['standard-events']
+    options['standard-events-types']
       ? prepareStandardEventsSupport(options.directory).catch((error) => {
           renderWarning({
-            headline: 'Failed to update standard events support.',
+            headline: 'Failed to update standard events types.',
             body: error instanceof Error ? (error.stack ?? error.message) : String(error),
           })
         })

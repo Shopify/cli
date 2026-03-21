@@ -77,10 +77,14 @@ You can run this command only in a directory that matches the [default Shopify t
       description: 'Synchronize Theme Editor updates in the local theme files.',
       env: 'SHOPIFY_FLAG_THEME_EDITOR_SYNC',
     }),
-    'standard-events': Flags.boolean({
-      description:
-        'Enable standard events types in assets and inject the standard events inspector into storefront HTML.',
-      env: 'SHOPIFY_FLAG_STANDARD_EVENTS',
+    'standard-events-inspector': Flags.boolean({
+      description: 'Inject the standard events inspector into storefront HTML.',
+      env: 'SHOPIFY_FLAG_STANDARD_EVENTS_INSPECTOR',
+      default: false,
+    }),
+    'standard-events-types': Flags.boolean({
+      description: 'Download standard events type definitions into assets and wire them into assets/jsconfig.json.',
+      env: 'SHOPIFY_FLAG_STANDARD_EVENTS_TYPES',
       default: false,
     }),
     port: Flags.string({
@@ -185,7 +189,8 @@ You can run this command only in a directory that matches the [default Shopify t
       force: flags.force,
       open: flags.open,
       'theme-editor-sync': flags['theme-editor-sync'],
-      'standard-events': flags['standard-events'],
+      'standard-events-inspector': flags['standard-events-inspector'],
+      'standard-events-types': flags['standard-events-types'],
       noDelete: flags.nodelete,
       ignore,
       only,

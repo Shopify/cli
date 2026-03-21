@@ -115,7 +115,7 @@ beforeEach(() => {
 })
 
 describe('dev', () => {
-  test('prepares standard events support and propagates the option to the dev server context', async () => {
+  test('enables the standard events dev bundle by default without preparing types', async () => {
     const adminSession = {storeFqdn: store} as AdminSession
 
     await dev({
@@ -125,7 +125,40 @@ describe('dev', () => {
       open: false,
       theme,
       force: false,
-      'standard-events': true,
+      'standard-events-inspector': false,
+      'standard-events-types': false,
+      'theme-editor-sync': false,
+      'live-reload': 'hot-reload',
+      'error-overlay': 'default',
+      noDelete: false,
+      ignore: [],
+      only: [],
+    })
+
+    expect(prepareStandardEventsSupport).not.toHaveBeenCalled()
+    expect(setupDevServer).toHaveBeenCalledWith(
+      theme,
+      expect.objectContaining({
+        options: expect.objectContaining({
+          standardEventsDevBundle: true,
+          standardEventsInspector: false,
+        }),
+      }),
+    )
+  })
+
+  test('prepares standard events types and propagates the inspector option to the dev server context', async () => {
+    const adminSession = {storeFqdn: store} as AdminSession
+
+    await dev({
+      adminSession,
+      directory: '/tmp/theme',
+      store,
+      open: false,
+      theme,
+      force: false,
+      'standard-events-inspector': true,
+      'standard-events-types': true,
       'theme-editor-sync': false,
       'live-reload': 'hot-reload',
       'error-overlay': 'default',
@@ -138,7 +171,10 @@ describe('dev', () => {
     expect(setupDevServer).toHaveBeenCalledWith(
       theme,
       expect.objectContaining({
-        options: expect.objectContaining({standardEvents: true}),
+        options: expect.objectContaining({
+          standardEventsDevBundle: true,
+          standardEventsInspector: true,
+        }),
       }),
     )
   })
@@ -156,7 +192,8 @@ describe('dev', () => {
       open: false,
       theme,
       force: false,
-      'standard-events': true,
+      'standard-events-inspector': false,
+      'standard-events-types': true,
       'theme-editor-sync': false,
       'live-reload': 'hot-reload',
       'error-overlay': 'default',
@@ -187,7 +224,8 @@ describe('dev', () => {
       open: false,
       theme,
       force: false,
-      'standard-events': true,
+      'standard-events-inspector': false,
+      'standard-events-types': true,
       'theme-editor-sync': false,
       'live-reload': 'hot-reload',
       'error-overlay': 'default',
@@ -198,7 +236,7 @@ describe('dev', () => {
 
     await vi.waitFor(() => {
       expect(renderWarning).toHaveBeenCalledWith({
-        headline: 'Failed to update standard events support.',
+        headline: 'Failed to update standard events types.',
         body: error.stack ?? error.message,
       })
     })

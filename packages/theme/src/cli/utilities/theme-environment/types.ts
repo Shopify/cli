@@ -131,9 +131,14 @@ export interface DevServerContext {
     liveReload: LiveReload
 
     /**
-     * Enables standard events types and inspector injection.
+     * Rewrites standard events runtime URLs to use the dev bundle.
      */
-    standardEvents: boolean
+    standardEventsDevBundle: boolean
+
+    /**
+     * Injects the standard events inspector into rendered HTML.
+     */
+    standardEventsInspector: boolean
 
     /**
      * Automatically open the theme preview in the default browser.

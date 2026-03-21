@@ -114,7 +114,8 @@ describe('setupDevServer', () => {
       host: '127.0.0.1',
       port: '9292',
       liveReload: 'hot-reload',
-      standardEvents: false,
+      standardEventsDevBundle: false,
+      standardEventsInspector: false,
       open: false,
       themeEditorSync: false,
       errorOverlay: 'default',
@@ -320,7 +321,7 @@ describe('setupDevServer', () => {
         ...defaultServerContext,
         options: {
           ...defaultServerContext.options,
-          standardEvents: true,
+          standardEventsDevBundle: true,
         },
       }
       const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
@@ -862,7 +863,8 @@ describe('setupDevServer', () => {
         ...defaultServerContext,
         options: {
           ...defaultServerContext.options,
-          standardEvents: true,
+          standardEventsDevBundle: true,
+          standardEventsInspector: true,
         },
       }
       const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
@@ -989,7 +991,7 @@ describe('setupDevServer', () => {
         ...defaultServerContext,
         options: {
           ...defaultServerContext.options,
-          standardEvents: true,
+          standardEventsInspector: true,
         },
       }
       const standardEventsServer = setupDevServer(developmentTheme, standardEventsContext)
