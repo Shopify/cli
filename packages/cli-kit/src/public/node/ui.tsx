@@ -522,7 +522,7 @@ export async function renderSingleTask<T>({
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    render(<SingleTask title={title} task={task} onComplete={resolve} onAbort={onAbort} />, {
+    render(<SingleTask title={title} task={task} onComplete={resolve} onError={reject} onAbort={onAbort} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     }).catch(reject)
