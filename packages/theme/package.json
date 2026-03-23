@@ -46,7 +46,7 @@
     "@shopify/theme-check-node": "3.24.0",
     "@shopify/theme-language-server-node": "2.20.2",
     "chokidar": "3.6.0",
-    "h3": "1.15.6",
+    "h3": "1.15.9",
     "yaml": "2.7.0"
   },
   "devDependencies": {
