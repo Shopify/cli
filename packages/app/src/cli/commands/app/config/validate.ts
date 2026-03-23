@@ -1,7 +1,7 @@
-import {appFlags} from '../../flags.js'
-import {validateApp} from '../../services/validate.js'
-import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
-import {linkedAppContext} from '../../services/app-context.js'
+import {appFlags} from '../../../flags.js'
+import {validateApp} from '../../../services/validate.js'
+import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
+import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 
 export default class Validate extends AppLinkedCommand {

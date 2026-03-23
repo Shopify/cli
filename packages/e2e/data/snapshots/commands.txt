@@ -7,7 +7,8 @@
 │  ├─ config
 │  │  ├─ link
 │  │  ├─ pull
-│  │  └─ use
+│  │  ├─ use
+│  │  └─ validate
 │  ├─ deploy
 │  ├─ dev
 │  │  └─ clean
@@ -31,7 +32,6 @@
 │  ├─ logs
 │  │  └─ sources
 │  ├─ release
-│  ├─ validate
 │  ├─ versions
 │  │  └─ list
 │  └─ webhook
