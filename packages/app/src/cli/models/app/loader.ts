@@ -14,6 +14,7 @@ import {
   SchemaForConfig,
   AppLinkedInterface,
   AppHiddenConfig,
+  normalizeExtensionDirectories,
 } from './app.js'
 import {parseHumanReadableError} from './error-parsing.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
@@ -625,7 +626,8 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   }
 
   private async createExtensionInstances(appDirectory: string, extensionDirectories?: string[]) {
-    const extensionConfigPaths = [...(extensionDirectories ?? [defaultExtensionDirectory])].map((extensionPath) => {
+    const normalizedDirs = normalizeExtensionDirectories(extensionDirectories)
+    const extensionConfigPaths = [...(normalizedDirs ?? [defaultExtensionDirectory])].map((extensionPath) => {
       return joinPath(appDirectory, extensionPath, '*.extension.toml')
     })
     extensionConfigPaths.push(`!${joinPath(appDirectory, '**/node_modules/**')}`)
