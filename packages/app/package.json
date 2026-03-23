@@ -62,7 +62,7 @@
     "diff": "5.2.2",
     "esbuild": "0.27.3",
     "graphql-request": "6.1.0",
-    "h3": "1.15.6",
+    "h3": "1.15.9",
     "http-proxy-node16": "1.0.6",
     "ignore": "6.0.2",
     "json-schema-to-typescript": "15.0.4",
