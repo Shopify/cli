@@ -486,15 +486,26 @@ interface RenderTasksOptions {
 export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
-) {
-  return new Promise<TContext>((resolve, reject) => {
-    render(<Tasks tasks={tasks} onComplete={resolve} noProgressBar={noProgressBar} />, {
+): Promise<TContext> {
+  let result: TContext | undefined
+  let taskError: Error | undefined
+  await render(
+    <Tasks
+      tasks={tasks}
+      onComplete={(ctx) => {
+        result = ctx
+      }}
+      noProgressBar={noProgressBar}
+    />,
+    {
       ...renderOptions,
       exitOnCtrlC: false,
-    })
-      .then(() => {})
-      .catch(reject)
+    },
+  ).catch((error) => {
+    taskError = error
   })
+  if (taskError) throw taskError
+  return result as TContext
 }
 
 export interface RenderSingleTaskOptions<T> {
@@ -521,12 +532,18 @@ export async function renderSingleTask<T>({
   onAbort,
   renderOptions,
 }: RenderSingleTaskOptions<T>): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
+  // Result/error come from callbacks because render() may resolve prematurely
+  // when multiple concurrent ink instances interfere with each other's waitUntilExit().
+  // We race the callback promise against render() to handle both cases:
+  // - Normal: callback fires, then render() completes
+  // - Concurrent: render() resolves early due to cross-instance interference
+  const callbackPromise = new Promise<T>((resolve, reject) => {
     render(<SingleTask title={title} task={task} onComplete={resolve} onError={reject} onAbort={onAbort} />, {
       ...renderOptions,
       exitOnCtrlC: false,
     }).catch(reject)
   })
+  return callbackPromise
 }
 
 export interface RenderTextPromptOptions extends Omit<TextPromptProps, 'onSubmit'> {
