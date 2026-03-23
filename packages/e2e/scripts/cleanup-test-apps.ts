@@ -1,79 +1,83 @@
 /**
- * Deletes all test apps from the dev dashboard via browser automation.
- * Run: npx tsx packages/e2e/scripts/cleanup-test-apps.ts
+ * Cleans up test apps from the e2e org via browser automation.
  *
- * Pass --dry-run to list apps without deleting.
- * Pass --filter <pattern> to only delete apps matching the pattern.
+ * Requires E2E_ACCOUNT_EMAIL + E2E_ACCOUNT_PASSWORD (+ E2E_ORG_ID, E2E_STORE_FQDN).
+ * Logs in once and processes all filters in a single browser session.
+ *
+ * Run: npx tsx packages/e2e/scripts/cleanup-test-apps.ts
+ * Options:
+ *   --delete <pat>     uninstall from store + delete from dashboard (apps matching <pat>)
+ *   --uninstall <pat>  uninstall from store only (apps matching <pat>)
+ *   --dry-run          list matching apps without taking action
+ *   --headed           show browser window (default in non-CI)
+ *
+ * Example (teardown):
+ *   npx tsx cleanup-test-apps.ts --delete QA-E2E-1st- --delete QA-E2E-2nd- --uninstall QA-E2E-1st --uninstall QA-E2E-2nd
  */
 
-import * as fs from 'fs'
+/* eslint-disable no-restricted-imports */
 import * as os from 'os'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
-import {execa} from 'execa'
-import {chromium, type Page} from '@playwright/test'
-import {completeLogin} from '../helpers/browser-login.js'
-import {stripAnsi} from '../helpers/strip-ansi.js'
-import {waitForText} from '../helpers/wait-for-text.js'
+import {loadEnv} from '../helpers/load-env.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '../../..')
 const cliPath = path.join(rootDir, 'packages/cli/bin/run.js')
 
+loadEnv(path.join(__dirname, '..'))
+
+// Args
 const dryRun = process.argv.includes('--dry-run')
-const filterIdx = process.argv.indexOf('--filter')
-if (filterIdx >= 0 && !process.argv[filterIdx + 1]) {
-  console.error('--filter requires a value')
-  process.exit(1)
-}
-const filterPattern = filterIdx >= 0 ? process.argv[filterIdx + 1] : undefined
 const headed = process.argv.includes('--headed') || !process.env.CI
 
-// Load .env
-const envPath = path.join(__dirname, '../.env')
-if (fs.existsSync(envPath)) {
-  for (const line of fs.readFileSync(envPath, 'utf-8').split('\n')) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const eqIdx = trimmed.indexOf('=')
-    if (eqIdx === -1) continue
-    const key = trimmed.slice(0, eqIdx).trim()
-    let value = trimmed.slice(eqIdx + 1).trim()
-    // Remove surrounding quotes if present
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1)
-    }
-    if (!process.env[key]) process.env[key] = value
+// Collect --delete and --uninstall patterns
+const deletePatterns: string[] = []
+const uninstallPatterns: string[] = []
+for (let ii = 0; ii < process.argv.length; ii++) {
+  if (process.argv[ii] === '--delete' && process.argv[ii + 1]) {
+    deletePatterns.push(process.argv[++ii]!)
+  } else if (process.argv[ii] === '--uninstall' && process.argv[ii + 1]) {
+    uninstallPatterns.push(process.argv[++ii]!)
   }
 }
 
-const email = process.env.E2E_ACCOUNT_EMAIL
-const password = process.env.E2E_ACCOUNT_PASSWORD
-if (!email || !password) {
-  console.error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD must be set')
+if (deletePatterns.length === 0 && uninstallPatterns.length === 0) {
+  console.error('At least one --delete or --uninstall pattern is required')
   process.exit(1)
 }
 
-const baseEnv: {[key: string]: string} = {
-  ...(process.env as {[key: string]: string}),
-  NODE_OPTIONS: '',
-  SHOPIFY_RUN_AS_USER: '0',
-}
-delete baseEnv.SHOPIFY_CLI_PARTNERS_TOKEN
+// Browser automation
 
-async function main() {
-  // Step 1: OAuth login to get a browser session
+type Page = import('@playwright/test').Page
+
+async function loginAndGetPage(): Promise<{page: Page}> {
+  const {execa} = await import('execa')
+  const {chromium} = await import('@playwright/test')
+  const {completeLogin} = await import('../helpers/browser-login.js')
+  const {stripAnsi} = await import('../helpers/strip-ansi.js')
+  const {waitForText} = await import('../helpers/wait-for-text.js')
+
+  const email = process.env.E2E_ACCOUNT_EMAIL!
+  const password = process.env.E2E_ACCOUNT_PASSWORD!
+
+  const baseEnv: {[key: string]: string} = {
+    ...(process.env as {[key: string]: string}),
+    NODE_OPTIONS: '',
+    SHOPIFY_RUN_AS_USER: '0',
+  }
+  delete baseEnv.SHOPIFY_CLI_PARTNERS_TOKEN
+
   console.log('--- Logging out ---')
   await execa('node', [cliPath, 'auth', 'logout'], {env: baseEnv, reject: false})
 
   console.log('--- Logging in via OAuth ---')
   const nodePty = await import('node-pty')
-  const spawnEnv = {...baseEnv, CI: '', BROWSER: 'none'}
   const pty = nodePty.spawn('node', [cliPath, 'auth', 'login'], {
     name: 'xterm-color',
     cols: 120,
     rows: 30,
-    env: spawnEnv,
+    env: {...baseEnv, CI: '', BROWSER: 'none', CODESPACES: 'true'},
   })
 
   let output = ''
@@ -81,28 +85,23 @@ async function main() {
     output += data
   })
 
-  await waitForText(() => output, 'Press any key to open the login page', 30_000)
-  pty.write(' ')
-  await waitForText(() => output, 'start the auth process', 10_000)
+  await waitForText(() => output, 'start the auth process', 30_000)
 
   const stripped = stripAnsi(output)
   const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
   if (!urlMatch) throw new Error(`No login URL found:\n${stripped}`)
 
-  // Launch browser - we'll reuse this session for dashboard navigation
   const browser = await chromium.launch({headless: !headed})
   const context = await browser.newContext({
-    extraHTTPHeaders: {
-      'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-    },
+    extraHTTPHeaders: {'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true'},
   })
+  context.setDefaultTimeout(60_000)
+  context.setDefaultNavigationTimeout(60_000)
   const page = await context.newPage()
 
-  // Complete OAuth login using shared helper
-  await completeLogin(page, urlMatch[0], email!, password!)
-
+  await completeLogin(page, urlMatch[0], email, password)
   await waitForText(() => output, 'Logged in', 60_000)
-  console.log('Logged in successfully!')
+  console.log('Logged in successfully!\n')
   try {
     pty.kill()
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -110,131 +109,193 @@ async function main() {
     // already dead
   }
 
-  try {
-    // Step 2: Navigate to dev dashboard
-    console.log('\n--- Navigating to dev dashboard ---')
-    await page.goto('https://dev.shopify.com/dashboard', {waitUntil: 'domcontentloaded'})
+  return {page}
+}
+
+/** Collect all apps from the dev dashboard matching any of the given patterns. */
+async function collectApps(
+  page: Page,
+  patterns: string[],
+): Promise<{name: string; url: string}[]> {
+  const email = process.env.E2E_ACCOUNT_EMAIL!
+  const orgId = process.env.E2E_ORG_ID
+  const dashboardUrl = orgId
+    ? `https://dev.shopify.com/dashboard/${orgId}/apps`
+    : 'https://dev.shopify.com/dashboard'
+
+  await page.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(3000)
+
+  // Handle account picker
+  const accountButton = page.locator(`text=${email}`).first()
+  if (await accountButton.isVisible({timeout: 5000}).catch(() => false)) {
+    console.log('Account picker detected, selecting account...')
+    await accountButton.click()
     await page.waitForTimeout(3000)
+  }
 
-    // Handle account picker if shown
-    const accountButton = page.locator(`text=${email}`).first()
-    if (await accountButton.isVisible({timeout: 5000}).catch(() => false)) {
-      console.log('Account picker detected, selecting account...')
-      await accountButton.click()
-      await page.waitForTimeout(3000)
+  await page.waitForTimeout(2000)
+
+  const pageText = (await page.textContent('body')) ?? ''
+  if (pageText.includes('500') || pageText.includes('Internal Server Error')) {
+    console.log('Got 500 error, retrying...')
+    await page.reload({waitUntil: 'domcontentloaded'})
+    await page.waitForTimeout(3000)
+  }
+
+  const appCards = await page.locator('a[href*="/apps/"]').all()
+  const apps: {name: string; url: string}[] = []
+  for (const card of appCards) {
+    const href = await card.getAttribute('href')
+    const text = await card.textContent()
+    if (href && text && href.match(/\/apps\/\d+/)) {
+      const name = text.split(/\d+ install/)[0]?.trim() || text.split('\n')[0]?.trim() || text.trim()
+      if (!name || name.length > 200) continue
+      if (!patterns.some((pat) => name.toLowerCase().includes(pat.toLowerCase()))) continue
+      const url = href.startsWith('http') ? href : `https://dev.shopify.com${href}`
+      apps.push({name, url})
     }
+  }
+  return apps
+}
 
-    // May need to handle org selection or retry on error
-    await page.waitForTimeout(2000)
+/** Uninstall a specific app from the store via the store admin. */
+async function uninstallAppFromStore(page: Page, appName: string): Promise<void> {
+  const storeFqdn = process.env.E2E_STORE_FQDN
+  if (!storeFqdn) return
 
-    // Check for 500 error and retry
-    const pageText = await page.textContent('body') ?? ''
-    if (pageText.includes('500') || pageText.includes('Internal Server Error')) {
-      console.log('Got 500 error, retrying...')
-      await page.reload({waitUntil: 'domcontentloaded'})
-      await page.waitForTimeout(3000)
-    }
+  await page.goto(`https://${storeFqdn}/admin/settings/apps`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(5000)
 
-    // Check for org selection page
-    const orgLink = page.locator('a, button').filter({hasText: /core-build|cli-e2e/i}).first()
-    if (await orgLink.isVisible({timeout: 3000}).catch(() => false)) {
-      console.log('Org selection detected, clicking...')
-      await orgLink.click()
-      await page.waitForTimeout(3000)
-    }
+  const appRow = page.locator('div[role="listitem"]').filter({hasText: appName}).first()
+  if (!(await appRow.isVisible({timeout: 5000}).catch(() => false))) {
+    console.log(`  Not found on store, skipping uninstall.`)
+    return
+  }
 
-    const dashboardScreenshot = path.join(os.tmpdir(), 'e2e-dashboard.png')
-    await page.screenshot({path: dashboardScreenshot})
-    console.log(`Dashboard URL: ${page.url()}`)
-    console.log(`Dashboard screenshot saved to ${dashboardScreenshot}`)
+  const menuButton = appRow.locator('button').first()
+  await menuButton.click({force: true})
+  await page.waitForTimeout(1000)
 
-    // Step 3: Find all app cards on the dashboard
-    // Each app is a clickable card/row with the app name visible
-    const appCards = await page.locator('a[href*="/apps/"]').all()
-    console.log(`Found ${appCards.length} app links on dashboard`)
+  const uninstallOption = page.getByText('Uninstall', {exact: true}).first()
+  if (!(await uninstallOption.isVisible({timeout: 5000}).catch(() => false))) {
+    console.log(`  Could not find Uninstall option in menu`)
+    return
+  }
 
-    // Collect app names and URLs
-    const apps: {name: string; url: string}[] = []
-    for (const card of appCards) {
-      const href = await card.getAttribute('href')
-      const text = await card.textContent()
-      if (href && text && href.match(/\/apps\/\d+/)) {
-        // Extract just the app name (first line of text, before "installs")
-        const name = text.split(/\d+ install/)[0]?.trim() || text.split('\n')[0]?.trim() || text.trim()
-        if (!name || name.length > 200) continue
-        if (filterPattern && !name.toLowerCase().includes(filterPattern.toLowerCase())) continue
-        const url = href.startsWith('http') ? href : `https://dev.shopify.com${href}`
-        apps.push({name, url})
-      }
-    }
+  console.log(`  Uninstalling from store...`)
+  await uninstallOption.click()
+  await page.waitForTimeout(2000)
+  await page.screenshot({path: path.join(os.tmpdir(), 'e2e-uninstall-confirm.png')})
 
-    if (apps.length === 0) {
-      console.log('No apps found to delete.')
-      return
-    }
+  // Confirm uninstall dialog
+  const confirmBtn = page.getByRole('button', {name: 'Uninstall'}).last()
+  if (await confirmBtn.isVisible({timeout: 5000}).catch(() => false)) {
+    await confirmBtn.click()
+    await page.waitForTimeout(3000)
+  }
 
-    console.log(`\nApps to delete (${apps.length}):`)
-    for (const app of apps) {
-      console.log(`  - ${app.name}`)
-    }
-
-    if (dryRun) {
-      console.log('\n--dry-run: not deleting anything.')
-      return
-    }
-
-    // Step 4: Delete each app
-    let deleted = 0
-    for (const [index, app] of apps.entries()) {
-      console.log(`\nDeleting "${app.name}"...`)
-      try {
-        await deleteApp(page, app.url)
-        deleted++
-        console.log(`  Deleted "${app.name}"`)
-      } catch (err) {
-        console.error(`  Failed to delete "${app.name}":`, err)
-        await page.screenshot({path: path.join(os.tmpdir(), `e2e-delete-error-${index}.png`)})
-      }
-    }
-
-    console.log(`\n--- Done: deleted ${deleted}/${apps.length} apps ---`)
-  } finally {
-    await browser.close()
+  // Verify uninstall succeeded
+  await page.reload({waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(3000)
+  const stillInstalled = page.locator('div[role="listitem"]').filter({hasText: appName}).first()
+  if (await stillInstalled.isVisible({timeout: 3000}).catch(() => false)) {
+    await page.screenshot({path: path.join(os.tmpdir(), 'e2e-uninstall-failed.png')})
+    console.log(`  WARNING: app still shows as installed after uninstall`)
+  } else {
+    console.log(`  Uninstalled from store.`)
   }
 }
 
-async function deleteApp(page: Page, appUrl: string): Promise<void> {
-  // Navigate to the app page
-  await page.goto(appUrl, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(3000)
+/** Delete an app from the dev dashboard. Retries uninstall if delete button is disabled. */
+async function deleteAppFromDashboard(page: Page, appUrl: string, appName: string): Promise<void> {
+  const settingsUrl = appUrl.replace(/\/?$/, '/settings')
 
-  // Click "Settings" in the sidebar nav (last matches the desktop nav, first is mobile)
-  await page.locator('a[aria-label="Settings"]').last().click({force: true})
-  await page.waitForTimeout(3000)
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await page.goto(settingsUrl, {waitUntil: 'domcontentloaded'})
+    await page.waitForTimeout(3000)
 
-  // Take screenshot for debugging
-  await page.screenshot({path: path.join(os.tmpdir(), 'e2e-settings-page.png')})
+    const deleteButton = page.locator('button:has-text("Delete app")').first()
+    await deleteButton.scrollIntoViewIfNeeded()
 
-  // Look for delete button
-  const deleteButton = page.locator('button:has-text("Delete app")').first()
-  await deleteButton.scrollIntoViewIfNeeded()
-  await deleteButton.click()
-  await page.waitForTimeout(2000)
+    const isDisabled = await deleteButton.evaluate((el) => (el as HTMLButtonElement).disabled)
+    if (!isDisabled) {
+      await deleteButton.click()
+      await page.waitForTimeout(2000)
 
-  // Take screenshot of confirmation dialog
-  await page.screenshot({path: path.join(os.tmpdir(), 'e2e-delete-confirm.png')})
+      const confirmInput = page.locator('input[type="text"]').last()
+      if (await confirmInput.isVisible({timeout: 3000}).catch(() => false)) {
+        await confirmInput.fill('DELETE')
+        await page.waitForTimeout(500)
+      }
 
-  // Handle confirmation dialog - may need to type app name or click confirm
-  const confirmInput = page.locator('input[type="text"]').last()
-  if (await confirmInput.isVisible({timeout: 3000}).catch(() => false)) {
-    await confirmInput.fill('DELETE')
-    await page.waitForTimeout(500)
+      const confirmButton = page.locator('button:has-text("Delete app")').last()
+      await confirmButton.click()
+      await page.waitForTimeout(3000)
+      return
+    }
+
+    console.log(`  Delete button disabled (attempt ${attempt + 1}/3), trying to uninstall from store...`)
+    await uninstallAppFromStore(page, appName)
+    await page.waitForTimeout(3000)
   }
 
-  // Click the final delete/confirm button in the dialog
-  const confirmButton = page.locator('button:has-text("Delete app")').last()
-  await confirmButton.click()
-  await page.waitForTimeout(3000)
+  throw new Error('Delete button remained disabled after 3 attempts')
+}
+
+// Main
+async function main() {
+  if (!process.env.E2E_ACCOUNT_EMAIL || !process.env.E2E_ACCOUNT_PASSWORD) {
+    console.error('E2E_ACCOUNT_EMAIL and E2E_ACCOUNT_PASSWORD must be set')
+    process.exit(1)
+  }
+
+  const allPatterns = [...deletePatterns, ...uninstallPatterns]
+  const {page} = await loginAndGetPage()
+
+  try {
+    const apps = await collectApps(page, allPatterns)
+
+    if (apps.length === 0) {
+      console.log('No matching apps found.')
+      return
+    }
+
+    console.log(`\nMatching apps (${apps.length}):`)
+    for (const app of apps) console.log(`  - ${app.name}`)
+
+    if (dryRun) {
+      console.log('\n--dry-run: not taking any action.')
+      return
+    }
+
+    // Process each app: delete (timestamped) or uninstall-only (pre-existing)
+    let processed = 0
+    for (const [index, app] of apps.entries()) {
+      const shouldDelete = deletePatterns.some((pat) => app.name.toLowerCase().includes(pat.toLowerCase()))
+      const action = shouldDelete ? 'delete' : 'uninstall'
+      console.log(`\n[${index + 1}/${apps.length}] "${app.name}" (${action})`)
+
+      try {
+        await uninstallAppFromStore(page, app.name)
+        if (shouldDelete) {
+          await deleteAppFromDashboard(page, app.url, app.name)
+        }
+        processed++
+        console.log(shouldDelete ? `  ✓ Deleted` : `  ✓ Uninstalled`)
+      } catch (err) {
+        console.error(`  ✗ Failed:`, err)
+        await page.screenshot({path: path.join(os.tmpdir(), `e2e-cleanup-error-${index}.png`)})
+      }
+    }
+
+    console.log(`\n--- Done: processed ${processed}/${apps.length} apps ---`)
+    if (processed < apps.length) {
+      throw new Error(`Failed to process ${apps.length - processed} app(s)`)
+    }
+  } finally {
+    await page.context().browser()?.close()
+  }
 }
 
 main().catch((err) => {

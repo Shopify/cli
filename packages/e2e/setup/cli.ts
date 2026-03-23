@@ -45,19 +45,22 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
   cli: async ({env}, use) => {
     const spawnedProcesses: SpawnedProcess[] = []
 
+    // Merge env with opts, filtering out undefined values
+    function buildEnv(optsEnv?: Record<string, string | undefined>): {[key: string]: string} {
+      const result: {[key: string]: string} = {}
+      for (const [key, value] of Object.entries({...env.processEnv, ...optsEnv})) {
+        if (value !== undefined) result[key] = value
+      }
+      return result
+    }
+
     const cli: CLIProcess = {
       async exec(args, opts = {}) {
         // 3 min default
         const timeout = opts.timeout ?? 3 * 60 * 1000
-        const execEnv: {[key: string]: string} = {}
-        for (const [key, value] of Object.entries({...env.processEnv, ...opts.env})) {
-          if (value !== undefined) {
-            execEnv[key] = value
-          }
-        }
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
-          env: execEnv,
+          env: buildEnv(opts.env),
           extendEnv: false,
           timeout,
           reject: false,
@@ -79,15 +82,9 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       async execCreateApp(args, opts = {}) {
         // 5 min default for scaffolding
         const timeout = opts.timeout ?? 5 * 60 * 1000
-        const execEnv: {[key: string]: string} = {}
-        for (const [key, value] of Object.entries({...env.processEnv, ...opts.env})) {
-          if (value !== undefined) {
-            execEnv[key] = value
-          }
-        }
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
-          env: execEnv,
+          env: buildEnv(opts.env),
           extendEnv: false,
           timeout,
           reject: false,
@@ -98,6 +95,11 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         }
 
         const result = await execa('node', [executables.createApp, ...args], execaOpts)
+
+        if (process.env.DEBUG === '1') {
+          if (result.stdout) console.log(`[e2e] execCreateApp stdout:\n${result.stdout}`)
+          if (result.stderr) console.log(`[e2e] execCreateApp stderr:\n${result.stderr}`)
+        }
 
         return {
           stdout: result.stdout ?? '',
@@ -110,13 +112,6 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
         // Dynamic import to avoid requiring node-pty for Phase 1 tests
         const nodePty = await import('node-pty')
 
-        const spawnEnv: {[key: string]: string} = {}
-        for (const [key, value] of Object.entries({...env.processEnv, ...opts.env})) {
-          if (value !== undefined) {
-            spawnEnv[key] = value
-          }
-        }
-
         if (process.env.DEBUG === '1') {
           console.log(`[e2e] spawn: node ${executables.cli} ${args.join(' ')}`)
         }
@@ -126,7 +121,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           cols: 120,
           rows: 30,
           cwd: opts.cwd,
-          env: spawnEnv,
+          env: buildEnv(opts.env),
         })
 
         let output = ''
