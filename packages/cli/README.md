@@ -7,6 +7,7 @@
 * [`shopify app config link`](#shopify-app-config-link)
 * [`shopify app config pull`](#shopify-app-config-pull)
 * [`shopify app config use [config] [flags]`](#shopify-app-config-use-config-flags)
+* [`shopify app config validate`](#shopify-app-config-validate)
 * [`shopify app deploy`](#shopify-app-deploy)
 * [`shopify app dev`](#shopify-app-dev)
 * [`shopify app dev clean`](#shopify-app-dev-clean)
@@ -27,7 +28,6 @@
 * [`shopify app logs`](#shopify-app-logs)
 * [`shopify app logs sources`](#shopify-app-logs-sources)
 * [`shopify app release --version <version>`](#shopify-app-release---version-version)
-* [`shopify app validate`](#shopify-app-validate)
 * [`shopify app versions list`](#shopify-app-versions-list)
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
@@ -304,6 +304,30 @@ DESCRIPTION
 
   Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll
   be prompted to choose from the configuration files in your project.
+```
+
+## `shopify app config validate`
+
+Validate your app configuration and extensions.
+
+```
+USAGE
+  $ shopify app config validate [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
+  [--verbose]
+
+FLAGS
+  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
+      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
+      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
+      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Validate your app configuration and extensions.
+
+  Validates the selected app configuration file and all extension configurations against their schemas and reports any
+  errors found.
 ```
 
 ## `shopify app deploy`
@@ -918,29 +942,6 @@ DESCRIPTION
   Release an app version.
 
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
-```
-
-## `shopify app validate`
-
-Validate your app configuration and extensions.
-
-```
-USAGE
-  $ shopify app validate [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ] [--verbose]
-
-FLAGS
-  -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
-      --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
-      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
-      --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
-      --reset              [env: SHOPIFY_FLAG_RESET] Reset all your settings.
-      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
-
-DESCRIPTION
-  Validate your app configuration and extensions.
-
-  Validates the selected app configuration file and all extension configurations against their schemas and reports any
-  errors found.
 ```
 
 ## `shopify app versions list`

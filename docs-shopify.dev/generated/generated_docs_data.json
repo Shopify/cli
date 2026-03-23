@@ -751,6 +751,98 @@
     "related": []
   },
   {
+    "name": "app config validate",
+    "description": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
+    "overviewPreviewDescription": "Validate your app configuration and extensions.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "app config validate",
+            "code": "shopify app config validate [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "app config validate"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `app config validate` command:",
+        "type": "appconfigvalidate",
+        "typeDefinitions": {
+          "appconfigvalidate": {
+            "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+            "name": "appconfigvalidate",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--client-id <value>",
+                "value": "string",
+                "description": "The Client ID of your app.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_CLIENT_ID"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--path <value>",
+                "value": "string",
+                "description": "The path to your app directory.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_PATH"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--reset",
+                "value": "\"\"",
+                "description": "Reset all your settings.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_RESET"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --config <value>",
+                "value": "string",
+                "description": "The name of the app configuration.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
+              }
+            ],
+            "value": "export interface appconfigvalidate {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "app",
+    "related": []
+  },
+  {
     "name": "app deploy",
     "description": "[Builds the app](/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your [web app](/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](/docs/apps/deployment/web) to your own hosting solution.\n  ",
     "overviewPreviewDescription": "Deploy your Shopify app.",
@@ -3077,98 +3169,6 @@
               }
             ],
             "value": "export interface apprelease {\n  /**\n   * Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.\n   * @environment SHOPIFY_FLAG_ALLOW_DELETES\n   */\n  '--allow-deletes'?: ''\n\n  /**\n   * Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.\n   * @environment SHOPIFY_FLAG_ALLOW_UPDATES\n   */\n  '--allow-updates'?: ''\n\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * [Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.\n   * @environment SHOPIFY_FLAG_FORCE\n   */\n  '-f, --force'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The name of the app version to release.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>': string\n}"
-          }
-        }
-      }
-    ],
-    "category": "app",
-    "related": []
-  },
-  {
-    "name": "app validate",
-    "description": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
-    "overviewPreviewDescription": "Validate your app configuration and extensions.",
-    "type": "command",
-    "isVisualComponent": false,
-    "defaultExample": {
-      "codeblock": {
-        "tabs": [
-          {
-            "title": "app validate",
-            "code": "shopify app validate [flags]",
-            "language": "bash"
-          }
-        ],
-        "title": "app validate"
-      }
-    },
-    "definitions": [
-      {
-        "title": "Flags",
-        "description": "The following flags are available for the `app validate` command:",
-        "type": "appvalidate",
-        "typeDefinitions": {
-          "appvalidate": {
-            "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-            "name": "appvalidate",
-            "description": "",
-            "members": [
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--client-id <value>",
-                "value": "string",
-                "description": "The Client ID of your app.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_CLIENT_ID"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--no-color",
-                "value": "\"\"",
-                "description": "Disable color output.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--path <value>",
-                "value": "string",
-                "description": "The path to your app directory.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_PATH"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--reset",
-                "value": "\"\"",
-                "description": "Reset all your settings.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_RESET"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "--verbose",
-                "value": "\"\"",
-                "description": "Increase the verbosity of the output.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
-              },
-              {
-                "filePath": "docs-shopify.dev/commands/interfaces/app-validate.interface.ts",
-                "syntaxKind": "PropertySignature",
-                "name": "-c, --config <value>",
-                "value": "string",
-                "description": "The name of the app configuration.",
-                "isOptional": true,
-                "environmentValue": "SHOPIFY_FLAG_APP_CONFIG"
-              }
-            ],
-            "value": "export interface appvalidate {\n  /**\n   * The Client ID of your app.\n   * @environment SHOPIFY_FLAG_CLIENT_ID\n   */\n  '--client-id <value>'?: string\n\n  /**\n   * The name of the app configuration.\n   * @environment SHOPIFY_FLAG_APP_CONFIG\n   */\n  '-c, --config <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The path to your app directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * Reset all your settings.\n   * @environment SHOPIFY_FLAG_RESET\n   */\n  '--reset'?: ''\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }
