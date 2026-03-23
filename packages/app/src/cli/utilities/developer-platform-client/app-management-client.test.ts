@@ -95,6 +95,7 @@ function moduleFromExtension(extension: ExtensionInstance) {
       identifier: extension.specification.identifier,
       externalIdentifier: extension.specification.externalIdentifier,
       name: extension.specification.externalName,
+      experience: extension.specification.experience,
       managementExperience: 'cli',
     },
   }
@@ -1352,6 +1353,14 @@ describe('appExtensionRegistrations', () => {
       registrationId: BrandingSpecIdentifier,
       registrationTitle: 'Config Extension',
       type: 'config_extension',
+      specification: {
+        identifier: BrandingSpecIdentifier,
+        name: 'Config Extension',
+        experience: 'configuration' as const,
+        options: {
+          managementExperience: 'cli' as const,
+        },
+      },
     })
 
     const extensionModule = createMockAppModuleVersion({
@@ -1451,6 +1460,14 @@ describe('appExtensionRegistrations', () => {
         registrationId: id,
         registrationTitle: `Config Extension ${index}`,
         type: 'config_extension',
+        specification: {
+          identifier: id,
+          name: `Config Extension ${index}`,
+          experience: 'configuration' as const,
+          options: {
+            managementExperience: 'cli' as const,
+          },
+        },
       }),
     )
 
@@ -1515,6 +1532,14 @@ describe('appExtensionRegistrations', () => {
           registrationId: id,
           registrationTitle: `Config ${id}`,
           type: 'config',
+          specification: {
+            identifier: id,
+            name: `Config ${id}`,
+            experience: 'configuration' as const,
+            options: {
+              managementExperience: 'cli' as const,
+            },
+          },
         }),
       ),
       // Regular CLI-managed extensions

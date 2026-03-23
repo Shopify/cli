@@ -954,6 +954,19 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     },
   },
   {
+    name: 'Webhook Subscription',
+    externalName: 'Webhook Subscription',
+    externalIdentifier: 'webhook_subscription',
+    identifier: 'webhook_subscription',
+    gated: false,
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+      registrationLimit: 1,
+      uidIsClientProvided: false,
+    },
+  },
+  {
     name: 'App Proxy',
     externalName: 'App Proxy',
     externalIdentifier: 'app_proxy',

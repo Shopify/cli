@@ -37,6 +37,7 @@ fragment ReleasedAppModule on AppModule {
     identifier
     externalIdentifier
     name
+    experience
     managementExperience
   }
 }

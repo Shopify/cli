@@ -23,6 +23,19 @@ describe('fetchExtensionSpecifications', () => {
       ]),
     )
 
+    // Then
+    expect(got).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          externalName: 'Webhook Subscription',
+          identifier: 'webhook_subscription',
+          externalIdentifier: 'webhook_subscription',
+          registrationLimit: 1,
+          experience: 'configuration',
+        }),
+      ]),
+    )
+
     expect(got).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
