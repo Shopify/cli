@@ -70,8 +70,8 @@ export async function refreshAccessToken(currentToken: IdentityToken): Promise<I
 }
 
 /**
- * Given a custom CLI token passed as ENV variable  request a valid API access token
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * Given a custom CLI token passed as ENV variable, request a valid API access token.
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_TOKEN`
  * @param apiName - The API to exchange for the access token
  * @param scopes - The scopes to request with the access token
  * @returns An instance with the application access tokens.
@@ -100,9 +100,9 @@ async function exchangeCliTokenForAccessToken(
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid Partners API token
+ * Given a custom CLI token passed as ENV variable, request a valid Partners API token.
  * This token does not accept extra scopes, just the cli one.
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_TOKEN`
  * @returns An instance with the application access tokens.
  */
 export async function exchangeCustomPartnerToken(token: string): Promise<{accessToken: string; userId: string}> {
@@ -110,8 +110,8 @@ export async function exchangeCustomPartnerToken(token: string): Promise<{access
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid App Management API token
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * Given a custom CLI token passed as ENV variable, request a valid App Management API token.
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_TOKEN`
  * @returns An instance with the application access tokens.
  */
 export async function exchangeCliTokenForAppManagementAccessToken(
@@ -121,8 +121,8 @@ export async function exchangeCliTokenForAppManagementAccessToken(
 }
 
 /**
- * Given a custom CLI token passed as ENV variable, request a valid Business Platform API token
- * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_PARTNERS_TOKEN`
+ * Given a custom CLI token passed as ENV variable, request a valid Business Platform API token.
+ * @param token - The CLI token passed as ENV variable `SHOPIFY_CLI_TOKEN`
  * @returns An instance with the application access tokens.
  */
 export async function exchangeCliTokenForBusinessPlatformAccessToken(

@@ -18,21 +18,14 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
 }
 
 /**
- * Returns the value of the SHOPIFY_CLI_PARTNERS_TOKEN environment variable.
+ * Returns the value of the SHOPIFY_CLI_TOKEN environment variable,
+ * falling back to the deprecated SHOPIFY_CLI_PARTNERS_TOKEN.
  *
- * @returns Current process environment variables.
+ * @returns The CLI token value, or undefined if neither env var is set.
  */
-export function getPartnersToken(): string | undefined {
-  return getEnvironmentVariables()[environmentVariables.partnersToken]
-}
-
-/**
- * Check if the current proccess is running using the partners token.
- *
- * @returns True if the current proccess is running using the partners token.
- */
-export function usePartnersToken(): boolean {
-  return getPartnersToken() !== undefined
+export function getCliToken(): string | undefined {
+  const env = getEnvironmentVariables()
+  return env[environmentVariables.cliToken] ?? env[environmentVariables.partnersToken]
 }
 
 /**
