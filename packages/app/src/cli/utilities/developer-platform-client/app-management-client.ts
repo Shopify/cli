@@ -82,7 +82,7 @@ import {ListOrganizations} from '../../api/graphql/business-platform-destination
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
-import {CONFIG_EXTENSION_IDS} from '../../models/extensions/extension-instance.js'
+
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {
   DevSessionUpdate,
@@ -465,7 +465,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
           uidIsClientProvided: spec.uidStrategy.isClientProvided,
           uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
         },
-        experience: experience(spec.identifier),
+        experience: normalizeExperience(spec.experience),
         validationSchema: spec.validationSchema,
       }),
     )
@@ -603,7 +603,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
             }
           : undefined,
       }
-      if (CONFIG_EXTENSION_IDS.includes(registration.id)) {
+      if (mod.specification?.experience === 'configuration') {
         configurationRegistrations.push(registration)
       } else if (mod.specification?.options?.managementExperience === 'dashboard') {
         dashboardManagedExtensionRegistrations.push(registration)
@@ -693,7 +693,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
         registrationTitle: mod.handle,
         specification: {
           identifier: mod.specification.identifier,
-          experience: experience(mod.specification.identifier),
+          experience: normalizeExperience(mod.specification.experience),
           options: {
             managementExperience: 'cli',
           },
@@ -1358,10 +1358,6 @@ export async function allowedTemplates(
   })
 }
 
-function experience(identifier: string): 'configuration' | 'extension' {
-  return CONFIG_EXTENSION_IDS.includes(identifier) ? 'configuration' : 'extension'
-}
-
 /**
  * Maps the backend uidStrategy __typename to the CLI UidStrategy value.
  * The __typename is always present in the response because the GraphQL document
@@ -1369,6 +1365,24 @@ function experience(identifier: string): 'configuration' | 'extension' {
  *
  * Type names come from the app-management GraphQL schema's UidStrategy union.
  */
+type SpecificationExperience = 'extension' | 'configuration' | 'deprecated'
+
+/**
+ * Normalizes the raw experience string from the API into a known union value.
+ * Falls back to 'extension' for any unexpected/unknown values and logs a debug message.
+ */
+function normalizeExperience(raw: string): SpecificationExperience {
+  switch (raw) {
+    case 'extension':
+    case 'configuration':
+    case 'deprecated':
+      return raw
+    default:
+      outputDebug(`Unknown specification experience value "${raw}", defaulting to "extension"`)
+      return 'extension'
+  }
+}
+
 export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' | undefined {
   switch (typename) {
     case 'UidStrategiesDynamic':
@@ -1415,7 +1429,7 @@ function appModuleVersion(mod: ReleasedAppModuleFragment): Required<AppModuleVer
       ...mod.specification,
       identifier: mod.specification.identifier,
       options: {managementExperience: mod.specification.managementExperience as 'cli' | 'custom' | 'dashboard'},
-      experience: experience(mod.specification.identifier),
+      experience: normalizeExperience(mod.specification.experience),
     },
   }
 }
