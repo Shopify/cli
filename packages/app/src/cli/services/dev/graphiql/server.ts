@@ -1,8 +1,18 @@
 import {defaultQuery, graphiqlTemplate} from './templates/graphiql.js'
 import {unauthorizedTemplate} from './templates/unauthorized.js'
 import {filterCustomHeaders} from './utilities.js'
-import express from 'express'
-import bodyParser from 'body-parser'
+import {
+  createApp,
+  createRouter,
+  defineEventHandler,
+  getQuery,
+  getRequestHeader,
+  getRequestHeaders,
+  readBody,
+  setResponseHeader,
+  setResponseStatus,
+  toNodeListener,
+} from 'h3'
 import {performActionWithRetryAfterRecovery} from '@shopify/cli-kit/common/retry'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -10,8 +20,9 @@ import {adminUrl, supportedApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {renderLiquidTemplate} from '@shopify/cli-kit/node/liquid'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {createHmac, timingSafeEqual} from 'crypto'
-import {Server} from 'http'
+import {createHmac} from 'crypto'
+import {createServer, Server} from 'http'
+import {readFileSync} from 'fs'
 import {Writable} from 'stream'
 import {createRequire} from 'module'
 
@@ -40,16 +51,6 @@ class TokenRefreshError extends AbortError {
   }
 }
 
-function corsMiddleware(_req: express.Request, res: express.Response, next: (err?: Error) => unknown) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, ngrok-skip-browser-warning',
-  )
-  next()
-}
-
 interface SetupGraphiQLServerOptions {
   stdout: Writable
   port: number
@@ -76,15 +77,9 @@ export function setupGraphiQLServer({
   // (browser tabs survive dev server restarts) but not guessable without the app secret.
   const key = resolveGraphiQLKey(providedKey, apiSecret, storeFqdn)
   outputDebug(`Setting up GraphiQL HTTP server on port ${port}...`, stdout)
-  const app = express()
 
-  function failIfUnmatchedKey(str: string, res: express.Response): boolean {
-    const strBuffer = Buffer.from(str ?? '')
-    const keyBuffer = Buffer.from(key)
-    if (strBuffer.length === keyBuffer.length && timingSafeEqual(strBuffer, keyBuffer)) return false
-    res.status(404).type('text/plain').send(`Invalid path ${res.req.originalUrl}`)
-    return true
-  }
+  const app = createApp()
+  const router = createRouter()
 
   let _token: string | undefined
   async function token(): Promise<string> {
@@ -119,20 +114,6 @@ export function setupGraphiQLServer({
     }
   }
 
-  app.get('/graphiql/ping', corsMiddleware, (_req, res) => {
-    res.send('pong')
-  })
-
-  const faviconPath = require.resolve('@shopify/app/assets/graphiql/favicon.ico')
-  app.get('/graphiql/favicon.ico', (_req, res) => {
-    res.sendFile(faviconPath)
-  })
-
-  const stylePath = require.resolve('@shopify/app/assets/graphiql/style.css')
-  app.get('/graphiql/simple.css', (_req, res) => {
-    res.sendFile(stylePath)
-  })
-
   async function fetchApiVersionsWithTokenRefresh(): Promise<string[]> {
     return performActionWithRetryAfterRecovery(
       async () => supportedApiVersions({storeFqdn, token: await token()}),
@@ -140,47 +121,97 @@ export function setupGraphiQLServer({
     )
   }
 
-  app.get('/graphiql/status', (req, res) => {
-    if (failIfUnmatchedKey(req.query.key as string, res)) return
-    fetchApiVersionsWithTokenRefresh()
-      .then(() => res.send({status: 'OK', storeFqdn, appName, appUrl}))
-      .catch(() => res.send({status: 'UNAUTHENTICATED'}))
-  })
+  const faviconPath = require.resolve('@shopify/app/assets/graphiql/favicon.ico')
+  const faviconContent = readFileSync(faviconPath)
+  const stylePath = require.resolve('@shopify/app/assets/graphiql/style.css')
+  const styleContent = readFileSync(stylePath, 'utf8')
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.get('/graphiql', async (req, res) => {
-    outputDebug('Handling /graphiql request', stdout)
-    if (failIfUnmatchedKey(req.query.key as string, res)) return
+  app.use(
+    defineEventHandler((event) => {
+      setResponseHeader(event, 'Access-Control-Allow-Origin', '*')
+      setResponseHeader(event, 'Access-Control-Allow-Methods', 'GET, OPTIONS')
+      setResponseHeader(
+        event,
+        'Access-Control-Allow-Headers',
+        'Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, ngrok-skip-browser-warning',
+      )
+    }),
+  )
 
-    const usesHttps = req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https'
-    const url = `http${usesHttps ? 's' : ''}://${req.get('host')}`
+  router.get(
+    '/graphiql/ping',
+    defineEventHandler(() => 'pong'),
+  )
 
-    let apiVersions: string[]
-    try {
-      apiVersions = await fetchApiVersionsWithTokenRefresh()
-    } catch (err) {
-      if (err instanceof TokenRefreshError) {
-        return res.send(
-          await renderLiquidTemplate(unauthorizedTemplate, {
+  router.get(
+    '/graphiql/favicon.ico',
+    defineEventHandler((event) => {
+      setResponseHeader(event, 'Content-Type', 'image/x-icon')
+      return faviconContent
+    }),
+  )
+
+  router.get(
+    '/graphiql/simple.css',
+    defineEventHandler((event) => {
+      setResponseHeader(event, 'Content-Type', 'text/css')
+      return styleContent
+    }),
+  )
+
+  router.get(
+    '/graphiql/status',
+    defineEventHandler(async () => {
+      try {
+        await fetchApiVersionsWithTokenRefresh()
+        return {status: 'OK', storeFqdn, appName, appUrl}
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch {
+        return {status: 'UNAUTHENTICATED'}
+      }
+    }),
+  )
+
+  router.get(
+    '/graphiql',
+    defineEventHandler(async (event) => {
+      outputDebug('Handling /graphiql request', stdout)
+
+      const query = getQuery(event)
+
+      if (key && query.key !== key) {
+        setResponseStatus(event, 404)
+        return `Invalid path ${event.path}`
+      }
+
+      const forwardedProto = getRequestHeader(event, 'x-forwarded-proto')
+      const usesHttps = forwardedProto === 'https'
+      const host = getRequestHeader(event, 'host')
+      const url = `http${usesHttps ? 's' : ''}://${host}`
+
+      let apiVersions: string[]
+      try {
+        apiVersions = await fetchApiVersionsWithTokenRefresh()
+      } catch (err) {
+        if (err instanceof TokenRefreshError) {
+          return renderLiquidTemplate(unauthorizedTemplate, {
             previewUrl: appUrl,
             url,
-          }),
-        )
+          })
+        }
+        throw err
       }
-      throw err
-    }
 
-    const apiVersion = apiVersions.sort().reverse()[0]!
+      const apiVersion = apiVersions.sort().reverse()[0]!
 
-    function decodeQueryString(input: string | undefined) {
-      return input ? decodeURIComponent(input).replace(/\n/g, '\\n') : undefined
-    }
+      function decodeQueryString(input: string | undefined) {
+        return input ? decodeURIComponent(input).replace(/\n/g, '\\n') : undefined
+      }
 
-    const query = decodeQueryString(req.query.query as string)
-    const variables = decodeQueryString(req.query.variables as string)
+      const queryParam = decodeQueryString(query.query as string | undefined)
+      const variables = decodeQueryString(query.variables as string | undefined)
 
-    res.send(
-      await renderLiquidTemplate(
+      return renderLiquidTemplate(
         graphiqlTemplate({
           apiVersion,
           apiVersions: [...apiVersions, 'unstable'],
@@ -192,64 +223,73 @@ export function setupGraphiQLServer({
         {
           url,
           defaultQueries: [{query: defaultQuery}],
-          query: query ? JSON.stringify(query) : undefined,
+          query: queryParam ? JSON.stringify(queryParam) : undefined,
           variables: variables ? JSON.stringify(variables) : undefined,
         },
-      ),
-    )
-  })
+      )
+    }),
+  )
 
-  app.use(bodyParser.json())
+  router.post(
+    '/graphiql/graphql.json',
+    defineEventHandler(async (event) => {
+      outputDebug('Handling /graphiql/graphql.json request', stdout)
 
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  app.post('/graphiql/graphql.json', async (req, res) => {
-    outputDebug('Handling /graphiql/graphql.json request', stdout)
-    if (failIfUnmatchedKey(req.query.key as string, res)) return
+      const query = getQuery(event)
 
-    const graphqlUrl = adminUrl(storeFqdn, req.query.api_version as string)
-    try {
-      const reqBody = JSON.stringify(req.body)
+      if (key && query.key !== key) {
+        setResponseStatus(event, 404)
+        return `Invalid path ${event.path}`
+      }
 
-      // Extract custom headers from the request, filtering out blocked headers
-      const customHeaders = filterCustomHeaders(req.headers)
+      const graphqlUrl = adminUrl(storeFqdn, query.api_version as string)
+      try {
+        const body = await readBody(event)
+        const reqBody = JSON.stringify(body)
 
-      const runRequest = async () => {
-        const headers = {
-          ...customHeaders,
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          'X-Shopify-Access-Token': await token(),
-          'User-Agent': `ShopifyCLIGraphiQL/${CLI_KIT_VERSION}`,
+        const reqHeaders = getRequestHeaders(event)
+        const customHeaders = filterCustomHeaders(reqHeaders)
+
+        const runRequest = async () => {
+          const headers = {
+            ...customHeaders,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            'X-Shopify-Access-Token': await token(),
+            'User-Agent': `ShopifyCLIGraphiQL/${CLI_KIT_VERSION}`,
+          }
+
+          return fetch(graphqlUrl, {
+            method: 'POST',
+            headers,
+            body: reqBody,
+          })
         }
 
-        return fetch(graphqlUrl, {
-          method: req.method,
-          headers,
-          body: reqBody,
-        })
-      }
+        let result = await runRequest()
+        if (result.status === 401) {
+          outputDebug('Token expired, fetching new token', stdout)
+          await refreshToken()
+          result = await runRequest()
+        }
 
-      let result = await runRequest()
-      if (result.status === 401) {
-        outputDebug('Token expired, fetching new token', stdout)
-        await refreshToken()
-        result = await runRequest()
+        setResponseHeader(event, 'Content-Type', 'application/json')
+        setResponseStatus(event, result.status)
+        return result.json()
+        // eslint-disable-next-line no-catch-all/no-catch-all
+      } catch (error: unknown) {
+        setResponseStatus(event, 500)
+        if (error instanceof Error) {
+          return {errors: [error.message]}
+        }
+        return {errors: ['Unknown error']}
       }
+    }),
+  )
 
-      res.setHeader('Content-Type', 'application/json')
-      res.statusCode = result.status
-      const responseBody = await result.json()
-      res.json(responseBody)
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (error: unknown) {
-      res.statusCode = 500
-      if (error instanceof Error) {
-        res.json({errors: [error.message]})
-      } else {
-        res.json({errors: ['Unknown error']})
-      }
-    }
-    res.end()
-  })
-  return app.listen(port, 'localhost', () => stdout.write(`GraphiQL server started on port ${port}`))
+  app.use(router)
+
+  const server = createServer(toNodeListener(app))
+  server.listen(port, 'localhost', () => stdout.write(`GraphiQL server started on port ${port}`))
+  return server
 }
