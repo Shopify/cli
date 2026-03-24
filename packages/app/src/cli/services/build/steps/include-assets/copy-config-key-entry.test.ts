@@ -107,9 +107,7 @@ describe('copyConfigKeyEntry', () => {
     // Then
     expect(result).toBe(0)
     expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(
-      expect.stringContaining("Warning: path 'nonexistent' does not exist"),
-    )
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Warning: path 'nonexistent' does not exist"))
   })
 
   test('resolves array config value and copies each path, summing results', async () => {
@@ -143,7 +141,14 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     await copyConfigKeyEntry(
-      {key: 'icons_dir', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false, destination: 'static/icons'},
+      {
+        key: 'icons_dir',
+        baseDir: '/ext',
+        outputDir: '/out',
+        context,
+        preserveStructure: false,
+        destination: 'static/icons',
+      },
       {stdout: mockStdout},
     )
 

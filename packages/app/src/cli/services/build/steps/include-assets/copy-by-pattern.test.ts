@@ -13,10 +13,7 @@ describe('copyByPattern', () => {
 
   test('copies matched files preserving relative paths when preserveStructure is true', async () => {
     // Given
-    vi.mocked(fs.glob).mockResolvedValue([
-      '/src/components/Button.tsx',
-      '/src/utils/helpers.ts',
-    ])
+    vi.mocked(fs.glob).mockResolvedValue(['/src/components/Button.tsx', '/src/utils/helpers.ts'])
     vi.mocked(fs.mkdir).mockResolvedValue()
     vi.mocked(fs.copyFile).mockResolvedValue()
 
@@ -41,10 +38,7 @@ describe('copyByPattern', () => {
 
   test('flattens files to basename when preserveStructure is false', async () => {
     // Given
-    vi.mocked(fs.glob).mockResolvedValue([
-      '/src/components/Button.tsx',
-      '/src/utils/helper.ts',
-    ])
+    vi.mocked(fs.glob).mockResolvedValue(['/src/components/Button.tsx', '/src/utils/helper.ts'])
     vi.mocked(fs.mkdir).mockResolvedValue()
     vi.mocked(fs.copyFile).mockResolvedValue()
 
@@ -68,10 +62,7 @@ describe('copyByPattern', () => {
 
   test('warns and lets last-in-array win when flattening produces basename collision', async () => {
     // Given — two files with the same basename in different directories
-    vi.mocked(fs.glob).mockResolvedValue([
-      '/src/a/index.js',
-      '/src/b/index.js',
-    ])
+    vi.mocked(fs.glob).mockResolvedValue(['/src/a/index.js', '/src/b/index.js'])
     vi.mocked(fs.mkdir).mockResolvedValue()
     vi.mocked(fs.copyFile).mockResolvedValue()
 
@@ -137,9 +128,7 @@ describe('copyByPattern', () => {
     )
 
     // Then
-    expect(mockStdout.write).toHaveBeenCalledWith(
-      expect.stringContaining('skipping'),
-    )
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('skipping'))
     expect(fs.copyFile).not.toHaveBeenCalled()
     expect(result).toBe(0)
   })

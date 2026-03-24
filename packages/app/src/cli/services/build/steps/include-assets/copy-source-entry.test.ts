@@ -18,7 +18,13 @@ describe('copySourceEntry', () => {
     // When / Then
     await expect(
       copySourceEntry(
-        {source: 'missing/file.js', destination: undefined, baseDir: '/ext', outputDir: '/out', preserveStructure: false},
+        {
+          source: 'missing/file.js',
+          destination: undefined,
+          baseDir: '/ext',
+          outputDir: '/out',
+          preserveStructure: false,
+        },
         {stdout: mockStdout},
       ),
     ).rejects.toThrow('Source does not exist: /ext/missing/file.js')
@@ -33,7 +39,13 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'src/icon.png', destination: 'assets/icon.png', baseDir: '/ext', outputDir: '/out', preserveStructure: false},
+      {
+        source: 'src/icon.png',
+        destination: 'assets/icon.png',
+        baseDir: '/ext',
+        outputDir: '/out',
+        preserveStructure: false,
+      },
       {stdout: mockStdout},
     )
 
@@ -146,7 +158,13 @@ describe('copySourceEntry', () => {
 
     // When
     await copySourceEntry(
-      {source: 'src/deep/icon.png', destination: 'assets/icons/icon.png', baseDir: '/ext', outputDir: '/out', preserveStructure: false},
+      {
+        source: 'src/deep/icon.png',
+        destination: 'assets/icons/icon.png',
+        baseDir: '/ext',
+        outputDir: '/out',
+        preserveStructure: false,
+      },
       {stdout: mockStdout},
     )
 
