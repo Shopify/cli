@@ -1,6 +1,7 @@
 import {outputEnv} from './app/env/show.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import {configurationFileNames} from '../constants.js'
 import {ExtensionInstance} from '../models/extensions/extension-instance.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
@@ -30,12 +31,13 @@ export async function info(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
   organization: Organization,
+  project: Project,
   options: InfoOptions,
 ): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.webEnv) {
     return infoWeb(app, remoteApp, organization, options)
   } else {
-    return infoApp(app, remoteApp, options)
+    return infoApp(app, remoteApp, project, options)
   }
 }
 
@@ -51,12 +53,16 @@ async function infoWeb(
 async function infoApp(
   app: AppLinkedInterface,
   remoteApp: OrganizationApp,
+  project: Project,
   options: InfoOptions,
 ): Promise<OutputMessage | AlertCustomSection[]> {
   if (options.format === 'json') {
     const extensionsInfo = withPurgedSchemas(app.allExtensions.filter((ext) => ext.isReturnedAsInfo()))
     let appWithSupportedExtensions = {
       ...app,
+      packageManager: project.packageManager,
+      nodeDependencies: project.nodeDependencies,
+      usesWorkspaces: project.usesWorkspaces,
       allExtensions: extensionsInfo,
     }
     if ('realExtensions' in appWithSupportedExtensions) {
@@ -82,7 +88,7 @@ async function infoApp(
       2,
     )}`
   } else {
-    const appInfo = new AppInfo(app, remoteApp, options)
+    const appInfo = new AppInfo(app, remoteApp, project, options)
     return appInfo.output()
   }
 }
@@ -114,11 +120,13 @@ const NOT_LOADED_TEXT = 'NOT LOADED'
 class AppInfo {
   private readonly app: AppLinkedInterface
   private readonly remoteApp: OrganizationApp
+  private readonly project: Project
   private readonly options: InfoOptions
 
-  constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, options: InfoOptions) {
+  constructor(app: AppLinkedInterface, remoteApp: OrganizationApp, project: Project, options: InfoOptions) {
     this.app = app
     this.remoteApp = remoteApp
+    this.project = project
     this.options = options
   }
 
@@ -165,7 +173,7 @@ class AppInfo {
       {
         body: [
           '💡 To change these, run',
-          {command: formatPackageManagerCommand(this.app.packageManager, 'shopify app config link')},
+          {command: formatPackageManagerCommand(this.project.packageManager, 'shopify app config link')},
         ],
       },
     ]
@@ -266,7 +274,7 @@ class AppInfo {
     const {platform, arch} = platformAndArch()
     return this.tableSection('Tooling and System', [
       ['Shopify CLI', CLI_KIT_VERSION],
-      ['Package manager', this.app.packageManager],
+      ['Package manager', this.project.packageManager],
       ['OS', `${platform}-${arch}`],
       ['Shell', process.env.SHELL ?? 'unknown'],
       ['Node version', process.version],

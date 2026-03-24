@@ -190,21 +190,15 @@ describe('Project integration', () => {
     })
   })
 
-  test('Project metadata matches the old loader metadata', async () => {
+  test('Project loads correct metadata from filesystem', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
 
       const project = await Project.load(dir)
-      const app = await loadApp({
-        directory: dir,
-        userProvidedConfigName: undefined,
-        specifications,
-        mode: 'report',
-      })
 
-      expect(project.packageManager).toBe(app.packageManager)
-      expect(project.nodeDependencies).toStrictEqual(app.nodeDependencies)
-      expect(project.usesWorkspaces).toBe(app.usesWorkspaces)
+      expect(project.packageManager).toBe('npm')
+      expect(project.nodeDependencies).toStrictEqual({})
+      expect(project.usesWorkspaces).toBe(false)
     })
   })
 

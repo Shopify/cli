@@ -33,7 +33,7 @@ export default class FunctionInfo extends AppUnlinkedCommand {
   public async run(): Promise<AppUnlinkedCommandOutput> {
     const {flags} = await this.parse(FunctionInfo)
 
-    const app = await localAppContext({
+    const {app} = await localAppContext({
       directory: flags.path,
       userProvidedConfigName: flags.config,
     })

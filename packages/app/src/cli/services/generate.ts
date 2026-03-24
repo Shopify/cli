@@ -7,6 +7,7 @@ import {
 } from './generate/extension.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import generateExtensionPrompts, {
   GenerateExtensionPromptOptions,
   GenerateExtensionPromptOutput,
@@ -25,6 +26,7 @@ import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface GenerateOptions {
   app: AppLinkedInterface
+  project: Project
   specifications: RemoteAwareExtensionSpecification[]
   remoteApp: OrganizationApp
   developerPlatformClient: DeveloperPlatformClient
@@ -54,7 +56,7 @@ async function generate(options: GenerateOptions) {
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  renderSuccessMessage(generatedExtension, app.packageManager)
+  renderSuccessMessage(generatedExtension, options.project.packageManager)
 }
 
 async function buildPromptOptions(
@@ -118,6 +120,7 @@ function buildGenerateOptions(
 ): GenerateExtensionTemplateOptions {
   return {
     app,
+    project: options.project,
     cloneUrl: options.cloneUrl,
     extensionChoices: promptAnswers.extensionContent,
     extensionTemplate: promptAnswers.extensionTemplate,
@@ -125,7 +128,7 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: AppInterface['packageManager']) {
+function renderSuccessMessage(extension: GeneratedExtension, packageManager: PackageManager) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,

@@ -16,7 +16,7 @@ import {WebhookSubscription} from '../extensions/specifications/types/app_config
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {ZodObjectOf, zod} from '@shopify/cli-kit/node/schema'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {getDependencies, PackageManager, readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
+import {readAndParsePackageJson} from '@shopify/cli-kit/node/node-package-manager'
 import {
   fileExistsSync,
   fileRealPath,
@@ -222,11 +222,8 @@ export interface AppInterface<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > extends AppConfigurationInterface<TConfig, TModuleSpec> {
   name: string
-  packageManager: PackageManager
   idEnvironmentVariableName: 'SHOPIFY_API_KEY'
-  nodeDependencies: {[key: string]: string}
   webs: Web[]
-  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   allExtensions: ExtensionInstance[]
   realExtensions: ExtensionInstance[]
@@ -236,7 +233,6 @@ export interface AppInterface<
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
   readonly devApplicationURLs?: ApplicationURLs
-  updateDependencies: () => Promise<void>
   extensionsForType: (spec: {identifier: string; externalIdentifier: string}) => ExtensionInstance[]
   updateExtensionUUIDS: (uuids: {[key: string]: string}) => void
   preDeployValidation: () => Promise<void>
@@ -264,11 +260,8 @@ type AppConstructor<
   TModuleSpec extends ExtensionSpecification = ExtensionSpecification,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   name: string
-  packageManager: PackageManager
-  nodeDependencies: {[key: string]: string}
   webs: Web[]
   modules: ExtensionInstance[]
-  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: ExtensionSpecification[]
@@ -285,11 +278,8 @@ export class App<
   idEnvironmentVariableName: 'SHOPIFY_API_KEY' = 'SHOPIFY_API_KEY' as const
   directory: string
   configPath: string
-  packageManager: PackageManager
   configuration: TConfig
-  nodeDependencies: {[key: string]: string}
   webs: Web[]
-  usesWorkspaces: boolean
   dotenv?: DotEnvFile
   errors?: AppErrors
   specifications: TModuleSpec[]
@@ -303,12 +293,9 @@ export class App<
     name,
     directory,
     configPath,
-    packageManager,
     configuration,
-    nodeDependencies,
     webs,
     modules,
-    usesWorkspaces,
     dotenv,
     errors,
     specifications,
@@ -320,14 +307,11 @@ export class App<
     this.name = name
     this.directory = directory
     this.configPath = configPath
-    this.packageManager = packageManager
     this.configuration = configuration
-    this.nodeDependencies = nodeDependencies
     this.webs = webs
     this.dotenv = dotenv
     this.realExtensions = modules
     this.errors = errors
-    this.usesWorkspaces = usesWorkspaces
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []
@@ -379,11 +363,6 @@ export class App<
       handle: '',
       modules: getArrayRejectingUndefined(modules),
     }
-  }
-
-  async updateDependencies() {
-    const nodeDependencies = await getDependencies(joinPath(this.directory, 'package.json'))
-    this.nodeDependencies = nodeDependencies
   }
 
   get hiddenConfig() {

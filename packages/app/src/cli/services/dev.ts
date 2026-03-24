@@ -29,6 +29,7 @@ import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Web, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
 import {getAnalyticsTunnelType} from '../utilities/analytics.js'
 import metadata from '../metadata.js'
@@ -52,6 +53,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 
 export interface DevOptions {
   app: AppLinkedInterface
+  project: Project
   remoteApp: OrganizationApp
   organization: Organization
   specifications: RemoteAwareExtensionSpecification[]
@@ -118,8 +120,8 @@ async function prepareForDev(commandOptions: DevOptions): Promise<DevConfig> {
     await configFile.patch({build: {dev_store_url: store.shopDomain}})
   }
 
-  if (!commandOptions.skipDependenciesInstallation && !app.usesWorkspaces) {
-    await installAppDependencies(app)
+  if (!commandOptions.skipDependenciesInstallation && !commandOptions.project.usesWorkspaces) {
+    await installAppDependencies(commandOptions.project)
   }
 
   const graphiqlPort = commandOptions.graphiqlPort ?? (await getAvailableTCPPort(ports.graphiql))
@@ -198,7 +200,8 @@ export async function warnIfScopesDifferBeforeDev({
   localApp,
   remoteApp,
   developerPlatformClient,
-}: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient'>) {
+  commandOptions,
+}: Pick<DevConfig, 'localApp' | 'remoteApp' | 'developerPlatformClient' | 'commandOptions'>) {
   if (developerPlatformClient.supportsDevSessions) return
   const localAccess = localApp.configuration.access_scopes
   const remoteAccess = remoteApp.configuration?.access_scopes
@@ -218,7 +221,7 @@ export async function warnIfScopesDifferBeforeDev({
     const nextSteps = [
       [
         'Run',
-        {command: formatPackageManagerCommand(localApp.packageManager, 'shopify app deploy')},
+        {command: formatPackageManagerCommand(commandOptions.project.packageManager, 'shopify app deploy')},
         'to push your scopes to the Partner Dashboard',
       ],
     ]

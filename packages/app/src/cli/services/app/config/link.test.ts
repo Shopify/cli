@@ -1859,6 +1859,7 @@ async function mockLoadOpaqueAppWithApp(
     state: 'loaded-app',
     app: mockedApp,
     configuration: mockedApp.configuration,
+    packageManager: 'yarn',
   })
   // Also mock loadApp for backward compatibility with getAppCreationDefaultsFromLocalApp
   vi.mocked(loadApp).mockResolvedValue(mockedApp)

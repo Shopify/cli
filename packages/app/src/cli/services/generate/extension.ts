@@ -1,5 +1,6 @@
 import {configurationFileNames, versions} from '../../constants.js'
 import {AppLinkedInterface} from '../../models/app/app.js'
+import {Project} from '../../models/project/project.js'
 import {buildGraphqlTypes, PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '../function/build.js'
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
@@ -23,6 +24,7 @@ import {nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 
 export interface GenerateExtensionTemplateOptions {
   app: AppLinkedInterface
+  project: Project
   cloneUrl?: string
   extensionChoices: GenerateExtensionContentOutput
   extensionTemplate: ExtensionTemplate
@@ -69,6 +71,7 @@ interface ExtensionInitOptions {
   directory: string
   url: string
   app: AppLinkedInterface
+  project: Project
   type: string
   name: string
   extensionFlavor: ExtensionFlavor | undefined
@@ -90,6 +93,7 @@ export async function generateExtensionTemplate(
     directory,
     url,
     app: options.app,
+    project: options.project,
     type: options.extensionTemplate.type,
     name: extensionName,
     extensionFlavor,
@@ -147,6 +151,7 @@ async function functionExtensionInit({
   directory,
   url,
   app,
+  project,
   name,
   extensionFlavor,
   onGetTemplateRepository,
@@ -184,15 +189,15 @@ async function functionExtensionInit({
       title: 'Installing additional dependencies',
       task: async () => {
         // We need to run install once to setup the workspace correctly
-        if (app.usesWorkspaces) {
-          await installNodeModules({packageManager: app.packageManager, directory: app.directory})
+        if (project.usesWorkspaces) {
+          await installNodeModules({packageManager: project.packageManager, directory: project.directory})
         }
 
         const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
         await addNPMDependenciesIfNeeded(requiredDependencies, {
-          packageManager: app.packageManager,
+          packageManager: project.packageManager,
           type: 'prod',
-          directory: app.usesWorkspaces ? directory : app.directory,
+          directory: project.usesWorkspaces ? directory : project.directory,
         })
       },
     })
@@ -214,6 +219,7 @@ async function uiExtensionInit({
   directory,
   url,
   app,
+  project,
   name,
   extensionFlavor,
   onGetTemplateRepository,
@@ -250,23 +256,23 @@ async function uiExtensionInit({
     {
       title: 'Installing dependencies',
       task: async () => {
-        const packageManager = app.packageManager
-        if (app.usesWorkspaces) {
+        const packageManager = project.packageManager
+        if (project.usesWorkspaces) {
           // Only install dependencies if the extension is javascript
           if (getTemplateLanguage(extensionFlavor?.value) === 'javascript') {
             await installNodeModules({
               packageManager,
-              directory: app.directory,
+              directory: project.directory,
             })
           }
         } else {
-          await addResolutionOrOverrideIfNeeded(app.directory, extensionFlavor?.value)
+          await addResolutionOrOverrideIfNeeded(project.directory, extensionFlavor?.value)
           const extensionPackageJsonPath = joinPath(directory, 'package.json')
           const requiredDependencies = await getProdDependencies(extensionPackageJsonPath)
           await addNPMDependenciesIfNeeded(requiredDependencies, {
             packageManager,
             type: 'prod',
-            directory: app.directory,
+            directory: project.directory,
           })
           await removeFile(extensionPackageJsonPath)
         }

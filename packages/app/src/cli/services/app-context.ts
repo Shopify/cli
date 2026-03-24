@@ -7,7 +7,7 @@ import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppConfigurationContext, loadApp, loadAppFromContext} from '../models/app/loader.js'
+import {getAppConfigurationContext, loadAppFromContext} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
@@ -150,24 +150,23 @@ async function logMetadata(app: {apiKey: string}, organization: Organization, re
   }))
 }
 
+interface LocalAppContextOutput {
+  app: AppInterface
+  project: Project
+}
+
 /**
  * This function loads an app locally without making any network calls.
  * It uses local specifications and doesn't require the app to be linked.
  *
- * @returns The local app instance.
+ * @returns The local app and project instances.
  */
 export async function localAppContext({
   directory,
   userProvidedConfigName,
-}: LocalAppContextOptions): Promise<AppInterface> {
-  // Load local specifications only
+}: LocalAppContextOptions): Promise<LocalAppContextOutput> {
+  const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   const specifications = await loadLocalExtensionsSpecifications()
-
-  // Load the local app using the specifications
-  return loadApp({
-    directory,
-    userProvidedConfigName,
-    specifications,
-    mode: 'local',
-  })
+  const app = await loadAppFromContext({project, activeConfig, specifications, mode: 'local'})
+  return {app, project}
 }

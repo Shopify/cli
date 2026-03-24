@@ -2,19 +2,21 @@ import buildWeb from './web.js'
 import {installAppDependencies} from './dependencies.js'
 import {installJavy} from './function/build.js'
 import {AppInterface, Web} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import {renderConcurrent, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {Writable} from 'stream'
 
 interface BuildOptions {
   app: AppInterface
+  project: Project
   skipDependenciesInstallation: boolean
   apiKey?: string
 }
 
 async function build(options: BuildOptions) {
-  if (!options.skipDependenciesInstallation && !options.app.usesWorkspaces) {
-    await installAppDependencies(options.app)
+  if (!options.skipDependenciesInstallation && !options.project.usesWorkspaces) {
+    await installAppDependencies(options.project)
   }
 
   const env: {SHOPIFY_API_KEY?: string} = {}

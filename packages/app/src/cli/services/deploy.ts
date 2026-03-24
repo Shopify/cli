@@ -5,6 +5,7 @@ import {bundleAndBuildExtensions} from './deploy/bundle.js'
 import {allExtensionTypes, filterOutImportedExtensions, importAllExtensions} from './import-extensions.js'
 import {getExtensions} from './fetch-extensions.js'
 import {AppLinkedInterface} from '../models/app/app.js'
+import {Project} from '../models/project/project.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
@@ -22,6 +23,9 @@ import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui
 export interface DeployOptions {
   /** The app to be built and uploaded */
   app: AppLinkedInterface
+
+  /** The project environment (packageManager, directory, etc.) */
+  project: Project
 
   /** The remote app to be deployed */
   remoteApp: OrganizationApp
@@ -277,6 +281,7 @@ export async function deploy(options: DeployOptions) {
 
     await outputCompletionMessage({
       app,
+      project: options.project,
       release,
       uploadExtensionsBundleResult,
       didMigrateExtensionsToDevDash,
@@ -297,11 +302,13 @@ export async function deploy(options: DeployOptions) {
 
 async function outputCompletionMessage({
   app,
+  project,
   release,
   uploadExtensionsBundleResult,
   didMigrateExtensionsToDevDash,
 }: {
   app: AppLinkedInterface
+  project: Project
   release: boolean
   uploadExtensionsBundleResult: UploadExtensionsBundleOutput
   didMigrateExtensionsToDevDash: boolean
@@ -320,7 +327,7 @@ async function outputCompletionMessage({
       body.push(
         '• Map extension IDs to other copies of your app by running',
         {
-          command: formatPackageManagerCommand(app.packageManager, 'shopify app deploy'),
+          command: formatPackageManagerCommand(project.packageManager, 'shopify app deploy'),
         },
         'for: ',
         {
@@ -372,7 +379,7 @@ async function outputCompletionMessage({
         'Run',
         {
           command: formatPackageManagerCommand(
-            app.packageManager,
+            project.packageManager,
             'shopify app release',
             `--version=${uploadExtensionsBundleResult.versionTag}`,
           ),
