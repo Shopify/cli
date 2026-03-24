@@ -181,12 +181,15 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
         if (!keepRunningAfterProcessesResolve) {
           // Defer unmount so React 19 can flush batched setProcessOutput
           // state updates before the component tree is torn down.
-          setImmediate(() => unmountInk())
+          // Use setImmediate → setTimeout(0) to span two event-loop phases,
+          // giving React's scheduler (which uses setImmediate in Node.js)
+          // a full cycle to flush before we tear down the component tree.
+          setImmediate(() => setTimeout(() => unmountInk(), 0))
         }
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: unknown) {
         if (!keepRunningAfterProcessesResolve) {
-          setImmediate(() => unmountInk(error as Error | undefined))
+          setImmediate(() => setTimeout(() => unmountInk(error as Error | undefined), 0))
         }
       }
     }
