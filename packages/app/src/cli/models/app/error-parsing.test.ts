@@ -1,4 +1,4 @@
-import {parseHumanReadableError, parseStructuredErrors} from './error-parsing.js'
+import {parseHumanReadableError, parseStructuredErrors, toRootValidationIssue} from './error-parsing.js'
 import {describe, expect, test} from 'vitest'
 
 describe('parseHumanReadableError', () => {
@@ -233,6 +233,17 @@ describe('parseHumanReadableError', () => {
     expect(result).not.toContain('Expected boolean, received string')
     expect(result).not.toContain('Must be valid URL')
     expect(result).not.toContain('Union validation failed')
+  })
+})
+
+describe('toRootValidationIssue', () => {
+  test('creates a root issue for a file path and message', () => {
+    expect(toRootValidationIssue('/tmp/app', "Couldn't find an app toml file at /tmp/app")).toEqual({
+      filePath: '/tmp/app',
+      path: [],
+      pathString: 'root',
+      message: "Couldn't find an app toml file at /tmp/app",
+    })
   })
 })
 

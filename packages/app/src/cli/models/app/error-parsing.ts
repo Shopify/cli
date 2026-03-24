@@ -32,6 +32,15 @@ export interface AppValidationFileIssues {
   issues: AppValidationIssue[]
 }
 
+export function toRootValidationIssue(filePath: string, message: string): AppValidationIssue {
+  return {
+    filePath,
+    path: [],
+    pathString: 'root',
+    message,
+  }
+}
+
 /**
  * Finds the best matching variant from a union error by scoring each variant
  * based on how close it is to the user's likely intent.
