@@ -117,11 +117,13 @@ export async function executeIncludeAssetsStep(
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
         const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
         const result = await copyByPattern(
-          sourceDir,
-          destinationDir,
-          entry.include,
-          entry.ignore ?? [],
-          entry.preserveStructure,
+          {
+            sourceDir,
+            outputDir: destinationDir,
+            patterns: entry.include,
+            ignore: entry.ignore ?? [],
+            preserveStructure: entry.preserveStructure,
+          },
           options,
         )
         return result.filesCopied
@@ -129,28 +131,34 @@ export async function executeIncludeAssetsStep(
 
       if (entry.type === 'configKey') {
         return copyConfigKeyEntry(
-          entry.key,
-          extension.directory,
-          outputDir,
-          context,
+          {
+            key: entry.key,
+            baseDir: extension.directory,
+            outputDir,
+            context,
+            preserveStructure: entry.preserveStructure,
+            destination: sanitizedDest,
+          },
           options,
-          entry.preserveStructure,
-          sanitizedDest,
         )
       }
 
-      return copySourceEntry(
-        entry.source,
-        sanitizedDest,
-        extension.directory,
-        outputDir,
-        options,
-        entry.preserveStructure,
-      )
+      if (entry.type === 'static') {
+        return copySourceEntry(
+          {
+            source: entry.source,
+            destination: sanitizedDest,
+            baseDir: extension.directory,
+            outputDir,
+            preserveStructure: entry.preserveStructure,
+          },
+          options,
+        )
+      }
     }),
   )
 
-  return {filesCopied: counts.reduce((sum, count) => sum + count, 0)}
+  return {filesCopied: counts.reduce((sum, count) => sum + (count ?? 0), 0)}
 }
 
 /**
@@ -161,13 +169,16 @@ export async function executeIncludeAssetsStep(
  * - With `destination`: copy the file to the explicit destination path (`preserveStructure` is ignored).
  */
 async function copySourceEntry(
-  source: string,
-  destination: string | undefined,
-  baseDir: string,
-  outputDir: string,
+  config: {
+    source: string
+    destination: string | undefined
+    baseDir: string
+    outputDir: string
+    preserveStructure: boolean
+  },
   options: {stdout: NodeJS.WritableStream},
-  preserveStructure: boolean,
 ): Promise<number> {
+  const {source, destination, baseDir, outputDir, preserveStructure} = config
   const sourcePath = joinPath(baseDir, source)
   const exists = await fileExists(sourcePath)
   if (!exists) {
@@ -176,6 +187,12 @@ async function copySourceEntry(
 
   if (destination !== undefined) {
     const destPath = joinPath(outputDir, destination)
+    if (await isDirectory(sourcePath)) {
+      await copyDirectoryContents(sourcePath, destPath)
+      const copied = await glob(['**/*'], {cwd: destPath, absolute: false})
+      options.stdout.write(`Copied ${source} to ${destination}\n`)
+      return copied.length
+    }
     await mkdir(dirname(destPath))
     await copyFile(sourcePath, destPath)
     options.stdout.write(`Copied ${source} to ${destination}\n`)
@@ -209,14 +226,17 @@ async function copySourceEntry(
  * resolved directory is placed under `outputDir/destination`.
  */
 async function copyConfigKeyEntry(
-  key: string,
-  baseDir: string,
-  outputDir: string,
-  context: BuildContext,
+  config: {
+    key: string
+    baseDir: string
+    outputDir: string
+    context: BuildContext
+    preserveStructure: boolean
+    destination?: string
+  },
   options: {stdout: NodeJS.WritableStream},
-  preserveStructure: boolean,
-  destination?: string,
 ): Promise<number> {
+  const {key, baseDir, outputDir, context, preserveStructure, destination} = config
   const value = getNestedValue(context.extension.configuration, key)
   let paths: string[]
   if (typeof value === 'string') {
@@ -266,13 +286,16 @@ async function copyConfigKeyEntry(
  * Pattern strategy: glob-based file selection.
  */
 async function copyByPattern(
-  sourceDir: string,
-  outputDir: string,
-  patterns: string[],
-  ignore: string[],
-  preserveStructure: boolean,
+  config: {
+    sourceDir: string
+    outputDir: string
+    patterns: string[]
+    ignore: string[]
+    preserveStructure: boolean
+  },
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number}> {
+  const {sourceDir, outputDir, patterns, ignore, preserveStructure} = config
   const files = await glob(patterns, {
     absolute: true,
     cwd: sourceDir,

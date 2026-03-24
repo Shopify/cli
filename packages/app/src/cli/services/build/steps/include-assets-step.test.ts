@@ -200,8 +200,8 @@ describe('executeIncludeAssetsStep', () => {
       // Given
       vi.mocked(fs.fileExists).mockResolvedValue(true)
       vi.mocked(fs.isDirectory).mockResolvedValue(true)
-      vi.mocked(fs.copyFile).mockResolvedValue()
-      vi.mocked(fs.mkdir).mockResolvedValue()
+      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
+      vi.mocked(fs.glob).mockResolvedValue(['a.js', 'b.js'])
 
       const step: LifecycleStep = {
         id: 'copy-dist',
@@ -216,8 +216,8 @@ describe('executeIncludeAssetsStep', () => {
       const result = await executeIncludeAssetsStep(step, mockContext)
 
       // Then
-      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/dist', '/test/output/assets/dist')
-      expect(result.filesCopied).toBe(1)
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output/assets/dist')
+      expect(result.filesCopied).toBe(2)
       expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied dist to assets/dist'))
     })
   })
@@ -454,7 +454,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
-      vi.mocked(fs.isDirectory).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockImplementation((path) => Promise.resolve(!String(path).endsWith('.png')))
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
@@ -630,7 +630,7 @@ describe('executeIncludeAssetsStep', () => {
       }
 
       vi.mocked(fs.fileExists).mockResolvedValue(true)
-      vi.mocked(fs.isDirectory).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockImplementation((path) => Promise.resolve(!String(path).endsWith('.json')))
       vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
