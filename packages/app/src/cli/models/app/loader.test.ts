@@ -2249,8 +2249,8 @@ describe('load', () => {
     // When
     const app = await loadTestingApp()
 
-    // Then
-    expect(app.allExtensions[0]!.outputPath).toMatch(/wasm32-wasi\/release\/my-function.wasm/)
+    // Then - outputPath always defaults to dist/index.wasm at load time; build.path is applied by buildFunctionExtension
+    expect(app.allExtensions[0]!.outputPath).toMatch(/dist\/index\.wasm/)
   })
 
   test(`defaults the function wasm path if not configured`, async () => {
