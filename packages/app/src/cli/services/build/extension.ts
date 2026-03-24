@@ -150,7 +150,8 @@ export async function buildFunctionExtension(
 
   try {
     const bundlePath = extension.outputPath
-    const relativeBuildPath = extension.specification.getOutputRelativePath?.(extension) ?? ''
+    const relativeBuildPath =
+      (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ?? extension.outputRelativePath
 
     extension.outputPath = joinPath(extension.directory, relativeBuildPath)
 
