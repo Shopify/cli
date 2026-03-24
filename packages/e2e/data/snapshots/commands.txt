@@ -89,6 +89,8 @@
 │  ├─ unlink
 │  └─ update
 ├─ search
+├─ store
+│  └─ execute
 ├─ theme
 │  ├─ check
 │  ├─ console

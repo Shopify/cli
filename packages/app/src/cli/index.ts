@@ -37,6 +37,7 @@ import AppUnlinkedCommand from './utilities/app-unlinked-command.js'
 import FunctionInfo from './commands/app/function/info.js'
 import ImportCustomDataDefinitions from './commands/app/import-custom-data-definitions.js'
 import OrganizationList from './commands/organization/list.js'
+import StoreExecute from './commands/store/execute.js'
 import BaseCommand from '@shopify/cli-kit/node/base-command'
 
 /**
@@ -78,6 +79,7 @@ export const commands: {[key: string]: typeof AppLinkedCommand | typeof AppUnlin
   'webhook:trigger': WebhookTriggerDeprecated,
   'demo:watcher': DemoWatcher,
   'organization:list': OrganizationList,
+  'store:execute': StoreExecute,
 }
 
 export const AppSensitiveMetadataHook = gatherSensitiveMetadata
