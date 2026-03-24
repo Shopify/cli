@@ -146,8 +146,10 @@ export function waitForContent(
  */
 export async function sendInputAndWaitForChange(renderInstance: ReturnType<typeof render>, ...inputs: string[]) {
   await waitForChange(() => inputs.forEach((input) => renderInstance.stdin.write(input)), renderInstance.lastFrame)
-  // wait for another tick so we give time to react to update caches
-  await new Promise((resolve) => setTimeout(resolve, 0))
+  // Yield via setImmediate → setTimeout(0) so React 19's scheduler can flush
+  // effects (e.g. re-register useInput handlers with up-to-date closures)
+  // before subsequent input is sent.
+  await new Promise((resolve) => setImmediate(() => setTimeout(resolve, 0)))
 }
 
 /** Send input and wait a number of milliseconds.
