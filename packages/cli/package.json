@@ -38,6 +38,7 @@
     "/bin/run.cmd",
     "/bin/run.js",
     "/dist",
+    "!/dist/**/*.map",
     "/oclif.manifest.json"
   ],
   "scripts": {

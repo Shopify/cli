@@ -147,10 +147,7 @@
     "ignoreBinaries": [
       "playwright"
     ],
-    "ignoreDependencies": [
-      "@shopify/theme-check-node",
-      "@shopify/theme-check-docs-updater"
-    ],
+    "ignoreDependencies": [],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli",
       "packages/e2e"
@@ -199,6 +196,7 @@
           "**/graphql/**/generated/*.ts"
         ],
         "ignoreDependencies": [
+          "@graphql-typed-document-node/core",
           "@shopify/plugin-cloudflare"
         ],
         "vite": {
@@ -215,7 +213,9 @@
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
-          "@ast-grep/napi"
+          "@ast-grep/napi",
+          "@shopify/theme-check-docs-updater",
+          "@shopify/theme-check-node"
         ],
         "vite": {
           "config": [
@@ -288,6 +288,9 @@
         "ignoreBinaries": [
           "open"
         ],
+        "ignoreDependencies": [
+          "@graphql-typed-document-node/core"
+        ],
         "vite": {
           "config": [
             "vite.config.ts"
@@ -306,10 +309,7 @@
           "**/scripts/*.ts!",
           "**/src/testing/index.ts"
         ],
-        "project": "**/*.{ts,tsx}!",
-        "ignoreDependencies": [
-          "react-dom"
-        ]
+        "project": "**/*.{ts,tsx}!"
       },
       "packages/ui-extensions-test-utils": {
         "entry": [

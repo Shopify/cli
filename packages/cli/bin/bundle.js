@@ -40,7 +40,7 @@ const hydrogenAssets = joinPath(hydrogenPath, 'dist/assets/hydrogen/**/*')
 
 esBuild({
   bundle: true,
-  entryPoints: ['./src/**/*.ts'],
+  entryPoints: ['./src/index.ts', './src/hooks/prerun.ts', './src/hooks/postrun.ts'],
   outdir: './dist',
   platform: 'node',
   format: 'esm',
@@ -53,14 +53,14 @@ esBuild({
   },
   inject: ['../../bin/bundling/cjs-shims.js'],
   external,
-  sourcemap: true,
+  sourcemap: 'external',
   loader: {'.node': 'copy'},
   splitting: true,
   // these tree shaking and minify options remove any in-source tests from the bundle
   treeShaking: true,
-  minifyWhitespace: false,
+  minifyWhitespace: true,
   minifySyntax: true,
-  minifyIdentifiers: false,
+  minifyIdentifiers: true,
 
   plugins: [
     ShopifyVSCodePlugin,
