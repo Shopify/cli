@@ -285,7 +285,7 @@ importers:
         version: link:../app
       '@shopify/cli-hydrogen':
         specifier: 11.1.10
-        version: 11.1.10(@graphql-codegen/cli@6.0.1)(graphql@16.10.0)(react-dom@19.2.4)(react@18.3.1)
+        version: 11.1.10(@graphql-codegen/cli@6.0.1)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1)
       '@shopify/cli-kit':
         specifier: 3.92.0
         version: link:../cli-kit
@@ -6272,7 +6272,7 @@ packages:
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
     dev: true
 
-  /@shopify/cli-hydrogen@11.1.10(@graphql-codegen/cli@6.0.1)(graphql@16.10.0)(react-dom@19.2.4)(react@18.3.1):
+  /@shopify/cli-hydrogen@11.1.10(@graphql-codegen/cli@6.0.1)(graphql@16.10.0)(react-dom@18.3.1)(react@18.3.1):
     resolution: {integrity: sha512-MEnTbWVeNMeV/0dawod4y2AuhhFFLlwpaYzbaqQXJ2HMm20g+bPoOogqSnGF04DoySIT9nEVXI9CXm/TgBsvoA==}
     engines: {node: ^20 || ^22 || ^24}
     hasBin: true
@@ -6318,7 +6318,7 @@ packages:
       tar-fs: 2.1.4
       tempy: 3.0.0
       ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@19.2.4)(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@18.3.1)(react@18.3.1)
     transitivePeerDependencies:
       - graphql
       - react
@@ -13623,15 +13623,6 @@ packages:
       react: 18.3.1
       scheduler: 0.23.2
 
-  /react-dom@19.2.4(react@18.3.1):
-    resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
-    peerDependencies:
-      react: ^19.2.4 || 18.3.1
-    dependencies:
-      react: 18.3.1
-      scheduler: 0.27.0
-    dev: true
-
   /react-dom@19.2.4(react@19.2.4):
     resolution: {integrity: sha512-AXJdLo8kgMbimY95O2aKQqsz2iWi9jMgKJhRBAxECE4IFxfcazB2LmzloIoibJI3C12IlY20+KFaLv+71bUJeQ==}
     peerDependencies:
@@ -14171,6 +14162,7 @@ packages:
 
   /scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
+    dev: false
 
   /semver-compare@1.0.0:
     resolution: {integrity: sha512-YM3/ITh2MJ5MtzaM429anh+x2jiLVjqILF4m4oyQB18W7Ggea7BfqdH/wGMK7dDiMghv/6WG7znWMwUDzJiXow==}
@@ -15373,7 +15365,7 @@ packages:
     resolution: {integrity: sha512-IGjKp/o0NL3Bso1PymYURCJxMPNAf/ILOpendP9f5B6e1rTJgdgiOvgfoT8VxCAdY+Wisb9uhGaJJf3yZ2V9nw==}
     dev: true
 
-  /use-resize-observer@9.1.0(react-dom@19.2.4)(react@18.3.1):
+  /use-resize-observer@9.1.0(react-dom@18.3.1)(react@18.3.1):
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
     peerDependencies:
       react: 16.8.0 - 18
@@ -15381,7 +15373,7 @@ packages:
     dependencies:
       '@juggle/resize-observer': 3.4.0
       react: 18.3.1
-      react-dom: 19.2.4(react@18.3.1)
+      react-dom: 18.3.1(react@18.3.1)
     dev: true
 
   /util-deprecate@1.0.2:
