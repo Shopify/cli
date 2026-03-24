@@ -56,7 +56,7 @@ describe('copyConfigKeyEntry', () => {
     // Given
     const context = makeContext({schema_path: 'src/schema.json'})
     // Source file exists; output path is free so findUniqueDestPath resolves on first attempt
-    vi.mocked(fs.fileExists).mockImplementation(async (p) => String(p) === '/ext/src/schema.json')
+    vi.mocked(fs.fileExists).mockImplementation(async (path) => String(path) === '/ext/src/schema.json')
     vi.mocked(fs.isDirectory).mockResolvedValue(false)
     vi.mocked(fs.mkdir).mockResolvedValue()
     vi.mocked(fs.copyFile).mockResolvedValue()
@@ -167,7 +167,7 @@ describe('copyConfigKeyEntry', () => {
       await expect(fileExists(joinPath(outDir, 'schema-c.json'))).resolves.toBe(true)
     })
     // Source files exist; output paths are free so findUniqueDestPath resolves on first attempt
-    vi.mocked(fs.fileExists).mockImplementation(async (p) => String(p).startsWith('/ext/'))
+    vi.mocked(fs.fileExists).mockImplementation(async (path) => String(path).startsWith('/ext/'))
     vi.mocked(fs.isDirectory).mockResolvedValue(false)
     vi.mocked(fs.mkdir).mockResolvedValue()
     vi.mocked(fs.copyFile).mockResolvedValue()
