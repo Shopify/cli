@@ -404,6 +404,11 @@ describe('usePollAppLogs', () => {
     // needed to await the render
     await vi.advanceTimersByTimeAsync(0)
 
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
+    // Flush React 19 batched state updates so hook.lastResult reflects the new state
+    await vi.advanceTimersByTimeAsync(0)
+
     // Initial invocation, 429 returned
     expect(mockedPollAppLogs).toHaveBeenCalledTimes(1)
 
@@ -445,6 +450,11 @@ describe('usePollAppLogs', () => {
     )
 
     // needed to await the render
+    await vi.advanceTimersByTimeAsync(0)
+
+    // Wait for the async polling function to execute
+    await waitForMockCalls(mockedPollAppLogs, 1)
+    // Flush React 19 batched state updates so hook.lastResult reflects the new state
     await vi.advanceTimersByTimeAsync(0)
 
     // Initial invocation, 422 returned
