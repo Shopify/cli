@@ -25,6 +25,15 @@ interface ExecuteOperationInput {
   version?: string
 }
 
+interface RunGraphQLExecutionInput {
+  adminSession: AdminSession
+  query: string
+  variables?: string
+  variableFile?: string
+  outputFile?: string
+  version: string
+}
+
 async function parseVariables(
   variables?: string,
   variableFile?: string,
@@ -61,23 +70,12 @@ async function parseVariables(
   return undefined
 }
 
-export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
-  const {remoteApp, store, query, variables, variableFile, version: userSpecifiedVersion, outputFile} = input
-
-  const {adminSession, version} = await renderSingleTask({
-    title: outputContent`Authenticating`,
-    task: async (): Promise<{adminSession: AdminSession; version: string}> => {
-      const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
-      const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
-      return {adminSession, version}
-    },
-    renderOptions: {stdout: process.stderr},
-  })
+export async function runGraphQLExecution(input: RunGraphQLExecutionInput): Promise<void> {
+  const {adminSession, query, variables, variableFile, outputFile, version} = input
 
   const parsedVariables = await parseVariables(variables, variableFile)
 
   validateSingleOperation(query)
-  validateMutationStore(query, store)
 
   try {
     const result = await renderSingleTask({
@@ -125,4 +123,22 @@ export async function executeOperation(input: ExecuteOperationInput): Promise<vo
     // Network/system errors - let them propagate
     throw error
   }
+}
+
+export async function executeOperation(input: ExecuteOperationInput): Promise<void> {
+  const {remoteApp, store, query, variables, variableFile, version: userSpecifiedVersion, outputFile} = input
+
+  const {adminSession, version} = await renderSingleTask({
+    title: outputContent`Authenticating`,
+    task: async (): Promise<{adminSession: AdminSession; version: string}> => {
+      const adminSession = await createAdminSessionAsApp(remoteApp, store.shopDomain)
+      const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
+      return {adminSession, version}
+    },
+    renderOptions: {stdout: process.stderr},
+  })
+
+  validateMutationStore(query, store)
+
+  await runGraphQLExecution({adminSession, query, variables, variableFile, outputFile, version})
 }

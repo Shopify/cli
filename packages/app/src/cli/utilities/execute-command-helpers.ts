@@ -29,38 +29,13 @@ interface ExecuteContext extends AppStoreContext {
 }
 
 /**
- * Prepares the app and store context for commands.
- * Sets up app linking and store selection without query handling.
+ * Loads a GraphQL query from the --query flag or --query-file flag.
+ * Validates that the query is non-empty and has valid GraphQL syntax.
  *
- * @param flags - Command flags containing configuration options.
- * @returns Context object containing app context and store information.
+ * @param flags - Flags containing query or query-file.
+ * @returns The loaded GraphQL query string.
  */
-export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promise<AppStoreContext> {
-  const appContextResult = await linkedAppContext({
-    directory: flags.path,
-    clientId: flags['client-id'],
-    forceRelink: flags.reset,
-    userProvidedConfigName: flags.config,
-  })
-
-  const store = await storeContext({
-    appContextResult,
-    storeFqdn: flags.store,
-    forceReselectStore: flags.reset,
-    storeTypes: ['APP_DEVELOPMENT', 'DEVELOPMENT', 'DEVELOPMENT_SUPERSET', 'PRODUCTION'],
-  })
-
-  return {appContextResult, store}
-}
-
-/**
- * Prepares the execution context for GraphQL operations.
- * Handles query input from flag or file, validates GraphQL syntax, and sets up app and store contexts.
- *
- * @param flags - Command flags containing configuration options.
- * @returns Context object containing query, app context, and store information.
- */
-export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise<ExecuteContext> {
+export async function loadQuery(flags: {query?: string; 'query-file'?: string}): Promise<string> {
   let query: string | undefined
 
   if (flags.query !== undefined) {
@@ -94,6 +69,43 @@ export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise
   // Validate GraphQL syntax and ensure single operation
   validateSingleOperation(query)
 
+  return query
+}
+
+/**
+ * Prepares the app and store context for commands.
+ * Sets up app linking and store selection without query handling.
+ *
+ * @param flags - Command flags containing configuration options.
+ * @returns Context object containing app context and store information.
+ */
+export async function prepareAppStoreContext(flags: AppStoreContextFlags): Promise<AppStoreContext> {
+  const appContextResult = await linkedAppContext({
+    directory: flags.path,
+    clientId: flags['client-id'],
+    forceRelink: flags.reset,
+    userProvidedConfigName: flags.config,
+  })
+
+  const store = await storeContext({
+    appContextResult,
+    storeFqdn: flags.store,
+    forceReselectStore: flags.reset,
+    storeTypes: ['APP_DEVELOPMENT', 'DEVELOPMENT', 'DEVELOPMENT_SUPERSET', 'PRODUCTION'],
+  })
+
+  return {appContextResult, store}
+}
+
+/**
+ * Prepares the execution context for GraphQL operations.
+ * Handles query input from flag or file, validates GraphQL syntax, and sets up app and store contexts.
+ *
+ * @param flags - Command flags containing configuration options.
+ * @returns Context object containing query, app context, and store information.
+ */
+export async function prepareExecuteContext(flags: ExecuteCommandFlags): Promise<ExecuteContext> {
+  const query = await loadQuery(flags)
   const {appContextResult, store} = await prepareAppStoreContext(flags)
 
   return {query, appContextResult, store}
