@@ -544,7 +544,7 @@ describe('draftMessages', async () => {
       expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
     })
 
-    test('uses custom path when build.path is defined', async () => {
+    test('uses default path when build.path is defined (custom path is only applied during build)', async () => {
       // Given
       const config = functionConfiguration()
       config.build = {
@@ -557,8 +557,8 @@ describe('draftMessages', async () => {
         dir: 'test-function',
       })
 
-      // Then
-      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'custom/output.wasm'))
+      // Then - outputPath always defaults to dist/index.wasm; build.path is applied by buildFunctionExtension
+      expect(extensionInstance.outputPath).toBe(joinPath('test-function', 'dist', 'index.wasm'))
     })
   })
 })
