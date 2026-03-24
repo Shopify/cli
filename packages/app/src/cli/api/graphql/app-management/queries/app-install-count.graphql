@@ -1,0 +1,5 @@
+query AppInstallCount($appId: ID!) {
+  app(id: $appId) {
+    installCount
+  }
+}
