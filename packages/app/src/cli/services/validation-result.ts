@@ -1,6 +1,6 @@
 import type {AppValidationIssue} from '../models/app/error-parsing.js'
 
-interface AppValidationResult {
+export interface AppValidationResult {
   valid: boolean
   issues: AppValidationIssue[]
 }
