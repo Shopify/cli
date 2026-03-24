@@ -3,7 +3,7 @@ import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import type {BuildContext} from '../../client-steps.js'
 
-type ConfigKeyManifestEntry = {
+interface ConfigKeyManifestEntry {
   anchor?: string | undefined
   groupBy?: string | undefined
   key: string
