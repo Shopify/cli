@@ -89,8 +89,7 @@ const functionSpec = createExtensionSpecification({
   schema: FunctionExtensionSchema,
   appModuleFeatures: (_) => ['function'],
   buildConfig: {mode: 'function'},
-  getOutputRelativePath: (extension: ExtensionInstance<FunctionConfigType>) =>
-    extension.configuration.build?.path ?? joinPath('dist', 'index.wasm'),
+  getOutputRelativePath: (_extension: ExtensionInstance<FunctionConfigType>) => joinPath('dist', 'index.wasm'),
   deployConfig: async (config, directory, apiKey) => {
     let inputQuery: string | undefined
     const moduleId = randomUUID()
