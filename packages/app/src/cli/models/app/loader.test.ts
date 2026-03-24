@@ -31,10 +31,8 @@ import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
-import {captureOutput} from '@shopify/cli-kit/node/system'
 
 vi.mock('../../services/local-storage.js')
-// Mock captureOutput to prevent executing `npm prefix` inside getPackageManager
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../../services/app/config/use.js')
 vi.mock('@shopify/cli-kit/node/is-global')
