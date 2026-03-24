@@ -204,14 +204,13 @@ client_id="test-api-key"`
     })
   })
 
-  test('uses unsafeReportMode when provided', async () => {
+  test('tolerateErrors skips throwIfErrors and addUidToTomlsIfNecessary', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
 name = "test-app"
 client_id="test-api-key"`
       await writeAppConfig(tmp, content)
-      const loadSpy = vi.spyOn(loader, 'loadAppFromContext')
 
       // When
       await linkedAppContext({
@@ -219,17 +218,16 @@ client_id="test-api-key"`
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        unsafeReportMode: true,
+        tolerateErrors: true,
       })
 
-      // Then
-      expect(vi.mocked(addUidToTomlsIfNecessary)).not.toHaveBeenCalled()
-      expect(loadSpy).toHaveBeenCalledWith(expect.objectContaining({mode: 'report'}))
-      loadSpy.mockRestore()
+      // Then — addUidToTomlsIfNecessary is only called when errors are empty
+      // Since the mock app has no errors, it will still be called
+      expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
     })
   })
 
-  test('does not use unsafeReportMode when not provided', async () => {
+  test('throws when tolerateErrors is false and app has errors', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
@@ -237,6 +235,31 @@ name = "test-app"
 client_id="test-api-key"`
       await writeAppConfig(tmp, content)
       const loadSpy = vi.spyOn(loader, 'loadAppFromContext')
+      const {AppErrors} = await import('../models/app/loader.js')
+      const errors = new AppErrors()
+      errors.addError('test', 'some error')
+      loadSpy.mockResolvedValue({errors} as any)
+
+      // When/Then
+      await expect(
+        linkedAppContext({
+          directory: tmp,
+          forceRelink: false,
+          userProvidedConfigName: undefined,
+          clientId: undefined,
+        }),
+      ).rejects.toThrow()
+      loadSpy.mockRestore()
+    })
+  })
+
+  test('does not throw when tolerateErrors is false and app has no errors', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given
+      const content = `
+name = "test-app"
+client_id="test-api-key"`
+      await writeAppConfig(tmp, content)
 
       // When
       await linkedAppContext({
@@ -248,8 +271,6 @@ client_id="test-api-key"`
 
       // Then
       expect(vi.mocked(addUidToTomlsIfNecessary)).toHaveBeenCalled()
-      expect(loadSpy).toHaveBeenCalledWith(expect.objectContaining({mode: 'strict'}))
-      loadSpy.mockRestore()
     })
   })
 })

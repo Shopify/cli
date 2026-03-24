@@ -24,7 +24,7 @@ export default class Validate extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
-      unsafeReportMode: true,
+      tolerateErrors: true,
     })
 
     await validateApp(app)

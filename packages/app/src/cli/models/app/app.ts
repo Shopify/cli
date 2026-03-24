@@ -229,7 +229,7 @@ export interface AppInterface<
   realExtensions: ExtensionInstance[]
   nonConfigExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
-  errors?: AppErrors
+  errors: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
   readonly devApplicationURLs?: ApplicationURLs
@@ -263,7 +263,7 @@ type AppConstructor<
   webs: Web[]
   modules: ExtensionInstance[]
   dotenv?: DotEnvFile
-  errors?: AppErrors
+  errors: AppErrors
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
   hiddenConfig: AppHiddenConfig
@@ -281,7 +281,7 @@ export class App<
   configuration: TConfig
   webs: Web[]
   dotenv?: DotEnvFile
-  errors?: AppErrors
+  errors: AppErrors
   specifications: TModuleSpec[]
   configSchema: SchemaForConfig<TConfig>
   remoteFlags: Flag[]
@@ -311,7 +311,7 @@ export class App<
     this.webs = webs
     this.dotenv = dotenv
     this.realExtensions = modules
-    this.errors = errors
+    this.errors = errors ?? new AppErrors()
     this.specifications = specifications
     this.configSchema = configSchema ?? AppSchema
     this.remoteFlags = remoteFlags ?? []

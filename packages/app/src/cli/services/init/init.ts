@@ -226,7 +226,6 @@ async function init(options: InitOptions) {
     clientId: undefined,
     forceRelink: false,
     userProvidedConfigName: undefined,
-    unsafeReportMode: false,
   })
 
   renderSuccess({

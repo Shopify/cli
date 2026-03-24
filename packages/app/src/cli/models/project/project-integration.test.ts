@@ -94,7 +94,6 @@ describe('Project integration', () => {
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
 
       expect(project.directory).toBe(app.directory)
@@ -110,7 +109,6 @@ describe('Project integration', () => {
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
 
       // The app's non-config extensions should match what the project discovered
@@ -137,7 +135,6 @@ describe('Project integration', () => {
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
 
       const appWebDirs = app.webs.map((web) => web.directory).sort()
@@ -160,7 +157,6 @@ describe('Project integration', () => {
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
 
       const configPath = joinPath(dir, 'shopify.app.toml')
@@ -181,7 +177,6 @@ describe('Project integration', () => {
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
 
       const projectHiddenConfig = await resolveHiddenConfig(project, 'test-client-id')
@@ -308,7 +303,6 @@ command = "cargo build"
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
       const initialRealExtensions = app.realExtensions
       const initialCount = initialRealExtensions.length
@@ -343,7 +337,6 @@ command = "cargo build"
         directory: dir,
         userProvidedConfigName: undefined,
         specifications,
-        mode: 'report',
       })
 
       // Add a new extension to disk

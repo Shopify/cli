@@ -26,7 +26,7 @@ export default class Sources extends AppLinkedCommand {
       userProvidedConfigName: flags.config,
     })
 
-    if (app.errors) {
+    if (!app.errors.isEmpty()) {
       process.exit(2)
     } else {
       sources(app)

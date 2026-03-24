@@ -13,8 +13,8 @@ import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
+import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {basename} from '@shopify/cli-kit/node/path'
-import {BugError} from '@shopify/cli-kit/node/error'
 import type {ActiveConfig} from '../models/project/active-config.js'
 
 export interface LoadedAppContextOutput {
@@ -34,15 +34,15 @@ export interface LoadedAppContextOutput {
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
  * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
- * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
- * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
+ * @param tolerateErrors - When true, the loaded app may contain validation errors without throwing.
+ * Commands like `app info` and `app validate` set this to true so they can display errors to the user.
  */
 interface LoadedAppContextOptions {
   directory: string
   forceRelink: boolean
   clientId: string | undefined
   userProvidedConfigName: string | undefined
-  unsafeReportMode?: boolean
+  tolerateErrors?: boolean
 }
 
 /**
@@ -50,13 +50,10 @@ interface LoadedAppContextOptions {
  *
  * @param directory - The directory containing the app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
- * @param unsafeReportMode - DONT USE THIS UNLESS YOU KNOW WHAT YOU ARE DOING. It means that the app loader will not throw an error when the app/extension configuration is invalid.
- * It is recommended to always use 'strict' mode unless the command can work with invalid configurations (like app info).
  */
 interface LocalAppContextOptions {
   directory: string
   userProvidedConfigName?: string
-  unsafeReportMode?: boolean
 }
 
 /**
@@ -72,7 +69,7 @@ export async function linkedAppContext({
   clientId,
   forceRelink,
   userProvidedConfigName,
-  unsafeReportMode = false,
+  tolerateErrors = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   let {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
@@ -111,9 +108,12 @@ export async function linkedAppContext({
     activeConfig,
     specifications,
     remoteFlags: remoteApp.flags,
-    mode: unsafeReportMode ? 'report' : 'strict',
     clientIdOverride: clientId && clientId !== configClientId ? clientId : undefined,
   })
+
+  if (!tolerateErrors && !localApp.errors.isEmpty()) {
+    throw new AbortError(localApp.errors.toJSON()[0]!)
+  }
 
   // If the remoteApp is the same as the linked one, update the cached info.
   const cachedInfo = getCachedAppInfo(directory)
@@ -125,10 +125,8 @@ export async function linkedAppContext({
   await logMetadata(remoteApp, organization, forceRelink)
 
   // Add UIDs to extension TOML files if using app-management.
-  // If in unsafe report mode, it is possible the UIDs are not loaded in memory
-  // even if they are present in the file, so we can't be sure whether or not
-  // it's necessary.
-  if (!unsafeReportMode) {
+  // Only safe when there are no errors — errors may mean UIDs weren't loaded correctly.
+  if (localApp.errors.isEmpty()) {
     await addUidToTomlsIfNecessary(localApp.allExtensions, developerPlatformClient)
   }
 
@@ -167,6 +165,11 @@ export async function localAppContext({
 }: LocalAppContextOptions): Promise<LocalAppContextOutput> {
   const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   const specifications = await loadLocalExtensionsSpecifications()
-  const app = await loadAppFromContext({project, activeConfig, specifications, mode: 'local'})
+  const app = await loadAppFromContext({project, activeConfig, specifications, ignoreUnknownExtensions: true})
+
+  if (!app.errors.isEmpty()) {
+    throw new AbortError(app.errors.toJSON()[0]!)
+  }
+
   return {app, project}
 }
