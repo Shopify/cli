@@ -58,6 +58,20 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     activeAppVersion: options.activeAppVersion,
   })
 
+  let installCount: number | undefined
+  if (extensionIdentifiersBreakdown.onlyRemote.length > 0) {
+    try {
+      installCount = await options.developerPlatformClient.appInstallCount({
+        id: options.appId,
+        apiKey: options.remoteApp.apiKey,
+        organizationId: options.remoteApp.organizationId,
+      })
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (_error) {
+      installCount = undefined
+    }
+  }
+
   const confirmed = await deployOrReleaseConfirmationPrompt({
     extensionIdentifiersBreakdown,
     configExtensionIdentifiersBreakdown,
@@ -66,6 +80,7 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     force: options.force,
     allowUpdates: options.allowUpdates,
     allowDeletes: options.allowDeletes,
+    installCount,
   })
   if (!confirmed) throw new AbortSilentError()
 

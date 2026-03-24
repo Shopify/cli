@@ -430,6 +430,11 @@ export class PartnersClient implements DeveloperPlatformClient {
     return this.request(AppVersionsQuery, variables)
   }
 
+  async appInstallCount(_app: MinimalAppIdentifiers): Promise<number> {
+    // Install count is not supported in partners client.
+    throw new Error('Unsupported operation')
+  }
+
   async appVersionByTag({apiKey}: MinimalOrganizationApp, versionTag: string): Promise<AppVersionWithContext> {
     const input: AppVersionByTagVariables = {apiKey, versionTag}
     const result: AppVersionByTagSchema = await this.request(AppVersionByTagQuery, input)
