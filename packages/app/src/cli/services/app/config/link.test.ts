@@ -28,7 +28,6 @@ vi.mock('../../../models/app/loader.js', async () => {
   return {
     ...loader,
     loadApp: vi.fn(),
-    loadAppConfiguration: vi.fn(),
     loadOpaqueApp: vi.fn(),
   }
 })
@@ -82,7 +81,7 @@ describe('link', () => {
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
 
       // When
-      const {configuration, state, remoteApp} = await link(options)
+      const {configuration, configFileName, remoteApp} = await link(options)
 
       // Then
       expect(selectConfigName).not.toHaveBeenCalled()
@@ -107,14 +106,7 @@ describe('link', () => {
         },
       })
 
-      expect(state).toEqual({
-        basicConfiguration: configuration,
-        appDirectory: options.directory,
-        configurationPath: expect.stringMatching(/\/shopify.app.default-value.toml$/),
-        configSource: 'flag',
-        configurationFileName: 'shopify.app.default-value.toml',
-        isLinked: true,
-      })
+      expect(configFileName).toBe('shopify.app.default-value.toml')
 
       expect(remoteApp).toEqual(mockRemoteApp({developerPlatformClient}))
     })
@@ -224,7 +216,7 @@ embedded = false
       })
 
       // When
-      const {configuration, state} = await link(options)
+      const {configuration, configFileName} = await link(options)
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
@@ -293,14 +285,7 @@ embedded = false
         },
       })
       expect(content).toEqual(expectedContent)
-      expect(state).toEqual({
-        basicConfiguration: configuration,
-        appDirectory: options.directory,
-        configurationPath: expect.stringMatching(/\/shopify.app.toml$/),
-        configSource: 'cached',
-        configurationFileName: 'shopify.app.toml',
-        isLinked: true,
-      })
+      expect(configFileName).toBe('shopify.app.toml')
     })
   })
 

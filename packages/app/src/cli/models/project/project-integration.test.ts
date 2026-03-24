@@ -1,10 +1,14 @@
 import {Project} from './project.js'
 import {resolveDotEnv, resolveHiddenConfig, extensionFilesForConfig, webFilesForConfig} from './config-selection.js'
-import {loadApp} from '../app/loader.js'
+import {loadApp, reloadApp} from '../app/loader.js'
+import {AppLinkedInterface} from '../app/app.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
+import {handleWatcherEvents} from '../../services/dev/app-events/app-event-watcher-handler.js'
+import {EventType} from '../../services/dev/app-events/app-event-watcher.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {AbortController} from '@shopify/cli-kit/node/abort'
 
 /**
  * Integration tests verifying that Project + config-selection produce
@@ -43,6 +47,7 @@ api_version = "2024-01"
 type = "product_discounts"
 name = "My Discount"
 handle = "my-discount"
+api_version = "2024-01"
 
 [build]
 command = "cargo build"
@@ -76,11 +81,13 @@ dev = "npm run dev"
   await writeFile(joinPath(dir, 'package.json'), JSON.stringify({name: 'test-app', dependencies: {}}))
 }
 
+// Load specifications once — this is expensive (loads all extension specs from disk)
+const specifications = await loadLocalExtensionsSpecifications()
+
 describe('Project integration', () => {
   test('Project discovers the same directory as the old loader', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
-      const specifications = await loadLocalExtensionsSpecifications()
 
       const project = await Project.load(dir)
       const app = await loadApp({
@@ -97,7 +104,6 @@ describe('Project integration', () => {
   test('Project discovers the same extension files as the old loader', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
-      const specifications = await loadLocalExtensionsSpecifications()
 
       const project = await Project.load(dir)
       const app = await loadApp({
@@ -125,7 +131,6 @@ describe('Project integration', () => {
   test('Project discovers the same web files as the old loader', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
-      const specifications = await loadLocalExtensionsSpecifications()
 
       const project = await Project.load(dir)
       const app = await loadApp({
@@ -149,7 +154,6 @@ describe('Project integration', () => {
   test('resolveDotEnv matches the old loader dotenv', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
-      const specifications = await loadLocalExtensionsSpecifications()
 
       const project = await Project.load(dir)
       const app = await loadApp({
@@ -171,7 +175,6 @@ describe('Project integration', () => {
   test('resolveHiddenConfig matches the old loader hidden config', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
-      const specifications = await loadLocalExtensionsSpecifications()
 
       const project = await Project.load(dir)
       const app = await loadApp({
@@ -190,7 +193,6 @@ describe('Project integration', () => {
   test('Project metadata matches the old loader metadata', async () => {
     await inTemporaryDirectory(async (dir) => {
       await setupRealApp(dir)
-      const specifications = await loadLocalExtensionsSpecifications()
 
       const project = await Project.load(dir)
       const app = await loadApp({
@@ -266,6 +268,131 @@ extension_directories = ["staging-ext/*"]
       // Staging config gets .env.staging
       const stagingDotenv = resolveDotEnv(project, joinPath(dir, 'shopify.app.staging.toml'))
       expect(stagingDotenv?.variables.STAGING_VAR).toBe('staging-value')
+    })
+  })
+
+  test('Project.load re-scans filesystem and finds extensions added after initial load', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+
+      // Initial load — should find 1 extension file
+      const project1 = await Project.load(dir)
+      expect(project1.extensionConfigFiles).toHaveLength(1)
+
+      // Add a new extension to disk (simulates `shopify generate extension` mid-dev)
+      await mkdir(joinPath(dir, 'extensions', 'another-function'))
+      await writeFile(
+        joinPath(dir, 'extensions', 'another-function', 'shopify.extension.toml'),
+        `
+type = "product_discounts"
+name = "Another Discount"
+handle = "another-discount"
+api_version = "2024-01"
+
+[build]
+command = "cargo build"
+        `.trim(),
+      )
+
+      // Fresh Project.load should find the new file
+      const project2 = await Project.load(dir)
+      expect(project2.extensionConfigFiles).toHaveLength(2)
+
+      // extensionFilesForConfig should also include it
+      const activeConfig = (await import('./active-config.js')).selectActiveConfig
+      const config = await activeConfig(project2)
+      const extFiles = extensionFilesForConfig(project2, config.file)
+      expect(extFiles).toHaveLength(2)
+    })
+  })
+
+  test('reloadApp finds extensions added after initial load', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      // Initial load with report mode (matches dev behavior)
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+      const initialRealExtensions = app.realExtensions
+      const initialCount = initialRealExtensions.length
+
+      // Add a new extension to disk (simulates `shopify generate extension` mid-dev)
+      await mkdir(joinPath(dir, 'extensions', 'another-function'))
+      await writeFile(
+        joinPath(dir, 'extensions', 'another-function', 'shopify.extension.toml'),
+        `
+type = "product_discounts"
+name = "Another Discount"
+handle = "another-discount"
+api_version = "2024-01"
+
+[build]
+command = "cargo build"
+        `.trim(),
+      )
+
+      // Reload should find the new extension
+      const reloadedApp = await reloadApp(app as AppLinkedInterface)
+      const reloadedRealExtensions = reloadedApp.realExtensions
+      expect(reloadedRealExtensions.length).toBe(initialCount + 1)
+    })
+  })
+
+  test('handleWatcherEvents produces Created event for extension added mid-dev', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      // Initial load
+      const app = await loadApp({
+        directory: dir,
+        userProvidedConfigName: undefined,
+        specifications,
+        mode: 'report',
+      })
+
+      // Add a new extension to disk
+      const newExtDir = joinPath(dir, 'extensions', 'another-function')
+      await mkdir(newExtDir)
+      await writeFile(
+        joinPath(newExtDir, 'shopify.extension.toml'),
+        `
+type = "product_discounts"
+name = "Another Discount"
+handle = "another-discount"
+api_version = "2024-01"
+
+[build]
+command = "cargo build"
+        `.trim(),
+      )
+
+      // Simulate the file watcher event that would fire
+      const appEvent = await handleWatcherEvents(
+        [
+          {
+            type: 'extension_folder_created',
+            path: newExtDir,
+            extensionPath: newExtDir,
+            startTime: [0, 0] as [number, number],
+          },
+        ],
+        app as AppLinkedInterface,
+        {stdout: process.stdout, stderr: process.stderr, signal: new AbortController().signal},
+      )
+
+      // The event should indicate the app was reloaded and the new extension was created
+      expect(appEvent).toBeDefined()
+      expect(appEvent!.appWasReloaded).toBe(true)
+      expect(appEvent!.app.realExtensions.length).toBeGreaterThan(app.realExtensions.length)
+
+      const createdEvents = appEvent!.extensionEvents.filter((ev) => ev.type === EventType.Created)
+      expect(createdEvents.length).toBeGreaterThanOrEqual(1)
+
+      // The reloaded app should include the new extension
+      const handles = appEvent!.app.realExtensions.map((ext) => ext.configuration.handle ?? ext.configuration.name)
+      expect(handles).toContain('another-discount')
     })
   })
 })

@@ -142,6 +142,66 @@ describe('extensionFilesForConfig', () => {
     })
   })
 
+  test('supports glob patterns in extension_directories', async () => {
+    // extension_directories globs are joined with /*.extension.toml by both
+    // Project.load() discovery and extensionFilesForConfig() filtering.
+    // For "plugins/*", the discovery glob is "plugins/*/*.extension.toml",
+    // matching extensions at plugins/<name>/shopify.extension.toml.
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "abc"\nextension_directories = ["plugins/*"]')
+
+      // Should match: plugins/checkout (within plugins/*)
+      await mkdir(joinPath(dir, 'plugins', 'checkout'))
+      await writeFile(
+        joinPath(dir, 'plugins', 'checkout', 'shopify.extension.toml'),
+        'type = "function"\nname = "matched"',
+      )
+
+      // Should NOT match: other-dir/my-ext (outside plugins/*)
+      await mkdir(joinPath(dir, 'other-dir', 'my-ext'))
+      await writeFile(
+        joinPath(dir, 'other-dir', 'my-ext', 'shopify.extension.toml'),
+        'type = "function"\nname = "not-matched"',
+      )
+
+      const project = await Project.load(dir)
+      const activeConfig = project.appConfigFiles[0]!
+
+      const extFiles = extensionFilesForConfig(project, activeConfig)
+
+      expect(extFiles).toHaveLength(1)
+      expect(extFiles[0]!.content.name).toBe('matched')
+    })
+  })
+
+  test('supports ** deep glob patterns', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "abc"\nextension_directories = ["extensions/**"]')
+
+      // Deeply nested extension should be found
+      await mkdir(joinPath(dir, 'extensions', 'nested', 'deep', 'my-ext'))
+      await writeFile(
+        joinPath(dir, 'extensions', 'nested', 'deep', 'my-ext', 'shopify.extension.toml'),
+        'type = "function"\nname = "deep-ext"',
+      )
+
+      // Top-level extension should also be found
+      await mkdir(joinPath(dir, 'extensions', 'top-ext'))
+      await writeFile(
+        joinPath(dir, 'extensions', 'top-ext', 'shopify.extension.toml'),
+        'type = "function"\nname = "top-ext"',
+      )
+
+      const project = await Project.load(dir)
+      const activeConfig = project.appConfigFiles[0]!
+
+      const extFiles = extensionFilesForConfig(project, activeConfig)
+      const names = extFiles.map((file) => file.content.name).sort()
+
+      expect(names).toStrictEqual(['deep-ext', 'top-ext'])
+    })
+  })
+
   test('filters to active config extension_directories only', async () => {
     await inTemporaryDirectory(async (dir) => {
       await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "default"\nextension_directories = ["ext-a/*"]')
@@ -184,6 +244,28 @@ describe('webFilesForConfig', () => {
       const webFiles = webFilesForConfig(project, activeConfig)
 
       expect(webFiles).toHaveLength(1)
+    })
+  })
+
+  test('supports glob patterns in web_directories', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "abc"\nweb_directories = ["services/*"]')
+
+      // Should match: services/backend (within services/*)
+      await mkdir(joinPath(dir, 'services', 'backend'))
+      await writeFile(joinPath(dir, 'services', 'backend', 'shopify.web.toml'), 'name = "backend"\nroles = ["backend"]')
+
+      // Should NOT match: other/web (outside services/*)
+      await mkdir(joinPath(dir, 'other', 'web'))
+      await writeFile(joinPath(dir, 'other', 'web', 'shopify.web.toml'), 'name = "not-matched"\nroles = ["backend"]')
+
+      const project = await Project.load(dir)
+      const activeConfig = project.appConfigFiles[0]!
+
+      const webFiles = webFilesForConfig(project, activeConfig)
+
+      expect(webFiles).toHaveLength(1)
+      expect(webFiles[0]!.content.name).toBe('backend')
     })
   })
 

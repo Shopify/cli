@@ -6,7 +6,7 @@ import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
-import {fileExistsSync, matchGlob, readFileSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, matchGlob, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ignore from 'ignore'
 import {Writable} from 'stream'
@@ -87,6 +87,23 @@ export class FileWatcher {
   async start(): Promise<void> {
     const extensionDirectories = [...(this.app.configuration.extension_directories ?? ['extensions'])]
     const fullExtensionDirectories = extensionDirectories.map((directory) => joinPath(this.app.directory, directory))
+
+    // Ensure extension directories exist so chokidar can watch them.
+    // Chokidar v3 silently ignores non-existent directories.
+    // Strip glob suffixes (e.g. extensions/** → extensions) since mkdir needs real paths.
+    // Errors are non-fatal — if mkdir fails (e.g. permissions), chokidar will still
+    // try to watch the path and handle it gracefully.
+    await Promise.all(
+      fullExtensionDirectories.map(async (dir) => {
+        try {
+          await mkdir(dir.replace(/\/\*+$/, ''))
+          // eslint-disable-next-line no-catch-all/no-catch-all
+        } catch {
+          // Non-fatal: directory may be unwritable (e.g. test fixtures)
+        }
+      }),
+    )
+
     const watchPaths = [this.app.configPath, ...fullExtensionDirectories]
 
     // Get all watched files from extensions

@@ -6,6 +6,7 @@ import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configurati
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {matchGlob} from '@shopify/cli-kit/node/fs'
 import {relativePath} from '@shopify/cli-kit/node/path'
 
 /**
@@ -69,35 +70,31 @@ export async function resolveHiddenConfig(project: Project, clientId: string | u
  * Filter extension config files to those belonging to the active config's
  * extension_directories. If the active config doesn't specify extension_directories,
  * uses the default (extensions/*).
+ *
+ * Uses real glob matching (via minimatch) to preserve the same semantics as
+ * Project.load()'s discovery globs, including patterns like "foo/&#42;/bar".
  * @public
  */
 export function extensionFilesForConfig(project: Project, activeConfig: TomlFile): TomlFile[] {
   const configDirs = activeConfig.content.extension_directories
-  if (!Array.isArray(configDirs) || configDirs.length === 0) {
-    // Default: extensions/* — filter project files by path prefix
-    return project.extensionConfigFiles.filter((file) => {
-      const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
-      return relPath.startsWith('extensions/')
-    })
-  }
+  const dirs = Array.isArray(configDirs) && configDirs.length > 0 ? (configDirs as string[]) : ['extensions/*']
 
-  // Filter to files within the active config's declared directories.
-  // Glob patterns are reduced to prefixes (e.g., "custom/*" → "custom/").
-  // This is a simplification — complex globs like "foo/*/bar" will over-match.
-  // In practice, only simple directory patterns are used in app configs.
-  const dirPrefixes = (configDirs as string[]).map((dir) => {
-    return dir.replace(/\*.*$/, '').replace(/\/?$/, '/')
-  })
+  // Replicate the same glob patterns used by discoverExtensionFiles in project.ts:
+  // each directory pattern becomes "<dir>/*.extension.toml"
+  const globPatterns = dirs.map((dir) => `${dir}/*.extension.toml`)
 
   return project.extensionConfigFiles.filter((file) => {
     const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
-    return dirPrefixes.some((prefix) => relPath.startsWith(prefix))
+    return globPatterns.some((pattern) => matchGlob(relPath, pattern))
   })
 }
 
 /**
  * Filter web config files to those belonging to the active config's
  * web_directories. If not specified, returns all web files.
+ *
+ * Uses real glob matching (via minimatch) to preserve the same semantics as
+ * Project.load()'s discovery globs.
  * @public
  */
 export function webFilesForConfig(project: Project, activeConfig: TomlFile): TomlFile[] {
@@ -106,10 +103,12 @@ export function webFilesForConfig(project: Project, activeConfig: TomlFile): Tom
     return project.webConfigFiles
   }
 
-  const dirPrefixes = (configDirs as string[]).map((dir) => dir.replace(/\*.*$/, '').replace(/\/?$/, '/'))
+  // Replicate the same glob patterns used by discoverWebFiles in project.ts:
+  // each directory pattern becomes "<dir>/shopify.web.toml"
+  const globPatterns = (configDirs as string[]).map((dir) => `${dir}/shopify.web.toml`)
 
   return project.webConfigFiles.filter((file) => {
     const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
-    return dirPrefixes.some((prefix) => relPath.startsWith(prefix))
+    return globPatterns.some((pattern) => matchGlob(relPath, pattern))
   })
 }

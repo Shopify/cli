@@ -3,17 +3,15 @@ import {
   getAppConfigurationFileName,
   loadApp,
   loadOpaqueApp,
-  loadDotEnv,
   parseConfigurationObject,
   checkFolderIsValidApp,
   AppLoaderMode,
-  getAppConfigurationState,
+  getAppConfigurationContext,
   loadConfigForAppCreation,
   reloadApp,
-  loadHiddenConfig,
 } from './loader.js'
 import {parseHumanReadableError} from './error-parsing.js'
-import {App, AppConfiguration, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
+import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
@@ -33,7 +31,7 @@ import {
   PackageJson,
   pnpmWorkspaceFile,
 } from '@shopify/cli-kit/node/node-package-manager'
-import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile, readFile} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
@@ -256,7 +254,7 @@ describe('load', () => {
 
       // When/Then
       await expect(loadApp({directory: tmp, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-        `Couldn't find directory ${tmp}`,
+        /Could not find a Shopify app configuration file/,
       )
     })
   })
@@ -267,7 +265,7 @@ describe('load', () => {
 
     // When/Then
     await expect(loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-      `Couldn't find an app toml file at ${currentDir}`,
+      /Could not find a Shopify app configuration file/,
     )
   })
 
@@ -485,7 +483,7 @@ describe('load', () => {
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Could not find a Shopify app configuration file/)
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -1058,7 +1056,7 @@ describe('load', () => {
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Couldn't find an app toml file at/)
+    await expect(loadTestingApp()).rejects.toThrow(/Could not find a Shopify app configuration file/)
   })
 
   test('throws an error if the function configuration file is invalid', async () => {
@@ -2813,46 +2811,6 @@ describe('getAppConfigurationShorthand', () => {
   })
 })
 
-describe('loadDotEnv', () => {
-  test('it returns undefined if the env is missing', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // When
-      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.toml'))
-
-      // Then
-      expect(got).toBeUndefined()
-    })
-  })
-
-  test('it loads from the default env file', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      await writeFile(joinPath(tmp, '.env'), 'FOO="bar"')
-
-      // When
-      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.toml'))
-
-      // Then
-      expect(got).toBeDefined()
-      expect(got!.variables.FOO).toEqual('bar')
-    })
-  })
-
-  test('it loads from the config specific env file', async () => {
-    await inTemporaryDirectory(async (tmp) => {
-      // Given
-      await writeFile(joinPath(tmp, '.env.staging'), 'FOO="bar"')
-
-      // When
-      const got = await loadDotEnv(tmp, joinPath(tmp, 'shopify.app.staging.toml'))
-
-      // Then
-      expect(got).toBeDefined()
-      expect(got!.variables.FOO).toEqual('bar')
-    })
-  })
-})
-
 describe('checkFolderIsValidApp', () => {
   test('throws an error if the folder does not contain a shopify.app.toml file', async () => {
     await inTemporaryDirectory(async (tmp) => {
@@ -3484,46 +3442,26 @@ describe('WebhooksSchema', () => {
   }
 })
 
-describe('getAppConfigurationState', () => {
+describe('getAppConfigurationContext', () => {
   test.each([
-    [
-      `client_id="abcdef"`,
-      {
-        basicConfiguration: {
-          client_id: 'abcdef',
-        },
-        isLinked: true,
-      },
-    ],
+    [`client_id="abcdef"`, {client_id: 'abcdef'}, true],
     [
       `client_id="abcdef"
       something_extra="keep"`,
-      {
-        basicConfiguration: {
-          client_id: 'abcdef',
-          something_extra: 'keep',
-        },
-        isLinked: true,
-      },
+      {client_id: 'abcdef', something_extra: 'keep'},
+      true,
     ],
-    [
-      `client_id=""`,
-      {
-        basicConfiguration: {
-          client_id: '',
-        },
-        isLinked: false,
-      },
-    ],
-  ])('loads from %s', async (content, resultShouldContain) => {
+    [`client_id=""`, {client_id: ''}, false],
+  ])('loads from %s', async (content, expectedContent, expectedIsLinked) => {
     await inTemporaryDirectory(async (tmpDir) => {
       const appConfigPath = joinPath(tmpDir, 'shopify.app.toml')
       const packageJsonPath = joinPath(tmpDir, 'package.json')
       await writeFile(appConfigPath, content)
       await writeFile(packageJsonPath, '{}')
 
-      const state = await getAppConfigurationState(tmpDir, undefined)
-      expect(state).toMatchObject(resultShouldContain)
+      const {activeConfig} = await getAppConfigurationContext(tmpDir, undefined)
+      expect(activeConfig.file.content).toMatchObject(expectedContent)
+      expect(activeConfig.isLinked).toBe(expectedIsLinked)
     })
   })
 
@@ -3535,10 +3473,10 @@ describe('getAppConfigurationState', () => {
       await writeFile(appConfigPath, content)
       await writeFile(packageJsonPath, '{}')
 
-      const result = await getAppConfigurationState(tmpDir, undefined)
+      const {activeConfig} = await getAppConfigurationContext(tmpDir, undefined)
 
-      expect(result.basicConfiguration.client_id).toBe('')
-      expect(result.isLinked).toBe(false)
+      expect(activeConfig.file.content.client_id).toBe('')
+      expect(activeConfig.isLinked).toBe(false)
     })
   })
 })
@@ -3679,117 +3617,6 @@ value = true
         directory: normalizePath(tmpDir),
         isEmbedded: false,
       })
-    })
-  })
-})
-
-describe('loadHiddenConfig', () => {
-  test('returns empty object if hidden config file does not exist', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: '12345',
-      } as AppConfiguration
-      await writeFile(joinPath(tmpDir, '.gitignore'), '')
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
-
-      // Verify empty config file was created
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      const fileContent = await readFile(hiddenConfigPath)
-      expect(JSON.parse(fileContent)).toEqual({})
-    })
-  })
-
-  test('returns config for client_id if hidden config file exists', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: '12345',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(
-        hiddenConfigPath,
-        JSON.stringify({
-          '12345': {someKey: 'someValue'},
-          'other-id': {otherKey: 'otherValue'},
-        }),
-      )
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({someKey: 'someValue'})
-    })
-  })
-
-  test('returns empty object if client_id not found in existing hidden config', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: 'not-found',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(
-        hiddenConfigPath,
-        JSON.stringify({
-          'other-id': {someKey: 'someValue'},
-        }),
-      )
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
-    })
-  })
-
-  test('returns config if hidden config has an old format with just a dev_store_url', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: 'not-found',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(
-        hiddenConfigPath,
-        JSON.stringify({
-          dev_store_url: 'https://dev-store.myshopify.com',
-        }),
-      )
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({dev_store_url: 'https://dev-store.myshopify.com'})
-    })
-  })
-
-  test('returns empty object if hidden config file is invalid JSON', async () => {
-    await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const configuration = {
-        client_id: '12345',
-      } as AppConfiguration
-      const hiddenConfigPath = joinPath(tmpDir, '.shopify', 'project.json')
-      await mkdir(dirname(hiddenConfigPath))
-      await writeFile(hiddenConfigPath, 'invalid json')
-
-      // When
-      const got = await loadHiddenConfig(tmpDir, configuration)
-
-      // Then
-      expect(got).toEqual({})
     })
   })
 })

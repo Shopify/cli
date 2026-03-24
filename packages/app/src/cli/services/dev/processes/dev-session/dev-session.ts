@@ -352,11 +352,12 @@ export class DevSession {
 
     const appManifest = await appEvent.app.manifest(undefined)
 
-    // Only use inherited for UPDATE session. Create still needs the manifest in the bundle.
+    // Always write the full manifest to the bundle so it stays current
+    await writeManifestToBundle(appManifest, this.bundlePath)
+
+    // For UPDATE sessions, only send changed modules in the API payload
     if (this.statusManager.status.isReady) {
       appManifest.modules = appManifest.modules.filter((module) => updatedUids.includes(module.uid))
-    } else {
-      await writeManifestToBundle(appManifest, this.bundlePath)
     }
 
     const existingDirs = await readdir(this.bundlePath)

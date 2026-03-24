@@ -23,12 +23,14 @@ vi.mock('@shopify/cli-kit/node/import-extractor', () => ({
   extractJSImports: vi.fn(() => []),
 }))
 
-// Mock fs module for fileExistsSync
+// Mock fs module for fileExistsSync, mkdir, and writeFile
 vi.mock('@shopify/cli-kit/node/fs', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
   return {
     ...actual,
     fileExistsSync: vi.fn(),
+    mkdir: vi.fn(),
+    writeFile: vi.fn(),
   }
 })
 
@@ -716,6 +718,83 @@ describe('file-watcher events', () => {
         clearTimeout(timeout)
         throw error
       }
+    })
+  })
+
+  test('creates extension directories if they do not exist before starting watcher', async () => {
+    const realFs = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
+
+    await inTemporaryDirectory(async (dir) => {
+      const extDir = joinPath(dir, 'extensions')
+      const configPath = joinPath(dir, 'shopify.app.toml')
+      await realFs.writeFile(configPath, '')
+
+      const app = testAppLinked({
+        allExtensions: [],
+        directory: dir,
+        configPath,
+        configuration: {
+          client_id: 'test-client-id',
+          name: 'my-app',
+          application_url: 'https://example.com',
+          embedded: true,
+          access_scopes: {scopes: ''},
+          extension_directories: ['extensions'],
+        },
+      })
+
+      // Use real mkdir for this test
+      vi.mocked(mkdir).mockImplementation((path: string) => realFs.mkdir(path))
+
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      expect(realFs.fileExistsSync(extDir)).toBe(true)
+    })
+  })
+
+  test('strips glob suffixes when creating extension directories', async () => {
+    const realFs = await vi.importActual<typeof import('@shopify/cli-kit/node/fs')>('@shopify/cli-kit/node/fs')
+
+    await inTemporaryDirectory(async (dir) => {
+      const extDir = joinPath(dir, 'extensions')
+      const configPath = joinPath(dir, 'shopify.app.toml')
+      await realFs.writeFile(configPath, '')
+
+      const app = testAppLinked({
+        allExtensions: [],
+        directory: dir,
+        configPath,
+        configuration: {
+          client_id: 'test-client-id',
+          name: 'my-app',
+          application_url: 'https://example.com',
+          embedded: true,
+          access_scopes: {scopes: ''},
+          extension_directories: ['extensions/**'],
+        },
+      })
+
+      vi.mocked(mkdir).mockImplementation((path: string) => realFs.mkdir(path))
+
+      const mockWatcher = {
+        on: vi.fn().mockReturnThis(),
+        close: vi.fn().mockResolvedValue(undefined),
+      }
+      vi.spyOn(chokidar, 'watch').mockReturnValue(mockWatcher as any)
+
+      const fileWatcher = new FileWatcher(app, outputOptions)
+      await fileWatcher.start()
+
+      // Should create extensions/, not extensions/**
+      expect(realFs.fileExistsSync(extDir)).toBe(true)
+      expect(realFs.fileExistsSync(joinPath(extDir, '**'))).toBe(false)
     })
   })
 

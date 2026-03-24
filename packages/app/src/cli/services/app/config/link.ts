@@ -10,7 +10,6 @@ import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
   AppConfigurationFileName,
-  AppConfigurationState,
   getAppConfigurationFileName,
   loadApp,
   loadOpaqueApp,
@@ -48,9 +47,9 @@ export interface LinkOptions {
 }
 
 interface LinkOutput {
-  configuration: CurrentAppConfiguration
   remoteApp: OrganizationApp
-  state: AppConfigurationState
+  configFileName: AppConfigurationFileName
+  configuration: CurrentAppConfiguration
 }
 /**
  * Link a local app configuration file to a remote app on the Shopify platform.
@@ -95,16 +94,7 @@ export default async function link(options: LinkOptions, shouldRenderSuccess = t
     renderSuccessMessage(configFileName, mergedAppConfiguration.name, localAppOptions.packageManager)
   }
 
-  const state: AppConfigurationState = {
-    basicConfiguration: mergedAppConfiguration,
-    appDirectory,
-    configurationPath: joinPath(appDirectory, configFileName),
-    configSource: options.configName ? 'flag' : 'cached',
-    configurationFileName: configFileName,
-    isLinked: mergedAppConfiguration.client_id !== '',
-  }
-
-  return {configuration: mergedAppConfiguration, remoteApp, state}
+  return {remoteApp, configFileName, configuration: mergedAppConfiguration}
 }
 
 /**
