@@ -134,5 +134,5 @@ export async function executeIncludeAssetsStep(
     }),
   )
 
-  return {filesCopied: counts.reduce((sum, count) => sum + (count ?? 0), 0)}
+  return {filesCopied: counts.reduce<number>((sum, count) => sum + (count ?? 0), 0)}
 }
