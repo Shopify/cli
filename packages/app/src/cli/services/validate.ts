@@ -1,3 +1,8 @@
+import {
+  invalidAppValidationResult,
+  stringifyAppValidationResult,
+  validAppValidationResult,
+} from './validation-result.js'
 import {AppLinkedInterface} from '../models/app/app.js'
 import {AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult, stringifyMessage} from '@shopify/cli-kit/node/output'
@@ -57,7 +62,7 @@ export async function validateApp(app: AppLinkedInterface, options: ValidateAppO
 
   if (!errors || errors.isEmpty()) {
     if (options.json) {
-      outputResult(JSON.stringify({valid: true, issues: []}, null, 2))
+      outputResult(stringifyAppValidationResult(validAppValidationResult()))
       return
     }
 
@@ -68,7 +73,7 @@ export async function validateApp(app: AppLinkedInterface, options: ValidateAppO
   const errorMessages = errors.toJSON().map((error) => stringifyMessage(error).trim())
 
   if (options.json) {
-    outputResult(JSON.stringify({valid: false, issues: toPublicIssues(app)}, null, 2))
+    outputResult(stringifyAppValidationResult(invalidAppValidationResult(toPublicIssues(app))))
     throw new AbortSilentError()
   }
 

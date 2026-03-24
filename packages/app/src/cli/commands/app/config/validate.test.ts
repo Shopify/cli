@@ -2,6 +2,7 @@ import Validate from './validate.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {validateApp} from '../../../services/validate.js'
 import {testAppLinked} from '../../../models/app/app.test-data.js'
+import {AppConfigurationAbortError} from '../../../models/app/error-parsing.js'
 import {describe, expect, test, vi} from 'vitest'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputResult} from '@shopify/cli-kit/node/output'
@@ -56,14 +57,40 @@ describe('app config validate command', () => {
     expect(validateApp).toHaveBeenCalledWith(app, {json: true})
   })
 
-  test('outputs json issues when app loading aborts before validateApp runs', async () => {
+  test('rethrows AppConfigurationAbortError in non-json mode without emitting json', async () => {
     // Given
     vi.mocked(linkedAppContext).mockRejectedValue(
-      new AbortError('Validation errors in /tmp/shopify.app.toml:\n\n• [name]: String is required'),
+      new AppConfigurationAbortError('Validation errors in /tmp/shopify.app.toml', '/tmp/shopify.app.toml'),
     )
 
     // When / Then
-    await Validate.run(['--json', '--path=/tmp/app'], import.meta.url).catch(() => {})
+    await expect(Validate.run(['--path=/tmp/app'], import.meta.url)).rejects.toThrow()
+    expect(outputResult).not.toHaveBeenCalled()
+    expect(validateApp).not.toHaveBeenCalled()
+  })
+
+  test('outputs structured configuration issues from app loading before validateApp runs', async () => {
+    // Given
+    vi.mocked(linkedAppContext).mockRejectedValue(
+      new AppConfigurationAbortError(
+        'Validation errors in /tmp/shopify.app.toml:\n\n• [name]: String is required',
+        '/tmp/shopify.app.toml',
+        [
+          {
+            filePath: '/tmp/shopify.app.toml',
+            path: ['name'],
+            pathString: 'name',
+            message: 'String is required',
+          },
+        ],
+      ),
+    )
+
+    // When / Then
+    await expect(Validate.run(['--json', '--path=/tmp/app'], import.meta.url)).rejects.toThrow(
+      'process.exit unexpectedly called with "1"',
+    )
+    expect(outputResult).toHaveBeenCalledTimes(1)
     expect(outputResult).toHaveBeenCalledWith(
       JSON.stringify(
         {
@@ -71,7 +98,7 @@ describe('app config validate command', () => {
           issues: [
             {
               filePath: '/tmp/shopify.app.toml',
-              path: [],
+              path: ['name'],
               pathString: 'name',
               message: 'String is required',
             },
@@ -84,107 +111,17 @@ describe('app config validate command', () => {
     expect(validateApp).not.toHaveBeenCalled()
   })
 
-  test('outputs json issues when app loading aborts with ansi-colored structured text', async () => {
+  test('outputs a root json issue when app loading fails without structured issues', async () => {
     // Given
     vi.mocked(linkedAppContext).mockRejectedValue(
-      new AbortError(
-        '\u001b[1m\u001b[91mValidation errors\u001b[39m\u001b[22m in /tmp/shopify.app.toml:\n\n• [name]: String is required',
-      ),
+      new AppConfigurationAbortError("Couldn't find an app toml file at /tmp/app", '/tmp/app'),
     )
 
     // When / Then
-    await Validate.run(['--json', '--path=/tmp/app'], import.meta.url).catch(() => {})
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify(
-        {
-          valid: false,
-          issues: [
-            {
-              filePath: '/tmp/shopify.app.toml',
-              path: [],
-              pathString: 'name',
-              message: 'String is required',
-            },
-          ],
-        },
-        null,
-        2,
-      ),
+    await expect(Validate.run(['--json', '--path=/tmp/app'], import.meta.url)).rejects.toThrow(
+      'process.exit unexpectedly called with "1"',
     )
-    expect(validateApp).not.toHaveBeenCalled()
-  })
-
-  test('preserves a root json issue when contextual text precedes structured validation errors', async () => {
-    // Given
-    vi.mocked(linkedAppContext).mockRejectedValue(
-      new AbortError(
-        'Could not infer extension handle\n\nValidation errors in /tmp/shopify.app.toml:\n\n• [name]: String is required',
-      ),
-    )
-
-    // When / Then
-    await Validate.run(['--json', '--path=/tmp/app'], import.meta.url).catch(() => {})
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify(
-        {
-          valid: false,
-          issues: [
-            {
-              filePath: '/tmp/shopify.app.toml',
-              path: [],
-              pathString: 'name',
-              message: 'String is required',
-            },
-            {
-              filePath: '/tmp/shopify.app.toml',
-              path: [],
-              pathString: 'root',
-              message:
-                'Could not infer extension handle\n\nValidation errors in /tmp/shopify.app.toml:\n\n• [name]: String is required',
-            },
-          ],
-        },
-        null,
-        2,
-      ),
-    )
-    expect(validateApp).not.toHaveBeenCalled()
-  })
-
-  test('parses structured validation errors for windows-style paths', async () => {
-    // Given
-    vi.mocked(linkedAppContext).mockRejectedValue(
-      new AbortError('Validation errors in C:\\tmp\\shopify.app.toml:\n\n• [name]: String is required'),
-    )
-
-    // When / Then
-    await Validate.run(['--json', '--path=/tmp/app'], import.meta.url).catch(() => {})
-    expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify(
-        {
-          valid: false,
-          issues: [
-            {
-              filePath: 'C:\\tmp\\shopify.app.toml',
-              path: [],
-              pathString: 'name',
-              message: 'String is required',
-            },
-          ],
-        },
-        null,
-        2,
-      ),
-    )
-    expect(validateApp).not.toHaveBeenCalled()
-  })
-
-  test('outputs a root json issue when app loading aborts with a non-structured message', async () => {
-    // Given
-    vi.mocked(linkedAppContext).mockRejectedValue(new AbortError("Couldn't find an app toml file at /tmp/app"))
-
-    // When / Then
-    await Validate.run(['--json', '--path=/tmp/app'], import.meta.url).catch(() => {})
+    expect(outputResult).toHaveBeenCalledTimes(1)
     expect(outputResult).toHaveBeenCalledWith(
       JSON.stringify(
         {
@@ -203,6 +140,58 @@ describe('app config validate command', () => {
       ),
     )
     expect(validateApp).not.toHaveBeenCalled()
+  })
+
+  test('outputs json when validateApp throws a structured configuration abort', async () => {
+    // Given
+    const app = testAppLinked()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockRejectedValue(
+      new AppConfigurationAbortError(
+        'Validation errors in /tmp/shopify.app.toml:\n\n• [name]: String is required',
+        '/tmp/shopify.app.toml',
+        [
+          {
+            filePath: '/tmp/shopify.app.toml',
+            path: ['name'],
+            pathString: 'name',
+            message: 'String is required',
+          },
+        ],
+      ),
+    )
+
+    // When / Then
+    await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow('process.exit unexpectedly called with "1"')
+    expect(outputResult).toHaveBeenCalledTimes(1)
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          valid: false,
+          issues: [
+            {
+              filePath: '/tmp/shopify.app.toml',
+              path: ['name'],
+              pathString: 'name',
+              message: 'String is required',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+    )
+  })
+
+  test('rethrows non-configuration errors from validateApp in json mode without converting them to validation json', async () => {
+    // Given
+    const app = testAppLinked()
+    vi.mocked(linkedAppContext).mockResolvedValue({app} as Awaited<ReturnType<typeof linkedAppContext>>)
+    vi.mocked(validateApp).mockRejectedValue(new AbortError('network problem'))
+
+    // When / Then
+    await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
+    expect(outputResult).not.toHaveBeenCalled()
   })
 
   test('rethrows unrelated abort errors in json mode without converting them to validation json', async () => {

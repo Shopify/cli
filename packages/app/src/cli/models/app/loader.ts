@@ -13,6 +13,7 @@ import {
   AppLinkedInterface,
 } from './app.js'
 import {
+  AppConfigurationAbortError,
   AppValidationFileIssues,
   AppValidationIssue,
   parseHumanReadableError,
@@ -42,7 +43,7 @@ import {
   webFilesForConfig,
 } from '../project/config-selection.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
-import {fileExists, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, readFile, glob, findPathUp, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {TomlFile, TomlParseError} from '@shopify/cli-kit/node/toml/toml-file'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
@@ -80,12 +81,12 @@ interface ReloadState {
 }
 
 /**
- * Handles a validation failure by either aborting immediately or recording the
- * failure and returning fallback output.
+ * Handles a configuration failure by either aborting immediately or recording
+ * the failure and returning fallback output.
  *
- * `issues` carries structured validation metadata for report-mode callers that
- * want to preserve machine-readable issue details. Abort-mode callers can
- * safely ignore it.
+ * `issues` carries structured configuration issue metadata for report-mode
+ * callers that want to preserve machine-readable issue details. Abort-mode
+ * callers can safely ignore it.
  */
 type AbortOrReport = <T>(
   errorMessage: OutputMessage,
@@ -94,8 +95,8 @@ type AbortOrReport = <T>(
   issues?: AppValidationIssue[],
 ) => T
 
-const abort: AbortOrReport = (errorMessage) => {
-  throw new AbortError(errorMessage)
+const abort: AbortOrReport = (errorMessage, _fallback, configurationPath, issues = []) => {
+  throw new AppConfigurationAbortError(errorMessage, configurationPath, issues)
 }
 
 /**
@@ -916,7 +917,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     switch (this.mode) {
       case 'strict':
       case 'local':
-        throw new AbortError(errorMessage)
+        throw new AppConfigurationAbortError(errorMessage, configurationPath, issues)
       case 'report':
         this.errors.addError(configurationPath, errorMessage, issues)
         return fallback
@@ -1002,7 +1003,50 @@ async function getConfigurationPath(appDirectory: string, configName: string | u
   if (await fileExists(configurationPath)) {
     return {configurationPath, configurationFileName}
   } else {
-    throw new AbortError(outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`)
+    throw new AppConfigurationAbortError(
+      outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`,
+      configurationPath,
+    )
+  }
+}
+
+/**
+ * Sometimes we want to run app commands from a nested folder (for example within an extension). So we need to
+ * traverse up the filesystem to find the root app directory.
+ *
+ * @param directory - The current working directory, or the `--path` option
+ */
+export async function getAppDirectory(directory: string) {
+  if (!(await fileExists(directory))) {
+    throw new AppConfigurationAbortError(
+      outputContent`Couldn't find directory ${outputToken.path(directory)}`,
+      directory,
+    )
+  }
+
+  // In order to find the chosen config for the app, we need to find the directory of the app.
+  // But we can't know the chosen config because the cache key is the directory itself. So we
+  // look for all possible `shopify.app.*toml` files and stop at the first directory that contains one.
+  const appDirectory = await findPathUp(
+    async (directory) => {
+      const found = await glob(joinPath(directory, appConfigurationFileNameGlob))
+      if (found.length > 0) {
+        return directory
+      }
+    },
+    {
+      cwd: directory,
+      type: 'directory',
+    },
+  )
+
+  if (appDirectory) {
+    return appDirectory
+  } else {
+    throw new AppConfigurationAbortError(
+      outputContent`Couldn't find an app toml file at ${outputToken.path(directory)}, is this an app directory?`,
+      directory,
+    )
   }
 }
 
@@ -1172,6 +1216,8 @@ async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadR
     }
   })
 }
+
+const appConfigurationFileNameGlob = 'shopify.app*.toml'
 
 // Re-export config file naming utilities from their leaf module.
 // These were moved to break the circular dependency: loader ↔ active-config ↔ use ↔ loader.

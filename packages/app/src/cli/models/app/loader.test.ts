@@ -11,7 +11,7 @@ import {
   loadConfigForAppCreation,
   reloadApp,
 } from './loader.js'
-import {parseHumanReadableError} from './error-parsing.js'
+import {AppConfigurationAbortError, parseHumanReadableError} from './error-parsing.js'
 import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -2799,6 +2799,31 @@ describe('parseConfigurationObject', () => {
         code: 'invalid_type',
       },
     ])
+  })
+
+  test('throws an AppConfigurationAbortError with structured issues by default', async () => {
+    const configurationObject = {
+      scopes: [],
+    }
+
+    try {
+      await parseConfigurationObject(AppSchema, 'tmp', configurationObject)
+      throw new Error('expected parseConfigurationObject to throw')
+    } catch (error) {
+      if (!(error instanceof AppConfigurationAbortError)) throw error
+
+      expect(error).toMatchObject({
+        issues: [
+          {
+            filePath: 'tmp',
+            path: ['client_id'],
+            pathString: 'client_id',
+            message: 'Required',
+            code: 'invalid_type',
+          },
+        ],
+      })
+    }
   })
 
   test('throws an error when client_id is missing in app schema TOML file', async () => {

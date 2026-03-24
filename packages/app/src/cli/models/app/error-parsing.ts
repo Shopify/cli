@@ -1,3 +1,6 @@
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
+
 import type {OutputMessage} from '@shopify/cli-kit/node/output'
 
 interface UnionErrorIssue {
@@ -30,6 +33,42 @@ export interface AppValidationFileIssues {
   filePath: string
   message: OutputMessage
   issues: AppValidationIssue[]
+}
+
+export function toRootValidationIssue(filePath: string, message: string): AppValidationIssue {
+  return {
+    filePath,
+    path: [],
+    pathString: 'root',
+    message,
+  }
+}
+
+function getValidationIssues(
+  filePath: string,
+  message: OutputMessage,
+  issues: AppValidationIssue[],
+): AppValidationIssue[] {
+  if (issues.length > 0) return issues
+
+  return [toRootValidationIssue(filePath, stringifyMessage(message).trim())]
+}
+
+/**
+ * Structured failure for local app configuration discovery, parsing, and
+ * validation.
+ *
+ * This error carries the machine-readable issues used by
+ * `shopify app validate --json` when local configuration loading cannot reach
+ * a normal validation result.
+ */
+export class AppConfigurationAbortError extends AbortError {
+  issues: AppValidationIssue[]
+
+  constructor(message: OutputMessage, filePath: string, issues: AppValidationIssue[] = []) {
+    super(message)
+    this.issues = getValidationIssues(filePath, message, issues)
+  }
 }
 
 /**

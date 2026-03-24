@@ -1,4 +1,4 @@
-import {parseHumanReadableError, parseStructuredErrors} from './error-parsing.js'
+import {AppConfigurationAbortError, parseHumanReadableError, parseStructuredErrors} from './error-parsing.js'
 import {describe, expect, test} from 'vitest'
 
 describe('parseHumanReadableError', () => {
@@ -233,6 +233,47 @@ describe('parseHumanReadableError', () => {
     expect(result).not.toContain('Expected boolean, received string')
     expect(result).not.toContain('Must be valid URL')
     expect(result).not.toContain('Union validation failed')
+  })
+})
+
+describe('AppConfigurationAbortError', () => {
+  test('preserves structured issues when they are provided', () => {
+    const error = new AppConfigurationAbortError(
+      'Validation errors in /tmp/shopify.app.toml',
+      '/tmp/shopify.app.toml',
+      [
+        {
+          filePath: '/tmp/shopify.app.toml',
+          path: ['name'],
+          pathString: 'name',
+          message: 'Required',
+          code: 'invalid_type',
+        },
+      ],
+    )
+
+    expect(error.issues).toEqual([
+      {
+        filePath: '/tmp/shopify.app.toml',
+        path: ['name'],
+        pathString: 'name',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+  })
+
+  test('synthesizes a root issue when structured issues are unavailable', () => {
+    const error = new AppConfigurationAbortError("Couldn't find an app toml file at /tmp/app", '/tmp/app')
+
+    expect(error.issues).toEqual([
+      {
+        filePath: '/tmp/app',
+        path: [],
+        pathString: 'root',
+        message: "Couldn't find an app toml file at /tmp/app",
+      },
+    ])
   })
 })
 
