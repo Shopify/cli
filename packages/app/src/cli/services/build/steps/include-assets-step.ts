@@ -1,4 +1,4 @@
-import {joinPath, dirname, extname, relativePath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, extname, relativePath, basename, sanitizeRelativePath} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
@@ -63,31 +63,6 @@ const IncludeAssetsConfigSchema = z.object({
 })
 
 /**
- * Removes any '..' traversal segments from a relative destination path and
- * emits a warning if any were found. Preserves normal '..' that only navigate
- * within the path (e.g. 'foo/../bar' → 'bar') but never allows the result to
- * escape the output root.
- */
-function sanitizeDestination(input: string, warn: (msg: string) => void): string {
-  const segments = input.replace(/\\/g, '/').split('/')
-  const stack: string[] = []
-  let stripped = false
-  for (const seg of segments) {
-    if (seg === '..') {
-      stripped = true
-      stack.pop()
-    } else if (seg !== '.') {
-      stack.push(seg)
-    }
-  }
-  const result = stack.join('/')
-  if (stripped) {
-    warn(`Warning: destination '${input}' contains '..' path traversal - sanitized to '${result || '.'}'\n`)
-  }
-  return result
-}
-
-/**
  * Executes an include_assets build step.
  *
  * Iterates over `config.inclusions` and dispatches each entry by type:
@@ -111,7 +86,7 @@ export async function executeIncludeAssetsStep(
   const counts = await Promise.all(
     config.inclusions.map(async (entry) => {
       const warn = (msg: string) => options.stdout.write(msg)
-      const sanitizedDest = entry.destination !== undefined ? sanitizeDestination(entry.destination, warn) : undefined
+      const sanitizedDest = entry.destination !== undefined ? sanitizeRelativePath(entry.destination, warn) : undefined
 
       if (entry.type === 'pattern') {
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
@@ -165,7 +140,7 @@ export async function executeIncludeAssetsStep(
  *
  * - No `destination`, `preserveStructure` false: copy directory contents into the output root.
  * - No `destination`, `preserveStructure` true: copy the directory under its own name in the output.
- * - With `destination`: copy the file to the explicit destination path (`preserveStructure` is ignored).
+ * - With `destination`: copy to that exact path (`preserveStructure` is ignored).
  */
 async function copySourceEntry(
   config: {
@@ -179,41 +154,40 @@ async function copySourceEntry(
 ): Promise<number> {
   const {source, destination, baseDir, outputDir, preserveStructure} = config
   const sourcePath = joinPath(baseDir, source)
-  const exists = await fileExists(sourcePath)
-  if (!exists) {
+  if (!(await fileExists(sourcePath))) {
     throw new Error(`Source does not exist: ${sourcePath}`)
   }
 
+  const sourceIsDir = await isDirectory(sourcePath)
+
+  // Resolve destination path and log message up front, then dispatch on file vs directory.
+  let destPath: string
+  let logMsg: string
   if (destination !== undefined) {
-    const destPath = joinPath(outputDir, destination)
-    if (await isDirectory(sourcePath)) {
-      await copyDirectoryContents(sourcePath, destPath)
-      const copied = await glob(['**/*'], {cwd: destPath, absolute: false})
-      options.stdout.write(`Copied ${source} to ${destination}\n`)
-      return copied.length
-    }
-    await mkdir(dirname(destPath))
-    await copyFile(sourcePath, destPath)
-    options.stdout.write(`Copied ${source} to ${destination}\n`)
-    return 1
+    destPath = joinPath(outputDir, destination)
+    logMsg = `Copied ${source} to ${destination}\n`
+  } else if (sourceIsDir && preserveStructure) {
+    destPath = joinPath(outputDir, basename(sourcePath))
+    logMsg = `Copied ${source} to ${basename(sourcePath)}\n`
+  } else if (sourceIsDir) {
+    destPath = outputDir
+    logMsg = `Copied contents of ${source} to output root\n`
+  } else {
+    destPath = joinPath(outputDir, basename(sourcePath))
+    logMsg = `Copied ${source} to ${basename(sourcePath)}\n`
   }
 
-  if (!(await isDirectory(sourcePath))) {
-    const destPath = joinPath(outputDir, basename(sourcePath))
-    await mkdir(outputDir)
-    await copyFile(sourcePath, destPath)
-    options.stdout.write(`Copied ${source} to ${basename(sourcePath)}\n`)
-    return 1
+  if (sourceIsDir) {
+    await copyDirectoryContents(sourcePath, destPath)
+    const copied = await glob(['**/*'], {cwd: destPath, absolute: false})
+    options.stdout.write(logMsg)
+    return copied.length
   }
 
-  const destDir = preserveStructure ? joinPath(outputDir, basename(sourcePath)) : outputDir
-  await copyDirectoryContents(sourcePath, destDir)
-  const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
-  const msg = preserveStructure
-    ? `Copied ${source} to ${basename(sourcePath)}\n`
-    : `Copied contents of ${source} to output root\n`
-  options.stdout.write(msg)
-  return copied.length
+  await mkdir(dirname(destPath))
+  await copyFile(sourcePath, destPath)
+  options.stdout.write(logMsg)
+  return 1
 }
 
 /**
