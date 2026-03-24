@@ -58,7 +58,7 @@ async function performPoll({
     organizationId,
   })
 
-  let resubscribeFailed = false
+  let resubscribeResult: 'succeeded' | 'failed' | 'not_attempted' = 'not_attempted'
   const errorResponse = response as ErrorResponse
 
   if (errorResponse.errors) {
@@ -75,7 +75,7 @@ async function performPoll({
       },
     })
 
-    resubscribeFailed = result.resubscribeFailed
+    resubscribeResult = result.resubscribeResult
 
     if (result.nextJwtToken) {
       nextJwtToken = result.nextJwtToken
@@ -138,7 +138,7 @@ async function performPoll({
     }
   }
 
-  return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor, resubscribeFailed}
+  return {nextJwtToken, retryIntervalMs, cursor: nextCursor ?? cursor, resubscribeResult}
 }
 
 export function usePollAppLogs({
@@ -169,13 +169,13 @@ export function usePollAppLogs({
       organizationId,
     })
 
-    if (res.resubscribeFailed) {
+    if (res.resubscribeResult === 'failed') {
       consecutiveResubscribeFailures.current += 1
       if (consecutiveResubscribeFailures.current >= MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES) {
         setErrors(['App log streaming session has expired. Please restart your dev session.'])
         return {retryIntervalMs: 0}
       }
-    } else {
+    } else if (res.resubscribeResult === 'succeeded') {
       consecutiveResubscribeFailures.current = 0
     }
 

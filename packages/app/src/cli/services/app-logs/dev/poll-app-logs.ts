@@ -107,13 +107,13 @@ export const pollAppLogs = async ({
         },
       })
 
-      if (result.resubscribeFailed) {
+      if (result.resubscribeResult === 'failed') {
         nextConsecutiveResubscribeFailures += 1
         if (nextConsecutiveResubscribeFailures >= MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES) {
           outputWarn('App log streaming session has expired. Please restart your dev session.', stdout)
           return
         }
-      } else {
+      } else if (result.resubscribeResult === 'succeeded') {
         nextConsecutiveResubscribeFailures = 0
       }
 
