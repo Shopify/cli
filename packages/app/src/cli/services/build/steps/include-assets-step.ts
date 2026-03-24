@@ -32,7 +32,7 @@ const StaticEntrySchema = z.object({
   type: z.literal('static'),
   source: z.string(),
   destination: z.string().optional(),
-  preserveStructure: z.boolean().default(false),
+  preserveStructure: z.boolean().default(true),
 })
 
 /**
@@ -116,7 +116,7 @@ export async function executeIncludeAssetsStep(
       if (entry.type === 'pattern') {
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
         const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
-        const result = await copyByPattern(
+        return copyByPattern(
           {
             sourceDir,
             outputDir: destinationDir,
@@ -126,7 +126,6 @@ export async function executeIncludeAssetsStep(
           },
           options,
         )
-        return result.filesCopied
       }
 
       if (entry.type === 'configKey') {
@@ -294,7 +293,7 @@ async function copyByPattern(
     preserveStructure: boolean
   },
   options: {stdout: NodeJS.WritableStream},
-): Promise<{filesCopied: number}> {
+): Promise<number> {
   const {sourceDir, outputDir, patterns, ignore, preserveStructure} = config
   const files = await glob(patterns, {
     absolute: true,
@@ -304,7 +303,7 @@ async function copyByPattern(
 
   if (files.length === 0) {
     options.stdout.write(`Warning: No files matched patterns in ${sourceDir}\n`)
-    return {filesCopied: 0}
+    return 0
   }
 
   await mkdir(outputDir)
@@ -359,7 +358,7 @@ async function copyByPattern(
 
   const copiedCount = copyResults.reduce((sum, count) => sum + count, 0)
   options.stdout.write(`Copied ${copiedCount} file(s) from ${sourceDir} to ${outputDir}\n`)
-  return {filesCopied: copiedCount}
+  return copiedCount
 }
 
 /**

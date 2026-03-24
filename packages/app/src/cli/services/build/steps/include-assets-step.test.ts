@@ -33,7 +33,7 @@ describe('executeIncludeAssetsStep', () => {
   })
 
   describe('static entries', () => {
-    test('copies directory contents to output root when no destination (preserveStructure defaults false)', async () => {
+    test('copies directory contents to output root when no destination and preserveStructure is false', async () => {
       // Given
       vi.mocked(fs.fileExists).mockResolvedValue(true)
       vi.mocked(fs.isDirectory).mockResolvedValue(true)
@@ -45,7 +45,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Copy Dist',
         type: 'include_assets',
         config: {
-          inclusions: [{type: 'static', source: 'dist'}],
+          inclusions: [{type: 'static', source: 'dist', preserveStructure: false}],
         },
       }
 
@@ -166,7 +166,7 @@ describe('executeIncludeAssetsStep', () => {
       const result = await executeIncludeAssetsStep(step, mockContext)
 
       // Then
-      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output')
+      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output/dist')
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/icon.png', '/test/output/assets/icon.png')
       expect(result.filesCopied).toBe(2)
     })
