@@ -102,6 +102,7 @@ describe('renderJsonLogs', () => {
   })
 
   test('should retry at throttle interval when handleFetchAppLogsError returns null token', async () => {
+    const timeoutSpy = vi.spyOn(global, 'setTimeout')
     const mockErrorResponse = {
       errors: [{status: 401, message: 'Unauthorized'}],
     }
@@ -109,7 +110,11 @@ describe('renderJsonLogs', () => {
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
     const throttleRetryInterval = 60000
     const handleFetchAppLogsErrorMock = vi.fn(() => {
-      return Promise.resolve({nextJwtToken: null, retryIntervalMs: throttleRetryInterval, resubscribeFailed: false})
+      return Promise.resolve({
+        nextJwtToken: null,
+        retryIntervalMs: throttleRetryInterval,
+        resubscribeResult: 'not_attempted' as const,
+      })
     })
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 
@@ -127,7 +132,7 @@ describe('renderJsonLogs', () => {
 
     expect(handleFetchAppLogsError).toHaveBeenCalled()
     expect(pollAppLogs).toHaveBeenCalled()
-    expect(setTimeout).toHaveBeenCalledWith(expect.any(Function), throttleRetryInterval)
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), throttleRetryInterval)
     expect(vi.getTimerCount()).toEqual(1)
   })
 
@@ -138,7 +143,7 @@ describe('renderJsonLogs', () => {
     const pollAppLogsMock = vi.fn().mockResolvedValue(mockErrorResponse)
     vi.mocked(pollAppLogs).mockImplementation(pollAppLogsMock)
     const handleFetchAppLogsErrorMock = vi.fn(() => {
-      return Promise.resolve({nextJwtToken: null, retryIntervalMs: 60000, resubscribeFailed: true})
+      return Promise.resolve({nextJwtToken: null, retryIntervalMs: 60000, resubscribeResult: 'failed' as const})
     })
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 
@@ -171,11 +176,13 @@ describe('renderJsonLogs', () => {
     const mockRetryInterval = 1000
     const handleFetchAppLogsErrorMock = vi.fn((input) => {
       input.onUnknownError(mockRetryInterval)
-      return new Promise<{retryIntervalMs: number; nextJwtToken: string | null; resubscribeFailed: boolean}>(
-        (resolve, _reject) => {
-          resolve({nextJwtToken: 'new-jwt-token', retryIntervalMs: mockRetryInterval, resubscribeFailed: false})
-        },
-      )
+      return new Promise<{
+        retryIntervalMs: number
+        nextJwtToken: string | null
+        resubscribeResult: 'succeeded' | 'failed' | 'not_attempted'
+      }>((resolve, _reject) => {
+        resolve({nextJwtToken: 'new-jwt-token', retryIntervalMs: mockRetryInterval, resubscribeResult: 'not_attempted'})
+      })
     })
     vi.mocked(handleFetchAppLogsError).mockImplementation(handleFetchAppLogsErrorMock)
 

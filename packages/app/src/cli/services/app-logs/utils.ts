@@ -108,14 +108,16 @@ export interface AppLogsOptions {
   }
 }
 
+type ResubscribeResult = 'succeeded' | 'failed' | 'not_attempted'
+
 export const handleFetchAppLogsError = async (
   input: FetchAppLogsErrorOptions,
-): Promise<{retryIntervalMs: number; nextJwtToken: string | null; resubscribeFailed: boolean}> => {
+): Promise<{retryIntervalMs: number; nextJwtToken: string | null; resubscribeResult: ResubscribeResult}> => {
   const {errors} = input.response
 
   let retryIntervalMs = POLLING_INTERVAL_MS
   let nextJwtToken = null
-  let resubscribeFailed = false
+  let resubscribeResult: ResubscribeResult = 'not_attempted'
 
   if (errors.length > 0) {
     outputDebug(`Errors: ${errors.map((error) => error.message).join(', ')}`)
@@ -123,11 +125,12 @@ export const handleFetchAppLogsError = async (
     if (errors.some((error) => error.status === 401)) {
       try {
         nextJwtToken = await input.onResubscribe()
+        resubscribeResult = 'succeeded'
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (resubscribeError) {
         outputDebug(`Failed to resubscribe to app logs: ${resubscribeError}`)
         retryIntervalMs = POLLING_THROTTLE_RETRY_INTERVAL_MS
-        resubscribeFailed = true
+        resubscribeResult = 'failed'
         input.onThrottle(retryIntervalMs)
       }
     } else if (errors.some((error) => error.status === 429)) {
@@ -139,7 +142,7 @@ export const handleFetchAppLogsError = async (
     }
   }
 
-  return {retryIntervalMs, nextJwtToken, resubscribeFailed}
+  return {retryIntervalMs, nextJwtToken, resubscribeResult}
 }
 
 export function sourcesForApp(app: AppInterface): string[] {
