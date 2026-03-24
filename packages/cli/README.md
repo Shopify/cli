@@ -32,6 +32,7 @@
 * [`shopify app webhook trigger`](#shopify-app-webhook-trigger)
 * [`shopify auth login`](#shopify-auth-login)
 * [`shopify auth logout`](#shopify-auth-logout)
+* [`shopify auth whoami`](#shopify-auth-whoami)
 * [`shopify commands`](#shopify-commands)
 * [`shopify config autocorrect off`](#shopify-config-autocorrect-off)
 * [`shopify config autocorrect on`](#shopify-config-autocorrect-on)
@@ -1054,10 +1055,13 @@ Logs you in to your Shopify account.
 
 ```
 USAGE
-  $ shopify auth login [--alias <value>]
+  $ shopify auth login [--alias <value>] [--no-polling] [--resume]
 
 FLAGS
   --alias=<value>  [env: SHOPIFY_FLAG_AUTH_ALIAS] Alias of the session you want to login to.
+  --no-polling     [env: SHOPIFY_FLAG_AUTH_NO_POLLING] Start the login flow without polling. Prints the auth URL and
+                   exits immediately.
+  --resume         [env: SHOPIFY_FLAG_AUTH_RESUME] Resume a previously started login flow.
 
 DESCRIPTION
   Logs you in to your Shopify account.
@@ -1073,6 +1077,18 @@ USAGE
 
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
+```
+
+## `shopify auth whoami`
+
+Displays the currently logged-in Shopify account.
+
+```
+USAGE
+  $ shopify auth whoami
+
+DESCRIPTION
+  Displays the currently logged-in Shopify account.
 ```
 
 ## `shopify commands`

@@ -38,7 +38,8 @@
 │     └─ trigger
 ├─ auth
 │  ├─ login
-│  └─ logout
+│  ├─ logout
+│  └─ whoami
 ├─ commands
 ├─ config
 │  └─ autocorrect

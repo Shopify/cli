@@ -293,8 +293,6 @@ The CLI is currently unable to prompt for reauthentication.`,
  */
 async function executeCompleteFlow(applications: OAuthApplications): Promise<Session> {
   const scopes = getFlattenScopes(applications)
-  const exchangeScopes = getExchangeScopes(applications)
-  const store = applications.adminApi?.storeFqdn
   if (firstPartyDev()) {
     outputDebug(outputContent`Authenticating as Shopify Employee...`)
     scopes.push('employee')
@@ -314,6 +312,22 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
     identityToken = await pollForDeviceAuthorization(deviceAuth.deviceCode, deviceAuth.interval)
   }
 
+  const session = await completeAuthFlow(identityToken, applications)
+  outputCompleted(`Logged in.`)
+  return session
+}
+
+/**
+ * Given an identity token, exchange it for application tokens and build a complete session.
+ * Shared between the interactive login flow and the --resume non-interactive flow.
+ */
+export async function completeAuthFlow(
+  identityToken: IdentityToken,
+  applications: OAuthApplications,
+): Promise<Session> {
+  const exchangeScopes = getExchangeScopes(applications)
+  const store = applications.adminApi?.storeFqdn
+
   // Exchange identity token for application tokens
   outputDebug(outputContent`CLI token received. Exchanging it for application tokens...`)
   const result = await exchangeAccessForApplicationTokens(identityToken, exchangeScopes, store)
@@ -322,17 +336,13 @@ async function executeCompleteFlow(applications: OAuthApplications): Promise<Ses
   const businessPlatformToken = result[applicationId('business-platform')]?.accessToken
   const alias = (await fetchEmail(businessPlatformToken)) ?? identityToken.userId
 
-  const session: Session = {
+  return {
     identity: {
       ...identityToken,
       alias,
     },
     applications: result,
   }
-
-  outputCompleted(`Logged in.`)
-
-  return session
 }
 
 /**
