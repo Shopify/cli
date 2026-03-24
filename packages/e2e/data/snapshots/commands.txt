@@ -90,6 +90,10 @@
 │  └─ update
 ├─ search
 ├─ store
+│  ├─ bulk
+│  │  ├─ cancel
+│  │  ├─ execute
+│  │  └─ status
 │  └─ execute
 ├─ theme
 │  ├─ check
