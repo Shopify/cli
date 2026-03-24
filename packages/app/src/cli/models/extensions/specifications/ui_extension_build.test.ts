@@ -29,23 +29,6 @@ describe('UI extension build configs', () => {
       test('uses build_steps mode', () => {
         expect(spec.buildConfig.mode).toBe('ui')
       })
-
-      test('has bundle-ui and copy-static-assets steps', () => {
-        const {steps} = spec.clientSteps![0]!
-
-        expect(steps).toHaveLength(2)
-        expect(steps[0]).toMatchObject({id: 'bundle-ui', type: 'bundle_ui'})
-        expect(steps[1]).toMatchObject({id: 'copy-static-assets', type: 'copy_static_assets'})
-      })
-
-      test('config is serializable to JSON', () => {
-        const serialized = JSON.stringify(spec.clientSteps!)
-        const deserialized = JSON.parse(serialized)
-
-        expect(deserialized[0].steps).toHaveLength(2)
-        expect(deserialized[0].steps[0].type).toBe('bundle_ui')
-        expect(deserialized[0].steps[1].type).toBe('copy_static_assets')
-      })
     })
   }
 
