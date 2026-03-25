@@ -1,8 +1,10 @@
+const COOKIE_PARSE_PATTERN = /(.*?)=(.*)$/
+
 export function parseCookies(cookies: string) {
   const cookiesRecord: Record<string, string> = {}
 
   cookies.split(';').forEach((cookie) => {
-    const parts = cookie.match(/(.*?)=(.*)$/) ?? []
+    const parts = cookie.match(COOKIE_PARSE_PATTERN) ?? []
 
     const key = parts[1]?.trim()
     const value = parts[2]?.trim() ?? ''
