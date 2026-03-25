@@ -61,6 +61,7 @@ const LIQUID_DOC_PATTERN = /{%\s*doc\s*%}[\s\S]*?{%\s*enddoc\s*%}/g
 const JSON_TEMPLATE_PATTERN = /^templates\/.+\.json$/
 const LOCALE_PATTERN = /^locales\/.+\.json$/
 const SECTION_ID_PATTERN = /^sections\/(.+)\.liquid$/
+const WHITESPACE_PATTERN = /\s+/g
 
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null, true)
@@ -458,7 +459,7 @@ export function getUpdatedFileParts(file: ThemeAsset) {
 
   type LiquidTag = (typeof LIQUID_TAGS)[number]
 
-  const normalizeContent = (content: string) => content?.replace(/\s+/g, ' ').trim()
+  const normalizeContent = (content: string) => content?.replace(WHITESPACE_PATTERN, ' ').trim()
   let otherContent = file.value
 
   const handleTagMatch = (tag: LiquidTag, value: string) => {
