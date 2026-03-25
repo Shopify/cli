@@ -2,3 +2,4 @@ experiment	hypothesis	result	kept	notes
 1	O(n²) → O(n) for rejectGeneratedStaticAssets using Set lookup	All 561 tests pass, complexity reduced from O(n²) to O(n)	yes	Replaced Array.some() inside filter() with pre-computed Set for O(1) lookup
 2	Hoist setMimeTypes to module init eliminates N redundant calls	All 561 tests pass, setMimeTypes called once vs once-per-file	yes	Moved setMimeTypes to module-level, extracted TEXT_FILE_TYPES constant
 3	Pre-compile regex patterns in filterBy reduces O(n*m) to O(m) RegExp creations	All 561 tests pass, regex patterns compiled once per call	yes	Created compiledPatterns array with pre-compiled RegExp objects instead of creating new RegExp per file
+4	Hoist matchGlob options to module level reduces object allocation per call	All 561 tests pass, matchOpts created once vs once-per-call	yes	Moved matchOpts object to MATCH_GLOB_OPTIONS constant at module level
