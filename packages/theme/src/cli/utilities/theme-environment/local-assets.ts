@@ -12,6 +12,10 @@ const tagContentCache = {
   javascript: new Map<string, {checksum: string; content: string}>(),
 }
 
+// Pre-compiled RegExp patterns for asset path matching
+const THEME_ASSET_PATTERN = /^(?:\/cdn\/.*?)?\/assets\/([^?]+)/
+const EXTENSION_ASSET_PATTERN = /^(?:\/ext\/cdn\/extensions\/.*?)?\/assets\/([^?]+)/
+
 /**
  * Handles requests for assets to the proxied Shopify CDN, serving local files.
  */
@@ -83,8 +87,8 @@ function findLocalFile(event: H3Event, ctx: DevServerContext) {
 
   // Try to match theme asset files first and fallback to theme extension asset files
   return (
-    tryGetFile(/^(?:\/cdn\/.*?)?\/assets\/([^?]+)/, ctx.localThemeFileSystem) ??
-    tryGetFile(/^(?:\/ext\/cdn\/extensions\/.*?)?\/assets\/([^?]+)/, ctx.localThemeExtensionFileSystem) ?? {
+    tryGetFile(THEME_ASSET_PATTERN, ctx.localThemeFileSystem) ??
+    tryGetFile(EXTENSION_ASSET_PATTERN, ctx.localThemeExtensionFileSystem) ?? {
       isUnsynced: false,
       fileKey: undefined,
       file: undefined,
