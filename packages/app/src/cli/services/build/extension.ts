@@ -235,7 +235,7 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
   return runCommand(extension.buildCommand, extension, options)
 }
 
-const SCHEMA_VERSION_PREFIX = '# shopify:api_version='
+const API_VERSION_DIRECTIVE_RE = /@apiVersion\(version:\s*"([^"]+)"\)/
 
 async function warnIfSchemaMismatch(extension: ExtensionInstance<FunctionConfigType>) {
   const schemaPath = joinPath(extension.directory, 'schema.graphql')
@@ -247,15 +247,15 @@ async function warnIfSchemaMismatch(extension: ExtensionInstance<FunctionConfigT
     throw error
   }
   try {
-    // Read just enough bytes for the version comment line
-    const buf = Buffer.alloc(128)
-    const {bytesRead} = await handle.read(buf, 0, 128, 0)
+    const buf = Buffer.alloc(512)
+    const {bytesRead} = await handle.read(buf, 0, 512, 0)
     if (bytesRead === 0) return
 
-    const firstLine = buf.toString('utf8', 0, bytesRead).split('\n')[0] ?? ''
-    if (!firstLine.startsWith(SCHEMA_VERSION_PREFIX)) return
+    const head = buf.toString('utf8', 0, bytesRead)
+    const match = API_VERSION_DIRECTIVE_RE.exec(head)
+    if (!match) return
 
-    const schemaVersion = firstLine.slice(SCHEMA_VERSION_PREFIX.length).trim()
+    const schemaVersion = match[1]!
     const tomlVersion = extension.configuration.api_version
     if (schemaVersion !== tomlVersion) {
       outputWarn(

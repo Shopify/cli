@@ -447,7 +447,7 @@ describe('buildFunctionExtension', () => {
 
     test('warns when schema version does not match toml version', async () => {
       const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
-      mockSchemaFile('# shopify:api_version=2025-01\ntype Query { shop: Shop }')
+      mockSchemaFile('schema @apiVersion(version: "2025-01") {\n  query: QueryRoot\n}')
 
       await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
 
@@ -458,14 +458,14 @@ describe('buildFunctionExtension', () => {
 
     test('does not warn when schema version matches toml version', async () => {
       const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
-      mockSchemaFile('# shopify:api_version=2022-07\ntype Query { shop: Shop }')
+      mockSchemaFile('schema @apiVersion(version: "2022-07") {\n  query: QueryRoot\n}')
 
       await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
 
       expect(warnSpy).not.toHaveBeenCalled()
     })
 
-    test('does not warn when schema file has no version comment', async () => {
+    test('does not warn when schema has no apiVersion directive', async () => {
       const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
       mockSchemaFile('type Query { shop: Shop }')
 
