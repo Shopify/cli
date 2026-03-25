@@ -1,4 +1,5 @@
 import {Project} from './project.js'
+import {AppConfigurationAbortError} from '../app/error-parsing.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -116,9 +117,16 @@ describe('Project', () => {
       })
     })
 
-    test('throws when no app config files found', async () => {
+    test('throws a structured configuration abort when no app config files are found', async () => {
       await inTemporaryDirectory(async (dir) => {
-        await expect(Project.load(dir)).rejects.toThrow()
+        try {
+          await Project.load(dir)
+          expect.unreachable('Expected Project.load to throw')
+        } catch (error) {
+          if (!(error instanceof AppConfigurationAbortError)) throw error
+
+          expect(error.issues).toHaveLength(1)
+        }
       })
     })
 

@@ -1,5 +1,6 @@
 import {selectActiveConfig} from './active-config.js'
 import {Project} from './project.js'
+import {AppConfigurationAbortError} from '../app/error-parsing.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
@@ -155,34 +156,103 @@ describe('selectActiveConfig', () => {
     })
   })
 
-  test('throws when requested config does not exist', async () => {
+  test('throws a structured configuration abort when requested config does not exist', async () => {
     await inTemporaryDirectory(async (dir) => {
       await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "default"')
       const project = await Project.load(dir)
 
-      await expect(selectActiveConfig(project, 'nonexistent')).rejects.toThrow()
+      try {
+        await selectActiveConfig(project, 'nonexistent')
+        expect.unreachable('Expected selectActiveConfig to throw')
+      } catch (error) {
+        if (!(error instanceof AppConfigurationAbortError)) throw error
+
+        expect(error).toMatchObject({
+          issues: [
+            {
+              filePath: joinPath(dir, 'shopify.app.nonexistent.toml'),
+              path: [],
+              pathString: 'root',
+              message: `Couldn't find shopify.app.nonexistent.toml in ${dir}.`,
+            },
+          ],
+        })
+      }
     })
   })
 
-  test('throws when the only app config is malformed (no valid configs to fall back to)', async () => {
+  test('throws a structured configuration abort when the only app config is malformed', async () => {
     await inTemporaryDirectory(async (dir) => {
-      // The only config is broken TOML — Project.load skips it and finds 0 valid configs
       await writeFile(joinPath(dir, 'shopify.app.toml'), '{{invalid toml')
 
-      await expect(Project.load(dir)).rejects.toThrow(/Could not find/)
+      try {
+        await Project.load(dir)
+        expect.unreachable('Expected Project.load to throw')
+      } catch (error) {
+        if (!(error instanceof AppConfigurationAbortError)) throw error
+
+        expect(error).toMatchObject({
+          issues: [
+            {
+              filePath: joinPath(dir, 'shopify.app.toml'),
+              path: [],
+              pathString: 'root',
+            },
+          ],
+        })
+      }
     })
   })
 
   test('surfaces parse error when selecting a broken config while a valid one exists', async () => {
     await inTemporaryDirectory(async (dir) => {
-      // Two configs: one good, one broken. Selecting the broken one by name should
-      // surface the real parse error via the fallback re-read, not a generic "not found".
       await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "good"')
       await writeFile(joinPath(dir, 'shopify.app.broken.toml'), '{{invalid toml')
 
       const project = await Project.load(dir)
 
-      await expect(selectActiveConfig(project, 'shopify.app.broken.toml')).rejects.toThrow()
+      try {
+        await selectActiveConfig(project, 'shopify.app.broken.toml')
+        expect.unreachable('Expected selectActiveConfig to throw')
+      } catch (error) {
+        if (!(error instanceof AppConfigurationAbortError)) throw error
+
+        expect(error).toMatchObject({
+          issues: [
+            {
+              filePath: joinPath(dir, 'shopify.app.broken.toml'),
+              path: [],
+              pathString: 'root',
+            },
+          ],
+        })
+      }
+    })
+  })
+
+  test('surfaces parse error when the default config is malformed and a named config exists', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), '{{invalid toml')
+      await writeFile(joinPath(dir, 'shopify.app.staging.toml'), 'client_id = "staging"')
+
+      const project = await Project.load(dir)
+
+      try {
+        await selectActiveConfig(project)
+        expect.unreachable('Expected selectActiveConfig to throw')
+      } catch (error) {
+        if (!(error instanceof AppConfigurationAbortError)) throw error
+
+        expect(error).toMatchObject({
+          issues: [
+            {
+              filePath: joinPath(dir, 'shopify.app.toml'),
+              path: [],
+              pathString: 'root',
+            },
+          ],
+        })
+      }
     })
   })
 
