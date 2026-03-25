@@ -38,7 +38,7 @@ import {
 } from '../project/config-selection.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {TomlFile, TomlParseError} from '@shopify/cli-kit/node/toml/toml-file'
+import {TomlFile, TomlFileNotFoundError, TomlParseError} from '@shopify/cli-kit/node/toml/toml-file'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
@@ -76,28 +76,6 @@ export class ConfigurationError extends AbortError {
 }
 
 /**
- * Loads a configuration file, and returns its content as an unvalidated object.
- */
-export async function loadConfigurationFileContent(filepath: string): Promise<JsonMapType> {
-  if (!(await fileExists(filepath))) {
-    throw new ConfigurationError(
-      outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`,
-      filepath,
-    )
-  }
-
-  try {
-    const file = await TomlFile.read(filepath)
-    return file.content
-  } catch (err) {
-    if (err instanceof TomlParseError) {
-      throw new ConfigurationError(outputContent`${err.message}`, filepath)
-    }
-    throw err
-  }
-}
-
-/**
  * Loads a configuration file, validates it against a schema, and returns the parsed object.
  *
  * Throws `ConfigurationError` if the file is missing or invalid.
@@ -107,9 +85,25 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   filepath: string,
   preloadedContent?: JsonMapType,
 ): Promise<zod.TypeOf<TSchema>> {
-  const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath))
-
-  return parseConfigurationObject(schema, filepath, configurationObject)
+  let content = preloadedContent
+  if (!content) {
+    try {
+      const file = await TomlFile.read(filepath)
+      content = file.content
+    } catch (err) {
+      if (err instanceof TomlFileNotFoundError) {
+        throw new ConfigurationError(
+          outputContent`Couldn't find the configuration file at ${outputToken.path(filepath)}`,
+          filepath,
+        )
+      }
+      if (err instanceof TomlParseError) {
+        throw new ConfigurationError(outputContent`${err.message}`, filepath)
+      }
+      throw err
+    }
+  }
+  return parseConfigurationObject(schema, filepath, content)
 }
 
 /**
@@ -398,7 +392,8 @@ export async function loadOpaqueApp(options: {
     try {
       const project = await Project.load(options.directory)
       const {configurationPath} = await getConfigurationPath(project.directory, options.configName)
-      const rawConfig = await loadConfigurationFileContent(configurationPath)
+      const tomlFile = await TomlFile.read(configurationPath)
+      const rawConfig = tomlFile.content
 
       return {
         state: 'loaded-template',

@@ -1,4 +1,4 @@
-import {TomlFile, TomlParseError} from './toml-file.js'
+import {TomlFile, TomlFileNotFoundError, TomlParseError} from './toml-file.js'
 import {writeFile, readFile, inTemporaryDirectory} from '../fs.js'
 import {joinPath} from '../path.js'
 import {describe, expect, test} from 'vitest'
@@ -38,8 +38,8 @@ describe('TomlFile', () => {
       })
     })
 
-    test('throws if file does not exist', async () => {
-      await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow()
+    test('throws TomlFileNotFoundError if file does not exist', async () => {
+      await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow(TomlFileNotFoundError)
     })
   })
 
