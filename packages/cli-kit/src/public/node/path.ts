@@ -191,3 +191,32 @@ export function sniffForPath(argv = process.argv): string | undefined {
 export function sniffForJson(argv = process.argv): boolean {
   return argv.includes('--json') || argv.includes('-j')
 }
+
+/**
+ * Removes any `..` traversal segments from a relative path and calls `warn`
+ * if any were stripped. Normal `..` that cancel out within the path (e.g.
+ * `foo/../bar` → `bar`) are collapsed but never allowed to escape the root.
+ * Both `/` and `\` are treated as separators for cross-platform safety.
+ *
+ * @param input - The relative path to sanitize.
+ * @param warn - Called with a human-readable warning when traversal segments are removed.
+ * @returns The sanitized path (may be an empty string if all segments were traversal).
+ */
+export function sanitizeRelativePath(input: string, warn: (msg: string) => void): string {
+  const segments = input.replace(/\\/g, '/').split('/')
+  const stack: string[] = []
+  let stripped = false
+  for (const seg of segments) {
+    if (seg === '..') {
+      stripped = true
+      stack.pop()
+    } else if (seg !== '.') {
+      stack.push(seg)
+    }
+  }
+  const result = stack.join('/')
+  if (stripped) {
+    warn(`Warning: path '${input}' contains '..' traversal — sanitized to '${result || '.'}'\n`)
+  }
+  return result
+}

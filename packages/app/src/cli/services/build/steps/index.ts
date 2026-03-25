@@ -1,3 +1,10 @@
+import {executeIncludeAssetsStep} from './include-assets-step.js'
+import {executeBuildThemeStep} from './build-theme-step.js'
+import {executeBundleThemeStep} from './bundle-theme-step.js'
+import {executeBundleUIStep} from './bundle-ui-step.js'
+import {executeCopyStaticAssetsStep} from './copy-static-assets-step.js'
+import {executeBuildFunctionStep} from './build-function-step.js'
+import {executeCreateTaxStubStep} from './create-tax-stub-step.js'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
 /**
@@ -9,18 +16,28 @@ import type {LifecycleStep, BuildContext} from '../client-steps.js'
  * @returns The output from the step execution
  * @throws Error if the step type is not implemented or unknown
  */
-export async function executeStepByType(step: LifecycleStep, _context: BuildContext): Promise<unknown> {
+export async function executeStepByType(step: LifecycleStep, context: BuildContext): Promise<unknown> {
   switch (step.type) {
-    // Future step types (not implemented yet):
     case 'include_assets':
-    case 'build_theme':
-    case 'bundle_theme':
-    case 'bundle_ui':
-    case 'copy_static_assets':
-    case 'build_function':
-    case 'create_tax_stub':
-      throw new Error(`Build step type "${step.type}" is not yet implemented.`)
+      return executeIncludeAssetsStep(step, context)
 
+    case 'build_theme':
+      return executeBuildThemeStep(step, context)
+
+    case 'bundle_theme':
+      return executeBundleThemeStep(step, context)
+
+    case 'bundle_ui':
+      return executeBundleUIStep(step, context)
+
+    case 'copy_static_assets':
+      return executeCopyStaticAssetsStep(step, context)
+
+    case 'build_function':
+      return executeBuildFunctionStep(step, context)
+
+    case 'create_tax_stub':
+      return executeCreateTaxStubStep(step, context)
     default:
       throw new Error(`Unknown build step type: ${(step as {type: string}).type}`)
   }
