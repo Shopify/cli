@@ -1,0 +1,2 @@
+experiment	hypothesis	result	kept	notes
+1	O(n²) → O(n) for rejectGeneratedStaticAssets using Set lookup	All 561 tests pass, complexity reduced from O(n²) to O(n)	yes	Replaced Array.some() inside filter() with pre-computed Set for O(1) lookup
