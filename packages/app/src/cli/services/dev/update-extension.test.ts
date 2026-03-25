@@ -1,4 +1,4 @@
-import {reloadExtensionConfig, updateExtensionDraft} from './update-extension.js'
+import {updateExtensionDraft} from './update-extension.js'
 import {
   placeholderAppConfiguration,
   testFunctionExtension,
@@ -7,26 +7,16 @@ import {
   testThemeExtensions,
   testUIExtension,
 } from '../../models/app/app.test-data.js'
-import {parseConfigurationFile, parseConfigurationObjectAgainstSpecification} from '../../models/app/loader.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {ExtensionUpdateDraftMutationVariables} from '../../api/graphql/partners/generated/update-draft.js'
 import {inTemporaryDirectory, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 import {describe, expect, vi, test} from 'vitest'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 
 vi.mock('@shopify/cli-kit/node/crypto')
 vi.mock('@shopify/cli-kit/node/output')
-vi.mock('../../models/app/loader.js', async () => {
-  const actual: any = await vi.importActual('../../models/app/loader.js')
-  return {
-    ...actual,
-    parseConfigurationFile: vi.fn(),
-    parseConfigurationObjectAgainstSpecification: vi.fn(),
-  }
-})
 
 const apiKey = 'mock-api-key'
 const registrationId = 'mock-registration-id'
@@ -452,66 +442,6 @@ describe('updateExtensionDraft()', () => {
       })
 
       expect(stderr.write).toHaveBeenCalledWith('Error updating extension draft for test-ui-extension: Unknown error')
-    })
-  })
-})
-
-describe('reloadExtensionConfig()', () => {
-  const runningOnWindows = platformAndArch().platform === 'windows'
-
-  test.skipIf(runningOnWindows)('reloads extension config', async () => {
-    // Given
-    await inTemporaryDirectory(async (tmpDir) => {
-      const configurationToml = `name = "test"
-type = "web_pixel_extension"
-runtime_context = "strict"
-[settings]
-type = "object"
-another = "setting"
-`
-
-      const parsedConfig = {
-        type: 'web_pixel_extension',
-        runtime_context: 'strict',
-        settings: {
-          type: 'object',
-          another: 'setting',
-        },
-      }
-
-      const configPath = joinPath(tmpDir, 'shopify.ui.extension.toml')
-      await writeFile(configPath, configurationToml)
-
-      const configuration = {
-        runtime_context: 'strict',
-        settings: {type: 'object'},
-        type: 'web_pixel_extension',
-        handle,
-      } as any
-
-      const mockExtension = await testUIExtension({
-        devUUID: '1',
-        configuration,
-        directory: tmpDir,
-      })
-
-      await mkdir(joinPath(tmpDir, 'dist'))
-
-      vi.mocked(parseConfigurationFile).mockResolvedValue({
-        type: 'web_pixel_extension',
-      } as any)
-
-      vi.mocked(parseConfigurationObjectAgainstSpecification).mockResolvedValue(parsedConfig)
-
-      await writeFile(mockExtension.outputPath, 'test content')
-
-      // When
-      const result = await reloadExtensionConfig({extension: mockExtension, stdout})
-
-      // Then
-      expect(mockExtension.configuration).toEqual(parsedConfig)
-      expect(result.newConfig).toEqual(parsedConfig)
-      expect(result.previousConfig).toEqual(configuration)
     })
   })
 })
