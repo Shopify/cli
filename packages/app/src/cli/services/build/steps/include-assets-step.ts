@@ -10,7 +10,6 @@ import type {LifecycleStep, BuildContext} from '../client-steps.js'
  *
  * Selects files from a source directory using glob patterns. `source` defaults
  * to the extension root when omitted. `include` defaults to `['**\/*']`.
- * `preserveStructure` defaults to `true` (relative paths preserved).
  */
 const PatternEntrySchema = z.object({
   type: z.literal('pattern'),
@@ -18,23 +17,17 @@ const PatternEntrySchema = z.object({
   include: z.array(z.string()).default(['**/*']),
   ignore: z.array(z.string()).optional(),
   destination: z.string().optional(),
-  preserveStructure: z.boolean().default(true),
 })
 
 /**
  * Static inclusion entry — explicit source path.
  *
- * - With `destination`: copies the file/directory to that exact path.
- * - Without `destination`, `preserveStructure` false (default): merges
- *   directory contents into the output root.
- * - Without `destination`, `preserveStructure` true: places the directory
- *   under its own name in the output.
+ * Copies source to destination. Without `destination`, copies directory under its own name in the output.
  */
 const StaticEntrySchema = z.object({
   type: z.literal('static'),
   source: z.string(),
   destination: z.string().optional(),
-  preserveStructure: z.boolean().default(true),
 })
 
 /**
@@ -42,14 +35,12 @@ const StaticEntrySchema = z.object({
  *
  * Resolves a path (or array of paths) from the extension configuration and
  * copies the directory contents into the output. Silently skipped when the
- * key is absent. Respects `preserveStructure` and `destination` the same way
- * as the static entry.
+ * key is absent.
  */
 const ConfigKeyEntrySchema = z.object({
   type: z.literal('configKey'),
   key: z.string(),
   destination: z.string().optional(),
-  preserveStructure: z.boolean().default(false),
 })
 
 const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, StaticEntrySchema, ConfigKeyEntrySchema])
@@ -99,7 +90,6 @@ export async function executeIncludeAssetsStep(
             outputDir: destinationDir,
             patterns: entry.include,
             ignore: entry.ignore ?? [],
-            preserveStructure: entry.preserveStructure,
           },
           options,
         )
@@ -112,7 +102,6 @@ export async function executeIncludeAssetsStep(
             baseDir: extension.directory,
             outputDir,
             context,
-            preserveStructure: entry.preserveStructure,
             destination: sanitizedDest,
           },
           options,
@@ -126,7 +115,6 @@ export async function executeIncludeAssetsStep(
             destination: sanitizedDest,
             baseDir: extension.directory,
             outputDir,
-            preserveStructure: entry.preserveStructure,
           },
           options,
         )

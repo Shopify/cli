@@ -17,7 +17,7 @@ describe('copyConfigKeyEntry', () => {
     mockStdout = {write: vi.fn()}
   })
 
-  test('merges directory contents into output root by default (preserveStructure false)', async () => {
+  test('merges directory contents into output root', async () => {
     // Given
     const context = makeContext({static_root: 'public'})
     vi.mocked(fs.fileExists).mockResolvedValue(true)
@@ -27,7 +27,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'static_root', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'static_root', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 
@@ -35,26 +35,6 @@ describe('copyConfigKeyEntry', () => {
     expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/public', '/out')
     expect(result).toBe(2)
     expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied contents of'))
-  })
-
-  test('places directory under its own name when preserveStructure is true', async () => {
-    // Given
-    const context = makeContext({theme_root: 'theme'})
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(true)
-    vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-    vi.mocked(fs.glob).mockResolvedValue(['style.css', 'layout.liquid'])
-
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'theme_root', baseDir: '/ext', outputDir: '/out', context, preserveStructure: true},
-      {stdout: mockStdout},
-    )
-
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/theme', '/out/theme')
-    expect(result).toBe(2)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Copied 'theme' to theme"))
   })
 
   test('copies a file source to outputDir/basename', async () => {
@@ -67,7 +47,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'schema_path', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'schema_path', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 
@@ -83,7 +63,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'static_root', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'static_root', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 
@@ -100,7 +80,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'assets_dir', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'assets_dir', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 
@@ -121,7 +101,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'roots', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'roots', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 
@@ -146,7 +126,6 @@ describe('copyConfigKeyEntry', () => {
         baseDir: '/ext',
         outputDir: '/out',
         context,
-        preserveStructure: false,
         destination: 'static/icons',
       },
       {stdout: mockStdout},
@@ -171,7 +150,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 
@@ -190,7 +169,7 @@ describe('copyConfigKeyEntry', () => {
 
     // When
     const result = await copyConfigKeyEntry(
-      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
+      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context},
       {stdout: mockStdout},
     )
 

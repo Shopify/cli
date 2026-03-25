@@ -23,14 +23,13 @@ describe('copySourceEntry', () => {
           destination: undefined,
           baseDir: '/ext',
           outputDir: '/out',
-          preserveStructure: false,
         },
         {stdout: mockStdout},
       ),
     ).rejects.toThrow('Source does not exist: /ext/missing/file.js')
   })
 
-  test('copies file to explicit destination path (preserveStructure ignored)', async () => {
+  test('copies file to explicit destination path', async () => {
     // Given
     vi.mocked(fs.fileExists).mockResolvedValue(true)
     vi.mocked(fs.isDirectory).mockResolvedValue(false)
@@ -44,7 +43,6 @@ describe('copySourceEntry', () => {
         destination: 'assets/icon.png',
         baseDir: '/ext',
         outputDir: '/out',
-        preserveStructure: false,
       },
       {stdout: mockStdout},
     )
@@ -55,7 +53,7 @@ describe('copySourceEntry', () => {
     expect(mockStdout.write).toHaveBeenCalledWith('Copied src/icon.png to assets/icon.png\n')
   })
 
-  test('copies directory under its own name when no destination and preserveStructure is true', async () => {
+  test('copies directory under its own name when no destination is given', async () => {
     // Given
     vi.mocked(fs.fileExists).mockResolvedValue(true)
     vi.mocked(fs.isDirectory).mockResolvedValue(true)
@@ -64,7 +62,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'dist', destination: undefined, baseDir: '/ext', outputDir: '/out', preserveStructure: true},
+      {source: 'dist', destination: undefined, baseDir: '/ext', outputDir: '/out'},
       {stdout: mockStdout},
     )
 
@@ -72,25 +70,6 @@ describe('copySourceEntry', () => {
     expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/dist', '/out/dist')
     expect(result).toBe(2)
     expect(mockStdout.write).toHaveBeenCalledWith('Copied dist to dist\n')
-  })
-
-  test('merges directory contents into output root when no destination and preserveStructure is false', async () => {
-    // Given
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(true)
-    vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-    vi.mocked(fs.glob).mockResolvedValue(['a.js', 'b.js', 'c.js'])
-
-    // When
-    const result = await copySourceEntry(
-      {source: 'build', destination: undefined, baseDir: '/ext', outputDir: '/out', preserveStructure: false},
-      {stdout: mockStdout},
-    )
-
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/build', '/out')
-    expect(result).toBe(3)
-    expect(mockStdout.write).toHaveBeenCalledWith('Copied contents of build to output root\n')
   })
 
   test('copies file to basename in outputDir when source is a file and no destination given', async () => {
@@ -102,7 +81,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'README.md', destination: undefined, baseDir: '/ext', outputDir: '/out', preserveStructure: true},
+      {source: 'README.md', destination: undefined, baseDir: '/ext', outputDir: '/out'},
       {stdout: mockStdout},
     )
 
@@ -112,7 +91,7 @@ describe('copySourceEntry', () => {
     expect(mockStdout.write).toHaveBeenCalledWith('Copied README.md to README.md\n')
   })
 
-  test('copies directory to explicit destination path, ignoring preserveStructure', async () => {
+  test('copies directory to explicit destination path', async () => {
     // Given
     vi.mocked(fs.fileExists).mockResolvedValue(true)
     vi.mocked(fs.isDirectory).mockResolvedValue(true)
@@ -121,7 +100,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'dist', destination: 'vendor/dist', baseDir: '/ext', outputDir: '/out', preserveStructure: false},
+      {source: 'dist', destination: 'vendor/dist', baseDir: '/ext', outputDir: '/out'},
       {stdout: mockStdout},
     )
 
@@ -141,7 +120,7 @@ describe('copySourceEntry', () => {
 
     // When
     const result = await copySourceEntry(
-      {source: 'theme', destination: undefined, baseDir: '/ext', outputDir: '/out', preserveStructure: false},
+      {source: 'theme', destination: undefined, baseDir: '/ext', outputDir: '/out'},
       {stdout: mockStdout},
     )
 
@@ -163,7 +142,6 @@ describe('copySourceEntry', () => {
         destination: 'assets/icons/icon.png',
         baseDir: '/ext',
         outputDir: '/out',
-        preserveStructure: false,
       },
       {stdout: mockStdout},
     )

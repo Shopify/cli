@@ -33,7 +33,7 @@ describe('executeIncludeAssetsStep', () => {
   })
 
   describe('static entries', () => {
-    test('copies directory contents to output root when no destination and preserveStructure is false', async () => {
+    test('copies directory under its own name when no destination is given', async () => {
       // Given
       vi.mocked(fs.fileExists).mockResolvedValue(true)
       vi.mocked(fs.isDirectory).mockResolvedValue(true)
@@ -45,32 +45,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Copy Dist',
         type: 'include_assets',
         config: {
-          inclusions: [{type: 'static', source: 'dist', preserveStructure: false}],
-        },
-      }
-
-      // When
-      const result = await executeIncludeAssetsStep(step, mockContext)
-
-      // Then
-      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output')
-      expect(result.filesCopied).toBe(2)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied contents of dist to output root'))
-    })
-
-    test('preserves directory name when preserveStructure is true', async () => {
-      // Given
-      vi.mocked(fs.fileExists).mockResolvedValue(true)
-      vi.mocked(fs.isDirectory).mockResolvedValue(true)
-      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'assets/logo.png'])
-
-      const step: LifecycleStep = {
-        id: 'copy-dist',
-        name: 'Copy Dist',
-        type: 'include_assets',
-        config: {
-          inclusions: [{type: 'static', source: 'dist', preserveStructure: true}],
+          inclusions: [{type: 'static', source: 'dist'}],
         },
       }
 
@@ -252,38 +227,6 @@ describe('executeIncludeAssetsStep', () => {
 
       // Then
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output')
-      expect(result.filesCopied).toBe(2)
-    })
-
-    test('preserves directory name for configKey when preserveStructure is true', async () => {
-      // Given
-      const contextWithConfig = {
-        ...mockContext,
-        extension: {
-          ...mockExtension,
-          configuration: {static_root: 'public'},
-        } as unknown as ExtensionInstance,
-      }
-
-      vi.mocked(fs.fileExists).mockResolvedValue(true)
-      vi.mocked(fs.isDirectory).mockResolvedValue(true)
-      vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-      vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
-
-      const step: LifecycleStep = {
-        id: 'copy-static',
-        name: 'Copy Static',
-        type: 'include_assets',
-        config: {
-          inclusions: [{type: 'configKey', key: 'static_root', preserveStructure: true}],
-        },
-      }
-
-      // When
-      const result = await executeIncludeAssetsStep(step, contextWithConfig)
-
-      // Then — directory is placed under its own name
-      expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/public', '/test/output/public')
       expect(result.filesCopied).toBe(2)
     })
 
@@ -571,28 +514,6 @@ describe('executeIncludeAssetsStep', () => {
       // Then
       expect(fs.glob).toHaveBeenCalledWith(expect.any(Array), expect.objectContaining({cwd: '/test/extension/public'}))
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/public/logo.png', '/test/output/static/logo.png')
-    })
-
-    test('flattens files when preserveStructure is false', async () => {
-      // Given
-      vi.mocked(fs.glob).mockResolvedValue(['/test/extension/src/components/Button.tsx'])
-      vi.mocked(fs.copyFile).mockResolvedValue()
-      vi.mocked(fs.mkdir).mockResolvedValue()
-
-      const step: LifecycleStep = {
-        id: 'copy-source',
-        name: 'Copy Source',
-        type: 'include_assets',
-        config: {
-          inclusions: [{type: 'pattern', baseDir: 'src', preserveStructure: false}],
-        },
-      }
-
-      // When
-      await executeIncludeAssetsStep(step, mockContext)
-
-      // Then — filename only, no subdirectory
-      expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/components/Button.tsx', '/test/output/Button.tsx')
     })
 
     test('returns zero and warns when no files match', async () => {
