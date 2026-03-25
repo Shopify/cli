@@ -1,6 +1,10 @@
 import {DevServerRenderContext} from './types.js'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
+const DEFAULT_HEADERS = {
+  'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
+}
+
 export function storefrontReplaceTemplatesParams(context: DevServerRenderContext): URLSearchParams {
   /**
    * Theme access proxy doesn't support FormData encoding.
@@ -23,9 +27,7 @@ export function storefrontReplaceTemplatesParams(context: DevServerRenderContext
 }
 
 export function defaultHeaders() {
-  return {
-    'User-Agent': `Shopify CLI; v=${CLI_KIT_VERSION}`,
-  }
+  return DEFAULT_HEADERS
 }
 
 export function cleanHeader(headers: Record<string, string>): Record<string, string> {
