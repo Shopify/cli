@@ -28,7 +28,9 @@ const MAX_THEME_ID_MISMATCH_REDIRECTS = 5
 
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
-    const [browserPathname = '/', browserSearch = ''] = event.path.split('?')
+    const questionMarkIndex = event.path.indexOf('?')
+    const browserPathname = questionMarkIndex === -1 ? event.path : event.path.substring(0, questionMarkIndex) || '/'
+    const browserSearch = questionMarkIndex === -1 ? '' : event.path.substring(questionMarkIndex + 1)
 
     if (isNavigationRequest(event)) {
       ctx.lastRequestedPath = event.path
@@ -164,7 +166,8 @@ function createErrorPageResponse(
  * Detects routes and params that indicate this request should be handled by SFR.
  */
 function isKnownRenderingRequest(event: H3Event) {
-  const searchParams = new URLSearchParams(event.path.split('?')[1])
+  const questionMarkIndex = event.path.indexOf('?')
+  const searchParams = new URLSearchParams(questionMarkIndex === -1 ? '' : event.path.substring(questionMarkIndex + 1))
   for (const key of KNOWN_RENDERING_PARAMS) {
     if (searchParams.has(key)) return true
   }
