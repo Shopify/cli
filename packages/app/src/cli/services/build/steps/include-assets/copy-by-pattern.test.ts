@@ -54,7 +54,6 @@ describe('copyByPattern', () => {
     expect(result).toBe(0)
     expect(fs.mkdir).not.toHaveBeenCalled()
     expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('no files matched'))
   })
 
   test('skips file and warns when resolved destination escapes the output directory', async () => {

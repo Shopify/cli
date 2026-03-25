@@ -535,7 +535,6 @@ describe('executeIncludeAssetsStep', () => {
 
       // Then
       expect(result.filesCopied).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('no files matched'))
     })
   })
 

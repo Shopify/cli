@@ -21,7 +21,6 @@ export async function copyByPattern(
   })
 
   if (files.length === 0) {
-    options.stdout.write(`Warning: no files matched, skipping\n`)
     return 0
   }
 
