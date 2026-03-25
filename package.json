@@ -13,6 +13,7 @@
     "create-app": "nx build create-app && node packages/create-app/bin/dev.js --package-manager npm",
     "deploy-experimental": "node bin/deploy-experimental.js",
     "graph": "nx graph",
+    "generate-schema-docs": "node bin/docs/generate-schema-docs.js",
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
     "graphql-codegen": "nx run-many --target=graphql-codegen --all",
     "knip": "knip",
@@ -189,7 +190,9 @@
       "packages/app": {
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "src/cli/services/docs/generate-schema-docs.ts",
+          "src/cli/services/docs/schema-to-docs.ts"
         ],
         "project": "**/*.{ts,tsx}!",
         "ignore": [

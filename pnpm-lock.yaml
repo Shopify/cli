@@ -248,6 +248,9 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
         version: 3.2.4(vitest@3.2.4(@types/node@22.19.11)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@22.19.11)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.2))
+      zod-to-json-schema:
+        specifier: ~3.24.1
+        version: 3.24.6(zod@3.24.4)
 
   packages/cli:
     dependencies:
@@ -8948,6 +8951,11 @@ packages:
   zip-stream@4.1.1:
     resolution: {integrity: sha512-9qv4rlDiopXg4E69k+vMHjNN63YFMe9sZMrdlvKnCjlCRWeCBswPPMPUfx+ipsAWq1LXHe70RcbaHdJJpS6hyQ==}
     engines: {node: '>= 10'}
+
+  zod-to-json-schema@3.24.6:
+    resolution: {integrity: sha512-h/z3PKvcTcTetyjl1fkj79MHNEjm+HpD6NXheWjzOekY7kV+lwDYnHw+ivHkijnCSMz1yJaWBD9vu/Fcmk+vEg==}
+    peerDependencies:
+      zod: ^3.24.1
 
   zod-validation-error@3.5.4:
     resolution: {integrity: sha512-+hEiRIiPobgyuFlEojnqjJnhFvg4r/i3cqgcm67eehZf/WBaK3g6cD02YU9mtdVxZjv8CzCA9n/Rhrs3yAAvAw==}
@@ -18950,6 +18958,10 @@ snapshots:
       archiver-utils: 3.0.4
       compress-commons: 4.1.2
       readable-stream: 3.6.2
+
+  zod-to-json-schema@3.24.6(zod@3.24.4):
+    dependencies:
+      zod: 3.24.4
 
   zod-validation-error@3.5.4(zod@3.24.4):
     dependencies:
