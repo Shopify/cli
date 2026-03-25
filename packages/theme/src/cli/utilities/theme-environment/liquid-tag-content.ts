@@ -1,4 +1,23 @@
 /**
+ * Pre-compiled RegExp patterns for Liquid tag extraction.
+ * Patterns are compiled once at module load for maximum throughput.
+ */
+const TAG_PATTERNS = {
+  javascript: {
+    open: /{%-?\s*javascript\s*-?%}/,
+    close: /{%-?\s*endjavascript\s*-?%}/,
+  },
+  stylesheet: {
+    open: /{%-?\s*stylesheet\s*-?%}/,
+    close: /{%-?\s*endstylesheet\s*-?%}/,
+  },
+  schema: {
+    open: /{%-?\s*schema\s*-?%}/,
+    close: /{%-?\s*endschema\s*-?%}/,
+  },
+} as const
+
+/**
  * Extracts the content of a given Liquid tag.
  *
  * This function is designed for high-throughput, runtime asset compilation in
@@ -28,18 +47,16 @@
  * @returns The tag content, or undefined if not found.
  */
 export function getLiquidTagContent(liquid: string, tag: 'javascript' | 'stylesheet' | 'schema'): string | undefined {
-  const openTagRE = new RegExp(`{%-?\\s*${tag}\\s*-?%}`)
-  const closeTagRE = new RegExp(`{%-?\\s*end${tag}\\s*-?%}`)
+  const patterns = TAG_PATTERNS[tag]
 
-  const openMatch = openTagRE.exec(liquid)
+  const openMatch = patterns.open.exec(liquid)
   if (!openMatch) {
     return
   }
 
   const startIndex = openMatch.index + openMatch[0].length
-  closeTagRE.lastIndex = startIndex
 
-  const closeMatch = closeTagRE.exec(liquid)
+  const closeMatch = patterns.close.exec(liquid)
   if (!closeMatch) {
     return
   }
