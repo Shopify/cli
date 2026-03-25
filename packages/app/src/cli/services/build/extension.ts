@@ -242,8 +242,9 @@ async function warnIfSchemaMismatch(extension: ExtensionInstance<FunctionConfigT
   let handle
   try {
     handle = await open(schemaPath, 'r')
-  } catch {
-    return
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return
+    throw error
   }
   try {
     // Read just enough bytes for the version comment line
