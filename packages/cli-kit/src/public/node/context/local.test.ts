@@ -2,6 +2,7 @@ import {
   ciPlatform,
   hasGit,
   isDevelopment,
+  isHostedAppsMode,
   isShopify,
   isUnitTest,
   analyticsDisabled,
@@ -42,6 +43,30 @@ describe('isDevelopment', () => {
 
     // Then
     expect(got).toBe(true)
+  })
+})
+
+describe('isHostedAppsMode', () => {
+  test('returns true when HOSTED_APPS is truthy', () => {
+    // Given
+    const env = {HOSTED_APPS: '1'}
+
+    // When
+    const got = isHostedAppsMode(env)
+
+    // Then
+    expect(got).toBe(true)
+  })
+
+  test('returns false when HOSTED_APPS is not set', () => {
+    // Given
+    const env = {}
+
+    // When
+    const got = isHostedAppsMode(env)
+
+    // Then
+    expect(got).toBe(false)
   })
 })
 
