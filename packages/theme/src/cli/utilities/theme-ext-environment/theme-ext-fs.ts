@@ -22,6 +22,11 @@ const THEME_EXT_DIRECTORY_PATTERNS = [
   'snippets/**/*.liquid',
 ]
 
+// Pre-computed unique directory names from THEME_EXT_DIRECTORY_PATTERNS
+const THEME_EXT_DIRECTORIES = [...new Set(
+  THEME_EXT_DIRECTORY_PATTERNS.map((pattern) => pattern.substring(0, pattern.indexOf('/')))
+)]
+
 export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileSystem {
   const files = new Map<string, ThemeAsset>()
   const unsyncedFileKeys = new Set<string>()
@@ -92,7 +97,7 @@ export function mountThemeExtensionFileSystem(root: string): ThemeExtensionFileS
   }
 
   const directoriesToWatch = new Set(
-    THEME_EXT_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+    THEME_EXT_DIRECTORIES.map((dir) => joinPath(root, dir)),
   )
 
   return {

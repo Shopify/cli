@@ -46,6 +46,11 @@ const THEME_DIRECTORY_PATTERNS = [
   'templates/customers/**/*.{liquid,json}',
 ]
 
+// Pre-computed unique directory names from THEME_DIRECTORY_PATTERNS
+const THEME_DIRECTORIES = [...new Set(
+  THEME_DIRECTORY_PATTERNS.map((pattern) => pattern.substring(0, pattern.indexOf('/')))
+)]
+
 const THEME_PARTITION_REGEX = {
   layoutLiquidRegex: /^layout\/.+\.liquid$/,
   sectionLiquidRegex: /^sections\/.+\.liquid$/,
@@ -261,7 +266,7 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
   }
 
   const directoriesToWatch = new Set(
-    THEME_DIRECTORY_PATTERNS.map((pattern) => joinPath(root, pattern.split('/').shift() ?? '')),
+    THEME_DIRECTORIES.map((dir) => joinPath(root, dir)),
   )
 
   if (options?.listing) {
