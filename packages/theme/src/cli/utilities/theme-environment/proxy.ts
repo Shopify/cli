@@ -104,11 +104,11 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
  */
 export function canProxyRequest(event: H3Event) {
   if (event.method !== 'GET') return true
-  if (event.path.match(CART_PATTERN)) return true
-  if (event.path.match(CHECKOUT_PATTERN)) return true
-  if (event.path.match(ACCOUNT_PATTERN)) return true
-  if (event.path.match(VANITY_CDN_PATTERN)) return true
-  if (event.path.match(EXTENSION_CDN_PATTERN)) return true
+  if (CART_PATTERN.test(event.path)) return true
+  if (CHECKOUT_PATTERN.test(event.path)) return true
+  if (ACCOUNT_PATTERN.test(event.path)) return true
+  if (VANITY_CDN_PATTERN.test(event.path)) return true
+  if (EXTENSION_CDN_PATTERN.test(event.path)) return true
 
   const qIdx = event.path.indexOf('?')
   const pathname = qIdx === -1 ? event.path : event.path.substring(0, qIdx)
