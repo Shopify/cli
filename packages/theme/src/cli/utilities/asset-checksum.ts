@@ -85,25 +85,23 @@ function md5(content: string | Buffer) {
  * as these are not needed for theme comparison.
  */
 export function rejectGeneratedStaticAssets(themeChecksums: Checksum[]) {
+  // Pre-compute Set of liquid asset keys for O(1) lookup
+  const liquidAssetKeys = new Set(
+    themeChecksums
+      .filter(({key}) => key.startsWith('assets/') && key.endsWith('.liquid'))
+      .map(({key}) => key),
+  )
+
   return themeChecksums.filter(({key}) => {
     const isStaticAsset = key.startsWith('assets/')
 
     if (isStaticAsset) {
-      return !hasLiquidSource(themeChecksums, key)
+      // O(1) lookup instead of O(n) scan
+      return !liquidAssetKeys.has(`${key}.liquid`)
     }
 
     return true
   })
-}
-
-/**
- * Checks if a given key has a corresponding liquid source in the provided checksums.
- * @param checksums - The array of checksums to search through.
- * @param key - The key to check for a liquid source.
- * @returns True if a liquid source exists for the given key, false otherwise.
- */
-function hasLiquidSource(checksums: Checksum[], key: string) {
-  return checksums.some((checksum) => checksum.key === `${key}.liquid`)
 }
 
 function isSettingsData(path: string) {
