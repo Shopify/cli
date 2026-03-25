@@ -14,7 +14,11 @@ interface Options {
 export async function launchCLI(options: Options): Promise<void> {
   const {errorHandler} = await import('./error-handler.js')
   const {isDevelopment} = await import('./context/local.js')
-  const {Config, run, flush, Errors, settings} = await import('@oclif/core')
+  type OclifCore = typeof import('@oclif/core')
+  const oclifModule = await import('@oclif/core')
+  // esbuild wraps CJS dynamic imports under .default when bundling as ESM with code splitting
+  const {Config, run, flush, Errors, settings}: OclifCore =
+    (oclifModule as OclifCore & {default?: OclifCore}).default ?? oclifModule
 
   if (isDevelopment()) {
     settings.debug = true
