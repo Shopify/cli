@@ -6,6 +6,8 @@ import {extname} from '@shopify/cli-kit/node/path'
 
 import type {DevServerContext} from './theme-environment/types.js'
 
+const IGNORED_PATH_PREFIXES = [EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX, '/checkouts', '/payments']
+const IGNORED_EXTENSIONS = new Set(['.js', '.css', '.json', '.map'])
 const CHARACTER_TRUNCATION_LIMIT = 80
 
 interface MinimalResponse {
@@ -39,15 +41,12 @@ export function logRequestLine(event: H3Event, response: MinimalResponse, ctx: D
 }
 
 export function shouldLog(event: H3Event) {
-  const ignoredPathPrefixes = [EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX, '/checkouts', '/payments']
-  const ignoredExtensions = ['.js', '.css', '.json', '.map']
-
-  if (ignoredPathPrefixes.some((prefix) => event.path.startsWith(prefix))) return false
+  if (IGNORED_PATH_PREFIXES.some((prefix) => event.path.startsWith(prefix))) return false
 
   const [pathname] = event.path.split('?') as [string]
   const extension = extname(pathname)
 
-  if (ignoredExtensions.includes(extension)) return false
+  if (IGNORED_EXTENSIONS.has(extension)) return false
 
   return true
 }
