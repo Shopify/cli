@@ -58,7 +58,19 @@ function isIgnoredEndpoint(path: string): boolean {
 }
 
 const SESSION_COOKIE_NAME = '_shopify_essential'
-const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=([^;]*)(;|$)`)
+const SESSION_COOKIE_PREFIX = `${SESSION_COOKIE_NAME}=`
+
+function findSessionCookieValue(cookies: string[]): string | undefined {
+  for (const cookie of cookies) {
+    const startIndex = cookie.indexOf(SESSION_COOKIE_PREFIX)
+    if (startIndex !== -1) {
+      const valueStart = startIndex + SESSION_COOKIE_PREFIX.length
+      const endIndex = cookie.indexOf(';', valueStart)
+      return endIndex === -1 ? cookie.substring(valueStart) : cookie.substring(valueStart, endIndex)
+    }
+  }
+  return undefined
+}
 
 // Cache for store-specific regex patterns (keyed by storeFqdn)
 interface StorePatternCache {
@@ -308,7 +320,7 @@ function patchProxiedResponseHeaders(ctx: DevServerContext, rawResponse: Respons
   if (setCookieHeader?.length) {
     response.headers.set('Set-Cookie', patchCookieDomains(setCookieHeader, ctx).join(','))
 
-    const latestShopifyEssential = setCookieHeader.join(',').match(SESSION_COOKIE_REGEXP)?.[1]
+    const latestShopifyEssential = findSessionCookieValue(setCookieHeader)
     if (latestShopifyEssential) {
       ctx.session.sessionCookies[SESSION_COOKIE_NAME] = latestShopifyEssential
     }
