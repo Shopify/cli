@@ -35,7 +35,10 @@ export function parseCookies(cookies: string) {
 }
 
 export function serializeCookies(cookies: Record<string, string>) {
-  return Object.entries(cookies)
-    .map(([key, value]) => `${key}=${value}`)
-    .join('; ')
+  let result = ''
+  for (const key in cookies) {
+    if (result) result += '; '
+    result += `${key}=${cookies[key]}`
+  }
+  return result
 }
