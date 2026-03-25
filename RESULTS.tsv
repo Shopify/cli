@@ -5,3 +5,4 @@ experiment	hypothesis	result	kept	notes
 4	Hoist matchGlob options to module level reduces object allocation per call	All 561 tests pass, matchOpts created once vs once-per-call	yes	Moved matchOpts object to MATCH_GLOB_OPTIONS constant at module level
 5	Convert TEXT_FILE_TYPES to Set for O(1) lookup in isTextFile	All 561 tests pass, mime type lookups now O(1) vs O(n)	yes	Changed TEXT_FILE_TYPES array to TEXT_FILE_TYPES_SET, used has() instead of includes()
 6	Hoist shouldLog arrays to module level and convert ignoredExtensions to Set	All 561 tests pass, arrays hoisted to module level, extension lookup now O(1)	yes	Moved ignoredPathPrefixes and ignoredExtensions to module-level constants, converted extensions to Set with has()
+7	Hoist EXTENSION_CDN_PREFIX RegExp to module level in proxy.ts	All 561 tests pass, RegExp compiled once at module init vs once-per-call	yes	Added EXTENSION_CDN_GLOBAL_PATTERN constant, used in proxyStorefrontRequest

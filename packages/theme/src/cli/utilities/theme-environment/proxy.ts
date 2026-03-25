@@ -20,6 +20,7 @@ const CHECKOUT_PATTERN = /^\/checkouts\/(?!internal\/)/
 const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
+const EXTENSION_CDN_GLOBAL_PATTERN = new RegExp(EXTENSION_CDN_PREFIX, 'g')
 
 const IGNORED_ENDPOINTS = [
   '/.well-known',
@@ -295,7 +296,7 @@ export function getProxyStorefrontHeaders(event: H3Event) {
 }
 
 export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): Promise<Response> {
-  const path = event.path.replace(new RegExp(EXTENSION_CDN_PREFIX, 'g'), '/')
+  const path = event.path.replace(EXTENSION_CDN_GLOBAL_PATTERN, '/')
   const host = event.path.startsWith(EXTENSION_CDN_PREFIX) ? 'cdn.shopify.com' : ctx.session.storeFqdn
   const url = new URL(path, `https://${host}`)
 
