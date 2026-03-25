@@ -50,6 +50,8 @@ export const fileDetailsCache = new Map<string, FileDetailsEntry>()
 const sectionNamesByFile = new Map<string, [string, string][]>()
 type SectionGroup = Record<string, {type: string}>
 
+const TEMPLATE_UPDATE_EXTENSIONS = new Set(['.liquid', '.json'])
+
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null, true)
   if (!maybeJson) return
@@ -67,7 +69,7 @@ function saveSectionsFromJson(fileKey: string, content: string) {
 }
 
 function needsTemplateUpdate(fileKey: string) {
-  return !fileKey.startsWith('assets/') && ['.liquid', '.json'].includes(extname(fileKey))
+  return !fileKey.startsWith('assets/') && TEMPLATE_UPDATE_EXTENSIONS.has(extname(fileKey))
 }
 
 /**
