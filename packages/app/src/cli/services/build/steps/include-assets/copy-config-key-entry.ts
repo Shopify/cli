@@ -50,12 +50,12 @@ export async function copyConfigKeyEntry(
         const destPath = joinPath(effectiveOutputDir, basename(fullPath))
         await mkdir(effectiveOutputDir)
         await copyFile(fullPath, destPath)
-        options.stdout.write(`Copied '${sourcePath}' to ${basename(fullPath)}\n`)
+        options.stdout.write(`Included '${sourcePath}'\n`)
         return 1
       }
       await copyDirectoryContents(fullPath, effectiveOutputDir)
       const copied = await glob(['**/*'], {cwd: effectiveOutputDir, absolute: false})
-      options.stdout.write(`Copied contents of '${sourcePath}' to output root\n`)
+      options.stdout.write(`Included '${sourcePath}'\n`)
       return copied.length
     }),
   )

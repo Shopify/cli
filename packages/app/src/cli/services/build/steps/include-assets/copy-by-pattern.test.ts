@@ -32,7 +32,7 @@ describe('copyByPattern', () => {
     expect(fs.copyFile).toHaveBeenCalledWith('/src/components/Button.tsx', '/out/components/Button.tsx')
     expect(fs.copyFile).toHaveBeenCalledWith('/src/utils/helpers.ts', '/out/utils/helpers.ts')
     expect(result).toBe(2)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied 2 file(s)'))
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 2 file(s)'))
   })
 
   test('warns and returns 0 when no files match patterns', async () => {
@@ -54,7 +54,7 @@ describe('copyByPattern', () => {
     expect(result).toBe(0)
     expect(fs.mkdir).not.toHaveBeenCalled()
     expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('No files matched patterns'))
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('no files matched'))
   })
 
   test('skips file and warns when resolved destination escapes the output directory', async () => {
@@ -101,7 +101,7 @@ describe('copyByPattern', () => {
     // Then
     expect(fs.copyFile).not.toHaveBeenCalled()
     expect(result).toBe(0)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied 0 file(s)'))
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 0 file(s)'))
   })
 
   test('calls mkdir(outputDir) before copying when files are matched', async () => {

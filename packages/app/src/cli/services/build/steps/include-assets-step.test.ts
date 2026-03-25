@@ -55,7 +55,7 @@ describe('executeIncludeAssetsStep', () => {
       // Then — directory is placed under its own name, not merged into output root
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output/dist')
       expect(result.filesCopied).toBe(2)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied dist to dist'))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included dist'))
     })
 
     test('throws when source directory does not exist', async () => {
@@ -96,7 +96,7 @@ describe('executeIncludeAssetsStep', () => {
       // Then
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/src/icon.png', '/test/output/assets/icon.png')
       expect(result.filesCopied).toBe(1)
-      expect(mockStdout.write).toHaveBeenCalledWith('Copied src/icon.png to assets/icon.png\n')
+      expect(mockStdout.write).toHaveBeenCalledWith('Included src/icon.png\n')
     })
 
     test('throws when source file does not exist (with destination)', async () => {
@@ -168,7 +168,7 @@ describe('executeIncludeAssetsStep', () => {
       // Then
       expect(fs.copyFile).toHaveBeenCalledWith('/test/extension/README.md', '/test/output/README.md')
       expect(result.filesCopied).toBe(1)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied README.md to README.md'))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included README.md'))
     })
 
     test('copies a directory to explicit destination path', async () => {
@@ -193,7 +193,7 @@ describe('executeIncludeAssetsStep', () => {
       // Then
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output/assets/dist')
       expect(result.filesCopied).toBe(2)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied dist to assets/dist'))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included dist'))
     })
   })
 
@@ -535,7 +535,7 @@ describe('executeIncludeAssetsStep', () => {
 
       // Then
       expect(result.filesCopied).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('No files matched patterns'))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('no files matched'))
     })
   })
 

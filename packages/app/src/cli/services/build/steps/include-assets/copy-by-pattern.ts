@@ -21,7 +21,7 @@ export async function copyByPattern(
   })
 
   if (files.length === 0) {
-    options.stdout.write(`Warning: No files matched patterns in ${sourceDir}\n`)
+    options.stdout.write(`Warning: no files matched, skipping\n`)
     return 0
   }
 
@@ -48,6 +48,6 @@ export async function copyByPattern(
   )
 
   const copiedCount = copyResults.reduce((sum, count) => sum + count, 0)
-  options.stdout.write(`Copied ${copiedCount} file(s) from ${sourceDir} to ${outputDir}\n`)
+  options.stdout.write(`Included ${copiedCount} file(s)\n`)
   return copiedCount
 }

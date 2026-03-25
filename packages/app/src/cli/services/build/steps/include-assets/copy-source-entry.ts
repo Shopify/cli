@@ -29,10 +29,10 @@ export async function copySourceEntry(
   let logMsg: string
   if (destination !== undefined) {
     destPath = joinPath(outputDir, destination)
-    logMsg = `Copied ${source} to ${destination}\n`
+    logMsg = `Included ${source}\n`
   } else {
     destPath = joinPath(outputDir, basename(sourcePath))
-    logMsg = `Copied ${source} to ${basename(sourcePath)}\n`
+    logMsg = `Included ${source}\n`
   }
 
   if (sourceIsDir) {

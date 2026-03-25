@@ -50,7 +50,7 @@ describe('copySourceEntry', () => {
     // Then
     expect(fs.copyFile).toHaveBeenCalledWith('/ext/src/icon.png', '/out/assets/icon.png')
     expect(result).toBe(1)
-    expect(mockStdout.write).toHaveBeenCalledWith('Copied src/icon.png to assets/icon.png\n')
+    expect(mockStdout.write).toHaveBeenCalledWith('Included src/icon.png\n')
   })
 
   test('copies directory under its own name when no destination is given', async () => {
@@ -69,7 +69,7 @@ describe('copySourceEntry', () => {
     // Then
     expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/dist', '/out/dist')
     expect(result).toBe(2)
-    expect(mockStdout.write).toHaveBeenCalledWith('Copied dist to dist\n')
+    expect(mockStdout.write).toHaveBeenCalledWith('Included dist\n')
   })
 
   test('copies file to basename in outputDir when source is a file and no destination given', async () => {
@@ -88,7 +88,7 @@ describe('copySourceEntry', () => {
     // Then
     expect(fs.copyFile).toHaveBeenCalledWith('/ext/README.md', '/out/README.md')
     expect(result).toBe(1)
-    expect(mockStdout.write).toHaveBeenCalledWith('Copied README.md to README.md\n')
+    expect(mockStdout.write).toHaveBeenCalledWith('Included README.md\n')
   })
 
   test('copies directory to explicit destination path', async () => {
@@ -107,7 +107,7 @@ describe('copySourceEntry', () => {
     // Then
     expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/dist', '/out/vendor/dist')
     expect(result).toBe(1)
-    expect(mockStdout.write).toHaveBeenCalledWith('Copied dist to vendor/dist\n')
+    expect(mockStdout.write).toHaveBeenCalledWith('Included dist\n')
   })
 
   test('returns count of files discovered in destination directory after directory copy', async () => {

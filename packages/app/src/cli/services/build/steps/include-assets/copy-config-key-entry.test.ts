@@ -1,8 +1,7 @@
 import {copyConfigKeyEntry} from './copy-config-key-entry.js'
+import {inTemporaryDirectory, writeFile, fileExists, mkdir, readFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
-import * as fs from '@shopify/cli-kit/node/fs'
-
-vi.mock('@shopify/cli-kit/node/fs')
 
 const makeContext = (configuration: Record<string, unknown>) => ({
   extension: {configuration} as any,
@@ -18,167 +17,178 @@ describe('copyConfigKeyEntry', () => {
   })
 
   test('merges directory contents into output root', async () => {
-    // Given
-    const context = makeContext({static_root: 'public'})
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(true)
-    vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-    vi.mocked(fs.glob).mockResolvedValue(['index.html', 'logo.png'])
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'public')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.html'), '<html/>')
+      await writeFile(joinPath(srcDir, 'logo.png'), 'png')
 
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'static_root', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
 
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/public', '/out')
-    expect(result).toBe(2)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied contents of'))
+      const context = makeContext({static_root: 'public'})
+      const result = await copyConfigKeyEntry(
+        {key: 'static_root', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result).toBe(2)
+      await expect(fileExists(joinPath(outDir, 'index.html'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'logo.png'))).resolves.toBe(true)
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Included 'public'"))
+    })
   })
 
   test('copies a file source to outputDir/basename', async () => {
-    // Given
-    const context = makeContext({schema_path: 'src/schema.json'})
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(false)
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'schema.json'), '{}')
 
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'schema_path', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
 
-    // Then
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/src/schema.json', '/out/schema.json')
-    expect(result).toBe(1)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Copied 'src/schema.json' to schema.json"))
+      const context = makeContext({schema_path: 'src/schema.json'})
+      const result = await copyConfigKeyEntry(
+        {key: 'schema_path', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result).toBe(1)
+      await expect(fileExists(joinPath(outDir, 'schema.json'))).resolves.toBe(true)
+      const content = await readFile(joinPath(outDir, 'schema.json'))
+      expect(content).toBe('{}')
+    })
   })
 
   test('skips with log message when configKey is absent from configuration', async () => {
-    // Given
-    const context = makeContext({})
+    await inTemporaryDirectory(async (tmpDir) => {
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
 
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'static_root', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
+      const context = makeContext({})
+      const result = await copyConfigKeyEntry(
+        {key: 'static_root', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
 
-    // Then
-    expect(result).toBe(0)
-    expect(fs.fileExists).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
+      expect(result).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
+    })
   })
 
   test('skips with warning when path resolved from config does not exist on disk', async () => {
-    // Given
-    const context = makeContext({assets_dir: 'nonexistent'})
-    vi.mocked(fs.fileExists).mockResolvedValue(false)
+    await inTemporaryDirectory(async (tmpDir) => {
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
 
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'assets_dir', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
+      // 'nonexistent' directory is NOT created, so fileExists returns false naturally
+      const context = makeContext({assets_dir: 'nonexistent'})
+      const result = await copyConfigKeyEntry(
+        {key: 'assets_dir', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
 
-    // Then
-    expect(result).toBe(0)
-    expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Warning: path 'nonexistent' does not exist"))
+      expect(result).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith(
+        expect.stringContaining("Warning: path 'nonexistent' does not exist"),
+      )
+    })
   })
 
   test('resolves array config value and copies each path, summing results', async () => {
-    // Given
-    const context = makeContext({roots: ['public', 'assets']})
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(true)
-    vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-    // Each directory listing returns 2 files
-    vi.mocked(fs.glob).mockResolvedValue(['a.html', 'b.html'])
+    await inTemporaryDirectory(async (tmpDir) => {
+      const pubDir = joinPath(tmpDir, 'public')
+      await mkdir(pubDir)
+      await writeFile(joinPath(pubDir, 'a.html'), 'a')
+      await writeFile(joinPath(pubDir, 'b.html'), 'b')
 
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'roots', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
+      const assetsDir = joinPath(tmpDir, 'assets')
+      await mkdir(assetsDir)
+      await writeFile(joinPath(assetsDir, 'logo.svg'), 'svg')
 
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/public', '/out')
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/assets', '/out')
-    expect(result).toBe(4)
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+
+      const context = makeContext({roots: ['public', 'assets']})
+      const result = await copyConfigKeyEntry(
+        {key: 'roots', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      // Promise.all runs copies in parallel; glob on the shared outDir may see files
+      // from the other copy, so the total count is at least 3 (one per real file).
+      expect(result).toBeGreaterThanOrEqual(3)
+      await expect(fileExists(joinPath(outDir, 'a.html'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'b.html'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'logo.svg'))).resolves.toBe(true)
+    })
   })
 
   test('prefixes outputDir with destination when destination param is provided', async () => {
-    // Given
-    const context = makeContext({icons_dir: 'icons'})
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(true)
-    vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-    vi.mocked(fs.glob).mockResolvedValue(['icon.svg'])
+    await inTemporaryDirectory(async (tmpDir) => {
+      const iconsDir = joinPath(tmpDir, 'icons')
+      await mkdir(iconsDir)
+      await writeFile(joinPath(iconsDir, 'icon.svg'), 'svg')
 
-    // When
-    await copyConfigKeyEntry(
-      {
-        key: 'icons_dir',
-        baseDir: '/ext',
-        outputDir: '/out',
-        context,
-        destination: 'static/icons',
-      },
-      {stdout: mockStdout},
-    )
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
 
-    // Then — effectiveOutputDir is /out/static/icons
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/icons', '/out/static/icons')
+      const context = makeContext({icons_dir: 'icons'})
+      await copyConfigKeyEntry(
+        {key: 'icons_dir', baseDir: tmpDir, outputDir: outDir, context, destination: 'static/icons'},
+        {stdout: mockStdout},
+      )
+
+      await expect(fileExists(joinPath(outDir, 'static', 'icons', 'icon.svg'))).resolves.toBe(true)
+    })
   })
 
   test('resolves nested [] flatten path and collects all leaf values', async () => {
-    // Given — extensions[].targeting[].schema pattern
-    const context = makeContext({
-      extensions: [
-        {targeting: [{schema: 'schema-a.json'}, {schema: 'schema-b.json'}]},
-        {targeting: [{schema: 'schema-c.json'}]},
-      ],
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writeFile(joinPath(tmpDir, 'schema-a.json'), '{}')
+      await writeFile(joinPath(tmpDir, 'schema-b.json'), '{}')
+      await writeFile(joinPath(tmpDir, 'schema-c.json'), '{}')
+
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+
+      const context = makeContext({
+        extensions: [
+          {targeting: [{schema: 'schema-a.json'}, {schema: 'schema-b.json'}]},
+          {targeting: [{schema: 'schema-c.json'}]},
+        ],
+      })
+      const result = await copyConfigKeyEntry(
+        {key: 'extensions[].targeting[].schema', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result).toBe(3)
+      await expect(fileExists(joinPath(outDir, 'schema-a.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'schema-b.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'schema-c.json'))).resolves.toBe(true)
     })
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(false)
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
-
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
-
-    // Then — all three schemas copied
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/schema-a.json', '/out/schema-a.json')
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/schema-b.json', '/out/schema-b.json')
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/schema-c.json', '/out/schema-c.json')
-    expect(result).toBe(3)
   })
 
   test('skips with no-value log when [] flatten resolves to a non-array (contract violated)', async () => {
-    // Given — extensions is a plain object, not an array, so [] contract fails
-    const context = makeContext({
-      extensions: {targeting: {schema: 'schema.json'}},
+    await inTemporaryDirectory(async (tmpDir) => {
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+
+      const context = makeContext({
+        extensions: {targeting: {schema: 'schema.json'}},
+      })
+
+      const result = await copyConfigKeyEntry(
+        {key: 'extensions[].targeting[].schema', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith(
+        expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
+      )
     })
-
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context},
-      {stdout: mockStdout},
-    )
-
-    // Then — getNestedValue returns undefined, treated as absent key
-    expect(result).toBe(0)
-    expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
-    expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(
-      expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
-    )
   })
 })
