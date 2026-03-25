@@ -1,13 +1,12 @@
-const COOKIE_PARSE_PATTERN = /(.*?)=(.*)$/
-
 export function parseCookies(cookies: string) {
   const cookiesRecord: Record<string, string> = {}
 
   cookies.split(';').forEach((cookie) => {
-    const parts = cookie.match(COOKIE_PARSE_PATTERN) ?? []
+    const eqIdx = cookie.indexOf('=')
+    if (eqIdx === -1) return
 
-    const key = parts[1]?.trim()
-    const value = parts[2]?.trim() ?? ''
+    const key = cookie.substring(0, eqIdx).trim()
+    const value = cookie.substring(eqIdx + 1).trim()
 
     if (key) {
       cookiesRecord[key] = value
