@@ -32,6 +32,41 @@ let themeIdMismatchRedirects = 0
 /** The maximum number of consecutive theme ID mismatch redirects before aborting */
 const MAX_THEME_ID_MISMATCH_REDIRECTS = 5
 
+/**
+ * Parses a query string into [key, value] tuples without URLSearchParams allocation.
+ * Uses indexOf iteration to avoid creating intermediate objects.
+ */
+function parseQueryString(queryString: string): [string, string][] {
+  if (!queryString) return []
+
+  const result: [string, string][] = []
+  let start = 0
+
+  while (start <= queryString.length) {
+    // Find the next & separator or end of string
+    let end = queryString.indexOf('&', start)
+    if (end === -1) end = queryString.length
+
+    // Extract this param segment
+    const segment = queryString.substring(start, end)
+    if (segment) {
+      const eqIdx = segment.indexOf('=')
+      if (eqIdx === -1) {
+        // No value, just key
+        result.push([decodeURIComponent(segment), ''])
+      } else {
+        const key = segment.substring(0, eqIdx)
+        const value = segment.substring(eqIdx + 1)
+        result.push([decodeURIComponent(key), decodeURIComponent(value)])
+      }
+    }
+
+    start = end + 1
+  }
+
+  return result
+}
+
 export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandler {
   return defineEventHandler((event) => {
     const questionMarkIndex = event.path.indexOf('?')
@@ -63,7 +98,7 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
     return render(ctx.session, {
       method: event.method,
       path: browserPathname,
-      query: [...new URLSearchParams(browserSearch)],
+      query: parseQueryString(browserSearch),
       themeId: String(theme.id),
       sectionId: '',
       headers: getProxyStorefrontHeaders(event),
