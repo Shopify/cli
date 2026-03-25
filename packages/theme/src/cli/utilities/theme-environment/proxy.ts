@@ -21,6 +21,8 @@ const ACCOUNT_PATTERN = /^\/account(\/login\/multipass(\/[^/]+)?|\/logout)?\/?$/
 const VANITY_CDN_PATTERN = new RegExp(`^${VANITY_CDN_PREFIX}`)
 const EXTENSION_CDN_PATTERN = new RegExp(`^${EXTENSION_CDN_PREFIX}`)
 const EXTENSION_CDN_GLOBAL_PATTERN = new RegExp(EXTENSION_CDN_PREFIX, 'g')
+const ASSET_CSS_JS_PATTERN = /\/assets\/[^/]+\.(css|js)$/
+const NUMERIC_QUERY_PATTERN = /\?\d+$/
 
 const IGNORED_ENDPOINTS = [
   '/.well-known',
@@ -314,7 +316,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
   // it will be rendered with a query string like `assets/file.css?1234`.
   // For some reason, after refreshing, this rendered URL keeps the wrong `?1234`
   // query string for a while. We replace it with a proper timestamp here to fix it.
-  if (/\/assets\/[^/]+\.(css|js)$/.test(url.pathname) && /\?\d+$/.test(url.search)) {
+  if (ASSET_CSS_JS_PATTERN.test(url.pathname) && NUMERIC_QUERY_PATTERN.test(url.search)) {
     url.search = `?v=${Date.now()}`
   }
 
