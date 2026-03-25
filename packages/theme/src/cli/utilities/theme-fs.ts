@@ -25,6 +25,13 @@ import type {
   ThemeFSEventPayload,
 } from '@shopify/cli-kit/node/themes/types'
 
+// Configure custom MIME types at module load time (once, not per-call)
+setMimeTypes({
+  liquid: 'application/liquid',
+  sass: 'text/x-sass',
+  scss: 'text/x-scss',
+})
+
 const FILE_EVENT_DEBOUNCE_TIME_IN_MS = 250
 
 const THEME_DIRECTORY_PATTERNS = [
@@ -50,6 +57,16 @@ const THEME_PARTITION_REGEX = {
   contextualizedJsonRegex: /\.context\.[^.]+\.json$/i,
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
+
+const TEXT_FILE_TYPES = [
+  'application/javascript',
+  'application/json',
+  'application/liquid',
+  'text/css',
+  'text/x-sass',
+  'text/x-scss',
+  'image/svg+xml',
+]
 
 export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
@@ -509,23 +526,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
 }
 
 export function isTextFile(path: string) {
-  setMimeTypes({
-    liquid: 'application/liquid',
-    sass: 'text/x-sass',
-    scss: 'text/x-scss',
-  })
-
-  const textFileTypes = [
-    'application/javascript',
-    'application/json',
-    'application/liquid',
-    'text/css',
-    'text/x-sass',
-    'text/x-scss',
-    'image/svg+xml',
-  ]
-
-  return textFileTypes.includes(lookupMimeType(path))
+  return TEXT_FILE_TYPES.includes(lookupMimeType(path))
 }
 
 export async function hasRequiredThemeDirectories(path: string) {
