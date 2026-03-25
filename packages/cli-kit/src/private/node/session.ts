@@ -19,7 +19,7 @@ import {outputContent, outputToken, outputDebug, outputCompleted} from '../../pu
 import {firstPartyDev, themeToken} from '../../public/node/context/local.js'
 import {AbortError} from '../../public/node/error.js'
 import {normalizeStoreFqdn, identityFqdn} from '../../public/node/context/fqdn.js'
-import {getIdentityTokenInformation, getCliToken} from '../../public/node/environment.js'
+import {getIdentityTokenInformation, getAppAutomationToken} from '../../public/node/environment.js'
 import {AdminSession, logout} from '../../public/node/session.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {isEmpty} from '../../public/common/object.js'
@@ -137,7 +137,7 @@ export async function getLastSeenUserIdAfterAuth(): Promise<string> {
   const currentSessionId = getCurrentSessionId()
   if (currentSessionId) return currentSessionId
 
-  const customToken = getCliToken() ?? themeToken()
+  const customToken = getAppAutomationToken() ?? themeToken()
   return customToken ? nonRandomUUID(customToken) : 'unknown'
 }
 
@@ -162,8 +162,8 @@ export async function getLastSeenAuthMethod(): Promise<AuthMethod> {
 
   if (getCurrentSessionId()) return 'device_auth'
 
-  const partnersToken = getCliToken()
-  if (partnersToken) return 'partners_token'
+  const appAutomationToken = getAppAutomationToken()
+  if (appAutomationToken) return 'partners_token'
 
   const themePassword = themeToken()
   if (themePassword) {
@@ -263,8 +263,7 @@ ${outputToken.json(applications)}
 
   const tokens = await tokensFor(applications, completeSession)
 
-  // Overwrite partners token if using a custom CLI Token
-  const envToken = getCliToken()
+  const envToken = getAppAutomationToken()
   if (envToken && applications.partnersApi) {
     tokens.partners = (await exchangeCustomPartnerToken(envToken)).accessToken
   }

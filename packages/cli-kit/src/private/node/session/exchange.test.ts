@@ -1,8 +1,8 @@
 import {
   exchangeAccessForApplicationTokens,
   exchangeCustomPartnerToken,
-  exchangeCliTokenForAppManagementAccessToken,
-  exchangeCliTokenForBusinessPlatformAccessToken,
+  exchangeAppAutomationTokenForAppManagementAccessToken,
+  exchangeAppAutomationTokenForBusinessPlatformAccessToken,
   InvalidGrantError,
   InvalidRequestError,
   refreshAccessToken,
@@ -245,13 +245,13 @@ const tokenExchangeMethods = [
     expectedErrorName: 'Partners',
   },
   {
-    tokenExchangeMethod: exchangeCliTokenForAppManagementAccessToken,
+    tokenExchangeMethod: exchangeAppAutomationTokenForAppManagementAccessToken,
     expectedScopes: ['https://api.shopify.com/auth/organization.apps.manage'],
     expectedApi: 'app-management',
     expectedErrorName: 'App Management',
   },
   {
-    tokenExchangeMethod: exchangeCliTokenForBusinessPlatformAccessToken,
+    tokenExchangeMethod: exchangeAppAutomationTokenForBusinessPlatformAccessToken,
     expectedScopes: ['https://api.shopify.com/auth/destinations.readonly'],
     expectedApi: 'business-platform',
     expectedErrorName: 'Business Platform',
@@ -261,7 +261,7 @@ const tokenExchangeMethods = [
 describe.each(tokenExchangeMethods)(
   'Token exchange: %s',
   ({tokenExchangeMethod, expectedScopes, expectedApi, expectedErrorName}) => {
-    const cliToken = 'customToken'
+    const automationToken = 'customToken'
     // Generated from `customToken` using `nonRandomUUID()`
     const userId = 'eab16ac4-0690-5fed-9d00-71bd202a3c2b37259a8f'
 
@@ -285,7 +285,7 @@ describe.each(tokenExchangeMethods)(
       })
 
       // When
-      const result = await tokenExchangeMethod(cliToken)
+      const result = await tokenExchangeMethod(automationToken)
 
       // Then
       expect(result).toEqual({accessToken: 'expected_access_token', userId})
@@ -304,7 +304,7 @@ describe.each(tokenExchangeMethods)(
       expect(params.get('client_id')).toBe('clientId')
       expect(params.get('audience')).toBe(expectedApi)
       expect(params.get('scope')).toBe(expectedScopes.join(' '))
-      expect(params.get('subject_token')).toBe(cliToken)
+      expect(params.get('subject_token')).toBe(automationToken)
     })
 
     test(`Executing ${tokenExchangeMethod.name} throws AbortError if an error is caught`, async () => {
@@ -314,7 +314,7 @@ describe.each(tokenExchangeMethods)(
       })
 
       try {
-        await tokenExchangeMethod(cliToken)
+        await tokenExchangeMethod(automationToken)
       } catch (error) {
         if (error instanceof Error) {
           expect(error).toBeInstanceOf(AbortError)
