@@ -7,6 +7,8 @@ import {AdminSession} from '@shopify/cli-kit/node/session'
 import {getThemeKitAccessDomain} from '@shopify/cli-kit/node/context/local'
 import {recordError} from '@shopify/cli-kit/node/analytics'
 
+const FILTER_KEYS_SET = new Set(['ACCEPT', 'CONTENT-TYPE', 'CONTENT-LENGTH'])
+
 export async function render(session: DevServerSession, context: DevServerRenderContext): Promise<Response> {
   const url = buildStorefrontUrl(session, context)
   const headers = await buildHeaders(session, context)
@@ -88,10 +90,9 @@ async function buildThemeAccessHeaders(session: DevServerSession, context: Pick<
   const cookies = await buildCookies(session, context)
   const storefrontToken = session.storefrontToken
   const filteredHeaders: Record<string, string> = {}
-  const filterKeys = ['ACCEPT', 'CONTENT-TYPE', 'CONTENT-LENGTH']
 
   for (const [key, value] of Object.entries(context.headers)) {
-    if (filterKeys.includes(key.toUpperCase())) {
+    if (FILTER_KEYS_SET.has(key.toUpperCase())) {
       filteredHeaders[key] = value
     }
   }
