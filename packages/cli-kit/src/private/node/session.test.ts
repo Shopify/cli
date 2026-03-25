@@ -24,7 +24,7 @@ import * as fqdnModule from '../../public/node/context/fqdn.js'
 import {themeToken} from '../../public/node/context/local.js'
 import {partnersRequest} from '../../public/node/api/partners.js'
 import {businessPlatformRequest} from '../../public/node/api/business-platform.js'
-import {getCliToken} from '../../public/node/environment.js'
+import {getAppAutomationToken} from '../../public/node/environment.js'
 import {nonRandomUUID} from '../../public/node/crypto.js'
 import {terminalSupportsPrompting} from '../../public/node/system.js'
 
@@ -319,7 +319,7 @@ describe('when existing session is valid', () => {
     // Given
     vi.mocked(validateSession).mockResolvedValueOnce('ok')
     vi.mocked(fetchSessions).mockResolvedValue(validSessions)
-    vi.mocked(getCliToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
     const expected = {...validTokens, partners: 'custom_partners_token'}
 
     // When
@@ -450,7 +450,7 @@ describe('getLastSeenUserIdAfterAuth', () => {
   test('returns UUID based on partners token if present in environment', async () => {
     // Given
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
-    vi.mocked(getCliToken).mockReturnValue('partners-token-456')
+    vi.mocked(getAppAutomationToken).mockReturnValue('partners-token-456')
 
     // When
     const userId = await getLastSeenUserIdAfterAuth()
@@ -540,7 +540,7 @@ describe('setLastSeenUserIdAfterAuth', () => {
 describe('getLastSeenAuthMethod', () => {
   beforeEach(() => {
     vi.mocked(getCurrentSessionId).mockReturnValue(undefined)
-    vi.mocked(getCliToken).mockReturnValue(undefined)
+    vi.mocked(getAppAutomationToken).mockReturnValue(undefined)
     vi.mocked(themeToken).mockReturnValue(undefined)
     setLastSeenAuthMethod('none')
   })
@@ -571,7 +571,7 @@ describe('getLastSeenAuthMethod', () => {
 
   test('returns partners_token if there is a partners token in the environment', async () => {
     // Given
-    vi.mocked(getCliToken).mockReturnValue('partners-token-456')
+    vi.mocked(getAppAutomationToken).mockReturnValue('partners-token-456')
 
     // When
     const method = await getLastSeenAuthMethod()

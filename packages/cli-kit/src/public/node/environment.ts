@@ -18,14 +18,14 @@ export function getEnvironmentVariables(): NodeJS.ProcessEnv {
 }
 
 /**
- * Returns the value of the SHOPIFY_CLI_TOKEN environment variable,
+ * Returns the value of the SHOPIFY_APP_AUTOMATION_TOKEN environment variable,
  * falling back to the deprecated SHOPIFY_CLI_PARTNERS_TOKEN.
  *
- * @returns The CLI token value, or undefined if neither env var is set.
+ * @returns The app automation token value, or undefined if neither env var is set.
  */
-export function getCliToken(): string | undefined {
+export function getAppAutomationToken(): string | undefined {
   const env = getEnvironmentVariables()
-  return env[environmentVariables.cliToken] ?? env[environmentVariables.partnersToken]
+  return env[environmentVariables.appAutomationToken] ?? env[environmentVariables.partnersToken]
 }
 
 /**

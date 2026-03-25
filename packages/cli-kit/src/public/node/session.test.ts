@@ -8,14 +8,14 @@ import {
   ensureAuthenticatedThemes,
 } from './session.js'
 
-import {getCliToken} from './environment.js'
+import {getAppAutomationToken} from './environment.js'
 import {shopifyFetch} from './http.js'
 import {ApplicationToken} from '../../private/node/session/schema.js'
 import {ensureAuthenticated, setLastSeenAuthMethod, setLastSeenUserIdAfterAuth} from '../../private/node/session.js'
 import {
   exchangeCustomPartnerToken,
-  exchangeCliTokenForAppManagementAccessToken,
-  exchangeCliTokenForBusinessPlatformAccessToken,
+  exchangeAppAutomationTokenForAppManagementAccessToken,
+  exchangeAppAutomationTokenForBusinessPlatformAccessToken,
 } from '../../private/node/session/exchange.js'
 
 import {vi, describe, expect, test} from 'vitest'
@@ -136,7 +136,7 @@ describe('ensureAuthenticatedPartners', () => {
       accessToken: partnersToken.accessToken,
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
-    vi.mocked(getCliToken).mockReturnValue('custom_cli_token')
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
 
     // When
     const got = await ensureAuthenticatedPartners([])
@@ -253,12 +253,12 @@ describe('ensureAuthenticatedAppManagementAndBusinessPlatform', () => {
 
   test('returns app managment and business platform tokens if CLI token envvar is defined', async () => {
     // Given
-    vi.mocked(getCliToken).mockReturnValue('custom_cli_token')
-    vi.mocked(exchangeCliTokenForAppManagementAccessToken).mockResolvedValueOnce({
+    vi.mocked(getAppAutomationToken).mockReturnValue('custom_cli_token')
+    vi.mocked(exchangeAppAutomationTokenForAppManagementAccessToken).mockResolvedValueOnce({
       accessToken: 'app-management-token',
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
-    vi.mocked(exchangeCliTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
+    vi.mocked(exchangeAppAutomationTokenForBusinessPlatformAccessToken).mockResolvedValueOnce({
       accessToken: 'business-platform-token',
       userId: '575e2102-cb13-7bea-4631-ce3469eac491cdcba07d',
     })
