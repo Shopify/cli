@@ -24,7 +24,9 @@ const EXTENSION_CDN_GLOBAL_PATTERN = new RegExp(EXTENSION_CDN_PREFIX, 'g')
 const ASSET_CSS_JS_PATTERN = /\/assets\/[^/]+\.(css|js)$/
 const NUMERIC_QUERY_PATTERN = /\?\d+$/
 
-const IGNORED_ENDPOINTS = [
+// Group ignored endpoints by first character after '/' for efficient prefix lookup
+const IGNORED_ENDPOINT_GROUPS = new Map<string, string[]>()
+const IGNORED_ENDPOINTS_LIST = [
   '/.well-known',
   '/shopify/monorail',
   '/mini-profiler-resources',
@@ -36,6 +38,24 @@ const IGNORED_ENDPOINTS = [
   // Cloudflare's turnstile challenge #6416
   '/cdn-cgi/challenge-platform',
 ]
+
+// Build the grouped Map at module init
+for (const endpoint of IGNORED_ENDPOINTS_LIST) {
+  const key = endpoint.charAt(1) // First char after '/'
+  const group = IGNORED_ENDPOINT_GROUPS.get(key)
+  if (group) {
+    group.push(endpoint)
+  } else {
+    IGNORED_ENDPOINT_GROUPS.set(key, [endpoint])
+  }
+}
+
+function isIgnoredEndpoint(path: string): boolean {
+  const key = path.charAt(1)
+  const group = IGNORED_ENDPOINT_GROUPS.get(key)
+  if (!group) return false
+  return group.some((endpoint) => path.startsWith(endpoint))
+}
 
 const SESSION_COOKIE_NAME = '_shopify_essential'
 const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=([^;]*)(;|$)`)
@@ -73,7 +93,7 @@ function getStorePatterns(ctx: DevServerContext): StorePatternCache {
  */
 export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
   return defineEventHandler(async (event) => {
-    if (IGNORED_ENDPOINTS.some((endpoint) => event.path.startsWith(endpoint))) {
+    if (isIgnoredEndpoint(event.path)) {
       // Mock successful status 204 response
       return null
     }
