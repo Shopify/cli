@@ -121,7 +121,7 @@ export function canProxyRequest(event: H3Event) {
 }
 
 function getStoreFqdnForRegEx(ctx: DevServerContext) {
-  return ctx.session.storeFqdn.replace(/\\/g, '\\\\').replace(/\./g, '\\.')
+  return ctx.session.storeFqdn.replace(/[\\.]/g, (char) => (char === '\\' ? '\\\\' : '\\.'))
 }
 
 /**
