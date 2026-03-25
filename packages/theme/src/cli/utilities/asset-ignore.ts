@@ -11,6 +11,7 @@ const MATCH_GLOB_OPTIONS = {
   noglobstar: true,
 } as const
 const warnedPatterns = new Set<string>()
+const NEWLINE_PATTERN = /(\r\n|\r|\n)/
 
 export function applyIgnoreFilters<T extends {key: string}>(
   files: T[],
@@ -75,7 +76,7 @@ export async function getPatternsFromShopifyIgnore(root: string) {
   const content = await readFile(shopifyIgnorePath, {encoding: 'utf8'})
 
   return content
-    .split(/(\r\n|\r|\n)/)
+    .split(NEWLINE_PATTERN)
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith('#'))
 }
