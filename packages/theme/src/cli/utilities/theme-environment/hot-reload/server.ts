@@ -53,7 +53,7 @@ type SectionGroup = Record<string, {type: string}>
 const TEMPLATE_UPDATE_EXTENSIONS = new Set(['.liquid', '.json'])
 
 // Constants for getUpdatedFileParts - hoisted from function body to avoid per-call allocation
-const VALID_FILE_PREFIXES = ['sections/', 'snippets/', 'blocks/']
+const VALID_FILE_DIRECTORIES = new Set(['sections', 'snippets', 'blocks'])
 const LIQUID_TAGS = ['stylesheet', 'javascript', 'schema'] as const
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g
 const LIQUID_COMMENT_PATTERN = /{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g
@@ -428,7 +428,9 @@ function isAsset(key: string) {
 }
 
 export function getUpdatedFileParts(file: ThemeAsset) {
-  const isValidFileType = VALID_FILE_PREFIXES.some((prefix) => file.key.startsWith(prefix)) && file.key.endsWith('.liquid')
+  const slashIdx = file.key.indexOf('/')
+  const directory = slashIdx === -1 ? '' : file.key.substring(0, slashIdx)
+  const isValidFileType = VALID_FILE_DIRECTORIES.has(directory) && file.key.endsWith('.liquid')
   if (!isValidFileType) return undefined
 
   const result = {
