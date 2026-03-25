@@ -52,6 +52,13 @@ type SectionGroup = Record<string, {type: string}>
 
 const TEMPLATE_UPDATE_EXTENSIONS = new Set(['.liquid', '.json'])
 
+// Constants for getUpdatedFileParts - hoisted from function body to avoid per-call allocation
+const VALID_FILE_PREFIXES = ['sections/', 'snippets/', 'blocks/']
+const LIQUID_TAGS = ['stylesheet', 'javascript', 'schema'] as const
+const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g
+const LIQUID_COMMENT_PATTERN = /{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g
+const LIQUID_DOC_PATTERN = /{%\s*doc\s*%}[\s\S]*?{%\s*enddoc\s*%}/g
+
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null, true)
   if (!maybeJson) return
@@ -421,8 +428,7 @@ function isAsset(key: string) {
 }
 
 export function getUpdatedFileParts(file: ThemeAsset) {
-  const validPrefixes = ['sections/', 'snippets/', 'blocks/']
-  const isValidFileType = validPrefixes.some((prefix) => file.key.startsWith(prefix)) && file.key.endsWith('.liquid')
+  const isValidFileType = VALID_FILE_PREFIXES.some((prefix) => file.key.startsWith(prefix)) && file.key.endsWith('.liquid')
   if (!isValidFileType) return undefined
 
   const result = {
@@ -447,8 +453,7 @@ export function getUpdatedFileParts(file: ThemeAsset) {
 
   if (!file.value) return result
 
-  const liquidTags = ['stylesheet', 'javascript', 'schema'] as const
-  type LiquidTag = (typeof liquidTags)[number]
+  type LiquidTag = (typeof LIQUID_TAGS)[number]
 
   const normalizeContent = (content: string) => content?.replace(/\s+/g, ' ').trim()
   let otherContent = file.value
@@ -461,16 +466,16 @@ export function getUpdatedFileParts(file: ThemeAsset) {
     cacheEntry[tagName] = content
   }
 
-  for (const tag of liquidTags) {
+  for (const tag of LIQUID_TAGS) {
     const match = getLiquidTagContent(file.value ?? '', tag)
     if (match) handleTagMatch(tag, match)
   }
 
   otherContent = normalizeContent(
     otherContent
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(/{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g, '')
-      .replace(/{%\s*doc\s*%}[\s\S]*?{%\s*enddoc\s*%}/g, ''),
+      .replace(HTML_COMMENT_PATTERN, '')
+      .replace(LIQUID_COMMENT_PATTERN, '')
+      .replace(LIQUID_DOC_PATTERN, ''),
   )
 
   cacheEntry.liquid = otherContent
