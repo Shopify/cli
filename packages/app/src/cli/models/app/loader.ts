@@ -54,14 +54,6 @@ import ignore from 'ignore'
 import type {ActiveConfig} from '../project/active-config.js'
 
 /**
- * The mode in which the app is loaded, this affects how errors are handled:
- * - strict: If there is any kind of error, the app won't be loaded.
- * - report: The app will be loaded as much as possible, errors will be reported afterwards.
- * - local: Errors for unknown extensions will be ignored. Other errors will prevent the app from loading.
- */
-export type AppLoaderMode = 'strict' | 'report' | 'local'
-
-/**
  * Narrow runtime state carried forward across app reloads.
  *
  * Replaces passing the entire previous AppInterface — only genuine runtime
@@ -74,21 +66,24 @@ interface ReloadState {
   previousDevURLs?: ApplicationURLs
 }
 
-type AbortOrReport = <T>(errorMessage: OutputMessage, fallback: T, configurationPath: string) => T
-
-const abort: AbortOrReport = (errorMessage) => {
-  throw new AbortError(errorMessage)
+export class ConfigurationError extends AbortError {
+  constructor(
+    message: OutputMessage,
+    public readonly configurationPath: string,
+  ) {
+    super(message)
+  }
 }
 
 /**
  * Loads a configuration file, and returns its content as an unvalidated object.
  */
-async function loadConfigurationFileContent(
-  filepath: string,
-  abortOrReport: AbortOrReport = abort,
-): Promise<JsonMapType> {
+export async function loadConfigurationFileContent(filepath: string): Promise<JsonMapType> {
   if (!(await fileExists(filepath))) {
-    return abortOrReport(outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`, {}, filepath)
+    throw new ConfigurationError(
+      outputContent`Couldn't find an app toml file at ${outputToken.path(filepath)}`,
+      filepath,
+    )
   }
 
   try {
@@ -96,7 +91,7 @@ async function loadConfigurationFileContent(
     return file.content
   } catch (err) {
     if (err instanceof TomlParseError) {
-      return abortOrReport(outputContent`${err.message}`, {}, filepath)
+      throw new ConfigurationError(outputContent`${err.message}`, filepath)
     }
     throw err
   }
@@ -105,41 +100,34 @@ async function loadConfigurationFileContent(
 /**
  * Loads a configuration file, validates it against a schema, and returns the parsed object.
  *
- * Calls `abortOrReport` if the file is invalid.
+ * Throws `ConfigurationError` if the file is missing or invalid.
  */
 export async function parseConfigurationFile<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
-  abortOrReport: AbortOrReport = abort,
   preloadedContent?: JsonMapType,
 ): Promise<zod.TypeOf<TSchema>> {
-  const fallbackOutput = {} as zod.TypeOf<TSchema>
+  const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath))
 
-  const configurationObject = preloadedContent ?? (await loadConfigurationFileContent(filepath, abortOrReport))
-
-  if (!configurationObject) return fallbackOutput
-
-  return parseConfigurationObject(schema, filepath, configurationObject, abortOrReport)
+  return parseConfigurationObject(schema, filepath, configurationObject)
 }
 
 /**
- * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
+ * Parses a configuration object using a schema, and returns the parsed object.
+ *
+ * Throws `ConfigurationError` if the object is invalid.
  */
 export function parseConfigurationObject<TSchema extends zod.ZodType>(
   schema: TSchema,
   filepath: string,
   configurationObject: unknown,
-  abortOrReport: AbortOrReport = abort,
 ): zod.TypeOf<TSchema> {
-  const fallbackOutput = {} as zod.TypeOf<TSchema>
-
   const parseResult = schema.safeParse(configurationObject)
   if (!parseResult.success) {
-    return abortOrReport(
+    throw new ConfigurationError(
       outputContent`\n${outputToken.errorText('Validation errors')} in ${outputToken.path(
         filepath,
       )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
-      fallbackOutput,
       filepath,
     )
   }
@@ -147,13 +135,14 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
 }
 
 /**
- * Parses a configuration object using a schema, and returns the parsed object, or calls `abortOrReport` if the object is invalid.
+ * Parses a configuration object using a specification's schema, and returns the parsed object.
+ *
+ * Throws `ConfigurationError` if the object is invalid.
  */
 export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
   spec: ExtensionSpecification,
   filepath: string,
   configurationObject: object,
-  abortOrReport: AbortOrReport,
 ): zod.TypeOf<TSchema> {
   const parsed = spec.parseConfigurationObject(configurationObject)
   switch (parsed.state) {
@@ -161,12 +150,10 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
       return parsed.data
     }
     case 'error': {
-      const fallbackOutput = {} as zod.TypeOf<TSchema>
-      return abortOrReport(
+      throw new ConfigurationError(
         outputContent`App configuration is not valid\nValidation errors in ${outputToken.path(
           filepath,
         )}:\n\n${parseHumanReadableError(parsed.errors)}`,
-        fallbackOutput,
         filepath,
       )
     }
@@ -199,7 +186,7 @@ interface AppLoaderConstructorArgs<
   TConfig extends CurrentAppConfiguration,
   TModuleSpec extends ExtensionSpecification,
 > {
-  mode?: AppLoaderMode
+  ignoreUnknownExtensions?: boolean
   loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
   // Pre-discovered project data — avoids re-scanning the filesystem for dependencies, package manager, etc.
   project: Project
@@ -219,7 +206,7 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const {project, activeConfig} = await getAppConfigurationContext(directory)
   const rawConfig = activeConfig.file.content
   const webFiles = webFilesForConfig(project, activeConfig.file)
-  const webs = await Promise.all(webFiles.map((wf) => loadSingleWeb(wf.path, abort, wf.content)))
+  const webs = await Promise.all(webFiles.map((wf) => loadSingleWeb(wf.path, wf.content)))
   const isLaunchable = webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
 
   const scopesArray = getAppScopesArray(rawConfig as CurrentAppConfiguration)
@@ -234,12 +221,8 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   }
 }
 
-async function loadSingleWeb(
-  webConfigPath: string,
-  abortOrReport: AbortOrReport = abort,
-  preloadedContent?: JsonMapType,
-): Promise<Web> {
-  const config = await parseConfigurationFile(WebConfigurationSchema, webConfigPath, abortOrReport, preloadedContent)
+async function loadSingleWeb(webConfigPath: string, preloadedContent?: JsonMapType): Promise<Web> {
+  const config = await parseConfigurationFile(WebConfigurationSchema, webConfigPath, preloadedContent)
   const roles = new Set('roles' in config ? config.roles : [])
   if ('type' in config) roles.add(config.type)
   const {type, ...processedWebConfiguration} = {...config, roles: Array.from(roles), type: undefined}
@@ -252,14 +235,14 @@ async function loadSingleWeb(
 
 /**
  * Load the local app from the given directory and using the provided extensions/functions specifications.
- * If the App contains extensions not supported by the current specs and mode is strict, it will throw an error.
+ * The loader always collects errors. Callers decide whether to throw based on app.errors.
  */
 export async function loadApp<TModuleSpec extends ExtensionSpecification = ExtensionSpecification>(options: {
   directory: string
   userProvidedConfigName: string | undefined
   specifications: TModuleSpec[]
   remoteFlags?: Flag[]
-  mode?: AppLoaderMode
+  ignoreUnknownExtensions?: boolean
 }): Promise<AppInterface<CurrentAppConfiguration, TModuleSpec>> {
   const {project, activeConfig} = await getAppConfigurationContext(options.directory, options.userProvidedConfigName)
   return loadAppFromContext({
@@ -267,7 +250,7 @@ export async function loadApp<TModuleSpec extends ExtensionSpecification = Exten
     activeConfig,
     specifications: options.specifications,
     remoteFlags: options.remoteFlags,
-    mode: options.mode,
+    ignoreUnknownExtensions: options.ignoreUnknownExtensions,
   })
 }
 
@@ -282,11 +265,19 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
   activeConfig: ActiveConfig
   specifications: TModuleSpec[]
   remoteFlags?: Flag[]
-  mode?: AppLoaderMode
+  ignoreUnknownExtensions?: boolean
   reloadState?: ReloadState
   clientIdOverride?: string
 }): Promise<AppInterface<CurrentAppConfiguration, TModuleSpec>> {
-  const {project, activeConfig, specifications, remoteFlags = [], mode, reloadState, clientIdOverride} = options
+  const {
+    project,
+    activeConfig,
+    specifications,
+    remoteFlags = [],
+    ignoreUnknownExtensions,
+    reloadState,
+    clientIdOverride,
+  } = options
 
   const rawConfig: JsonMapType = {...activeConfig.file.content}
   if (clientIdOverride) {
@@ -298,7 +289,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
   const configurationPath = activeConfig.file.path
   const configurationFileName = basename(configurationPath) as AppConfigurationFileName
 
-  const configuration = await parseConfigurationFile(configSchema, configurationPath, abort, rawConfig)
+  const configuration = await parseConfigurationFile(configSchema, configurationPath, rawConfig)
 
   const allClientIdsByConfigName = getAllLinkedConfigClientIds(project.appConfigFiles, {
     [configurationFileName]: configuration.client_id,
@@ -332,7 +323,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
   }
 
   const loader = new AppLoader<CurrentAppConfiguration, TModuleSpec>({
-    mode,
+    ignoreUnknownExtensions,
     loadedConfiguration,
     project,
     reloadState,
@@ -389,9 +380,9 @@ export async function loadOpaqueApp(options: {
   configName?: string
   specifications: ExtensionSpecification[]
   remoteFlags?: Flag[]
-  mode?: AppLoaderMode
 }): Promise<OpaqueAppLoadResult> {
-  // Try to load the app normally first
+  // Try to load the app normally first — the loader always collects validation errors,
+  // so only structural failures (TOML parse, missing files) will throw.
   try {
     const {project, activeConfig} = await getAppConfigurationContext(options.directory, options.configName)
     const app = await loadAppFromContext({
@@ -399,7 +390,6 @@ export async function loadOpaqueApp(options: {
       activeConfig,
       specifications: options.specifications,
       remoteFlags: options.remoteFlags,
-      mode: options.mode ?? 'report',
     })
     return {state: 'loaded-app', app, configuration: app.configuration, packageManager: project.packageManager}
     // eslint-disable-next-line no-catch-all/no-catch-all
@@ -446,7 +436,7 @@ export function getDotEnvFileName(configurationPath: string) {
 }
 
 class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends ExtensionSpecification> {
-  private readonly mode: AppLoaderMode
+  private readonly ignoreUnknownExtensions: boolean
   private readonly errors: AppErrors = new AppErrors()
   private readonly specifications: TModuleSpec[]
   private readonly remoteFlags: Flag[]
@@ -454,8 +444,13 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private readonly reloadState: ReloadState | undefined
   private readonly project: Project
 
-  constructor({mode, loadedConfiguration, reloadState, project}: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
-    this.mode = mode ?? 'strict'
+  constructor({
+    ignoreUnknownExtensions,
+    loadedConfiguration,
+    reloadState,
+    project,
+  }: AppLoaderConstructorArgs<TConfig, TModuleSpec>) {
+    this.ignoreUnknownExtensions = ignoreUnknownExtensions ?? false
     this.specifications = loadedConfiguration.specifications
     this.remoteFlags = loadedConfiguration.remoteFlags
     this.loadedConfiguration = loadedConfiguration
@@ -501,6 +496,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       webs,
       modules: extensions,
       dotenv,
+      errors: this.errors,
       specifications: this.specifications,
       configSchema,
       remoteFlags: this.remoteFlags,
@@ -511,8 +507,6 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     // Show CLI notifications that are targetted for when your app has specific extension types
     const extensionTypes = appClass.realExtensions.map((module) => module.type)
     await showNotificationsIfNeeded(extensionTypes)
-
-    if (!this.errors.isEmpty()) appClass.errors = this.errors
 
     await logMetadataForLoadedApp(appClass, this.project.usesWorkspaces, {
       usedCustomLayoutForWeb,
@@ -528,9 +522,20 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const activeConfig = this.activeConfigFile
     const webFiles = activeConfig ? webFilesForConfig(this.project, activeConfig) : this.project.webConfigFiles
     const webTomlPaths = webFiles.map((file) => file.path)
-    const webs = await Promise.all(
-      webFiles.map((webFile) => loadSingleWeb(webFile.path, this.abortOrReport.bind(this), webFile.content)),
+    const webResults = await Promise.all(
+      webFiles.map(async (webFile) => {
+        try {
+          return await loadSingleWeb(webFile.path, webFile.content)
+        } catch (err) {
+          if (err instanceof ConfigurationError) {
+            this.errors.addError(err.configurationPath, err.message)
+            return undefined
+          }
+          throw err
+        }
+      }),
     )
+    const webs = getArrayRejectingUndefined(webResults)
     this.validateWebs(webs)
 
     const allWebsUnderStandardDir = webTomlPaths.every((webPath) => {
@@ -549,10 +554,6 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     )
   }
 
-  private parseConfigurationFile<TSchema extends zod.ZodType>(schema: TSchema, filepath: string) {
-    return parseConfigurationFile(schema, filepath, this.abortOrReport.bind(this))
-  }
-
   private validateWebs(webs: Web[]): void {
     ;[WebType.Backend, WebType.Frontend].forEach((webType) => {
       const websOfType = webs.filter((web) => web.configuration.roles.includes(webType))
@@ -561,12 +562,11 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         const pathsList = conflictingPaths.map((path) => `  ${path}`).join('\n')
 
         const lastConflictingPath = conflictingPaths[conflictingPaths.length - 1]!
-        this.abortOrReport(
+        this.errors.addError(
+          lastConflictingPath,
           outputContent`You can only have one "web" configuration file with the ${outputToken.yellow(
             webType,
           )} role in your app.\n\nConflicting configurations found at:\n${pathsList}`,
-          undefined,
-          lastConflictingPath,
         )
       }
     })
@@ -578,56 +578,63 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
-    const specification = this.findSpecificationForType(type)
-    let entryPath
-    let usedKnownSpecification = false
+    try {
+      const specification = this.findSpecificationForType(type)
+      let entryPath
+      let usedKnownSpecification = false
 
-    if (specification) {
-      usedKnownSpecification = true
-    } else if (this.mode === 'local') {
-      return undefined
-    } else {
-      return this.abortOrReport(
-        outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
-        undefined,
+      if (specification) {
+        usedKnownSpecification = true
+      } else if (this.ignoreUnknownExtensions) {
+        return undefined
+      } else {
+        this.errors.addError(
+          configurationPath,
+          outputContent`Invalid extension type "${type}" in "${relativizePath(configurationPath)}"`,
+        )
+        return undefined
+      }
+
+      const configuration = parseConfigurationObjectAgainstSpecification(
+        specification,
         configurationPath,
+        configurationObject,
       )
-    }
 
-    const configuration = parseConfigurationObjectAgainstSpecification(
-      specification,
-      configurationPath,
-      configurationObject,
-      this.abortOrReport.bind(this),
-    )
-
-    if (usedKnownSpecification) {
-      entryPath = await this.findEntryPath(directory, specification)
-    }
-
-    const extensionInstance = new ExtensionInstance({
-      configuration,
-      configurationPath,
-      entryPath,
-      directory,
-      specification,
-    })
-
-    if (this.reloadState && configuration.handle) {
-      const previousDevUUID = this.reloadState.extensionDevUUIDs.get(configuration.handle)
-      if (previousDevUUID) {
-        // Keep the existing devUUID for consistency with the dev-console across reloads
-        extensionInstance.devUUID = previousDevUUID
+      if (usedKnownSpecification) {
+        entryPath = await this.findEntryPath(directory, specification)
       }
-    }
 
-    if (usedKnownSpecification) {
-      const validateResult = await extensionInstance.validate()
-      if (validateResult.isErr()) {
-        this.abortOrReport(outputContent`\n${validateResult.error}`, undefined, configurationPath)
+      const extensionInstance = new ExtensionInstance({
+        configuration,
+        configurationPath,
+        entryPath,
+        directory,
+        specification,
+      })
+
+      if (this.reloadState && configuration.handle) {
+        const previousDevUUID = this.reloadState.extensionDevUUIDs.get(configuration.handle)
+        if (previousDevUUID) {
+          // Keep the existing devUUID for consistency with the dev-console across reloads
+          extensionInstance.devUUID = previousDevUUID
+        }
       }
+
+      if (usedKnownSpecification) {
+        const validateResult = await extensionInstance.validate()
+        if (validateResult.isErr()) {
+          this.errors.addError(configurationPath, outputContent`\n${validateResult.error}`)
+        }
+      }
+      return extensionInstance
+    } catch (err) {
+      if (err instanceof ConfigurationError) {
+        this.errors.addError(err.configurationPath, err.message)
+        return undefined
+      }
+      throw err
     }
-    return extensionInstance
   }
 
   private async loadExtensions(appDirectory: string, appConfiguration: TConfig): Promise<ExtensionInstance[]> {
@@ -650,10 +657,9 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         const result = joinWithAnd(matchingExtensions.map((ext) => ext.name))
         const handle = outputToken.cyan(extension.handle)
 
-        this.abortOrReport(
-          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
-          undefined,
+        this.errors.addError(
           extension.configurationPath,
+          outputContent`Duplicated handle "${handle}" in extensions ${result}. Handle needs to be unique per extension.`,
         )
       } else if (extension.handle) {
         handles.add(extension.handle)
@@ -676,10 +682,9 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       const obj = extensionFile.content
       const parseResult = ExtensionsArraySchema.safeParse(obj)
       if (!parseResult.success) {
-        this.abortOrReport(
-          outputContent`Invalid extension configuration at ${relativePath(appDirectory, configurationPath)}`,
-          undefined,
+        this.errors.addError(
           configurationPath,
+          outputContent`Invalid extension configuration at ${relativePath(appDirectory, configurationPath)}`,
         )
         return []
       }
@@ -688,25 +693,28 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       if (extensions) {
         // If the extension is an array, it's a unified toml file.
         // Parse all extensions by merging each extension config with the global unified configuration.
-        const configuration = await parseConfigurationFile(
-          UnifiedSchema,
-          configurationPath,
-          this.abortOrReport.bind(this),
-          extensionFile.content,
-        )
+        let configuration
+        try {
+          configuration = await parseConfigurationFile(UnifiedSchema, configurationPath, extensionFile.content)
+        } catch (err) {
+          if (err instanceof ConfigurationError) {
+            this.errors.addError(err.configurationPath, err.message)
+            return []
+          }
+          throw err
+        }
         const extensionsInstancesPromises = configuration.extensions.map(async (extensionConfig) => {
           const mergedConfig = {...configuration, ...extensionConfig}
 
           // Remove `extensions` and `path`, they are injected automatically but not needed nor expected by the contract
           if (!mergedConfig.handle) {
             // Handle is required for unified config extensions.
-            this.abortOrReport(
+            this.errors.addError(
+              configurationPath,
               outputContent`Missing handle for extension "${mergedConfig.name}" at ${relativePath(
                 appDirectory,
                 configurationPath,
               )}`,
-              undefined,
-              configurationPath,
             )
             mergedConfig.handle = 'unknown-handle'
           }
@@ -717,13 +725,13 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         // Legacy toml file with a single extension.
         return this.createExtensionInstance(type, obj, configurationPath, directory)
       } else {
-        return this.abortOrReport(
+        this.errors.addError(
+          configurationPath,
           outputContent`Invalid extension type at "${outputToken.path(
             relativePath(appDirectory, configurationPath),
           )}". Please specify a type.`,
-          undefined,
-          configurationPath,
         )
+        return undefined
       }
     })
   }
@@ -732,12 +740,16 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const configPath = this.loadedConfiguration.configPath
     const specification = this.findSpecificationForType(WebhookSubscriptionSpecIdentifier)
     if (!specification) return []
-    const specConfiguration = parseConfigurationObject(
-      WebhooksSchema,
-      configPath,
-      appConfiguration,
-      this.abortOrReport.bind(this),
-    )
+    let specConfiguration
+    try {
+      specConfiguration = parseConfigurationObject(WebhooksSchema, configPath, appConfiguration)
+    } catch (err) {
+      if (err instanceof ConfigurationError) {
+        this.errors.addError(err.configurationPath, err.message)
+        return []
+      }
+      throw err
+    }
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const {api_version, subscriptions = []} = specConfiguration.webhooks
     // Find all unique subscriptions
@@ -766,12 +778,20 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         .filter((specification) => isAppConfigSpecification(specification))
         .filter((specification) => specification.identifier !== WebhookSubscriptionSpecIdentifier)
         .map(async (specification) => {
-          const specConfiguration = parseConfigurationObjectAgainstSpecification(
-            specification,
-            configPath,
-            appConfiguration,
-            this.abortOrReport.bind(this),
-          )
+          let specConfiguration
+          try {
+            specConfiguration = parseConfigurationObjectAgainstSpecification(
+              specification,
+              configPath,
+              appConfiguration,
+            )
+          } catch (err) {
+            if (err instanceof ConfigurationError) {
+              this.errors.addError(err.configurationPath, err.message)
+              return [null, [] as string[]] as const
+            }
+            throw err
+          }
 
           if (Object.keys(specConfiguration).length === 0) return [null, Object.keys(specConfiguration)] as const
 
@@ -800,11 +820,10 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         return !configKeysThatAreNeverModules.includes(key)
       })
 
-    if (unusedKeys.length > 0 && this.mode !== 'local') {
-      this.abortOrReport(
-        outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
-        undefined,
+    if (unusedKeys.length > 0 && !this.ignoreUnknownExtensions) {
+      this.errors.addError(
         configPath,
+        outputContent`Unsupported section(s) in app configuration: ${unusedKeys.sort().join(', ')}`,
       )
     }
     return extensionInstancesWithKeys
@@ -836,12 +855,11 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
         )
       ).find((sourcePath) => sourcePath !== undefined)
       if (!entryPath) {
-        this.abortOrReport(
+        this.errors.addError(
+          directory,
           outputContent`Couldn't find an index.{js,jsx,ts,tsx} file in the directories ${outputToken.path(
             directory,
           )} or ${outputToken.path(joinPath(directory, 'src'))}`,
-          undefined,
-          directory,
         )
       }
     } else if (specification.identifier === 'function') {
@@ -854,17 +872,6 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       ).find((sourcePath) => sourcePath !== undefined)
     }
     return entryPath
-  }
-
-  private abortOrReport<T>(errorMessage: OutputMessage, fallback: T, configurationPath: string): T {
-    switch (this.mode) {
-      case 'strict':
-      case 'local':
-        throw new AbortError(errorMessage)
-      case 'report':
-        this.errors.addError(configurationPath, errorMessage)
-        return fallback
-    }
   }
 
   private getDevApplicationURLs(currentConfiguration: TConfig, webs: Web[]): ApplicationURLs | undefined {

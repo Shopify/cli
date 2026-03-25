@@ -8,6 +8,7 @@ import {
   WebType,
   getAppVersionedSchema,
 } from './app.js'
+import {AppErrors} from './loader.js'
 import {ExtensionTemplate} from './template.js'
 import {
   Organization,
@@ -118,7 +119,7 @@ export function testApp(app: Partial<AppInterface> = {}): AppInterface {
     ],
     modules: app.allExtensions ?? [],
     dotenv: app.dotenv,
-    errors: app.errors,
+    errors: app.errors ?? new AppErrors(),
     specifications: app.specifications ?? [],
     configSchema: (app.configSchema ?? AppSchema) as any,
     remoteFlags: app.remoteFlags ?? [],

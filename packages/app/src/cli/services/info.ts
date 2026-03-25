@@ -216,7 +216,7 @@ class AppInfo {
       } else {
         sublevels.push([{subdued: `  📂 ${UNKNOWN_TEXT}`}, {filePath: relativePath(this.app.directory, web.directory)}])
       }
-      if (this.app.errors) {
+      if (!this.app.errors.isEmpty()) {
         const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
         if (error) errors.push(error)
       }
@@ -254,7 +254,7 @@ class AppInfo {
     if (config && 'metafields' in config && Array.isArray(config.metafields) && config.metafields.length > 0) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
-    const error = this.app.errors?.getError(extension.configurationPath)
+    const error = this.app.errors.getError(extension.configurationPath)
     if (error) {
       details.push([{error: '     error'}, {error: this.formattedError(error)}])
     }

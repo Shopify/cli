@@ -6,7 +6,7 @@ import {AbortSilentError} from '@shopify/cli-kit/node/error'
 export async function validateApp(app: AppLinkedInterface): Promise<void> {
   const errors = app.errors
 
-  if (!errors || errors.isEmpty()) {
+  if (errors.isEmpty()) {
     renderSuccess({headline: 'App configuration is valid.'})
     return
   }

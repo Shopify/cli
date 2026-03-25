@@ -163,7 +163,6 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
     const app = await loadApp({
       specifications: await loadLocalExtensionsSpecifications(),
       directory: options.directory,
-      mode: 'report',
       userProvidedConfigName: options.configName,
       remoteFlags: undefined,
     })
@@ -232,7 +231,6 @@ export async function loadLocalAppOptions(
     configName: options.configName,
     specifications,
     remoteFlags,
-    mode: 'report',
   })
 
   switch (result.state) {
