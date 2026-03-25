@@ -175,12 +175,20 @@ function createErrorPageResponse(
 
 /**
  * Detects routes and params that indicate this request should be handled by SFR.
+ * Uses indexOf instead of URLSearchParams to avoid allocation on every HTML request.
  */
 function isKnownRenderingRequest(event: H3Event) {
   const questionMarkIndex = event.path.indexOf('?')
-  const searchParams = new URLSearchParams(questionMarkIndex === -1 ? '' : event.path.substring(questionMarkIndex + 1))
-  for (const key of KNOWN_RENDERING_PARAMS) {
-    if (searchParams.has(key)) return true
+  if (questionMarkIndex === -1) return false
+
+  const queryString = event.path.substring(questionMarkIndex + 1)
+  for (const param of KNOWN_RENDERING_PARAMS) {
+    const paramWithEquals = param + '='
+    const idx = queryString.indexOf(paramWithEquals)
+    // Match if param is at start or preceded by &
+    if (idx === 0 || (idx > 0 && queryString.charCodeAt(idx - 1) === 38)) {
+      return true
+    }
   }
   return false
 }
