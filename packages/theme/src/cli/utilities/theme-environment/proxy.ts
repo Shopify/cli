@@ -143,9 +143,14 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
 
   // -- Only redirect usages of the main CDN for known local theme and theme extension assets to the local server:
   const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?#"'`>\s]+))/g
-  const filterAssets = (key: string) => key.startsWith('assets/')
-  const existingAssets = new Set([...ctx.localThemeFileSystem.files.keys()].filter(filterAssets))
-  const existingExtAssets = new Set([...ctx.localThemeExtensionFileSystem.files.keys()].filter(filterAssets))
+  const existingAssets = new Set<string>()
+  for (const key of ctx.localThemeFileSystem.files.keys()) {
+    if (key.startsWith('assets/')) existingAssets.add(key)
+  }
+  const existingExtAssets = new Set<string>()
+  for (const key of ctx.localThemeExtensionFileSystem.files.keys()) {
+    if (key.startsWith('assets/')) existingExtAssets.add(key)
+  }
 
   content = content.replace(mainCdnRE, (matchedUrl, pathname, matchedAsset) => {
     const isLocalAsset = matchedAsset && existingAssets.has(matchedAsset)
