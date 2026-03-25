@@ -44,7 +44,8 @@ export function logRequestLine(event: H3Event, response: MinimalResponse, ctx: D
 export function shouldLog(event: H3Event) {
   if (IGNORED_PATH_PREFIXES.some((prefix) => event.path.startsWith(prefix))) return false
 
-  const [pathname] = event.path.split('?') as [string]
+  const qIdx = event.path.indexOf('?')
+  const pathname = qIdx === -1 ? event.path : event.path.substring(0, qIdx)
   const extension = extname(pathname)
 
   if (IGNORED_EXTENSIONS.has(extension)) return false
