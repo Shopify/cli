@@ -6,6 +6,10 @@ import {renderWarning} from '@shopify/cli-kit/node/ui'
 
 const SHOPIFY_IGNORE = '.shopifyignore'
 const templatesRegex = /templates\/\*(\.(json|liquid))?$/
+const MATCH_GLOB_OPTIONS = {
+  matchBase: true,
+  noglobstar: true,
+} as const
 const warnedPatterns = new Set<string>()
 
 export function applyIgnoreFilters<T extends {key: string}>(
@@ -86,12 +90,7 @@ function filterRegexValues(regexList: string[]) {
 }
 
 function matchGlob(key: string, pattern: string) {
-  const matchOpts = {
-    matchBase: true,
-    noglobstar: true,
-  }
-
-  if (originalMatchGlob(key, pattern, matchOpts)) return true
+  if (originalMatchGlob(key, pattern, MATCH_GLOB_OPTIONS)) return true
 
   if (!pattern.includes('*') && pattern.endsWith('/') && !warnedPatterns.has(pattern)) {
     warnedPatterns.add(pattern)
@@ -105,7 +104,7 @@ function matchGlob(key: string, pattern: string) {
   // replace '/*.' with '/**/*.' to emulate Shopify CLI 2.x behavior, as it was
   // based on 'File.fnmatch'.
   if (shouldReplaceGlobPattern(pattern)) {
-    return originalMatchGlob(key, pattern.replace(templatesRegex, 'templates/**/*$1'), matchOpts)
+    return originalMatchGlob(key, pattern.replace(templatesRegex, 'templates/**/*$1'), MATCH_GLOB_OPTIONS)
   }
 
   return false
