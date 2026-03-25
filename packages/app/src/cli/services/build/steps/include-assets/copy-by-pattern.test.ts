@@ -33,61 +33,10 @@ describe('copyByPattern', () => {
     expect(fs.copyFile).toHaveBeenCalledWith('/src/utils/helpers.ts', '/out/utils/helpers.ts')
     expect(result.filesCopied).toBe(2)
     expect(result.outputPaths).toEqual(expect.arrayContaining(['components/Button.tsx', 'utils/helpers.ts']))
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied 2 file(s)'))
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 2 file(s)'))
   })
 
-  test('flattens files to basename when preserveStructure is false', async () => {
-    // Given
-    vi.mocked(fs.glob).mockResolvedValue(['/src/components/Button.tsx', '/src/utils/helper.ts'])
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
-
-    // When
-    const result = await copyByPattern(
-      {
-        sourceDir: '/src',
-        outputDir: '/out',
-        patterns: ['**/*'],
-        ignore: [],
-        preserveStructure: false,
-      },
-      {stdout: mockStdout},
-    )
-
-    // Then
-    expect(fs.copyFile).toHaveBeenCalledWith('/src/components/Button.tsx', '/out/Button.tsx')
-    expect(fs.copyFile).toHaveBeenCalledWith('/src/utils/helper.ts', '/out/helper.ts')
-    expect(result.filesCopied).toBe(2)
-    expect(result.outputPaths).toEqual(expect.arrayContaining(['Button.tsx', 'helper.ts']))
-  })
-
-  test('warns and lets last-in-array win when flattening produces basename collision', async () => {
-    // Given — two files with the same basename in different directories
-    vi.mocked(fs.glob).mockResolvedValue(['/src/a/index.js', '/src/b/index.js'])
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
-
-    // When
-    const result = await copyByPattern(
-      {
-        sourceDir: '/src',
-        outputDir: '/out',
-        patterns: ['**/index.js'],
-        ignore: [],
-        preserveStructure: false,
-      },
-      {stdout: mockStdout},
-    )
-
-    // Then — collision warning emitted, only the last one is copied
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('filename collision detected'))
-    expect(fs.copyFile).toHaveBeenCalledTimes(1)
-    expect(fs.copyFile).toHaveBeenCalledWith('/src/b/index.js', '/out/index.js')
-    expect(result.filesCopied).toBe(1)
-    expect(result.outputPaths).toEqual(['index.js'])
-  })
-
-  test('warns and returns 0 when no files match patterns', async () => {
+  test('returns 0 when no files match patterns', async () => {
     // Given
     vi.mocked(fs.glob).mockResolvedValue([])
 
@@ -155,7 +104,7 @@ describe('copyByPattern', () => {
     expect(fs.copyFile).not.toHaveBeenCalled()
     expect(result.filesCopied).toBe(0)
     expect(result.outputPaths).toEqual([])
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied 0 file(s)'))
+    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 0 file(s)'))
   })
 
   test('calls mkdir(outputDir) before copying when files are matched', async () => {

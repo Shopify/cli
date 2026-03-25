@@ -36,8 +36,7 @@ const StaticEntrySchema = z.object({
  *
  * Resolves a path (or array of paths) from the extension configuration and
  * copies the directory contents into the output. Silently skipped when the
- * key is absent. Respects `preserveStructure` and `destination` the same way
- * as the static entry.
+ * key is absent.
  *
  * `anchor` — the config key path whose array value provides the grouping
  * dimension. Each array item becomes one top-level manifest entry, keyed by
@@ -52,7 +51,6 @@ const ConfigKeyEntrySchema = z.object({
   type: z.literal('configKey'),
   key: z.string(),
   destination: z.string().optional(),
-  preserveStructure: z.boolean().default(false),
   anchor: z.string().optional(),
   groupBy: z.string().optional(),
 })
@@ -138,7 +136,6 @@ export async function executeIncludeAssetsStep(
         baseDir: extension.directory,
         outputDir,
         context,
-        preserveStructure: entry.preserveStructure,
         destination: sanitizedDest,
       },
       options,
@@ -164,7 +161,6 @@ export async function executeIncludeAssetsStep(
               outputDir: destinationDir,
               patterns: entry.include,
               ignore: entry.ignore ?? [],
-              preserveStructure: entry.preserveStructure,
             },
             options,
           )
@@ -182,7 +178,6 @@ export async function executeIncludeAssetsStep(
               destination: sanitizedDest,
               baseDir: extension.directory,
               outputDir,
-              preserveStructure: entry.preserveStructure,
             },
             options,
           )

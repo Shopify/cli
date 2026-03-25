@@ -13,7 +13,7 @@ export async function copyByPattern(
   },
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
-  const {sourceDir, outputDir, patterns, ignore, preserveStructure} = config
+  const {sourceDir, outputDir, patterns, ignore} = config
   const files = await glob(patterns, {
     absolute: true,
     cwd: sourceDir,
@@ -21,7 +21,6 @@ export async function copyByPattern(
   })
 
   if (files.length === 0) {
-    options.stdout.write(`Warning: No files matched patterns in ${sourceDir}\n`)
     return {filesCopied: 0, outputPaths: []}
   }
 
@@ -31,7 +30,7 @@ export async function copyByPattern(
 
   const copyResults = await Promise.all(
     filesToCopy.map(async (filepath): Promise<{count: number; path: string | null}> => {
-      const relPath = preserveStructure ? relativePath(sourceDir, filepath) : basename(filepath)
+      const relPath = relativePath(sourceDir, filepath)
       const destPath = joinPath(outputDir, relPath)
 
       if (relativePath(outputDir, destPath).startsWith('..')) {
@@ -49,6 +48,6 @@ export async function copyByPattern(
 
   const filesCopied = copyResults.reduce((sum, result) => sum + result.count, 0)
   const outputPaths = copyResults.flatMap((result) => (result.path !== null ? [result.path] : []))
-  options.stdout.write(`Copied ${filesCopied} file(s) from ${sourceDir} to ${outputDir}\n`)
+  options.stdout.write(`Included ${filesCopied} file(s)\n`)
   return {filesCopied, outputPaths}
 }

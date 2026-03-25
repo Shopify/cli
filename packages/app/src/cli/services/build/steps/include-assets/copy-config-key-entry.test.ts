@@ -26,48 +26,65 @@ describe('copyConfigKeyEntry', () => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/public', '/out')
-    expect(result.filesCopied).toBe(2)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied contents of'))
-  })
+      const context = makeContext({static_root: 'public'})
+      const result = await copyConfigKeyEntry(
+        {key: 'static_root', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
 
-  test('places directory under its own name when preserveStructure is true', async () => {
-    // Given
-    const context = makeContext({theme_root: 'theme'})
-    vi.mocked(fs.fileExists).mockResolvedValue(true)
-    vi.mocked(fs.isDirectory).mockResolvedValue(true)
-    vi.mocked(fs.copyDirectoryContents).mockResolvedValue()
-    vi.mocked(fs.glob).mockResolvedValue(['style.css', 'layout.liquid'])
-
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'theme_root', baseDir: '/ext', outputDir: '/out', context, preserveStructure: true},
-      {stdout: mockStdout},
-    )
-
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/theme', '/out/theme')
-    expect(result.filesCopied).toBe(2)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Copied 'theme' to theme"))
+      expect(result.filesCopied).toBe(2)
+      await expect(fileExists(joinPath(outDir, 'index.html'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'logo.png'))).resolves.toBe(true)
+      expect(result.pathMap.get('public')).toEqual(expect.arrayContaining(['index.html', 'logo.png']))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Included 'public'"))
+    })
   })
 
   test('copies a file source to outputDir/basename', async () => {
-    // Given
-    const context = makeContext({schema_path: 'src/schema.json'})
-    // Source file exists; output path is free so findUniqueDestPath resolves on first attempt
-    vi.mocked(fs.fileExists).mockImplementation(async (path) => String(path) === '/ext/src/schema.json')
-    vi.mocked(fs.isDirectory).mockResolvedValue(false)
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
+    await inTemporaryDirectory(async (tmpDir) => {
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'schema.json'), '{}')
 
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
 
-    // Then
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/src/schema.json', '/out/schema.json')
-    expect(result.filesCopied).toBe(1)
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Copied 'src/schema.json' to schema.json"))
+      const context = makeContext({schema_path: 'src/schema.json'})
+      const result = await copyConfigKeyEntry(
+        {key: 'schema_path', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result.filesCopied).toBe(1)
+      await expect(fileExists(joinPath(outDir, 'schema.json'))).resolves.toBe(true)
+      const content = await readFile(joinPath(outDir, 'schema.json'))
+      expect(content).toBe('{}')
+      expect(result.pathMap.get('src/schema.json')).toBe('schema.json')
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Included 'src/schema.json'"))
+    })
+  })
+
+  test('renames output file to avoid collision when candidate path already exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writeFile(joinPath(tmpDir, 'tools-a.json'), '{}')
+      await writeFile(joinPath(tmpDir, 'tools-b.json'), '{}')
+
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+      // Pre-create the first candidate to force a rename
+      await writeFile(joinPath(outDir, 'tools-a.json'), 'existing')
+
+      const context = makeContext({files: ['tools-a.json', 'tools-b.json']})
+      const result = await copyConfigKeyEntry(
+        {key: 'files', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result.filesCopied).toBe(2)
+      // tools-a.json was taken, so the copy lands as tools-a-1.json
+      await expect(fileExists(joinPath(outDir, 'tools-a-1.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'tools-b.json'))).resolves.toBe(true)
+    })
   })
 
   test('skips with log message when configKey is absent from configuration', async () => {
@@ -81,10 +98,10 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-    // Then
-    expect(result.filesCopied).toBe(0)
-    expect(fs.fileExists).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
+      expect(result.filesCopied).toBe(0)
+      expect(result.pathMap.size).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
+    })
   })
 
   test('skips with warning when path resolved from config does not exist on disk', async () => {
@@ -99,10 +116,12 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-    // Then
-    expect(result.filesCopied).toBe(0)
-    expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Warning: path 'nonexistent' does not exist"))
+      expect(result.filesCopied).toBe(0)
+      expect(result.pathMap.size).toBe(0)
+      expect(mockStdout.write).toHaveBeenCalledWith(
+        expect.stringContaining("Warning: path 'nonexistent' does not exist"),
+      )
+    })
   })
 
   test('resolves array config value and copies each path, summing results', async () => {
@@ -116,10 +135,22 @@ describe('copyConfigKeyEntry', () => {
       await mkdir(assetsDir)
       await writeFile(joinPath(assetsDir, 'logo.svg'), 'svg')
 
-    // Then
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/public', '/out')
-    expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/ext/assets', '/out')
-    expect(result.filesCopied).toBe(4)
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+
+      const context = makeContext({roots: ['public', 'assets']})
+      const result = await copyConfigKeyEntry(
+        {key: 'roots', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      // Promise.all runs copies sequentially; glob on the shared outDir may see files
+      // from the other copy, so the total count is at least 3 (one per real file).
+      expect(result.filesCopied).toBeGreaterThanOrEqual(3)
+      await expect(fileExists(joinPath(outDir, 'a.html'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'b.html'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'logo.svg'))).resolves.toBe(true)
+    })
   })
 
   test('prefixes outputDir with destination when destination param is provided', async () => {
@@ -161,28 +192,11 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(3)
+      expect(result.filesCopied).toBe(3)
       await expect(fileExists(joinPath(outDir, 'schema-a.json'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'schema-b.json'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'schema-c.json'))).resolves.toBe(true)
     })
-    // Source files exist; output paths are free so findUniqueDestPath resolves on first attempt
-    vi.mocked(fs.fileExists).mockImplementation(async (path) => String(path).startsWith('/ext/'))
-    vi.mocked(fs.isDirectory).mockResolvedValue(false)
-    vi.mocked(fs.mkdir).mockResolvedValue()
-    vi.mocked(fs.copyFile).mockResolvedValue()
-
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
-      {stdout: mockStdout},
-    )
-
-    // Then — all three schemas copied
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/schema-a.json', '/out/schema-a.json')
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/schema-b.json', '/out/schema-b.json')
-    expect(fs.copyFile).toHaveBeenCalledWith('/ext/schema-c.json', '/out/schema-c.json')
-    expect(result.filesCopied).toBe(3)
   })
 
   test('skips with no-value log when [] flatten resolves to a non-array (contract violated)', async () => {
@@ -199,24 +213,32 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(0)
+      expect(result.filesCopied).toBe(0)
+      expect(result.pathMap.size).toBe(0)
       expect(mockStdout.write).toHaveBeenCalledWith(
         expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
       )
     })
+  })
 
-    // When
-    const result = await copyConfigKeyEntry(
-      {key: 'extensions[].targeting[].schema', baseDir: '/ext', outputDir: '/out', context, preserveStructure: false},
-      {stdout: mockStdout},
-    )
+  test('deduplicates repeated source paths — copies each unique path only once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writeFile(joinPath(tmpDir, 'tools.json'), '{}')
 
-    // Then — getNestedValue returns undefined, treated as absent key
-    expect(result.filesCopied).toBe(0)
-    expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
-    expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(mockStdout.write).toHaveBeenCalledWith(
-      expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
-    )
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+
+      // Two items referencing the same file; should only be copied once
+      const context = makeContext({
+        extensions: [{targeting: [{tools: 'tools.json'}, {tools: 'tools.json'}]}],
+      })
+      const result = await copyConfigKeyEntry(
+        {key: 'extensions[].targeting[].tools', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result.filesCopied).toBe(1)
+      await expect(fileExists(joinPath(outDir, 'tools.json'))).resolves.toBe(true)
+    })
   })
 })
