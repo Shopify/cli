@@ -2832,16 +2832,16 @@ DESCRIPTION
 
 ## `shopify upgrade`
 
-Shows details on how to upgrade Shopify CLI.
+Upgrades Shopify CLI using your package manager.
 
 ```
 USAGE
   $ shopify upgrade
 
 DESCRIPTION
-  Shows details on how to upgrade Shopify CLI.
+  Upgrades Shopify CLI using your package manager.
 
-  Shows details on how to upgrade Shopify CLI.
+  Upgrades Shopify CLI using your package manager.
 ```
 
 ## `shopify version`
