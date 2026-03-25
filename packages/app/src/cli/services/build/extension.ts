@@ -9,9 +9,10 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
+import {open} from 'fs/promises'
 
 export interface ExtensionBuildOptions {
   /**
@@ -135,6 +136,8 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
+  await warnIfSchemaMismatch(extension as ExtensionInstance<FunctionConfigType>)
+
   const lockfilePath = joinPath(extension.directory, '.build-lock')
   let releaseLock
   try {
@@ -230,6 +233,37 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
     await buildGraphqlTypes(extension, options)
   }
   return runCommand(extension.buildCommand, extension, options)
+}
+
+const SCHEMA_VERSION_PREFIX = '# shopify:api_version='
+
+async function warnIfSchemaMismatch(extension: ExtensionInstance<FunctionConfigType>) {
+  const schemaPath = joinPath(extension.directory, 'schema.graphql')
+  let handle
+  try {
+    handle = await open(schemaPath, 'r')
+  } catch {
+    return
+  }
+  try {
+    // Read just enough bytes for the version comment line
+    const buf = Buffer.alloc(128)
+    const {bytesRead} = await handle.read(buf, 0, 128, 0)
+    if (bytesRead === 0) return
+
+    const firstLine = buf.toString('utf8', 0, bytesRead).split('\n')[0] ?? ''
+    if (!firstLine.startsWith(SCHEMA_VERSION_PREFIX)) return
+
+    const schemaVersion = firstLine.slice(SCHEMA_VERSION_PREFIX.length).trim()
+    const tomlVersion = extension.configuration.api_version
+    if (schemaVersion !== tomlVersion) {
+      outputWarn(
+        `schema.graphql was generated for API version ${schemaVersion} but your extension targets ${tomlVersion}. Run \`shopify app function schema\` to update.`,
+      )
+    }
+  } finally {
+    await handle.close()
+  }
 }
 
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
