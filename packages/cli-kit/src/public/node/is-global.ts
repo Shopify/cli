@@ -122,6 +122,9 @@ export function inferPackageManagerForGlobalCLI(argv = process.argv, env = proce
 
 /**
  * Returns the project directory for the given path.
+ *
+ * @param directory - The path to search upward from.
+ * @returns The project root directory, or undefined if not found.
  */
 export function getProjectDir(directory: string): string | undefined {
   const configFiles = ['shopify.app{,.*}.toml', 'hydrogen.config.js', 'hydrogen.config.ts']
