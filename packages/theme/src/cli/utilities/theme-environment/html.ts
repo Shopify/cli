@@ -118,7 +118,12 @@ export function getHtmlHandler(theme: Theme, ctx: DevServerContext): EventHandle
              * development mode.
              */
             const searchParams = new URLSearchParams(browserSearch)
-            const filteredParams = new URLSearchParams([...searchParams].filter(([key]) => !key.startsWith('__sfr')))
+            const filteredParams = new URLSearchParams()
+            for (const [key, value] of searchParams) {
+              if (!key.startsWith('__sfr')) {
+                filteredParams.append(key, value)
+              }
+            }
             const location = browserPathname + (filteredParams.toString() ? `?${filteredParams}` : '')
 
             return new Response(null, {
