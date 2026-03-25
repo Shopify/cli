@@ -8,8 +8,8 @@ import {
   getAppConfigurationContext,
   loadConfigForAppCreation,
   reloadApp,
+  ConfigurationError,
 } from './loader.js'
-import {parseHumanReadableError} from './error-parsing.js'
 import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -27,7 +27,6 @@ import {installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-packag
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
@@ -2767,16 +2766,8 @@ describe('parseConfigurationObject', () => {
         message: 'Boolean is required',
       },
     ]
-    const expectedFormatted = outputContent`\n${outputToken.errorText(
-      'Validation errors',
-    )} in tmp:\n\n${parseHumanReadableError(errorObject)}`
-
-    const abortOrReport = vi.fn()
-
     const {schema} = await buildVersionedAppSchema()
-    await parseConfigurationObject(schema, 'tmp', configurationObject, abortOrReport)
-
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    expect(() => parseConfigurationObject(schema, 'tmp', configurationObject)).toThrow(ConfigurationError)
   })
 
   test('throws an error when client_id is missing in app schema TOML file', async () => {
@@ -2784,12 +2775,8 @@ describe('parseConfigurationObject', () => {
       scopes: [],
     }
 
-    const abortOrReport = vi.fn()
-    await parseConfigurationObject(AppSchema, 'tmp', configurationObject, abortOrReport)
-
-    expect(abortOrReport).toHaveBeenCalledOnce()
-    const errorString = abortOrReport.mock.calls[0]![0].value
-    expect(errorString).toContain('[client_id]: Required')
+    expect(() => parseConfigurationObject(AppSchema, 'tmp', configurationObject)).toThrow(ConfigurationError)
+    expect(() => parseConfigurationObject(AppSchema, 'tmp', configurationObject)).toThrow('[client_id]: Required')
   })
 
   test('throws an error if fields are missing in a frontend config web TOML file', async () => {
@@ -2799,25 +2786,26 @@ describe('parseConfigurationObject', () => {
       roles: 1,
     }
 
-    const abortOrReport = vi.fn()
-    await parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject, abortOrReport)
-
-    // Verify the function was called and capture the actual error structure
-    expect(abortOrReport).toHaveBeenCalledOnce()
-    const callArgs = abortOrReport.mock.calls[0]!
-    const actualErrorMessage = callArgs[0]
-
-    // Convert TokenizedString to regular string for testing
-    const errorString = actualErrorMessage.value
+    let thrown: ConfigurationError | undefined
+    try {
+      parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject)
+      expect.fail('Expected ConfigurationError to be thrown')
+    } catch (err) {
+      if (err instanceof ConfigurationError) {
+        thrown = err
+      } else {
+        throw err
+      }
+    }
 
     // The enhanced union handling should show only the most relevant errors
     // instead of showing all variants, making it much more user-friendly
-    expect(errorString).toContain('[roles]: Expected array, received number')
+    expect(thrown.message).toContain('[roles]: Expected array, received number')
 
     // Should NOT show the confusing union variant breakdown
-    expect(errorString).not.toContain('Union validation failed')
-    expect(errorString).not.toContain('Option 1:')
-    expect(errorString).not.toContain('Option 2:')
+    expect(thrown.message).not.toContain('Union validation failed')
+    expect(thrown.message).not.toContain('Option 1:')
+    expect(thrown.message).not.toContain('Option 2:')
   })
 })
 
@@ -2839,8 +2827,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('removes trailing slashes on uri', async () => {
@@ -2849,10 +2837,10 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'https://example.com/', topics: ['products/create']}],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
     webhookConfig.subscriptions![0]!.uri = 'https://example.com'
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if uri is not a valid https URL, pubsub URI, or Eventbridge ARN', async () => {
@@ -2867,8 +2855,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('accepts an https uri', async () => {
@@ -2877,9 +2865,9 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'https://example.com', topics: ['products/create']}],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts a pub sub uri', async () => {
@@ -2888,9 +2876,9 @@ describe('WebhooksSchema', () => {
       subscriptions: [{uri: 'pubsub://my-project-123:my-topic', topics: ['products/create']}],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts an ARN uri', async () => {
@@ -2904,9 +2892,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts combination of uris', async () => {
@@ -2958,9 +2946,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(expandedWebhookConfig)
   })
 
   test('throws an error if we have duplicate subscriptions in same topics array', async () => {
@@ -2976,8 +2964,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if we have duplicate subscriptions in different topics array', async () => {
@@ -2996,8 +2984,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('removes trailing forward slash', async () => {
@@ -3011,10 +2999,10 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
     webhookConfig.subscriptions![0]!.uri = 'https://example.com'
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if uri is not an https uri', async () => {
@@ -3034,8 +3022,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0, 'uri'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('accepts a pub sub config with both project and topic', async () => {
@@ -3049,9 +3037,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if we have duplicate https subscriptions', async () => {
@@ -3076,8 +3064,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if we have duplicate pub sub subscriptions', async () => {
@@ -3102,8 +3090,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if we have duplicate arn subscriptions', async () => {
@@ -3130,8 +3118,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('does not allow identical topic and uri and filter in different subscriptions', async () => {
@@ -3158,8 +3146,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('shows multiple duplicate subscriptions in error message', async () => {
@@ -3196,8 +3184,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('allows identical topic and uri if filter is different', async () => {
@@ -3217,9 +3205,9 @@ describe('WebhooksSchema', () => {
       ],
     }
 
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('throws an error if we have privacy_compliance section and subscriptions with compliance_topics', async () => {
@@ -3241,8 +3229,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error if neither topics nor compliance_topics are added', async () => {
@@ -3260,8 +3248,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions', 0],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('throws an error when there are duplicated compliance topics', async () => {
@@ -3285,8 +3273,8 @@ describe('WebhooksSchema', () => {
       path: ['webhooks', 'subscriptions'],
     }
 
-    const {abortOrReport, expectedFormatted} = await setupParsing(errorObj, webhookConfig)
-    expect(abortOrReport).toHaveBeenCalledWith(expectedFormatted, {}, 'tmp')
+    const result = await setupParsing(errorObj, webhookConfig)
+    expect(result.threw).toBe(true)
   })
 
   test('accepts webhook subscription with payload_query', async () => {
@@ -3300,9 +3288,9 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts webhook subscription with name', async () => {
@@ -3316,9 +3304,9 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   test('accepts webhook subscription with actions', async () => {
@@ -3332,21 +3320,20 @@ describe('WebhooksSchema', () => {
         },
       ],
     }
-    const {abortOrReport, parsedConfiguration} = await setupParsing({}, webhookConfig)
-    expect(abortOrReport).not.toHaveBeenCalled()
-    expect(parsedConfiguration.webhooks).toMatchObject(webhookConfig)
+    const result = await setupParsing({}, webhookConfig)
+    expect(result.threw).toBe(false)
+    expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
-    const err = Array.isArray(errorObj) ? errorObj : [errorObj]
-    const expectedFormatted = outputContent`\n${outputToken.errorText(
-      'Validation errors',
-    )} in tmp:\n\n${parseHumanReadableError(err)}`
-    const abortOrReport = vi.fn()
-
     const toParse = getWebhookConfig(webhookConfigOverrides)
-    const parsedConfiguration = await parseConfigurationObject(WebhooksSchema, 'tmp', toParse, abortOrReport)
-    return {abortOrReport, expectedFormatted, parsedConfiguration}
+    try {
+      const parsedConfiguration = parseConfigurationObject(WebhooksSchema, 'tmp', toParse)
+      return {threw: false as const, parsedConfiguration, error: undefined}
+    } catch (err) {
+      if (!(err instanceof ConfigurationError)) throw err
+      return {threw: true as const, parsedConfiguration: undefined as any, error: err}
+    }
   }
 })
 
