@@ -39,11 +39,17 @@ export function applyIgnoreFilters<T extends {key: string}>(
 }
 
 function filterBy(patterns: string[], type: string, invertMatch = false) {
+  // Pre-compile regex patterns once (O(m) where m = number of patterns)
+  const compiledPatterns = patterns.map((pattern) => ({
+    pattern,
+    regex: isRegex(pattern) ? asRegex(pattern) : null,
+  }))
+
   return ({key}: {key: string}) => {
     if (patterns.length === 0) return true
 
-    const match = patterns.some(
-      (pattern) => matchGlob(key, pattern) || (isRegex(pattern) && regexMatch(key, asRegex(pattern))),
+    const match = compiledPatterns.some(
+      ({pattern, regex}) => matchGlob(key, pattern) || (regex !== null && regexMatch(key, regex)),
     )
     const shouldIgnore = invertMatch ? !match : match
 
