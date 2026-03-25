@@ -197,8 +197,8 @@ importers:
         specifier: 6.1.0
         version: 6.1.0(graphql@16.10.0)
       h3:
-        specifier: 1.15.6
-        version: 1.15.6
+        specifier: 1.15.9
+        version: 1.15.9
       http-proxy-node16:
         specifier: 1.0.6
         version: 1.0.6
@@ -675,8 +675,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       h3:
-        specifier: 1.15.6
-        version: 1.15.6
+        specifier: 1.15.9
+        version: 1.15.9
       yaml:
         specifier: 2.7.0
         version: 2.7.0
@@ -6014,8 +6014,8 @@ packages:
     resolution: {integrity: sha512-4haO1M4mLO91PW57BMsDFf75UmwoRX0GkdD+Faw+Lr+r/OZrOCS0pIBwOL1xCKQqnQzbNFGgK2V2CpBUPeFNTw==}
     hasBin: true
 
-  h3@1.15.6:
-    resolution: {integrity: sha512-oi15ESLW5LRthZ+qPCi5GNasY/gvynSKUQxgiovrY63bPAtG59wtM+LSrlcwvOHAXzGrXVLnI97brbkdPF9WoQ==}
+  h3@1.15.9:
+    resolution: {integrity: sha512-H7UPnyIupUOYUQu7f2x7ABVeMyF/IbJjqn20WSXpMdnQB260luADUkSgJU7QTWLutq8h3tUayMQ1DdbSYX5LkA==}
 
   hard-rejection@2.1.0:
     resolution: {integrity: sha512-VIZB+ibDhx7ObhAe7OVtoEbuP4h/MuOTHJ+J8h/eBXotJYl0fBgR72xDFCKgIh22OJZIOVNxBMWuhAr10r8HdA==}
@@ -15725,7 +15725,7 @@ snapshots:
       pumpify: 1.5.1
       through2: 2.0.5
 
-  h3@1.15.6:
+  h3@1.15.9:
     dependencies:
       cookie-es: 1.2.2
       crossws: 0.3.5
