@@ -103,7 +103,7 @@ function isCompiledAssetRequest(event: H3Event, ctx: DevServerContext): boolean 
 
 function handleCompiledAssetRequest(event: H3Event, ctx: DevServerContext) {
   const pathname = parseServerEvent(event).pathname
-  const assetPath = pathname.split('/').at(-1)
+  const assetPath = pathname.substring(pathname.lastIndexOf('/') + 1) || undefined
 
   switch (assetPath) {
     case 'styles.css':
