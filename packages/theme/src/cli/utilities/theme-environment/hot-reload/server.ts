@@ -82,10 +82,13 @@ function saveSectionsFromJson(fileKey: string, content: string) {
   const sections: SectionGroup | undefined = maybeJson?.sections
 
   if (sections && !fileKey.startsWith('locales/')) {
-    sectionNamesByFile.set(
-      fileKey,
-      Object.entries(sections || {}).map(([name, {type}]) => [type, name]),
-    )
+    const sectionEntries: [string, string][] = []
+    for (const name in sections) {
+      if (Object.prototype.hasOwnProperty.call(sections, name)) {
+        sectionEntries.push([sections[name]!.type, name])
+      }
+    }
+    sectionNamesByFile.set(fileKey, sectionEntries)
   } else {
     sectionNamesByFile.delete(fileKey)
   }
