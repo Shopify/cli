@@ -40,6 +40,33 @@ const IGNORED_ENDPOINTS = [
 const SESSION_COOKIE_NAME = '_shopify_essential'
 const SESSION_COOKIE_REGEXP = new RegExp(`${SESSION_COOKIE_NAME}=([^;]*)(;|$)`)
 
+// Cache for store-specific regex patterns (keyed by storeFqdn)
+interface StorePatternCache {
+  escapedFqdn: string
+  beaconEndpointRE: RegExp
+  vanityCdnRE: RegExp
+  dataBaseUrlRE: RegExp
+  domainRE: RegExp
+}
+const storePatternCache = new Map<string, StorePatternCache>()
+
+function getStorePatterns(ctx: DevServerContext): StorePatternCache {
+  const storeFqdn = ctx.session.storeFqdn
+  let cached = storePatternCache.get(storeFqdn)
+  if (!cached) {
+    const escapedFqdn = storeFqdn.replace(/[\\.]/g, (char) => (char === '\\' ? '\\\\' : '\\.'))
+    cached = {
+      escapedFqdn,
+      beaconEndpointRE: new RegExp(`(data-shs-beacon-endpoint=["'])https://${escapedFqdn}${API_COLLECT_PATH}`, 'g'),
+      vanityCdnRE: new RegExp(`(https?:)?//${escapedFqdn}${VANITY_CDN_PREFIX}`, 'g'),
+      dataBaseUrlRE: new RegExp(`data-base-url=["']((?:https?:)?//${escapedFqdn})[^"']*?["']`, 'g'),
+      domainRE: new RegExp(`Domain=${escapedFqdn};\\s*`, 'gi'),
+    }
+    storePatternCache.set(storeFqdn, cached)
+  }
+  return cached
+}
+
 /**
  * Forwards non-HTML requests to the remote SFR instance,
  * or mocks the result for certain endpoints.
@@ -120,10 +147,6 @@ export function canProxyRequest(event: H3Event) {
   return Boolean(extension) || acceptsType !== '*/*'
 }
 
-function getStoreFqdnForRegEx(ctx: DevServerContext) {
-  return ctx.session.storeFqdn.replace(/[\\.]/g, (char) => (char === '\\' ? '\\\\' : '\\.'))
-}
-
 /**
  * Replaces every VanityCDN-like (...myshopify.com/cdn/...) URL to pass through the local server.
  * It also replaces MainCDN-like (cdn.shopify.com/...) URLs to files that are known local assets.
@@ -131,15 +154,13 @@ function getStoreFqdnForRegEx(ctx: DevServerContext) {
  */
 export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
   let content = originalContent
+  const patterns = getStorePatterns(ctx)
 
   // -- The beacon endpoint is patched in injectCdnProxy to be proxied and ignored locally
-  const beaconEndpointREStr = `(data-shs-beacon-endpoint=["'])https://${getStoreFqdnForRegEx(ctx)}${API_COLLECT_PATH}`
-  const beaconEndpointRE = new RegExp(beaconEndpointREStr, 'g')
-  content = content.replace(beaconEndpointRE, `$1${API_COLLECT_PATH}`)
+  content = content.replace(patterns.beaconEndpointRE, `$1${API_COLLECT_PATH}`)
 
   // -- Redirect all usages to the vanity CDN to the local server:
-  const vanityCdnRE = new RegExp(`(https?:)?//${getStoreFqdnForRegEx(ctx)}${VANITY_CDN_PREFIX}`, 'g')
-  content = content.replace(vanityCdnRE, VANITY_CDN_PREFIX)
+  content = content.replace(patterns.vanityCdnRE, VANITY_CDN_PREFIX)
 
   // -- Only redirect usages of the main CDN for known local theme and theme extension assets to the local server:
   const mainCdnRE = /(?:https?:)?\/\/cdn\.shopify\.com\/(.*?\/(assets\/[^?#"'`>\s]+))/g
@@ -174,15 +195,15 @@ export function injectCdnProxy(originalContent: string, ctx: DevServerContext) {
 
 function patchBaseUrlAttributes(html: string, ctx: DevServerContext) {
   const newBaseUrl = `http://${ctx.options.host}:${ctx.options.port}`
-  const dataBaseUrlRE = new RegExp(`data-base-url=["']((?:https?:)?//${getStoreFqdnForRegEx(ctx)})[^"']*?["']`, 'g')
+  const patterns = getStorePatterns(ctx)
 
-  return html.replace(dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
+  return html.replace(patterns.dataBaseUrlRE, (match, m1) => match.replace(m1, newBaseUrl))
 }
 
 function patchCookieDomains(cookieHeader: string[], ctx: DevServerContext) {
   // Domains are invalid for localhost:
-  const domainRE = new RegExp(`Domain=${getStoreFqdnForRegEx(ctx)};\\s*`, 'gi')
-  return cookieHeader.map((value) => value.replace(domainRE, ''))
+  const patterns = getStorePatterns(ctx)
+  return cookieHeader.map((value) => value.replace(patterns.domainRE, ''))
 }
 
 /**
