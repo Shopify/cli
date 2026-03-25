@@ -16,6 +16,11 @@ const tagContentCache = {
 const THEME_ASSET_PATTERN = /^(?:\/cdn\/.*?)?\/assets\/([^?]+)/
 const EXTENSION_ASSET_PATTERN = /^(?:\/ext\/cdn\/extensions\/.*?)?\/assets\/([^?]+)/
 const LIQUID_BASENAME_PATTERN = /([^/]+)\.liquid$/
+const KIND_PREFIXES = new Map([
+  ['section', 'sections/'],
+  ['block', 'blocks/'],
+  ['snippet', 'snippets/'],
+] as const)
 
 /**
  * Handles requests for assets to the proxied Shopify CDN, serving local files.
@@ -201,7 +206,7 @@ function handleBlockScriptsJs(ctx: DevServerContext, event: H3Event, kind: 'bloc
 function getLiquidFilesByKind(ctx: DevServerContext, kind: 'section' | 'block' | 'snippet') {
   return [...ctx.localThemeFileSystem.files.entries()]
     .filter(([key]) => {
-      return key.endsWith('.liquid') && key.startsWith(`${kind}s/`)
+      return key.endsWith('.liquid') && key.startsWith(KIND_PREFIXES.get(kind)!)
     })
     .sort(([key1], [key2]) => {
       return key1.localeCompare(key2)
