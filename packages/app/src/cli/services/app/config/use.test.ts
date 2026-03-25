@@ -14,6 +14,9 @@ vi.mock('../../local-storage.js')
 vi.mock('../../../models/app/loader.js')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('../../context.js')
+vi.mock('@shopify/cli-kit/node/is-global', () => ({
+  currentProcessIsGlobal: () => false,
+}))
 
 function mockContext(directory: string, configuration: Record<string, unknown>) {
   vi.mocked(getAppConfigurationContext).mockResolvedValue({
@@ -41,6 +44,7 @@ describe('use', () => {
         developerPlatformClient: testDeveloperPlatformClient(),
       }
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
+      writeFileSync(joinPath(tmp, 'shopify.app.toml'), '')
 
       // When
       await use(options)

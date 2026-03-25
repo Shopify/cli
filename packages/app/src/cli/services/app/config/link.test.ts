@@ -23,6 +23,9 @@ import {setPathValue} from '@shopify/cli-kit/common/object'
 
 vi.mock('./use.js')
 vi.mock('../../../prompts/config.js')
+vi.mock('@shopify/cli-kit/node/is-global', () => ({
+  currentProcessIsGlobal: () => false,
+}))
 vi.mock('../../../models/app/loader.js', async () => {
   const loader: any = await vi.importActual('../../../models/app/loader.js')
   return {
