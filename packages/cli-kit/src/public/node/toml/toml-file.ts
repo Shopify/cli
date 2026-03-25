@@ -1,8 +1,21 @@
 import {JsonMapType, decodeToml, encodeToml} from './codec.js'
-import {readFile, writeFile} from '../fs.js'
+import {fileExists, readFile, writeFile} from '../fs.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 
 type TomlPatchValue = string | number | boolean | undefined | (string | number | boolean)[]
+
+/**
+ * Thrown when a TOML file does not exist at the expected path.
+ */
+export class TomlFileNotFoundError extends Error {
+  readonly path: string
+
+  constructor(path: string) {
+    super(`TOML file not found: ${path}`)
+    this.name = 'TomlFileNotFoundError'
+    this.path = path
+  }
+}
 
 /**
  * Thrown when a TOML file cannot be parsed. Includes the file path for context.
@@ -38,6 +51,9 @@ export class TomlFile {
    * @returns A TomlFile instance with parsed content.
    */
   static async read(path: string): Promise<TomlFile> {
+    if (!(await fileExists(path))) {
+      throw new TomlFileNotFoundError(path)
+    }
     const raw = await readFile(path)
     const file = new TomlFile(path, {})
     file.content = file.decode(raw)
