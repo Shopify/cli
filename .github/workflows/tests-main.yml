@@ -55,8 +55,9 @@ jobs:
         run: pnpm nx run-many --all --skip-nx-cache  --target=bundle --output-style=stream
         if: ${{ matrix.os == 'ubuntu-latest' && matrix.node == '24.1.0' }}
       - name: Unit tests
-        run: pnpm vitest run
+        run: pnpm vitest run ${{ env.POOL_OPTIONS }}
         env:
+          POOL_OPTIONS: ${{ matrix.os == 'macos-latest' && '--pool forks' || '' }}
           VITEST_MIN_THREADS: "1"
           VITEST_MAX_THREADS: "4"
       - name: Send Slack notification on failure
