@@ -14,6 +14,12 @@ import type {Theme} from '@shopify/cli-kit/node/themes/types'
 
 import type {DevServerContext} from './types.js'
 
+/**
+ * URL params that indicate a request should be handled by SFR.
+ * Pre-allocated as Set for O(1) lookup.
+ */
+const KNOWN_RENDERING_PARAMS = new Set(['section_id', 'sections', 'app_block_id'])
+
 /** Tracks the number of consecutive theme ID mismatch redirects */
 let themeIdMismatchRedirects = 0
 
@@ -159,7 +165,10 @@ function createErrorPageResponse(
  */
 function isKnownRenderingRequest(event: H3Event) {
   const searchParams = new URLSearchParams(event.path.split('?')[1])
-  return ['section_id', 'sections', 'app_block_id'].some((key) => searchParams.has(key))
+  for (const key of KNOWN_RENDERING_PARAMS) {
+    if (searchParams.has(key)) return true
+  }
+  return false
 }
 
 /** Determines if a request is a user navigation type via sec-fetch-mode header. */
