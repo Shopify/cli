@@ -50,14 +50,16 @@ export function getProxyHandler(_theme: Theme, ctx: DevServerContext) {
     }
 
     if (canProxyRequest(event)) {
-      const pathname = event.path.split('?')[0] ?? ''
+      const queryIdx = event.path.indexOf('?')
+      const pathname = queryIdx === -1 ? event.path : event.path.substring(0, queryIdx)
 
       return proxyStorefrontRequest(event, ctx)
         .then(async (response) => {
           logRequestLine(event, response, ctx)
 
           if (response.ok) {
-            const fileName = pathname.split('/').at(-1) ?? ''
+            const slashIdx = pathname.lastIndexOf('/')
+            const fileName = slashIdx === -1 ? pathname : pathname.substring(slashIdx + 1)
             if (ctx.localThemeFileSystem.files.has(`assets/${fileName}.liquid`)) {
               const newBody = injectCdnProxy(await response.text(), ctx)
               return new Response(newBody, response)
@@ -106,7 +108,8 @@ export function canProxyRequest(event: H3Event) {
   if (event.path.match(VANITY_CDN_PATTERN)) return true
   if (event.path.match(EXTENSION_CDN_PATTERN)) return true
 
-  const [pathname] = event.path.split('?') as [string]
+  const qIdx = event.path.indexOf('?')
+  const pathname = qIdx === -1 ? event.path : event.path.substring(0, qIdx)
   const extension = extname(pathname)
   const acceptsType = event.headers.get('accept') ?? '*/*'
 
