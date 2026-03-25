@@ -397,6 +397,10 @@ export const hotReloadScriptId = 'hot-reload-client'
 export const hotReloadScriptUrl = '/cdn/shopifycloud/theme-hot-reload/theme-hot-reload.js'
 const hotReloadScriptRE = new RegExp(`<script id="${hotReloadScriptId}"[^>]*>[^<]*</script>`)
 const localHotReloadScriptEndpoint = '/@shopify/theme-hot-reload'
+const CLOSE_HEAD_PATTERN = /<\/head>/
+const HOT_RELOAD_SCRIPT_TAG_PREFIX = `<script id="${hotReloadScriptId}"`
+const LOCAL_HOT_RELOAD_SCRIPT_TAG = `<script id="${hotReloadScriptId}" src="${localHotReloadScriptEndpoint}" defer></script></head>`
+const REMOTE_HOT_RELOAD_SCRIPT_TAG = `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}" defer></script></head>`
 
 /**
  * Injects a `<script>` tag in the HTML Head containing
@@ -407,24 +411,16 @@ export function handleHotReloadScriptInjection(html: string, ctx: DevServerConte
 
   if (process.env.SHOPIFY_CLI_LOCAL_HOT_RELOAD) {
     // When running locally, use the local script for easy development.
-    return html
-      .replace(hotReloadScriptRE, '')
-      .replace(
-        /<\/head>/,
-        `<script id="${hotReloadScriptId}" src="${localHotReloadScriptEndpoint}" defer></script></head>`,
-      )
+    return html.replace(hotReloadScriptRE, '').replace(CLOSE_HEAD_PATTERN, LOCAL_HOT_RELOAD_SCRIPT_TAG)
   }
 
-  if (html.includes(`<script id="${hotReloadScriptId}"`)) {
+  if (html.includes(HOT_RELOAD_SCRIPT_TAG_PREFIX)) {
     // Already injected in SFR, do nothing
     return html
   }
 
   // Inject the HotReload script in the HTML Head
-  return html.replace(
-    /<\/head>/,
-    `<script id="${hotReloadScriptId}" src="${hotReloadScriptUrl}" defer></script></head>`,
-  )
+  return html.replace(CLOSE_HEAD_PATTERN, REMOTE_HOT_RELOAD_SCRIPT_TAG)
 }
 
 function isAsset(key: string) {
