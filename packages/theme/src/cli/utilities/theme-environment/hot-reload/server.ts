@@ -241,7 +241,8 @@ export function getHotReloadHandler(theme: Theme, ctx: DevServerContext): EventH
       const sectionKey = query.get('section_key') ?? ''
       const sectionId = query.get('section_id') ?? ''
       const appBlockId = query.get('app_block_id') ?? ''
-      const browserPathname = event.path.split('?')[0] ?? ''
+      const queryIndex = event.path.indexOf('?')
+      const browserPathname = queryIndex === -1 ? event.path : event.path.substring(0, queryIndex)
       const browserSearch = new URLSearchParams(query)
       browserSearch.delete('section_key')
       browserSearch.delete('section_id')
@@ -380,7 +381,8 @@ function findSectionNamesToReload(key: string, ctx: DevServerContext) {
 }
 
 function collectReloadInfoForFile(key: string, ctx: DevServerContext) {
-  const [type] = key.split('/')
+  const slashIndex = key.indexOf('/')
+  const type = slashIndex === -1 ? key : key.substring(0, slashIndex)
   const file = ctx.localThemeFileSystem.files.get(key)
 
   return {
