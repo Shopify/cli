@@ -97,8 +97,8 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
         res.end('Response from target server 2')
       })
 
-      targetServer1.listen(ports.targetPort1)
-      targetServer2.listen(ports.targetPort2)
+      await new Promise<void>((resolve) => targetServer1.listen(ports.targetPort1, resolve))
+      await new Promise<void>((resolve) => targetServer2.listen(ports.targetPort2, resolve))
 
       const abortController = new AbortController()
       const {server: proxyServer} = await getProxyingWebServer(
@@ -111,12 +111,12 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
         protocol === 'https' ? localhostCert : undefined,
       )
 
-      proxyServer.listen(ports.proxyPort)
+      await new Promise<void>((resolve) => proxyServer.listen(ports.proxyPort, resolve))
       await use({targetServer1, targetServer2, proxyServer, abortController})
 
-      proxyServer.close()
-      targetServer1.close()
-      targetServer2.close()
+      await new Promise<void>((resolve) => proxyServer.close(() => resolve()))
+      await new Promise<void>((resolve) => targetServer1.close(() => resolve()))
+      await new Promise<void>((resolve) => targetServer2.close(() => resolve()))
     },
   })
 }
