@@ -15,6 +15,7 @@ const tagContentCache = {
 // Pre-compiled RegExp patterns for asset path matching
 const THEME_ASSET_PATTERN = /^(?:\/cdn\/.*?)?\/assets\/([^?]+)/
 const EXTENSION_ASSET_PATTERN = /^(?:\/ext\/cdn\/extensions\/.*?)?\/assets\/([^?]+)/
+const LIQUID_BASENAME_PATTERN = /([^/]+)\.liquid$/
 
 /**
  * Handles requests for assets to the proxied Shopify CDN, serving local files.
@@ -160,7 +161,7 @@ function handleBlockScriptsJs(ctx: DevServerContext, event: H3Event, kind: 'bloc
   ]
 
   for (const [key, file] of liquidFiles) {
-    const baseName = key.split('/').pop()?.replace('.liquid', '')
+    const baseName = key.match(LIQUID_BASENAME_PATTERN)?.[1]
     const javascript = getTagContent(file, 'javascript') ?? ''
 
     if (baseName && javascript) {
