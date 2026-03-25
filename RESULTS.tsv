@@ -1,2 +1,3 @@
 experiment	hypothesis	result	kept	notes
 1	O(n²) → O(n) for rejectGeneratedStaticAssets using Set lookup	All 561 tests pass, complexity reduced from O(n²) to O(n)	yes	Replaced Array.some() inside filter() with pre-computed Set for O(1) lookup
+2	Hoist setMimeTypes to module init eliminates N redundant calls	All 561 tests pass, setMimeTypes called once vs once-per-file	yes	Moved setMimeTypes to module-level, extracted TEXT_FILE_TYPES constant
