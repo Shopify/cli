@@ -127,6 +127,7 @@ export function formatPackageManagerCommand(
       }
       return pieces.join(' ')
     }
+    case 'homebrew':
     case 'unknown': {
       const pieces = [scriptName, ...scriptArgs]
       return pieces.join(' ')
