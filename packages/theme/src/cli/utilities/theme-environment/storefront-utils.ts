@@ -12,7 +12,8 @@ export function storefrontReplaceTemplatesParams(context: DevServerRenderContext
   }
 
   for (const [path, content] of Object.entries(context.replaceExtensionTemplates ?? [])) {
-    const bucket = path.split('/')[0]
+    const slashIndex = path.indexOf('/')
+    const bucket = slashIndex !== -1 ? path.substring(0, slashIndex) : path
     params.append(`replace_extension_templates[${bucket}][${path}]`, content)
   }
 
