@@ -34,15 +34,15 @@ export interface LoadedAppContextOutput {
  * @param forceRelink - Whether to force a relink of the app, this includes re-selecting the remote org and app.
  * @param clientId - The client ID to use when linking the app or when fetching the remote app.
  * @param userProvidedConfigName - The name of an existing config file in the app, if not provided, the cached/default one will be used.
- * @param tolerateErrors - When true, the loaded app may contain validation errors without throwing.
- * Commands like `app info` and `app validate` set this to true so they can display errors to the user.
+ * @param unsafeTolerateErrors - When true, the loaded app may contain validation errors without throwing.
+ * Only use this for commands that explicitly handle invalid configs (e.g. `app info`, `app validate`).
  */
 interface LoadedAppContextOptions {
   directory: string
   forceRelink: boolean
   clientId: string | undefined
   userProvidedConfigName: string | undefined
-  tolerateErrors?: boolean
+  unsafeTolerateErrors?: boolean
 }
 
 /**
@@ -69,7 +69,7 @@ export async function linkedAppContext({
   clientId,
   forceRelink,
   userProvidedConfigName,
-  tolerateErrors = false,
+  unsafeTolerateErrors = false,
 }: LoadedAppContextOptions): Promise<LoadedAppContextOutput> {
   let {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
@@ -111,7 +111,7 @@ export async function linkedAppContext({
     clientIdOverride: clientId && clientId !== configClientId ? clientId : undefined,
   })
 
-  if (!tolerateErrors && !localApp.errors.isEmpty()) {
+  if (!unsafeTolerateErrors && !localApp.errors.isEmpty()) {
     throw new AbortError(localApp.errors.toJSON()[0]!)
   }
 

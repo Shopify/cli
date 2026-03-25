@@ -39,7 +39,7 @@ export default class AppInfo extends AppLinkedCommand {
       clientId: flags['client-id'],
       forceRelink: flags.reset,
       userProvidedConfigName: flags.config,
-      tolerateErrors: true,
+      unsafeTolerateErrors: true,
     })
     const results = await info(app, remoteApp, organization, project, {
       format: (flags.json ? 'json' : 'text') as Format,

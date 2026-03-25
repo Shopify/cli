@@ -204,7 +204,7 @@ client_id="test-api-key"`
     })
   })
 
-  test('tolerateErrors skips throwIfErrors and addUidToTomlsIfNecessary', async () => {
+  test('unsafeTolerateErrors skips throwIfErrors and addUidToTomlsIfNecessary', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
@@ -218,7 +218,7 @@ client_id="test-api-key"`
         forceRelink: false,
         userProvidedConfigName: undefined,
         clientId: undefined,
-        tolerateErrors: true,
+        unsafeTolerateErrors: true,
       })
 
       // Then — addUidToTomlsIfNecessary is only called when errors are empty
@@ -227,7 +227,7 @@ client_id="test-api-key"`
     })
   })
 
-  test('throws when tolerateErrors is false and app has errors', async () => {
+  test('throws when unsafeTolerateErrors is false and app has errors', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
@@ -253,7 +253,7 @@ client_id="test-api-key"`
     })
   })
 
-  test('does not throw when tolerateErrors is false and app has no errors', async () => {
+  test('does not throw when unsafeTolerateErrors is false and app has no errors', async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       const content = `
