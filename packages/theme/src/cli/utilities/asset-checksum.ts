@@ -2,6 +2,10 @@ import {isTextFile} from './theme-fs.js'
 import {Checksum} from '@shopify/cli-kit/node/themes/types'
 import {fileHash} from '@shopify/cli-kit/node/crypto'
 
+// Pre-compiled regex patterns for checksum calculation (avoids N allocations per theme)
+const CRLF_PATTERN = /\r\n/g
+const MULTILINE_COMMENT_PATTERN = /\/\*[\s\S]*?\*\//
+
 export function calculateChecksum(fileKey: string, fileContent: string | Buffer | undefined) {
   if (!fileContent) {
     return ''
@@ -25,8 +29,8 @@ export function calculateChecksum(fileKey: string, fileContent: string | Buffer 
 function minifiedJSONFileChecksum(fileContent: string) {
   let content = fileContent
 
-  content = content.replace(/\r\n/g, '\n')
-  content = content.replace(/\/\*[\s\S]*?\*\//, '')
+  content = content.replace(CRLF_PATTERN, '\n')
+  content = content.replace(MULTILINE_COMMENT_PATTERN, '')
   content = normalizeJson(content)
 
   return md5(content)
@@ -36,7 +40,7 @@ function regularFileChecksum(fileKey: string, fileContent: string) {
   let content = fileContent
 
   if (isTextFile(fileKey)) {
-    content = content.replace(/\r\n/g, '\n')
+    content = content.replace(CRLF_PATTERN, '\n')
   }
 
   return md5(content)
