@@ -6,6 +6,12 @@ import {Theme} from '@shopify/cli-kit/node/themes/types'
 export type Role = 'live' | 'development' | 'unpublished'
 export const ALLOWED_ROLES: Role[] = ['live', 'unpublished', 'development']
 
+// O(1) lookup for role membership
+const ALLOWED_ROLES_SET = new Set<string>(ALLOWED_ROLES)
+
+// O(1) lookup for role sort order
+const ROLE_ORDER = new Map<string, number>(ALLOWED_ROLES.map((role, index) => [role, index]))
+
 /**
  * Fetches the themes from the store.
  * @param store - Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -29,9 +35,9 @@ export async function fetchStoreThemes(session: AdminSession) {
 }
 
 function isRoleAllowed(theme: Theme) {
-  return (ALLOWED_ROLES as string[]).includes(theme.role)
+  return ALLOWED_ROLES_SET.has(theme.role)
 }
 
 function byRole(themeA: Theme, themeB: Theme) {
-  return (ALLOWED_ROLES as string[]).indexOf(themeA.role) - (ALLOWED_ROLES as string[]).indexOf(themeB.role)
+  return (ROLE_ORDER.get(themeA.role) ?? Infinity) - (ROLE_ORDER.get(themeB.role) ?? Infinity)
 }
