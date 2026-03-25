@@ -9,6 +9,7 @@ import type {DevServerContext} from './theme-environment/types.js'
 const IGNORED_PATH_PREFIXES = [EXTENSION_CDN_PREFIX, VANITY_CDN_PREFIX, '/checkouts', '/payments']
 const IGNORED_EXTENSIONS = new Set(['.js', '.css', '.json', '.map'])
 const CHARACTER_TRUNCATION_LIMIT = 80
+const CF_REQUEST_DURATION_PATTERN = /cfRequestDuration;dur=([\d.]+)/
 
 interface MinimalResponse {
   status: number
@@ -24,7 +25,7 @@ export function logRequestLine(event: H3Event, response: MinimalResponse, ctx: D
       ? `${event.path.substring(0, CHARACTER_TRUNCATION_LIMIT)}...`
       : event.path
   const serverTiming = response.headers.get('server-timing')
-  const requestDuration = serverTiming?.match(/cfRequestDuration;dur=([\d.]+)/)?.[1]
+  const requestDuration = serverTiming?.match(CF_REQUEST_DURATION_PATTERN)?.[1]
   const durationString = requestDuration ? `${Math.round(Number(requestDuration))}ms` : ''
 
   const statusColor = getColorizeStatus(response.status)
