@@ -416,13 +416,17 @@ export async function reloadApp(app: AppLinkedInterface): Promise<AppLinkedInter
     extensionDevUUIDs: new Map(app.allExtensions.map((ext) => [ext.handle, ext.devUUID])),
     previousDevURLs: app.devApplicationURLs,
   }
-  return loadAppFromContext({
+  const newApp = await loadAppFromContext({
     project,
     activeConfig,
     specifications: app.specifications,
     remoteFlags: app.remoteFlags ?? [],
     reloadState,
   })
+  if (!newApp.errors.isEmpty()) {
+    throw new AbortError(newApp.errors.toJSON().join('\n'))
+  }
+  return newApp
 }
 
 export function getDotEnvFileName(configurationPath: string) {
