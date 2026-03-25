@@ -63,6 +63,18 @@ const LOCALE_PATTERN = /^locales\/.+\.json$/
 const SECTION_ID_PATTERN = /^sections\/(.+)\.liquid$/
 const WHITESPACE_PATTERN = /\s+/g
 
+/**
+ * Removes leading slash and trailing .html from a route path.
+ * Optimized to use string methods instead of regex.
+ */
+function normalizeRoute(route: string): string {
+  let result = route.startsWith('/') ? route.substring(1) : route
+  if (result.endsWith('.html')) {
+    result = result.slice(0, -5)
+  }
+  return result
+}
+
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null, true)
   if (!maybeJson) return
@@ -91,7 +103,7 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
   const inMemoryTemplates: Record<string, string> = {}
 
   const filterTemplate = currentRoute
-    ? `${joinPath('templates', currentRoute.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
+    ? `${joinPath('templates', normalizeRoute(currentRoute) || 'index')}.json`
     : ''
   const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
 
