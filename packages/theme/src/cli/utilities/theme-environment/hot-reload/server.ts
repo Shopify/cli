@@ -58,6 +58,9 @@ const LIQUID_TAGS = ['stylesheet', 'javascript', 'schema'] as const
 const HTML_COMMENT_PATTERN = /<!--[\s\S]*?-->/g
 const LIQUID_COMMENT_PATTERN = /{%\s*comment\s*%}[\s\S]*?{%\s*endcomment\s*%}/g
 const LIQUID_DOC_PATTERN = /{%\s*doc\s*%}[\s\S]*?{%\s*enddoc\s*%}/g
+const JSON_TEMPLATE_PATTERN = /^templates\/.+\.json$/
+const LOCALE_PATTERN = /^locales\/.+\.json$/
+const SECTION_ID_PATTERN = /^sections\/(.+)\.liquid$/
 
 function saveSectionsFromJson(fileKey: string, content: string) {
   const maybeJson = parseJSON(content, null, true)
@@ -86,13 +89,11 @@ function needsTemplateUpdate(fileKey: string) {
 export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: string, locale?: string) {
   const inMemoryTemplates: Record<string, string> = {}
 
-  const jsonTemplateRE = /^templates\/.+\.json$/
   const filterTemplate = currentRoute
     ? `${joinPath('templates', currentRoute.replace(/^\//, '').replace(/\.html$/, '') || 'index')}.json`
     : ''
   const hasRouteTemplate = Boolean(currentRoute) && ctx.localThemeFileSystem.files.has(filterTemplate)
 
-  const localeRE = /^locales\/.+\.json$/
   const hasLocale =
     Boolean(locale) &&
     (ctx.localThemeFileSystem.files.has(`locales/${locale}.json`) ||
@@ -101,11 +102,11 @@ export function getInMemoryTemplates(ctx: DevServerContext, currentRoute?: strin
   for (const fileKey of ctx.localThemeFileSystem.unsyncedFileKeys) {
     if (!needsTemplateUpdate(fileKey)) continue
 
-    if (hasRouteTemplate && jsonTemplateRE.test(fileKey)) {
+    if (hasRouteTemplate && JSON_TEMPLATE_PATTERN.test(fileKey)) {
       // Filter out unused JSON templates for the current route. If we're not
       // sure about the current route's template, we send all (modified) JSON templates.
       if (fileKey !== filterTemplate) continue
-    } else if (localeRE.test(fileKey)) {
+    } else if (LOCALE_PATTERN.test(fileKey)) {
       // Filter out unused locales for the sent cookie. If can't find the
       // current locale file, we send the default locale (and its schema file).
       if (hasLocale) {
@@ -363,7 +364,7 @@ function findSectionNamesToReload(key: string, ctx: DevServerContext) {
     }
   } else {
     // Update specific sections by reading the section names from the in-memory map.
-    const sectionId = key.match(/^sections\/(.+)\.liquid$/)?.[1]
+    const sectionId = key.match(SECTION_ID_PATTERN)?.[1]
     if (sectionId) {
       for (const [_fileKey, sections] of sectionNamesByFile) {
         for (const [type, name] of sections) {
