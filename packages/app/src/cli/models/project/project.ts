@@ -1,4 +1,5 @@
 import {configurationFileNames} from '../../constants.js'
+import {LocalConfigError} from '../app/local-config-error.js'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, glob, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
@@ -9,7 +10,6 @@ import {
   usesWorkspaces as detectUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
@@ -20,6 +20,11 @@ const WEB_TOML = 'shopify.web.toml'
 const DEFAULT_EXTENSION_DIR = 'extensions/*'
 const NODE_MODULES_EXCLUDE = '**/node_modules/**'
 const DOTENV_GLOB = '.env*'
+
+export interface MalformedTomlFile {
+  path: string
+  message: string
+}
 
 /**
  * A Project is the Shopify app as it exists on the filesystem.
@@ -45,9 +50,14 @@ export class Project {
     const directory = await findProjectRoot(startDirectory)
 
     // Discover all app config files
-    const appConfigFiles = await discoverAppConfigFiles(directory)
+    const {appConfigFiles, malformedAppConfigFiles} = await discoverAppConfigFiles(directory)
     if (appConfigFiles.length === 0) {
-      throw new AbortError(`Could not find a Shopify app TOML file in ${directory}`)
+      const preferredMalformedConfig = getPreferredMalformedAppConfig(malformedAppConfigFiles)
+      if (preferredMalformedConfig) {
+        throw new LocalConfigError(preferredMalformedConfig.message, preferredMalformedConfig.path)
+      }
+
+      throw new LocalConfigError(`Could not find a Shopify app TOML file in ${directory}`, directory)
     }
 
     // Discover extension files from all app configs' extension_directories (union).
@@ -61,7 +71,9 @@ export class Project {
         allExtensionDirs.add(DEFAULT_EXTENSION_DIR)
       }
     }
-    const extensionConfigFiles = await discoverExtensionFiles(directory, [...allExtensionDirs])
+    const {extensionConfigFiles, malformedExtensionConfigFiles} = await discoverExtensionFiles(directory, [
+      ...allExtensionDirs,
+    ])
 
     // Discover web files from all app configs' web_directories (union)
     const allWebDirs = new Set<string>()
@@ -71,7 +83,10 @@ export class Project {
         for (const dir of dirs) allWebDirs.add(dir as string)
       }
     }
-    const webConfigFiles = await discoverWebFiles(directory, allWebDirs.size > 0 ? [...allWebDirs] : undefined)
+    const {webConfigFiles, malformedWebConfigFiles} = await discoverWebFiles(
+      directory,
+      allWebDirs.size > 0 ? [...allWebDirs] : undefined,
+    )
 
     // Project metadata
     const packageJSONPath = joinPath(directory, 'package.json')
@@ -92,8 +107,11 @@ export class Project {
       nodeDependencies,
       usesWorkspaces,
       appConfigFiles,
+      malformedAppConfigFiles,
       extensionConfigFiles,
+      malformedExtensionConfigFiles,
       webConfigFiles,
+      malformedWebConfigFiles,
       dotenvFiles,
       hiddenConfigRaw,
     })
@@ -104,8 +122,11 @@ export class Project {
   readonly nodeDependencies: Record<string, string>
   readonly usesWorkspaces: boolean
   readonly appConfigFiles: TomlFile[]
+  readonly malformedAppConfigFiles: MalformedTomlFile[]
   readonly extensionConfigFiles: TomlFile[]
+  readonly malformedExtensionConfigFiles: MalformedTomlFile[]
   readonly webConfigFiles: TomlFile[]
+  readonly malformedWebConfigFiles: MalformedTomlFile[]
 
   /** All .env* files discovered in the project root, keyed by filename */
   readonly dotenvFiles: Map<string, DotEnvFile>
@@ -119,8 +140,11 @@ export class Project {
     nodeDependencies: Record<string, string>
     usesWorkspaces: boolean
     appConfigFiles: TomlFile[]
+    malformedAppConfigFiles: MalformedTomlFile[]
     extensionConfigFiles: TomlFile[]
+    malformedExtensionConfigFiles: MalformedTomlFile[]
     webConfigFiles: TomlFile[]
+    malformedWebConfigFiles: MalformedTomlFile[]
     dotenvFiles: Map<string, DotEnvFile>
     hiddenConfigRaw: JsonMapType
   }) {
@@ -129,8 +153,11 @@ export class Project {
     this.nodeDependencies = options.nodeDependencies
     this.usesWorkspaces = options.usesWorkspaces
     this.appConfigFiles = options.appConfigFiles
+    this.malformedAppConfigFiles = options.malformedAppConfigFiles
     this.extensionConfigFiles = options.extensionConfigFiles
+    this.malformedExtensionConfigFiles = options.malformedExtensionConfigFiles
     this.webConfigFiles = options.webConfigFiles
+    this.malformedWebConfigFiles = options.malformedWebConfigFiles
     this.dotenvFiles = options.dotenvFiles
     this.hiddenConfigRaw = options.hiddenConfigRaw
   }
@@ -145,6 +172,11 @@ export class Project {
   /** Find an app config file by client_id */
   appConfigByClientId(clientId: string): TomlFile | undefined {
     return this.appConfigFiles.find((file) => file.content.client_id === clientId)
+  }
+
+  /** Find a malformed app config file by filename. */
+  malformedAppConfigByName(fileName: string): MalformedTomlFile | undefined {
+    return this.malformedAppConfigFiles.find((file) => basename(file.path) === fileName)
   }
 
   /** The default app config (shopify.app.toml), if it exists */
@@ -167,34 +199,46 @@ async function findProjectRoot(startDirectory: string): Promise<string> {
     },
   )
   if (!found) {
-    throw new AbortError(
+    throw new LocalConfigError(
       `Could not find a Shopify app configuration file. Looked in ${startDirectory} and parent directories.`,
+      startDirectory,
     )
   }
   return found
 }
 
-async function discoverAppConfigFiles(directory: string): Promise<TomlFile[]> {
+async function discoverAppConfigFiles(
+  directory: string,
+): Promise<{appConfigFiles: TomlFile[]; malformedAppConfigFiles: MalformedTomlFile[]}> {
   const pattern = joinPath(directory, APP_CONFIG_GLOB)
   const paths = await glob(pattern)
   const validPaths = paths.filter((filePath) => APP_CONFIG_REGEX.test(basename(filePath)))
-  return readTomlFilesSafe(validPaths)
+  const {files, malformedFiles} = await readTomlFiles(validPaths)
+  return {appConfigFiles: files, malformedAppConfigFiles: malformedFiles}
 }
 
-async function discoverExtensionFiles(directory: string, extensionDirectories?: string[]): Promise<TomlFile[]> {
+async function discoverExtensionFiles(
+  directory: string,
+  extensionDirectories?: string[],
+): Promise<{extensionConfigFiles: TomlFile[]; malformedExtensionConfigFiles: MalformedTomlFile[]}> {
   const dirs = extensionDirectories ?? [DEFAULT_EXTENSION_DIR]
   const patterns = dirs.map((dir) => joinPath(directory, dir, EXTENSION_TOML))
   patterns.push(`!${joinPath(directory, NODE_MODULES_EXCLUDE)}`)
   const paths = await glob(patterns)
-  return readTomlFilesSafe(paths)
+  const {files, malformedFiles} = await readTomlFiles(paths)
+  return {extensionConfigFiles: files, malformedExtensionConfigFiles: malformedFiles}
 }
 
-async function discoverWebFiles(directory: string, webDirectories?: string[]): Promise<TomlFile[]> {
+async function discoverWebFiles(
+  directory: string,
+  webDirectories?: string[],
+): Promise<{webConfigFiles: TomlFile[]; malformedWebConfigFiles: MalformedTomlFile[]}> {
   const dirs = webDirectories ?? ['**']
   const patterns = dirs.map((dir) => joinPath(directory, dir, WEB_TOML))
   patterns.push(`!${joinPath(directory, NODE_MODULES_EXCLUDE)}`)
   const paths = await glob(patterns)
-  return readTomlFilesSafe(paths)
+  const {files, malformedFiles} = await readTomlFiles(paths)
+  return {webConfigFiles: files, malformedWebConfigFiles: malformedFiles}
 }
 
 /**
@@ -202,19 +246,40 @@ async function discoverWebFiles(directory: string, webDirectories?: string[]): P
  * This prevents a malformed inactive config or extension TOML
  * from blocking the active config from loading.
  */
-async function readTomlFilesSafe(paths: string[]): Promise<TomlFile[]> {
+async function readTomlFiles(paths: string[]): Promise<{files: TomlFile[]; malformedFiles: MalformedTomlFile[]}> {
   const results = await Promise.all(
     paths.map(async (filePath) => {
       try {
-        return await TomlFile.read(filePath)
+        return {file: await TomlFile.read(filePath)}
         // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch {
+      } catch (error) {
         outputDebug(`Skipping malformed TOML file: ${filePath}`)
-        return undefined
+        return {
+          malformedFile: {
+            path: filePath,
+            message: error instanceof Error ? error.message : `Failed to parse ${filePath}`,
+          },
+        }
       }
     }),
   )
-  return results.filter((file): file is TomlFile => file !== undefined)
+
+  const files: TomlFile[] = []
+  const malformedFiles: MalformedTomlFile[] = []
+
+  for (const result of results) {
+    if ('file' in result && result.file) {
+      files.push(result.file)
+    } else {
+      malformedFiles.push(result.malformedFile)
+    }
+  }
+
+  return {files, malformedFiles}
+}
+
+function getPreferredMalformedAppConfig(malformedFiles: MalformedTomlFile[]): MalformedTomlFile | undefined {
+  return malformedFiles.find((file) => basename(file.path) === configurationFileNames.app) ?? malformedFiles[0]
 }
 
 /** Discover all .env* files in the project root */

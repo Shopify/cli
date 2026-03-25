@@ -40,6 +40,8 @@ import {
   resolveDotEnv,
   resolveHiddenConfig,
   extensionFilesForConfig,
+  malformedExtensionFilesForConfig,
+  malformedWebFilesForConfig,
   webFilesForConfig,
 } from '../project/config-selection.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
@@ -538,6 +540,14 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   async loadWebs(appDirectory: string, webDirectories?: string[]): Promise<{webs: Web[]; usedCustomLayout: boolean}> {
     const activeConfig = this.activeConfigFile
     const webFiles = activeConfig ? webFilesForConfig(this.project, activeConfig) : this.project.webConfigFiles
+    const malformedWebFiles = activeConfig
+      ? malformedWebFilesForConfig(this.project, activeConfig)
+      : this.project.malformedWebConfigFiles
+
+    for (const malformedWebFile of malformedWebFiles) {
+      this.errors.addError(malformedWebFile.path, malformedWebFile.message)
+    }
+
     const webTomlPaths = webFiles.map((file) => file.path)
     const webResults = await Promise.all(
       webFiles.map(async (webFile) => {
@@ -692,6 +702,13 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     const extensionFiles = activeConfig
       ? extensionFilesForConfig(this.project, activeConfig)
       : this.project.extensionConfigFiles
+    const malformedExtensionFiles = activeConfig
+      ? malformedExtensionFilesForConfig(this.project, activeConfig)
+      : this.project.malformedExtensionConfigFiles
+
+    for (const malformedExtensionFile of malformedExtensionFiles) {
+      this.errors.addError(malformedExtensionFile.path, malformedExtensionFile.message)
+    }
 
     return extensionFiles.map(async (extensionFile) => {
       const configurationPath = extensionFile.path

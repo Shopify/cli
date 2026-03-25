@@ -1,4 +1,11 @@
-import {resolveDotEnv, resolveHiddenConfig, extensionFilesForConfig, webFilesForConfig} from './config-selection.js'
+import {
+  resolveDotEnv,
+  resolveHiddenConfig,
+  extensionFilesForConfig,
+  malformedExtensionFilesForConfig,
+  malformedWebFilesForConfig,
+  webFilesForConfig,
+} from './config-selection.js'
 import {Project} from './project.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
@@ -230,6 +237,33 @@ describe('extensionFilesForConfig', () => {
       expect(stagingExts[0]!.content.name).toBe('func2')
     })
   })
+
+  test('filters malformed extension files to the active config extension_directories', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "default"\nextension_directories = ["ext-a/*"]')
+      await writeFile(
+        joinPath(dir, 'shopify.app.staging.toml'),
+        'client_id = "staging"\nextension_directories = ["ext-b/*"]',
+      )
+
+      await mkdir(joinPath(dir, 'ext-a', 'broken-default'))
+      await writeFile(joinPath(dir, 'ext-a', 'broken-default', 'shopify.extension.toml'), '{{broken toml')
+      await mkdir(joinPath(dir, 'ext-b', 'broken-staging'))
+      await writeFile(joinPath(dir, 'ext-b', 'broken-staging', 'shopify.extension.toml'), '{{broken toml')
+
+      const project = await Project.load(dir)
+      const defaultConfig = project.appConfigByName('shopify.app.toml')!
+      const stagingConfig = project.appConfigByName('shopify.app.staging.toml')!
+
+      const defaultMalformed = malformedExtensionFilesForConfig(project, defaultConfig)
+      expect(defaultMalformed).toHaveLength(1)
+      expect(defaultMalformed[0]!.path).toContain('ext-a/broken-default/shopify.extension.toml')
+
+      const stagingMalformed = malformedExtensionFilesForConfig(project, stagingConfig)
+      expect(stagingMalformed).toHaveLength(1)
+      expect(stagingMalformed[0]!.path).toContain('ext-b/broken-staging/shopify.extension.toml')
+    })
+  })
 })
 
 describe('webFilesForConfig', () => {
@@ -285,6 +319,30 @@ describe('webFilesForConfig', () => {
       const webFiles = webFilesForConfig(project, defaultConfig)
       expect(webFiles).toHaveLength(1)
       expect(webFiles[0]!.content.name).toBe('web-a')
+    })
+  })
+
+  test('filters malformed web files to the active config web_directories', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await writeFile(joinPath(dir, 'shopify.app.toml'), 'client_id = "default"\nweb_directories = ["web-a"]')
+      await writeFile(joinPath(dir, 'shopify.app.staging.toml'), 'client_id = "staging"\nweb_directories = ["web-b"]')
+
+      await mkdir(joinPath(dir, 'web-a'))
+      await writeFile(joinPath(dir, 'web-a', 'shopify.web.toml'), '{{broken toml')
+      await mkdir(joinPath(dir, 'web-b'))
+      await writeFile(joinPath(dir, 'web-b', 'shopify.web.toml'), '{{broken toml')
+
+      const project = await Project.load(dir)
+      const defaultConfig = project.appConfigByName('shopify.app.toml')!
+      const stagingConfig = project.appConfigByName('shopify.app.staging.toml')!
+
+      const defaultMalformed = malformedWebFilesForConfig(project, defaultConfig)
+      expect(defaultMalformed).toHaveLength(1)
+      expect(defaultMalformed[0]!.path).toContain('web-a/shopify.web.toml')
+
+      const stagingMalformed = malformedWebFilesForConfig(project, stagingConfig)
+      expect(stagingMalformed).toHaveLength(1)
+      expect(stagingMalformed[0]!.path).toContain('web-b/shopify.web.toml')
     })
   })
 })

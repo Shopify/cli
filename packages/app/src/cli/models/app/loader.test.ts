@@ -29,6 +29,7 @@ import {installNodeModules, PackageJson} from '@shopify/cli-kit/node/node-packag
 import {inTemporaryDirectory, moveFile, mkdir, mkTmpDir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname, cwd, normalizePath} from '@shopify/cli-kit/node/path'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
@@ -608,6 +609,27 @@ describe('load', () => {
     expect(app.errors.isEmpty()).toBe(false)
   })
 
+  test('collects a malformed discovered extension TOML as an app error', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+    const configurationPath = blockConfigurationPath({name: 'my-extension'})
+    await writeBlockConfig({
+      blockConfiguration: '{{broken toml',
+      name: 'my-extension',
+    })
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(getRealExtensions(app)).toHaveLength(0)
+    const error = app.errors.getError(configurationPath)
+    expect(error).toBeDefined()
+    expect(stringifyMessage(error!)).toContain(configurationPath)
+    expect(stringifyMessage(error!)).toContain('Unknown character')
+    expect(app.errors.getIssues(configurationPath)).toEqual([])
+  })
+
   test('collects an error if the extension configuration is missing both extensions and type', async () => {
     // Given
     await writeConfig(appConfiguration, {
@@ -630,6 +652,24 @@ describe('load', () => {
     const app = await loadTestingApp()
     // Then — errors are collected, not thrown
     expect(app.errors.isEmpty()).toBe(false)
+  })
+
+  test('collects a malformed discovered web TOML as an app error', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(appConfiguration)
+    const configurationPath = joinPath(webDirectory, blocks.web.configurationName)
+    await writeFile(configurationPath, '{{broken toml')
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.webs).toHaveLength(0)
+    const error = app.errors.getError(configurationPath)
+    expect(error).toBeDefined()
+    expect(stringifyMessage(error!)).toContain(configurationPath)
+    expect(stringifyMessage(error!)).toContain('Unknown character')
+    expect(app.errors.getIssues(configurationPath)).toEqual([])
   })
 
   test('loads the app with web blocks', async () => {
