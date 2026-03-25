@@ -58,7 +58,7 @@ const THEME_PARTITION_REGEX = {
   staticAssetRegex: /^assets\/(?!.*\.liquid$)/,
 }
 
-const TEXT_FILE_TYPES = [
+const TEXT_FILE_TYPES_SET = new Set([
   'application/javascript',
   'application/json',
   'application/liquid',
@@ -66,7 +66,7 @@ const TEXT_FILE_TYPES = [
   'text/x-sass',
   'text/x-scss',
   'image/svg+xml',
-]
+])
 
 export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOptions): ThemeFileSystem {
   const files = new Map<string, ThemeAsset>()
@@ -526,7 +526,7 @@ export function partitionThemeFiles<T extends {key: string}>(files: T[]) {
 }
 
 export function isTextFile(path: string) {
-  return TEXT_FILE_TYPES.includes(lookupMimeType(path))
+  return TEXT_FILE_TYPES_SET.has(lookupMimeType(path))
 }
 
 export async function hasRequiredThemeDirectories(path: string) {
