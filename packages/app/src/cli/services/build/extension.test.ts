@@ -7,14 +7,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, readFile} from '@shopify/cli-kit/node/fs'
 import * as outputModule from '@shopify/cli-kit/node/output'
-import {open} from 'fs/promises'
-
-vi.mock('fs/promises', async () => {
-  const actual: any = await vi.importActual('fs/promises')
-  return {...actual, open: vi.fn(actual.open)}
-})
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -426,23 +420,13 @@ describe('buildFunctionExtension', () => {
 
   describe('schema version mismatch warning', () => {
     function mockSchemaFile(content: string) {
-      const buf = Buffer.from(content)
-      const handle = {
-        read: vi.fn().mockImplementation(async (target: Buffer, _offset: number, length: number) => {
-          const bytesRead = Math.min(buf.length, length)
-          buf.copy(target, 0, 0, bytesRead)
-          return {bytesRead, buffer: target}
-        }),
-        close: vi.fn().mockResolvedValue(undefined),
-      }
-      vi.mocked(open).mockResolvedValue(handle as any)
-      return handle
+      vi.mocked(readFile).mockResolvedValueOnce(content)
     }
 
     function mockSchemaNotFound() {
       const err = new Error('ENOENT') as NodeJS.ErrnoException
       err.code = 'ENOENT'
-      vi.mocked(open).mockRejectedValue(err)
+      vi.mocked(readFile).mockRejectedValueOnce(err)
     }
 
     test('warns when schema version does not match toml version', async () => {

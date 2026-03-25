@@ -12,7 +12,6 @@ import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
-import {open} from 'fs/promises'
 
 export interface ExtensionBuildOptions {
   /**
@@ -239,31 +238,23 @@ const API_VERSION_DIRECTIVE_RE = /@apiVersion\(version:\s*"([^"]+)"\)/
 
 async function warnIfSchemaMismatch(extension: ExtensionInstance<FunctionConfigType>) {
   const schemaPath = joinPath(extension.directory, 'schema.graphql')
-  let handle
+  let content: string
   try {
-    handle = await open(schemaPath, 'r')
+    content = await readFile(schemaPath)
   } catch (error) {
-    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') return
+    if (error instanceof Error && 'code' in error) return
     throw error
   }
-  try {
-    const buf = Buffer.alloc(512)
-    const {bytesRead} = await handle.read(buf, 0, 512, 0)
-    if (bytesRead === 0) return
 
-    const head = buf.toString('utf8', 0, bytesRead)
-    const match = API_VERSION_DIRECTIVE_RE.exec(head)
-    if (!match) return
+  const match = API_VERSION_DIRECTIVE_RE.exec(content)
+  if (!match) return
 
-    const schemaVersion = match[1]!
-    const tomlVersion = extension.configuration.api_version
-    if (schemaVersion !== tomlVersion) {
-      outputWarn(
-        `schema.graphql was generated for API version ${schemaVersion} but your extension targets ${tomlVersion}. Run \`shopify app function schema\` to update.`,
-      )
-    }
-  } finally {
-    await handle.close()
+  const schemaVersion = match[1]!
+  const tomlVersion = extension.configuration.api_version
+  if (schemaVersion !== tomlVersion) {
+    outputWarn(
+      `schema.graphql was generated for API version ${schemaVersion} but your extension targets ${tomlVersion}. Run \`shopify app function schema\` to update.`,
+    )
   }
 }
 
