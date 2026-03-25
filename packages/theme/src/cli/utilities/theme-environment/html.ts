@@ -20,6 +20,12 @@ import type {DevServerContext} from './types.js'
  */
 const KNOWN_RENDERING_PARAMS = new Set(['section_id', 'sections', 'app_block_id'])
 
+/**
+ * Pattern to extract theme ID from Shopify.theme object in HTML.
+ * Hoisted to module level to avoid recompilation on every HTML response.
+ */
+const SHOPIFY_THEME_ID_PATTERN = /Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/
+
 /** Tracks the number of consecutive theme ID mismatch redirects */
 let themeIdMismatchRedirects = 0
 
@@ -210,7 +216,7 @@ function assertThemeId(response: Response, html: string, expectedThemeId: string
    * ...;</script>
    * ```
    */
-  const obtainedThemeId = html.match(/Shopify\.theme\s*=\s*{[^}]+?"id":\s*"?(\d+)"?(}|,)/)?.[1]
+  const obtainedThemeId = html.match(SHOPIFY_THEME_ID_PATTERN)?.[1]
 
   if (obtainedThemeId && obtainedThemeId !== expectedThemeId) {
     throw new ThemeIdMismatchError(expectedThemeId, obtainedThemeId, response)
