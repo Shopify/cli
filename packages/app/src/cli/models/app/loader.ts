@@ -67,7 +67,7 @@ export type AppLoaderMode = 'strict' | 'report' | 'local'
  * Replaces passing the entire previous AppInterface — only genuine runtime
  * state (devUUIDs and tunnel URLs) needs to survive a reload.
  */
-export interface ReloadState {
+interface ReloadState {
   /** Extension handle → devUUID, preserved for dev-console stability across reloads */
   extensionDevUUIDs: Map<string, string>
   /** Previous dev tunnel URL, kept stable across reloads */
@@ -83,7 +83,7 @@ const abort: AbortOrReport = (errorMessage) => {
 /**
  * Loads a configuration file, and returns its content as an unvalidated object.
  */
-export async function loadConfigurationFileContent(
+async function loadConfigurationFileContent(
   filepath: string,
   abortOrReport: AbortOrReport = abort,
 ): Promise<JsonMapType> {
@@ -346,7 +346,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
  * such as during linking where templates may have extra configuration keys
  * (metafields, metaobjects, etc.).
  */
-export type OpaqueAppLoadResult =
+type OpaqueAppLoadResult =
   | {
       state: 'loaded-app'
       app: AppInterface

@@ -8,7 +8,6 @@ import {DeveloperPlatformClient} from '../../utilities/developer-platform-client
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
 import {Config} from '@oclif/core'
-import {isValidURL} from '@shopify/cli-kit/common/url'
 import {codespaceURL, codespacePortForwardingDomain, gitpodURL} from '@shopify/cli-kit/node/context/local'
 import {fanoutHooks} from '@shopify/cli-kit/node/plugins'
 import {terminalSupportsPrompting} from '@shopify/cli-kit/node/system'
@@ -257,23 +256,6 @@ export async function shouldOrPromptUpdateURLs(options: ShouldOrPromptUpdateURLs
     }
   }
   return shouldUpdateURLs
-}
-
-export function validateApplicationURLs(urls: ApplicationURLs): void {
-  if (!isValidURL(urls.applicationUrl))
-    throw new AbortError(`Invalid application URL: ${urls.applicationUrl}`, 'Valid format: "https://example.com"')
-
-  urls.redirectUrlWhitelist.forEach((url) => {
-    if (!isValidURL(url))
-      throw new AbortError(
-        `Invalid redirection URLs: ${urls.redirectUrlWhitelist}`,
-        'Valid format: "https://example.com/callback1,https://example.com/callback2"',
-      )
-  })
-
-  if (urls.appProxy?.proxyUrl && !isValidURL(urls.appProxy.proxyUrl)) {
-    throw new AbortError(`Invalid app proxy URL: ${urls.appProxy.proxyUrl}`, 'Valid format: "https://example.com"')
-  }
 }
 
 export async function startTunnelPlugin(config: Config, port: number, provider: string): Promise<TunnelClient> {

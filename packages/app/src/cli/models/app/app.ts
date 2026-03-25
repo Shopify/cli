@@ -89,7 +89,7 @@ export type AppConfiguration = zod.infer<typeof AppSchema>
 /**
  * App configuration for a normal, linked, app. Doesn't include properties that are module derived.
  */
-export type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema>
+type BasicAppConfigurationWithoutModules = zod.infer<typeof AppSchema>
 
 /**
  * The build section for a normal, linked app. The options here tweak the CLI's behavior when working with the app.
@@ -176,10 +176,10 @@ export const WebConfigurationSchema = zod.union([
   baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),
   baseWebConfigurationSchema.extend({type: webTypes}),
 ])
-export const ProcessedWebConfigurationSchema = baseWebConfigurationSchema.extend({roles: zod.array(webTypes)})
-
-export type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
-export type ProcessedWebConfiguration = zod.infer<typeof ProcessedWebConfigurationSchema>
+type WebConfiguration = zod.infer<typeof WebConfigurationSchema>
+type ProcessedWebConfiguration = zod.infer<
+  ReturnType<typeof baseWebConfigurationSchema.extend<{roles: zod.ZodArray<typeof webTypes>}>>
+>
 export type WebConfigurationCommands = keyof WebConfiguration['commands']
 
 export interface Web {
@@ -208,7 +208,7 @@ export interface AppManifest extends JsonMapType {
   modules: ManifestModule[]
 }
 
-export interface ManifestModule extends JsonMapType {
+interface ManifestModule extends JsonMapType {
   type: string
   handle: string
   uid: string
@@ -540,7 +540,7 @@ export function validateFunctionExtensionsWithUiHandle(
   return errors.length > 0 ? errors : undefined
 }
 
-export type UIExtensionType = zod.infer<typeof UIExtensionSchema>
+type UIExtensionType = zod.infer<typeof UIExtensionSchema>
 
 export function validateExtensionsHandlesInCollection(
   editorExtensionCollections: ExtensionInstance<EditorExtensionCollectionType>[],
