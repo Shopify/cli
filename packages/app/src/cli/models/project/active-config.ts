@@ -1,6 +1,7 @@
 import {Project} from './project.js'
 import {resolveDotEnv, resolveHiddenConfig} from './config-selection.js'
 import {AppHiddenConfig} from '../app/app.js'
+import {LocalConfigError} from '../app/local-config-error.js'
 import {getAppConfigurationFileName} from '../app/config-file-naming.js'
 import {getCachedAppInfo} from '../../services/local-storage.js'
 import use from '../../services/app/config/use.js'
@@ -8,7 +9,6 @@ import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 
 /** @public */
@@ -87,8 +87,14 @@ export async function selectActiveConfig(project: Project, userProvidedConfigNam
   const configurationFileName = getAppConfigurationFileName(configName)
   const file = project.appConfigByName(configurationFileName)
   if (!file) {
-    throw new AbortError(
+    const malformedFile = project.malformedAppConfigByName(configurationFileName)
+    if (malformedFile) {
+      throw new LocalConfigError(malformedFile.message, malformedFile.path)
+    }
+
+    throw new LocalConfigError(
       outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(project.directory)}.`,
+      joinPath(project.directory, configurationFileName),
     )
   }
 

@@ -1,4 +1,4 @@
-import {Project} from './project.js'
+import {Project, type MalformedTomlFile} from './project.js'
 import {AppHiddenConfig} from '../app/app.js'
 import {getAppConfigurationShorthand} from '../app/loader.js'
 import {dotEnvFileNames} from '../../constants.js'
@@ -76,14 +76,18 @@ export async function resolveHiddenConfig(project: Project, clientId: string | u
  * @public
  */
 export function extensionFilesForConfig(project: Project, activeConfig: TomlFile): TomlFile[] {
-  const configDirs = activeConfig.content.extension_directories
-  const dirs = Array.isArray(configDirs) && configDirs.length > 0 ? (configDirs as string[]) : ['extensions/*']
-
-  // Replicate the same glob patterns used by discoverExtensionFiles in project.ts:
-  // each directory pattern becomes "<dir>/*.extension.toml"
-  const globPatterns = dirs.map((dir) => `${dir}/*.extension.toml`)
+  const globPatterns = extensionGlobPatternsForConfig(activeConfig)
 
   return project.extensionConfigFiles.filter((file) => {
+    const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
+    return globPatterns.some((pattern) => matchGlob(relPath, pattern))
+  })
+}
+
+export function malformedExtensionFilesForConfig(project: Project, activeConfig: TomlFile): MalformedTomlFile[] {
+  const globPatterns = extensionGlobPatternsForConfig(activeConfig)
+
+  return project.malformedExtensionConfigFiles.filter((file) => {
     const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
     return globPatterns.some((pattern) => matchGlob(relPath, pattern))
   })
@@ -98,17 +102,35 @@ export function extensionFilesForConfig(project: Project, activeConfig: TomlFile
  * @public
  */
 export function webFilesForConfig(project: Project, activeConfig: TomlFile): TomlFile[] {
-  const configDirs = activeConfig.content.web_directories
-  if (!Array.isArray(configDirs) || configDirs.length === 0) {
-    return project.webConfigFiles
-  }
-
-  // Replicate the same glob patterns used by discoverWebFiles in project.ts:
-  // each directory pattern becomes "<dir>/shopify.web.toml"
-  const globPatterns = (configDirs as string[]).map((dir) => `${dir}/shopify.web.toml`)
+  const globPatterns = webGlobPatternsForConfig(activeConfig)
 
   return project.webConfigFiles.filter((file) => {
     const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
     return globPatterns.some((pattern) => matchGlob(relPath, pattern))
   })
+}
+
+export function malformedWebFilesForConfig(project: Project, activeConfig: TomlFile): MalformedTomlFile[] {
+  const globPatterns = webGlobPatternsForConfig(activeConfig)
+
+  return project.malformedWebConfigFiles.filter((file) => {
+    const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
+    return globPatterns.some((pattern) => matchGlob(relPath, pattern))
+  })
+}
+
+function extensionGlobPatternsForConfig(activeConfig: TomlFile): string[] {
+  const configDirs = activeConfig.content.extension_directories
+  const dirs = Array.isArray(configDirs) && configDirs.length > 0 ? (configDirs as string[]) : ['extensions/*']
+
+  return dirs.map((dir) => `${dir}/*.extension.toml`)
+}
+
+function webGlobPatternsForConfig(activeConfig: TomlFile): string[] {
+  const configDirs = activeConfig.content.web_directories
+  if (!Array.isArray(configDirs) || configDirs.length === 0) {
+    return ['**/shopify.web.toml']
+  }
+
+  return (configDirs as string[]).map((dir) => `${dir}/shopify.web.toml`)
 }

@@ -1,4 +1,5 @@
 import {Project} from './project.js'
+import {LocalConfigError} from '../app/local-config-error.js'
 import {describe, expect, test} from 'vitest'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, normalizePath} from '@shopify/cli-kit/node/path'
@@ -116,9 +117,21 @@ describe('Project', () => {
       })
     })
 
-    test('throws when no app config files found', async () => {
+    test('throws a LocalConfigError when no app config files are found', async () => {
       await inTemporaryDirectory(async (dir) => {
-        await expect(Project.load(dir)).rejects.toThrow()
+        try {
+          await Project.load(dir)
+          expect.fail('Expected Project.load to throw')
+        } catch (error) {
+          if (!(error instanceof LocalConfigError)) throw error
+          expect(error.configurationPath).toBe(dir)
+          expect(error.message).toMatch(/Could not find a Shopify app configuration file/)
+          expect(error.issues[0]).toMatchObject({
+            filePath: dir,
+            path: [],
+            pathString: 'root',
+          })
+        }
       })
     })
 
@@ -180,9 +193,11 @@ describe('Project', () => {
 
         const project = await Project.load(dir)
 
-        // Only the valid extension is loaded
+        // Only the valid extension is loaded, but malformed files are retained as discovery metadata
         expect(project.extensionConfigFiles).toHaveLength(1)
         expect(project.extensionConfigFiles[0]!.content.name).toBe('good')
+        expect(project.malformedExtensionConfigFiles).toHaveLength(1)
+        expect(project.malformedExtensionConfigFiles[0]!.path).toContain('bad-ext/shopify.extension.toml')
       })
     })
 
@@ -194,9 +209,11 @@ describe('Project', () => {
 
         const project = await Project.load(dir)
 
-        // Only the valid web config is loaded
+        // Only the valid web config is loaded, but malformed files are retained as discovery metadata
         expect(project.webConfigFiles).toHaveLength(1)
         expect(project.webConfigFiles[0]!.content.name).toBe('good')
+        expect(project.malformedWebConfigFiles).toHaveLength(1)
+        expect(project.malformedWebConfigFiles[0]!.path).toContain('bad-web/shopify.web.toml')
       })
     })
 
