@@ -1,6 +1,7 @@
 import {pollAppLogs} from './poll-app-logs.js'
 import {writeAppLogsToFile} from './write-app-logs.js'
 import {FunctionRunLog} from '../types.js'
+import {MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES} from '../utils.js'
 import {testDeveloperPlatformClient} from '../../../models/app/app.test-data.js'
 import {describe, expect, test, vi, beforeEach, afterEach} from 'vitest'
 import * as components from '@shopify/cli-kit/node/ui/components'
@@ -385,6 +386,36 @@ describe('pollAppLogs', () => {
     expect(vi.getTimerCount()).toEqual(1)
   })
 
+  test('retries at 60s interval when resubscribe throws on 401', async () => {
+    // Given
+    const outputDebugSpy = vi.spyOn(output, 'outputDebug')
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const timeoutSpy = vi.spyOn(global, 'setTimeout')
+    const response = {errors: ['Unauthorized'], status: 401}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
+    const failingResubscribe = vi.fn().mockRejectedValue(new Error('Network error'))
+
+    // When
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      developerPlatformClient: mockedDeveloperPlatformClient,
+      resubscribeCallback: failingResubscribe,
+      storeName: 'storeName',
+      organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
+    })
+
+    // Then
+    expect(failingResubscribe).toHaveBeenCalled()
+    expect(outputDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to resubscribe'))
+    expect(outputWarnSpy).toHaveBeenCalledWith('Request throttled while polling app logs.', stdout)
+    expect(timeoutSpy).toHaveBeenCalledWith(expect.any(Function), 60000)
+    expect(vi.getTimerCount()).toEqual(1)
+  })
+
   test('displays error message, waits, and retries if error occurred', async () => {
     // Given
     const outputDebugSpy = vi.spyOn(output, 'outputDebug')
@@ -410,6 +441,35 @@ describe('pollAppLogs', () => {
     // Then
     expect(outputWarnSpy).toHaveBeenCalledWith('Error while polling app logs.', stdout)
     expect(vi.getTimerCount()).toEqual(1)
+  })
+
+  test('stops polling after MAX consecutive resubscribe failures', async () => {
+    // Given
+    const outputWarnSpy = vi.spyOn(output, 'outputWarn')
+    const response = {errors: ['Unauthorized'], status: 401}
+    const mockedDeveloperPlatformClient = testDeveloperPlatformClient({
+      appLogs: vi.fn().mockResolvedValue(response),
+    })
+    const failingResubscribe = vi.fn().mockRejectedValue(new Error('Network error'))
+
+    // When - start with failures already at MAX - 1
+    await pollAppLogs({
+      stdout,
+      appLogsFetchInput: {jwtToken: JWT_TOKEN},
+      developerPlatformClient: mockedDeveloperPlatformClient,
+      resubscribeCallback: failingResubscribe,
+      storeName: 'storeName',
+      organizationId: 'organizationId',
+      logsDir: TEST_LOGS_DIR,
+      consecutiveResubscribeFailures: MAX_CONSECUTIVE_RESUBSCRIBE_FAILURES - 1,
+    })
+
+    // Then - should output terminal message and NOT schedule a timer
+    expect(outputWarnSpy).toHaveBeenCalledWith(
+      'App log streaming session has expired. Please restart your dev session.',
+      stdout,
+    )
+    expect(vi.getTimerCount()).toEqual(0)
   })
 
   test('displays error message, waits, and retries if response contained bad JSON', async () => {
