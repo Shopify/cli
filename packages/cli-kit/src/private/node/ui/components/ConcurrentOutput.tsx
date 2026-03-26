@@ -227,4 +227,4 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
     </Static>
   )
 }
-export {ConcurrentOutput, ConcurrentOutputContext, useConcurrentOutputContext}
+export {ConcurrentOutput, ConcurrentOutputContext, useConcurrentOutputContext, outputContextStore}
