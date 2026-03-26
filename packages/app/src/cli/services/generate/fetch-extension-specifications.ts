@@ -61,6 +61,44 @@ export async function fetchSpecifications({
   return [...updatedSpecs]
 }
 
+/**
+ * Build a RemoteAwareExtensionSpecification by explicitly merging local behavior with remote metadata.
+ *
+ * Local spec provides all behavior (methods, build config, schema parsing).
+ * Remote spec provides authoritative metadata — applied field-by-field to avoid silent overwrites.
+ */
+function buildRemoteAwareSpec(
+  localSpec: ExtensionSpecification,
+  remoteSpec: FlattenedRemoteSpecification,
+): RemoteAwareExtensionSpecification {
+  return {
+    // All local behavior (methods, build config, schema parsing, etc.)
+    ...localSpec,
+
+    // Explicit remote metadata overrides — only data fields
+    identifier: remoteSpec.identifier,
+    externalIdentifier: remoteSpec.externalIdentifier,
+    externalName: remoteSpec.externalName,
+    experience: remoteSpec.experience as ExtensionSpecification['experience'],
+    registrationLimit: remoteSpec.registrationLimit,
+    surface: remoteSpec.surface as string,
+
+    // Remote-only fields carried explicitly
+    options: remoteSpec.options,
+    gated: remoteSpec.gated,
+    validationSchema: remoteSpec.validationSchema,
+
+    // Always prefer the backend-derived uidStrategy (from __typename) when available.
+    // This correctly overrides the local spec's default (e.g. channel_config defaults to 'uuid'
+    // locally but the backend defines it as 'single').
+    // Falls back to the local spec value for the Partners API path (no __typename available).
+    uidStrategy: remoteSpec.options.uidStrategy ?? localSpec.uidStrategy ?? 'single',
+
+    // Marker
+    loadedRemoteSpecs: true as const,
+  }
+}
+
 async function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
   remote: FlattenedRemoteSpecification[],
@@ -84,14 +122,7 @@ async function mergeLocalAndRemoteSpecs(
     }
     if (!localSpec) return undefined
 
-    const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
-      FlattenedRemoteSpecification
-
-    // Always prefer the backend-derived uidStrategy (from __typename) when available.
-    // This correctly overrides the local spec's default (e.g. channel_config defaults to 'uuid'
-    // locally but the backend defines it as 'single').
-    // Falls back to the local spec value for the Partners API path (no __typename available).
-    merged.uidStrategy = merged.options.uidStrategy ?? localSpec.uidStrategy ?? 'single'
+    const merged = buildRemoteAwareSpec(localSpec, remoteSpec)
 
     // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
     // DEPRECATED: not all single specs are config specs.

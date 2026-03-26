@@ -142,10 +142,21 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
 
 /**
  * Extension specification, explicitly marked as having taken remote configuration values into account.
+ * Includes remote-only metadata that consumers need (e.g. options, gated, validationSchema).
  */
 export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> =
   ExtensionSpecification<TConfiguration> & {
     loadedRemoteSpecs: true
+    options: {
+      managementExperience: 'cli' | 'custom' | 'dashboard'
+      registrationLimit: number
+      uidIsClientProvided: boolean
+      uidStrategy?: 'single' | 'dynamic' | 'uuid'
+    }
+    gated: boolean
+    validationSchema?: {
+      jsonSchema: string
+    } | null
   }
 
 /**
