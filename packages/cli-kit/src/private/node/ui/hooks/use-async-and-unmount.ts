@@ -12,17 +12,21 @@ export default function useAsyncAndUnmount(
 ) {
   const {exit: unmountInk} = useApp()
 
+  const scheduleUnmount = (error?: Error) => {
+    // Defer unmounting to the next setImmediate so React 19 can flush
+    // batched state updates before the tree is torn down.
+    setImmediate(() => unmountInk(error))
+  }
+
   useEffect(() => {
     asyncFunction()
       .then(() => {
         onFulfilled()
-        // Defer unmount so React 19 can flush batched state updates
-        // before the component tree is torn down.
-        setImmediate(() => unmountInk())
+        scheduleUnmount()
       })
       .catch((error) => {
         onRejected(error)
-        setImmediate(() => unmountInk(error))
+        scheduleUnmount(error)
       })
   }, [])
 }
