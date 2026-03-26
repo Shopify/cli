@@ -97,6 +97,7 @@ export function buildExtensionConfig(extension: ExtensionRegistration, allExtens
         allExtensions,
         cardPresentDeployConfigToCLIConfig,
       )
+    case undefined:
     default:
       throw new Error(`Unsupported extension: ${context}`)
   }

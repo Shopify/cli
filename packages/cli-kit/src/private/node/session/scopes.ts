@@ -38,7 +38,8 @@ export function tokenExchangeScopes(api: API): string[] {
       return [scopeTransform('app-management')]
     case 'business-platform':
       return [scopeTransform('destinations')]
-    default:
+    case 'admin':
+    case 'storefront-renderer':
       throw new BugError(`API not supported for token exchange: ${api}`)
   }
 }

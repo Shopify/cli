@@ -69,6 +69,7 @@ function adaptedTreeKill(
   const pidsToProcess = new Set<string>()
   pidsToProcess.add(rootPid)
 
+  // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check -- default handles all Unix-like platforms
   switch (process.platform) {
     case 'win32':
       // @ts-ignore
@@ -87,7 +88,6 @@ function adaptedTreeKill(
         },
       )
       break
-    // Linux
     default:
       buildProcessTree(
         rootPid,

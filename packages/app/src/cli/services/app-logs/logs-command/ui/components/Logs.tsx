@@ -30,7 +30,7 @@ const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason):
       return 'No cached response available'
     case BackgroundExecutionReason.CacheAboutToExpire:
       return 'Cache is about to expire'
-    default:
+    case BackgroundExecutionReason.Unknown:
       return 'Unknown reason'
   }
 }
