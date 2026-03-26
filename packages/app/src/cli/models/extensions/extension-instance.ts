@@ -323,9 +323,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       stepResults: new Map(),
     }
 
-    const steps = clientSteps
-      .filter((lifecycle) => lifecycle.lifecycle === 'deploy')
-      .flatMap((lifecycle) => lifecycle.steps)
+    const steps = clientSteps.find((lifecycle) => lifecycle.lifecycle === 'deploy')?.steps ?? []
 
     for (const step of steps) {
       // eslint-disable-next-line no-await-in-loop
