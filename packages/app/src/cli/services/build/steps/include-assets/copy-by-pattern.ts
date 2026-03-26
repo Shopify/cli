@@ -12,7 +12,7 @@ export async function copyByPattern(
     ignore: string[]
   },
   options: {stdout: NodeJS.WritableStream},
-): Promise<number> {
+): Promise<{filesCopied: number; outputPaths: string[]}> {
   const {sourceDir, outputDir, patterns, ignore} = config
   const files = await glob(patterns, {
     absolute: true,
@@ -21,7 +21,7 @@ export async function copyByPattern(
   })
 
   if (files.length === 0) {
-    return 0
+    return {filesCopied: 0, outputPaths: []}
   }
 
   await mkdir(outputDir)
@@ -29,24 +29,25 @@ export async function copyByPattern(
   const filesToCopy = files
 
   const copyResults = await Promise.all(
-    filesToCopy.map(async (filepath): Promise<number> => {
+    filesToCopy.map(async (filepath): Promise<{count: number; path: string | null}> => {
       const relPath = relativePath(sourceDir, filepath)
       const destPath = joinPath(outputDir, relPath)
 
       if (relativePath(outputDir, destPath).startsWith('..')) {
         options.stdout.write(`Warning: skipping '${filepath}' - resolved destination is outside the output directory\n`)
-        return 0
+        return {count: 0, path: null}
       }
 
-      if (filepath === destPath) return 0
+      if (filepath === destPath) return {count: 0, path: null}
 
       await mkdir(dirname(destPath))
       await copyFile(filepath, destPath)
-      return 1
+      return {count: 1, path: relPath}
     }),
   )
 
-  const copiedCount = copyResults.reduce((sum, count) => sum + count, 0)
-  options.stdout.write(`Included ${copiedCount} file(s)\n`)
-  return copiedCount
+  const filesCopied = copyResults.reduce((sum, result) => sum + result.count, 0)
+  const outputPaths = copyResults.flatMap((result) => (result.path !== null ? [result.path] : []))
+  options.stdout.write(`Included ${filesCopied} file(s)\n`)
+  return {filesCopied, outputPaths}
 }

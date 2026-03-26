@@ -1,4 +1,4 @@
-import {joinPath, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 import type {BuildContext} from '../../client-steps.js'
 
@@ -9,6 +9,15 @@ import type {BuildContext} from '../../client-steps.js'
  * arrays are each used as source paths. Unresolved keys and missing paths are
  * skipped silently with a log message. When `destination` is given, the
  * resolved directory is placed under `outputDir/destination`.
+ *
+ * File sources are copied with `copyFile` using a unique destination name
+ * (via `findUniqueDestPath`) to prevent overwrites when multiple config values
+ * resolve to files with the same basename. Directory sources use
+ * `copyDirectoryContents`.
+ *
+ * Returns `{filesCopied, pathMap}` where `pathMap` maps each raw config path
+ * value to its output-relative location. File sources map to a single string.
+ * Directory sources map to a `string[]` of every output-relative file path.
  */
 export async function copyConfigKeyEntry(
   config: {
@@ -19,7 +28,7 @@ export async function copyConfigKeyEntry(
     destination?: string
   },
   options: {stdout: NodeJS.WritableStream},
-): Promise<number> {
+): Promise<{filesCopied: number; pathMap: Map<string, string | string[]>}> {
   const {key, baseDir, outputDir, context, destination} = config
   const value = getNestedValue(context.extension.configuration, key)
   let paths: string[]
@@ -33,33 +42,75 @@ export async function copyConfigKeyEntry(
 
   if (paths.length === 0) {
     options.stdout.write(`No value for configKey '${key}', skipping\n`)
-    return 0
+    return {filesCopied: 0, pathMap: new Map()}
   }
 
   const effectiveOutputDir = destination ? joinPath(outputDir, destination) : outputDir
 
-  const counts = await Promise.all(
-    paths.map(async (sourcePath) => {
-      const fullPath = joinPath(baseDir, sourcePath)
-      const exists = await fileExists(fullPath)
-      if (!exists) {
-        options.stdout.write(`Warning: path '${sourcePath}' does not exist, skipping\n`)
-        return 0
-      }
-      if (!(await isDirectory(fullPath))) {
-        const destPath = joinPath(effectiveOutputDir, basename(fullPath))
-        await mkdir(effectiveOutputDir)
-        await copyFile(fullPath, destPath)
-        options.stdout.write(`Included '${sourcePath}'\n`)
-        return 1
-      }
-      await copyDirectoryContents(fullPath, effectiveOutputDir)
-      const copied = await glob(['**/*'], {cwd: effectiveOutputDir, absolute: false})
+  // Deduplicate: the same source path shared across multiple targets
+  // should only be copied once; the pathMap entry is reused for all references.
+  const uniquePaths = [...new Set(paths)]
+
+  // Process sequentially — findUniqueDestPath relies on filesystem state that
+  // would race if multiple copies ran in parallel against the same output dir.
+  const pathMap = new Map<string, string | string[]>()
+  let filesCopied = 0
+
+  /* eslint-disable no-await-in-loop */
+  for (const sourcePath of uniquePaths) {
+    const fullPath = joinPath(baseDir, sourcePath)
+    const exists = await fileExists(fullPath)
+    if (!exists) {
+      options.stdout.write(`Warning: path '${sourcePath}' does not exist, skipping\n`)
+      continue
+    }
+
+    const sourceIsDir = await isDirectory(fullPath)
+
+    const destDir = effectiveOutputDir
+
+    if (sourceIsDir) {
+      await copyDirectoryContents(fullPath, destDir)
+      const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
       options.stdout.write(`Included '${sourcePath}'\n`)
-      return copied.length
-    }),
-  )
-  return counts.reduce((sum, count) => sum + count, 0)
+      const relFiles = copied.map((file) => relativePath(outputDir, joinPath(destDir, file)))
+      pathMap.set(sourcePath, relFiles)
+      filesCopied += copied.length
+    } else {
+      await mkdir(destDir)
+      const uniqueDestPath = await findUniqueDestPath(destDir, basename(fullPath))
+      await copyFile(fullPath, uniqueDestPath)
+      const outputRelative = relativePath(outputDir, uniqueDestPath)
+      options.stdout.write(`Included '${sourcePath}'\n`)
+      pathMap.set(sourcePath, outputRelative)
+      filesCopied += 1
+    }
+  }
+  /* eslint-enable no-await-in-loop */
+
+  return {filesCopied, pathMap}
+}
+
+/**
+ * Returns a destination path for `filename` inside `dir` that does not already
+ * exist. If `dir/filename` is free, returns it as-is. Otherwise appends a
+ * counter before the extension: `name-1.ext`, `name-2.ext`, …
+ */
+async function findUniqueDestPath(dir: string, filename: string): Promise<string> {
+  const candidate = joinPath(dir, filename)
+  if (!(await fileExists(candidate))) return candidate
+
+  const ext = extname(filename)
+  const base = ext ? filename.slice(0, -ext.length) : filename
+  let counter = 1
+  const maxAttempts = 1000
+  while (counter <= maxAttempts) {
+    const next = joinPath(dir, `${base}-${counter}${ext}`)
+    // eslint-disable-next-line no-await-in-loop
+    if (!(await fileExists(next))) return next
+    counter++
+  }
+  throw new Error(`Unable to find unique destination path for '${filename}' in '${dir}' after ${maxAttempts} attempts`)
 }
 
 /**
@@ -74,7 +125,7 @@ export async function copyConfigKeyEntry(
  *   "targeting.tools"                    → [name:"targeting",...], [name:"tools",...]
  *   "extensions[].targeting[].schema"   → [name:"extensions", flatten:true], ...
  */
-function tokenizePath(path: string): {name: string; flatten: boolean}[] {
+export function tokenizePath(path: string): {name: string; flatten: boolean}[] {
   return path.split('.').map((part) => {
     const flatten = part.endsWith('[]')
     return {name: flatten ? part.slice(0, -2) : part, flatten}
@@ -92,7 +143,7 @@ function tokenizePath(path: string): {name: string; flatten: boolean}[] {
  *   of nesting. Returns `undefined` if the value at that point is not an array
  *   — the `[]` suffix is a contract that an array is expected there.
  */
-function getNestedValue(obj: {[key: string]: unknown}, path: string): unknown {
+export function getNestedValue(obj: {[key: string]: unknown}, path: string): unknown {
   let current: unknown = obj
 
   for (const {name, flatten} of tokenizePath(path)) {
