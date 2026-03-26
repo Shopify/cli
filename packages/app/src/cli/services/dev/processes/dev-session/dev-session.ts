@@ -246,7 +246,12 @@ export class DevSession {
     // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
     // async nature of the process.
     if (!this.statusManager.status.isReady && !isUnitTest()) {
-      throw new AbortError('Failed to start dev preview.')
+      // Deferring the throw with setImmediate so the `logUserErrors` call above has a chance to
+      // finish logging `result.error` before the process exits. A synchronous throw here would
+      // abort the function immediately, swallowing the error output.
+      setImmediate(() => {
+        throw new AbortError('Failed to start dev preview.')
+      })
     }
   }
 
