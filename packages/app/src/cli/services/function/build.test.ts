@@ -29,6 +29,14 @@ import {build as esBuild} from 'esbuild'
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
 
+vi.mock('./binaries.js', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    downloadBinary: vi.fn(),
+  }
+})
+
 vi.mock('esbuild', async () => {
   const esbuild: any = await vi.importActual('esbuild')
   return {
