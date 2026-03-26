@@ -2831,14 +2831,14 @@ DESCRIPTION
 
 ## `shopify upgrade`
 
-Upgrades Shopify CLI using your package manager.
+Upgrades Shopify CLI.
 
 ```
 USAGE
   $ shopify upgrade
 
 DESCRIPTION
-  Upgrades Shopify CLI using your package manager.
+  Upgrades Shopify CLI.
 
   Upgrades Shopify CLI using your package manager.
 ```

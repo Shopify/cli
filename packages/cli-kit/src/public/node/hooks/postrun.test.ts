@@ -22,6 +22,18 @@ vi.mock('../version.js', async (importOriginal) => {
   }
 })
 
+// Always execute the task so the rate limit doesn't interfere with tests
+vi.mock('../../../private/node/conf-store.js', async (importOriginal) => {
+  const actual: any = await importOriginal()
+  return {
+    ...actual,
+    runAtMinimumInterval: vi.fn(async (_key: string, _interval: object, task: () => Promise<void>) => {
+      await task()
+      return true
+    }),
+  }
+})
+
 afterEach(() => {
   mockAndCaptureOutput().clear()
 })
