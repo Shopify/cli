@@ -43,7 +43,6 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'product_subscription',
           externalIdentifier: 'product_subscription_external',
           registrationLimit: 1,
-          surface: 'admin',
         }),
       ]),
     )
@@ -55,7 +54,6 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'ui_extension',
           externalIdentifier: 'ui_extension_external',
           registrationLimit: 50,
-          surface: 'all',
         }),
       ]),
     )
@@ -68,7 +66,6 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'product_subscription',
           externalIdentifier: 'product_subscription_external',
           registrationLimit: 1,
-          surface: 'admin',
         }),
       ]),
     )
@@ -81,7 +78,6 @@ describe('fetchExtensionSpecifications', () => {
           identifier: 'theme',
           externalIdentifier: 'theme_external',
           registrationLimit: 1,
-          surface: undefined,
         }),
       ]),
     )

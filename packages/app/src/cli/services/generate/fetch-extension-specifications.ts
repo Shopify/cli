@@ -44,9 +44,6 @@ export async function fetchSpecifications({
       if (spec.identifier === 'theme_app_extension') spec.identifier = 'theme'
       if (spec.identifier === 'subscription_management') spec.identifier = 'product_subscription'
 
-      newSpec.registrationLimit = spec.options.registrationLimit
-      newSpec.surface = spec.features?.argo?.surface
-
       // Hardcoded value for the post purchase extension because the value is wrong in the API
       if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
 
@@ -74,45 +71,17 @@ async function mergeLocalAndRemoteSpecs(
       const hasLocalization = normalisedSchema.properties?.localization !== undefined
       localSpec = createContractBasedModuleSpecification({
         identifier: remoteSpec.identifier,
-        uidStrategy: remoteSpec.options.uidStrategy,
+        uidStrategy: remoteSpec.uidStrategy,
         appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
       })
-      // Seed uidStrategy for contract specs using uidIsClientProvided as fallback (Partners API path).
-      // This will be overridden below if the backend provides a typename-derived value.
-      localSpec.uidStrategy =
-        remoteSpec.options.uidStrategy ?? (remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single')
     }
     if (!localSpec) return undefined
 
     const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
       FlattenedRemoteSpecification
 
-    // Always prefer the backend-derived uidStrategy (from __typename) when available.
-    // This correctly overrides the local spec's default (e.g. channel_config defaults to 'uuid'
-    // locally but the backend defines it as 'single').
-    // Falls back to the local spec value for the Partners API path (no __typename available).
-    merged.uidStrategy = merged.options.uidStrategy ?? localSpec.uidStrategy ?? 'single'
-
-    // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
-    // DEPRECATED: not all single specs are config specs.
-    // Should be removed once we can get the experience from the API.
-    let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
-    switch (merged.uidStrategy) {
-      case 'uuid':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-      case 'single':
-        handleInvalidAdditionalProperties = 'strip'
-        break
-      case 'dynamic':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-    }
-
-    // If the experience is 'configuration', force strip.
-    if (merged.experience === 'configuration') {
-      handleInvalidAdditionalProperties = 'strip'
-    }
+    let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip'
+    if (merged.experience === 'extension') handleInvalidAdditionalProperties = 'fail'
 
     const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
 

@@ -32,7 +32,7 @@ export interface CustomTransformationConfig {
   reverse?: (obj: object, options?: {flags?: Flag[]}) => object
 }
 
-type ExtensionExperience = 'extension' | 'configuration'
+export type ExtensionExperience = 'extension' | 'configuration'
 
 export function isAppConfigSpecification(spec: {experience: string}): boolean {
   return spec.experience === 'configuration'

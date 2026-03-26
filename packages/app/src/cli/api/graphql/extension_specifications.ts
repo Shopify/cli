@@ -37,6 +37,21 @@ export interface RemoteSpecification {
   gated: boolean
   externalIdentifier: string
   experience: 'extension' | 'configuration' | 'deprecated'
+  managementExperience: 'cli' | 'custom' | 'dashboard'
+  registrationLimit: number
+  uidStrategy: 'single' | 'dynamic' | 'uuid'
+  validationSchema?: {
+    jsonSchema: string
+  } | null
+}
+
+export interface PartnersRemoteSpecification {
+  name: string
+  externalName: string
+  identifier: string
+  gated: boolean
+  externalIdentifier: string
+  experience: 'extension' | 'configuration' | 'deprecated'
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
@@ -59,5 +74,5 @@ export interface FlattenedRemoteSpecification extends RemoteSpecification {
 }
 
 export interface ExtensionSpecificationsQuerySchema {
-  extensionSpecifications: RemoteSpecification[]
+  extensionSpecifications: PartnersRemoteSpecification[]
 }
