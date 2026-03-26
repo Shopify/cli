@@ -1,10 +1,16 @@
 import {createContractBasedModuleSpecification} from '../specification.js'
 
-export const AdminSpecIdentifier = 'admin'
-
 const adminSpecificationSpec = createContractBasedModuleSpecification({
   identifier: 'admin',
   uidStrategy: 'single',
+  transformRemoteToLocal: (remoteContent) => {
+    return {
+      admin: {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        static_root: (remoteContent as any).admin.static_root,
+      },
+    }
+  },
   buildConfig: {
     mode: 'copy_files',
     filePatterns: [],

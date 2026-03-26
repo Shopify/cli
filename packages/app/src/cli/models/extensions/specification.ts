@@ -289,7 +289,7 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: Pick<
     CreateExtensionSpecType<TConfiguration>,
-    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy' | 'clientSteps'
+    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy' | 'clientSteps' | 'transformRemoteToLocal'
   >,
 ) {
   return createExtensionSpecification({
@@ -299,6 +299,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     clientSteps: spec.clientSteps,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
     uidStrategy: spec.uidStrategy ?? 'single',
+    transformRemoteToLocal: spec.transformRemoteToLocal,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
