@@ -690,7 +690,6 @@
           "name": "config",
           "type": "option"
         },
-<<<<<<< HEAD
         "json": {
           "allowNo": false,
           "char": "j",
@@ -700,8 +699,6 @@
           "name": "json",
           "type": "boolean"
         },
-=======
->>>>>>> 9f31e82226 (Rate-limit entire auto-upgrade flow to once per day)
         "no-color": {
           "allowNo": false,
           "description": "Disable color output.",
@@ -8033,13 +8030,8 @@
       ],
       "args": {
       },
-<<<<<<< HEAD
       "description": "Upgrades Shopify CLI using your package manager.",
       "descriptionWithMarkdown": "Upgrades Shopify CLI using your package manager.",
-=======
-      "description": "Shows details on how to upgrade Shopify CLI.",
-      "descriptionWithMarkdown": "Shows details on how to upgrade Shopify CLI.",
->>>>>>> 9f31e82226 (Rate-limit entire auto-upgrade flow to once per day)
       "enableJsonFlag": false,
       "flags": {
       },
@@ -8051,11 +8043,7 @@
       "pluginName": "@shopify/cli",
       "pluginType": "core",
       "strict": true,
-<<<<<<< HEAD
       "summary": "Upgrades Shopify CLI."
-=======
-      "summary": "Shows details on how to upgrade Shopify CLI."
->>>>>>> 9f31e82226 (Rate-limit entire auto-upgrade flow to once per day)
     },
     "version": {
       "aliases": [
