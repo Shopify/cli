@@ -20,6 +20,27 @@ describe('cli', () => {
     expect(env.FORCE_COLOR).toBe('0')
   })
 
+  test('triggers no colour mode based on --json flag', async () => {
+    const launchCLI = vi.fn()
+    const env = {} as any
+    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['--json'], env)
+    expect(env.FORCE_COLOR).toBe('0')
+  })
+
+  test('triggers no colour mode based on -j flag', async () => {
+    const launchCLI = vi.fn()
+    const env = {} as any
+    await runCLI({moduleURL: 'test', development: false}, launchCLI, ['-j'], env)
+    expect(env.FORCE_COLOR).toBe('0')
+  })
+
+  test('triggers no colour mode based on SHOPIFY_FLAG_JSON environment variable', async () => {
+    const launchCLI = vi.fn()
+    const env = {SHOPIFY_FLAG_JSON: 'TRUE'} as any
+    await runCLI({moduleURL: 'test', development: false}, launchCLI, [], env)
+    expect(env.FORCE_COLOR).toBe('0')
+  })
+
   test('triggers no colour mode based on NO_COLOR environment variable', async () => {
     const launchCLI = vi.fn()
     const env = {NO_COLOR: 'TRUE'} as any

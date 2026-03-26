@@ -25,7 +25,7 @@ export interface appfunctionrun {
   '-i, --input <value>'?: string
 
   /**
-   * Output the result as JSON.
+   * Output the result as JSON. Automatically disables color output.
    * @environment SHOPIFY_FLAG_JSON
    */
   '-j, --json'?: ''

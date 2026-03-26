@@ -1585,7 +1585,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -1673,7 +1673,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -1798,7 +1798,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -2444,7 +2444,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -2656,7 +2656,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -2964,7 +2964,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -5343,7 +5343,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -6314,7 +6314,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -6414,7 +6414,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -6620,7 +6620,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -7062,7 +7062,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
@@ -7456,7 +7456,7 @@
         "json": {
           "allowNo": false,
           "char": "j",
-          "description": "Output the result as JSON.",
+          "description": "Output the result as JSON. Automatically disables color output.",
           "env": "SHOPIFY_FLAG_JSON",
           "hidden": false,
           "name": "json",
