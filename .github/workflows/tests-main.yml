@@ -93,6 +93,9 @@ jobs:
           shard: ${{ matrix.shard }}
 
   test-coverage-merge:
+    # Parity note:
+    # Keep the core test/coverage topology in sync with tests-pr.yml unless a
+    # difference is intentionally required and documented inline.
     # Only publish a new baseline after the full main matrix is green.
     needs: [main, test-coverage-shard]
     name: 'Test Coverage'
