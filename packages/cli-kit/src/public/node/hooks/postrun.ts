@@ -36,12 +36,28 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
 
 /**
  * Auto-upgrades the CLI after a command completes, if a newer version is available.
+ * The entire flow is rate-limited to once per day unless forced via SHOPIFY_CLI_FORCE_AUTO_UPGRADE.
  *
  * @returns Resolves when the upgrade attempt (or fallback warning) is complete.
  */
 export async function autoUpgradeIfNeeded(): Promise<void> {
   const newerVersion = versionToAutoUpgrade()
   if (!newerVersion) return
+
+  const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
+
+  // SHOPIFY_CLI_FORCE_AUTO_UPGRADE bypasses the daily rate limit so tests and intentional upgrades always run.
+  if (forced) {
+    await performAutoUpgrade(newerVersion)
+  } else {
+    // Rate-limit the entire upgrade flow to once per day to avoid repeated attempts and major-version warnings.
+    await runAtMinimumInterval('auto-upgrade', {days: 1}, async () => {
+      await performAutoUpgrade(newerVersion)
+    })
+  }
+}
+
+async function performAutoUpgrade(newerVersion: string): Promise<void> {
   if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
     return outputWarn(getOutputUpdateCLIReminder(newerVersion))
   }
@@ -52,10 +68,7 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)
-    // Only show the manual install reminder once per day to avoid spamming on every command
-    await runAtMinimumInterval('auto-upgrade-failure-reminder', {days: 1}, async () => {
-      outputWarn(getOutputUpdateCLIReminder(newerVersion))
-    })
+    outputWarn(getOutputUpdateCLIReminder(newerVersion))
     // Report to Observe as a handled error without showing anything extra to the user
     const {sendErrorToBugsnag} = await import('../error-handler.js')
     const enrichedError = Object.assign(new Error(errorMessage), {
