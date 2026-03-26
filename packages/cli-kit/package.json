@@ -139,7 +139,7 @@
     "graphql": "16.10.0",
     "graphql-request": "6.1.0",
     "ignore": "6.0.2",
-    "ink": "6.2.0",
+    "ink": "6.8.0",
     "is-executable": "2.0.1",
     "is-interactive": "2.0.0",
     "is-wsl": "3.1.0",

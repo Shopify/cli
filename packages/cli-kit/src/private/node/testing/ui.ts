@@ -81,7 +81,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
     rerender: instance.rerender,
     unmount: instance.unmount,
     cleanup: instance.cleanup,
-    waitUntilExit: () => trackPromise(instance.waitUntilExit()),
+    waitUntilExit: () => trackPromise(instance.waitUntilExit().then(() => {})),
     stdout,
     stderr,
     stdin,
