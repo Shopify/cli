@@ -84,18 +84,16 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     template: templates.reactRouter.url,
   } as const
 
-  if (!template) {
-    template = await renderSelectPrompt({
-      choices: templateOptionsInOrder.map((key) => {
-        return {
-          label: templates[key].label || key,
-          value: key,
-        }
-      }),
-      message: 'Get started building your app:',
-      defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
-    })
-  }
+  template ??= await renderSelectPrompt({
+    choices: templateOptionsInOrder.map((key) => {
+      return {
+        label: templates[key].label || key, // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty label should show key
+        value: key,
+      }
+    }),
+    message: 'Get started building your app:',
+    defaultValue: allTemplates.find((key) => templates[key].url === defaults.template),
+  })
 
   const answers: InitOutput = {
     ...options,
@@ -129,7 +127,7 @@ const init = async (options: InitOptions): Promise<InitOutput> => {
     selectedUrl = `${selectedUrl}#${branch}`
   }
 
-  answers.template = selectedUrl || answers.template || defaults.template
+  answers.template = selectedUrl || answers.template || defaults.template // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty URL should fall through
 
   answers.globalCLIResult = await installGlobalCLIPrompt()
 

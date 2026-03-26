@@ -79,7 +79,7 @@ export async function executeIncludeAssetsStep(
   const counts = await Promise.all(
     config.inclusions.map(async (entry) => {
       const warn = (msg: string) => options.stdout.write(msg)
-      const sanitizedDest = entry.destination !== undefined ? sanitizeRelativePath(entry.destination, warn) : undefined
+      const sanitizedDest = entry.destination === undefined ? undefined : sanitizeRelativePath(entry.destination, warn)
 
       if (entry.type === 'pattern') {
         const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory

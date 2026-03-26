@@ -16,7 +16,7 @@ export interface TableProps<T extends ScalarDict> {
 
 function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: TableProps<T>) {
   const columns = Object.entries(columnsConfiguration).map(([key, {header, color}]) => {
-    const headerWidth = String(header || key).length
+    const headerWidth = String(header ?? key).length
     const columnWidths = rows.map((row) => {
       const value = row[key]
 
@@ -34,7 +34,7 @@ function Table<T extends ScalarDict>({rows, columns: columnsConfiguration}: Tabl
     }
   })
   const headings = Object.entries(columnsConfiguration).reduce(
-    (headings, [column, {header}]) => ({...headings, [column]: header || column}),
+    (headings, [column, {header}]) => ({...headings, [column]: header ?? column}),
     {},
   )
 

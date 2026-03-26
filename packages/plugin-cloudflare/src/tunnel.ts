@@ -112,7 +112,7 @@ class TunnelClientInstance implements TunnelClient {
       write(chunk, _, callback) {
         outputDebug(chunk.toString())
         if (resolved) return
-        if (!url) url = findUrl(chunk)
+        url ??= findUrl(chunk)
         if (findConnection(chunk)) connected = true
         if (connected) {
           if (url) {

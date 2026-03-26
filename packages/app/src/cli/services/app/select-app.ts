@@ -27,11 +27,11 @@ export async function fetchAppRemoteConfiguration(
   flags: Flag[],
   activeAppVersion?: AppVersion,
 ) {
-  const appVersion = activeAppVersion || (await developerPlatformClient.activeAppVersion(remoteApp))
+  const appVersion = activeAppVersion ?? (await developerPlatformClient.activeAppVersion(remoteApp))
   const appModuleVersionsConfig =
     appVersion?.appModuleVersions.filter(
       (module) => extensionTypeStrategy(specifications, module.specification?.identifier) !== 'uuid',
-    ) || []
+    ) ?? []
 
   // This might be droppable -- if remote apps always have an active version and some modules?
   if (appModuleVersionsConfig.length === 0) return undefined

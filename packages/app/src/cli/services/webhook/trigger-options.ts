@@ -104,8 +104,8 @@ export async function collectAddressAndMethod(
   deliveryMethod: string | undefined,
   address: string | undefined,
 ): Promise<[string, string]> {
-  const actualMethod = deliveryMethod || deliveryMethodForAddress(address) || (await deliveryMethodPrompt())
-  const actualAddress = address || (await addressPrompt(actualMethod))
+  const actualMethod = deliveryMethod ?? deliveryMethodForAddress(address) ?? (await deliveryMethodPrompt())
+  const actualAddress = address ?? (await addressPrompt(actualMethod))
 
   return validateAddressMethod(actualAddress, actualMethod)
 }

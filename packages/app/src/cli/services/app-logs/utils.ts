@@ -84,11 +84,11 @@ export function parseNetworkAccessRequestExecutedPayload(payload: string): Netwo
   const parsedPayload = JSON.parse(payload)
   return new NetworkAccessRequestExecutedLog({
     attempt: parsedPayload.attempt,
-    connectTimeMs: parsedPayload.connect_time_ms || null,
-    writeReadTimeMs: parsedPayload.write_read_time_ms || null,
+    connectTimeMs: parsedPayload.connect_time_ms ?? null,
+    writeReadTimeMs: parsedPayload.write_read_time_ms ?? null,
     httpRequest: parsedPayload.http_request,
-    httpResponse: parsedPayload.http_response || null,
-    error: parsedPayload.error || null,
+    httpResponse: parsedPayload.http_response ?? null,
+    error: parsedPayload.error ?? null,
   })
 }
 

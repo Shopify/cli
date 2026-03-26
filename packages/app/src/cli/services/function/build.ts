@@ -464,7 +464,7 @@ export function ${identifier}() { return __runFunction(${alias}) }`
 }
 
 export function jsExports(fun: ExtensionInstance<FunctionConfigType>) {
-  const targets = fun.configuration.targeting || []
+  const targets = fun.configuration.targeting ?? []
   const withoutExport = targets.filter((target) => !target.export)
   const withExport = targets.filter((target) => Boolean(target.export))
 

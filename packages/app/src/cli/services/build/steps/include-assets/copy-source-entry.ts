@@ -27,11 +27,11 @@ export async function copySourceEntry(
   // Resolve destination path and log message up front, then dispatch on file vs directory.
   let destPath: string
   let logMsg: string
-  if (destination !== undefined) {
-    destPath = joinPath(outputDir, destination)
+  if (destination === undefined) {
+    destPath = joinPath(outputDir, basename(sourcePath))
     logMsg = `Included ${source}\n`
   } else {
-    destPath = joinPath(outputDir, basename(sourcePath))
+    destPath = joinPath(outputDir, destination)
     logMsg = `Included ${source}\n`
   }
 

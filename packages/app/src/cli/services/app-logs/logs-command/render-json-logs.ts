@@ -87,7 +87,7 @@ export async function renderJsonLogs({
       options: {variables, developerPlatformClient},
       pollOptions: {
         jwtToken: nextJwtToken || pollOptions.jwtToken,
-        cursor: nextCursor || pollOptions.cursor,
+        cursor: nextCursor ?? pollOptions.cursor,
         filters: pollOptions.filters,
       },
       storeNameById,

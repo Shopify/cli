@@ -92,7 +92,7 @@ export function patchEnvFile(envFileContent: string | null, updatedValues: Recor
 
     if (match) {
       const key = match[1]!.trim()
-      const value = (match[2] || '').trim()
+      const value = (match[2] ?? '').trim()
 
       if (/^["'`]/.test(value) && !value.endsWith(value[0]!)) {
         multilineVariable = {

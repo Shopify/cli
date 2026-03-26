@@ -1,4 +1,3 @@
-/* eslint-disable @shopify/cli/specific-imports-in-bootstrap-code */
 import VersionCommand from './cli/commands/version.js'
 import Search from './cli/commands/search.js'
 import Upgrade from './cli/commands/upgrade.js'

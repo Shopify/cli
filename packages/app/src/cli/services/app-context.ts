@@ -92,9 +92,7 @@ export async function linkedAppContext({
   const effectiveClientId = clientId ?? configClientId
 
   // Fetch the remote app, using a different clientID if provided via flag.
-  if (!remoteApp) {
-    remoteApp = await appFromIdentifiers({apiKey: effectiveClientId})
-  }
+  remoteApp ??= await appFromIdentifiers({apiKey: effectiveClientId})
   const developerPlatformClient = remoteApp.developerPlatformClient
 
   const organization = await fetchOrgFromId(remoteApp.organizationId, developerPlatformClient)

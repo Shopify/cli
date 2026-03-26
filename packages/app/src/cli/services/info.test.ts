@@ -292,7 +292,7 @@ function mockApp({
       },
       extension_directories: ['extensions/*'],
     },
-    ...(app ? app : {}),
+    ...(app ?? {}),
   })
 }
 
