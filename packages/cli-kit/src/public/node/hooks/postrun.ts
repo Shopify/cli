@@ -2,8 +2,10 @@ import {postrun as deprecationsHook} from './deprecations.js'
 import {reportAnalyticsEvent} from '../analytics.js'
 import {outputDebug, outputWarn} from '../output.js'
 import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from '../upgrade.js'
+import {inferPackageManagerForGlobalCLI} from '../is-global.js'
 import BaseCommand from '../base-command.js'
 import * as metadata from '../metadata.js'
+import {runAtMinimumInterval} from '../../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../../common/version.js'
 import {isMajorVersionChange} from '../version.js'
 import {Command, Hook} from '@oclif/core'
@@ -50,10 +52,18 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
   } catch (error) {
     const errorMessage = `Auto-upgrade failed: ${error}`
     outputDebug(errorMessage)
-    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    // Only show the manual install reminder once per day to avoid spamming on every command
+    await runAtMinimumInterval('auto-upgrade-failure-reminder', {days: 1}, async () => {
+      outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    })
     // Report to Observe as a handled error without showing anything extra to the user
     const {sendErrorToBugsnag} = await import('../error-handler.js')
-    await sendErrorToBugsnag(new Error(errorMessage), 'expected_error')
+    const enrichedError = Object.assign(new Error(errorMessage), {
+      packageManager: inferPackageManagerForGlobalCLI(),
+      platform: process.platform,
+      cliVersion: CLI_KIT_VERSION,
+    })
+    await sendErrorToBugsnag(enrichedError, 'expected_error')
   }
 }
 
