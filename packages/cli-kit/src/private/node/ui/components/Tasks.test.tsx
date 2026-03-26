@@ -1,5 +1,5 @@
 import {Task, Tasks} from './Tasks.js'
-import {render} from '../../testing/ui.js'
+import {getLastFrameAfterUnmount, render, waitForContent} from '../../testing/ui.js'
 import {TokenizedString} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import {Stdout} from '../../ui.js'
@@ -29,33 +29,43 @@ beforeEach(() => {
 describe('Tasks', () => {
   test('shows nothing at the end in case of success', async () => {
     // Given
-    const firstTaskFunction = vi.fn(async () => {})
-    const secondTaskFunction = vi.fn(async () => {})
+    let resolveTask!: () => void
+    const firstTaskFunction = vi.fn(async () => {
+      await new Promise<void>((resolve) => {
+        resolveTask = resolve
+      })
+    })
 
     const firstTask = {
       title: 'task 1',
       task: firstTaskFunction,
     }
 
-    const secondTask = {
-      title: 'task 2',
-      task: secondTaskFunction,
-    }
     // When
+    const renderInstance = render(<Tasks tasks={[firstTask]} silent={false} />)
+    await waitForContent(renderInstance, 'task 1')
 
-    const renderInstance = render(<Tasks tasks={[firstTask, secondTask]} silent={false} />)
+    resolveTask()
     await renderInstance.waitUntilExit()
+
+    // Then
+    expect(firstTaskFunction).toHaveBeenCalledTimes(1)
+    expect(getLastFrameAfterUnmount(renderInstance)).toBe('')
   })
 
   test('stops at the task that throws error', async () => {
     // Given
     const abortController = new AbortController()
     const secondTaskFunction = vi.fn(async () => {})
+    const error = new Error('something went wrong')
+    let rejectTask!: (error: Error) => void
 
     const firstTask: Task = {
       title: 'task 1',
       task: async () => {
-        throw new Error('something went wrong')
+        await new Promise<void>((_resolve, reject) => {
+          rejectTask = reject
+        })
       },
     }
 
@@ -68,10 +78,15 @@ describe('Tasks', () => {
     const renderInstance = render(
       <Tasks tasks={[firstTask, secondTask]} silent={false} abortSignal={abortController.signal} />,
     )
+    await waitForContent(renderInstance, 'task 1')
+
+    const exitPromise = renderInstance.waitUntilExit()
+    rejectTask(error)
 
     // Then
-    await expect(renderInstance.waitUntilExit()).rejects.toThrowError('something went wrong')
+    await expect(exitPromise).rejects.toThrowError('something went wrong')
     expect(secondTaskFunction).toHaveBeenCalledTimes(0)
+    expect(getLastFrameAfterUnmount(renderInstance)).toBe('')
   })
 
   test('it supports subtasks', async () => {
