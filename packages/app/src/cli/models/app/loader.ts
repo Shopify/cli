@@ -970,7 +970,10 @@ async function getConfigurationPath(appDirectory: string, configName: string | u
   if (await fileExists(configurationPath)) {
     return {configurationPath, configurationFileName}
   } else {
-    throw new AbortError(outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`)
+    throw new LocalConfigError(
+      outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(appDirectory)}.`,
+      configurationPath,
+    )
   }
 }
 
