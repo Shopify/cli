@@ -312,11 +312,12 @@ Validate your app configuration and extensions.
 
 ```
 USAGE
-  $ shopify app config validate [--client-id <value> | -c <value>] [--no-color] [--path <value>] [--reset | ]
-  [--verbose]
+  $ shopify app config validate [--client-id <value> | -c <value>] [-j] [--no-color] [--path <value>] [--reset | ]
+    [--verbose]
 
 FLAGS
   -c, --config=<value>     [env: SHOPIFY_FLAG_APP_CONFIG] The name of the app configuration.
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
       --client-id=<value>  [env: SHOPIFY_FLAG_CLIENT_ID] The Client ID of your app.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
       --path=<value>       [env: SHOPIFY_FLAG_PATH] The path to your app directory.
