@@ -1,0 +1,34 @@
+name: 'Merge and save test coverage'
+description: 'Downloads coverage shard reports, merges them, and uploads the baseline artifact'
+inputs:
+  branch-name:
+    required: true
+    description: 'Name of the branch being tested'
+runs:
+  using: 'composite'
+  steps:
+    - uses: actions/download-artifact@v4
+      with:
+        pattern: coverage-blob-*
+        path: vitest-blob-reports
+        merge-multiple: true
+    - name: Merge coverage reports
+      shell: bash
+      run: pnpm vitest --mergeReports vitest-blob-reports --reporter=json --outputFile=./coverage/report.json --coverage --coverage.all=false
+    - name: Convert coverage to Jest
+      shell: bash
+      run: ./bin/save-coverage-file.js
+    - name: Take copy of report as new baseline for branch
+      shell: bash
+      run: cp ./report.json ./baseline-report.json
+    - name: Clean ref name
+      shell: bash
+      env:
+        SAFE_REF_NAME: '${{ inputs.branch-name }}'
+      run: |
+        SAFE_REF_NAME="${SAFE_REF_NAME//[\/.]/}"
+        echo "SAFE_REF_NAME=${SAFE_REF_NAME}" >> "$GITHUB_ENV"
+    - uses: actions/upload-artifact@v4
+      with:
+        name: ${{ env.SAFE_REF_NAME }}--coverage-report
+        path: ./baseline-report.json

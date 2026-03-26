@@ -233,16 +233,10 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - name: Unit tests with coverage (shard)
-        run: pnpm vitest run --coverage --coverage.all=false --reporter=blob --outputFile=vitest-blob-reports/blob-${{ matrix.shard == '1/2' && '1' || '2' }}.json --shard ${{ matrix.shard }}
-        env:
-          VITEST_MIN_THREADS: "1"
-          VITEST_MAX_THREADS: "4"
-      - uses: actions/upload-artifact@v4
+      - name: Run coverage shard
+        uses: ./.github/actions/run-test-coverage-shard
         with:
-          name: coverage-blob-${{ matrix.shard == '1/2' && '1' || '2' }}
-          path: vitest-blob-reports/
-          retention-days: 1
+          shard: ${{ matrix.shard }}
 
   test-coverage-merge:
     if: ${{ github.event.pull_request.user.login != 'dependabot[bot]' }}
@@ -260,28 +254,13 @@ jobs:
         uses: ./.github/actions/setup-cli-deps
         with:
           node-version: ${{ env.DEFAULT_NODE_VERSION }}
-      - uses: actions/download-artifact@v4
+      - name: Merge and save test coverage
+        uses: ./.github/actions/merge-and-save-test-coverage
         with:
-          pattern: coverage-blob-*
-          path: vitest-blob-reports
-          merge-multiple: true
-      - name: Merge coverage reports
-        run: pnpm vitest --mergeReports vitest-blob-reports --reporter=json --outputFile=./coverage/report.json --coverage --coverage.all=false
-      - name: Convert coverage to Jest
-        run: ./bin/save-coverage-file.js
-      - name: Take copy of report as new baseline for branch
-        run: cp ./report.json ./baseline-report.json
-      - name: Clean ref name
-        env:
-          SAFE_REF_NAME: "${{ github.head_ref }}"
-        run: |
-          SAFE_REF_NAME="${SAFE_REF_NAME//[\/.]/}"
-          echo "SAFE_REF_NAME=${SAFE_REF_NAME}" >> $GITHUB_ENV
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.SAFE_REF_NAME }}--coverage-report
-          path: ./baseline-report.json
+          branch-name: ${{ github.head_ref || github.event.merge_group.head_ref || github.ref_name }}
+      # Coverage execution is shared with tests-main; only publication stays PR-only.
       - name: Download and publish test coverage
+        if: ${{ github.event_name == 'pull_request' }}
         uses: ./.github/actions/download-and-publish-test-coverage
         with:
           base-branch-name: '${{ github.base_ref }}'
