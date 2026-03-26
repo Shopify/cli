@@ -1,5 +1,11 @@
 import {TextPrompt} from './TextPrompt.js'
-import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
+import {
+  getLastFrameAfterUnmount,
+  sendInputAndWaitForChange,
+  waitForContent,
+  waitForInputsToBeReady,
+  render,
+} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {AbortController} from '../../../../public/node/abort.js'
 import colors from '../../../../public/node/colors.js'
@@ -72,7 +78,13 @@ describe('TextPrompt', () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'A')
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
@@ -86,7 +98,13 @@ describe('TextPrompt', () => {
     const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" defaultValue="A" />)
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
@@ -102,7 +120,13 @@ describe('TextPrompt', () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(onSubmit).toHaveBeenCalledWith('')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
@@ -124,7 +148,13 @@ describe('TextPrompt', () => {
     )
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(onSubmit).toHaveBeenCalledWith('A')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
@@ -151,7 +181,8 @@ describe('TextPrompt', () => {
   })
 
   test("masking the input if it's a password", async () => {
-    const renderInstance = render(<TextPrompt onSubmit={() => {}} message="Test question" password />)
+    const onSubmit = vi.fn()
+    const renderInstance = render(<TextPrompt onSubmit={onSubmit} message="Test question" password />)
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'ABC')
@@ -162,7 +193,13 @@ describe('TextPrompt', () => {
       "
     `)
 
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
+    expect(onSubmit).toHaveBeenCalledWith('ABC')
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
       ✔  ***

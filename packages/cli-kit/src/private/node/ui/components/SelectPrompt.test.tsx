@@ -1,5 +1,11 @@
 import {SelectPrompt} from './SelectPrompt.js'
-import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
+import {
+  getLastFrameAfterUnmount,
+  sendInputAndWaitForChange,
+  waitForContent,
+  waitForInputsToBeReady,
+  render,
+} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import {Stdout} from '../../ui.js'
 import {AbortController} from '../../../../public/node/abort.js'
@@ -53,8 +59,13 @@ describe('SelectPrompt', async () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
-    await sendInputAndWaitForChange(renderInstance, ENTER)
 
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
       [36m✔[39m  [36msecond[39m
@@ -258,8 +269,13 @@ describe('SelectPrompt', async () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, ENTER)
 
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Test question?
       [36m✔[39m  [36mb[39m
@@ -288,8 +304,13 @@ describe('SelectPrompt', async () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, ENTER)
 
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Test question?
       [36m✔[39m  [36ma[39m
@@ -318,8 +339,13 @@ describe('SelectPrompt', async () => {
     `)
 
     await waitForInputsToBeReady()
-    await sendInputAndWaitForChange(renderInstance, 'b')
 
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write('b'))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Test question?
       [36m✔[39m  [36mb[39m

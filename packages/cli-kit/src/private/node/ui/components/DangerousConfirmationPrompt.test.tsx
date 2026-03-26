@@ -1,5 +1,11 @@
 import {DangerousConfirmationPrompt} from './DangerousConfirmationPrompt.js'
-import {getLastFrameAfterUnmount, sendInputAndWaitForChange, waitForInputsToBeReady, render} from '../../testing/ui.js'
+import {
+  getLastFrameAfterUnmount,
+  sendInputAndWaitForChange,
+  waitForContent,
+  waitForInputsToBeReady,
+  render,
+} from '../../testing/ui.js'
 import {unstyled} from '../../../../public/node/output.js'
 import React from 'react'
 
@@ -61,7 +67,13 @@ describe('DangerousConfirmationPrompt', () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, 'yes')
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(onSubmit).toHaveBeenCalledWith(true)
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
@@ -112,15 +124,18 @@ describe('DangerousConfirmationPrompt', () => {
       <DangerousConfirmationPrompt onSubmit={onSubmit} message="Test question" confirmation="yes" />,
     )
     await waitForInputsToBeReady()
-    const promise = renderInstance.waitUntilExit()
-    await sendInputAndWaitForChange(renderInstance, ESC)
 
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✘', () => renderInstance.stdin.write(ESC))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(unstyled(getLastFrameAfterUnmount(renderInstance)!)).toMatchInlineSnapshot(`
       "?  Test question:
       ✘  Cancelled
       "
     `)
-    await expect(promise).resolves.toEqual(undefined)
     expect(onSubmit).toHaveBeenCalledWith(false)
   })
 })
