@@ -7,6 +7,12 @@ export interface themepreview {
   '-e, --environment <value>'?: string
 
   /**
+   * Output the preview URL and identifier as JSON.
+   * @environment SHOPIFY_FLAG_JSON
+   */
+  '--json'?: ''
+
+  /**
    * Disable color output.
    * @environment SHOPIFY_FLAG_NO_COLOR
    */
