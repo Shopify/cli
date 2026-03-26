@@ -694,11 +694,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'checkout_post_purchase_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
     features: {
       argo: {
         surface: 'checkout',
@@ -712,11 +710,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'theme_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
   },
   {
     name: 'Product Subscription',
@@ -725,11 +721,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'product_subscription_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
     features: {
       argo: {
         surface: 'admin',
@@ -743,11 +737,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'ui_extension_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 50,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 50,
+    uidIsClientProvided: true,
     features: {
       argo: {
         surface: 'all',
@@ -761,11 +753,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'checkout_ui_extension_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 5,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 5,
+    uidIsClientProvided: true,
     features: {
       argo: {
         surface: 'checkout',
@@ -781,11 +771,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'product_subscription_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
     features: {
       argo: {
         surface: 'admin',
@@ -799,11 +787,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'marketing_activity_extension_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'dashboard',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'dashboard',
+    registrationLimit: 100,
+    uidIsClientProvided: true,
   },
   {
     name: 'function',
@@ -812,11 +798,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'function',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
     features: {
       argo: {
         surface: 'checkout',
@@ -830,11 +814,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'editor_extension_collection_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 100,
+    uidIsClientProvided: true,
   },
   {
     name: 'Flow Action',
@@ -843,11 +825,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'flow_action',
     gated: true,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 100,
+    uidIsClientProvided: true,
   },
   {
     name: 'Flow Template',
@@ -856,11 +836,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'flow_template',
     gated: true,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 300,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 300,
+    uidIsClientProvided: true,
   },
   {
     name: 'Flow Trigger',
@@ -869,11 +847,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'flow_trigger',
     gated: true,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 100,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 100,
+    uidIsClientProvided: true,
   },
   {
     name: 'POS UI Extension',
@@ -882,11 +858,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'pos_ui_extension',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 50,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 50,
+    uidIsClientProvided: true,
   },
   {
     name: 'Web Pixel Extension',
@@ -895,11 +869,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'web_pixel_extension',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
   },
   {
     name: 'Branding',
@@ -908,11 +880,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'branding',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'App access',
@@ -921,11 +891,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'app_access',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'Webhooks',
@@ -934,11 +902,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'webhooks',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'Privacy Compliance Webhooks',
@@ -947,11 +913,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'privacy_compliance_webhooks',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'App Proxy',
@@ -960,11 +924,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'app_proxy',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'Point Of Sale Configuration',
@@ -973,11 +935,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'point_of_sale',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'App Home',
@@ -986,11 +946,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     identifier: 'app_home',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
   },
   {
     name: 'Remote Extension Without Schema and Without local spec',
@@ -999,11 +957,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_without_schema_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
   },
   {
     name: 'Remote Extension With Schema, Without local spec, without localization',
@@ -1012,11 +968,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_schema_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',
@@ -1029,11 +983,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_schema_with_localization_external',
     gated: false,
     experience: 'extension',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: true,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: true,
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"},"localization":{"type":"object","properties":{"marketing_channel":{"type":"string"}},"required":["marketing_channel"]}},"required":["pattern","localization"]}',
@@ -1046,11 +998,9 @@ const testRemoteSpecifications: RemoteSpecification[] = [
     externalIdentifier: 'remote_only_extension_schema_config_style_external',
     gated: false,
     experience: 'configuration',
-    options: {
-      managementExperience: 'cli',
-      registrationLimit: 1,
-      uidIsClientProvided: false,
-    },
+    managementExperience: 'cli',
+    registrationLimit: 1,
+    uidIsClientProvided: false,
     validationSchema: {
       jsonSchema:
         '{"$schema":"http://json-schema.org/draft-07/schema#","type":"object","additionalProperties":false,"properties":{"pattern":{"type":"string"},"name":{"type":"string"}},"required":["pattern"]}',

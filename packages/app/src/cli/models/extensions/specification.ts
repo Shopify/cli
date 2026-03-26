@@ -142,10 +142,14 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
 
 /**
  * Extension specification, explicitly marked as having taken remote configuration values into account.
+ * Includes remote-only metadata that is carried through from the API response.
  */
 export type RemoteAwareExtensionSpecification<TConfiguration extends BaseConfigType = BaseConfigType> =
   ExtensionSpecification<TConfiguration> & {
     loadedRemoteSpecs: true
+    validationSchema?: {
+      jsonSchema: string
+    } | null
   }
 
 /**

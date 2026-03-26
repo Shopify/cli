@@ -359,10 +359,9 @@ export class PartnersClient implements DeveloperPlatformClient {
     // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
     return result.extensionSpecifications.map((spec) => ({
       ...spec,
-      options: {
-        ...spec.options,
-        uidIsClientProvided: true,
-      },
+      managementExperience: spec.options.managementExperience,
+      registrationLimit: spec.options.registrationLimit,
+      uidIsClientProvided: true,
     }))
   }
 

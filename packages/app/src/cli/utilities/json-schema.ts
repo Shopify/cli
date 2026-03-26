@@ -1,4 +1,3 @@
-import {FlattenedRemoteSpecification} from '../api/graphql/extension_specifications.js'
 import {BaseConfigType} from '../models/extensions/schemas.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {ParseConfigurationResult} from '@shopify/cli-kit/node/schema'
@@ -32,7 +31,7 @@ const JsonSchemaBaseProperties = {
  * @returns A function that can parse a configuration object
  */
 export async function unifiedConfigurationParserFactory(
-  merged: RemoteAwareExtensionSpecification & FlattenedRemoteSpecification,
+  merged: RemoteAwareExtensionSpecification,
   handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties = 'strip',
 ) {
   const contractJsonSchema = merged.validationSchema?.jsonSchema

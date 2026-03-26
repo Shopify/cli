@@ -30,7 +30,11 @@ export interface ExtensionSpecificationsQueryVariables {
   apiKey: string
 }
 
-export interface RemoteSpecification {
+/**
+ * Raw shape returned by the GraphQL extensionSpecifications query (Partners API).
+ * Has nested `options` and `features` matching the query structure.
+ */
+export interface RawRemoteSpecification {
   name: string
   externalName: string
   identifier: string
@@ -40,8 +44,6 @@ export interface RemoteSpecification {
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
-    uidIsClientProvided: boolean
-    uidStrategy?: 'single' | 'dynamic' | 'uuid'
   }
   features?: {
     argo?: {
@@ -53,11 +55,32 @@ export interface RemoteSpecification {
   } | null
 }
 
-export interface FlattenedRemoteSpecification extends RemoteSpecification {
-  surface?: string
+/**
+ * Flattened remote specification used throughout the CLI.
+ * Options are flattened to top-level fields to align with ExtensionSpecification.
+ */
+export interface RemoteSpecification {
+  name: string
+  externalName: string
+  identifier: string
+  gated: boolean
+  externalIdentifier: string
+  experience: 'extension' | 'configuration' | 'deprecated'
+  managementExperience: 'cli' | 'custom' | 'dashboard'
   registrationLimit: number
+  uidIsClientProvided: boolean
+  uidStrategy?: 'single' | 'dynamic' | 'uuid'
+  surface?: string
+  features?: {
+    argo?: {
+      surface: string
+    }
+  }
+  validationSchema?: {
+    jsonSchema: string
+  } | null
 }
 
 export interface ExtensionSpecificationsQuerySchema {
-  extensionSpecifications: RemoteSpecification[]
+  extensionSpecifications: RawRemoteSpecification[]
 }
