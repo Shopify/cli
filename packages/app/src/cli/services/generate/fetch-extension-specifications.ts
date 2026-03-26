@@ -43,11 +43,15 @@ export async function fetchSpecifications({
       // has been using so far. This is a workaround to keep the CLI working until the API is updated.
       if (spec.identifier === 'theme_app_extension') spec.identifier = 'theme'
       if (spec.identifier === 'subscription_management') spec.identifier = 'product_subscription'
+
       newSpec.registrationLimit = spec.options.registrationLimit
       newSpec.surface = spec.features?.argo?.surface
 
       // Hardcoded value for the post purchase extension because the value is wrong in the API
       if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
+
+      // Hardcoded value for the webhook_subscription extension because the value is wrong in the API
+      if (spec.identifier === 'webhook_subscription') spec.experience = 'configuration'
 
       return newSpec
     })

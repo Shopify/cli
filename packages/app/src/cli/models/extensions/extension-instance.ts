@@ -2,15 +2,6 @@ import {BaseConfigType, MAX_EXTENSION_HANDLE_LENGTH, MAX_UID_LENGTH} from './sch
 import {FunctionConfigType} from './specifications/function.js'
 import {ExtensionFeature, ExtensionSpecification} from './specification.js'
 import {SingleWebhookSubscriptionType} from './specifications/app_config_webhook_schemas/webhooks_schema.js'
-import {AppHomeSpecIdentifier} from './specifications/app_config_app_home.js'
-import {AppAccessSpecIdentifier} from './specifications/app_config_app_access.js'
-import {AppProxySpecIdentifier} from './specifications/app_config_app_proxy.js'
-import {BrandingSpecIdentifier} from './specifications/app_config_branding.js'
-import {PosSpecIdentifier} from './specifications/app_config_point_of_sale.js'
-import {PrivacyComplianceWebhooksSpecIdentifier} from './specifications/app_config_privacy_compliance_webhooks.js'
-import {WebhooksSpecIdentifier} from './specifications/app_config_webhook.js'
-import {WebhookSubscriptionSpecIdentifier} from './specifications/app_config_webhook_subscription.js'
-import {EventsSpecIdentifier} from './specifications/app_config_events.js'
 import {
   ExtensionBuildOptions,
   buildFunctionExtension,
@@ -33,23 +24,6 @@ import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {extractJSImports, extractImportPathsRecursively} from '@shopify/cli-kit/node/import-extractor'
 import {uniq} from '@shopify/cli-kit/common/array'
-
-// DEPRECATED. We should get the experience from the specification instead of hardcoding it based on the identifier.
-// This is a temporary solution to avoid breaking changes while we update the API and the specifications query.
-export const CONFIG_EXTENSION_IDS: string[] = [
-  AppAccessSpecIdentifier,
-  AppHomeSpecIdentifier,
-  AppProxySpecIdentifier,
-  BrandingSpecIdentifier,
-  PosSpecIdentifier,
-  PrivacyComplianceWebhooksSpecIdentifier,
-  WebhookSubscriptionSpecIdentifier,
-  WebhooksSpecIdentifier,
-  EventsSpecIdentifier,
-  // Hardcoded identifiers that don't exist locally.
-  'data',
-  'admin',
-]
 
 /**
  * Class that represents an instance of a local extension
