@@ -303,18 +303,24 @@ async function discoverDotEnvFiles(directory: string): Promise<Map<string, DotEn
     }),
   )
 
-  return new Map(entries.filter(Boolean) as [string, DotEnvFile][])
+  const result = new Map<string, DotEnvFile>()
+  for (const entry of entries) {
+    if (entry) result.set(entry[0], entry[1])
+  }
+  return result
 }
 
-/** Read raw .shopify/project.json if present */
+/** Load the raw .shopify/project.json as JsonMapType */
 async function loadRawHiddenConfig(directory: string): Promise<JsonMapType> {
-  const path = joinPath(directory, '.shopify', 'project.json')
-  if (!(await fileExists(path))) return {}
-
+  const hiddenPath = joinPath(directory, configurationFileNames.hiddenFolder, configurationFileNames.hiddenConfig)
   try {
-    return JSON.parse(await readFile(path)) as JsonMapType
+    if (await fileExists(hiddenPath)) {
+      const raw = await readFile(hiddenPath)
+      return JSON.parse(raw) as JsonMapType
+    }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch {
-    return {}
+    // Parse errors are not fatal
   }
+  return {}
 }
