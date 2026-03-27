@@ -145,8 +145,11 @@ async function upgradeLocalShopify(projectDir: string, currentVersion: string) {
   const packageJsonDevDependencies = packageJson.devDependencies ?? {}
   const allDependencies = {...packageJsonDependencies, ...packageJsonDevDependencies}
 
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  let resolvedCLIVersion = allDependencies[await cliDependency()]!
+  let resolvedCLIVersion = allDependencies[await cliDependency()]
+  if (!resolvedCLIVersion) {
+    outputDebug('Auto-upgrade: CLI dependency not found in project dependencies, skipping local upgrade.')
+    return
+  }
 
   if (resolvedCLIVersion.slice(0, 1).match(/[\^~]/)) resolvedCLIVersion = currentVersion
   const newestCLIVersion = await checkForNewVersion(await cliDependency(), resolvedCLIVersion)
