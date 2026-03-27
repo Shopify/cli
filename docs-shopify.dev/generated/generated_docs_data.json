@@ -7198,6 +7198,15 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--json",
+                "value": "\"\"",
+                "description": "Output the preview URL and identifier as JSON.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
                 "value": "\"\"",
                 "description": "Disable color output.",
@@ -7284,7 +7293,7 @@
                 "environmentValue": "SHOPIFY_FLAG_THEME_ID"
               }
             ],
-            "value": "export interface themepreview {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Path to a JSON overrides file.\n   * @environment SHOPIFY_FLAG_OVERRIDES\n   */\n  '--overrides <value>': string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * An existing preview identifier to update instead of creating a new preview.\n   * @environment SHOPIFY_FLAG_PREVIEW_ID\n   */\n  '--preview-id <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface themepreview {\n  /**\n   * The environment to apply to the current command.\n   * @environment SHOPIFY_FLAG_ENVIRONMENT\n   */\n  '-e, --environment <value>'?: string\n\n  /**\n   * Output the preview URL and identifier as JSON.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '--json'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Automatically launch the theme preview in your default web browser.\n   * @environment SHOPIFY_FLAG_OPEN\n   */\n  '--open'?: ''\n\n  /**\n   * Path to a JSON overrides file.\n   * @environment SHOPIFY_FLAG_OVERRIDES\n   */\n  '--overrides <value>': string\n\n  /**\n   * Password generated from the Theme Access app or an Admin API token.\n   * @environment SHOPIFY_CLI_THEME_TOKEN\n   */\n  '--password <value>'?: string\n\n  /**\n   * The path where you want to run the command. Defaults to the current working directory.\n   * @environment SHOPIFY_FLAG_PATH\n   */\n  '--path <value>'?: string\n\n  /**\n   * An existing preview identifier to update instead of creating a new preview.\n   * @environment SHOPIFY_FLAG_PREVIEW_ID\n   */\n  '--preview-id <value>'?: string\n\n  /**\n   * Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>'?: string\n\n  /**\n   * Theme ID or name of the remote theme.\n   * @environment SHOPIFY_FLAG_THEME_ID\n   */\n  '-t, --theme <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

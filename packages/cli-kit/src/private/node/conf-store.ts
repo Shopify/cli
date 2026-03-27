@@ -42,9 +42,7 @@ let _instance: LocalStorage<ConfSchema> | undefined
  * @returns CLIKitStore.
  */
 function cliKitStore() {
-  if (!_instance) {
-    _instance = new LocalStorage<ConfSchema>({projectName: `shopify-cli-kit${isUnitTest() ? '-test' : ''}`})
-  }
+  _instance ??= new LocalStorage<ConfSchema>({projectName: `shopify-cli-kit${isUnitTest() ? '-test' : ''}`})
   return _instance
 }
 

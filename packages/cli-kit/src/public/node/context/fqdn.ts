@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/switch-exhaustiveness-check -- all switches branch on Environment.Local vs default (production) */
 import {AbortError} from '../error.js'
 import {serviceEnvironment} from '../../../private/node/context/service.js'
 import {DevServer, DevServerCore} from '../vendor/dev_server/index.js'

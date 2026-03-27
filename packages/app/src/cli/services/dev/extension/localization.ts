@@ -32,13 +32,13 @@ export async function getLocalization(
     return {localization: undefined, status: ''}
   }
 
-  const localization = options.currentLocalizationPayload
-    ? options.currentLocalizationPayload
-    : ({
-        defaultLocale: 'en',
-        translations: {},
-        lastUpdated: 0,
-      } as Localization)
+  const localization =
+    options.currentLocalizationPayload ??
+    ({
+      defaultLocale: 'en',
+      translations: {},
+      lastUpdated: 0,
+    } as Localization)
 
   let status: ExtensionAssetBuildStatus = 'success'
 

@@ -40,12 +40,13 @@ export interface RemoteSpecification {
   managementExperience: 'cli' | 'custom' | 'dashboard'
   registrationLimit: number
   uidStrategy: 'single' | 'dynamic' | 'uuid'
+  surface?: string
   validationSchema?: {
     jsonSchema: string
   } | null
 }
 
-export interface PartnersRemoteSpecification {
+interface PartnersRemoteSpecification {
   name: string
   externalName: string
   identifier: string
@@ -55,8 +56,6 @@ export interface PartnersRemoteSpecification {
   options: {
     managementExperience: 'cli' | 'custom' | 'dashboard'
     registrationLimit: number
-    uidIsClientProvided: boolean
-    uidStrategy?: 'single' | 'dynamic' | 'uuid'
   }
   features?: {
     argo?: {
@@ -66,11 +65,6 @@ export interface PartnersRemoteSpecification {
   validationSchema?: {
     jsonSchema: string
   } | null
-}
-
-export interface FlattenedRemoteSpecification extends RemoteSpecification {
-  surface?: string
-  registrationLimit: number
 }
 
 export interface ExtensionSpecificationsQuerySchema {

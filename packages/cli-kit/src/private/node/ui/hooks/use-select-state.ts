@@ -31,9 +31,7 @@ export default class OptionMap<T> extends Map<T, OptionMapItem<T>> {
         previous.next = item
       }
 
-      if (!firstItem) {
-        firstItem = item
-      }
+      firstItem ??= item
 
       items.push([option.value, item])
       index++

@@ -194,8 +194,8 @@ function logLevelValue(level: LogLevel): number {
       return 50
     case 'fatal':
       return 60
-    default:
-      return 30
+    case 'silent':
+      return 70
   }
 }
 

@@ -56,7 +56,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
       if (targeting.length > 1 && isTTY({})) {
         const targets = targeting.map((target) => ({
           label: target.target,
-          value: target.export || DEFAULT_FUNCTION_EXPORT,
+          value: target.export || DEFAULT_FUNCTION_EXPORT, // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty export should use default
         }))
 
         functionExport = await renderAutocompletePrompt({
@@ -64,7 +64,7 @@ export default class FunctionRun extends AppUnlinkedCommand {
           choices: targets,
         })
       } else {
-        functionExport = targeting?.[0]?.export || DEFAULT_FUNCTION_EXPORT
+        functionExport = targeting?.[0]?.export || DEFAULT_FUNCTION_EXPORT // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty export should use default
         outputDebug(
           `Using export '${functionExport}'. Use the --export flag or an interactive terminal to select a different export.`,
         )

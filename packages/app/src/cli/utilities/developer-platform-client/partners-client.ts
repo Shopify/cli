@@ -214,9 +214,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   private static instance: PartnersClient | undefined
 
   static getInstance(session?: Session): PartnersClient {
-    if (!PartnersClient.instance) {
-      PartnersClient.instance = new PartnersClient(session)
-    }
+    PartnersClient.instance ??= new PartnersClient(session)
     return PartnersClient.instance
   }
 
@@ -356,12 +354,13 @@ export class PartnersClient implements DeveloperPlatformClient {
   async specifications({apiKey}: MinimalAppIdentifiers): Promise<RemoteSpecification[]> {
     const variables: ExtensionSpecificationsQueryVariables = {apiKey}
     const result: ExtensionSpecificationsQuerySchema = await this.request(ExtensionSpecificationsQuery, variables)
-    // Partners client does not support isClientProvided. Safe to assume that all modules are extension-style.
-    return result.extensionSpecifications.map((spec) => ({
+    // Partners API doesn't provide uidStrategy; derive it from experience.
+    return result.extensionSpecifications.map(({options, features, ...spec}) => ({
       ...spec,
-      uidStrategy: spec.options.uidStrategy ?? 'uuid',
-      registrationLimit: spec.options.registrationLimit,
-      managementExperience: spec.options.managementExperience,
+      uidStrategy: spec.experience === 'extension' ? 'uuid' : 'single',
+      registrationLimit: options.registrationLimit,
+      managementExperience: options.managementExperience,
+      surface: features?.argo?.surface,
     }))
   }
 

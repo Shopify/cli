@@ -23,9 +23,7 @@ export interface AppLocalStorageSchema {
 let _appLocalStorageInstance: LocalStorage<AppLocalStorageSchema> | undefined
 
 function appLocalStorage() {
-  if (!_appLocalStorageInstance) {
-    _appLocalStorageInstance = new LocalStorage<AppLocalStorageSchema>({projectName: 'shopify-cli-app'})
-  }
+  _appLocalStorageInstance ??= new LocalStorage<AppLocalStorageSchema>({projectName: 'shopify-cli-app'})
   return _appLocalStorageInstance
 }
 
@@ -91,9 +89,7 @@ interface CommandLocalStorage {
 let _commandLocalStorageInstance: LocalStorage<CommandLocalStorage> | undefined
 
 function commandLocalStorage() {
-  if (!_commandLocalStorageInstance) {
-    _commandLocalStorageInstance = new LocalStorage<CommandLocalStorage>({projectName: 'shopify-cli-app-command'})
-  }
+  _commandLocalStorageInstance ??= new LocalStorage<CommandLocalStorage>({projectName: 'shopify-cli-app-command'})
   return _commandLocalStorageInstance
 }
 

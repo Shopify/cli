@@ -42,6 +42,11 @@ export default class Preview extends ThemeCommand {
       env: 'SHOPIFY_FLAG_OPEN',
       default: false,
     }),
+    json: Flags.boolean({
+      description: 'Output the preview URL and identifier as JSON.',
+      env: 'SHOPIFY_FLAG_JSON',
+      default: false,
+    }),
   }
 
   static multiEnvironmentsFlags: RequiredFlags = null
@@ -55,6 +60,7 @@ export default class Preview extends ThemeCommand {
       previewIdentifier: flags['preview-id'],
       open: flags.open,
       password: flags.password,
+      json: flags.json,
     })
   }
 }

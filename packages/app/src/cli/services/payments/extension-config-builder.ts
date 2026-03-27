@@ -59,7 +59,7 @@ export enum DashboardPaymentExtensionType {
 }
 
 export function buildExtensionConfig(extension: ExtensionRegistration, allExtensions: ExtensionRegistration[]): object {
-  const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
+  const context = extension.activeVersion?.context ?? extension.draftVersion?.context ?? typeToContext(extension.type)
   switch (context) {
     case OFFSITE_TARGET:
       return buildPaymentsToml<OffsitePaymentsAppExtensionDeployConfigType>(
@@ -97,6 +97,7 @@ export function buildExtensionConfig(extension: ExtensionRegistration, allExtens
         allExtensions,
         cardPresentDeployConfigToCLIConfig,
       )
+    case undefined:
     default:
       throw new Error(`Unsupported extension: ${context}`)
   }
@@ -117,7 +118,7 @@ function buildPaymentsToml<T extends BasePaymentsAppExtensionDeployConfigType>(
   const cliConfig = serialize(dashboardConfig, allExtensions)
   if (cliConfig) delete cliConfig.api_version
 
-  const context = extension.activeVersion?.context || extension.draftVersion?.context || typeToContext(extension.type)
+  const context = extension.activeVersion?.context ?? extension.draftVersion?.context ?? typeToContext(extension.type)
 
   const localExtensionRepresentation = {
     api_version: dashboardConfig.api_version,

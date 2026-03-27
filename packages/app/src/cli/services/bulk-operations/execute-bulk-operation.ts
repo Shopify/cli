@@ -212,7 +212,10 @@ async function renderBulkOperationResult(operation: BulkOperation, outputFile?: 
         renderSuccess({headline, customSections})
       }
       break
-    default:
+    case 'CANCELED':
+    case 'CANCELING':
+    case 'EXPIRED':
+    case 'FAILED':
       renderError({headline, customSections})
       break
   }

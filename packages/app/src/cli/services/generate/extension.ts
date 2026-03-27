@@ -57,7 +57,9 @@ function getTemplateLanguage(flavor: ExtensionFlavorValue | undefined): Template
     case 'rust':
     case 'wasm':
       return flavor
-    default:
+    case undefined:
+    case 'liquid':
+    case 'config-only':
       return undefined
   }
 }

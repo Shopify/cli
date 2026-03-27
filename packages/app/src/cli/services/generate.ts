@@ -100,7 +100,7 @@ function limitReached(app: AppInterface, specifications: ExtensionSpecification[
   const type = template.type
   const specification = specifications.find((spec) => spec.identifier === type || spec.externalIdentifier === type)
   const existingExtensions = app.extensionsForType({identifier: type, externalIdentifier: type})
-  return existingExtensions.length >= (specification?.registrationLimit || 1)
+  return existingExtensions.length >= (specification?.registrationLimit ?? 1)
 }
 
 async function saveAnalyticsMetadata(promptAnswers: GenerateExtensionPromptOutput, typeFlag: string | undefined) {

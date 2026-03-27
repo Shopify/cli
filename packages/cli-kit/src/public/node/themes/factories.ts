@@ -52,6 +52,7 @@ export function buildThemeAsset(asset?: RemoteAssetResponse): ThemeAsset | undef
 
   const {key, checksum, attachment, value} = asset
   // Note: for attachments, this is the size of the base64 string, not the real length of the file
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty string value should fall through to attachment for binary assets
   const stats = {size: (value || attachment || '').length, mtime: Date.now()}
   return {key, checksum, attachment, value, stats}
 }

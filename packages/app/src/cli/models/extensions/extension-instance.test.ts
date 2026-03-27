@@ -694,3 +694,31 @@ describe('rescanImports', async () => {
     })
   })
 })
+
+describe('SHOPIFY_CLI_DISABLE_IMPORT_SCANNING', () => {
+  test('skips import scanning when env var is set', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extensionInstance = await testUIExtension({
+        directory: tmpDir,
+        entrySourceFilePath: joinPath(tmpDir, 'src', 'index.ts'),
+      })
+
+      const srcDir = joinPath(tmpDir, 'src')
+      await mkdir(srcDir)
+      await writeFile(joinPath(srcDir, 'index.ts'), 'import "../shared"')
+
+      vi.mocked(extractImportPathsRecursively).mockReset()
+      vi.mocked(extractImportPathsRecursively).mockReturnValue(['/some/external/file.ts'])
+
+      process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING = '1'
+      try {
+        const watched = extensionInstance.watchedFiles()
+        expect(extractImportPathsRecursively).not.toHaveBeenCalled()
+        expect(watched.some((file) => file.includes('external'))).toBe(false)
+      } finally {
+        delete process.env.SHOPIFY_CLI_DISABLE_IMPORT_SCANNING
+        vi.mocked(extractImportPathsRecursively).mockReset()
+      }
+    })
+  })
+})

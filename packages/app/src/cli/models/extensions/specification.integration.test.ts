@@ -34,6 +34,7 @@ describe('createContractBasedModuleSpecification', () => {
     const got = createContractBasedModuleSpecification({
       identifier: 'test',
       uidStrategy: 'uuid',
+      experience: 'extension',
       appModuleFeatures: () => ['localization'],
     })
 

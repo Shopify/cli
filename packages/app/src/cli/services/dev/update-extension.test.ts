@@ -278,7 +278,7 @@ describe('updateExtensionDraft()', () => {
       errors: [{message: 'Network error'}, {message: 'Timeout error'}],
     }
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -313,7 +313,7 @@ describe('updateExtensionDraft()', () => {
   test('handles system error with message string', async () => {
     const systemError = {message: 'API connection failed'}
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -348,7 +348,7 @@ describe('updateExtensionDraft()', () => {
   test('handles string error', async () => {
     const systemError = 'Connection timeout'
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -382,7 +382,7 @@ describe('updateExtensionDraft()', () => {
 
   test('handles null/undefined error with fallback message', async () => {
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(null),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(null), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing null rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {
@@ -415,7 +415,7 @@ describe('updateExtensionDraft()', () => {
   test('handles object error without errors or message properties', async () => {
     const systemError = {status: 500, code: 'INTERNAL_ERROR'}
     const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
-      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError),
+      updateExtension: (_extensionInput: ExtensionUpdateDraftMutationVariables) => Promise.reject(systemError), // eslint-disable-line @typescript-eslint/prefer-promise-reject-errors -- testing non-Error rejection handling,
     })
 
     await inTemporaryDirectory(async (tmpDir) => {

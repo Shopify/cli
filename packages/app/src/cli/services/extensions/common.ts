@@ -11,7 +11,7 @@ export async function ensureDownloadedExtensionFlavorExists(
   extensionFlavor: ExtensionFlavor | undefined,
   templateDownloadDir: string,
 ): Promise<string> {
-  const templatePath = extensionFlavor?.path || ''
+  const templatePath = extensionFlavor?.path ?? ''
   const origin = joinPath(templateDownloadDir, templatePath)
   if (!(await fileExists(origin))) {
     throw new AbortError(`\nThe extension is not available for ${extensionFlavor?.value}`)

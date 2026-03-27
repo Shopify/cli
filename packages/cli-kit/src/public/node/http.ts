@@ -258,7 +258,7 @@ export function downloadFile(url: string, to: string): Promise<string> {
         })
         .catch((err) => {
           tryToRemoveFile()
-          reject(err)
+          reject(err instanceof Error ? err : new Error(String(err)))
         })
     })
   })

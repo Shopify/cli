@@ -30,7 +30,7 @@ const getBackgroundExecutionReasonMessage = (reason: BackgroundExecutionReason):
       return 'No cached response available'
     case BackgroundExecutionReason.CacheAboutToExpire:
       return 'Cache is about to expire'
-    default:
+    case BackgroundExecutionReason.Unknown:
       return 'Unknown reason'
   }
 }
@@ -92,7 +92,7 @@ const Logs: FunctionComponent<LogsProps> = ({
                       </Box>
                       <Box marginLeft={1} marginTop={1}>
                         <Text>
-                          {prettyPrintJsonIfPossible(appLog.inputQueryVariablesMetafieldValue) || (
+                          {prettyPrintJsonIfPossible(appLog.inputQueryVariablesMetafieldValue) ?? (
                             <Text color="red">Metafield is not set</Text>
                           )}
                         </Text>

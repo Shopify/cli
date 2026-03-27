@@ -30,9 +30,7 @@ export const hook: Hook.Prerun = async (options) => {
 
 export function parseCommandContent(cmdInfo: {id: string; aliases: string[]; pluginAlias?: string}): CommandContent {
   let commandContent = parseCreateCommand(cmdInfo.pluginAlias)
-  if (!commandContent) {
-    commandContent = parseNormalCommand(cmdInfo.id, cmdInfo.aliases)
-  }
+  commandContent ??= parseNormalCommand(cmdInfo.id, cmdInfo.aliases)
   return commandContent
 }
 
