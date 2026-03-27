@@ -1,7 +1,7 @@
 import {postrun as deprecationsHook} from './deprecations.js'
 import {reportAnalyticsEvent} from '../analytics.js'
 import {outputDebug, outputWarn} from '../output.js'
-import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from '../upgrade.js'
+import {getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade, warnIfUpgradeAvailable} from '../upgrade.js'
 import {inferPackageManagerForGlobalCLI} from '../is-global.js'
 import BaseCommand from '../base-command.js'
 import * as metadata from '../metadata.js'
@@ -42,7 +42,10 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
  */
 export async function autoUpgradeIfNeeded(): Promise<void> {
   const newerVersion = versionToAutoUpgrade()
-  if (!newerVersion) return
+  if (!newerVersion) {
+    await warnIfUpgradeAvailable()
+    return
+  }
 
   const forced = process.env.SHOPIFY_CLI_FORCE_AUTO_UPGRADE === '1'
 

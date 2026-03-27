@@ -10,12 +10,12 @@ import {
   addNPMDependencies,
   getPackageManager,
 } from './node-package-manager.js'
-import {outputContent, outputDebug, outputInfo, outputToken} from './output.js'
+import {outputContent, outputDebug, outputInfo, outputToken, outputWarn} from './output.js'
 import {cwd, moduleDirectory, sniffForPath} from './path.js'
 import {exec, isCI} from './system.js'
 import {renderConfirmationPrompt} from './ui.js'
 import {isPreReleaseVersion} from './version.js'
-import {getAutoUpgradeEnabled, setAutoUpgradeEnabled} from '../../private/node/conf-store.js'
+import {getAutoUpgradeEnabled, setAutoUpgradeEnabled, runAtMinimumInterval} from '../../private/node/conf-store.js'
 import {CLI_KIT_VERSION} from '../common/version.js'
 
 /**
@@ -108,6 +108,22 @@ export function versionToAutoUpgrade(): string | undefined {
     return undefined
   }
   return newerVersion
+}
+
+/**
+ * Shows a daily upgrade-available warning for users who have not enabled auto-upgrade.
+ * Skipped in CI and for pre-release versions. When auto-upgrade is enabled this is a no-op
+ * because the postrun hook will handle the upgrade directly.
+ */
+export async function warnIfUpgradeAvailable(): Promise<void> {
+  if (isCI() || isPreReleaseVersion(CLI_KIT_VERSION) || getAutoUpgradeEnabled()) return
+
+  const newerVersion = checkForCachedNewVersion('@shopify/cli', CLI_KIT_VERSION)
+  if (!newerVersion) return
+
+  await runAtMinimumInterval('warn-on-available-upgrade', {days: 1}, async () => {
+    outputWarn(getOutputUpdateCLIReminder(newerVersion))
+  })
 }
 
 /**
