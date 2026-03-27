@@ -1,13 +1,13 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {executeStoreOperation} from './execute.js'
-import {ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
+import {getStoredStoreAppSession} from './session.js'
 import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask, renderSuccess, renderError} from '@shopify/cli-kit/node/ui'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('@shopify/cli-kit/node/session')
+vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -23,10 +23,17 @@ vi.mock('@shopify/cli-kit/node/api/admin', async () => {
 describe('executeStoreOperation', () => {
   const store = 'shop.myshopify.com'
   const session = {token: 'token', storeFqdn: store}
+  const storedSession = {
+    store,
+    clientId: '4c6af92692662b9c95c8a47b1520aced',
+    accessToken: 'token',
+    scopes: ['read_products'],
+    acquiredAt: '2026-03-27T00:00:00.000Z',
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(ensureAuthenticatedAdmin).mockResolvedValue(session)
+    vi.mocked(getStoredStoreAppSession).mockReturnValue(storedSession)
     vi.mocked(fetchApiVersions).mockResolvedValue([
       {handle: '2025-10', supported: true},
       {handle: '2025-07', supported: true},
@@ -49,7 +56,7 @@ describe('executeStoreOperation', () => {
       query: 'query { shop { name } }',
     })
 
-    expect(ensureAuthenticatedAdmin).toHaveBeenCalledWith(store)
+    expect(getStoredStoreAppSession).toHaveBeenCalledWith(store)
     expect(fetchApiVersions).toHaveBeenCalledWith(session)
     expect(graphqlRequest).toHaveBeenCalledWith({
       query: 'query { shop { name } }',
@@ -117,7 +124,18 @@ describe('executeStoreOperation', () => {
       }),
     ).rejects.toThrow('Mutations are disabled by default')
 
-    expect(ensureAuthenticatedAdmin).not.toHaveBeenCalled()
+    expect(getStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
+  test('throws when no stored app session exists', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue(undefined)
+
+    await expect(
+      executeStoreOperation({
+        store,
+        query: 'query { shop { name } }',
+      }),
+    ).rejects.toThrow('No stored app authentication found')
   })
 
   test('allows mutations when explicitly enabled', async () => {
@@ -161,6 +179,21 @@ describe('executeStoreOperation', () => {
     })
   })
 
+  test('throws when stored auth is no longer valid', async () => {
+    vi.mocked(graphqlRequest).mockRejectedValue({
+      response: {
+        status: 401,
+      },
+    })
+
+    await expect(
+      executeStoreOperation({
+        store,
+        query: 'query { shop { name } }',
+      }),
+    ).rejects.toThrow('Stored app authentication for')
+  })
+
   test('renders GraphQL errors without throwing', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue({
       response: {
@@ -189,7 +222,7 @@ describe('executeStoreOperation', () => {
       mock: true,
     })
 
-    expect(ensureAuthenticatedAdmin).not.toHaveBeenCalled()
+    expect(getStoredStoreAppSession).not.toHaveBeenCalled()
     expect(fetchApiVersions).not.toHaveBeenCalled()
     expect(graphqlRequest).not.toHaveBeenCalled()
     expect(output.info()).toContain('"mock": true')

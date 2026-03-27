@@ -1,4 +1,4 @@
-import {ensureAuthenticatedAdmin, AdminSession} from '@shopify/cli-kit/node/session'
+import {AdminSession} from '@shopify/cli-kit/node/session'
 import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderError, renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -6,6 +6,7 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputResult, outputToken} from '@shopify/cli-kit/node/output'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {parse} from 'graphql'
+import {getStoredStoreAppSession} from './session.js'
 
 interface ExecuteStoreOperationInput {
   store: string
@@ -139,10 +140,10 @@ function buildMockResponse(input: {
   }
 }
 
-function isGraphQLClientError(error: unknown): error is {response: {errors: unknown}} {
+function isGraphQLClientError(error: unknown): error is {response: {errors?: unknown; status?: number}} {
   if (!error || typeof error !== 'object' || !('response' in error)) return false
   const response = (error as {response?: unknown}).response
-  return !!response && typeof response === 'object' && 'errors' in response
+  return !!response && typeof response === 'object'
 }
 
 async function writeOrOutputResult(result: unknown, outputFile?: string): Promise<void> {
@@ -157,6 +158,22 @@ async function writeOrOutputResult(result: unknown, outputFile?: string): Promis
   } else {
     renderSuccess({headline: 'Operation succeeded.'})
     outputResult(resultString)
+  }
+}
+
+function loadAuthenticatedStoreSession(store: string): AdminSession {
+  const session = getStoredStoreAppSession(store)
+
+  if (!session) {
+    throw new AbortError(
+      `No stored app authentication found for ${store}.`,
+      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes> --client-secret-file <path>`).value} first.`,
+    )
+  }
+
+  return {
+    token: session.accessToken,
+    storeFqdn: session.store,
   }
 }
 
@@ -184,7 +201,7 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
   const {adminSession, version} = await renderSingleTask({
     title: outputContent`Authenticating`,
     task: async (): Promise<{adminSession: AdminSession; version: string}> => {
-      const adminSession = await ensureAuthenticatedAdmin(store)
+      const adminSession = loadAuthenticatedStoreSession(store)
       const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
       return {adminSession, version}
     },
@@ -209,7 +226,14 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
 
     await writeOrOutputResult(result, outputFile)
   } catch (error) {
-    if (isGraphQLClientError(error)) {
+    if (isGraphQLClientError(error) && error.response.status === 401) {
+      throw new AbortError(
+        `Stored app authentication for ${store} is no longer valid.`,
+        `Re-run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes> --client-secret-file <path>`).value}.`,
+      )
+    }
+
+    if (isGraphQLClientError(error) && error.response.errors) {
       renderError({
         headline: 'GraphQL operation failed.',
         body: JSON.stringify({errors: error.response.errors}, null, 2),
