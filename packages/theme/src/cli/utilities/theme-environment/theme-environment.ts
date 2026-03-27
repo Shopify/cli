@@ -8,7 +8,15 @@ import {renderTasksToStdErr} from '../theme-ui.js'
 import {renderThrownError} from '../errors.js'
 import {promiseWithResolvers} from '../../polyfills/promiseWithResolvers.js'
 
-import {createApp, defineEventHandler, defineLazyEventHandler, toNodeListener, handleCors} from 'h3'
+import {
+  createApp,
+  defineEventHandler,
+  defineLazyEventHandler,
+  toNodeListener,
+  handleCors,
+  sendError,
+  createError,
+} from 'h3'
 import {fetchChecksums} from '@shopify/cli-kit/node/themes/api'
 
 import {createServer} from 'node:http'
@@ -123,9 +131,54 @@ interface DevelopmentServerInstance {
   close: () => Promise<void>
 }
 
+function createAllowedHostsSet(host: string, port: string): Set<string> {
+  const allowedHosts = new Set<string>()
+  const portSuffix = `:${port}`
+  const normalizedHost = host.toLowerCase().trim()
+
+  allowedHosts.add(`${normalizedHost}${portSuffix}`)
+
+  // When binding to localhost variants or 0.0.0.0, allow all localhost forms
+  const localhostVariants = ['localhost', '127.0.0.1', '::1', '0.0.0.0']
+  if (localhostVariants.includes(normalizedHost)) {
+    allowedHosts.add(`localhost${portSuffix}`)
+    allowedHosts.add(`127.0.0.1${portSuffix}`)
+    allowedHosts.add(`[::1]${portSuffix}`)
+  }
+
+  return allowedHosts
+}
+
+function normalizeHostHeader(hostHeader: string | undefined): string | undefined {
+  if (!hostHeader) return undefined
+  // Lowercase, then strip trailing dot before port (or at end for plain hostname).
+  // IPv6 brackets: trailing dot would be after `]`, e.g. [::1].:9292
+  return hostHeader.toLowerCase().replace(/\.(?=:\d|$)/, '')
+}
+
 function createDevelopmentServer(theme: Theme, ctx: DevServerContext, initialWork: Promise<void>) {
   const app = createApp()
   const allowedOrigins = [`http://${ctx.options.host}:${ctx.options.port}`, `https://${ctx.session.storeFqdn}`]
+  const allowedHosts = createAllowedHostsSet(ctx.options.host, ctx.options.port)
+
+  // Host header validation
+  app.use(
+    defineEventHandler((event) => {
+      const hostHeader = event.node.req.headers.host
+      const normalizedHost = normalizeHostHeader(hostHeader)
+
+      if (!normalizedHost || !allowedHosts.has(normalizedHost)) {
+        return sendError(
+          event,
+          createError({
+            statusCode: 400,
+            statusMessage: 'Bad Request',
+            message: 'Invalid Host header',
+          }),
+        )
+      }
+    }),
+  )
 
   app.use(
     defineLazyEventHandler(async () => {
