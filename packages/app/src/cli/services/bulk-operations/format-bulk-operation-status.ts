@@ -90,7 +90,9 @@ export function formatBulkOperationCancellationResult(
         renderType: 'warning',
       }
     }
-    default:
+    case 'CREATED':
+    case 'EXPIRED':
+    case 'RUNNING':
       return {
         headline,
         renderType: 'info',
