@@ -5,7 +5,7 @@ import {compressBundle, writeManifestToBundle} from '../bundle.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {mkdir, rmdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {renderConcurrent} from '@shopify/cli-kit/node/ui'
+import {renderConcurrentRL} from '@shopify/cli-kit/node/ui'
 import {Writable} from 'stream'
 
 interface BundleOptions {
@@ -30,7 +30,7 @@ export async function bundleAndBuildExtensions(options: BundleOptions) {
     await installJavy(options.app)
   }
 
-  await renderConcurrent({
+  await renderConcurrentRL({
     processes: options.app.allExtensions.map((extension) => {
       return {
         prefix: extension.localIdentifier,

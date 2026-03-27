@@ -2,9 +2,10 @@
 import {AbortError, AbortSilentError, FatalError as Fatal} from './error.js'
 import {outputContent, outputDebug, outputToken, TokenizedString} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
-import {AbortController} from './abort.js'
+import {AbortController, AbortSignal} from './abort.js'
 import {runWithTimer} from './metadata.js'
 import {ConcurrentOutput, ConcurrentOutputProps} from '../../private/node/ui/components/ConcurrentOutput.js'
+import {renderConcurrentOutputRL, ConcurrentOutputRLOptions} from '../../private/node/ui/components/ConcurrentOutputRL.js'
 import {handleCtrlC, render, renderOnce} from '../../private/node/ui.js'
 import {alert, AlertOptions} from '../../private/node/ui/alert.js'
 import {CustomSection} from '../../private/node/ui/components/Alert.js'
@@ -63,6 +64,17 @@ export async function renderConcurrent({renderOptions, ...props}: RenderConcurre
   const abortSignal = props.abortSignal ?? new AbortController().signal
 
   return render(<ConcurrentOutput {...props} abortSignal={abortSignal} />, renderOptions)
+}
+
+export type RenderConcurrentRLOptions = Omit<ConcurrentOutputRLOptions, 'abortSignal'> & {abortSignal?: AbortSignal}
+
+/**
+ * Renders output from concurrent processes using Node's readline (no Ink/React).
+ * Same visual layout as {@link renderConcurrent} but with zero framework overhead.
+ */
+export async function renderConcurrentRL(options: RenderConcurrentRLOptions) {
+  const abortSignal = options.abortSignal ?? new AbortController().signal
+  return renderConcurrentOutputRL({...options, abortSignal})
 }
 
 export type AlertCustomSection = CustomSection

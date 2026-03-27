@@ -9,7 +9,7 @@ import {AdminSession, ensureAuthenticatedThemes} from '@shopify/cli-kit/node/ses
 import {loadEnvironment} from '@shopify/cli-kit/node/environments'
 import {
   renderWarning,
-  renderConcurrent,
+  renderConcurrentRL,
   renderConfirmationPrompt,
   RenderConfirmationPromptOptions,
   renderError,
@@ -266,7 +266,7 @@ export default abstract class ThemeCommand extends Command {
 
     for (const runGroup of runGroups) {
       // eslint-disable-next-line no-await-in-loop
-      await renderConcurrent({
+      await renderConcurrentRL({
         processes: runGroup.map(({environment, flags, requiresAuth}) => ({
           prefix: environment,
           action: async (stdout: Writable, stderr: Writable, _signal) => {
@@ -296,7 +296,7 @@ export default abstract class ThemeCommand extends Command {
         })),
         abortSignal: abortController.signal,
         showTimestamps: true,
-        renderOptions: {stdout: process.stderr},
+        output: process.stderr,
       })
     }
   }

@@ -8,6 +8,7 @@ import CommandFlags from './cli/commands/debug/command-flags.js'
 import KitchenSinkAsync from './cli/commands/kitchen-sink/async.js'
 import KitchenSinkPrompts from './cli/commands/kitchen-sink/prompts.js'
 import KitchenSinkStatic from './cli/commands/kitchen-sink/static.js'
+import KitchenSinkReadline from './cli/commands/kitchen-sink/readline.js'
 import KitchenSink from './cli/commands/kitchen-sink/index.js'
 import Doctor from './cli/commands/doctor-release/doctor-release.js'
 import DoctorTheme from './cli/commands/doctor-release/theme/index.js'
@@ -144,6 +145,7 @@ export const COMMANDS: any = {
   'kitchen-sink': KitchenSink,
   'kitchen-sink:async': KitchenSinkAsync,
   'kitchen-sink:prompts': KitchenSinkPrompts,
+  'kitchen-sink:readline': KitchenSinkReadline,
   'kitchen-sink:static': KitchenSinkStatic,
   'doctor-release': Doctor,
   'doctor-release:theme': DoctorTheme,

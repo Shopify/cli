@@ -1,10 +1,8 @@
-import {renderConcurrentRL, renderSingleTask, renderTasks} from '@shopify/cli-kit/node/ui'
+import {renderConcurrentRL} from '@shopify/cli-kit/node/ui'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
-import {outputContent, outputToken, TokenizedString} from '@shopify/cli-kit/node/output'
 import {Writable} from 'stream'
 
-export async function asyncTasks() {
-  // renderConcurrentRL
+export async function readlineConcurrent() {
   let backendPromiseResolve: () => void
 
   const backendPromise = new Promise<void>(function (resolve, _reject) {
@@ -40,39 +38,5 @@ export async function asyncTasks() {
 
   await renderConcurrentRL({
     processes: [backendProcess, frontendProcess],
-  })
-
-  // renderTasks
-  const tasks = [
-    {
-      title: 'Installing dependencies',
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      },
-    },
-    {
-      title: 'Downloading assets',
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-      },
-    },
-  ]
-
-  await renderTasks(tasks)
-
-  // renderSingleTask
-  await renderSingleTask({
-    title: new TokenizedString('Importing data'),
-    task: async (updateStatus: (status: TokenizedString) => void) => {
-      for (let i = 1; i <= 10; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        const status = outputContent`Importing data ${outputToken.italic(
-          outputContent`(${outputToken.green(i.toString())} complete)`,
-        )}`
-        updateStatus(status)
-      }
-      return 'completed'
-    },
   })
 }

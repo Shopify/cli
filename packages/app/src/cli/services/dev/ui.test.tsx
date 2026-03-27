@@ -1,6 +1,6 @@
 import {renderDev} from './ui.js'
 import {Dev} from './ui/components/Dev.js'
-import {DevSessionUI} from './ui/components/DevSessionUI.js'
+import {renderDevSessionUI} from './ui/components/DevSessionUI.js'
 import {DevSessionStatusManager} from './processes/dev-session/dev-session-status-manager.js'
 import {testDeveloperPlatformClient} from '../../models/app/app.test-data.js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
@@ -237,15 +237,13 @@ describe('ui', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      expect(vi.mocked(DevSessionUI)).toHaveBeenCalledWith(
+      expect(vi.mocked(renderDevSessionUI)).toHaveBeenCalledWith(
         expect.objectContaining({
           processes,
           abortController,
           devSessionStatusManager,
           onAbort: expect.any(Function),
         }),
-        // React 19 no longer passes legacy context as second argument
-        undefined,
       )
       expect(vi.mocked(Dev)).not.toHaveBeenCalled()
     })
@@ -288,8 +286,8 @@ describe('ui', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 10))
 
-      // Get the onAbort callback that was passed to DevSessionUI
-      const onAbort = vi.mocked(DevSessionUI).mock.calls[0]?.[0]?.onAbort
+      // Get the onAbort callback that was passed to renderDevSessionUI
+      const onAbort = vi.mocked(renderDevSessionUI).mock.calls[0]?.[0]?.onAbort
       await onAbort?.()
 
       expect(app.developerPlatformClient.devSessionDelete).toHaveBeenCalledWith({
