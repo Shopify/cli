@@ -113,10 +113,6 @@ export function inferPackageManagerForGlobalCLI(argv = process.argv, env = proce
   // Check for Homebrew via Cellar path (resolved symlink)
   if (realPath.includes('/cellar/')) return 'homebrew'
 
-  // Check for Homebrew via HOMEBREW_PREFIX (using original path)
-  const homebrewPrefix = env.HOMEBREW_PREFIX
-  if (homebrewPrefix && processArgv.startsWith(homebrewPrefix)) return 'homebrew'
-
   return 'npm'
 }
 

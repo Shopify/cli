@@ -213,7 +213,7 @@ async function cliDependency(): Promise<string> {
 }
 
 async function oclifPlugins(): Promise<string[]> {
-  return (await packageJsonContents())?.oclif?.plugins || []
+  return (await packageJsonContents())?.oclif?.plugins ?? []
 }
 
 type PackageJsonWithName = Omit<PackageJson, 'name'> & {name: string}

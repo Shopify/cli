@@ -178,16 +178,21 @@ describe('inferPackageManagerForGlobalCLI', () => {
     expect(got).toBe('homebrew')
   })
 
-  test('returns homebrew when HOMEBREW_PREFIX matches path', async () => {
-    // Given
-    const argv = ['node', '/opt/homebrew/bin/shopify', 'shopify']
+  test('returns npm for npm global install with Homebrew node (binary in HOMEBREW_PREFIX)', async () => {
+    // Given: npm install -g with Homebrew node puts the symlink in /opt/homebrew/bin,
+    // but the real path resolves to node_modules — not the Cellar
+    const symlinkPath = '/opt/homebrew/bin/shopify'
+    const realNpmPath = '/opt/homebrew/lib/node_modules/@shopify/cli/bin/run.js'
+    const argv = ['node', symlinkPath, 'shopify']
     const env = {HOMEBREW_PREFIX: '/opt/homebrew'}
+
+    vi.mocked(realpathSync).mockImplementationOnce(() => realNpmPath)
 
     // When
     const got = inferPackageManagerForGlobalCLI(argv, env)
 
-    // Then
-    expect(got).toBe('homebrew')
+    // Then: should detect npm, not homebrew — real path is node_modules, not Cellar
+    expect(got).toBe('npm')
   })
 
   test('resolves symlinks to detect actual package manager (yarn)', async () => {
@@ -224,11 +229,10 @@ describe('inferPackageManagerForGlobalCLI', () => {
     expect(got).toBe('homebrew')
   })
 
-  test('falls back to original path if realpath fails', async () => {
+  test('defaults to npm if realpath fails and no other indicator is present', async () => {
     // Given: A path that realpathSync cannot resolve
     const nonExistentPath = '/opt/homebrew/bin/shopify'
     const argv = ['node', nonExistentPath, 'shopify']
-    const env = {HOMEBREW_PREFIX: '/opt/homebrew'}
 
     // Mock realpathSync for this specific test to throw an error
     vi.mocked(realpathSync).mockImplementationOnce(() => {
@@ -236,10 +240,10 @@ describe('inferPackageManagerForGlobalCLI', () => {
     })
 
     // When
-    const got = inferPackageManagerForGlobalCLI(argv, env)
+    const got = inferPackageManagerForGlobalCLI(argv)
 
-    // Then: Should fall back to checking the original path
-    expect(got).toBe('homebrew')
+    // Then: no /cellar/ in path, no SHOPIFY_HOMEBREW_FORMULA — defaults to npm
+    expect(got).toBe('npm')
   })
 })
 
