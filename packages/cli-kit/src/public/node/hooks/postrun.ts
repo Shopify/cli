@@ -31,7 +31,14 @@ export const hook: Hook.Postrun = async ({config, Command}) => {
   outputDebug(`Completed command ${command}`)
   postRunHookCompleted = true
 
-  if (!command.includes('notifications') && !command.includes('upgrade')) await autoUpgradeIfNeeded()
+  if (!command.includes('notifications') && !command.includes('upgrade')) {
+    try {
+      await autoUpgradeIfNeeded()
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (error) {
+      outputDebug(`Auto-upgrade check failed: ${error}`)
+    }
+  }
 }
 
 /**
