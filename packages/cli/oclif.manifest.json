@@ -5734,6 +5734,130 @@
       "strict": true,
       "usage": "search [query]"
     },
+    "store:execute": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Executes an Admin API GraphQL query or mutation on the specified store without requiring an app project.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
+      "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store without requiring an app project.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"query { shop { name } }\"",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query-file ./operation.graphql --variables \"{\"id\":\"gid://shopify/Product/1\"}\"",
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query \"mutation { shop { id } }\" --allow-mutations"
+      ],
+      "flags": {
+        "allow-mutations": {
+          "allowNo": false,
+          "description": "Allow GraphQL mutations to run against the target store.",
+          "env": "SHOPIFY_FLAG_ALLOW_MUTATIONS",
+          "name": "allow-mutations",
+          "type": "boolean"
+        },
+        "mock": {
+          "allowNo": false,
+          "char": "m",
+          "description": "Use mock data instead of real API calls (for development).",
+          "env": "SHOPIFY_FLAG_MOCK",
+          "hidden": true,
+          "name": "mock",
+          "type": "boolean"
+        },
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "output-file": {
+          "description": "The file name where results should be written, instead of STDOUT.",
+          "env": "SHOPIFY_FLAG_OUTPUT_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "output-file",
+          "type": "option"
+        },
+        "query": {
+          "char": "q",
+          "description": "The GraphQL query or mutation, as a string.",
+          "env": "SHOPIFY_FLAG_QUERY",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "query",
+          "required": false,
+          "type": "option"
+        },
+        "query-file": {
+          "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+          "env": "SHOPIFY_FLAG_QUERY_FILE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "query-file",
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store to execute against.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "variable-file": {
+          "description": "Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.",
+          "env": "SHOPIFY_FLAG_VARIABLE_FILE",
+          "exclusive": [
+            "variables"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "variable-file",
+          "type": "option"
+        },
+        "variables": {
+          "char": "v",
+          "description": "The values for any GraphQL variables in your query or mutation, in JSON format.",
+          "env": "SHOPIFY_FLAG_VARIABLES",
+          "exclusive": [
+            "variable-file"
+          ],
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "variables",
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        },
+        "version": {
+          "description": "The API version to use for the query or mutation. Defaults to the latest stable version.",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "version",
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:execute",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Execute GraphQL queries and mutations on a store."
+    },
     "theme:check": {
       "aliases": [
       ],
