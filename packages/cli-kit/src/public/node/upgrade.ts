@@ -54,7 +54,7 @@ export async function runCLIUpgrade(): Promise<void> {
 
   // Don't auto-upgrade for development mode
   if (!isGlobal && isDevelopment()) {
-    outputDebug('Auto-upgrade: Skipping auto-upgrade in development mode.')
+    outputInfo('Skipping upgrade in development mode.')
     return
   }
 
