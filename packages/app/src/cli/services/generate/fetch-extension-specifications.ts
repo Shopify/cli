@@ -46,8 +46,11 @@ export async function fetchSpecifications({
       // Hardcoded value for the post purchase extension because the value is wrong in the API
       if (spec.identifier === 'checkout_post_purchase') spec.surface = 'post_purchase'
 
-      // Hardcoded value for the webhook_subscription extension because the value is wrong in the API
-      if (spec.identifier === 'webhook_subscription') spec.experience = 'configuration'
+      // Hardcoded values for the webhook_subscription extension because the values are wrong in the API
+      if (spec.identifier === 'webhook_subscription') {
+        spec.experience = 'configuration'
+        spec.uidStrategy = 'dynamic'
+      }
 
       return spec
     })
@@ -126,7 +129,7 @@ function mergeLocalAndRemoteSpec(
     experience: remoteSpec.experience as 'extension' | 'configuration',
     registrationLimit: remoteSpec.registrationLimit,
     uidStrategy: remoteSpec.uidStrategy,
-    surface: remoteSpec.surface ?? '',
+    surface: remoteSpec.surface ?? localSpec.surface,
   }
   return merged
 }
