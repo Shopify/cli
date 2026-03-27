@@ -214,9 +214,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   private static instance: PartnersClient | undefined
 
   static getInstance(session?: Session): PartnersClient {
-    if (!PartnersClient.instance) {
-      PartnersClient.instance = new PartnersClient(session)
-    }
+    PartnersClient.instance ??= new PartnersClient(session)
     return PartnersClient.instance
   }
 

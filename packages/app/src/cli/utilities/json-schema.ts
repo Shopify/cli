@@ -59,7 +59,7 @@ export async function unifiedConfigurationParserFactory(
     )
 
     // Finally, we de-duplicate the error set from both validations -- identical messages for identical paths are removed
-    let errors = zodParse.errors || []
+    let errors = zodParse.errors ?? []
     if (jsonSchemaParse.state === 'error') {
       errors = errors.concat(jsonSchemaParse.errors)
     }

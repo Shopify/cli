@@ -80,6 +80,7 @@ export function tokenItemToString(token: TokenItem): string {
   } else if ('command' in token) {
     return token.command
   } else if ('link' in token) {
+    // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- empty label should fall through to url
     return token.link.label || token.link.url
   } else if ('char' in token) {
     return token.char

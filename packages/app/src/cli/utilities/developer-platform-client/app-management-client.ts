@@ -191,9 +191,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
   private static instance: AppManagementClient | undefined
 
   static getInstance(session?: Session): AppManagementClient {
-    if (!AppManagementClient.instance) {
-      AppManagementClient.instance = new AppManagementClient(session)
-    }
+    AppManagementClient.instance ??= new AppManagementClient(session)
     return AppManagementClient.instance
   }
 

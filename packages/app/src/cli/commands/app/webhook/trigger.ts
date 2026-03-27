@@ -106,7 +106,7 @@ export default class WebhookTrigger extends AppLinkedCommand {
       deliveryMethod: flags['delivery-method'],
       address: flags.address,
       clientId: flags['client-id'],
-      clientSecret: flags['client-secret'] || flags['shared-secret'],
+      clientSecret: flags['client-secret'] || flags['shared-secret'], // eslint-disable-line @typescript-eslint/prefer-nullish-coalescing -- empty flag should try next
       path: flags.path,
       config: flags.config,
       organizationId: appContextResult.organization.id,

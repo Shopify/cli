@@ -130,7 +130,7 @@ export const pollAppLogs = async ({
         stdout,
         appLogsFetchInput: {
           jwtToken: nextJwtToken,
-          cursor: responseCursor || cursor,
+          cursor: responseCursor ?? cursor,
         },
         developerPlatformClient,
         resubscribeCallback,

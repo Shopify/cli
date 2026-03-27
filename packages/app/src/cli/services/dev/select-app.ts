@@ -59,10 +59,7 @@ export async function selectOrCreateApp(
         {directory: options.directory},
       )
 
-      if (!app) {
-        if (attempt < MAX_PROMPT_RETRIES - 1) outputInfo('App selection failed. Retrying...')
-        continue
-      } else {
+      if (app) {
         const selectedToml = tomls[app.apiKey]
         if (selectedToml) setCachedCommandTomlPreference(selectedToml)
 
@@ -72,6 +69,9 @@ export async function selectOrCreateApp(
         if (fullSelectedApp) {
           return fullSelectedApp
         }
+      } else {
+        if (attempt < MAX_PROMPT_RETRIES - 1) outputInfo('App selection failed. Retrying...')
+        continue
       }
     }
 

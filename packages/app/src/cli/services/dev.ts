@@ -352,9 +352,7 @@ async function setupNetworkingOptions(
 
   let frontendPort = frontendConfig?.configuration.port
   if (frontendConfig) {
-    if (!frontendPort) {
-      frontendPort = frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
-    }
+    frontendPort ??= frontendConfig === backendConfig ? backendPort : await getAvailableTCPPort()
     frontendConfig.configuration.port = frontendPort
   }
   frontendPort = frontendPort ?? (await getAvailableTCPPort())

@@ -9,9 +9,8 @@ interface TestSchema {
 }
 
 // Helper to access private config for testing
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 function getConfig(storage: LocalStorage<TestSchema>): any {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (storage as any).config
 }
 

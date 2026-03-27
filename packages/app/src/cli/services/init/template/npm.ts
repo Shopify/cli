@@ -16,7 +16,7 @@ export async function updateCLIDependencies({
   local,
   useGlobalCLI,
 }: UpdateCLIDependenciesOptions): Promise<PackageJson> {
-  packageJSON.dependencies = packageJSON.dependencies || {}
+  packageJSON.dependencies = packageJSON.dependencies ?? {}
   if (useGlobalCLI) {
     delete packageJSON.dependencies['@shopify/cli']
   } else {

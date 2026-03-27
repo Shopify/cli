@@ -134,7 +134,6 @@ export async function findDevelopmentThemeByName(name: string, session: AdminSes
   }
 
   if (themes.nodes.length === 1) {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const {id, processing, role, name} = themes.nodes[0]!
 
     return buildTheme({

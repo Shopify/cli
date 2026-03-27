@@ -10,11 +10,9 @@ type HostThemeLocalStorageSchema = Record<StoreFqdn, HostThemeId>
 let _hostThemeLocalStorageInstance: LocalStorage<HostThemeLocalStorageSchema> | undefined
 
 export function hostThemeLocalStorage(): LocalStorage<HostThemeLocalStorageSchema> {
-  if (!_hostThemeLocalStorageInstance) {
-    _hostThemeLocalStorageInstance = new LocalStorage<HostThemeLocalStorageSchema>({
-      projectName: 'shopify-cli-host-theme-conf',
-    })
-  }
+  _hostThemeLocalStorageInstance ??= new LocalStorage<HostThemeLocalStorageSchema>({
+    projectName: 'shopify-cli-host-theme-conf',
+  })
   return _hostThemeLocalStorageInstance
 }
 

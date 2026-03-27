@@ -79,15 +79,15 @@ export async function reportAnalyticsEvent(options: ReportAnalyticsEventOptions)
       }
     }
     const doOpenTelemetry = async () => {
-      const active = payload.public.cmd_all_timing_active_ms || 0
-      const network = payload.public.cmd_all_timing_network_ms || 0
-      const prompt = payload.public.cmd_all_timing_prompts_ms || 0
+      const active = payload.public.cmd_all_timing_active_ms ?? 0
+      const network = payload.public.cmd_all_timing_network_ms ?? 0
+      const prompt = payload.public.cmd_all_timing_prompts_ms ?? 0
 
       return recordMetrics(
         {
           skipMetricAnalytics,
           cliVersion: payload.public.cli_version,
-          owningPlugin: payload.public.cmd_all_plugin || '@shopify/cli',
+          owningPlugin: payload.public.cmd_all_plugin ?? '@shopify/cli',
           command: payload.public.command,
           exitMode: options.exitMode,
         },

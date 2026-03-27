@@ -40,6 +40,7 @@ export function deriveGraphiQLKey(apiSecret: string, storeFqdn: string): string 
  * if non-empty, otherwise derives one deterministically from the app secret.
  */
 export function resolveGraphiQLKey(providedKey: string | undefined, apiSecret: string, storeFqdn: string): string {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional: empty string after trim should fall through to deriveGraphiQLKey
   return providedKey?.trim() || deriveGraphiQLKey(apiSecret, storeFqdn)
 }
 
@@ -83,10 +84,8 @@ export function setupGraphiQLServer({
 
   let _token: string | undefined
   async function token(): Promise<string> {
-    if (!_token) {
-      // eslint-disable-next-line require-atomic-updates
-      _token = await refreshToken()
-    }
+    // eslint-disable-next-line require-atomic-updates
+    _token ??= await refreshToken()
     return _token
   }
 

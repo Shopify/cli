@@ -104,6 +104,7 @@ export class Err<TValue, TError> {
    * A safe mode to throw the `error` of the `Result`
    */
   valueOrBug(): TValue {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error -- TError may not extend Error; this is intentional for the Result pattern
     throw this.error
   }
 

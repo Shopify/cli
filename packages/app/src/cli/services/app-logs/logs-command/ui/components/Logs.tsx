@@ -92,7 +92,7 @@ const Logs: FunctionComponent<LogsProps> = ({
                       </Box>
                       <Box marginLeft={1} marginTop={1}>
                         <Text>
-                          {prettyPrintJsonIfPossible(appLog.inputQueryVariablesMetafieldValue) || (
+                          {prettyPrintJsonIfPossible(appLog.inputQueryVariablesMetafieldValue) ?? (
                             <Text color="red">Metafield is not set</Text>
                           )}
                         </Text>

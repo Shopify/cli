@@ -654,6 +654,7 @@ interface IsTTYOptions {
 }
 
 export function isTTY({stdin = undefined, uiDebugOptions = defaultUIDebugOptions}: IsTTYOptions = {}) {
+  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- false should fall through to stdin/terminalSupportsPrompting
   return Boolean(uiDebugOptions.skipTTYCheck || stdin || terminalSupportsPrompting())
 }
 
