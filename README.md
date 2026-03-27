@@ -51,6 +51,40 @@ The Hydrogen code lives here: https://github.com/Shopify/hydrogen/tree/main/pack
 
 Learn more in the docs: [Shopify CLI for Hydrogen storefronts](https://shopify.dev/docs/custom-storefronts/hydrogen/cli)
 
+## Agent Skills
+
+This repo includes [Agent Skills](https://agentskills.io) that inject Shopify CLI and Liquid theme knowledge directly into the agent's context. These follow the open [Agent Skills format](https://agentskills.io/specification) and work with any compatible agent — Claude Code, Cursor, Gemini CLI, VS Code, and others.
+
+| Skill | Scope | What the agent learns |
+|-------|-------|----------------------|
+| [`shopify-cli`](skills/shopify-cli/) | CLI commands | Non-interactive execution, store resolution, auth, workflows |
+| [`shopify-liquid-themes`](skills/shopify-liquid-themes/) | Liquid language | Schema JSON, LiquidDoc, filters, tags, objects, translations |
+| [`liquid-theme-standards`](skills/liquid-theme-standards/) | CSS/JS/HTML | BEM in `{% stylesheet %}`, design tokens, Web Components, defensive CSS |
+| [`liquid-theme-a11y`](skills/liquid-theme-a11y/) | Accessibility | WCAG 2.2 patterns for e-commerce components |
+| [`shopify-functions`](skills/shopify-functions/) | Shopify Functions | Wasm compilation, declarative I/O, execution order, function types |
+| [`shopify-graphql-admin`](skills/shopify-graphql-admin/) | Admin GraphQL API | Cost-based rate limiting, GIDs, userErrors, bulk operations |
+| [`shopify-app-extensions`](skills/shopify-app-extensions/) | App extensions | Sandbox model, web components (not React DOM), 64KB limit |
+| [`shopify-checkout-ui`](skills/shopify-checkout-ui/) | Checkout UI | Preact Signals, static vs block targets, network constraints |
+| [`shopify-webhooks`](skills/shopify-webhooks/) | Webhooks | TOML vs API subscriptions, GDPR compliance, idempotency |
+| [`shopify-app-auth`](skills/shopify-app-auth/) | Authentication | Token exchange vs OAuth, session vs access tokens |
+| [`shopify-hydrogen`](skills/shopify-hydrogen/) | Hydrogen | React Router (not Next.js), Storefront API, Oxygen hosting |
+
+Install individual skills with the [skills CLI](https://skills.sh):
+
+```sh
+npx skills add Shopify/cli --skill shopify-cli
+npx skills add Shopify/cli --skill shopify-liquid-themes
+npx skills add Shopify/cli --skill liquid-theme-standards
+npx skills add Shopify/cli --skill liquid-theme-a11y
+npx skills add Shopify/cli --skill shopify-functions
+npx skills add Shopify/cli --skill shopify-graphql-admin
+npx skills add Shopify/cli --skill shopify-app-extensions
+npx skills add Shopify/cli --skill shopify-checkout-ui
+npx skills add Shopify/cli --skill shopify-webhooks
+npx skills add Shopify/cli --skill shopify-app-auth
+npx skills add Shopify/cli --skill shopify-hydrogen
+```
+
 <p>&nbsp;</p>
 
 ## Help 🖐
