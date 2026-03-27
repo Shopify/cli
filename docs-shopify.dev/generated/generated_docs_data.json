@@ -5775,6 +5775,205 @@
     "related": []
   },
   {
+    "name": "store auth",
+    "description": "Starts a PKCE OAuth flow against the specified store and stores an online access token for later use by `shopify store execute`.\n\nThis flow authenticates the app on behalf of the current user. Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
+    "overviewPreviewDescription": "Authenticate an app against a store for store commands.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "store auth",
+            "code": "shopify store auth [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "store auth"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `store auth` command:",
+        "type": "storeauth",
+        "typeDefinitions": {
+          "storeauth": {
+            "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
+            "name": "storeauth",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--scopes <value>",
+                "value": "string",
+                "description": "Comma-separated Admin API scopes to request for the app.",
+                "environmentValue": "SHOPIFY_FLAG_SCOPES"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "The myshopify.com domain of the store to authenticate against.",
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              }
+            ],
+            "value": "export interface storeauth {\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * Comma-separated Admin API scopes to request for the app.\n   * @environment SHOPIFY_FLAG_SCOPES\n   */\n  '--scopes <value>': string\n\n  /**\n   * The myshopify.com domain of the store to authenticate against.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "store",
+    "related": []
+  },
+  {
+    "name": "store execute",
+    "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
+    "overviewPreviewDescription": "Execute GraphQL queries and mutations on a store.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "store execute",
+            "code": "shopify store execute [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "store execute"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `store execute` command:",
+        "type": "storeexecute",
+        "typeDefinitions": {
+          "storeexecute": {
+            "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+            "name": "storeexecute",
+            "description": "",
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--allow-mutations",
+                "value": "\"\"",
+                "description": "Allow GraphQL mutations to run against the target store.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_ALLOW_MUTATIONS"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "\"\"",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--output-file <value>",
+                "value": "string",
+                "description": "The file name where results should be written, instead of STDOUT.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_OUTPUT_FILE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--query-file <value>",
+                "value": "string",
+                "description": "Path to a file containing the GraphQL query or mutation. Can't be used with --query.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_QUERY_FILE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--variable-file <value>",
+                "value": "string",
+                "description": "Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VARIABLE_FILE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "\"\"",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--version <value>",
+                "value": "string",
+                "description": "The API version to use for the query or mutation. Defaults to the latest stable version.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERSION"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-q, --query <value>",
+                "value": "string",
+                "description": "The GraphQL query or mutation, as a string.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_QUERY"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-s, --store <value>",
+                "value": "string",
+                "description": "The myshopify.com domain of the store to execute against.",
+                "environmentValue": "SHOPIFY_FLAG_STORE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-v, --variables <value>",
+                "value": "string",
+                "description": "The values for any GraphQL variables in your query or mutation, in JSON format.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VARIABLES"
+              }
+            ],
+            "value": "export interface storeexecute {\n  /**\n   * Allow GraphQL mutations to run against the target store.\n   * @environment SHOPIFY_FLAG_ALLOW_MUTATIONS\n   */\n  '--allow-mutations'?: ''\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The file name where results should be written, instead of STDOUT.\n   * @environment SHOPIFY_FLAG_OUTPUT_FILE\n   */\n  '--output-file <value>'?: string\n\n  /**\n   * The GraphQL query or mutation, as a string.\n   * @environment SHOPIFY_FLAG_QUERY\n   */\n  '-q, --query <value>'?: string\n\n  /**\n   * Path to a file containing the GraphQL query or mutation. Can't be used with --query.\n   * @environment SHOPIFY_FLAG_QUERY_FILE\n   */\n  '--query-file <value>'?: string\n\n  /**\n   * The myshopify.com domain of the store to execute against.\n   * @environment SHOPIFY_FLAG_STORE\n   */\n  '-s, --store <value>': string\n\n  /**\n   * Path to a file containing GraphQL variables in JSON format. Can't be used with --variables.\n   * @environment SHOPIFY_FLAG_VARIABLE_FILE\n   */\n  '--variable-file <value>'?: string\n\n  /**\n   * The values for any GraphQL variables in your query or mutation, in JSON format.\n   * @environment SHOPIFY_FLAG_VARIABLES\n   */\n  '-v, --variables <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n\n  /**\n   * The API version to use for the query or mutation. Defaults to the latest stable version.\n   * @environment SHOPIFY_FLAG_VERSION\n   */\n  '--version <value>'?: string\n}"
+          }
+        }
+      }
+    ],
+    "category": "store",
+    "related": []
+  },
+  {
     "name": "theme check",
     "description": "Calls and runs [Theme Check](/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](/docs/themes/tools/theme-check/checks)",
     "overviewPreviewDescription": "Validate the theme.",
