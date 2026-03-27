@@ -34,6 +34,12 @@ const spec = createExtensionSpecification({
   buildConfig: {mode: 'tax_calculation'},
   getOutputRelativePath: (extension: ExtensionInstance<TaxCalculationsConfigType>) =>
     joinPath('dist', `${extension.handle}.js`),
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [{id: 'create-tax-stub', name: 'Create Tax Stub', type: 'create_tax_stub', config: {}}],
+    },
+  ],
   deployConfig: async (config, _) => {
     return {
       production_api_base_url: config.production_api_base_url,
