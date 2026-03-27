@@ -12,7 +12,10 @@ const each = ['http', 'https'] as const
 describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
   const test = getTestReverseProxy(protocol)
   const wsProtocol = protocol === 'http' ? 'ws' : 'wss'
-  const agent = protocol === 'http' ? undefined : new https.Agent({rejectUnauthorized: false})
+  const agent =
+    protocol === 'http'
+      ? new http.Agent({keepAlive: false})
+      : new https.Agent({ca: localhostCert.cert, keepAlive: false})
 
   test('routes requests to the correct target based on path', {retry: 2}, async ({ports, servers}) => {
     const response1 = await fetch(`${protocol}://localhost:${ports.proxyPort}/path1/test`, {agent})
@@ -44,8 +47,9 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
       ws.on('message', (data) => {
         expect(String(data)).toBe('Echo: Hello, WebSocket!')
         ws.close()
-        wss.close()
-        resolve()
+      })
+      ws.on('close', () => {
+        wss.close(() => resolve())
       })
       ws.on('error', reject)
     })
@@ -97,8 +101,8 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
         res.end('Response from target server 2')
       })
 
-      await new Promise<void>((resolve) => targetServer1.listen(ports.targetPort1, resolve))
-      await new Promise<void>((resolve) => targetServer2.listen(ports.targetPort2, resolve))
+      await new Promise<void>((resolve) => targetServer1.listen(ports.targetPort1, 'localhost', resolve))
+      await new Promise<void>((resolve) => targetServer2.listen(ports.targetPort2, 'localhost', resolve))
 
       const abortController = new AbortController()
       const {server: proxyServer} = await getProxyingWebServer(
@@ -111,11 +115,14 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
         protocol === 'https' ? localhostCert : undefined,
       )
 
-      await new Promise<void>((resolve) => proxyServer.listen(ports.proxyPort, resolve))
+      await new Promise<void>((resolve) => proxyServer.listen(ports.proxyPort, 'localhost', resolve))
       await use({targetServer1, targetServer2, proxyServer, abortController})
 
+      proxyServer.closeAllConnections()
       await new Promise<void>((resolve) => proxyServer.close(() => resolve()))
+      targetServer1.closeAllConnections()
       await new Promise<void>((resolve) => targetServer1.close(() => resolve()))
+      targetServer2.closeAllConnections()
       await new Promise<void>((resolve) => targetServer2.close(() => resolve()))
     },
   })
@@ -124,59 +131,50 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
 const localhostCert = {
   key:
     '-----BEGIN PRIVATE KEY-----\n' +
-    'MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC4f3TBaM5/O2KI\n' +
-    'n9FIlwJ+g/6Tm9GPOF/Lme21lvIgXSRi0zr1hkhTmbHiQ6R9sdlrtYP+F63sK9lI\n' +
-    'BeUzwc0SWt4CWEU/gd41SrDDl6hp2NY0H/oucmDVpq0nH7e/57vwNBvMeWS83rJ5\n' +
-    'm3TqwEzzXnYwZOq/2nqpnKHZHizzhLa4vBYpVRGXaE61ldtZai+knSizx6I10FyC\n' +
-    'eLZblCT0zNFaM6ObJjbpZEvx6BAig9lZreEVY4QxqIWZfXOICnQMyLhajIh1PW8K\n' +
-    'UhLLKf6xTfZOx1O9gr8PdVrkNq+7FvglrwyBV0Eb2/NcL8T8EeFAoYt4kLAfxfwT\n' +
-    'eXhaOuKDAgMBAAECggEBAKHtA10Ijkvuo+FDWxw5pS/CyzlkBX2Mvc7lD1NT4rfy\n' +
-    '549w0otQysPM3em28nR7FlbJHcpxn+zq4y2qNurBCio05CrsrAI8Cfl9zzwrK92S\n' +
-    'ORXQhvQi4MhDHC99T/k2+qSsJ0XDuV1mmv/OJ8Qs+JyUaGi6+aleqE+asBXtvQgQ\n' +
-    'EWJHLLmGwzlnIj2Nc9qmH06QGOjoXOn3o4xLLz09CxEo987HzZv+Kw2Fci+XfEoj\n' +
-    'OcezlrW5QbVR60aWJUrQu/Mmljpqsw8pQeKn9iWlyK8G+AvdvYgRjhcvEjVZcD0f\n' +
-    'ue+C2MvVT1QCOiQtl3DDuFk2sy/YlakRT0/bxzPv/uECgYEA5p7IcsAnpohNicyq\n' +
-    'wUJazFMuvGpUk6HiwnNFKZhNJXGkWTgNN6eZ9eEHGuYeTNdLTK65cHiQ3Q+ChhMz\n' +
-    'rVnia4dPV6gLY15PjXbffRXJTPUetXcVW3nupdzSU7EO3o4ayhQ96/tzxUsvSPQE\n' +
-    'd1PV5HS6ZbzSVwLLZLlXRdoEAlMCgYEAzM1G5u3pu6bPRN+XT6iFxbzmknOgppcT\n' +
-    'pyvkTFrTtKn49m18AuywuQ+EvwzN6nh5LbLyWKKgcUuM75EI5ZNjM7UCfAG8eHum\n' +
-    '1HXLEfJ6LpZJ0/80fUUHcAzL1bp3prRhTLbxOKtjx2ZnDlURY3tZKCoY7mHKmT/X\n' +
-    'Y5AdopD8+RECgYEAkULyf1UJpJu2O1XvOEvTZV//0C4pl9QgQNradZi4/xzVqFzl\n' +
-    '9mhbUcSr9QV9kGkLxQFJTM6kcJmUXV867bXwKErSbyQqCC0fbruxidhvM0oyTZr0\n' +
-    'mOn0qASvdofQFd7sgNy/JCT+hwcUgZ8yMPddgskDn5GP676W3prfnd/1JoECgYAf\n' +
-    '+yZJRXmsXf4b6TZ9r/lDyZ3P3NKHcSwWfNonuj85BRnlkW8+HavzGiNGmj9FkA6M\n' +
-    'Pldt0+duCbg2aNWU1BE3r9p1dufxgI2qu8I8STsfL0TUIBQYQ8FHlBf4hifNFnnj\n' +
-    'OuYsTUdFig4pxMr0V/yyMvC1uPukNr3xxD18d1upoQKBgQCOqyzwuXXZp0gDTuOC\n' +
-    'c5hyjAhwxpppLvXt0bHZJ8AqSnRDFjMBjY+4s9hgaRFMjbcB4n0DZNQFKeECtcfm\n' +
-    'gZGMPEvoMptrUbG4licNClEhgZJ1BDb5zQv0no2m9AAr5XYVCbAVyQAhhLfYZNMo\n' +
-    'CIgUuvwT3ewgoTn8UsPOsgkmRA==\n' +
+    'MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCpAmXYsXgC0K9l\n' +
+    'aAknNZPdxG2/sA4EC4+Ez7fe+nvMn3vmFE+loesu2IAOYrqJPJvN9vGGr0Vs3P1u\n' +
+    '6zcDV7NSWSAvO8BT5InLnOFWIeF5clq7wc1mk4lrcM4fJtJocdnmRZxpbWaDTa7a\n' +
+    '/seQliQrr5Skw7VWuFkp3lqOLu2XXXVcbZ7+Ya7wzMej9wXAfRwZO8dfg/pwhxfe\n' +
+    'jwfxz/wKjfEewFAQ2vOdQKw6ju+sLnCDXCcnmlifYWlvoDnl06Q9jc7kz/rwr0d9\n' +
+    '2nxJDx/G4XA8LfrBO257P4FMilwPwpb8OgrSoxQRqD89b7eOXcjsYqiZDOR4mEz2\n' +
+    'gg0DqSmdAgMBAAECggEAR41uVPl9l6OGPmZ3SZRTT9ZzqG3+4ROL5WyTqeFePFlg\n' +
+    '+R2sQrF0glbCkFSYKLXyOJbN1nmp6Nb+rNEEb3PXxYtaJuUjHeFpvTxj4jVh4irZ\n' +
+    '4xe/wCfCTCxr96BWAEYDPIxIFhJtDjX7S1gGYV5PXfdt9PuucFKH3UP4Dq4rhKMq\n' +
+    'L5DE70ipk93G66cKwMnfzlPpjnKDMesq+GNLTotzOl0n7v7N2rwgZlbEoHznOFcn\n' +
+    'zA510COtiWksL3LVORnEYdMzUWlPxWM+t3ONDZlXByC0qJEf3toiNwzYi2wpLqUP\n' +
+    'iq5sKALCG+CJzTp2myH3Tb8Zsx49mP/scDJE0rCueQKBgQDdT36ZrBmi3/YWAgqt\n' +
+    'RG2FQugN4Ec//WzTWpqhldy9rZBJEiOiMKdBXGn3R6llv7Ft18ZR/EFq7ID84Gva\n' +
+    'XcTGDEZlehW9u3b83z3qIfntfUpMNNt8v/aaKrSD7e861PGpqePJXbgg1p7ls7vt\n' +
+    'Gjf9bHhm9rmtXQ8pijzpVMVXEwKBgQDDgDhLIQinGps2VYcW9YzmF2nsvOzikA1c\n' +
+    'V67ogq0ftt9V0iCXt8V3JMd5Xt7ALtLj0uzI8qVKXDbcti/Fq4jGIia4hQ3lA5cQ\n' +
+    '0WkZvEqAbpwbSd28P10RIAnSWlY4ZkCj9FZNpnS4TdDZa4wns3R5lsZVUlAbyRd0\n' +
+    'NaRwt08ijwKBgQDIx3Mi9dj4RFmdE9Md6OO3r8CZvizF6CQQB7Yb/LscNledg2Bi\n' +
+    'p+NF0BKu7gvILMZK0iSxgrrSx6gqQ2x12vZHeyFutPj+fhHwTpR8UsDM7gs24gly\n' +
+    'vzF6Il5NBtMwO7rXYzMuH+GJoUzdNle7Pzsmpn8BYruHhdLYq/qg8XBrkwKBgHhW\n' +
+    'MFBuYPka83caZjDHrJbkypqiH93FdbPldRBBf3cKBaa51L4OrEmOJgqbTtlU+RKq\n' +
+    '/n0ifoOrB0oMCpPN5j6vPs5NeCQDdbUwcVUaBXHQo95YNVhuWEb2RZVpbbEBn8BL\n' +
+    '4eOiFi5sF6X9ASRe3c8J88MJC65OtVUev71x2BAZAoGBAKCMcgjTJwS7avupT3D/\n' +
+    '/ZY2Nz4+Ro7xv3OrquEDPGF9IOjxUph7yedwtX/Ybwnh/Wu6HYmJnK5S4zsijgp9\n' +
+    'CNEakriug3FXzamyXzGQFlVXrz5/RGqraGFeElrqt4hv1iPe1aiVGFLSc//4cLrA\n' +
+    'jZPjgaaFbRALJQJ6i5luC2LP\n' +
     '-----END PRIVATE KEY-----\n',
   cert:
     '-----BEGIN CERTIFICATE-----\n' +
-    'MIIEVDCCArygAwIBAgIQIbaylXp1Twug/Ne2DltDXDANBgkqhkiG9w0BAQsFADCB\n' +
-    'jTEeMBwGA1UEChMVbWtjZXJ0IGRldmVsb3BtZW50IENBMTEwLwYDVQQLDChyaWNo\n' +
-    'YXJkcG93ZWxsQFJpY2hhcmRzLU1hY0Jvb2stUHJvLmxvY2FsMTgwNgYDVQQDDC9t\n' +
-    'a2NlcnQgcmljaGFyZHBvd2VsbEBSaWNoYXJkcy1NYWNCb29rLVByby5sb2NhbDAe\n' +
-    'Fw0yNTAzMDQxOTAyMTJaFw0yNzA2MDQxODAyMTJaMF4xJzAlBgNVBAoTHm1rY2Vy\n' +
-    'dCBkZXZlbG9wbWVudCBjZXJ0aWZpY2F0ZTEzMDEGA1UECwwqcmljaGFyZHBvd2Vs\n' +
-    'bEBSaWNoYXJkcy1NYWNCb29rLVByby0yLmxvY2FsMIIBIjANBgkqhkiG9w0BAQEF\n' +
-    'AAOCAQ8AMIIBCgKCAQEAuH90wWjOfztiiJ/RSJcCfoP+k5vRjzhfy5nttZbyIF0k\n' +
-    'YtM69YZIU5mx4kOkfbHZa7WD/het7CvZSAXlM8HNElreAlhFP4HeNUqww5eoadjW\n' +
-    'NB/6LnJg1aatJx+3v+e78DQbzHlkvN6yeZt06sBM8152MGTqv9p6qZyh2R4s84S2\n' +
-    'uLwWKVURl2hOtZXbWWovpJ0os8eiNdBcgni2W5Qk9MzRWjOjmyY26WRL8egQIoPZ\n' +
-    'Wa3hFWOEMaiFmX1ziAp0DMi4WoyIdT1vClISyyn+sU32TsdTvYK/D3Va5Davuxb4\n' +
-    'Ja8MgVdBG9vzXC/E/BHhQKGLeJCwH8X8E3l4WjrigwIDAQABo14wXDAOBgNVHQ8B\n' +
-    'Af8EBAMCBaAwEwYDVR0lBAwwCgYIKwYBBQUHAwEwHwYDVR0jBBgwFoAUpeI4lDvc\n' +
-    'Yw09VrPC4ME+I0EjA0AwFAYDVR0RBA0wC4IJbG9jYWxob3N0MA0GCSqGSIb3DQEB\n' +
-    'CwUAA4IBgQBhqZUbVSIVboIXxa3OFKctXi7PqsRId8D7KibIpEUjBegvgzIxpuqB\n' +
-    '+5p7HZc7IZxEz7pD5wm7CCcw8CwnBSQOem+3YkrJtNzeTv+Le/YFWYYeCBb+38gR\n' +
-    '9IAJT4BQXJr5vmBSYsqG0q9UXKXsLkA8FOscr2r6B+h3lF1e+NZlMHcMOFu9NJPO\n' +
-    'n6suL6ap9jdtslqWCspkUy9xKMmya3lv7FbXKe48IyhazxVNUemZrEW/m6GZkCFx\n' +
-    'IZnwtN9JV33IkE7w/+HHdomCCDpKsvGtX+KJxajnNaCawyP1k3+cMRQWPyp1ceUe\n' +
-    'hMDQsOoGSZAVQGT7uCaUXcmphQedlJqhrFbqV2xUoU+XS+ASti3LdoQiRO8COAAV\n' +
-    '4jT234BS7zHSJXcg+dmocKqOeRf5J5b+XwAkQs+qEgWSgHYsju5srNle4wd341PY\n' +
-    'fbw6iqA335rMbN/+jBGZ2ixrrro7lc3RKI0oayLHT1QnszQdZy+SAfV3a++nwbkC\n' +
-    'Sad3b/7iWHY=\n' +
+    'MIICwzCCAaugAwIBAgIJALZpjza1rNWnMA0GCSqGSIb3DQEBCwUAMBQxEjAQBgNV\n' +
+    'BAMMCWxvY2FsaG9zdDAeFw0yNjAzMjYxODQzMjhaFw0zNjAzMjMxODQzMjhaMBQx\n' +
+    'EjAQBgNVBAMMCWxvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoC\n' +
+    'ggEBAKkCZdixeALQr2VoCSc1k93Ebb+wDgQLj4TPt976e8yfe+YUT6Wh6y7YgA5i\n' +
+    'uok8m8328YavRWzc/W7rNwNXs1JZIC87wFPkicuc4VYh4XlyWrvBzWaTiWtwzh8m\n' +
+    '0mhx2eZFnGltZoNNrtr+x5CWJCuvlKTDtVa4WSneWo4u7ZdddVxtnv5hrvDMx6P3\n' +
+    'BcB9HBk7x1+D+nCHF96PB/HP/AqN8R7AUBDa851ArDqO76wucINcJyeaWJ9haW+g\n' +
+    'OeXTpD2NzuTP+vCvR33afEkPH8bhcDwt+sE7bns/gUyKXA/Clvw6CtKjFBGoPz1v\n' +
+    't45dyOxiqJkM5HiYTPaCDQOpKZ0CAwEAAaMYMBYwFAYDVR0RBA0wC4IJbG9jYWxo\n' +
+    'b3N0MA0GCSqGSIb3DQEBCwUAA4IBAQB2vd2s4NKoApN57AN507SEO7eU1sJLl0xG\n' +
+    'I1NCel8sSSjO6gkjx3HOxX5hPekjPVoPDA/o4KDUfJG16wGkiow7A9HL9LVcG5J5\n' +
+    'pSFSS885joDu79uZfEPixbo7SGjAKG0SnJ5WbXz9JDIDenO8zuMCPKIE1hchsEpV\n' +
+    '2MQ4f2tKK7qS1MI67Uu/U2I+2v32GB4PvGVSmpDbk09larAi/rnJM32cLIM5QamF\n' +
+    'XsgFQapfZCLV9TJo3nAm7Z0BoQN707YrJZDiky4kVQXk2jog+Qr7v+h9pTh5lOob\n' +
+    'Kr3LCBfGnbLLYljudOKEyx1ZyVB7Lv7kgAtQ8FmgycN327xsrxVj\n' +
     '-----END CERTIFICATE-----\n',
   certPath: 'localhost.pem',
 }
