@@ -26,7 +26,7 @@ import {CLI_KIT_VERSION} from '../common/version.js'
  */
 export function cliInstallCommand(): string | undefined {
   const packageManager = inferPackageManagerForGlobalCLI()
-  if (!packageManager) return undefined
+  if (!packageManager || packageManager === 'unknown') return undefined
 
   if (packageManager === 'homebrew') {
     return 'brew upgrade shopify-cli'

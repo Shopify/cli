@@ -144,8 +144,8 @@ describe('runCLIUpgrade', () => {
   test('throws an error when cliInstallCommand returns undefined', async () => {
     // Given
     vi.mocked(currentProcessIsGlobal).mockReturnValue(true)
-    // Force a falsy return so cliInstallCommand() returns undefined
-    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('' as unknown as PackageManager)
+    // 'unknown' is returned by inferPackageManagerForGlobalCLI for local installs
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('unknown' as PackageManager)
 
     // When/Then
     await expect(runCLIUpgrade()).rejects.toThrow('Could not determine the package manager')
