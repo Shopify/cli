@@ -7,16 +7,10 @@ export interface hydrogeninit {
   '-f, --force'?: ''
 
   /**
-   * Init Git and create initial commits.
-   * @environment SHOPIFY_HYDROGEN_FLAG_GIT
+   * The path to the directory of the new Hydrogen storefront.
+   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
    */
-  '--git'?: ''
-
-  /**
-   * Auto installs dependencies using the active package manager.
-   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS
-   */
-  '--install-deps'?: ''
+  '--path <value>'?: string
 
   /**
    * Sets the template language to use. One of `js` or `ts`.
@@ -25,10 +19,16 @@ export interface hydrogeninit {
   '--language <value>'?: string
 
   /**
-   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_I18N
+   * Scaffolds project based on an existing template or example from the Hydrogen repository.
+   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE
    */
-  '--markets <value>'?: string
+  '--template <value>'?: string
+
+  /**
+   * Auto installs dependencies using the active package manager.
+   * @environment SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS
+   */
+  '--install-deps'?: ''
 
   /**
    * Use mock.shop as the data source for the storefront.
@@ -37,16 +37,16 @@ export interface hydrogeninit {
   '--mock-shop'?: ''
 
   /**
-   * The path to the directory of the new Hydrogen storefront.
-   * @environment SHOPIFY_HYDROGEN_FLAG_PATH
+   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING
    */
-  '--path <value>'?: string
+  '--styling <value>'?: string
 
   /**
-   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`
-   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART
+   * Sets the URL structure to support multiple markets. Must be one of: `subfolders`, `domains`, `subdomains`, `none`. Example: `--markets subfolders`.
+   * @environment SHOPIFY_HYDROGEN_FLAG_I18N
    */
-  '--quickstart'?: ''
+  '--markets <value>'?: string
 
   /**
    * Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.
@@ -55,14 +55,14 @@ export interface hydrogeninit {
   '--shortcut'?: ''
 
   /**
-   * Sets the styling strategy to use. One of `tailwind`, `vanilla-extract`, `css-modules`, `postcss`, `none`.
-   * @environment SHOPIFY_HYDROGEN_FLAG_STYLING
+   * Init Git and create initial commits.
+   * @environment SHOPIFY_HYDROGEN_FLAG_GIT
    */
-  '--styling <value>'?: string
+  '--git'?: ''
 
   /**
-   * Scaffolds project based on an existing template or example from the Hydrogen repository.
-   * @environment SHOPIFY_HYDROGEN_FLAG_TEMPLATE
+   * Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`
+   * @environment SHOPIFY_HYDROGEN_FLAG_QUICKSTART
    */
-  '--template <value>'?: string
+  '--quickstart'?: ''
 }
