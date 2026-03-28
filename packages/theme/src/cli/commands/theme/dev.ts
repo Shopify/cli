@@ -69,8 +69,8 @@ You can run this command only in a directory that matches the [default Shopify t
       env: 'SHOPIFY_FLAG_ERROR_OVERLAY',
     }),
     poll: Flags.boolean({
-      hidden: true,
-      description: 'Force polling to detect file changes.',
+      description:
+        'Use polling to detect file changes. Use this when file system events are unreliable, such as with build tools that preserve timestamps, Docker volumes, or network filesystems.',
       env: 'SHOPIFY_FLAG_POLL',
     }),
     'theme-editor-sync': Flags.boolean({
@@ -183,6 +183,7 @@ You can run this command only in a directory that matches the [default Shopify t
       ignore,
       only,
       notify: flags.notify,
+      poll: flags.poll,
     })
 
     await metafieldsPull({
