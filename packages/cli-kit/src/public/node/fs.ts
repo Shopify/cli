@@ -15,7 +15,7 @@ import {
 
 import {temporaryDirectory, temporaryDirectoryTask} from 'tempy'
 import {sep, join} from 'pathe'
-import {findUp as internalFindUp} from 'find-up'
+import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
 import {minimatch} from 'minimatch'
 import fastGlobLib from 'fast-glob'
 import {
@@ -649,6 +649,16 @@ export async function findPathUp(
   // findUp has odd typing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const got = await internalFindUp(matcher as any, options)
+  return got ? normalizePath(got) : undefined
+}
+
+export function findPathUpSync(
+  matcher: OverloadParameters<typeof internalFindUp>[0],
+  options: OverloadParameters<typeof internalFindUp>[1],
+): ReturnType<typeof internalFindUpSync> {
+  // findUp has odd typing
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const got = internalFindUpSync(matcher as any, options)
   return got ? normalizePath(got) : undefined
 }
 
