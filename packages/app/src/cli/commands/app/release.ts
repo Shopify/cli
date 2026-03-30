@@ -1,11 +1,12 @@
 import {appFlags} from '../../flags.js'
 import {release} from '../../services/release.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../utilities/app-linked-command.js'
+import {deprecated} from '@shopify/cli-kit/node/base-command'
 import {linkedAppContext} from '../../services/app-context.js'
 import {Flags} from '@oclif/core'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {addPublicMetadata} from '@shopify/cli-kit/node/metadata'
-import {renderWarning} from '@shopify/cli-kit/node/ui'
+
 
 export default class Release extends AppLinkedCommand {
   static summary = 'Release an app version.'
@@ -19,13 +20,25 @@ export default class Release extends AppLinkedCommand {
   static flags = {
     ...globalFlags,
     ...appFlags,
-    force: Flags.boolean({
-      hidden: false,
-      description:
-        '[Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.',
-      env: 'SHOPIFY_FLAG_FORCE',
-      char: 'f',
-    }),
+    force: deprecated(
+      Flags.boolean({
+        hidden: false,
+        description:
+          '[Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.',
+        env: 'SHOPIFY_FLAG_FORCE',
+        char: 'f',
+      }),
+      {
+        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in the next major release.'],
+        body: [
+          'Use',
+          {command: '--allow-updates'},
+          'for CI/CD environments, or',
+          {command: '--allow-updates --allow-deletes'},
+          'if you also want to allow removals.',
+        ],
+      },
+    ),
     'allow-updates': Flags.boolean({
       hidden: false,
       description:
@@ -49,19 +62,6 @@ export default class Release extends AppLinkedCommand {
   async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Release)
     const clientId = flags['client-id']
-
-    if (flags.force) {
-      renderWarning({
-        headline: ['The', {command: '--force'}, 'flag is deprecated and will be removed in the next major release.'],
-        body: [
-          'Use',
-          {command: '--allow-updates'},
-          'for CI/CD environments, or',
-          {command: '--allow-updates --allow-deletes'},
-          'if you also want to allow removals.',
-        ],
-      })
-    }
 
     await addPublicMetadata(() => ({
       cmd_app_reset_used: flags.reset,
