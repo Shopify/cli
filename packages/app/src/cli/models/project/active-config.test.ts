@@ -164,12 +164,15 @@ describe('selectActiveConfig', () => {
     })
   })
 
-  test('throws when the only app config is malformed (no valid configs to fall back to)', async () => {
+  test('loads with errors when the only app config is malformed', async () => {
     await inTemporaryDirectory(async (dir) => {
-      // The only config is broken TOML — Project.load skips it and finds 0 valid configs
+      // The only config is broken TOML — Project.load records the error instead of throwing
       await writeFile(joinPath(dir, 'shopify.app.toml'), '{{invalid toml')
 
-      await expect(Project.load(dir)).rejects.toThrow(/Could not find/)
+      const project = await Project.load(dir)
+      expect(project.appConfigFiles).toHaveLength(0)
+      expect(project.errors).toHaveLength(1)
+      expect(project.errors[0]!.path).toContain('shopify.app.toml')
     })
   })
 

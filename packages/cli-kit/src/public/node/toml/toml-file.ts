@@ -4,6 +4,12 @@ import {updateTomlValues} from '@shopify/toml-patch'
 
 type TomlPatchValue = string | number | boolean | undefined | (string | number | boolean)[]
 
+/** An error on a TOML file — missing or malformed. */
+export interface TomlFileError {
+  readonly path: string
+  readonly message: string
+}
+
 /**
  * Thrown when a TOML file does not exist at the expected path.
  */
@@ -62,6 +68,7 @@ export class TomlFile {
 
   readonly path: string
   content: JsonMapType
+  readonly errors: TomlFileError[] = []
 
   constructor(path: string, content: JsonMapType) {
     this.path = path

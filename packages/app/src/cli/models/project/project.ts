@@ -1,5 +1,5 @@
 import {configurationFileNames} from '../../constants.js'
-import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {TomlFile, type TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, glob, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
 import {
@@ -10,7 +10,6 @@ import {
 } from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputDebug} from '@shopify/cli-kit/node/output'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 const APP_CONFIG_GLOB = 'shopify.app*.toml'
@@ -43,10 +42,11 @@ export class Project {
    */
   static async load(startDirectory: string): Promise<Project> {
     const directory = await findProjectRoot(startDirectory)
+    const errors: TomlFileError[] = []
 
     // Discover all app config files
-    const appConfigFiles = await discoverAppConfigFiles(directory)
-    if (appConfigFiles.length === 0) {
+    const appConfigFiles = await discoverAppConfigFiles(directory, errors)
+    if (appConfigFiles.length === 0 && errors.length === 0) {
       throw new AbortError(`Could not find a Shopify app TOML file in ${directory}`)
     }
 
@@ -61,7 +61,7 @@ export class Project {
         allExtensionDirs.add(DEFAULT_EXTENSION_DIR)
       }
     }
-    const extensionConfigFiles = await discoverExtensionFiles(directory, [...allExtensionDirs])
+    const extensionConfigFiles = await discoverExtensionFiles(directory, [...allExtensionDirs], errors)
 
     // Discover web files from all app configs' web_directories (union)
     const allWebDirs = new Set<string>()
@@ -71,7 +71,7 @@ export class Project {
         for (const dir of dirs) allWebDirs.add(dir as string)
       }
     }
-    const webConfigFiles = await discoverWebFiles(directory, allWebDirs.size > 0 ? [...allWebDirs] : undefined)
+    const webConfigFiles = await discoverWebFiles(directory, allWebDirs.size > 0 ? [...allWebDirs] : undefined, errors)
 
     // Project metadata
     const packageJSONPath = joinPath(directory, 'package.json')
@@ -96,6 +96,7 @@ export class Project {
       webConfigFiles,
       dotenvFiles,
       hiddenConfigRaw,
+      errors,
     })
   }
 
@@ -113,6 +114,9 @@ export class Project {
   /** Raw .shopify/project.json content — selection logic looks up by client_id */
   readonly hiddenConfigRaw: JsonMapType
 
+  /** TOML parse errors from discovery. Files with errors are not in appConfigFiles/extensionConfigFiles/webConfigFiles. */
+  readonly errors: TomlFileError[]
+
   private constructor(options: {
     directory: string
     packageManager: PackageManager
@@ -123,6 +127,7 @@ export class Project {
     webConfigFiles: TomlFile[]
     dotenvFiles: Map<string, DotEnvFile>
     hiddenConfigRaw: JsonMapType
+    errors: TomlFileError[]
   }) {
     this.directory = options.directory
     this.packageManager = options.packageManager
@@ -133,6 +138,7 @@ export class Project {
     this.webConfigFiles = options.webConfigFiles
     this.dotenvFiles = options.dotenvFiles
     this.hiddenConfigRaw = options.hiddenConfigRaw
+    this.errors = options.errors
   }
 
   // ── File lookup ───────────────────────────────────────────
@@ -174,47 +180,50 @@ async function findProjectRoot(startDirectory: string): Promise<string> {
   return found
 }
 
-async function discoverAppConfigFiles(directory: string): Promise<TomlFile[]> {
+async function discoverAppConfigFiles(directory: string, errors: TomlFileError[]): Promise<TomlFile[]> {
   const pattern = joinPath(directory, APP_CONFIG_GLOB)
   const paths = await glob(pattern)
   const validPaths = paths.filter((filePath) => APP_CONFIG_REGEX.test(basename(filePath)))
-  return readTomlFilesSafe(validPaths)
+  return readTomlFilesCollectingErrors(validPaths, errors)
 }
 
-async function discoverExtensionFiles(directory: string, extensionDirectories?: string[]): Promise<TomlFile[]> {
-  const dirs = extensionDirectories ?? [DEFAULT_EXTENSION_DIR]
+async function discoverExtensionFiles(
+  directory: string,
+  extensionDirectories: string[],
+  errors: TomlFileError[],
+): Promise<TomlFile[]> {
+  const dirs = extensionDirectories.length > 0 ? extensionDirectories : [DEFAULT_EXTENSION_DIR]
   const patterns = dirs.map((dir) => joinPath(directory, dir, EXTENSION_TOML))
   patterns.push(`!${joinPath(directory, NODE_MODULES_EXCLUDE)}`)
   const paths = await glob(patterns)
-  return readTomlFilesSafe(paths)
+  return readTomlFilesCollectingErrors(paths, errors)
 }
 
-async function discoverWebFiles(directory: string, webDirectories?: string[]): Promise<TomlFile[]> {
+async function discoverWebFiles(
+  directory: string,
+  webDirectories: string[] | undefined,
+  errors: TomlFileError[],
+): Promise<TomlFile[]> {
   const dirs = webDirectories ?? ['**']
   const patterns = dirs.map((dir) => joinPath(directory, dir, WEB_TOML))
   patterns.push(`!${joinPath(directory, NODE_MODULES_EXCLUDE)}`)
   const paths = await glob(patterns)
-  return readTomlFilesSafe(paths)
+  return readTomlFilesCollectingErrors(paths, errors)
 }
 
-/**
- * Read TOML files, skipping any that fail to parse.
- * This prevents a malformed inactive config or extension TOML
- * from blocking the active config from loading.
- */
-async function readTomlFilesSafe(paths: string[]): Promise<TomlFile[]> {
-  const results = await Promise.all(
+async function readTomlFilesCollectingErrors(paths: string[], errors: TomlFileError[]): Promise<TomlFile[]> {
+  const files: TomlFile[] = []
+  await Promise.all(
     paths.map(async (filePath) => {
       try {
-        return await TomlFile.read(filePath)
+        files.push(await TomlFile.read(filePath))
         // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch {
-        outputDebug(`Skipping malformed TOML file: ${filePath}`)
-        return undefined
+      } catch (err) {
+        errors.push({path: filePath, message: err instanceof Error ? err.message : `Failed to read ${filePath}`})
       }
     }),
   )
-  return results.filter((file): file is TomlFile => file !== undefined)
+  return files
 }
 
 /** Discover all .env* files in the project root */
