@@ -293,11 +293,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
 
   const configResult = await parseConfigurationFile(configSchema, configurationPath, rawConfig)
   if (configResult.errors) {
-    throw new AbortError(
-      outputContent`${outputToken.errorText('Validation errors')} in ${outputToken.path(
-        configurationPath,
-      )}:\n\n${configResult.errors.map(formatConfigurationError).join('\n')}`,
-    )
+    throw new AbortError(configResult.errors.map(formatConfigurationError).join('\n'))
   }
   const configuration = configResult.data
 
