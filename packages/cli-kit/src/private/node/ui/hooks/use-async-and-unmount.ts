@@ -16,11 +16,13 @@ export default function useAsyncAndUnmount(
     asyncFunction()
       .then(() => {
         onFulfilled()
-        unmountInk()
+        // Defer unmount so React 19 can flush batched state updates
+        // before the component tree is torn down.
+        setImmediate(() => unmountInk())
       })
       .catch((error) => {
         onRejected(error)
-        unmountInk(error)
+        setImmediate(() => unmountInk(error))
       })
   }, [])
 }
