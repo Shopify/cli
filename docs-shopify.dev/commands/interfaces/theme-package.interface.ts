@@ -7,14 +7,14 @@ export interface themepackage {
   '--no-color'?: ''
 
   /**
-   * The path where you want to run the command. Defaults to the current working directory.
-   * @environment SHOPIFY_FLAG_PATH
-   */
-  '--path <value>'?: string
-
-  /**
    * Increase the verbosity of the output.
    * @environment SHOPIFY_FLAG_VERBOSE
    */
   '--verbose'?: ''
+
+  /**
+   * The path where you want to run the command. Defaults to the current working directory.
+   * @environment SHOPIFY_FLAG_PATH
+   */
+  '--path <value>'?: string
 }
