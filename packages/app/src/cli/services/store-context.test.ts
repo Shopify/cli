@@ -207,6 +207,91 @@ describe('storeContext', () => {
     })
   })
 
+  test('does not update hidden config when cached URL differs only by format', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // The TOML has an un-normalized URL (with https:// prefix)
+      const appWithUnnormalizedUrl = testAppLinked({
+        configuration: {
+          client_id: 'client_id',
+          name: 'app-config-name',
+          build: {
+            dev_store_url: 'https://test-store.myshopify.com',
+          },
+        } as any,
+        hiddenConfig: {
+          dev_store_url: 'test-store.myshopify.com',
+        },
+      })
+      const updatedAppContextResult = {...appContextResult, app: appWithUnnormalizedUrl}
+      const storeMatchingNormalized = testOrganizationStore({
+        shopId: 'store1',
+        shopDomain: 'test-store.myshopify.com',
+      })
+
+      await prepareAppFolder(appWithUnnormalizedUrl, dir)
+      vi.mocked(fetchStore).mockResolvedValue(storeMatchingNormalized)
+
+      await storeContext({appContextResult: updatedAppContextResult, forceReselectStore: false})
+
+      // The hidden config should NOT be updated since the normalized URLs match
+      // and the hidden config already has a value
+      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
+      // The file was initialized empty, so if updateHiddenConfig was NOT called,
+      // it should still be empty
+      expect(hiddenConfig).toEqual('')
+    })
+  })
+
+  test('does not update hidden config when cached URL is a short store name', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      // The TOML has just the store name without .myshopify.com
+      const appWithShortUrl = testAppLinked({
+        configuration: {
+          client_id: 'client_id',
+          name: 'app-config-name',
+          build: {
+            dev_store_url: 'test-store',
+          },
+        } as any,
+        hiddenConfig: {
+          dev_store_url: 'test-store.myshopify.com',
+        },
+      })
+      const updatedAppContextResult = {...appContextResult, app: appWithShortUrl}
+      const storeMatchingNormalized = testOrganizationStore({
+        shopId: 'store1',
+        shopDomain: 'test-store.myshopify.com',
+      })
+
+      await prepareAppFolder(appWithShortUrl, dir)
+      vi.mocked(fetchStore).mockResolvedValue(storeMatchingNormalized)
+
+      await storeContext({appContextResult: updatedAppContextResult, forceReselectStore: false})
+
+      // The hidden config should NOT be updated since normalized URLs match
+      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
+      expect(hiddenConfig).toEqual('')
+    })
+  })
+
+  test('updates hidden config when store actually changes', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await prepareAppFolder(mockApp, dir)
+      const differentStore = testOrganizationStore({
+        shopId: 'store2',
+        shopDomain: 'different-store.myshopify.com',
+      })
+      vi.mocked(fetchStore).mockResolvedValue(differentStore)
+
+      await storeContext({appContextResult, forceReselectStore: false})
+
+      const hiddenConfig = await readFile(appHiddenConfigPath(dir))
+      expect(hiddenConfig).toEqual(
+        '{\n  "client_id": {\n    "dev_store_url": "different-store.myshopify.com"\n  }\n}',
+      )
+    })
+  })
+
   test('ensures user access to store', async () => {
     await inTemporaryDirectory(async (dir) => {
       await prepareAppFolder(mockApp, dir)

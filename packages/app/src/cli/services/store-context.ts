@@ -67,8 +67,12 @@ export async function storeContext({
   await logMetadata(selectedStore, forceReselectStore)
   selectedStore.shopDomain = normalizeStoreFqdn(selectedStore.shopDomain)
 
-  // Save the selected store in the hidden config file
-  if (selectedStore.shopDomain !== cachedStoreURL || !devStoreUrlFromHiddenConfig) {
+  // Save the selected store in the hidden config file.
+  // Normalize the cached URL before comparing so that format differences
+  // (e.g. "https://store.myshopify.com" vs "store.myshopify.com") don't
+  // cause unnecessary writes.
+  const normalizedCachedURL = cachedStoreURL ? normalizeStoreFqdn(cachedStoreURL) : undefined
+  if (selectedStore.shopDomain !== normalizedCachedURL || !devStoreUrlFromHiddenConfig) {
     await app.updateHiddenConfig({dev_store_url: selectedStore.shopDomain})
   }
 
