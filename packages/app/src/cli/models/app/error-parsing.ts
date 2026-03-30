@@ -1,4 +1,4 @@
-export interface ParsedIssue {
+interface ParsedIssue {
   path?: (string | number)[]
   message: string
   code?: string
@@ -9,7 +9,7 @@ interface UnionError {
   name: string
 }
 
-export interface ExtendedZodIssue {
+interface ExtendedZodIssue {
   path?: (string | number)[]
   message?: string
   code?: string
