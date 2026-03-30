@@ -7,7 +7,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, readFile} from '@shopify/cli-kit/node/fs'
+import * as outputModule from '@shopify/cli-kit/node/output'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -415,5 +416,55 @@ describe('buildFunctionExtension', () => {
     })
     expect(releaseLock).toHaveBeenCalled()
     expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  describe('schema version mismatch warning', () => {
+    function mockSchemaFile(content: string) {
+      vi.mocked(readFile).mockResolvedValueOnce(content)
+    }
+
+    function mockSchemaNotFound() {
+      const err = new Error('ENOENT') as NodeJS.ErrnoException
+      err.code = 'ENOENT'
+      vi.mocked(readFile).mockRejectedValueOnce(err)
+    }
+
+    test('warns when schema version does not match toml version', async () => {
+      const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
+      mockSchemaFile('schema @apiVersion(version: "2025-01") {\n  query: QueryRoot\n}')
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('schema.graphql was generated for API version 2025-01 but your extension targets 2022-07'),
+      )
+    })
+
+    test('does not warn when schema version matches toml version', async () => {
+      const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
+      mockSchemaFile('schema @apiVersion(version: "2022-07") {\n  query: QueryRoot\n}')
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(warnSpy).not.toHaveBeenCalled()
+    })
+
+    test('does not warn when schema has no apiVersion directive', async () => {
+      const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
+      mockSchemaFile('type Query { shop: Shop }')
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(warnSpy).not.toHaveBeenCalled()
+    })
+
+    test('does not warn when schema file does not exist', async () => {
+      const warnSpy = vi.spyOn(outputModule, 'outputWarn').mockImplementation(() => {})
+      mockSchemaNotFound()
+
+      await buildFunctionExtension(extension, {stdout, stderr, signal, app, environment: 'production'})
+
+      expect(warnSpy).not.toHaveBeenCalled()
+    })
   })
 })
