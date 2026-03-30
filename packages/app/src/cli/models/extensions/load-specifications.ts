@@ -27,6 +27,7 @@ import uiExtensionSpec from './specifications/ui_extension.js'
 import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import channelSpecificationSpec from './specifications/channel.js'
+import adminSpecificationSpec from './specifications/admin.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -61,6 +62,7 @@ function loadSpecifications() {
     appWebhooksSpec,
     appWebhookSubscriptionSpec,
     appEventsSpec,
+    adminSpecificationSpec,
   ]
   const moduleSpecs = [
     checkoutPostPurchaseSpec,
