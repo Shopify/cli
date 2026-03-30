@@ -6,6 +6,7 @@ import {
   sendInputAndWaitForContent,
   waitForInputsToBeReady,
   render,
+  waitForContent,
 } from '../../testing/ui.js'
 import {Stdout} from '../../ui.js'
 import {AbortController} from '../../../../public/node/abort.js'
@@ -117,8 +118,13 @@ describe('AutocompletePrompt', async () => {
 
     await waitForInputsToBeReady()
     await sendInputAndWaitForChange(renderInstance, ARROW_DOWN)
-    await sendInputAndWaitForChange(renderInstance, ENTER)
 
+    const renderPromise = renderInstance.waitUntilExit()
+    await waitForContent(renderInstance, '✔', () => renderInstance.stdin.write(ENTER))
+
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await renderPromise
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org [36mCastile Ventures[39m?
       [36m✔[39m  [36msecond[39m
@@ -520,8 +526,13 @@ describe('AutocompletePrompt', async () => {
       "
     `)
 
-    await sendInputAndWaitForChange(renderInstance, ENTER)
+    const renderPromise = renderInstance.waitUntilExit()
+    renderInstance.stdin.write(ENTER)
 
+    expect(renderPromise.isFulfilled()).toBe(false)
+
+    await waitForContent(renderInstance, '✔')
+    await renderPromise
     expect(getLastFrameAfterUnmount(renderInstance)).toMatchInlineSnapshot(`
       "?  Associate your project with the org Castile Ventures?
       [36m✔[39m  [36mfifth[39m

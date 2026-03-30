@@ -6,10 +6,11 @@ import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
 import useAbortSignal from '../hooks/use-abort-signal.js'
+import useDeferredUnmount from '../hooks/use-deferred-unmount.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
-import {Box, useApp, useInput, Text} from 'ink'
+import {Box, useInput, Text} from 'ink'
 import figures from 'figures'
 
 export interface DangerousConfirmationPromptProps {
@@ -38,7 +39,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   const {promptState, setPromptState, answer, setAnswer} = usePrompt<string>({
     initialAnswer: '',
   })
-  const {exit: unmountInk} = useApp()
+  const unmountInk = useDeferredUnmount()
   const [error, setError] = useState<TokenItem<InlineToken> | undefined>(undefined)
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
