@@ -1,5 +1,13 @@
+import type {OutputMessage} from '@shopify/cli-kit/node/output'
+
+interface UnionErrorIssue {
+  path?: (string | number)[]
+  message: string
+  code?: string
+}
+
 interface UnionError {
-  issues?: {path?: (string | number)[]; message: string}[]
+  issues?: UnionErrorIssue[]
   name: string
 }
 
@@ -8,6 +16,20 @@ interface ExtendedZodIssue {
   message?: string
   code?: string
   unionErrors?: UnionError[]
+}
+
+export interface AppValidationIssue {
+  filePath: string
+  path: (string | number)[]
+  pathString: string
+  message: string
+  code?: string
+}
+
+export interface AppValidationFileIssues {
+  filePath: string
+  message: OutputMessage
+  issues: AppValidationIssue[]
 }
 
 /**
@@ -56,13 +78,66 @@ function findBestMatchingVariant(unionErrors: UnionError[]): UnionError | null {
   return bestVariant
 }
 
+function getIssuePath(path?: (string | number)[]) {
+  return path ?? []
+}
+
+function getIssuePathString(path?: (string | number)[]) {
+  const resolvedPath = getIssuePath(path)
+  return resolvedPath.length > 0 ? resolvedPath.map(String).join('.') : 'root'
+}
+
 /**
  * Formats an issue into a human-readable error line
  */
 function formatErrorLine(issue: {path?: (string | number)[]; message?: string}, indent = '') {
-  const path = issue.path && issue.path.length > 0 ? issue.path.map(String).join('.') : 'root'
+  const pathString = getIssuePathString(issue.path)
   const message = issue.message ?? 'Unknown error'
-  return `${indent}• [${path}]: ${message}\n`
+  return `${indent}• [${pathString}]: ${message}\n`
+}
+
+function toStructuredIssue(filePath: string, issue: Pick<ExtendedZodIssue, 'path' | 'message' | 'code'>) {
+  return {
+    filePath,
+    path: getIssuePath(issue.path),
+    pathString: getIssuePathString(issue.path),
+    message: issue.message ?? 'Unknown error',
+    code: issue.code,
+  }
+}
+
+export function parseStructuredErrors(issues: ExtendedZodIssue[], filePath: string): AppValidationIssue[] {
+  return issues.flatMap((issue) => {
+    if (issue.code === 'invalid_union' && issue.unionErrors) {
+      // Intentionally mirror the current human-readable union selection heuristic
+      // so structured/internal issues stay aligned with existing CLI behavior.
+      // If we change this heuristic later, text and structured output should move together.
+      const bestVariant = findBestMatchingVariant(issue.unionErrors)
+
+      if (bestVariant?.issues?.length) {
+        return bestVariant.issues.map((nestedIssue) => toStructuredIssue(filePath, nestedIssue))
+      }
+
+      const fallbackIssues = issue.unionErrors.flatMap((unionError) => unionError.issues ?? [])
+      if (fallbackIssues.length > 0) {
+        // Preserve any concrete nested issues we were able to recover before
+        // falling back to a synthetic root issue. This structured path is still
+        // internal, and retaining leaf issues is more actionable than erasing
+        // them behind a generic union failure.
+        return fallbackIssues.map((nestedIssue) => toStructuredIssue(filePath, nestedIssue))
+      }
+
+      return [
+        toStructuredIssue(filePath, {
+          path: issue.path,
+          message: "Configuration doesn't match any expected format",
+          code: issue.code,
+        }),
+      ]
+    }
+
+    return [toStructuredIssue(filePath, issue)]
+  })
 }
 
 export function parseHumanReadableError(issues: ExtendedZodIssue[]) {
