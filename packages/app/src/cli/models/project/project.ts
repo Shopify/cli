@@ -1,5 +1,5 @@
 import {configurationFileNames} from '../../constants.js'
-import {TomlFile, type TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
+import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {readAndParseDotEnv, DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExists, glob, findPathUp, readFile} from '@shopify/cli-kit/node/fs'
 import {
@@ -46,7 +46,7 @@ export class Project {
 
     // Discover all app config files
     const appConfigFiles = await discoverAppConfigFiles(directory, errors)
-    if (appConfigFiles.length === 0 && errors.length === 0) {
+    if (appConfigFiles.length === 0) {
       throw new AbortError(`Could not find a Shopify app TOML file in ${directory}`)
     }
 
@@ -219,7 +219,11 @@ async function readTomlFilesCollectingErrors(paths: string[], errors: TomlFileEr
         files.push(await TomlFile.read(filePath))
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
-        errors.push({path: filePath, message: err instanceof Error ? err.message : `Failed to read ${filePath}`})
+        const tomlError = err instanceof TomlFileError ? err : new TomlFileError(filePath, `Failed to read ${filePath}`)
+        const file = new TomlFile(filePath, {})
+        file.errors.push(tomlError)
+        files.push(file)
+        errors.push(tomlError)
       }
     }),
   )
