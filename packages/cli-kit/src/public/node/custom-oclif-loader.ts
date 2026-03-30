@@ -81,9 +81,16 @@ export class ShopifyConfig extends Config {
           commandClass.id = id
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           commandClass.plugin = cmd.plugin ?? (this as any).rootPlugin
-          await this.runHook('prerun', {argv, Command: commandClass})
+          // Execute the command first — give it exclusive CPU time.
           const result = (await commandClass.run(argv, this)) as T
-          await this.runHook('postrun', {argv, Command: commandClass, result})
+          // Fire prerun + postrun AFTER command completes. Both are fire-and-forget.
+          // Analytics is best-effort; process.exit(0) in bootstrap may terminate
+          // before these complete, which is fine.
+          // eslint-disable-next-line no-void
+          void this.runHook('prerun', {argv, Command: commandClass}).then(() => {
+            // eslint-disable-next-line no-void
+            void this.runHook('postrun', {argv, Command: commandClass, result})
+          })
           return result
         }
       }

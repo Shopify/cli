@@ -64,6 +64,9 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
     development,
     lazyCommandLoader: loadCommand,
   })
+  // Force exit after command completes. Pending network requests (analytics,
+  // version checks) are best-effort and shouldn't delay the user.
+  process.exit(0)
 }
 
 export default runShopifyCLI
