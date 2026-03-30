@@ -1,11 +1,18 @@
 import {fileExists, findPathUp, readFileSync} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath, relativizePath, resolvePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import ts from 'typescript'
 import {compile} from 'json-schema-to-typescript'
 import {pascalize} from '@shopify/cli-kit/common/string'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {createRequire} from 'module'
+import type ts from 'typescript'
+
+async function loadTypeScript(): Promise<typeof ts> {
+  // typescript is CJS; dynamic import wraps it as { default: ... }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const mod: any = await import('typescript')
+  return mod.default ?? mod
+}
 
 const require = createRequire(import.meta.url)
 
@@ -17,7 +24,10 @@ export function parseApiVersion(apiVersion: string): {year: number; month: numbe
   return {year: parseInt(year, 10), month: parseInt(month, 10)}
 }
 
-function loadTsConfig(startPath: string): {compilerOptions: ts.CompilerOptions; configPath: string | undefined} {
+async function loadTsConfig(
+  startPath: string,
+): Promise<{compilerOptions: ts.CompilerOptions; configPath: string | undefined}> {
+  const ts = await loadTypeScript()
   const configPath = ts.findConfigFile(startPath, ts.sys.fileExists.bind(ts.sys), 'tsconfig.json')
   if (!configPath) {
     return {compilerOptions: {}, configPath: undefined}
@@ -65,11 +75,12 @@ async function fallbackResolve(importPath: string, baseDir: string): Promise<str
 
 async function parseAndResolveImports(filePath: string): Promise<string[]> {
   try {
+    const ts = await loadTypeScript()
     const content = readFileSync(filePath).toString()
     const resolvedPaths: string[] = []
 
     // Load TypeScript configuration once
-    const {compilerOptions} = loadTsConfig(filePath)
+    const {compilerOptions} = await loadTsConfig(filePath)
 
     // Determine script kind based on file extension
     let scriptKind = ts.ScriptKind.JSX
