@@ -7,15 +7,26 @@ import {addUidToTomlsIfNecessary} from './app/add-uid-to-extension-toml.js'
 import {loadLocalExtensionsSpecifications} from '../models/extensions/load-specifications.js'
 import {Organization, OrganizationApp, OrganizationSource} from '../models/organization.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
-import {getAppConfigurationContext, loadAppFromContext} from '../models/app/loader.js'
+import {
+  getAppConfigurationContext,
+  loadAppFromContext,
+  formatConfigurationError,
+  type ConfigurationError,
+} from '../models/app/loader.js'
 import {RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {AppLinkedInterface, AppInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import metadata from '../metadata.js'
 import {tryParseInt} from '@shopify/cli-kit/common/string'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
+import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
 import {basename} from '@shopify/cli-kit/node/path'
 import type {ActiveConfig} from '../models/project/active-config.js'
+
+function styledConfigurationError(error: ConfigurationError) {
+  const formatted = formatConfigurationError(error)
+  return outputContent`${outputToken.errorText('Validation error')} in ${outputToken.path(error.file)}:\n\n${formatted}`
+}
 
 export interface LoadedAppContextOutput {
   app: AppLinkedInterface
@@ -110,7 +121,7 @@ export async function linkedAppContext({
   })
 
   if (!unsafeTolerateErrors && !localApp.errors.isEmpty()) {
-    throw new AbortError(localApp.errors.toJSON()[0]!)
+    throw new AbortError(styledConfigurationError(localApp.errors.getErrors()[0]!))
   }
 
   // If the remoteApp is the same as the linked one, update the cached info.
@@ -166,7 +177,7 @@ export async function localAppContext({
   const app = await loadAppFromContext({project, activeConfig, specifications, ignoreUnknownExtensions: true})
 
   if (!app.errors.isEmpty()) {
-    throw new AbortError(app.errors.toJSON()[0]!)
+    throw new AbortError(styledConfigurationError(app.errors.getErrors()[0]!))
   }
 
   return {app, project}

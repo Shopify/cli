@@ -237,7 +237,7 @@ client_id="test-api-key"`
       const loadSpy = vi.spyOn(loader, 'loadAppFromContext')
       const {AppErrors} = await import('../models/app/loader.js')
       const errors = new AppErrors()
-      errors.addError('test', 'some error')
+      errors.addError({file: 'test', message: 'some error'})
       loadSpy.mockResolvedValue({errors} as any)
 
       // When/Then

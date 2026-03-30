@@ -8,7 +8,9 @@ import {describe, expect, test} from 'vitest'
 import type {zod} from '@shopify/cli-kit/node/schema'
 
 async function parseConfigAsCurrentApp(schema: zod.ZodTypeAny, filePath: string): Promise<CurrentAppConfiguration> {
-  return parseConfigurationFile(schema, filePath) as Promise<CurrentAppConfiguration>
+  const result = await parseConfigurationFile(schema, filePath)
+  if (result.errors) throw new Error(result.errors.map((err) => err.message).join('\n'))
+  return result.data as CurrentAppConfiguration
 }
 
 /**

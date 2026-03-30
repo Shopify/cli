@@ -1,9 +1,15 @@
+export interface ParsedIssue {
+  path?: (string | number)[]
+  message: string
+  code?: string
+}
+
 interface UnionError {
   issues?: {path?: (string | number)[]; message: string}[]
   name: string
 }
 
-interface ExtendedZodIssue {
+export interface ExtendedZodIssue {
   path?: (string | number)[]
   message?: string
   code?: string
@@ -63,6 +69,23 @@ function formatErrorLine(issue: {path?: (string | number)[]; message?: string}, 
   const path = issue.path && issue.path.length > 0 ? issue.path.map(String).join('.') : 'root'
   const message = issue.message ?? 'Unknown error'
   return `${indent}• [${path}]: ${message}\n`
+}
+
+export function parseStructuredErrors(issues: ExtendedZodIssue[]): ParsedIssue[] {
+  const result: ParsedIssue[] = []
+  for (const issue of issues) {
+    if (issue.code === 'invalid_union' && issue.unionErrors) {
+      const bestVariant = findBestMatchingVariant(issue.unionErrors)
+      if (bestVariant?.issues?.length) {
+        for (const nested of bestVariant.issues) {
+          result.push({path: nested.path, message: nested.message, code: issue.code})
+        }
+      }
+    } else {
+      result.push({path: issue.path, message: issue.message ?? 'Unknown error', code: issue.code})
+    }
+  }
+  return result
 }
 
 export function parseHumanReadableError(issues: ExtendedZodIssue[]) {

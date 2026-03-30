@@ -150,8 +150,8 @@ describe('info', () => {
       })
 
       const errors = new AppErrors()
-      errors.addError(uiExtension1.configurationPath, 'Mock error with ui_extension')
-      errors.addError(uiExtension2.configurationPath, 'Mock error with checkout_ui_extension')
+      errors.addError({file: uiExtension1.configurationPath, message: 'Mock error with ui_extension'})
+      errors.addError({file: uiExtension2.configurationPath, message: 'Mock error with checkout_ui_extension'})
 
       const app = mockApp({
         directory: tmp,

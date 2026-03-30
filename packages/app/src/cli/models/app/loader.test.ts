@@ -8,7 +8,6 @@ import {
   getAppConfigurationContext,
   loadConfigForAppCreation,
   reloadApp,
-  ConfigurationError,
 } from './loader.js'
 import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
@@ -2767,45 +2766,38 @@ describe('parseConfigurationObject', () => {
       },
     ]
     const {schema} = await buildVersionedAppSchema()
-    expect(() => parseConfigurationObject(schema, 'tmp', configurationObject)).toThrow(ConfigurationError)
+    const result = parseConfigurationObject(schema, 'tmp', configurationObject)
+    expect(result.errors).toBeDefined()
   })
 
-  test('throws an error when client_id is missing in app schema TOML file', async () => {
+  test('returns errors when client_id is missing in app schema TOML file', async () => {
     const configurationObject = {
       scopes: [],
     }
 
-    expect(() => parseConfigurationObject(AppSchema, 'tmp', configurationObject)).toThrow(ConfigurationError)
-    expect(() => parseConfigurationObject(AppSchema, 'tmp', configurationObject)).toThrow('[client_id]: Required')
+    const result = parseConfigurationObject(AppSchema, 'tmp', configurationObject)
+    expect(result.errors).toBeDefined()
+    expect(result.errors!.some((err) => err.message === 'Required' && err.path?.includes('client_id'))).toBe(true)
   })
 
-  test('throws an error if fields are missing in a frontend config web TOML file', async () => {
+  test('returns errors if fields are missing in a frontend config web TOML file', async () => {
     const configurationObject = {
       type: 11,
       commands: {dev: ''},
       roles: 1,
     }
 
-    let thrown: ConfigurationError | undefined
-    try {
-      parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject)
-      expect.fail('Expected ConfigurationError to be thrown')
-    } catch (err) {
-      if (err instanceof ConfigurationError) {
-        thrown = err
-      } else {
-        throw err
-      }
-    }
+    const result = parseConfigurationObject(WebConfigurationSchema, 'tmp', configurationObject)
+    expect(result.errors).toBeDefined()
 
     // The enhanced union handling should show only the most relevant errors
-    // instead of showing all variants, making it much more user-friendly
-    expect(thrown.message).toContain('[roles]: Expected array, received number')
+    const messages = result.errors!.map((err) => err.message)
+    expect(messages.some((msg) => msg.includes('Expected array, received number'))).toBe(true)
 
-    // Should NOT show the confusing union variant breakdown
-    expect(thrown.message).not.toContain('Union validation failed')
-    expect(thrown.message).not.toContain('Option 1:')
-    expect(thrown.message).not.toContain('Option 2:')
+    // Should NOT show confusing union variant breakdown
+    expect(messages.join('\n')).not.toContain('Union validation failed')
+    expect(messages.join('\n')).not.toContain('Option 1:')
+    expect(messages.join('\n')).not.toContain('Option 2:')
   })
 })
 
@@ -3327,13 +3319,11 @@ describe('WebhooksSchema', () => {
 
   async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const toParse = getWebhookConfig(webhookConfigOverrides)
-    try {
-      const parsedConfiguration = parseConfigurationObject(WebhooksSchema, 'tmp', toParse)
-      return {threw: false as const, parsedConfiguration, error: undefined}
-    } catch (err) {
-      if (!(err instanceof ConfigurationError)) throw err
-      return {threw: true as const, parsedConfiguration: undefined as any, error: err}
+    const result = parseConfigurationObject(WebhooksSchema, 'tmp', toParse)
+    if (result.errors) {
+      return {threw: true as const, parsedConfiguration: undefined as any, error: result.errors}
     }
+    return {threw: false as const, parsedConfiguration: result.data, error: undefined}
   }
 })
 
