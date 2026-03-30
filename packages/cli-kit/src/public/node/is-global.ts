@@ -1,11 +1,12 @@
 import {PackageManager} from './node-package-manager.js'
 import {outputInfo} from './output.js'
-import {cwd, sniffForPath} from './path.js'
+import {cwd, dirname, joinPath, sniffForPath} from './path.js'
 import {exec, terminalSupportsPrompting} from './system.js'
 import {renderSelectPrompt} from './ui.js'
 import {globalCLIVersion} from './version.js'
 import {isUnitTest} from './context/local.js'
-import {execaSync} from 'execa'
+import {findPathUpSync, globSync} from './fs.js'
+import {realpathSync} from 'fs'
 
 let _isGlobal: boolean | undefined
 
@@ -23,15 +24,16 @@ export function currentProcessIsGlobal(argv = process.argv): boolean {
     // Path where the current project is (app/hydrogen)
     const path = sniffForPath() ?? cwd()
 
-    // Closest parent directory to contain a package.json file or node_modules directory
-    // https://docs.npmjs.com/cli/v8/commands/npm-prefix#description
-    const npmPrefix = execaSync('npm', ['prefix'], {cwd: path}).stdout.trim()
+    const projectDir = getProjectDir(path)
+    if (!projectDir) {
+      return true
+    }
 
     // From node docs: "The second element [of the array] will be the path to the JavaScript file being executed"
     const binDir = argv[1] ?? ''
 
-    // If binDir starts with npmPrefix, then we are running a local CLI
-    const isLocal = binDir.startsWith(npmPrefix.trim())
+    // If binDir starts with projectDir, then we are running a local CLI
+    const isLocal = binDir.startsWith(projectDir.trim())
 
     _isGlobal = !isLocal
     return _isGlobal
@@ -82,15 +84,58 @@ export async function installGlobalCLIPrompt(): Promise<InstallGlobalCLIPromptRe
  * Infers the package manager used by the global CLI.
  *
  * @param argv - The arguments passed to the process.
+ * @param env - The environment variables of the process.
  * @returns The package manager used by the global CLI.
  */
-export function inferPackageManagerForGlobalCLI(argv = process.argv): PackageManager {
+export function inferPackageManagerForGlobalCLI(argv = process.argv, env = process.env): PackageManager {
   if (!currentProcessIsGlobal(argv)) return 'unknown'
 
-  // argv[1] contains the path of the executed binary
+  // Check for Homebrew first (most reliable via environment variable)
+  if (env.SHOPIFY_HOMEBREW_FORMULA) {
+    return 'homebrew'
+  }
+
   const processArgv = argv[1] ?? ''
-  if (processArgv.includes('yarn')) return 'yarn'
-  if (processArgv.includes('pnpm')) return 'pnpm'
-  if (processArgv.includes('bun')) return 'bun'
+
+  // Resolve symlinks to get the real path of the binary.
+  let realPath = processArgv.toLowerCase()
+  try {
+    realPath = realpathSync(processArgv).toLowerCase()
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    // fall back to using the original path for detection
+  }
+
+  if (realPath.includes('yarn')) return 'yarn'
+  if (realPath.includes('pnpm')) return 'pnpm'
+  if (realPath.includes('bun')) return 'bun'
+
+  // Check for Homebrew via Cellar path (resolved symlink)
+  if (realPath.includes('/cellar/')) return 'homebrew'
+
   return 'npm'
+}
+
+/**
+ * Returns the project directory for the given path.
+ *
+ * @param directory - The path to search upward from.
+ * @returns The project root directory, or undefined if not found.
+ */
+export function getProjectDir(directory: string): string | undefined {
+  const configFiles = ['shopify.app{,.*}.toml', 'hydrogen.config.js', 'hydrogen.config.ts']
+  const existsConfigFile = (directory: string) => {
+    const configPaths = globSync(configFiles.map((file) => joinPath(directory, file)))
+    return configPaths.length > 0 ? configPaths[0] : undefined
+  }
+  try {
+    const configFile = findPathUpSync(existsConfigFile, {
+      cwd: directory,
+      type: 'file',
+    })
+    if (configFile) return dirname(configFile)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    return undefined
+  }
 }

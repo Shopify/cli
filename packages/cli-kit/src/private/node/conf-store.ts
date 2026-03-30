@@ -32,6 +32,7 @@ export interface ConfSchema {
   devSessionStore?: string
   currentDevSessionId?: string
   cache?: Cache
+  autoUpgradeEnabled?: boolean
 }
 
 let _instance: LocalStorage<ConfSchema> | undefined
@@ -263,6 +264,24 @@ export async function runWithRateLimit(options: RunWithRateLimitOptions, config 
   config.set('cache', cache)
 
   return true
+}
+
+/**
+ * Get auto-upgrade preference.
+ *
+ * @returns Whether auto-upgrade is enabled, or undefined if never set.
+ */
+export function getAutoUpgradeEnabled(config: LocalStorage<ConfSchema> = cliKitStore()): boolean | undefined {
+  return config.get('autoUpgradeEnabled')
+}
+
+/**
+ * Set auto-upgrade preference.
+ *
+ * @param enabled - Whether auto-upgrade should be enabled.
+ */
+export function setAutoUpgradeEnabled(enabled: boolean, config: LocalStorage<ConfSchema> = cliKitStore()): void {
+  config.set('autoUpgradeEnabled', enabled)
 }
 
 export function getConfigStoreForPartnerStatus() {
