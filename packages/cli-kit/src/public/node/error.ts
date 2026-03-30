@@ -1,4 +1,4 @@
-import {AlertCustomSection, renderFatalError} from './ui.js'
+import type {AlertCustomSection} from './ui.js'
 import {normalizePath} from './path.js'
 import {OutputMessage, stringifyMessage, TokenizedString} from './output.js'
 import {InlineToken, TokenItem, tokenItemToString} from '../../private/node/ui/components/TokenizedText.js'
@@ -146,6 +146,7 @@ export async function handler(error: unknown): Promise<unknown> {
     }
   }
 
+  const {renderFatalError} = await import('./ui.js')
   renderFatalError(fatal)
   return Promise.resolve(error)
 }
