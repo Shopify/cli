@@ -157,20 +157,22 @@ export enum WebType {
 
 const WebConfigurationAuthCallbackPathSchema = zod.preprocess(ensurePathStartsWithSlash, zod.string())
 
-const baseWebConfigurationSchema = zod.object({
-  auth_callback_path: zod
-    .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
-    .optional(),
-  webhooks_path: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
-  port: zod.number().max(65536).min(0).optional(),
-  commands: zod.object({
-    build: zod.string().optional(),
-    predev: zod.string().optional(),
-    dev: zod.string(),
-  }),
-  name: zod.string().optional(),
-  hmr_server: zod.object({http_paths: zod.string().array()}).optional(),
-})
+const baseWebConfigurationSchema = zod
+  .object({
+    auth_callback_path: zod
+      .union([WebConfigurationAuthCallbackPathSchema, WebConfigurationAuthCallbackPathSchema.array()])
+      .optional(),
+    webhooks_path: zod.preprocess(ensurePathStartsWithSlash, zod.string()).optional(),
+    port: zod.number().max(65536).min(0).optional(),
+    commands: zod.object({
+      build: zod.string().optional(),
+      predev: zod.string().optional(),
+      dev: zod.string(),
+    }),
+    name: zod.string().optional(),
+    hmr_server: zod.object({http_paths: zod.string().array()}).optional(),
+  })
+  .strict()
 const webTypes = zod.enum([WebType.Frontend, WebType.Backend, WebType.Background]).default(WebType.Frontend)
 export const WebConfigurationSchema = zod.union([
   baseWebConfigurationSchema.extend({roles: zod.array(webTypes)}),

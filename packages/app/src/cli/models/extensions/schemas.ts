@@ -124,12 +124,14 @@ export const BaseSchemaWithoutHandle = BaseSchema.omit({
   handle: true,
 })
 
-export const UnifiedSchema = zod.object({
-  api_version: ApiVersionSchema.optional(),
-  description: zod.string().optional(),
-  extensions: zod.array(zod.any()),
-  settings: SettingsSchema.optional(),
-})
+export const UnifiedSchema = zod
+  .object({
+    api_version: ApiVersionSchema.optional(),
+    description: zod.string().optional(),
+    extensions: zod.array(zod.any()),
+    settings: SettingsSchema.optional(),
+  })
+  .strict()
 
 export type NewExtensionPointSchemaType = zod.infer<typeof NewExtensionPointSchema>
 
