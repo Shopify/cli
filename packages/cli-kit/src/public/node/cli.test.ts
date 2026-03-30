@@ -128,9 +128,9 @@ describe('cli', () => {
 })
 
 describe('clearCache', () => {
-  test('clears the cache', () => {
+  test('clears the cache', async () => {
     const spy = vi.spyOn(confStore, 'cacheClear')
-    clearCache()
+    await clearCache()
     expect(spy).toHaveBeenCalled()
     spy.mockRestore()
   })

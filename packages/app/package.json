@@ -24,6 +24,18 @@
     "./node/plugins/*": {
       "import": "./dist/cli/public/plugins/*.js",
       "require": "./dist/cli/public/plugins/*.d.ts"
+    },
+    "./hooks/init": {
+      "import": "./dist/cli/hooks/clear_command_cache.js",
+      "types": "./dist/cli/hooks/clear_command_cache.d.ts"
+    },
+    "./hooks/public-metadata": {
+      "import": "./dist/cli/hooks/public_metadata.js",
+      "types": "./dist/cli/hooks/public_metadata.d.ts"
+    },
+    "./hooks/sensitive-metadata": {
+      "import": "./dist/cli/hooks/sensitive_metadata.js",
+      "types": "./dist/cli/hooks/sensitive_metadata.d.ts"
     }
   },
   "files": [

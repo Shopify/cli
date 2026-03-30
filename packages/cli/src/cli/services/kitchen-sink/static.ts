@@ -35,7 +35,7 @@ export async function staticService() {
   })
 
   renderInfo({
-    headline: 'About your app',
+    headline: 'About your app.',
     customSections: [
       {
         body: {

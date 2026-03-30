@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import runCLI from '../dist/index.js'
+const {default: runCLI} = await import('../dist/bootstrap.js')
 
 process.removeAllListeners('warning')
 
