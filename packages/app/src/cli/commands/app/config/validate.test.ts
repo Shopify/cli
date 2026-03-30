@@ -55,14 +55,12 @@ describe('app config validate command', () => {
 
   test('outputs JSON issues when project has TOML parse errors', async () => {
     vi.mocked(Project.load).mockResolvedValue({
-      errors: [{path: '/app/shopify.app.toml', message: 'Fix the following error in shopify.app.toml:\nUnexpected character'}],
+      errors: [{path: '/app/shopify.app.toml', message: 'Unexpected character at row 1, col 5'}],
     } as unknown as Project)
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
 
-    expect(outputResult).toHaveBeenCalledWith(
-      expect.stringContaining('"valid": false'),
-    )
+    expect(outputResult).toHaveBeenCalledWith(expect.stringContaining('"valid": false'))
     expect(linkedAppContext).not.toHaveBeenCalled()
   })
 })
