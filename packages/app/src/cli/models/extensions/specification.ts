@@ -289,16 +289,16 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: Pick<
     CreateExtensionSpecType<TConfiguration>,
-    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy' | 'clientSteps'
+    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy' | 'clientSteps' | 'experience'
   >,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
     schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
     appModuleFeatures: spec.appModuleFeatures,
-    clientSteps: spec.clientSteps,
+    experience: spec.experience,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
-    uidStrategy: spec.uidStrategy ?? 'single',
+    uidStrategy: spec.uidStrategy,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {

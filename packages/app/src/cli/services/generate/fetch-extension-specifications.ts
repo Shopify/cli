@@ -1,5 +1,5 @@
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
-import {FlattenedRemoteSpecification, RemoteSpecification} from '../../api/graphql/extension_specifications.js'
+import {RemoteSpecification} from '../../api/graphql/extension_specifications.js'
 import {
   createContractBasedModuleSpecification,
   ExtensionSpecification,
@@ -10,7 +10,7 @@ import {MinimalAppIdentifiers} from '../../models/organization.js'
 import {unifiedConfigurationParserFactory} from '../../utilities/json-schema.js'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {HandleInvalidAdditionalProperties, normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
+import {normaliseJsonSchema} from '@shopify/cli-kit/node/json-schema'
 
 interface FetchSpecificationsOptions {
   developerPlatformClient: DeveloperPlatformClient
@@ -35,25 +35,24 @@ export async function fetchSpecifications({
 }: FetchSpecificationsOptions): Promise<RemoteAwareExtensionSpecification[]> {
   const result: RemoteSpecification[] = await developerPlatformClient.specifications(app)
 
-  const extensionSpecifications: FlattenedRemoteSpecification[] = result
+  const extensionSpecifications: RemoteSpecification[] = result
     .filter((specification) => ['extension', 'configuration'].includes(specification.experience))
     .map((spec) => {
-      const newSpec = spec as FlattenedRemoteSpecification
       // WORKAROUND: The identifiers in the API are different for these extensions to the ones the CLI
       // has been using so far. This is a workaround to keep the CLI working until the API is updated.
       if (spec.identifier === 'theme_app_extension') spec.identifier = 'theme'
       if (spec.identifier === 'subscription_management') spec.identifier = 'product_subscription'
 
-      newSpec.registrationLimit = spec.options.registrationLimit
-      newSpec.surface = spec.features?.argo?.surface
-
       // Hardcoded value for the post purchase extension because the value is wrong in the API
-      if (spec.identifier === 'checkout_post_purchase') newSpec.surface = 'post_purchase'
+      if (spec.identifier === 'checkout_post_purchase') spec.surface = 'post_purchase'
 
-      // Hardcoded value for the webhook_subscription extension because the value is wrong in the API
-      if (spec.identifier === 'webhook_subscription') spec.experience = 'configuration'
+      // Hardcoded values for the webhook_subscription extension because the values are wrong in the API
+      if (spec.identifier === 'webhook_subscription') {
+        spec.experience = 'configuration'
+        spec.uidStrategy = 'dynamic'
+      }
 
-      return newSpec
+      return spec
     })
 
   const local = await loadLocalExtensionsSpecifications()
@@ -63,63 +62,26 @@ export async function fetchSpecifications({
 
 async function mergeLocalAndRemoteSpecs(
   local: ExtensionSpecification[],
-  remote: FlattenedRemoteSpecification[],
+  remote: RemoteSpecification[],
 ): Promise<RemoteAwareExtensionSpecification[]> {
   // Iterate over the remote specs and merge them with the local ones
   // If the local spec is missing, and the remote one has a validation schema, create a new local spec using contracts
   const updated = remote.map(async (remoteSpec) => {
     let localSpec = local.find((local) => local.identifier === remoteSpec.identifier)
     if (!localSpec && remoteSpec.validationSchema?.jsonSchema) {
-      const normalisedSchema = await normaliseJsonSchema(remoteSpec.validationSchema.jsonSchema)
-      const hasLocalization = normalisedSchema.properties?.localization !== undefined
-      localSpec = createContractBasedModuleSpecification({
-        identifier: remoteSpec.identifier,
-        uidStrategy: remoteSpec.options.uidStrategy,
-        appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
-      })
-      // Seed uidStrategy for contract specs using uidIsClientProvided as fallback (Partners API path).
-      // This will be overridden below if the backend provides a typename-derived value.
-      localSpec.uidStrategy =
-        remoteSpec.options.uidStrategy ?? (remoteSpec.options.uidIsClientProvided ? 'uuid' : 'single')
+      localSpec = await createRemoteOnlySpecification(remoteSpec, remoteSpec.validationSchema)
     }
     if (!localSpec) return undefined
 
-    const merged = {...localSpec, ...remoteSpec, loadedRemoteSpecs: true} as RemoteAwareExtensionSpecification &
-      FlattenedRemoteSpecification
+    const merged = mergeLocalAndRemoteSpec(localSpec, remoteSpec)
 
-    // Always prefer the backend-derived uidStrategy (from __typename) when available.
-    // This correctly overrides the local spec's default (e.g. channel_config defaults to 'uuid'
-    // locally but the backend defines it as 'single').
-    // Falls back to the local spec value for the Partners API path (no __typename available).
-    merged.uidStrategy = merged.options.uidStrategy ?? localSpec.uidStrategy ?? 'single'
+    const parseConfigurationObject = await unifiedConfigurationParserFactory(
+      merged,
+      remoteSpec.validationSchema,
+      merged.experience === 'extension' ? 'fail' : 'strip',
+    )
 
-    // If configuration is inside an app.toml -- i.e. single UID mode -- we must be able to parse a partial slice.
-    // DEPRECATED: not all single specs are config specs.
-    // Should be removed once we can get the experience from the API.
-    let handleInvalidAdditionalProperties: HandleInvalidAdditionalProperties
-    switch (merged.uidStrategy) {
-      case 'uuid':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-      case 'single':
-        handleInvalidAdditionalProperties = 'strip'
-        break
-      case 'dynamic':
-        handleInvalidAdditionalProperties = 'fail'
-        break
-    }
-
-    // If the experience is 'configuration', force strip.
-    if (merged.experience === 'configuration') {
-      handleInvalidAdditionalProperties = 'strip'
-    }
-
-    const parseConfigurationObject = await unifiedConfigurationParserFactory(merged, handleInvalidAdditionalProperties)
-
-    return {
-      ...merged,
-      parseConfigurationObject,
-    }
+    return {...merged, parseConfigurationObject}
   })
 
   const result = getArrayRejectingUndefined<RemoteAwareExtensionSpecification>(await Promise.all(updated))
@@ -152,4 +114,37 @@ async function mergeLocalAndRemoteSpecs(
   }
 
   return result
+}
+
+function mergeLocalAndRemoteSpec(
+  localSpec: ExtensionSpecification,
+  remoteSpec: RemoteSpecification,
+): RemoteAwareExtensionSpecification {
+  const merged: RemoteAwareExtensionSpecification = {
+    ...localSpec,
+    loadedRemoteSpecs: true,
+    // Remote values have priority over local ones.
+    externalName: remoteSpec.externalName,
+    externalIdentifier: remoteSpec.externalIdentifier,
+    experience: remoteSpec.experience as 'extension' | 'configuration',
+    registrationLimit: remoteSpec.registrationLimit,
+    uidStrategy: remoteSpec.uidStrategy,
+    surface: remoteSpec.surface ?? localSpec.surface,
+  }
+  return merged
+}
+
+async function createRemoteOnlySpecification(
+  remoteSpec: RemoteSpecification,
+  validationSchema: {jsonSchema: string},
+): Promise<RemoteAwareExtensionSpecification> {
+  const normalisedSchema = await normaliseJsonSchema(validationSchema.jsonSchema)
+  const hasLocalization = normalisedSchema.properties?.localization !== undefined
+  const localSpec = createContractBasedModuleSpecification({
+    identifier: remoteSpec.identifier,
+    uidStrategy: remoteSpec.uidStrategy,
+    experience: remoteSpec.experience as 'extension' | 'configuration',
+    appModuleFeatures: () => (hasLocalization ? ['localization'] : []),
+  })
+  return {...localSpec, loadedRemoteSpecs: true}
 }

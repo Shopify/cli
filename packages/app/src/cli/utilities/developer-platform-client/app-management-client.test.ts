@@ -1856,7 +1856,7 @@ describe('uidStrategyFromTypename', () => {
     expect(uidStrategyFromTypename('UidStrategiesClientProvided')).toBe('uuid')
   })
 
-  test('returns undefined for unknown typename', () => {
-    expect(uidStrategyFromTypename('UnknownStrategy')).toBeUndefined()
+  test('returns uuid as default for unknown typename', () => {
+    expect(uidStrategyFromTypename('UnknownStrategy')).toBe('uuid')
   })
 })

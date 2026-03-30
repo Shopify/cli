@@ -457,12 +457,9 @@ export class AppManagementClient implements DeveloperPlatformClient {
         identifier: spec.identifier,
         externalIdentifier: spec.externalIdentifier,
         gated: false,
-        options: {
-          managementExperience: 'cli',
-          registrationLimit: spec.uidStrategy.appModuleLimit,
-          uidIsClientProvided: spec.uidStrategy.isClientProvided,
-          uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
-        },
+        managementExperience: 'cli',
+        registrationLimit: spec.uidStrategy.appModuleLimit,
+        uidStrategy: uidStrategyFromTypename(spec.uidStrategy.__typename),
         experience: normalizeExperience(spec.experience),
         validationSchema: spec.validationSchema,
       }),
@@ -1381,7 +1378,7 @@ function normalizeExperience(raw: string): SpecificationExperience {
   }
 }
 
-export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' | undefined {
+export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' | 'uuid' {
   switch (typename) {
     case 'UidStrategiesDynamic':
       return 'dynamic'
@@ -1390,7 +1387,7 @@ export function uidStrategyFromTypename(typename: string): 'single' | 'dynamic' 
     case 'UidStrategiesClientProvided':
       return 'uuid'
     default:
-      return undefined
+      return 'uuid'
   }
 }
 

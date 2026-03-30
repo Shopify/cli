@@ -6,6 +6,8 @@ const FILE_EXTENSIONS = ['json', 'toml', 'yaml', 'yml', 'svg']
 
 const channelSpecificationSpec = createContractBasedModuleSpecification({
   identifier: 'channel_config',
+  uidStrategy: 'uuid',
+  experience: 'extension',
   buildConfig: {
     mode: 'copy_files',
     filePatterns: FILE_EXTENSIONS.map((ext) => joinPath(SUBDIRECTORY_NAME, '**', `*.${ext}`)),

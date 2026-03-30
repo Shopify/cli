@@ -27,7 +27,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
     const result = parser({type: 'product_subscription'})
 
     // Then
@@ -49,7 +49,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
     const result = parser({type: 'product_subscription'})
 
     // Then
@@ -71,7 +71,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
     const result = parser({type: 'product_subscription'})
 
     // Then
@@ -93,7 +93,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
     const result = parser({type: 'invalid'})
 
     // Then
@@ -114,7 +114,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
     const result = parser({type: 'product_subscription'})
 
     // Then
@@ -136,7 +136,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
     const result = parser({type: 'invalid'})
 
     // Then
@@ -163,7 +163,7 @@ describe('unifiedConfigurationParserFactory', () => {
     }
 
     // When
-    const parser = await unifiedConfigurationParserFactory(merged as any)
+    const parser = await unifiedConfigurationParserFactory(merged as any, merged.validationSchema)
 
     // Then - base properties should be accepted
     const result = parser({
