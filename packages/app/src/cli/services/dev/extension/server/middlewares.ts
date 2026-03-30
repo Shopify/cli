@@ -134,6 +134,23 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
   })
 })
 
+export function getAppAssetsMiddleware(appAssets: Record<string, string>) {
+  return defineEventHandler(async (event) => {
+    const {filePath = ''} = getRouterParams(event)
+
+    // Find the asset directory for 'staticRoot' (the only key currently)
+    const directory = Object.values(appAssets)[0]
+
+    if (!directory) {
+      return sendError(event, {statusCode: 404, statusMessage: 'No app assets configured'})
+    }
+
+    return fileServerMiddleware(event, {
+      filePath: joinPath(directory, filePath),
+    })
+  })
+}
+
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler((event) => {
     outputDebug(`UI extensions server received a ${event.method} request to URL ${event.path}`, devOptions.stdout)

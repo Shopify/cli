@@ -11,8 +11,15 @@ import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileExists} from '@shopify/cli-kit/node/fs'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
+import type {FSWatcher} from 'chokidar'
+
+export interface AppAssets {
+  [key: string]: string
+}
 
 export interface ExtensionDevOptions {
   /**
@@ -112,6 +119,23 @@ export interface ExtensionDevOptions {
    * The app watcher that emits events when the app is updated
    */
   appWatcher: AppEventWatcher
+
+  /**
+   * Map of asset key to absolute directory path for app-level assets (e.g., admin static_root)
+   */
+  appAssets?: AppAssets
+}
+
+export function resolveAppAssets(allExtensions: ExtensionInstance[]): Record<string, string> {
+  const appAssets: Record<string, string> = {}
+  const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
+  if (adminExtension) {
+    const staticRoot = (adminExtension.configuration as {admin?: {static_root?: string}}).admin?.static_root
+    if (staticRoot) {
+      appAssets.staticRoot = joinPath(adminExtension.directory, staticRoot)
+    }
+  }
+  return appAssets
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
@@ -133,15 +157,57 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
+  const currentAppAssets = payloadOptions.appAssets
+  const httpServer = setupHTTPServer({
+    devOptions: payloadOptions,
+    payloadStore,
+    getExtensions,
+    appAssets: currentAppAssets,
+  })
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
+  // Set up asset directory watchers
+  let assetWatchers: FSWatcher[] = []
+
+  async function startAssetWatchers(assets: Record<string, string>) {
+    // Close existing watchers
+    await Promise.all(assetWatchers.map((watcher) => watcher.close()))
+    // eslint-disable-next-line require-atomic-updates
+    assetWatchers = []
+
+    const {default: chokidar} = await import('chokidar')
+    for (const [assetKey, directoryPath] of Object.entries(assets)) {
+      const exists = await fileExists(directoryPath)
+      if (!exists) continue
+
+      let debounceTimer: ReturnType<typeof setTimeout> | undefined
+      const watcher = chokidar.watch(directoryPath, {ignoreInitial: true})
+      watcher.on('all', () => {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => {
+          payloadStore.updateAppAssetTimestamp(assetKey)
+        }, 200)
+      })
+      assetWatchers.push(watcher)
+    }
+  }
+
+  if (currentAppAssets && Object.keys(currentAppAssets).length > 0) {
+    await startAssetWatchers(currentAppAssets)
+  }
+
   const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
     if (appWasReloaded) {
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
+
+      // Re-resolve app assets in case admin extension was added/removed/changed
+      const newAppAssets = resolveAppAssets(app.allExtensions)
+      const hasAssets = Object.keys(newAppAssets).length > 0
+      payloadOptions.appAssets = hasAssets ? newAppAssets : undefined
+      await startAssetWatchers(hasAssets ? newAppAssets : {})
     }
 
     for (const event of extensionEvents) {
@@ -178,6 +244,9 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   payloadOptions.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
+    for (const watcher of assetWatchers) {
+      watcher.close().catch(() => {})
+    }
     websocketConnection.close()
     httpServer.close()
   })

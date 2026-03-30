@@ -5,6 +5,7 @@ import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 const MANIFEST_VERSION = '3'
 
@@ -24,6 +25,7 @@ interface PreviewableExtensionOptions {
   grantedScopes: string[]
   previewableExtensions: ExtensionInstance[]
   appWatcher: AppEventWatcher
+  appAssets?: Record<string, string>
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -47,6 +49,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     previewableExtensions,
     appDirectory,
     appWatcher,
+    appAssets,
   },
 ) => {
   await devUIExtensions({
@@ -68,6 +71,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     subscriptionProductUrl,
     manifestVersion: MANIFEST_VERSION,
     appWatcher,
+    appAssets,
   })
 }
 
@@ -84,6 +88,16 @@ export async function setupPreviewableExtensionsProcess({
 
   const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl)
 
+  // Resolve app-level asset directories from admin extensions
+  const appAssets: Record<string, string> = {}
+  const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
+  if (adminExtension) {
+    const staticRoot = (adminExtension.configuration as {admin?: {static_root?: string}}).admin?.static_root
+    if (staticRoot) {
+      appAssets.staticRoot = joinPath(adminExtension.directory, staticRoot)
+    }
+  }
+
   return {
     prefix: 'extensions',
     type: 'previewable-extension',
@@ -94,6 +108,7 @@ export async function setupPreviewableExtensionsProcess({
       storeFqdn,
       previewableExtensions,
       cartUrl,
+      appAssets: Object.keys(appAssets).length > 0 ? appAssets : undefined,
       ...options,
     },
   }
