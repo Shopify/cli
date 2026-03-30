@@ -1,5 +1,23 @@
 # @shopify/cli
 
+## 3.93.0
+
+### Minor Changes
+
+- 9a39b44: Add `--development-context` flag to `theme push`
+
+  The new `--development-context` flag (short: `-c`) allows you to specify a unique identifier for a development theme context (e.g., PR number, branch name). This gives developers the ability to programmatically create or reuse named development themes; particularly useful when running `shopify theme push` in a CI environment where you might want to associate a particular development theme to a branch or pull request.
+
+- 962e932: Add support for theme previews using a JSON via `theme preview`. Pass a JSON via --override to quickly preview overrides on a live theme. Also adds a --preview-id flag to to handle in-place updates for previews created from an override JSON.
+
+### Patch Changes
+
+- 34e19bc: Change wording for current development theme in `theme list`
+
+  Previously you could only have one development theme at a time so we'd add `[yours]` beside the development theme that you were currently attached to. Now you can have multiple development themes so we're changing the language to `[current]` to show which theme you are actively connected to.
+
+- 67aaf10: fix missing json output for theme info when no theme or dev flag is present
+
 ## 3.92.0
 
 ### Patch Changes
