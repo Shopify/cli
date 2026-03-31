@@ -5,11 +5,13 @@ import {
   loadOpaqueApp,
   parseConfigurationObject,
   checkFolderIsValidApp,
+  AppErrors,
   getAppConfigurationContext,
   loadConfigForAppCreation,
   reloadApp,
   ConfigurationError,
 } from './loader.js'
+import {LocalConfigError} from './local-config-error.js'
 import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
@@ -2779,6 +2781,35 @@ describe('parseConfigurationObject', () => {
     expect(() => parseConfigurationObject(AppSchema, 'tmp', configurationObject)).toThrow('[client_id]: Required')
   })
 
+  test('captures structured issues on configuration errors', async () => {
+    const configurationObject = {
+      scopes: [],
+    }
+
+    let thrown: ConfigurationError | undefined
+    try {
+      parseConfigurationObject(AppSchema, '/tmp/shopify.app.toml', configurationObject)
+      expect.fail('Expected ConfigurationError to be thrown')
+    } catch (err) {
+      if (err instanceof ConfigurationError) {
+        thrown = err
+      } else {
+        throw err
+      }
+    }
+
+    expect(thrown).toBeInstanceOf(LocalConfigError)
+    expect(thrown.issues).toEqual([
+      {
+        filePath: '/tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+  })
+
   test('throws an error if fields are missing in a frontend config web TOML file', async () => {
     const configurationObject = {
       type: 11,
@@ -2806,6 +2837,133 @@ describe('parseConfigurationObject', () => {
     expect(thrown.message).not.toContain('Union validation failed')
     expect(thrown.message).not.toContain('Option 1:')
     expect(thrown.message).not.toContain('Option 2:')
+  })
+})
+
+describe('AppErrors', () => {
+  test('preserves structured issues while keeping existing rendered message accessors', () => {
+    const errors = new AppErrors()
+    errors.addError('tmp/shopify.app.toml', 'rendered error', [
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+    errors.addError('tmp/shopify.app.toml', 'replacement rendered error')
+
+    expect(errors.getError('tmp/shopify.app.toml')).toBe('replacement rendered error')
+    expect(errors.getIssues('tmp/shopify.app.toml')).toEqual([
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+    expect(errors.toJSON()).toEqual(['replacement rendered error'])
+    expect(errors.toStructuredJSON()).toEqual([
+      {
+        filePath: 'tmp/shopify.app.toml',
+        message: 'replacement rendered error',
+        issues: [
+          {
+            filePath: 'tmp/shopify.app.toml',
+            path: ['client_id'],
+            pathString: 'client_id',
+            message: 'Required',
+            code: 'invalid_type',
+          },
+        ],
+      },
+    ])
+  })
+
+  test('accumulates issues across multiple addError calls for the same path', () => {
+    const errors = new AppErrors()
+
+    errors.addError('tmp/shopify.app.toml', 'first rendered error', [
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+    errors.addError('tmp/shopify.app.toml', 'second rendered error', [
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['name'],
+        pathString: 'name',
+        message: 'Must be set',
+        code: 'custom',
+      },
+    ])
+
+    expect(errors.getError('tmp/shopify.app.toml')).toBe('second rendered error')
+    expect(errors.getIssues('tmp/shopify.app.toml')).toEqual([
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['name'],
+        pathString: 'name',
+        message: 'Must be set',
+        code: 'custom',
+      },
+    ])
+  })
+
+  test('keeps issues isolated per file path and returns an empty array for unknown paths', () => {
+    const errors = new AppErrors()
+
+    errors.addError('tmp/shopify.app.toml', 'app error', [
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+    errors.addError('tmp/extensions/foo/shopify.extension.toml', 'extension error', [
+      {
+        filePath: 'tmp/extensions/foo/shopify.extension.toml',
+        path: ['name'],
+        pathString: 'name',
+        message: 'Must be set',
+        code: 'custom',
+      },
+    ])
+
+    expect(errors.getIssues('tmp/shopify.app.toml')).toEqual([
+      {
+        filePath: 'tmp/shopify.app.toml',
+        path: ['client_id'],
+        pathString: 'client_id',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+    expect(errors.getIssues('tmp/extensions/foo/shopify.extension.toml')).toEqual([
+      {
+        filePath: 'tmp/extensions/foo/shopify.extension.toml',
+        path: ['name'],
+        pathString: 'name',
+        message: 'Must be set',
+        code: 'custom',
+      },
+    ])
+    expect(errors.getIssues('tmp/missing.toml')).toEqual([])
   })
 })
 
@@ -3325,7 +3483,7 @@ describe('WebhooksSchema', () => {
     expect(result.parsedConfiguration.webhooks).toMatchObject(webhookConfig)
   })
 
-  async function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
+  function setupParsing(errorObj: zod.ZodIssue | {}, webhookConfigOverrides: WebhooksConfig) {
     const toParse = getWebhookConfig(webhookConfigOverrides)
     try {
       const parsedConfiguration = parseConfigurationObject(WebhooksSchema, 'tmp', toParse)

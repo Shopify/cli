@@ -12,7 +12,13 @@ import {
   SchemaForConfig,
   AppLinkedInterface,
 } from './app.js'
-import {parseHumanReadableError} from './error-parsing.js'
+import {
+  AppValidationFileIssues,
+  AppValidationIssue,
+  parseHumanReadableError,
+  parseStructuredErrors,
+} from './error-parsing.js'
+import {LocalConfigError} from './local-config-error.js'
 import {
   getAppConfigurationFileName,
   getAppConfigurationShorthand,
@@ -66,14 +72,7 @@ interface ReloadState {
   previousDevURLs?: ApplicationURLs
 }
 
-export class ConfigurationError extends AbortError {
-  constructor(
-    message: OutputMessage,
-    public readonly configurationPath: string,
-  ) {
-    super(message)
-  }
-}
+export class ConfigurationError extends LocalConfigError {}
 
 /**
  * Loads a configuration file, validates it against a schema, and returns the parsed object.
@@ -123,6 +122,7 @@ export function parseConfigurationObject<TSchema extends zod.ZodType>(
         filepath,
       )}:\n\n${parseHumanReadableError(parseResult.error.issues)}`,
       filepath,
+      parseStructuredErrors(parseResult.error.issues, filepath),
     )
   }
   return parseResult.data
@@ -149,6 +149,7 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
           filepath,
         )}:\n\n${parseHumanReadableError(parsed.errors)}`,
         filepath,
+        parseStructuredErrors(parsed.errors, filepath),
       )
     }
   }
@@ -156,15 +157,28 @@ export function parseConfigurationObjectAgainstSpecification<TSchema extends zod
 
 export class AppErrors {
   private errors: {
-    [key: string]: OutputMessage
+    [key: string]: {
+      message: OutputMessage
+      issues: AppValidationIssue[]
+    }
   } = {}
 
-  addError(path: string, message: OutputMessage): void {
-    this.errors[path] = message
+  /**
+   * Replaces the rendered message for a path while preserving previously
+   * collected structured issues unless new issues are provided, in which case
+   * the new issues are appended.
+   */
+  addError(path: string, message: OutputMessage, issues: AppValidationIssue[] = []): void {
+    const existingIssues = this.errors[path]?.issues ?? []
+    this.errors[path] = {message, issues: issues.length > 0 ? [...existingIssues, ...issues] : existingIssues}
   }
 
   getError(path: string) {
-    return this.errors[path]
+    return this.errors[path]?.message
+  }
+
+  getIssues(path: string): AppValidationIssue[] {
+    return this.errors[path]?.issues ?? []
   }
 
   isEmpty() {
@@ -172,7 +186,11 @@ export class AppErrors {
   }
 
   toJSON(): OutputMessage[] {
-    return Object.values(this.errors)
+    return Object.values(this.errors).map(({message}) => message)
+  }
+
+  toStructuredJSON(): AppValidationFileIssues[] {
+    return Object.entries(this.errors).map(([filePath, {message, issues}]) => ({filePath, message, issues}))
   }
 }
 
@@ -527,7 +545,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           return await loadSingleWeb(webFile.path, webFile.content)
         } catch (err) {
           if (err instanceof ConfigurationError) {
-            this.errors.addError(err.configurationPath, err.message)
+            this.errors.addError(err.configurationPath, err.message, err.issues)
             return undefined
           }
           throw err
@@ -629,7 +647,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       return extensionInstance
     } catch (err) {
       if (err instanceof ConfigurationError) {
-        this.errors.addError(err.configurationPath, err.message)
+        this.errors.addError(err.configurationPath, err.message, err.issues)
         return undefined
       }
       throw err
@@ -697,7 +715,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
           configuration = await parseConfigurationFile(UnifiedSchema, configurationPath, extensionFile.content)
         } catch (err) {
           if (err instanceof ConfigurationError) {
-            this.errors.addError(err.configurationPath, err.message)
+            this.errors.addError(err.configurationPath, err.message, err.issues)
             return []
           }
           throw err
@@ -744,7 +762,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       specConfiguration = parseConfigurationObject(WebhooksSchema, configPath, appConfiguration)
     } catch (err) {
       if (err instanceof ConfigurationError) {
-        this.errors.addError(err.configurationPath, err.message)
+        this.errors.addError(err.configurationPath, err.message, err.issues)
         return []
       }
       throw err
@@ -786,7 +804,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
             )
           } catch (err) {
             if (err instanceof ConfigurationError) {
-              this.errors.addError(err.configurationPath, err.message)
+              this.errors.addError(err.configurationPath, err.message, err.issues)
               return [null, [] as string[]] as const
             }
             throw err

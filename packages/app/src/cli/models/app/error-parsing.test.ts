@@ -1,4 +1,4 @@
-import {parseHumanReadableError} from './error-parsing.js'
+import {parseHumanReadableError, parseStructuredErrors} from './error-parsing.js'
 import {describe, expect, test} from 'vitest'
 
 describe('parseHumanReadableError', () => {
@@ -233,5 +233,152 @@ describe('parseHumanReadableError', () => {
     expect(result).not.toContain('Expected boolean, received string')
     expect(result).not.toContain('Must be valid URL')
     expect(result).not.toContain('Union validation failed')
+  })
+})
+
+describe('parseStructuredErrors', () => {
+  test('preserves regular issues with file path and path string', () => {
+    const issues = [
+      {
+        path: ['name'],
+        message: 'Required field is missing',
+        code: 'invalid_type',
+      },
+      {
+        path: ['version'],
+        message: 'Must be a valid semver string',
+        code: 'custom',
+      },
+    ]
+
+    const result = parseStructuredErrors(issues, '/tmp/shopify.app.toml')
+
+    expect(result).toEqual([
+      {
+        filePath: '/tmp/shopify.app.toml',
+        path: ['name'],
+        pathString: 'name',
+        message: 'Required field is missing',
+        code: 'invalid_type',
+      },
+      {
+        filePath: '/tmp/shopify.app.toml',
+        path: ['version'],
+        pathString: 'version',
+        message: 'Must be a valid semver string',
+        code: 'custom',
+      },
+    ])
+  })
+
+  test('uses the best matching union variant for structured issues', () => {
+    const issues = [
+      {
+        code: 'invalid_union',
+        unionErrors: [
+          {
+            issues: [
+              {
+                code: 'invalid_type',
+                path: ['web', 'roles'],
+                message: 'Expected array, received number',
+              },
+              {
+                code: 'invalid_type',
+                path: ['web', 'commands', 'build'],
+                message: 'Required',
+              },
+            ],
+            name: 'ZodError',
+          },
+          {
+            issues: [
+              {
+                code: 'invalid_literal',
+                path: ['web', 'type'],
+                message: "Invalid literal value, expected 'frontend'",
+              },
+            ],
+            name: 'ZodError',
+          },
+        ],
+        path: ['web'],
+        message: 'Invalid input',
+      },
+    ]
+
+    const result = parseStructuredErrors(issues, '/tmp/shopify.web.toml')
+
+    expect(result).toEqual([
+      {
+        filePath: '/tmp/shopify.web.toml',
+        path: ['web', 'roles'],
+        pathString: 'web.roles',
+        message: 'Expected array, received number',
+        code: 'invalid_type',
+      },
+      {
+        filePath: '/tmp/shopify.web.toml',
+        path: ['web', 'commands', 'build'],
+        pathString: 'web.commands.build',
+        message: 'Required',
+        code: 'invalid_type',
+      },
+    ])
+  })
+
+  test('falls back to recovered nested union issues before returning a synthetic root issue', () => {
+    const unionIssues = Array.from({length: 51}, (_, index) => ({
+      code: 'custom',
+      path: ['variants', index],
+      message: `Invalid variant ${index + 1}`,
+    }))
+
+    const issues = [
+      {
+        code: 'invalid_union',
+        unionErrors: [{issues: unionIssues, name: 'ZodError'}],
+        path: ['root'],
+        message: 'Invalid input',
+      },
+    ]
+
+    const result = parseStructuredErrors(issues, '/tmp/shopify.app.toml')
+
+    expect(result).toEqual(
+      unionIssues.map((issue, index) => ({
+        filePath: '/tmp/shopify.app.toml',
+        path: ['variants', index],
+        pathString: `variants.${index}`,
+        message: issue.message,
+        code: 'custom',
+      })),
+    )
+  })
+
+  test('falls back to a synthetic root issue when union variants expose no nested issues', () => {
+    const issues = [
+      {
+        code: 'invalid_union',
+        unionErrors: [
+          {issues: [], name: 'ZodError'},
+          {issues: [], name: 'ZodError'},
+        ],
+        path: ['root'],
+        message: 'Invalid input',
+      },
+    ]
+
+    const result = parseStructuredErrors(issues, '/tmp/shopify.app.toml')
+
+    expect(result).toEqual([
+      {
+        filePath: '/tmp/shopify.app.toml',
+        path: ['root'],
+        pathString: 'root',
+        message: "Configuration doesn't match any expected format",
+        code: 'invalid_union',
+      },
+    ])
   })
 })
