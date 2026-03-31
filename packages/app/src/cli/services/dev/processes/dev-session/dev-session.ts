@@ -55,6 +55,7 @@ export class DevSession {
   private readonly appEventsProcessor: SerialBatchProcessor<AppEvent>
   private failedEvents: AppEvent[] = []
   private currentSessionState: DevSessionState | null = null
+  private lastErrors: string[] = []
 
   private constructor(processOptions: DevSessionProcessOptions, stdout: Writable) {
     this.statusManager = processOptions.devSessionStatusManager
@@ -241,12 +242,20 @@ export class DevSession {
         if (event) this.failedEvents.push(event)
         this.statusManager.setMessage('REMOTE_ERROR')
       }
+
+      // Stash error details so they can be included in the AbortError below
+      if (result.error instanceof Error) {
+        this.lastErrors = [result.error.message]
+      } else if (Array.isArray(result.error)) {
+        this.lastErrors = result.error.map((e) => e.message)
+      }
     }
 
     // If we failed to create a session, exit the process. Don't throw an error in tests as it can't be caught due to the
     // async nature of the process.
     if (!this.statusManager.status.isReady && !isUnitTest()) {
-      throw new AbortError('Failed to start dev preview.')
+      const errorDetail = this.lastErrors.length > 0 ? this.lastErrors.join('\n') : null
+      throw new AbortError('Failed to start dev preview.', errorDetail)
     }
   }
 
