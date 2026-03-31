@@ -63,8 +63,12 @@ export default class Validate extends AppLinkedCommand {
       })
       app = context.app
     } catch (err) {
-      if (err instanceof AbortError && flags.json) {
-        const message = unstyled(stringifyMessage(err.message)).trim()
+      // Only catch config validation errors for JSON output. Auth/linking/remote
+      // failures should propagate normally — they aren't validation results.
+      // This is a workaround while we consider more granular error types -- today most everything is AbortError.
+      const message = err instanceof AbortError ? unstyled(stringifyMessage(err.message)).trim() : ''
+      const isValidationError = message.startsWith('Validation errors in ')
+      if (isValidationError && flags.json) {
         outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
         throw new AbortSilentError()
       }
