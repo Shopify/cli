@@ -1,5 +1,5 @@
 import {getShouldRenderTarget} from './ui_extension.js'
-import {renderTypeDefinitions, TypeDefinitionsByFile} from './type-generation.js'
+import {getTypeDefinitions, TypeDefinitionsByFile} from './type-generation.js'
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
 import {ExtensionInstance} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
@@ -1387,7 +1387,7 @@ Please check the configuration in ${joinPath(tmpDir, 'shopify.extension.toml')}`
   }
 
   async function getRenderedTypeDefinitions(typeDefinitionsByFile: TypeDefinitionsByFile, typeFilePath: string) {
-    return Array.from(await renderTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath))
+    return Array.from(await getTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath))
   }
 
   describe('contributeToSharedTypeFile', () => {

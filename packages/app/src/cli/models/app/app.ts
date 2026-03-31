@@ -7,7 +7,7 @@ import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../exte
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
 import {UIExtensionSchema} from '../extensions/specifications/ui_extension.js'
-import {renderTypeDefinitions, TypeDefinitionsByFile} from '../extensions/specifications/type-generation.js'
+import {getTypeDefinitions, TypeDefinitionsByFile} from '../extensions/specifications/type-generation.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
 import {AppAccessSpecIdentifier} from '../extensions/specifications/app_config_app_access.js'
 import {configurationFileNames} from '../../constants.js'
@@ -456,7 +456,7 @@ export class App<
 
     await Promise.all(
       Array.from(typeDefinitionsByFile.entries()).map(async ([typeFilePath, typeDefinitions]) => {
-        const types = await renderTypeDefinitions(typeDefinitions, typeFilePath)
+        const types = await getTypeDefinitions(typeDefinitions, typeFilePath)
         const exists = fileExistsSync(typeFilePath)
         // No types to add, remove the file if it exists
         if (types.size === 0) {

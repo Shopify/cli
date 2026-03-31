@@ -4,7 +4,7 @@ import {
   createToolsTypeDefinition,
   findNearestTsConfigDir,
   parseApiVersion,
-  renderTypeDefinitions,
+  getTypeDefinitions,
   TypeDefinitionsByFile,
 } from './type-generation.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -106,7 +106,7 @@ describe('shared type generation helpers', () => {
       expect(storedDefinition.toolsTypeDefinition).toBe('interface ShopifyTools {}')
 
       const renderedDefinitions = Array.from(
-        await renderTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath),
+        await getTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath),
       )
 
       expect(renderedDefinitions).toHaveLength(1)
@@ -165,7 +165,7 @@ describe('shared type generation helpers', () => {
       })
 
       const renderedDefinitions = Array.from(
-        await renderTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath),
+        await getTypeDefinitions(typeDefinitionsByFile.get(typeFilePath) ?? new Map(), typeFilePath),
       )
 
       expect(renderedDefinitions).toHaveLength(2)

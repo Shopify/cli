@@ -276,7 +276,7 @@ export function addTypeDefinition(
   typeDefinitionsByFile.set(typeFilePath, currentTypeDefinitions)
 }
 
-export async function renderTypeDefinitions(
+export async function getTypeDefinitions(
   typeDefinitionsByPath: Map<string, SharedTypeDefinition>,
   typeFilePath: string,
 ): Promise<Set<string>> {
