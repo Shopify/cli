@@ -85,6 +85,10 @@ export async function linkedAppContext({
   let {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 
+  if (activeConfig.file.errors.length > 0) {
+    throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+  }
+
   if (!activeConfig.isLinked || forceRelink) {
     const configName = forceRelink ? undefined : basename(activeConfig.file.path)
     const result = await link({directory, apiKey: clientId, configName})
@@ -173,6 +177,11 @@ export async function localAppContext({
   userProvidedConfigName,
 }: LocalAppContextOptions): Promise<LocalAppContextOutput> {
   const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
+
+  if (activeConfig.file.errors.length > 0) {
+    throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+  }
+
   const specifications = await loadLocalExtensionsSpecifications()
   const app = await loadAppFromContext({project, activeConfig, specifications, ignoreUnknownExtensions: true})
 

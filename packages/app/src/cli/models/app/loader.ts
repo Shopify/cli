@@ -38,7 +38,7 @@ import {
 } from '../project/config-selection.js'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
 import {fileExists, readFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
-import {TomlFile, TomlFileNotFoundError, TomlParseError} from '@shopify/cli-kit/node/toml/toml-file'
+import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
@@ -96,10 +96,7 @@ export async function parseConfigurationFile<TSchema extends zod.ZodType>(
       const file = await TomlFile.read(filepath)
       content = file.content
     } catch (err) {
-      if (err instanceof TomlFileNotFoundError) {
-        return {errors: [{file: filepath, message: `Couldn't find the configuration file at ${filepath}`}]}
-      }
-      if (err instanceof TomlParseError) {
+      if (err instanceof TomlFileError) {
         return {errors: [{file: filepath, message: err.message}]}
       }
       throw err
