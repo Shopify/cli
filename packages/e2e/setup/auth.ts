@@ -36,8 +36,7 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         if (value !== undefined) spawnEnv[key] = value
       }
       spawnEnv.CI = ''
-      // Pretend we're in a cloud environment so the CLI prints the login URL
-      // directly instead of opening a system browser (BROWSER=none doesn't work on macOS)
+      // Print login URL directly instead of opening system browser
       spawnEnv.CODESPACES = 'true'
 
       const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
@@ -83,8 +82,7 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         // Process may already be dead
       }
 
-      // Remove the partners token so CLI uses the OAuth session
-      // instead of the token (which can't auth against Business Platform API)
+      // Drop token so CLI uses the OAuth session instead
       delete env.processEnv.SHOPIFY_CLI_PARTNERS_TOKEN
 
       await use()

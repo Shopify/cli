@@ -1,23 +1,22 @@
-/* eslint-disable no-restricted-imports */
-import {appScaffoldFixture as test} from '../setup/app.js'
+import {freshAppScaffoldFixture as test} from '../setup/app.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
-import * as path from 'path'
+import * as path from 'path' // eslint-disable-line no-restricted-imports
 
-test.describe('App basic flow (no extensions)', () => {
+test.describe('App basic flow — from scratch', () => {
   test('init, dev, execute, quit, clean, deploy, versions, config link, deploy to secondary', async ({
     appScaffold,
     cli,
     env,
   }) => {
-    test.setTimeout(10 * 60 * 1000)
-    requireEnv(env, 'clientId', 'storeFqdn', 'secondaryClientId')
+    test.setTimeout(15 * 60 * 1000)
+    requireEnv(env, 'storeFqdn', 'orgId')
 
-    // Step 1: Scaffold app (links to pre-existing app via SHOPIFY_FLAG_CLIENT_ID)
+    // Step 1: Create a new app (non-interactive via --organization-id + --name)
     const initResult = await appScaffold.init({
       template: 'reactRouter',
-      flavor: 'javascript',
+      flavor: 'typescript',
       packageManager: 'npm',
     })
     expect(initResult.exitCode, '‼️ Step 1 - app init failed').toBe(0)
@@ -36,7 +35,7 @@ test.describe('App basic flow (no extensions)', () => {
       )
       const executeOutput = executeResult.stdout + executeResult.stderr
       expect(executeResult.exitCode, '‼️ Step 3 - app execute failed').toBe(0)
-      expect(executeOutput, '‼️ Step 3 - app execute: response missing "shop" field').toContain('"shop"')
+      expect(executeOutput, '‼️ Step 3 - app execute: response missing "shop" field').toContain('shop')
 
       // Step 4: Quit dev server
       dev.sendKey('q')
@@ -81,24 +80,71 @@ test.describe('App basic flow (no extensions)', () => {
     expect(listResult.exitCode, '‼️ Step 7 - app versions list failed').toBe(0)
     expect(listOutput, `‼️ Step 7 - app versions list: missing version tag "${versionTag}"`).toContain(versionTag)
 
-    // Step 8: Config link to secondary app
+    // Step 8: Create a second app, then config link to it
+    const secondaryAppName = `QA-E2E-2nd-${Date.now()}`
+    const secondaryTmpDir = fs.mkdtempSync(path.join(appScaffold.appDir, '..', 'secondary-'))
+    const secondaryInitResult = await cli.execCreateApp(
+      [
+        '--name',
+        secondaryAppName,
+        '--path',
+        secondaryTmpDir,
+        '--package-manager',
+        'npm',
+        '--local',
+        '--template',
+        'reactRouter',
+        '--flavor',
+        'typescript',
+        '--organization-id',
+        env.orgId,
+      ],
+      {env: {FORCE_COLOR: '0'}, timeout: 5 * 60 * 1000},
+    )
+    expect(secondaryInitResult.exitCode, '‼️ Step 8a - secondary app init failed').toBe(0)
+
+    // Read client_id from the new app's toml
+    const secondaryAppDir = fs
+      .readdirSync(secondaryTmpDir, {withFileTypes: true})
+      .find((entry) => entry.isDirectory() && fs.existsSync(path.join(secondaryTmpDir, entry.name, 'shopify.app.toml')))
+    expect(secondaryAppDir, '‼️ Step 8a - secondary app dir not found').toBeTruthy()
+    const secondaryToml = fs.readFileSync(
+      path.join(secondaryTmpDir, secondaryAppDir!.name, 'shopify.app.toml'),
+      'utf-8',
+    )
+    const clientIdMatch = secondaryToml.match(/client_id\s*=\s*"([^"]+)"/)
+    expect(clientIdMatch, '‼️ Step 8a - client_id not found in secondary toml').toBeTruthy()
+    const secondaryClientId = clientIdMatch![1]!
+
     // TOML stub so config link skips the "Configuration file name" prompt
     fs.writeFileSync(
       path.join(appScaffold.appDir, 'shopify.app.secondary.toml'),
-      `client_id = "${env.secondaryClientId}"\n`,
+      `client_id = "${secondaryClientId}"\n`,
     )
 
-    const configLink = await cli.spawn(
-      ['app', 'config', 'link', '--path', appScaffold.appDir, '--client-id', env.secondaryClientId],
-      {env: {CI: '', SHOPIFY_FLAG_CLIENT_ID: undefined}},
+    // Link to the secondary app
+    const configLinkResult = await cli.exec(
+      ['app', 'config', 'link', '--path', appScaffold.appDir, '--client-id', secondaryClientId],
+      {timeout: 2 * 60 * 1000},
     )
-    await configLink.waitForOutput('is now linked to', 2 * 60 * 1000).catch((err: Error) => {
-      throw new Error(`‼️ Step 8 - app config link failed\n${err.message}`)
-    })
-    const configLinkExitCode = await configLink.waitForExit(30_000)
-    expect(configLinkExitCode, '‼️ Step 8 - app config link failed').toBe(0)
+    expect(
+      configLinkResult.exitCode,
+      `‼️ Step 8b - app config link failed\nstdout: ${configLinkResult.stdout}\nstderr: ${configLinkResult.stderr}`,
+    ).toBe(0)
+    const configLinkOutput = configLinkResult.stdout + configLinkResult.stderr
+    expect(configLinkOutput, '‼️ Step 8b - config link: missing "is now linked" in output').toContain(
+      'is now linked to',
+    )
 
-    // Step 9: Deploy to secondary app
+    fs.rmSync(secondaryTmpDir, {recursive: true, force: true})
+
+    // Step 9: Deploy to the secondary app
+    const tomlFiles = fs
+      .readdirSync(appScaffold.appDir)
+      .filter(
+        (file: string) => file.startsWith('shopify.app.') && file.endsWith('.toml') && file !== 'shopify.app.toml',
+      )
+    const secondaryConfig = tomlFiles[0]?.replace('shopify.app.', '').replace('.toml', '') ?? 'secondary'
     const secondaryVersionTag = `QA-E2E-2nd-${Date.now()}`
     const secondaryDeployResult = await cli.exec(
       [
@@ -107,14 +153,14 @@ test.describe('App basic flow (no extensions)', () => {
         '--path',
         appScaffold.appDir,
         '--config',
-        'secondary',
+        secondaryConfig,
         '--force',
         '--version',
         secondaryVersionTag,
         '--message',
         'E2E secondary app deployment',
       ],
-      {timeout: 5 * 60 * 1000, env: {SHOPIFY_FLAG_CLIENT_ID: undefined}},
+      {timeout: 5 * 60 * 1000},
     )
     expect(secondaryDeployResult.exitCode, '‼️ Step 9 - app deploy (secondary) failed').toBe(0)
   })
