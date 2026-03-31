@@ -201,6 +201,10 @@ export async function loadConfigForAppCreation(directory: string, name: string):
   const rawConfig = activeConfig.file.content
   const webFiles = webFilesForConfig(project, activeConfig.file)
   const webResults = await Promise.all(webFiles.map((wf) => loadSingleWeb(wf.path, wf.content)))
+  const webErrors = webResults.flatMap((result) => result.errors ?? [])
+  if (webErrors.length > 0) {
+    throw new AbortError(webErrors.map(formatConfigurationError).join('\n'))
+  }
   const webs = webResults.filter((result): result is {web: Web} => 'web' in result).map((result) => result.web)
   const isLaunchable = webs.some((web) => isWebType(web, WebType.Frontend) || isWebType(web, WebType.Backend))
 
