@@ -109,7 +109,34 @@ const uiExtensionSpec = createExtensionSpecification({
       lifecycle: 'deploy',
       steps: [
         {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
-        {id: 'copy-static-assets', name: 'Copy Static Assets', type: 'copy_static_assets', config: {}},
+        {
+          id: 'include-ui-extension-assets',
+          name: 'Include UI Extension Assets',
+          type: 'include_assets',
+          config: {
+            generatesAssetsManifest: true,
+            inclusions: [
+              {
+                type: 'configKey',
+                anchor: 'targeting[]',
+                groupBy: 'target',
+                key: 'targeting[].tools',
+              },
+              {
+                type: 'configKey',
+                anchor: 'targeting[]',
+                groupBy: 'target',
+                key: 'targeting[].instructions',
+              },
+              {
+                type: 'configKey',
+                anchor: 'targeting[]',
+                groupBy: 'target',
+                key: 'targeting[].intents[].schema',
+              },
+            ],
+          },
+        },
       ],
     },
   ],

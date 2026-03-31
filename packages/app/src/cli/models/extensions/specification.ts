@@ -42,6 +42,7 @@ export enum AssetIdentifier {
   Main = 'main',
   Tools = 'tools',
   Instructions = 'instructions',
+  Intents = 'intents',
 }
 
 export interface Asset {
