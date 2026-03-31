@@ -6,12 +6,34 @@ const FILE_EXTENSIONS = ['json', 'toml', 'yaml', 'yml', 'svg']
 
 const channelSpecificationSpec = createContractBasedModuleSpecification({
   identifier: 'channel_config',
-  uidStrategy: 'uuid',
+  uidStrategy: 'single',
   experience: 'extension',
   buildConfig: {
     mode: 'copy_files',
     filePatterns: FILE_EXTENSIONS.map((ext) => joinPath(SUBDIRECTORY_NAME, '**', `*.${ext}`)),
   },
+  clientSteps: [
+    {
+      lifecycle: 'deploy',
+      steps: [
+        {
+          id: 'copy-files',
+          name: 'Copy Files',
+          type: 'include_assets',
+          config: {
+            inclusions: [
+              {
+                type: 'pattern',
+                baseDir: SUBDIRECTORY_NAME,
+                destination: SUBDIRECTORY_NAME,
+                include: FILE_EXTENSIONS.map((ext) => `**/*.${ext}`),
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
   appModuleFeatures: () => [],
 })
 

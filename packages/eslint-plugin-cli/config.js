@@ -54,8 +54,7 @@ const baseRules = {
       fixToUnknown: true,
     },
   ],
-  // Switch exhaustiveness check may trigger in existing code, keep as warn
-  '@typescript-eslint/switch-exhaustiveness-check': 'warn',
+  '@typescript-eslint/switch-exhaustiveness-check': 'error',
   '@typescript-eslint/naming-convention': [
     'error',
     {
@@ -161,8 +160,8 @@ const baseRules = {
   '@shopify/cli/no-trailing-js-in-cli-kit-imports': 'error',
   '@shopify/cli/no-vi-manual-mock-clear': 'error',
   '@shopify/cli/no-vi-mock-in-callbacks': 'error',
-  '@shopify/cli/prompt-message-format': 'warn',
-  '@shopify/cli/banner-headline-format': 'warn',
+  '@shopify/cli/prompt-message-format': 'error',
+  '@shopify/cli/banner-headline-format': 'error',
   '@shopify/cli/required-fields-when-loading-app': 'error',
   '@shopify/cli/no-inline-graphql': 'error',
   'no-restricted-syntax': [
@@ -205,12 +204,12 @@ const baseRules = {
   '@typescript-eslint/no-unsafe-return': 'off',
   '@typescript-eslint/restrict-template-expressions': 'off',
   '@typescript-eslint/no-unsafe-enum-comparison': 'off',
-  '@typescript-eslint/prefer-nullish-coalescing': 'warn',
-  'no-negated-condition': 'warn',
-  '@typescript-eslint/prefer-promise-reject-errors': 'warn',
+  '@typescript-eslint/prefer-nullish-coalescing': 'error',
+  'no-negated-condition': 'error',
+  '@typescript-eslint/prefer-promise-reject-errors': 'error',
   'prefer-promise-reject-errors': 'off',
-  'no-lone-blocks': 'warn',
-  '@typescript-eslint/only-throw-error': 'warn',
+  'no-lone-blocks': 'error',
+  '@typescript-eslint/only-throw-error': 'error',
   '@typescript-eslint/prefer-readonly': 'error',
   // These should be moved to a warning/error eventually.
   '@typescript-eslint/use-unknown-in-catch-callback-variable': 'off',
@@ -244,11 +243,11 @@ const testFileRules = {
   '@typescript-eslint/unbound-method': 'off',
   '@typescript-eslint/no-redundant-type-constituents': 'off',
   '@typescript-eslint/no-confusing-void-expression': 'off',
-  '@typescript-eslint/no-unnecessary-template-expression': 'warn',
+  '@typescript-eslint/no-unnecessary-template-expression': 'error',
   '@typescript-eslint/no-unnecessary-condition': 'off',
   '@typescript-eslint/restrict-plus-operands': 'off',
   '@typescript-eslint/non-nullable-type-assertion-style': 'off',
-  '@typescript-eslint/prefer-reduce-type-parameter': 'warn',
+  '@typescript-eslint/prefer-reduce-type-parameter': 'error',
   'no-restricted-globals': 'off',
 }
 

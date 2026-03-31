@@ -23,9 +23,7 @@ export type ExtensionFeature =
   | 'localization'
   | 'generates_source_maps'
 
-export interface TransformationConfig {
-  [key: string]: string
-}
+export type TransformationConfig = Record<string, string>
 
 export interface CustomTransformationConfig {
   forward?: (obj: object, appConfiguration: AppConfiguration, options?: {flags?: Flag[]}) => object
@@ -86,7 +84,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
     directory: string,
     apiKey: string,
     moduleId?: string,
-  ) => Promise<{[key: string]: unknown} | undefined>
+  ) => Promise<Record<string, unknown> | undefined>
   validate?: (config: TConfiguration, configPath: string, directory: string) => Promise<Result<unknown, string>>
   preDeployValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
   buildValidation?: (extension: ExtensionInstance<TConfiguration>) => Promise<void>
@@ -289,7 +287,13 @@ export function createConfigExtensionSpecification<TConfiguration extends BaseCo
 export function createContractBasedModuleSpecification<TConfiguration extends BaseConfigType = BaseConfigType>(
   spec: Pick<
     CreateExtensionSpecType<TConfiguration>,
-    'identifier' | 'appModuleFeatures' | 'buildConfig' | 'uidStrategy' | 'clientSteps' | 'experience'
+    | 'identifier'
+    | 'appModuleFeatures'
+    | 'buildConfig'
+    | 'uidStrategy'
+    | 'clientSteps'
+    | 'experience'
+    | 'transformRemoteToLocal'
   >,
 ) {
   return createExtensionSpecification({
@@ -299,6 +303,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     experience: spec.experience,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
     uidStrategy: spec.uidStrategy,
+    transformRemoteToLocal: spec.transformRemoteToLocal,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
@@ -324,7 +329,7 @@ function resolveReverseAppConfigTransform<T>(
   transformConfig?: TransformationConfig | CustomTransformationConfig,
 ) {
   if (!transformConfig)
-    return (content: object) => defaultAppConfigReverseTransform(schema, content as {[key: string]: unknown})
+    return (content: object) => defaultAppConfigReverseTransform(schema, content as Record<string, unknown>)
 
   if (Object.keys(transformConfig).includes('reverse')) {
     return (transformConfig as CustomTransformationConfig).reverse!
@@ -392,8 +397,8 @@ function appConfigTransform(
  * @returns The nested object
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: {[key: string]: unknown}) {
-  return Object.keys(schema._def.shape()).reduce((result: {[key: string]: unknown}, key: string) => {
+function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, content: Record<string, unknown>) {
+  return Object.keys(schema._def.shape()).reduce((result: Record<string, unknown>, key: string) => {
     let innerSchema = schema._def.shape()[key]
     if (innerSchema instanceof zod.ZodOptional) {
       innerSchema = innerSchema._def.innerType
