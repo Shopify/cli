@@ -4,7 +4,7 @@ import {getAppConfigurationShorthand} from '../app/loader.js'
 import {dotEnvFileNames} from '../../constants.js'
 import {patchAppHiddenConfigFile} from '../../services/app/patch-app-configuration-file.js'
 import {getOrCreateAppConfigHiddenPath} from '../../utilities/app/config/hidden-app-config.js'
-import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {matchGlob} from '@shopify/cli-kit/node/fs'
 import {relativePath} from '@shopify/cli-kit/node/path'
@@ -110,5 +110,31 @@ export function webFilesForConfig(project: Project, activeConfig: TomlFile): Tom
   return project.webConfigFiles.filter((file) => {
     const relPath = relativePath(project.directory, file.path).replace(/\\/g, '/')
     return globPatterns.some((pattern) => matchGlob(relPath, pattern))
+  })
+}
+
+/**
+ * Filter project.errors to only those relevant to the active config:
+ * the active config file itself, plus extension/web TOMLs in its directories.
+ * @public
+ */
+export function errorsForConfig(project: Project, activeConfig: TomlFile): TomlFileError[] {
+  const extDirs = activeConfig.content.extension_directories
+  const extPatterns = (Array.isArray(extDirs) && extDirs.length > 0 ? (extDirs as string[]) : ['extensions/*']).map(
+    (dir) => `${dir}/*.extension.toml`,
+  )
+
+  const webDirs = activeConfig.content.web_directories
+  const webPatterns =
+    Array.isArray(webDirs) && webDirs.length > 0
+      ? (webDirs as string[]).map((dir) => `${dir}/shopify.web.toml`)
+      : ['**/shopify.web.toml']
+
+  const allPatterns = [...extPatterns, ...webPatterns]
+
+  return project.errors.filter((err) => {
+    if (err.path === activeConfig.path) return true
+    const relPath = relativePath(project.directory, err.path).replace(/\\/g, '/')
+    return allPatterns.some((pattern) => matchGlob(relPath, pattern))
   })
 }
