@@ -31,7 +31,9 @@ export async function getUIExtensionPayload(
     const url = `${options.url}/extensions/${extension.devUUID}`
     const {localization, status: localizationStatus} = await getLocalization(extension, options)
     const renderer = await getUIExtensionRendererVersion(extension)
-    const buildDirectory = dirname(extensionOutputPath)
+    // If the extension has a custom output relative path, use that as the build directory
+    // ex. ext/dist/handle.js -> ext/dist
+    const buildDirectory = extension.outputRelativePath ? dirname(extensionOutputPath) : extensionOutputPath
     const extensionPoints = await getExtensionPoints(extension, url, buildDirectory)
 
     let metafields: {namespace: string; key: string}[] | null = null
@@ -103,7 +105,8 @@ export async function getUIExtensionPayload(
 }
 
 async function getExtensionPoints(extension: ExtensionInstance, url: string, buildDirectory: string) {
-  let extensionPoints = extension.configuration.extension_points as DevNewExtensionPointSchema[]
+  const config = extension.configuration as Record<string, unknown>
+  let extensionPoints = (config.extension_points ?? config.targeting) as DevNewExtensionPointSchema[]
 
   if (extension.type === 'checkout_post_purchase') {
     // Mock target for post-purchase in order to get the right extension point redirect url
