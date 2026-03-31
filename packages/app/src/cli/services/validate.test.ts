@@ -1,6 +1,6 @@
 import {validateApp} from './validate.js'
 import {testAppLinked} from '../models/app/app.test-data.js'
-import {AppErrors} from '../models/app/loader.js'
+import {AppErrors, formatConfigurationError} from '../models/app/loader.js'
 import {describe, expect, test, vi} from 'vitest'
 import {outputResult} from '@shopify/cli-kit/node/output'
 import {renderError, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -15,42 +15,42 @@ vi.mock('@shopify/cli-kit/node/output', async (importOriginal) => {
 })
 vi.mock('@shopify/cli-kit/node/ui')
 
+describe('formatConfigurationError', () => {
+  test('returns plain message when no path', () => {
+    expect(formatConfigurationError({file: 'foo.toml', message: 'something broke'})).toBe('something broke')
+  })
+
+  test('includes field path when present', () => {
+    expect(formatConfigurationError({file: 'foo.toml', path: ['access', 'admin'], message: 'Required'})).toBe(
+      '[access.admin]: Required',
+    )
+  })
+})
+
 describe('validateApp', () => {
   test('renders success when there are no errors', async () => {
-    // Given
     const app = testAppLinked()
-
-    // When
     await validateApp(app)
-
-    // Then
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'App configuration is valid.'})
     expect(renderError).not.toHaveBeenCalled()
     expect(outputResult).not.toHaveBeenCalled()
   })
 
   test('outputs json success when --json is enabled and there are no errors', async () => {
-    // Given
     const app = testAppLinked()
-
-    // When
     await validateApp(app, {json: true})
-
-    // Then
     expect(outputResult).toHaveBeenCalledWith(JSON.stringify({valid: true, errors: []}, null, 2))
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderError).not.toHaveBeenCalled()
   })
 
   test('renders errors and throws when there are validation errors', async () => {
-    // Given
     const errors = new AppErrors()
-    errors.addError('/path/to/shopify.app.toml', 'client_id is required')
-    errors.addError('/path/to/extensions/my-ext/shopify.extension.toml', 'invalid type "unknown"')
+    errors.addError({file: '/path/to/shopify.app.toml', message: 'client_id is required'})
+    errors.addError({file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'})
     const app = testAppLinked()
     app.errors = errors
 
-    // When / Then
     await expect(validateApp(app)).rejects.toThrow(AbortSilentError)
     expect(renderError).toHaveBeenCalledWith({
       headline: 'Validation errors found.',
@@ -61,40 +61,36 @@ describe('validateApp', () => {
   })
 
   test('outputs json errors and throws when --json is enabled and there are validation errors', async () => {
-    // Given
     const errors = new AppErrors()
-    errors.addError('/path/to/shopify.app.toml', 'client_id is required')
-    errors.addError('/path/to/extensions/my-ext/shopify.extension.toml', 'invalid type "unknown"')
+    errors.addError({file: '/path/to/shopify.app.toml', message: 'client_id is required'})
+    errors.addError({file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'})
     const app = testAppLinked()
     app.errors = errors
 
-    // When / Then
     await expect(validateApp(app, {json: true})).rejects.toThrow(AbortSilentError)
     expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify(
-        {
-          valid: false,
-          errors: ['client_id is required', 'invalid type "unknown"'],
-        },
-        null,
-        2,
-      ),
+      JSON.stringify({valid: false, errors: ['client_id is required', 'invalid type "unknown"']}, null, 2),
     )
     expect(renderError).not.toHaveBeenCalled()
     expect(renderSuccess).not.toHaveBeenCalled()
   })
 
   test('renders success when errors object exists but is empty', async () => {
-    // Given
     const errors = new AppErrors()
     const app = testAppLinked()
     app.errors = errors
-
-    // When
     await validateApp(app)
-
-    // Then
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'App configuration is valid.'})
     expect(outputResult).not.toHaveBeenCalled()
+  })
+
+  test('formats structured errors with paths for JSON output', async () => {
+    const errors = new AppErrors()
+    errors.addError({file: '/path/to/shopify.app.toml', path: ['name'], message: 'Required', code: 'invalid_type'})
+    const app = testAppLinked()
+    app.errors = errors
+
+    await expect(validateApp(app, {json: true})).rejects.toThrow(AbortSilentError)
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({valid: false, errors: ['[name]: Required']}, null, 2))
   })
 })

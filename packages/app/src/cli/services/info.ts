@@ -13,7 +13,6 @@ import {
   formatPackageManagerCommand,
   outputContent,
   shouldDisplayColors,
-  stringifyMessage,
 } from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
@@ -196,7 +195,7 @@ class AppInfo {
   }
 
   webComponentsSection(): AlertCustomSection | undefined {
-    const errors: OutputMessage[] = []
+    const errors: string[] = []
     const sublevels: InlineToken[][] = []
     if (!this.app.webs[0]) return
     this.app.webs.forEach((web) => {
@@ -217,8 +216,8 @@ class AppInfo {
         sublevels.push([{subdued: `  📂 ${UNKNOWN_TEXT}`}, {filePath: relativePath(this.app.directory, web.directory)}])
       }
       if (!this.app.errors.isEmpty()) {
-        const error = this.app.errors.getError(`${web.directory}/${configurationFileNames.web}`)
-        if (error) errors.push(error)
+        const fileErrors = this.app.errors.getErrors(`${web.directory}/${configurationFileNames.web}`)
+        errors.push(...fileErrors.map((err) => err.message))
       }
     })
 
@@ -254,19 +253,18 @@ class AppInfo {
     if (config && 'metafields' in config && Array.isArray(config.metafields) && config.metafields.length > 0) {
       details.push(['     metafields', `${config.metafields.length}`])
     }
-    const error = this.app.errors.getError(extension.configurationPath)
-    if (error) {
-      details.push([{error: '     error'}, {error: this.formattedError(error)}])
+    const fileErrors = this.app.errors.getErrors(extension.configurationPath)
+    for (const error of fileErrors) {
+      details.push([{error: '     error'}, {error: this.formattedError(error.message)}])
     }
 
     return details
   }
 
-  formattedError(str: OutputMessage): string {
-    // Some errors have newlines at the beginning for no apparent reason
-    const rawErrorMessage = stringifyMessage(str).trim()
+  formattedError(str: string): string {
+    const rawErrorMessage = str.trim()
     if (shouldDisplayColors()) return rawErrorMessage
-    const [errorFirstLine, ...errorRemainingLines] = stringifyMessage(str).trim().split('\n')
+    const [errorFirstLine, ...errorRemainingLines] = rawErrorMessage.split('\n')
     return [`! ${errorFirstLine}`, ...errorRemainingLines.map((line) => `  ${line}`)].join('\n')
   }
 

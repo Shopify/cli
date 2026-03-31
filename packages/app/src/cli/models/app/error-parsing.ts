@@ -1,3 +1,9 @@
+interface ParsedIssue {
+  path?: (string | number)[]
+  message: string
+  code?: string
+}
+
 interface UnionError {
   issues?: {path?: (string | number)[]; message: string}[]
   name: string
@@ -56,44 +62,25 @@ function findBestMatchingVariant(unionErrors: UnionError[]): UnionError | null {
   return bestVariant
 }
 
-/**
- * Formats an issue into a human-readable error line
- */
-function formatErrorLine(issue: {path?: (string | number)[]; message?: string}, indent = '') {
-  const path = issue.path && issue.path.length > 0 ? issue.path.map(String).join('.') : 'root'
-  const message = issue.message ?? 'Unknown error'
-  return `${indent}• [${path}]: ${message}\n`
-}
-
-export function parseHumanReadableError(issues: ExtendedZodIssue[]) {
-  let humanReadableError = ''
-
-  issues.forEach((issue) => {
-    // Handle union errors with smart variant detection
+export function parseStructuredErrors(issues: ExtendedZodIssue[]): ParsedIssue[] {
+  const result: ParsedIssue[] = []
+  for (const issue of issues) {
     if (issue.code === 'invalid_union' && issue.unionErrors) {
-      // Find the variant that's most likely the intended one
       const bestVariant = findBestMatchingVariant(issue.unionErrors)
-
       if (bestVariant?.issues?.length) {
-        // Show errors only for the best matching variant
-        bestVariant.issues.forEach((nestedIssue) => {
-          humanReadableError += formatErrorLine(nestedIssue)
-        })
+        for (const nested of bestVariant.issues) {
+          result.push({path: nested.path, message: nested.message, code: issue.code})
+        }
       } else {
-        // Fallback: show all variants if we can't determine the best one
-        humanReadableError += `• Configuration doesn't match any expected format:\n`
-        issue.unionErrors.forEach((unionError, index: number) => {
-          humanReadableError += `  Option ${index + 1}:\n`
-          unionError.issues?.forEach((nestedIssue) => {
-            humanReadableError += formatErrorLine(nestedIssue, '    ')
-          })
+        result.push({
+          path: issue.path,
+          message: issue.message ?? "Configuration doesn't match any expected format",
+          code: issue.code,
         })
       }
     } else {
-      // Handle regular issues
-      humanReadableError += formatErrorLine(issue)
+      result.push({path: issue.path, message: issue.message ?? 'Unknown error', code: issue.code})
     }
-  })
-
-  return humanReadableError
+  }
+  return result
 }

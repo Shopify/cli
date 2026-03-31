@@ -3,6 +3,8 @@ import {validateApp} from '../../../services/validate.js'
 import AppLinkedCommand, {AppLinkedCommandOutput} from '../../../utilities/app-linked-command.js'
 import {linkedAppContext} from '../../../services/app-context.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
+import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
+import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 
 export default class Validate extends AppLinkedCommand {
   static summary = 'Validate your app configuration and extensions.'
@@ -20,13 +22,24 @@ export default class Validate extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Validate)
 
-    const {app} = await linkedAppContext({
-      directory: flags.path,
-      clientId: flags['client-id'],
-      forceRelink: flags.reset,
-      userProvidedConfigName: flags.config,
-      unsafeTolerateErrors: true,
-    })
+    let app
+    try {
+      const context = await linkedAppContext({
+        directory: flags.path,
+        clientId: flags['client-id'],
+        forceRelink: flags.reset,
+        userProvidedConfigName: flags.config,
+        unsafeTolerateErrors: true,
+      })
+      app = context.app
+    } catch (err) {
+      if (err instanceof AbortError && flags.json) {
+        const message = unstyled(stringifyMessage(err.message)).trim()
+        outputResult(JSON.stringify({valid: false, errors: [{message}]}, null, 2))
+        throw new AbortSilentError()
+      }
+      throw err
+    }
 
     await validateApp(app, {json: flags.json})
 
