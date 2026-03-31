@@ -4,6 +4,7 @@ import {
   clearStoredStoreAppSession,
   getStoredStoreAppSession,
   setStoredStoreAppSession,
+  isSessionExpired,
   type StoredStoreAppSession,
 } from './session.js'
 
@@ -26,7 +27,7 @@ function inMemoryStorage() {
 function buildSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
   return {
     store: 'shop.myshopify.com',
-    clientId: '4c6af92692662b9c95c8a47b1520aced',
+    clientId: 'b16de5d7ba3e2e22279a38c22ef025a0',
     userId: '42',
     accessToken: 'token-1',
     scopes: ['read_products'],
@@ -66,7 +67,7 @@ describe('store session storage', () => {
 
   test('returns undefined when the current user session is missing from the bucket', () => {
     const storage = inMemoryStorage()
-    storage.set('4c6af92692662b9c95c8a47b1520aced::shop.myshopify.com', {
+    storage.set('b16de5d7ba3e2e22279a38c22ef025a0::shop.myshopify.com', {
       currentUserId: '999',
       sessionsByUserId: {
         '42': buildSession(),
@@ -74,5 +75,31 @@ describe('store session storage', () => {
     })
 
     expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+  })
+})
+
+describe('isSessionExpired', () => {
+  test('returns false when expiresAt is not set', () => {
+    expect(isSessionExpired(buildSession())).toBe(false)
+  })
+
+  test('returns false when token is still valid', () => {
+    const future = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+    expect(isSessionExpired(buildSession({expiresAt: future}))).toBe(false)
+  })
+
+  test('returns true when token is expired', () => {
+    const past = new Date(Date.now() - 60 * 1000).toISOString()
+    expect(isSessionExpired(buildSession({expiresAt: past}))).toBe(true)
+  })
+
+  test('returns true within the 4-minute expiry margin', () => {
+    const almostExpired = new Date(Date.now() + 3 * 60 * 1000).toISOString()
+    expect(isSessionExpired(buildSession({expiresAt: almostExpired}))).toBe(true)
+  })
+
+  test('returns false just outside the 4-minute expiry margin', () => {
+    const safelyValid = new Date(Date.now() + 5 * 60 * 1000).toISOString()
+    expect(isSessionExpired(buildSession({expiresAt: safelyValid}))).toBe(false)
   })
 })

@@ -1,28 +1,38 @@
-import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, STORE_AUTH_CALLBACK_PATH, storeAuthRedirectUri} from './config.js'
+import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, STORE_AUTH_CALLBACK_PATH, storeAuthRedirectUri, maskToken} from './config.js'
 import {setStoredStoreAppSession} from './session.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
-import {createHmac, timingSafeEqual} from 'crypto'
+import {createHash, randomBytes, timingSafeEqual} from 'crypto'
 import {createServer} from 'http'
 
 interface StoreAuthInput {
   store: string
   scopes: string
-  clientSecretFile: string
   port?: number
 }
 
 interface StoreTokenResponse {
   access_token: string
+  token_type?: string
   scope?: string
+  expires_in?: number
+  refresh_token?: string
+  refresh_token_expires_in?: number
+  associated_user_scope?: string
   associated_user?: {
     id: number
+    first_name?: string
+    last_name?: string
+    email?: string
+    account_owner?: boolean
+    locale?: string
+    collaborator?: boolean
+    email_verified?: boolean
   }
 }
 
@@ -33,6 +43,7 @@ interface StoreAuthorizationContext {
   port: number
   redirectUri: string
   authorizationUrl: string
+  codeVerifier: string
 }
 
 interface StoreAuthBootstrap {
@@ -44,11 +55,22 @@ interface StoreAuthBootstrap {
 export interface WaitForAuthCodeOptions {
   store: string
   state: string
-  clientSecret: string
   port: number
   timeoutMs?: number
   onListening?: () => void | Promise<void>
 }
+
+// --- PKCE helpers (RFC 7636) ---
+
+export function generateCodeVerifier(): string {
+  return randomBytes(32).toString('base64url')
+}
+
+export function computeCodeChallenge(verifier: string): string {
+  return createHash('sha256').update(verifier).digest('base64url')
+}
+
+// --- Scope parsing ---
 
 export function parseStoreAuthScopes(input: string): string[] {
   const scopes = input
@@ -65,58 +87,48 @@ export function parseStoreAuthScopes(input: string): string[] {
 
 function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requestedScopes: string[]): string[] {
   if (!tokenResponse.scope) {
-    throw new AbortError('Shopify did not return granted scopes for the online access token.')
+    outputDebug(outputContent`Token response did not include scope field, falling back to requested scopes`)
+    return requestedScopes
   }
 
   const grantedScopes = parseStoreAuthScopes(tokenResponse.scope)
   const missingScopes = requestedScopes.filter((scope) => !grantedScopes.includes(scope))
 
   if (missingScopes.length > 0) {
-    throw new AbortError(
-      'Shopify granted fewer scopes than were requested.',
-      `Missing scopes: ${missingScopes.join(', ')}. Update the app or store installation scopes, then re-run shopify store auth.`,
+    outputDebug(
+      outputContent`Shopify granted fewer scopes than requested. Missing: ${outputToken.raw(missingScopes.join(', '))}`,
     )
   }
 
   return grantedScopes
 }
 
+// --- Authorize URL ---
+
 export function buildStoreAuthUrl(options: {
   store: string
   scopes: string[]
   state: string
   redirectUri: string
+  codeChallenge: string
 }): string {
   const params = new URLSearchParams()
   params.set('client_id', STORE_AUTH_APP_CLIENT_ID)
   params.set('scope', options.scopes.join(','))
   params.set('redirect_uri', options.redirectUri)
   params.set('state', options.state)
-  params.append('grant_options[]', 'per-user')
+  params.set('response_type', 'code')
+  params.set('code_challenge', options.codeChallenge)
+  params.set('code_challenge_method', 'S256')
 
   return `https://${options.store}/admin/oauth/authorize?${params.toString()}`
 }
 
-export function verifyStoreAuthHmac(params: URLSearchParams, clientSecret: string): boolean {
-  const providedHmac = params.get('hmac')
-  if (!providedHmac) return false
-
-  const entries = [...params.entries()]
-    .filter(([key]) => key !== 'hmac' && key !== 'signature')
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-
-  const message = entries.join('&')
-  const digest = createHmac('sha256', clientSecret).update(message).digest('hex')
-  if (digest.length !== providedHmac.length) return false
-
-  return timingSafeEqual(Buffer.from(digest, 'utf8'), Buffer.from(providedHmac, 'utf8'))
-}
+// --- Localhost callback server ---
 
 export async function waitForStoreAuthCode({
   store,
   state,
-  clientSecret,
   port,
   timeoutMs = 5 * 60 * 1000,
   onListening,
@@ -132,7 +144,7 @@ export async function waitForStoreAuthCode({
     }, timeoutMs)
 
     const server = createServer((req, res) => {
-      const requestUrl = new URL(req.url ?? '/', `http://localhost:${port}`)
+      const requestUrl = new URL(req.url ?? '/', `http://127.0.0.1:${port}`)
 
       if (requestUrl.pathname !== STORE_AUTH_CALLBACK_PATH) {
         res.statusCode = 404
@@ -145,23 +157,22 @@ export async function waitForStoreAuthCode({
       const fail = (message: string) => {
         res.statusCode = 400
         res.setHeader('Content-Type', 'text/html')
-        res.end(`<html><body><h1>Authentication failed</h1><p>${message}</p></body></html>`)
+        const safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+        res.end(`<html><body><h1>Authentication failed</h1><p>${safeMessage}</p></body></html>`)
         settleWithError(new AbortError(message))
       }
 
       const returnedStore = searchParams.get('shop')
+      outputDebug(outputContent`Received OAuth callback for shop ${outputToken.raw(returnedStore ?? 'unknown')}`)
+
       if (!returnedStore || normalizeStoreFqdn(returnedStore) !== normalizedStore) {
         fail('OAuth callback store does not match the requested store.')
         return
       }
 
-      if (searchParams.get('state') !== state) {
+      const returnedState = searchParams.get('state')
+      if (!returnedState || !constantTimeEqual(returnedState, state)) {
         fail('OAuth callback state does not match the original request.')
-        return
-      }
-
-      if (!verifyStoreAuthHmac(searchParams, clientSecret)) {
-        fail('OAuth callback could not be verified.')
         return
       }
 
@@ -176,6 +187,8 @@ export async function waitForStoreAuthCode({
         fail('OAuth callback did not include an authorization code.')
         return
       }
+
+      outputDebug(outputContent`Received authorization code ${outputToken.raw(maskToken(code))}`)
 
       res.statusCode = 200
       res.setHeader('Content-Type', 'text/html')
@@ -221,8 +234,9 @@ export async function waitForStoreAuthCode({
       settleWithError(error)
     })
 
-    server.listen(port, 'localhost', async () => {
+    server.listen(port, '127.0.0.1', async () => {
       isListening = true
+      outputDebug(outputContent`PKCE callback server listening on http://127.0.0.1:${outputToken.raw(String(port))}${outputToken.raw(STORE_AUTH_CALLBACK_PATH)}`)
 
       if (!onListening) return
 
@@ -235,35 +249,59 @@ export async function waitForStoreAuthCode({
   })
 }
 
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'))
+}
+
+// --- Token exchange (PKCE) ---
+
 export async function exchangeStoreAuthCodeForToken(options: {
   store: string
   code: string
-  clientSecret: string
+  codeVerifier: string
+  redirectUri: string
 }): Promise<StoreTokenResponse> {
-  const response = await fetch(`https://${options.store}/admin/oauth/access_token`, {
+  const endpoint = `https://${options.store}/admin/oauth/access_token`
+
+  outputDebug(outputContent`Exchanging authorization code for token at ${outputToken.raw(endpoint)}`)
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({
       client_id: STORE_AUTH_APP_CLIENT_ID,
-      client_secret: options.clientSecret,
       code: options.code,
+      code_verifier: options.codeVerifier,
+      redirect_uri: options.redirectUri,
     }),
   })
 
   const body = await response.text()
+
   if (!response.ok) {
+    outputDebug(outputContent`Token exchange failed with HTTP ${outputToken.raw(String(response.status))}: ${outputToken.raw(body.slice(0, 300))}`)
     throw new AbortError(
       `Failed to exchange OAuth code for an access token (HTTP ${response.status}).`,
       body || response.statusText,
     )
   }
 
+  let parsed: StoreTokenResponse
   try {
-    return JSON.parse(body) as StoreTokenResponse
+    parsed = JSON.parse(body) as StoreTokenResponse
   } catch {
     throw new AbortError('Received an invalid token response from Shopify.')
   }
+
+  outputDebug(
+    outputContent`Token exchange succeeded: access_token=${outputToken.raw(maskToken(parsed.access_token))}, refresh_token=${outputToken.raw(parsed.refresh_token ? maskToken(parsed.refresh_token) : 'none')}, expires_in=${outputToken.raw(String(parsed.expires_in ?? 'unknown'))}s, user=${outputToken.raw(String(parsed.associated_user?.id ?? 'unknown'))} (${outputToken.raw(parsed.associated_user?.email ?? 'no email')})`,
+  )
+
+  return parsed
 }
+
+// --- Orchestration ---
 
 interface StoreAuthDependencies {
   openURL: typeof openURL
@@ -281,36 +319,22 @@ const defaultStoreAuthDependencies: StoreAuthDependencies = {
   renderSuccess,
 }
 
-// TODO: Replace this demo-only client-secret-file bootstrap with PKCE before shipping a production auth flow.
-async function readClientSecretFromFile(path: string): Promise<string> {
-  if (!(await fileExists(path))) {
-    throw new AbortError(
-      outputContent`Client secret file not found at ${outputToken.path(path)}. Please check the path and try again.`,
-    )
-  }
-
-  const contents = await readFile(path, {encoding: 'utf8'})
-  const secret = contents.trim()
-  if (!secret) {
-    throw new AbortError(
-      outputContent`Client secret file at ${outputToken.path(path)} is empty. Please provide a valid client secret.`,
-    )
-  }
-
-  return secret
-}
-
-async function createClientSecretFileBootstrap(
+function createPkceBootstrap(
   input: StoreAuthInput,
   exchangeCodeForToken: typeof exchangeStoreAuthCodeForToken,
-): Promise<StoreAuthBootstrap> {
+): StoreAuthBootstrap {
   const store = normalizeStoreFqdn(input.store)
   const scopes = parseStoreAuthScopes(input.scopes)
   const port = input.port ?? DEFAULT_STORE_AUTH_PORT
-  const clientSecret = await readClientSecretFromFile(input.clientSecretFile)
   const state = randomUUID()
   const redirectUri = storeAuthRedirectUri(port)
-  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri})
+  const codeVerifier = generateCodeVerifier()
+  const codeChallenge = computeCodeChallenge(codeVerifier)
+  const authorizationUrl = buildStoreAuthUrl({store, scopes, state, redirectUri, codeChallenge})
+
+  outputDebug(
+    outputContent`Starting PKCE auth for ${outputToken.raw(store)} with scopes ${outputToken.raw(scopes.join(','))} (redirect_uri=${outputToken.raw(redirectUri)})`,
+  )
 
   return {
     authorization: {
@@ -320,14 +344,14 @@ async function createClientSecretFileBootstrap(
       port,
       redirectUri,
       authorizationUrl,
+      codeVerifier,
     },
     waitForAuthCodeOptions: {
       store,
       state,
-      clientSecret,
       port,
     },
-    exchangeCodeForToken: (code: string) => exchangeCodeForToken({store, code, clientSecret}),
+    exchangeCodeForToken: (code: string) => exchangeCodeForToken({store, code, codeVerifier, redirectUri}),
   }
 }
 
@@ -335,7 +359,7 @@ export async function authenticateStoreWithApp(
   input: StoreAuthInput,
   dependencies: StoreAuthDependencies = defaultStoreAuthDependencies,
 ): Promise<void> {
-  const bootstrap = await createClientSecretFileBootstrap(input, dependencies.exchangeStoreAuthCodeForToken)
+  const bootstrap = createPkceBootstrap(input, dependencies.exchangeStoreAuthCodeForToken)
   const {
     authorization: {store, scopes, redirectUri, authorizationUrl},
   } = bootstrap
@@ -363,19 +387,41 @@ export async function authenticateStoreWithApp(
     throw new AbortError('Shopify did not return associated user information for the online access token.')
   }
 
+  const now = Date.now()
+  const expiresAt = tokenResponse.expires_in ? new Date(now + tokenResponse.expires_in * 1000).toISOString() : undefined
+
   setStoredStoreAppSession({
     store,
     clientId: STORE_AUTH_APP_CLIENT_ID,
     userId,
     accessToken: tokenResponse.access_token,
+    refreshToken: tokenResponse.refresh_token,
     scopes: resolveGrantedScopes(tokenResponse, scopes),
-    acquiredAt: new Date().toISOString(),
+    acquiredAt: new Date(now).toISOString(),
+    expiresAt,
+    refreshTokenExpiresAt: tokenResponse.refresh_token_expires_in
+      ? new Date(now + tokenResponse.refresh_token_expires_in * 1000).toISOString()
+      : undefined,
+    associatedUser: tokenResponse.associated_user
+      ? {
+          id: tokenResponse.associated_user.id,
+          email: tokenResponse.associated_user.email,
+          firstName: tokenResponse.associated_user.first_name,
+          lastName: tokenResponse.associated_user.last_name,
+          accountOwner: tokenResponse.associated_user.account_owner,
+        }
+      : undefined,
   })
+
+  outputDebug(outputContent`Session persisted for ${outputToken.raw(store)} (user ${outputToken.raw(userId)}, expires ${outputToken.raw(expiresAt ?? 'unknown')})`)
+
+  const email = tokenResponse.associated_user?.email
+  const displayName = email ? ` as ${email}` : ''
 
   dependencies.renderSuccess({
     headline: 'Store authentication succeeded.',
     body: [
-      `The app is now authenticated against ${store}.`,
+      `Authenticated${displayName} against ${store}.`,
       `Next step:`,
       {command: `shopify store execute --store ${store} --query 'query { shop { name id } }'`},
     ],

@@ -15,22 +15,19 @@ describe('store auth command', () => {
       'shop.myshopify.com',
       '--scopes',
       'read_products,write_products',
-      '--client-secret-file',
-      './client-secret.txt',
     ])
 
     expect(authenticateStoreWithApp).toHaveBeenCalledWith({
       store: 'shop.myshopify.com',
       scopes: 'read_products,write_products',
-      clientSecretFile: expect.stringContaining('client-secret.txt'),
-      port: 3458,
+      port: 13387,
     })
   })
 
   test('defines the expected flags', () => {
     expect(StoreAuth.flags.store).toBeDefined()
     expect(StoreAuth.flags.scopes).toBeDefined()
-    expect(StoreAuth.flags['client-secret-file']).toBeDefined()
     expect(StoreAuth.flags.port).toBeDefined()
+    expect(StoreAuth.flags['client-secret-file']).toBeUndefined()
   })
 })

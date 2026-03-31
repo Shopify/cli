@@ -6,8 +6,18 @@ export interface StoredStoreAppSession {
   clientId: string
   userId: string
   accessToken: string
+  refreshToken?: string
   scopes: string[]
   acquiredAt: string
+  expiresAt?: string
+  refreshTokenExpiresAt?: string
+  associatedUser?: {
+    id: number
+    email?: string
+    firstName?: string
+    lastName?: string
+    accountOwner?: boolean
+  }
 }
 
 interface StoredStoreAppSessionBucket {
@@ -21,8 +31,7 @@ interface StoreSessionSchema {
 
 let _storeSessionStorage: LocalStorage<StoreSessionSchema> | undefined
 
-// TODO: Revisit store token persistence when the auth flow moves to PKCE.
-// The current model is meant to keep the demo-oriented online-token flow coherent, not final.
+// Per-store, per-user session storage for PKCE online tokens.
 function storeSessionStorage() {
   _storeSessionStorage ??= new LocalStorage<StoreSessionSchema>({projectName: 'shopify-cli-store'})
   return _storeSessionStorage
@@ -61,4 +70,11 @@ export function clearStoredStoreAppSession(
   storage: LocalStorage<StoreSessionSchema> = storeSessionStorage(),
 ): void {
   storage.delete(storeAuthSessionKey(store))
+}
+
+const EXPIRY_MARGIN_MS = 4 * 60 * 1000
+
+export function isSessionExpired(session: StoredStoreAppSession): boolean {
+  if (!session.expiresAt) return false
+  return new Date(session.expiresAt).getTime() - EXPIRY_MARGIN_MS < Date.now()
 }

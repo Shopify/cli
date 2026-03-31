@@ -3,10 +3,13 @@ import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputResult, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputResult, outputToken} from '@shopify/cli-kit/node/output'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {fetch} from '@shopify/cli-kit/node/http'
 import {parse} from 'graphql'
-import {getStoredStoreAppSession} from './session.js'
+import {getStoredStoreAppSession, setStoredStoreAppSession, clearStoredStoreAppSession, isSessionExpired} from './session.js'
+import {STORE_AUTH_APP_CLIENT_ID, maskToken} from './config.js'
+import type {StoredStoreAppSession} from './session.js'
 
 interface ExecuteStoreOperationInput {
   store: string
@@ -161,14 +164,94 @@ async function writeOrOutputResult(result: unknown, outputFile?: string): Promis
   }
 }
 
-function loadAuthenticatedStoreSession(store: string): AdminSession {
-  const session = getStoredStoreAppSession(store)
+async function refreshStoreToken(session: StoredStoreAppSession): Promise<StoredStoreAppSession> {
+  if (!session.refreshToken) {
+    throw new AbortError(
+      `No refresh token stored for ${session.store}.`,
+      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
+    )
+  }
+
+  const endpoint = `https://${session.store}/admin/oauth/access_token`
+
+  outputDebug(
+    outputContent`Refreshing expired token for ${outputToken.raw(session.store)} (expired at ${outputToken.raw(session.expiresAt ?? 'unknown')}, refresh_token=${outputToken.raw(maskToken(session.refreshToken))})`,
+  )
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      client_id: STORE_AUTH_APP_CLIENT_ID,
+      grant_type: 'refresh_token',
+      refresh_token: session.refreshToken,
+    }),
+  })
+
+  const body = await response.text()
+
+  if (!response.ok) {
+    outputDebug(outputContent`Token refresh failed with HTTP ${outputToken.raw(String(response.status))}: ${outputToken.raw(body.slice(0, 300))}`)
+    clearStoredStoreAppSession(session.store)
+    throw new AbortError(
+      `Token refresh failed for ${session.store} (HTTP ${response.status}).`,
+      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
+    )
+  }
+
+  let data: {access_token?: string; refresh_token?: string; expires_in?: number; refresh_token_expires_in?: number}
+  try {
+    data = JSON.parse(body)
+  } catch {
+    throw new AbortError('Received an invalid refresh response from Shopify.')
+  }
+
+  if (!data.access_token) {
+    clearStoredStoreAppSession(session.store)
+    throw new AbortError(
+      `Token refresh returned an invalid response for ${session.store}.`,
+      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
+    )
+  }
+
+  const now = Date.now()
+  const newExpiresAt = data.expires_in ? new Date(now + data.expires_in * 1000).toISOString() : session.expiresAt
+
+  const refreshedSession: StoredStoreAppSession = {
+    ...session,
+    accessToken: data.access_token,
+    refreshToken: data.refresh_token ?? session.refreshToken,
+    expiresAt: newExpiresAt,
+    refreshTokenExpiresAt: data.refresh_token_expires_in
+      ? new Date(now + data.refresh_token_expires_in * 1000).toISOString()
+      : session.refreshTokenExpiresAt,
+    acquiredAt: new Date(now).toISOString(),
+  }
+
+  outputDebug(
+    outputContent`Token refresh succeeded for ${outputToken.raw(session.store)}: ${outputToken.raw(maskToken(session.accessToken))} → ${outputToken.raw(maskToken(refreshedSession.accessToken))}, new expiry ${outputToken.raw(newExpiresAt ?? 'unknown')}`,
+  )
+
+  setStoredStoreAppSession(refreshedSession)
+  return refreshedSession
+}
+
+async function loadAuthenticatedStoreSession(store: string): Promise<AdminSession> {
+  let session = getStoredStoreAppSession(store)
 
   if (!session) {
     throw new AbortError(
       `No stored app authentication found for ${store}.`,
-      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes> --client-secret-file <path>`).value} first.`,
+      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes>`).value} first.`,
     )
+  }
+
+  outputDebug(
+    outputContent`Loaded stored session for ${outputToken.raw(store)}: token=${outputToken.raw(maskToken(session.accessToken))}, expires=${outputToken.raw(session.expiresAt ?? 'unknown')}`,
+  )
+
+  if (isSessionExpired(session)) {
+    session = await refreshStoreToken(session)
   }
 
   return {
@@ -201,7 +284,7 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
   const {adminSession, version} = await renderSingleTask({
     title: outputContent`Authenticating`,
     task: async (): Promise<{adminSession: AdminSession; version: string}> => {
-      const adminSession = loadAuthenticatedStoreSession(store)
+      const adminSession = await loadAuthenticatedStoreSession(store)
       const version = await resolveApiVersion({adminSession, userSpecifiedVersion})
       return {adminSession, version}
     },
@@ -227,9 +310,10 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
     await writeOrOutputResult(result, outputFile)
   } catch (error) {
     if (isGraphQLClientError(error) && error.response.status === 401) {
+      clearStoredStoreAppSession(store)
       throw new AbortError(
         `Stored app authentication for ${store} is no longer valid.`,
-        `Re-run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes> --client-secret-file <path>`).value}.`,
+        `Run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes>`).value} to re-authenticate.`,
       )
     }
 
