@@ -13,7 +13,7 @@ export async function validateApp(app: AppLinkedInterface, options: ValidateAppO
 
   if (!appErrors || appErrors.isEmpty()) {
     if (options.json) {
-      outputResult(JSON.stringify({valid: true, errors: []}, null, 2))
+      outputResult(JSON.stringify({valid: true, issues: []}, null, 2))
       return
     }
 
@@ -24,8 +24,8 @@ export async function validateApp(app: AppLinkedInterface, options: ValidateAppO
   const errors = appErrors.getErrors()
 
   if (options.json) {
-    const errorMessages = errors.map(formatConfigurationError)
-    outputResult(JSON.stringify({valid: false, errors: errorMessages}, null, 2))
+    const issues = errors.map(({file, message, path, code}) => ({file, message, path, code}))
+    outputResult(JSON.stringify({valid: false, issues}, null, 2))
     throw new AbortSilentError()
   }
 

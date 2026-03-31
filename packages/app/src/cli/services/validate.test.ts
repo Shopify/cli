@@ -39,7 +39,7 @@ describe('validateApp', () => {
   test('outputs json success when --json is enabled and there are no errors', async () => {
     const app = testAppLinked()
     await validateApp(app, {json: true})
-    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({valid: true, errors: []}, null, 2))
+    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({valid: true, issues: []}, null, 2))
     expect(renderSuccess).not.toHaveBeenCalled()
     expect(renderError).not.toHaveBeenCalled()
   })
@@ -60,7 +60,7 @@ describe('validateApp', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('outputs json errors and throws when --json is enabled and there are validation errors', async () => {
+  test('outputs structured json issues when --json is enabled and there are validation errors', async () => {
     const errors = new AppErrors()
     errors.addError({file: '/path/to/shopify.app.toml', message: 'client_id is required'})
     errors.addError({file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'})
@@ -69,7 +69,17 @@ describe('validateApp', () => {
 
     await expect(validateApp(app, {json: true})).rejects.toThrow(AbortSilentError)
     expect(outputResult).toHaveBeenCalledWith(
-      JSON.stringify({valid: false, errors: ['client_id is required', 'invalid type "unknown"']}, null, 2),
+      JSON.stringify(
+        {
+          valid: false,
+          issues: [
+            {file: '/path/to/shopify.app.toml', message: 'client_id is required'},
+            {file: '/path/to/extensions/my-ext/shopify.extension.toml', message: 'invalid type "unknown"'},
+          ],
+        },
+        null,
+        2,
+      ),
     )
     expect(renderError).not.toHaveBeenCalled()
     expect(renderSuccess).not.toHaveBeenCalled()
@@ -84,13 +94,22 @@ describe('validateApp', () => {
     expect(outputResult).not.toHaveBeenCalled()
   })
 
-  test('formats structured errors with paths for JSON output', async () => {
+  test('includes path and code in structured json issues', async () => {
     const errors = new AppErrors()
     errors.addError({file: '/path/to/shopify.app.toml', path: ['name'], message: 'Required', code: 'invalid_type'})
     const app = testAppLinked()
     app.errors = errors
 
     await expect(validateApp(app, {json: true})).rejects.toThrow(AbortSilentError)
-    expect(outputResult).toHaveBeenCalledWith(JSON.stringify({valid: false, errors: ['[name]: Required']}, null, 2))
+    expect(outputResult).toHaveBeenCalledWith(
+      JSON.stringify(
+        {
+          valid: false,
+          issues: [{file: '/path/to/shopify.app.toml', message: 'Required', path: ['name'], code: 'invalid_type'}],
+        },
+        null,
+        2,
+      ),
+    )
   })
 })
