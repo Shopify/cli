@@ -173,7 +173,7 @@ describe('selectActiveConfig', () => {
       expect(project.appConfigFiles).toHaveLength(1)
       expect(project.appConfigFiles[0]!.errors).toHaveLength(1)
       expect(project.errors).toHaveLength(1)
-      expect(project.errors[0]!.path).toContain('shopify.app.toml')
+      expect(project.errors[0]!.details.path).toContain('shopify.app.toml')
     })
   })
 

@@ -69,6 +69,19 @@ export abstract class FatalError extends Error {
 }
 
 /**
+ * Shared interface for domain-scoped errors. Each domain model defines its own
+ * error class that extends AbortError and implements this interface.
+ * `code` is the discriminant, `details` carries domain-specific structured data.
+ */
+export interface DomainError<
+  TCode extends string = string,
+  TDetails extends Record<string, unknown> = Record<string, unknown>,
+> {
+  readonly code: TCode
+  readonly details: TDetails
+}
+
+/**
  * An abort error is a fatal error that shouldn't be reported as a bug.
  * Those usually represent unexpected scenarios that we can't handle and that usually require some action from the developer.
  */

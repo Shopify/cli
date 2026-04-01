@@ -45,7 +45,7 @@ import {resolveFramework} from '@shopify/cli-kit/node/framework'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, type DomainError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputToken, stringifyMessage} from '@shopify/cli-kit/node/output'
 import {joinWithAnd} from '@shopify/cli-kit/common/string'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
@@ -71,6 +71,20 @@ export interface ConfigurationError {
   message: string
   path?: (string | number)[]
   code?: string
+}
+
+export type AppConfigValidationErrorCode = 'schema-validation'
+
+export class AppConfigValidationError
+  extends AbortError
+  implements DomainError<AppConfigValidationErrorCode, {configPath: string; errors: ConfigurationError[]}>
+{
+  constructor(
+    public readonly code: AppConfigValidationErrorCode,
+    public readonly details: {configPath: string; errors: ConfigurationError[]},
+  ) {
+    super(`AppConfigValidationError: ${code}`)
+  }
 }
 
 export function formatConfigurationError(error: ConfigurationError): string {
@@ -294,8 +308,10 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
 
   const configResult = await parseConfigurationFile(configSchema, configurationPath, rawConfig)
   if (configResult.errors) {
-    const formatted = configResult.errors.map(formatConfigurationError).join('\n')
-    throw new AbortError(`Validation errors in ${configurationPath}:\n\n${formatted}`)
+    throw new AppConfigValidationError('schema-validation', {
+      configPath: configurationPath,
+      errors: configResult.errors,
+    })
   }
   const configuration = configResult.data
 

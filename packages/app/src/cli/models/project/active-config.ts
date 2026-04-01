@@ -8,8 +8,21 @@ import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError, type DomainError} from '@shopify/cli-kit/node/error'
+
+export type ActiveConfigErrorCode = 'config-not-found'
+
+export class ActiveConfigError
+  extends AbortError
+  implements DomainError<ActiveConfigErrorCode, {configName: string; directory: string}>
+{
+  constructor(
+    public readonly code: ActiveConfigErrorCode,
+    public readonly details: {configName: string; directory: string},
+  ) {
+    super(`ActiveConfigError: ${code}`)
+  }
+}
 
 /** @public */
 export type ConfigSource = 'flag' | 'cached' | 'default'
@@ -87,9 +100,7 @@ export async function selectActiveConfig(project: Project, userProvidedConfigNam
   const configurationFileName = getAppConfigurationFileName(configName)
   const file = project.appConfigByName(configurationFileName)
   if (!file) {
-    throw new AbortError(
-      outputContent`Couldn't find ${configurationFileName} in ${outputToken.path(project.directory)}.`,
-    )
+    throw new ActiveConfigError('config-not-found', {configName: configurationFileName, directory: project.directory})
   }
 
   return buildActiveConfig(project, file, source)
