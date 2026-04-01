@@ -195,7 +195,7 @@ describe('executeIncludeAssetsStep', () => {
       expect(fs.copyDirectoryContents).toHaveBeenCalledWith('/test/extension/dist', '/test/output/assets/dist')
       expect(fs.copyFile).not.toHaveBeenCalled()
       expect(result.filesCopied).toBe(3)
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Copied dist to assets/dist'))
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included dist'))
     })
   })
 
@@ -1013,7 +1013,7 @@ describe('executeIncludeAssetsStep', () => {
         type: 'include_assets',
         config: {
           generatesAssetsManifest: true,
-          // no destination, no preserveStructure → contents merged into output root
+          // no destination → contents merged into output root
           inclusions: [{type: 'configKey', key: 'admin.static_root'}],
         },
       }

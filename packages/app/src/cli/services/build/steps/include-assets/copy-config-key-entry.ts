@@ -29,7 +29,7 @@ export async function copyConfigKeyEntry(
   },
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; pathMap: Map<string, string | string[]>}> {
-  const {key, baseDir, outputDir, context, preserveStructure, destination} = config
+  const {key, baseDir, outputDir, context, destination} = config
   const value = getNestedValue(context.extension.configuration, key)
   let paths: string[]
   if (typeof value === 'string') {
@@ -67,16 +67,12 @@ export async function copyConfigKeyEntry(
 
     const sourceIsDir = await isDirectory(fullPath)
 
-    const destDir =
-      sourceIsDir && preserveStructure ? joinPath(effectiveOutputDir, basename(fullPath)) : effectiveOutputDir
+    const destDir = effectiveOutputDir
 
     if (sourceIsDir) {
       await copyDirectoryContents(fullPath, destDir)
       const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
-      const msg = preserveStructure
-        ? `Copied '${sourcePath}' to ${basename(fullPath)}\n`
-        : `Copied contents of '${sourcePath}' to output root\n`
-      options.stdout.write(msg)
+      options.stdout.write(`Included '${sourcePath}'\n`)
       const relFiles = copied.map((file) => relativePath(outputDir, joinPath(destDir, file)))
       pathMap.set(sourcePath, relFiles)
       filesCopied += copied.length
@@ -85,7 +81,7 @@ export async function copyConfigKeyEntry(
       const uniqueDestPath = await findUniqueDestPath(destDir, basename(fullPath))
       await copyFile(fullPath, uniqueDestPath)
       const outputRelative = relativePath(outputDir, uniqueDestPath)
-      options.stdout.write(`Copied '${sourcePath}' to ${outputRelative}\n`)
+      options.stdout.write(`Included '${sourcePath}'\n`)
       pathMap.set(sourcePath, outputRelative)
       filesCopied += 1
     }

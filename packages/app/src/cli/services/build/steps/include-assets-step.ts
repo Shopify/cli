@@ -6,6 +6,8 @@ import {joinPath, dirname, extname, sanitizeRelativePath} from '@shopify/cli-kit
 import {z} from 'zod'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
+export type {IncludeAssetsConfig}
+
 /**
  * Pattern inclusion entry.
  *
@@ -36,8 +38,7 @@ const StaticEntrySchema = z.object({
  *
  * Resolves a path (or array of paths) from the extension configuration and
  * copies the directory contents into the output. Silently skipped when the
- * key is absent. Respects `preserveStructure` and `destination` the same way
- * as the static entry.
+ * key is absent.
  *
  * `anchor` — the config key path whose array value provides the grouping
  * dimension. Each array item becomes one top-level manifest entry, keyed by
@@ -52,7 +53,6 @@ const ConfigKeyEntrySchema = z.object({
   type: z.literal('configKey'),
   key: z.string(),
   destination: z.string().optional(),
-  preserveStructure: z.boolean().default(false),
   anchor: z.string().optional(),
   groupBy: z.string().optional(),
 })
@@ -78,6 +78,7 @@ const IncludeAssetsConfigSchema = z
     inclusions: z.array(InclusionEntrySchema),
     generatesAssetsManifest: z.boolean().default(false),
   })
+  .strict()
   .superRefine((data, ctx) => {
     for (const [i, entry] of data.inclusions.entries()) {
       if (entry.type === 'configKey') {
@@ -93,6 +94,13 @@ const IncludeAssetsConfigSchema = z
       }
     }
   })
+
+/**
+ * TypeScript type for the include_assets step config.
+ * Derived from the Zod schema so that static type-checking catches
+ * mismatched property names at compile time.
+ */
+type IncludeAssetsConfig = z.input<typeof IncludeAssetsConfigSchema>
 
 /**
  * Executes an include_assets build step.

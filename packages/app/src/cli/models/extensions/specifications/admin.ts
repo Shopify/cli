@@ -24,7 +24,7 @@ const adminSpecificationSpec = createContractBasedModuleSpecification({
           name: 'Hosted App Copy Files',
           type: 'include_assets',
           config: {
-            generateManifest: true,
+            generatesAssetsManifest: true,
             inclusions: [
               {
                 type: 'configKey',

@@ -16,7 +16,7 @@ export async function copySourceEntry(
   },
   options: {stdout: NodeJS.WritableStream},
 ): Promise<{filesCopied: number; outputPaths: string[]}> {
-  const {source, destination, baseDir, outputDir, preserveStructure} = config
+  const {source, destination, baseDir, outputDir} = config
   const sourcePath = joinPath(baseDir, source)
   if (!(await fileExists(sourcePath))) {
     throw new Error(`Source does not exist: ${sourcePath}`)
