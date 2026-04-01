@@ -176,7 +176,7 @@ export async function executeIncludeAssetsStep(
   const counts = [configKeyCount, ...otherCounts]
 
   if (config.generateManifest) {
-    const configKeyEntries = config.inclusions.filter((inclusion) => inclusion.type === 'configKey')
+    const configKeyEntries = config.inclusions.filter((entry) => entry.type === 'configKey')
     await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap)
   }
 
