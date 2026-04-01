@@ -18,7 +18,7 @@ import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
 import type {FSWatcher} from 'chokidar'
 
-export interface AppAssets {
+interface AppAssets {
   [key: string]: string
 }
 
