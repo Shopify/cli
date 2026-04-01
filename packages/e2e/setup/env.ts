@@ -16,6 +16,8 @@ export interface E2EEnv {
   storeFqdn: string
   /** Secondary app client ID for config link tests */
   secondaryClientId: string
+  /** Dedicated e2e org ID for fresh-app tests (empty string if not set) */
+  orgId: string
   /** Environment variables to pass to CLI processes */
   processEnv: NodeJS.ProcessEnv
   /** Temporary directory root for this worker */
@@ -66,7 +68,7 @@ export function createIsolatedEnv(baseDir: string): {tempDir: string; xdgEnv: {[
  */
 export function requireEnv(
   env: E2EEnv,
-  ...keys: (keyof Pick<E2EEnv, 'partnersToken' | 'clientId' | 'storeFqdn' | 'secondaryClientId'>)[]
+  ...keys: (keyof Pick<E2EEnv, 'partnersToken' | 'clientId' | 'storeFqdn' | 'secondaryClientId' | 'orgId'>)[]
 ): void {
   for (const key of keys) {
     if (!env[key]) {
@@ -75,6 +77,7 @@ export function requireEnv(
         clientId: 'SHOPIFY_FLAG_CLIENT_ID',
         storeFqdn: 'E2E_STORE_FQDN',
         secondaryClientId: 'E2E_SECONDARY_CLIENT_ID',
+        orgId: 'E2E_ORG_ID',
       }
       throw new Error(`${envVarNames[key]} environment variable is required for this test`)
     }
@@ -93,6 +96,7 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
       const clientId = process.env.SHOPIFY_FLAG_CLIENT_ID ?? ''
       const storeFqdn = process.env.E2E_STORE_FQDN ?? ''
       const secondaryClientId = process.env.E2E_SECONDARY_CLIENT_ID ?? ''
+      const orgId = process.env.E2E_ORG_ID ?? ''
 
       const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(directories.root, '.e2e-tmp')
       fs.mkdirSync(tmpBase, {recursive: true})
@@ -104,8 +108,8 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
         ...xdgEnv,
         SHOPIFY_RUN_AS_USER: '0',
         NODE_OPTIONS: '',
-        // Prevent interactive prompts
         CI: '1',
+        SHOPIFY_CLI_1P_DEV: undefined,
       }
 
       if (partnersToken) {
@@ -123,13 +127,14 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
         clientId,
         storeFqdn,
         secondaryClientId,
+        orgId,
         processEnv,
         tempDir,
       }
 
       await use(env)
 
-      // Cleanup: remove temp directory
+      // Cleanup
       fs.rmSync(tempDir, {recursive: true, force: true})
     },
     {scope: 'worker'},
