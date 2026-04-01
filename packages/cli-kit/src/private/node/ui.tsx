@@ -3,10 +3,43 @@ import {Logger, LogLevel} from '../../public/node/output.js'
 import {isUnitTest} from '../../public/node/context/local.js'
 import {treeKill} from '../../public/node/tree-kill.js'
 
-import {ReactElement} from 'react'
-import {Key, render as inkRender, RenderOptions} from 'ink'
+import React, {ReactElement, createContext, useCallback, useContext, useEffect, useState} from 'react'
+import {Key, render as inkRender, RenderOptions, useApp} from 'ink'
 
 import {EventEmitter} from 'events'
+
+const CompletionContext = createContext<(error?: Error) => void>(() => {})
+
+/**
+ * Signal that the current Ink tree is done. The root wrapper will call
+ * `exit()` after React finishes rendering.
+ */
+export function useComplete(): (error?: Error) => void {
+  return useContext(CompletionContext)
+}
+
+/**
+ * Root wrapper for Ink trees. Owns the single `exit()` call site — children
+ * signal completion via `useComplete()`, which sets state here. The `useEffect`
+ * fires post-render, guaranteeing all batched state updates have been flushed
+ * before the tree is torn down.
+ */
+export function InkLifecycleRoot({children}: {children: React.ReactNode}) {
+  const {exit} = useApp()
+  const [exitResult, setExitResult] = useState<{error?: Error} | null>(null)
+
+  const complete = useCallback((error?: Error) => {
+    setExitResult({error})
+  }, [])
+
+  useEffect(() => {
+    if (exitResult !== null) {
+      exit(exitResult.error)
+    }
+  }, [exitResult, exit])
+
+  return <CompletionContext.Provider value={complete}>{children}</CompletionContext.Provider>
+}
 
 interface RenderOnceOptions {
   logLevel?: LogLevel
@@ -27,10 +60,8 @@ export function renderOnce(element: JSX.Element, {logLevel = 'info', renderOptio
 }
 
 export async function render(element: JSX.Element, options?: RenderOptions) {
-  const {waitUntilExit} = inkRender(element, options)
+  const {waitUntilExit} = inkRender(<InkLifecycleRoot>{element}</InkLifecycleRoot>, options)
   await waitUntilExit()
-  // We need to wait for other pending tasks -- unmounting of the ink component -- to complete
-  return new Promise((resolve) => setImmediate(resolve))
 }
 
 interface Instance {

@@ -1,7 +1,8 @@
 import {OutputProcess} from '../../../../public/node/output.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
+import {useComplete} from '../../ui.js'
 import React, {FunctionComponent, useCallback, useEffect, useMemo, useState} from 'react'
-import {Box, Static, Text, TextProps, useApp} from 'ink'
+import {Box, Static, Text, TextProps} from 'ink'
 import figures from 'figures'
 import stripAnsi from 'strip-ansi'
 
@@ -92,7 +93,8 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
   useAlternativeColorPalette = false,
 }) => {
   const [processOutput, setProcessOutput] = useState<Chunk[]>([])
-  const {exit: unmountInk} = useApp()
+  const [completionResult, setCompletionResult] = useState<{error?: Error} | null>(null)
+  const complete = useComplete()
   const concurrentColors: TextProps['color'][] = useMemo(
     () =>
       useAlternativeColorPalette
@@ -179,24 +181,25 @@ const ConcurrentOutput: FunctionComponent<ConcurrentOutputProps> = ({
           }),
         )
         if (!keepRunningAfterProcessesResolve) {
-          // Defer unmount so React 19 can flush batched setProcessOutput
-          // state updates before the component tree is torn down.
-          // Use setImmediate → setTimeout(0) to span two event-loop phases,
-          // giving React's scheduler (which uses setImmediate in Node.js)
-          // a full cycle to flush before we tear down the component tree.
-          setImmediate(() => setTimeout(() => unmountInk(), 0))
+          setCompletionResult({})
         }
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (error: unknown) {
         if (!keepRunningAfterProcessesResolve) {
-          setImmediate(() => setTimeout(() => unmountInk(error as Error | undefined), 0))
+          setCompletionResult({error: error as Error})
         }
       }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
     runProcesses()
-  }, [abortSignal, processes, writableStream, unmountInk, keepRunningAfterProcessesResolve])
+  }, [abortSignal, processes, writableStream, keepRunningAfterProcessesResolve])
+
+  useEffect(() => {
+    if (completionResult !== null) {
+      complete(completionResult.error)
+    }
+  }, [completionResult, complete])
 
   const {lineVertical} = figures
 
