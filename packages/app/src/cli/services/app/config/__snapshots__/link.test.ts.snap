@@ -1,0 +1,548 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`link > creates a new shopify.app.staging.toml file when shopify.app.toml already linked 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > creates a new shopify.app.toml file when it does not exist using existing app version configuration instead of the api client configuration 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+
+[build]
+include_config_on_deploy = true
+"
+`;
+
+exports[`link > does not ask for a name when the selected app is already linked 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > does not render success banner if shouldRenderSuccess is false 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > enables include_config_on_deploy when the apiKey is provided and isNewApp is true 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "app1"
+client_id = "12345"
+application_url = "https://example.com"
+embedded = true
+handle = "handle"
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "https://my-app.com/webhooks"
+  topics = [ "products/create" ]
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > existing config is respected when isNewApp is true, config is current and client_id is not the same as remote app 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "app1"
+client_id = "12345"
+application_url = "https://example.com"
+embedded = true
+handle = "handle"
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "https://my-app.com/webhooks"
+  topics = [ "products/create" ]
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > existing config is respected when isNewApp is true, config is current and client_id is not the same as remote app and config name is provided 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "app1"
+client_id = "12345"
+application_url = "https://example.com"
+embedded = true
+handle = "handle"
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "https://my-app.com/webhooks"
+  topics = [ "products/create" ]
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "my-store.myshopify.com"
+include_config_on_deploy = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > fetches the privacy compliance webhooks from the configuration module 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/customers"
+  compliance_topics = [ "customers/redact", "customers/data_request" ]
+
+[pos]
+embedded = false
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+"
+`;
+
+exports[`link > generates the file when there is no shopify.app.toml 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "app1"
+application_url = "https://example.com"
+embedded = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+use_legacy_install_flow = true
+"
+`;
+
+exports[`link > replace arrays content with the remote one 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/remote" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > simplifies the webhook config using relative paths 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://my-app-url.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "/webhooks"
+  topics = [ "products/create", "products/update" ]
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > skips config name question if re-linking to existing current app schema 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "app1"
+client_id = "12345"
+application_url = "https://example.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > the api client configuration is deep merged with the remote app_config extension registrations 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+name = "my app"
+client_id = "12345"
+application_url = "https://myapp.com"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+  [[webhooks.subscriptions]]
+  uri = "https://my-app.com/webhooks"
+  topics = [ "products/create" ]
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = true
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+"
+`;
+
+exports[`link > the local configuration is discarded if the client_id is different from the remote one 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "different-api-key"
+name = "my app"
+application_url = "https://myapp.com"
+embedded = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[webhooks]
+api_version = "2023-07"
+
+[pos]
+embedded = false
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+"
+`;
+
+exports[`link > updates the shopify.app.toml when it already exists and is unlinked 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > uses scopes on platform if defined 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products,write_orders"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
+
+exports[`link > uses the api client configuration in case there is no configuration app modules 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+client_id = "12345"
+name = "new-title"
+application_url = "https://api-client-config.com"
+embedded = false
+
+[pos]
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+  [webhooks.privacy_compliance]
+  customer_data_request_url = "https://api-client-config.com/customer-data-request"
+  customer_deletion_url = "https://api-client-config.com/customer-deletion"
+  shop_deletion_url = "https://api-client-config.com/shop-deletion"
+
+[auth]
+redirect_urls = [ "https://api-client-config.com/callback" ]
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "write_products"
+
+[app_proxy]
+url = "https://api-client-config.com/proxy"
+subpath = "/api"
+prefix = "prefix"
+
+[app_preferences]
+url = "https://api-client-config.com/preferences"
+
+[build]
+include_config_on_deploy = true
+"
+`;
+
+exports[`link > when local app doesnt include build section and the remote app is new then include include_config_on_deploy is added 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[build]
+include_config_on_deploy = true
+"
+`;
+
+exports[`link > when remote app is new and supports dev sessions then include automatically_update_urls_on_dev = true 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
+"
+`;
+
+exports[`link > write in the toml configuration fields not typed 1`] = `
+"# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
+
+application_url = "https://example.com"
+client_id = "12345"
+name = "app1"
+embedded = true
+handle = "handle"
+
+[webhooks]
+api_version = "2023-07"
+
+[access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
+scopes = "read_products"
+use_legacy_install_flow = true
+
+[auth]
+redirect_urls = [ "https://example.com/callback1" ]
+
+[pos]
+embedded = false
+"
+`;
