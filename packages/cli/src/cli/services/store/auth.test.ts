@@ -299,6 +299,7 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp opens the browser and stores the session with refresh token', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
+    const renderSuccess = vi.fn()
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -320,11 +321,15 @@ describe('store auth service', () => {
           associated_user: {id: 42, email: 'test@example.com'},
         }),
         renderInfo: vi.fn(),
-        renderSuccess: vi.fn(),
+        renderSuccess,
       },
     )
 
     expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/admin/oauth/authorize?'))
+    expect(renderSuccess).toHaveBeenCalledWith({
+      headline: 'Store authentication succeeded.',
+      body: 'Authenticated as test@example.com against shop.myshopify.com.',
+    })
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
     expect(storedSession.store).toBe('shop.myshopify.com')

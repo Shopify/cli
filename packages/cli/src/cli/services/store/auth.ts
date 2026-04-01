@@ -4,7 +4,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {createHash, randomBytes, timingSafeEqual} from 'crypto'
@@ -118,6 +118,36 @@ export function buildStoreAuthUrl(options: {
   return `https://${options.store}/admin/oauth/authorize?${params.toString()}`
 }
 
+function renderAuthCallbackPage(title: string, message: string): string {
+  const safeTitle = title
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+  const safeMessage = message
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${safeTitle}</title>
+  </head>
+  <body style="margin:0;background:#f6f6f7;color:#202223;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <main style="max-width:32rem;margin:12vh auto;padding:0 1rem;">
+      <section style="background:#fff;border:1px solid #e1e3e5;border-radius:12px;padding:1.5rem 1.25rem;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+        <h1 style="margin:0 0 0.75rem 0;font-size:1.375rem;line-height:1.2;">${safeTitle}</h1>
+        <p style="margin:0;font-size:1rem;line-height:1.5;">${safeMessage}</p>
+      </section>
+    </main>
+  </body>
+</html>`
+}
+
 export async function waitForStoreAuthCode({
   store,
   state,
@@ -150,13 +180,8 @@ export async function waitForStoreAuthCode({
         res.statusCode = 400
         res.setHeader('Content-Type', 'text/html')
         res.setHeader('Connection', 'close')
-        const safeMessage = message
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
         res.once('finish', () => settleWithError(new AbortError(message)))
-        res.end(`<html><body><h1>Authentication failed</h1><p>${safeMessage}</p></body></html>`)
+        res.end(renderAuthCallbackPage('Authentication failed', message))
       }
 
       const returnedStore = searchParams.get('shop')
@@ -191,7 +216,7 @@ export async function waitForStoreAuthCode({
       res.setHeader('Content-Type', 'text/html')
       res.setHeader('Connection', 'close')
       res.once('finish', () => settle(() => resolve(code)))
-      res.end('<html><body><h1>Authentication succeeded</h1><p>You can close this window and return to the terminal.</p></body></html>')
+      res.end(renderAuthCallbackPage('Authentication succeeded', 'You can close this window and return to the terminal.'))
     })
 
     const settle = (callback: () => void) => {
@@ -364,18 +389,18 @@ export async function authenticateStoreWithApp(
 
   dependencies.renderInfo({
     headline: 'Authenticate the app against your store.',
-    body: [
-      `Shopify CLI will open the app authorization page in your browser.`,
-      `If the browser does not open, use this URL:`,
-      {link: {label: authorizationUrl, url: authorizationUrl}},
-      `Ensure your app allows the redirect URI ${redirectUri}.`,
-    ],
+    body: `Shopify CLI will open the app authorization page in your browser.`,
   })
 
   const code = await dependencies.waitForStoreAuthCode({
     ...bootstrap.waitForAuthCodeOptions,
     onListening: async () => {
-      await dependencies.openURL(authorizationUrl)
+      const opened = await dependencies.openURL(authorizationUrl)
+      if (!opened) {
+        outputInfo('Browser did not open automatically. Open this URL manually:')
+        outputInfo(authorizationUrl)
+        outputInfo('')
+      }
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
@@ -420,10 +445,8 @@ export async function authenticateStoreWithApp(
 
   dependencies.renderSuccess({
     headline: 'Store authentication succeeded.',
-    body: [
-      `Authenticated${displayName} against ${store}.`,
-      `Next step:`,
-      {command: `shopify store execute --store ${store} --query 'query { shop { name id } }'`},
-    ],
+    body: `Authenticated${displayName} against ${store}.`,
   })
+
+  outputInfo(`Next step: shopify store execute --store ${store} --query 'query { shop { name id } }'`)
 }
