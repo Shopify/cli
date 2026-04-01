@@ -1,5 +1,6 @@
 import {describe, test, expect} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
+import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './auth-config.js'
 import {
   clearStoredStoreAppSession,
   getStoredStoreAppSession,
@@ -27,7 +28,7 @@ function inMemoryStorage() {
 function buildSession(overrides: Partial<StoredStoreAppSession> = {}): StoredStoreAppSession {
   return {
     store: 'shop.myshopify.com',
-    clientId: 'b16de5d7ba3e2e22279a38c22ef025a0',
+    clientId: STORE_AUTH_APP_CLIENT_ID,
     userId: '42',
     accessToken: 'token-1',
     scopes: ['read_products'],
@@ -79,7 +80,7 @@ describe('store session storage', () => {
 
   test('returns undefined and clears the bucket when the current user session is missing', () => {
     const storage = inMemoryStorage()
-    storage.set('b16de5d7ba3e2e22279a38c22ef025a0::shop.myshopify.com', {
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
       currentUserId: '999',
       sessionsByUserId: {
         '42': buildSession(),
@@ -87,18 +88,18 @@ describe('store session storage', () => {
     })
 
     expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
-    expect(storage.get('b16de5d7ba3e2e22279a38c22ef025a0::shop.myshopify.com')).toBeUndefined()
+    expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
 
   test('returns undefined and clears corrupted stored buckets', () => {
     const storage = inMemoryStorage()
-    storage.set('b16de5d7ba3e2e22279a38c22ef025a0::shop.myshopify.com', {
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
       currentUserId: 42,
       sessionsByUserId: null,
     })
 
     expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
-    expect(storage.get('b16de5d7ba3e2e22279a38c22ef025a0::shop.myshopify.com')).toBeUndefined()
+    expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
 })
 

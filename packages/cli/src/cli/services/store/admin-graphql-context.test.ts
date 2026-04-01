@@ -8,6 +8,7 @@ import {
   isSessionExpired,
   setStoredStoreAppSession,
 } from './session.js'
+import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {prepareAdminStoreGraphQLContext} from './admin-graphql-context.js'
 
 vi.mock('./session.js')
@@ -24,7 +25,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   const store = 'shop.myshopify.com'
   const storedSession = {
     store,
-    clientId: 'b16de5d7ba3e2e22279a38c22ef025a0',
+    clientId: STORE_AUTH_APP_CLIENT_ID,
     userId: '42',
     accessToken: 'token',
     refreshToken: 'refresh-token',
