@@ -31,11 +31,12 @@ describe('copyByPattern', () => {
     // Then
     expect(fs.copyFile).toHaveBeenCalledWith('/src/components/Button.tsx', '/out/components/Button.tsx')
     expect(fs.copyFile).toHaveBeenCalledWith('/src/utils/helpers.ts', '/out/utils/helpers.ts')
-    expect(result).toBe(2)
+    expect(result.filesCopied).toBe(2)
+    expect(result.outputPaths).toEqual(expect.arrayContaining(['components/Button.tsx', 'utils/helpers.ts']))
     expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 2 file(s)'))
   })
 
-  test('warns and returns 0 when no files match patterns', async () => {
+  test('returns 0 when no files match patterns', async () => {
     // Given
     vi.mocked(fs.glob).mockResolvedValue([])
 
@@ -51,7 +52,8 @@ describe('copyByPattern', () => {
     )
 
     // Then
-    expect(result).toBe(0)
+    expect(result.filesCopied).toBe(0)
+    expect(result.outputPaths).toEqual([])
     expect(fs.mkdir).not.toHaveBeenCalled()
     expect(fs.copyFile).not.toHaveBeenCalled()
   })
@@ -77,7 +79,8 @@ describe('copyByPattern', () => {
     // Then
     expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('skipping'))
     expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(result).toBe(0)
+    expect(result.filesCopied).toBe(0)
+    expect(result.outputPaths).toEqual([])
   })
 
   test('returns 0 without copying when filepath equals computed destPath', async () => {
@@ -99,7 +102,8 @@ describe('copyByPattern', () => {
 
     // Then
     expect(fs.copyFile).not.toHaveBeenCalled()
-    expect(result).toBe(0)
+    expect(result.filesCopied).toBe(0)
+    expect(result.outputPaths).toEqual([])
     expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining('Included 0 file(s)'))
   })
 

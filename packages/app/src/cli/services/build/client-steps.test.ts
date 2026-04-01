@@ -27,8 +27,7 @@ describe('executeStep', () => {
   const step: LifecycleStep = {
     id: 'test-step',
     name: 'Test Step',
-    type: 'include_assets',
-    config: {},
+    type: 'build_theme',
   }
 
   describe('success', () => {

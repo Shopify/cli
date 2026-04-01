@@ -302,6 +302,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     appModuleFeatures: spec.appModuleFeatures,
     experience: spec.experience,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
+    clientSteps: spec.clientSteps,
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
     deployConfig: async (config, directory) => {

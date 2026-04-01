@@ -32,9 +32,10 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(2)
+      expect(result.filesCopied).toBe(2)
       await expect(fileExists(joinPath(outDir, 'index.html'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'logo.png'))).resolves.toBe(true)
+      expect(result.pathMap.get('public')).toEqual(expect.arrayContaining(['index.html', 'logo.png']))
       expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Included 'public'"))
     })
   })
@@ -54,10 +55,35 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(1)
+      expect(result.filesCopied).toBe(1)
       await expect(fileExists(joinPath(outDir, 'schema.json'))).resolves.toBe(true)
       const content = await readFile(joinPath(outDir, 'schema.json'))
       expect(content).toBe('{}')
+      expect(result.pathMap.get('src/schema.json')).toBe('schema.json')
+      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("Included 'src/schema.json'"))
+    })
+  })
+
+  test('renames output file to avoid collision when candidate path already exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writeFile(joinPath(tmpDir, 'tools-a.json'), '{}')
+      await writeFile(joinPath(tmpDir, 'tools-b.json'), '{}')
+
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+      // Pre-create the first candidate to force a rename
+      await writeFile(joinPath(outDir, 'tools-a.json'), 'existing')
+
+      const context = makeContext({files: ['tools-a.json', 'tools-b.json']})
+      const result = await copyConfigKeyEntry(
+        {key: 'files', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result.filesCopied).toBe(2)
+      // tools-a.json was taken, so the copy lands as tools-a-1.json
+      await expect(fileExists(joinPath(outDir, 'tools-a-1.json'))).resolves.toBe(true)
+      await expect(fileExists(joinPath(outDir, 'tools-b.json'))).resolves.toBe(true)
     })
   })
 
@@ -72,7 +98,8 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(0)
+      expect(result.filesCopied).toBe(0)
+      expect(result.pathMap.size).toBe(0)
       expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
     })
   })
@@ -89,7 +116,8 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(0)
+      expect(result.filesCopied).toBe(0)
+      expect(result.pathMap.size).toBe(0)
       expect(mockStdout.write).toHaveBeenCalledWith(
         expect.stringContaining("Warning: path 'nonexistent' does not exist"),
       )
@@ -116,9 +144,9 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      // Promise.all runs copies in parallel; glob on the shared outDir may see files
+      // Promise.all runs copies sequentially; glob on the shared outDir may see files
       // from the other copy, so the total count is at least 3 (one per real file).
-      expect(result).toBeGreaterThanOrEqual(3)
+      expect(result.filesCopied).toBeGreaterThanOrEqual(3)
       await expect(fileExists(joinPath(outDir, 'a.html'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'b.html'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'logo.svg'))).resolves.toBe(true)
@@ -164,7 +192,7 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(3)
+      expect(result.filesCopied).toBe(3)
       await expect(fileExists(joinPath(outDir, 'schema-a.json'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'schema-b.json'))).resolves.toBe(true)
       await expect(fileExists(joinPath(outDir, 'schema-c.json'))).resolves.toBe(true)
@@ -185,10 +213,32 @@ describe('copyConfigKeyEntry', () => {
         {stdout: mockStdout},
       )
 
-      expect(result).toBe(0)
+      expect(result.filesCopied).toBe(0)
+      expect(result.pathMap.size).toBe(0)
       expect(mockStdout.write).toHaveBeenCalledWith(
         expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
       )
+    })
+  })
+
+  test('deduplicates repeated source paths — copies each unique path only once', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writeFile(joinPath(tmpDir, 'tools.json'), '{}')
+
+      const outDir = joinPath(tmpDir, 'out')
+      await mkdir(outDir)
+
+      // Two items referencing the same file; should only be copied once
+      const context = makeContext({
+        extensions: [{targeting: [{tools: 'tools.json'}, {tools: 'tools.json'}]}],
+      })
+      const result = await copyConfigKeyEntry(
+        {key: 'extensions[].targeting[].tools', baseDir: tmpDir, outputDir: outDir, context},
+        {stdout: mockStdout},
+      )
+
+      expect(result.filesCopied).toBe(1)
+      await expect(fileExists(joinPath(outDir, 'tools.json'))).resolves.toBe(true)
     })
   })
 })

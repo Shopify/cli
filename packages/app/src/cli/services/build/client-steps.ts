@@ -1,34 +1,46 @@
 import {executeStepByType} from './steps/index.js'
+import type {IncludeAssetsConfig} from './steps/include-assets-step.js'
 import type {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import type {ExtensionBuildOptions} from './extension.js'
 
-/**
- * LifecycleStep represents a single step in the client-side build pipeline.
- * Pure configuration object — execution logic is separate (router pattern).
- */
-export interface LifecycleStep {
+/** Common fields shared by all lifecycle steps. */
+interface BaseStep {
   /** Unique identifier, used as the key in the stepResults map */
   readonly id: string
 
   /** Human-readable name for logging */
   readonly name: string
 
-  /** Step type (determines which executor handles it) */
+  /** Whether to continue on error (default: false) */
+  readonly continueOnError?: boolean
+}
+
+/** Step with typed config specific to include_assets. */
+interface IncludeAssetsStep extends BaseStep {
+  readonly type: 'include_assets'
+  readonly config: IncludeAssetsConfig
+}
+
+/** Steps that don't require any config yet. */
+interface NoConfigStep extends BaseStep {
   readonly type:
-    | 'include_assets'
     | 'build_theme'
     | 'bundle_theme'
     | 'bundle_ui'
     | 'copy_static_assets'
     | 'build_function'
     | 'create_tax_stub'
-
-  /** Step-specific configuration */
-  readonly config: {[key: string]: unknown}
-
-  /** Whether to continue on error (default: false) */
-  readonly continueOnError?: boolean
+  readonly config?: Record<string, never>
 }
+
+/**
+ * LifecycleStep represents a single step in the client-side build pipeline.
+ * Pure configuration object — execution logic is separate (router pattern).
+ *
+ * This is a discriminated union on `type`: each step type carries its own
+ * typed `config`, so TypeScript catches config typos at compile time.
+ */
+export type LifecycleStep = IncludeAssetsStep | NoConfigStep
 
 /**
  * A group of steps scoped to a specific lifecycle phase.
