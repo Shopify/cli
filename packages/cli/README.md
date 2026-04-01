@@ -73,6 +73,8 @@
 * [`shopify plugins unlink [PLUGIN]`](#shopify-plugins-unlink-plugin)
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
+* [`shopify store auth`](#shopify-store-auth)
+* [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
 * [`shopify theme delete`](#shopify-theme-delete)
@@ -2047,6 +2049,79 @@ EXAMPLES
       shopify search <query>
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
+```
+
+## `shopify store auth`
+
+Authenticate an app against a store for store commands.
+
+```
+USAGE
+  $ shopify store auth --scopes <value> -s <value> [--no-color] [--verbose]
+
+FLAGS
+  -s, --store=<value>   (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to authenticate
+                        against.
+      --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --scopes=<value>  (required) [env: SHOPIFY_FLAG_SCOPES] Comma-separated Admin API scopes to request for the app.
+      --verbose         [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Authenticate an app against a store for store commands.
+
+  Starts a PKCE OAuth flow against the specified store and stores an online access token for later use by `shopify store
+  execute`.
+
+  This flow authenticates the app on behalf of the current user. Re-run this command if the stored token is missing,
+  expires, or no longer has the scopes you need.
+
+EXAMPLES
+  $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
+```
+
+## `shopify store execute`
+
+Execute GraphQL queries and mutations on a store.
+
+```
+USAGE
+  $ shopify store execute -s <value> [--allow-mutations] [--no-color] [--output-file <value>] [-q <value>]
+    [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
+
+FLAGS
+  -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string.
+  -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to execute
+                               against.
+  -v, --variables=<value>      [env: SHOPIFY_FLAG_VARIABLES] The values for any GraphQL variables in your query or
+                               mutation, in JSON format.
+      --allow-mutations        [env: SHOPIFY_FLAG_ALLOW_MUTATIONS] Allow GraphQL mutations to run against the target
+                               store.
+      --no-color               [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --output-file=<value>    [env: SHOPIFY_FLAG_OUTPUT_FILE] The file name where results should be written, instead of
+                               STDOUT.
+      --query-file=<value>     [env: SHOPIFY_FLAG_QUERY_FILE] Path to a file containing the GraphQL query or mutation.
+                               Can't be used with --query.
+      --variable-file=<value>  [env: SHOPIFY_FLAG_VARIABLE_FILE] Path to a file containing GraphQL variables in JSON
+                               format. Can't be used with --variables.
+      --verbose                [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+      --version=<value>        [env: SHOPIFY_FLAG_VERSION] The API version to use for the query or mutation. Defaults to
+                               the latest stable version.
+
+DESCRIPTION
+  Execute GraphQL queries and mutations on a store.
+
+  Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
+
+  Run `shopify store auth` first to create stored auth for the store.
+
+  Mutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.
+
+EXAMPLES
+  $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }"
+
+  $ shopify store execute --store shop.myshopify.com --query-file ./operation.graphql --variables '{"id":"gid://shopify/Product/1"}'
+
+  $ shopify store execute --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations
 ```
 
 ## `shopify theme check`

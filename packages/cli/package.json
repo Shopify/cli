@@ -102,6 +102,9 @@
       "app": {
         "description": "Build Shopify apps."
       },
+      "store": {
+        "description": "Work directly with Shopify stores."
+      },
       "app:config": {
         "description": "Manage app configuration."
       },
