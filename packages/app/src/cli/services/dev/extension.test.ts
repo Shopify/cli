@@ -158,7 +158,7 @@ describe('devUIExtensions()', () => {
     expect(getExtensions()).toStrictEqual([newUIExtension])
   })
 
-  test('passes appAssets to the HTTP server when provided', async () => {
+  test('passes getAppAssets callback to the HTTP server when appAssets provided', async () => {
     // GIVEN
     spyOnEverything()
     const optionsWithAssets = {
@@ -172,9 +172,12 @@ describe('devUIExtensions()', () => {
     // THEN
     expect(server.setupHTTPServer).toHaveBeenCalledWith(
       expect.objectContaining({
-        appAssets: {staticRoot: '/absolute/path/to/public'},
+        getAppAssets: expect.any(Function),
       }),
     )
+
+    const {getAppAssets} = vi.mocked(server.setupHTTPServer).mock.calls[0]![0]
+    expect(getAppAssets!()).toStrictEqual({staticRoot: '/absolute/path/to/public'})
   })
 })
 

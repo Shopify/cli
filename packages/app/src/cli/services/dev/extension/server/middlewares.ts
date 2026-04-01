@@ -134,11 +134,12 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
   })
 })
 
-export function getAppAssetsMiddleware(appAssets: Record<string, string>) {
+export function getAppAssetsMiddleware(getAppAssets: () => Record<string, string> | undefined) {
   return defineEventHandler(async (event) => {
     const {assetKey = '', filePath = ''} = getRouterParams(event)
 
-    const directory = appAssets[assetKey]
+    const appAssets = getAppAssets()
+    const directory = appAssets?.[assetKey]
 
     if (!directory) {
       return sendError(event, {statusCode: 404, statusMessage: `No app assets configured for key: ${assetKey}`})

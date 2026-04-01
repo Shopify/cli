@@ -582,7 +582,7 @@ describe('getAppAssetsMiddleware()', () => {
       await mkdir(assetDir)
       await writeFile(joinPath(assetDir, 'icon.png'), 'png-content')
 
-      const middleware = getAppAssetsMiddleware({staticRoot: assetDir})
+      const middleware = getAppAssetsMiddleware(() => ({staticRoot: assetDir}))
 
       const event = getMockEvent({
         params: {assetKey: 'staticRoot', filePath: 'icon.png'},
@@ -598,7 +598,7 @@ describe('getAppAssetsMiddleware()', () => {
   test('returns 404 for an unknown asset key', async () => {
     vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
 
-    const middleware = getAppAssetsMiddleware({staticRoot: '/some/path'})
+    const middleware = getAppAssetsMiddleware(() => ({staticRoot: '/some/path'}))
 
     const event = getMockEvent({
       params: {assetKey: 'unknown', filePath: 'icon.png'},

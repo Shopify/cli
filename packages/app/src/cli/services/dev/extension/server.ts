@@ -20,7 +20,7 @@ interface SetupHTTPServerOptions {
   devOptions: ExtensionsPayloadStoreOptions
   payloadStore: ExtensionsPayloadStore
   getExtensions: () => ExtensionInstance[]
-  appAssets?: Record<string, string>
+  getAppAssets?: () => Record<string, string> | undefined
 }
 
 export function setupHTTPServer(options: SetupHTTPServerOptions) {
@@ -30,8 +30,8 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpApp.use(getLogMiddleware(options))
   httpApp.use(corsMiddleware)
   httpApp.use(noCacheMiddleware)
-  if (options.appAssets) {
-    httpRouter.use('/extensions/assets/:assetKey/**:filePath', getAppAssetsMiddleware(options.appAssets))
+  if (options.getAppAssets) {
+    httpRouter.use('/extensions/assets/:assetKey/**:filePath', getAppAssetsMiddleware(options.getAppAssets))
   }
   httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)

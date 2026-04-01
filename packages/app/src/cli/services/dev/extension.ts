@@ -158,12 +158,12 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const currentAppAssets = payloadOptions.appAssets
+  const getAppAssets = () => payloadOptions.appAssets
   const httpServer = setupHTTPServer({
     devOptions: payloadOptions,
     payloadStore,
     getExtensions,
-    appAssets: currentAppAssets,
+    getAppAssets,
   })
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
@@ -172,24 +172,27 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   // Set up asset directory watchers
   let assetWatchers: FSWatcher[] = []
-  let debounceTimers: ReturnType<typeof setTimeout>[] = []
+  const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
   function createDebouncedAssetUpdater(assetKey: string) {
-    let debounceTimer: ReturnType<typeof setTimeout> | undefined
     return () => {
-      if (debounceTimer) clearTimeout(debounceTimer)
-      debounceTimer = setTimeout(() => {
-        payloadStore.updateAppAssetTimestamp(assetKey)
-      }, 200)
-      debounceTimers.push(debounceTimer)
+      const existing = debounceTimers.get(assetKey)
+      if (existing) clearTimeout(existing)
+      debounceTimers.set(
+        assetKey,
+        setTimeout(() => {
+          debounceTimers.delete(assetKey)
+          payloadStore.updateAppAssetTimestamp(assetKey)
+        }, 200),
+      )
     }
   }
 
   function clearDebounceTimers() {
-    for (const timer of debounceTimers) {
+    for (const timer of debounceTimers.values()) {
       clearTimeout(timer)
     }
-    debounceTimers = []
+    debounceTimers.clear()
   }
 
   async function startAssetWatchers(assets: Record<string, string>) {
@@ -210,8 +213,9 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
     }
   }
 
-  if (currentAppAssets && Object.keys(currentAppAssets).length > 0) {
-    await startAssetWatchers(currentAppAssets)
+  const initialAppAssets = payloadOptions.appAssets
+  if (initialAppAssets && Object.keys(initialAppAssets).length > 0) {
+    await startAssetWatchers(initialAppAssets)
   }
 
   const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
