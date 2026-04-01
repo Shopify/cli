@@ -3,9 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'store auth',
-  description: `Starts a PKCE OAuth flow against the specified store and stores an online access token for later use by \`shopify store execute\`.
+  description: `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
 
-This flow authenticates the app on behalf of the current user. Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`,
+Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`,
   overviewPreviewDescription: `Authenticate an app against a store for store commands.`,
   type: 'command',
   isVisualComponent: false,

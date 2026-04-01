@@ -100,7 +100,11 @@ describe('prepareAdminStoreGraphQLContext', () => {
   test('throws when no stored auth exists', async () => {
     vi.mocked(getStoredStoreAppSession).mockReturnValue(undefined)
 
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('No stored app authentication found')
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
+      message: `No stored app authentication found for ${store}.`,
+      tryMessage: 'To create stored auth for this store, run:',
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes <comma-separated-scopes>`}]],
+    })
   })
 
   test('clears stored auth when token refresh fails', async () => {
@@ -111,7 +115,11 @@ describe('prepareAdminStoreGraphQLContext', () => {
       text: vi.fn().mockResolvedValue('bad refresh'),
     } as any)
 
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('Token refresh failed')
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
+      message: `Token refresh failed for ${store} (HTTP 401).`,
+      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products`}]],
+    })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
 
@@ -119,7 +127,11 @@ describe('prepareAdminStoreGraphQLContext', () => {
     vi.mocked(isSessionExpired).mockReturnValue(true)
     vi.mocked(getStoredStoreAppSession).mockReturnValue({...storedSession, refreshToken: undefined})
 
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('No refresh token stored')
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
+      message: `No refresh token stored for ${store}.`,
+      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products`}]],
+    })
     expect(clearStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
@@ -130,7 +142,11 @@ describe('prepareAdminStoreGraphQLContext', () => {
       text: vi.fn().mockResolvedValue(JSON.stringify({refresh_token: 'fresh-refresh-token'})),
     } as any)
 
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('Token refresh returned an invalid response')
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
+      message: `Token refresh returned an invalid response for ${store}.`,
+      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products`}]],
+    })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
 
@@ -150,7 +166,11 @@ describe('prepareAdminStoreGraphQLContext', () => {
       new AbortError(`Error connecting to your store ${store}: unauthorized 401 {}`),
     )
 
-    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toThrow('Stored app authentication for')
+    await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
+      message: `Stored app authentication for ${store} is no longer valid.`,
+      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products`}]],
+    })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
 
