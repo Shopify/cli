@@ -1,11 +1,10 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {devUIExtensions} from '../extension.js'
+import {devUIExtensions, resolveAppAssets} from '../extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {joinPath} from '@shopify/cli-kit/node/path'
 
 const MANIFEST_VERSION = '3'
 
@@ -88,15 +87,7 @@ export async function setupPreviewableExtensionsProcess({
 
   const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl)
 
-  // Resolve app-level asset directories from admin extensions
-  const appAssets: Record<string, string> = {}
-  const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
-  if (adminExtension) {
-    const staticRoot = (adminExtension.configuration as {admin?: {static_root?: string}}).admin?.static_root
-    if (staticRoot) {
-      appAssets.staticRoot = joinPath(adminExtension.directory, staticRoot)
-    }
-  }
+  const appAssets = resolveAppAssets(allExtensions)
 
   return {
     prefix: 'extensions',

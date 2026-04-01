@@ -12,6 +12,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 import {fileExists} from '@shopify/cli-kit/node/fs'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
@@ -130,9 +131,9 @@ export function resolveAppAssets(allExtensions: ExtensionInstance[]): Record<str
   const appAssets: Record<string, string> = {}
   const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
   if (adminExtension) {
-    const staticRoot = (adminExtension.configuration as {admin?: {static_root?: string}}).admin?.static_root
-    if (staticRoot) {
-      appAssets.staticRoot = joinPath(adminExtension.directory, staticRoot)
+    const staticRootPath = getPathValue<string>(adminExtension.configuration, 'admin.static_root')
+    if (staticRootPath) {
+      appAssets.staticRoot = joinPath(adminExtension.directory, staticRootPath)
     }
   }
   return appAssets
@@ -171,9 +172,29 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   // Set up asset directory watchers
   let assetWatchers: FSWatcher[] = []
+  let debounceTimers: ReturnType<typeof setTimeout>[] = []
+
+  function createDebouncedAssetUpdater(assetKey: string) {
+    let debounceTimer: ReturnType<typeof setTimeout> | undefined
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer)
+      debounceTimer = setTimeout(() => {
+        payloadStore.updateAppAssetTimestamp(assetKey)
+      }, 200)
+      debounceTimers.push(debounceTimer)
+    }
+  }
+
+  function clearDebounceTimers() {
+    for (const timer of debounceTimers) {
+      clearTimeout(timer)
+    }
+    debounceTimers = []
+  }
 
   async function startAssetWatchers(assets: Record<string, string>) {
-    // Close existing watchers
+    // Clear pending debounce timers and close existing watchers
+    clearDebounceTimers()
     await Promise.all(assetWatchers.map((watcher) => watcher.close()))
     // eslint-disable-next-line require-atomic-updates
     assetWatchers = []
@@ -183,14 +204,8 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       const exists = await fileExists(directoryPath)
       if (!exists) continue
 
-      let debounceTimer: ReturnType<typeof setTimeout> | undefined
       const watcher = chokidar.watch(directoryPath, {ignoreInitial: true})
-      watcher.on('all', () => {
-        if (debounceTimer) clearTimeout(debounceTimer)
-        debounceTimer = setTimeout(() => {
-          payloadStore.updateAppAssetTimestamp(assetKey)
-        }, 200)
-      })
+      watcher.on('all', createDebouncedAssetUpdater(assetKey))
       assetWatchers.push(watcher)
     }
   }
@@ -207,6 +222,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       const newAppAssets = resolveAppAssets(app.allExtensions)
       const hasAssets = Object.keys(newAppAssets).length > 0
       payloadOptions.appAssets = hasAssets ? newAppAssets : undefined
+      payloadStore.updateAppAssets(payloadOptions.appAssets, payloadOptions.url)
       await startAssetWatchers(hasAssets ? newAppAssets : {})
     }
 
@@ -244,6 +260,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   payloadOptions.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
+    clearDebounceTimers()
     for (const watcher of assetWatchers) {
       watcher.close().catch(() => {})
     }

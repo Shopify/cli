@@ -31,7 +31,7 @@ export function setupHTTPServer(options: SetupHTTPServerOptions) {
   httpApp.use(corsMiddleware)
   httpApp.use(noCacheMiddleware)
   if (options.appAssets) {
-    httpRouter.use('/extensions/admin/assets/**:filePath', getAppAssetsMiddleware(options.appAssets))
+    httpRouter.use('/extensions/assets/:assetKey/**:filePath', getAppAssetsMiddleware(options.appAssets))
   }
   httpRouter.use('/extensions/dev-console', devConsoleIndexMiddleware)
   httpRouter.use('/extensions/dev-console/assets/**:assetPath', devConsoleAssetsMiddleware)

@@ -365,4 +365,143 @@ describe('ExtensionsPayloadStore()', () => {
       expect(onUpdateSpy).not.toHaveBeenCalled()
     })
   })
+
+  describe('updateAppAssetTimestamp()', () => {
+    test('updates lastUpdated for the given asset key and emits update', () => {
+      // Given
+      const mockPayload = {
+        app: {
+          assets: {
+            staticRoot: {url: 'https://mock.url/extensions/assets/staticRoot/', lastUpdated: 1000},
+          },
+        },
+        extensions: [],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
+      const onUpdateSpy = vi.fn()
+      extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
+
+      // When
+      extensionsPayloadStore.updateAppAssetTimestamp('staticRoot')
+
+      // Then
+      const asset = extensionsPayloadStore.getRawPayload().app.assets?.staticRoot
+      expect(asset?.url).toBe('https://mock.url/extensions/assets/staticRoot/')
+      expect(asset?.lastUpdated).toBeGreaterThan(1000)
+      expect(onUpdateSpy).toHaveBeenCalledWith([])
+    })
+
+    test('does nothing if the asset key does not exist', () => {
+      // Given
+      const mockPayload = {
+        app: {assets: {}},
+        extensions: [],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
+      const onUpdateSpy = vi.fn()
+      extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
+
+      // When
+      extensionsPayloadStore.updateAppAssetTimestamp('nonExistent')
+
+      // Then
+      expect(onUpdateSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('updateAppAssets()', () => {
+    test('sets app.assets from the provided appAssets map', () => {
+      // Given
+      const mockPayload = {
+        app: {},
+        extensions: [],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
+      const onUpdateSpy = vi.fn()
+      extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
+
+      // When
+      extensionsPayloadStore.updateAppAssets({staticRoot: '/path/to/public'}, 'https://mock.url')
+
+      // Then
+      const assets = extensionsPayloadStore.getRawPayload().app.assets
+      expect(assets?.staticRoot?.url).toBe('https://mock.url/extensions/assets/staticRoot/')
+      expect(assets?.staticRoot?.lastUpdated).toBeGreaterThan(0)
+      expect(onUpdateSpy).toHaveBeenCalledWith([])
+    })
+
+    test('removes app.assets when appAssets is undefined', () => {
+      // Given
+      const mockPayload = {
+        app: {
+          assets: {
+            staticRoot: {url: 'https://mock.url/extensions/assets/staticRoot/', lastUpdated: 1000},
+          },
+        },
+        extensions: [],
+      } as unknown as ExtensionsEndpointPayload
+
+      const extensionsPayloadStore = new ExtensionsPayloadStore(mockPayload, mockOptions)
+      const onUpdateSpy = vi.fn()
+      extensionsPayloadStore.on(ExtensionsPayloadStoreEvent.Update, onUpdateSpy)
+
+      // When
+      extensionsPayloadStore.updateAppAssets(undefined, 'https://mock.url')
+
+      // Then
+      expect(extensionsPayloadStore.getRawPayload().app.assets).toBeUndefined()
+      expect(onUpdateSpy).toHaveBeenCalledWith([])
+    })
+  })
+})
+
+describe('getExtensionsPayloadStoreRawPayload() with appAssets', () => {
+  test('populates app.assets when appAssets option is provided', async () => {
+    vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
+      mock: 'extension-payload',
+    } as unknown as UIExtensionPayload)
+
+    const options = {
+      apiKey: 'mock-api-key',
+      appName: 'mock-app-name',
+      url: 'https://mock-url.com',
+      websocketURL: 'wss://mock-websocket-url.com',
+      extensions: [],
+      storeFqdn: 'mock-store-fqdn.myshopify.com',
+      manifestVersion: '3',
+      appAssets: {staticRoot: '/path/to/public'},
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
+
+    expect(rawPayload.app.assets).toStrictEqual({
+      staticRoot: {
+        url: 'https://mock-url.com/extensions/assets/staticRoot/',
+        lastUpdated: expect.any(Number),
+      },
+    })
+  })
+
+  test('does not set app.assets when appAssets option is not provided', async () => {
+    vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
+      mock: 'extension-payload',
+    } as unknown as UIExtensionPayload)
+
+    const options = {
+      apiKey: 'mock-api-key',
+      appName: 'mock-app-name',
+      url: 'https://mock-url.com',
+      websocketURL: 'wss://mock-websocket-url.com',
+      extensions: [],
+      storeFqdn: 'mock-store-fqdn.myshopify.com',
+      manifestVersion: '3',
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
+
+    expect(rawPayload.app.assets).toBeUndefined()
+  })
 })

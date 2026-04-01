@@ -1,7 +1,7 @@
 import * as store from './extension/payload/store.js'
 import * as server from './extension/server.js'
 import * as websocket from './extension/websocket.js'
-import {devUIExtensions, ExtensionDevOptions} from './extension.js'
+import {devUIExtensions, ExtensionDevOptions, resolveAppAssets} from './extension.js'
 import {ExtensionsEndpointPayload} from './extension/payload/models.js'
 import {WebsocketConnection} from './extension/websocket/models.js'
 import {AppEventWatcher} from './app-events/app-event-watcher.js'
@@ -33,7 +33,10 @@ describe('devUIExtensions()', () => {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(() => ({mock: 'payload-store'}))
+    vi.spyOn(store, 'ExtensionsPayloadStore').mockImplementation(() => ({
+      mock: 'payload-store',
+      updateAppAssets: vi.fn(),
+    }))
     vi.spyOn(server, 'setupHTTPServer').mockReturnValue({
       mock: 'http-server',
       close: serverCloseSpy,
@@ -65,11 +68,13 @@ describe('devUIExtensions()', () => {
     await devUIExtensions(options)
 
     // THEN
-    expect(server.setupHTTPServer).toHaveBeenCalledWith({
-      devOptions: {...options, websocketURL: 'wss://mock.url/extensions'},
-      payloadStore: {mock: 'payload-store'},
-      getExtensions: expect.any(Function),
-    })
+    expect(server.setupHTTPServer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        devOptions: expect.objectContaining({websocketURL: 'wss://mock.url/extensions'}),
+        payloadStore: expect.objectContaining({mock: 'payload-store'}),
+        getExtensions: expect.any(Function),
+      }),
+    )
   })
 
   test('initializes the HTTP server with a getExtensions function that returns the extensions from the provided options', async () => {
@@ -91,12 +96,13 @@ describe('devUIExtensions()', () => {
     await devUIExtensions(options)
 
     // THEN
-    expect(websocket.setupWebsocketConnection).toHaveBeenCalledWith({
-      ...options,
-      httpServer: expect.objectContaining({mock: 'http-server'}),
-      payloadStore: {mock: 'payload-store'},
-      websocketURL: 'wss://mock.url/extensions',
-    })
+    expect(websocket.setupWebsocketConnection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        httpServer: expect.objectContaining({mock: 'http-server'}),
+        payloadStore: expect.objectContaining({mock: 'payload-store'}),
+        websocketURL: 'wss://mock.url/extensions',
+      }),
+    )
   })
 
   test('closes the http server, websocket and bundler when the process aborts', async () => {
@@ -128,14 +134,80 @@ describe('devUIExtensions()', () => {
     const {getExtensions} = vi.mocked(server.setupHTTPServer).mock.calls[0]![0]
     expect(getExtensions()).toStrictEqual(options.extensions)
 
-    const newUIExtension = {type: 'ui_extension', devUUID: 'BAR', isPreviewable: true}
+    const newUIExtension = {
+      type: 'ui_extension',
+      devUUID: 'BAR',
+      isPreviewable: true,
+      specification: {identifier: 'ui_extension'},
+    }
     const newApp = {
       ...app,
-      allExtensions: [newUIExtension, {type: 'function_extension', devUUID: 'FUNCTION', isPreviewable: false}],
+      allExtensions: [
+        newUIExtension,
+        {
+          type: 'function_extension',
+          devUUID: 'FUNCTION',
+          isPreviewable: false,
+          specification: {identifier: 'function'},
+        },
+      ],
     }
     options.appWatcher.emit('all', {app: newApp, appWasReloaded: true, extensionEvents: []})
 
     // THEN
     expect(getExtensions()).toStrictEqual([newUIExtension])
+  })
+
+  test('passes appAssets to the HTTP server when provided', async () => {
+    // GIVEN
+    spyOnEverything()
+    const optionsWithAssets = {
+      ...options,
+      appAssets: {staticRoot: '/absolute/path/to/public'},
+    } as unknown as ExtensionDevOptions
+
+    // WHEN
+    await devUIExtensions(optionsWithAssets)
+
+    // THEN
+    expect(server.setupHTTPServer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        appAssets: {staticRoot: '/absolute/path/to/public'},
+      }),
+    )
+  })
+})
+
+describe('resolveAppAssets()', () => {
+  test('returns empty object when no admin extension exists', () => {
+    const extensions = [
+      {specification: {identifier: 'ui_extension'}, configuration: {}, directory: '/app'},
+    ] as unknown as Parameters<typeof resolveAppAssets>[0]
+
+    expect(resolveAppAssets(extensions)).toStrictEqual({})
+  })
+
+  test('returns empty object when admin extension has no static_root', () => {
+    const extensions = [
+      {specification: {identifier: 'admin'}, configuration: {admin: {}}, directory: '/app/extensions/admin'},
+    ] as unknown as Parameters<typeof resolveAppAssets>[0]
+
+    expect(resolveAppAssets(extensions)).toStrictEqual({})
+  })
+
+  test('returns staticRoot mapped to resolved absolute path when static_root is set', () => {
+    const extensions = [
+      {
+        specification: {identifier: 'admin'},
+        configuration: {admin: {static_root: 'public'}},
+        directory: '/app/extensions/admin',
+      },
+    ] as unknown as Parameters<typeof resolveAppAssets>[0]
+
+    const result = resolveAppAssets(extensions)
+
+    expect(result).toStrictEqual({
+      staticRoot: '/app/extensions/admin/public',
+    })
   })
 })

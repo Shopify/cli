@@ -44,9 +44,9 @@ export async function getExtensionsPayloadStoreRawPayload(
 
   if (options.appAssets) {
     const assets: Record<string, {url: string; lastUpdated: number}> = {}
-    for (const [assetKey] of Object.entries(options.appAssets)) {
+    for (const assetKey of Object.keys(options.appAssets)) {
       assets[assetKey] = {
-        url: new URL('/extensions/admin/assets/', options.url).toString(),
+        url: new URL(`/extensions/assets/${assetKey}/`, options.url).toString(),
         lastUpdated: Date.now(),
       }
     }
@@ -182,6 +182,22 @@ export class ExtensionsPayloadStore extends EventEmitter {
   async addExtension(extension: ExtensionInstance, bundlePath: string) {
     this.rawPayload.extensions.push(await getUIExtensionPayload(extension, bundlePath, this.options))
     this.emitUpdate([extension.devUUID])
+  }
+
+  updateAppAssets(appAssets: Record<string, string> | undefined, url: string) {
+    if (!appAssets || Object.keys(appAssets).length === 0) {
+      delete this.rawPayload.app.assets
+    } else {
+      const assets: Record<string, {url: string; lastUpdated: number}> = {}
+      for (const assetKey of Object.keys(appAssets)) {
+        assets[assetKey] = {
+          url: new URL(`/extensions/assets/${assetKey}/`, url).toString(),
+          lastUpdated: Date.now(),
+        }
+      }
+      this.rawPayload.app.assets = assets
+    }
+    this.emitUpdate([])
   }
 
   updateAppAssetTimestamp(assetKey: string) {
