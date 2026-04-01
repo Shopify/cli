@@ -190,19 +190,28 @@ export async function waitForStoreAuthCode({
 
       const {searchParams} = requestUrl
 
-      const fail = (message: string) => {
+      const fail = (message: string, tryMessage?: string) => {
         res.statusCode = 400
         res.setHeader('Content-Type', 'text/html')
         res.setHeader('Connection', 'close')
-        res.once('finish', () => settleWithError(new AbortError(message)))
+        res.once('finish', () => settleWithError(new AbortError(message, tryMessage)))
         res.end(renderAuthCallbackPage('Authentication failed', message))
       }
 
       const returnedStore = searchParams.get('shop')
       outputDebug(outputContent`Received OAuth callback for shop ${outputToken.raw(returnedStore ?? 'unknown')}`)
 
-      if (!returnedStore || normalizeStoreFqdn(returnedStore) !== normalizedStore) {
+      if (!returnedStore) {
         fail('OAuth callback store does not match the requested store.')
+        return
+      }
+
+      const normalizedReturnedStore = normalizeStoreFqdn(returnedStore)
+      if (normalizedReturnedStore !== normalizedStore) {
+        fail(
+          'OAuth callback store does not match the requested store.',
+          `Shopify returned ${normalizedReturnedStore} during authentication. Re-run ${outputToken.genericShellCommand(`shopify store auth --store ${normalizedReturnedStore} --scopes <comma-separated-scopes>`).value} using the permanent store domain instead of an alias or vanity domain.`,
+        )
         return
       }
 
