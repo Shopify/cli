@@ -233,6 +233,7 @@ function errorMessageImpliesEnvironmentIssue(message: string): boolean {
     'Client network socket disconnected before secure TLS connection was established',
     'spawn EPERM',
     'socket hang up',
+    'The user aborted a request.',
   ]
   const anyMatches = environmentIssueMessages.some((issueMessage) => message.includes(issueMessage))
   return anyMatches
