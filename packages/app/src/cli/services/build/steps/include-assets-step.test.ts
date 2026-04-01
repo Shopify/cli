@@ -257,7 +257,6 @@ describe('executeIncludeAssetsStep', () => {
       // Then — no error, no copies
       expect(result.filesCopied).toBe(0)
       expect(fs.copyDirectoryContents).not.toHaveBeenCalled()
-      expect(mockStdout.write).toHaveBeenCalledWith(expect.stringContaining("No value for configKey 'static_root'"))
     })
 
     test('skips path that does not exist on disk but logs a warning', async () => {

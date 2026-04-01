@@ -88,7 +88,6 @@ export async function executeStep(step: LifecycleStep, context: BuildContext): P
   const startTime = Date.now()
 
   try {
-    context.options.stdout.write(`Executing step: ${step.name}\n`)
     const output = await executeStepByType(step, context)
 
     return {
