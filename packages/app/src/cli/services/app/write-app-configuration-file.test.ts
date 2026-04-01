@@ -155,9 +155,11 @@ url = "https://example.com/prefs"
         webhooks: {api_version: '2023-07', subscriptions: 'also-not-an-array'},
       }
 
-      await expect(
-        writeAppConfigurationFile(malformedConfig as unknown as CurrentAppConfiguration, filePath),
-      ).resolves.not.toThrow()
+      await writeAppConfigurationFile(malformedConfig as unknown as CurrentAppConfiguration, filePath)
+
+      const content = await readFile(filePath)
+      expect(content).toContain('client_id')
+      expect(content).toContain('api-key')
     })
   })
 })
