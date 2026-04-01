@@ -87,7 +87,7 @@ describe('copyConfigKeyEntry', () => {
     })
   })
 
-  test('skips with log message when configKey is absent from configuration', async () => {
+  test('skips when configKey is absent from configuration', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
@@ -100,7 +100,6 @@ describe('copyConfigKeyEntry', () => {
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith("No value for configKey 'static_root', skipping\n")
     })
   })
 
@@ -199,7 +198,7 @@ describe('copyConfigKeyEntry', () => {
     })
   })
 
-  test('skips with no-value log when [] flatten resolves to a non-array (contract violated)', async () => {
+  test('skips when [] flatten resolves to a non-array (contract violated)', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const outDir = joinPath(tmpDir, 'out')
       await mkdir(outDir)
@@ -215,9 +214,6 @@ describe('copyConfigKeyEntry', () => {
 
       expect(result.filesCopied).toBe(0)
       expect(result.pathMap.size).toBe(0)
-      expect(mockStdout.write).toHaveBeenCalledWith(
-        expect.stringContaining("No value for configKey 'extensions[].targeting[].schema'"),
-      )
     })
   })
 

@@ -1,5 +1,6 @@
 import {joinPath, basename, relativePath, extname} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
 
 /**
@@ -41,7 +42,7 @@ export async function copyConfigKeyEntry(
   }
 
   if (paths.length === 0) {
-    options.stdout.write(`No value for configKey '${key}', skipping\n`)
+    outputDebug(`No value for configKey '${key}', skipping\n`, context.options.stdout)
     return {filesCopied: 0, pathMap: new Map()}
   }
 

@@ -1,6 +1,7 @@
 import {getNestedValue, tokenizePath} from './copy-config-key-entry.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {fileExists, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
 
 interface ConfigKeyManifestEntry {
@@ -120,7 +121,7 @@ export async function generateManifestFile(
   }
   await mkdir(outputDir)
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
-  options.stdout.write(`Generated manifest.json in ${outputDir}\n`)
+  outputDebug(`Generated manifest.json in ${outputDir}\n`, options.stdout)
 }
 
 /**
