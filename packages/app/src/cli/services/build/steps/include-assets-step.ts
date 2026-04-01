@@ -39,8 +39,14 @@ const StaticEntrySchema = z.object({
  * key is absent. Respects `preserveStructure` and `destination` the same way
  * as the static entry.
  *
- * `anchor` and `groupBy` are optional fields used for manifest generation.
- * When both are present, this entry participates in `generateManifestFile`.
+ * `anchor` — the config key path whose array value provides the grouping
+ * dimension. Each array item becomes one top-level manifest entry, keyed by
+ * its `groupBy` field value.
+ *
+ * `groupBy` — the field name within each anchor array item whose string value
+ * becomes the manifest key (e.g. `"target"` → `manifest["admin.link"] = {...}`).
+ *
+ * Both `anchor` and `groupBy` must be set together or both omitted.
  */
 const ConfigKeyEntrySchema = z.object({
   type: z.literal('configKey'),
@@ -61,14 +67,16 @@ const InclusionEntrySchema = z.discriminatedUnion('type', [PatternEntrySchema, S
  * sequentially (to avoid filesystem race conditions on shared output paths),
  * then `pattern` and `static` entries run in parallel.
  *
- * When `generateManifest` is `true`, a `manifest.json` file is written to the
- * output directory after all inclusions complete. Only `configKey` entries
- * that have both `anchor` and `groupBy` set participate in manifest generation.
+ * When `generatesAssetsManifest` is `true`, a `manifest.json` file is written
+ * to the output directory after all inclusions complete. All entry types
+ * contribute their copied output paths to the manifest. `configKey` entries
+ * with `anchor` and `groupBy` produce structured manifest entries; `pattern`
+ * and `static` entries contribute their paths under a `"files"` key.
  */
 const IncludeAssetsConfigSchema = z
   .object({
     inclusions: z.array(InclusionEntrySchema),
-    generateManifest: z.boolean().default(false),
+    generatesAssetsManifest: z.boolean().default(false),
   })
   .superRefine((data, ctx) => {
     for (const [i, entry] of data.inclusions.entries()) {
@@ -97,6 +105,9 @@ const IncludeAssetsConfigSchema = z
  *   Runs sequentially to avoid filesystem race conditions.
  * - `type: 'pattern'` — glob-based file selection from a source directory
  *   (defaults to extension root when `source` is omitted).
+ *
+ * When `generatesAssetsManifest` is `true`, all entry types contribute their
+ * copied output paths to `manifest.json`.
  */
 export async function executeIncludeAssetsStep(
   step: LifecycleStep,
@@ -135,9 +146,7 @@ export async function executeIncludeAssetsStep(
     configKeyCount += result.filesCopied
   }
 
-  // pattern and static entries do not use findUniqueDestPath and do not
-  // contribute to the pathMap, so they are safe to run in parallel.
-  const otherCounts = await Promise.all(
+  const otherResults = await Promise.all(
     config.inclusions
       .filter((entry) => entry.type !== 'configKey')
       .map(async (entry) => {
@@ -148,7 +157,7 @@ export async function executeIncludeAssetsStep(
         if (entry.type === 'pattern') {
           const sourceDir = entry.baseDir ? joinPath(extension.directory, entry.baseDir) : extension.directory
           const destinationDir = sanitizedDest ? joinPath(outputDir, sanitizedDest) : outputDir
-          return copyByPattern(
+          const result = await copyByPattern(
             {
               sourceDir,
               outputDir: destinationDir,
@@ -157,6 +166,11 @@ export async function executeIncludeAssetsStep(
             },
             options,
           )
+          // result.outputPaths are relative to destinationDir; prefix with sanitizedDest for outer outputDir relativity
+          const outputPaths = sanitizedDest
+            ? result.outputPaths.map((outputPath) => joinPath(sanitizedDest, outputPath))
+            : result.outputPaths
+          return {filesCopied: result.filesCopied, outputPaths}
         }
 
         if (entry.type === 'static') {
@@ -173,11 +187,13 @@ export async function executeIncludeAssetsStep(
       }),
   )
 
-  const counts = [configKeyCount, ...otherCounts]
+  const otherFiles = config.generatesAssetsManifest ? otherResults.flatMap((result) => result?.outputPaths ?? []) : []
 
-  if (config.generateManifest) {
+  const counts = [configKeyCount, ...otherResults.map((result) => result?.filesCopied ?? 0)]
+
+  if (config.generatesAssetsManifest) {
     const configKeyEntries = config.inclusions.filter((entry) => entry.type === 'configKey')
-    await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap)
+    await generateManifestFile(configKeyEntries, context, outputDir, aggregatedPathMap, otherFiles)
   }
 
   return {filesCopied: counts.reduce<number>((sum, count) => sum + (count ?? 0), 0)}

@@ -697,7 +697,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -753,7 +753,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -817,7 +817,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -854,7 +854,7 @@ describe('executeIncludeAssetsStep', () => {
       })
     })
 
-    test('does NOT write manifest.json when generateManifest is false (default)', async () => {
+    test('does NOT write manifest.json when generatesAssetsManifest is false (default)', async () => {
       // Given
       const contextWithConfig = {
         ...mockContext,
@@ -872,7 +872,7 @@ describe('executeIncludeAssetsStep', () => {
 
       vi.mocked(fs.fileExists).mockResolvedValue(false)
 
-      // No generateManifest field — defaults to false
+      // No generatesAssetsManifest field — defaults to false
       const step: LifecycleStep = {
         id: 'gen-manifest',
         name: 'Generate Manifest',
@@ -896,18 +896,20 @@ describe('executeIncludeAssetsStep', () => {
       expect(fs.writeFile).not.toHaveBeenCalled()
     })
 
-    test('does NOT write manifest.json when generateManifest is true but all inclusions are pattern/static', async () => {
-      // Given — pattern and static entries never contribute to the manifest
+    test('writes manifest.json with files array when generatesAssetsManifest is true and only pattern inclusions exist', async () => {
+      // Given — pattern entries contribute output paths to the manifest "files" array
       vi.mocked(fs.glob).mockResolvedValue(['/test/extension/public/logo.png'])
       vi.mocked(fs.copyFile).mockResolvedValue()
       vi.mocked(fs.mkdir).mockResolvedValue()
+      vi.mocked(fs.fileExists).mockResolvedValue(false)
+      vi.mocked(fs.writeFile).mockResolvedValue()
 
       const step: LifecycleStep = {
         id: 'gen-manifest',
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [{type: 'pattern', baseDir: 'public', include: ['**/*']}],
         },
       }
@@ -915,8 +917,40 @@ describe('executeIncludeAssetsStep', () => {
       // When
       await executeIncludeAssetsStep(step, mockContext)
 
-      // Then — no configKey inclusions → no manifest written
-      expect(fs.writeFile).not.toHaveBeenCalled()
+      // Then — pattern entry contributes its output path to the manifest
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const manifestContent = JSON.parse(vi.mocked(fs.writeFile).mock.calls[0]![1] as string)
+      expect(manifestContent).toEqual({files: ['logo.png']})
+    })
+
+    test('writes manifest.json with files array from static entry when generatesAssetsManifest is true', async () => {
+      // Given — static file entry contributes its output path to the manifest "files" array
+      vi.mocked(fs.fileExists).mockResolvedValue(true)
+      vi.mocked(fs.isDirectory).mockResolvedValue(false)
+      vi.mocked(fs.mkdir).mockResolvedValue()
+      vi.mocked(fs.copyFile).mockResolvedValue()
+      vi.mocked(fs.writeFile).mockResolvedValue()
+
+      // fileExists returns false for the manifest.json output path check
+      vi.mocked(fs.fileExists).mockImplementation(async (path) => String(path) !== '/test/output/manifest.json')
+
+      const step: LifecycleStep = {
+        id: 'gen-manifest',
+        name: 'Generate Manifest',
+        type: 'include_assets',
+        config: {
+          generatesAssetsManifest: true,
+          inclusions: [{type: 'static', source: 'src/schema.json'}],
+        },
+      }
+
+      // When
+      await executeIncludeAssetsStep(step, mockContext)
+
+      // Then — static entry contributes its output path to the manifest
+      expect(fs.writeFile).toHaveBeenCalledOnce()
+      const manifestContent = JSON.parse(vi.mocked(fs.writeFile).mock.calls[0]![1] as string)
+      expect(manifestContent).toEqual({files: ['schema.json']})
     })
 
     test('writes root-level manifest entry from non-anchored configKey inclusion', async () => {
@@ -934,7 +968,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {type: 'configKey', key: 'targeting.tools'},
             {type: 'configKey', key: 'targeting.instructions'},
@@ -978,7 +1012,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Copy Static',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           // no destination, no preserveStructure → contents merged into output root
           inclusions: [{type: 'configKey', key: 'admin.static_root'}],
         },
@@ -1000,7 +1034,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [{type: 'configKey', key: 'targeting.tools', anchor: 'targeting'}],
         },
       }
@@ -1036,7 +1070,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1072,7 +1106,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1116,7 +1150,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1161,7 +1195,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1182,7 +1216,7 @@ describe('executeIncludeAssetsStep', () => {
       expect(writeFileCall[0]).toBe('/test/output/manifest.json')
     })
 
-    test('still copies files AND writes manifest when generateManifest is true', async () => {
+    test('still copies files AND writes manifest when generatesAssetsManifest is true', async () => {
       // Given
       const contextWithConfig = {
         ...mockContext,
@@ -1201,7 +1235,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1246,7 +1280,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1293,7 +1327,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',
@@ -1349,7 +1383,7 @@ describe('executeIncludeAssetsStep', () => {
         name: 'Generate Manifest',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
             {
               type: 'configKey',

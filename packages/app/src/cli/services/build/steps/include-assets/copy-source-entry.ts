@@ -1,4 +1,4 @@
-import {joinPath, dirname, basename} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname, basename, relativePath} from '@shopify/cli-kit/node/path'
 import {glob, copyFile, copyDirectoryContents, fileExists, mkdir, isDirectory} from '@shopify/cli-kit/node/fs'
 
 /**
@@ -15,8 +15,8 @@ export async function copySourceEntry(
     outputDir: string
   },
   options: {stdout: NodeJS.WritableStream},
-): Promise<number> {
-  const {source, destination, baseDir, outputDir} = config
+): Promise<{filesCopied: number; outputPaths: string[]}> {
+  const {source, destination, baseDir, outputDir, preserveStructure} = config
   const sourcePath = joinPath(baseDir, source)
   if (!(await fileExists(sourcePath))) {
     throw new Error(`Source does not exist: ${sourcePath}`)
@@ -39,11 +39,13 @@ export async function copySourceEntry(
     await copyDirectoryContents(sourcePath, destPath)
     const copied = await glob(['**/*'], {cwd: destPath, absolute: false})
     options.stdout.write(logMsg)
-    return copied.length
+    const destRelToOutput = relativePath(outputDir, destPath)
+    const outputPaths = destRelToOutput ? copied.map((file) => joinPath(destRelToOutput, file)) : copied
+    return {filesCopied: copied.length, outputPaths}
   }
 
   await mkdir(dirname(destPath))
   await copyFile(sourcePath, destPath)
   options.stdout.write(logMsg)
-  return 1
+  return {filesCopied: 1, outputPaths: [relativePath(outputDir, destPath)]}
 }

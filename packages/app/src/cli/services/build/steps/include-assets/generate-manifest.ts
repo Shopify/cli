@@ -29,6 +29,7 @@ export async function generateManifestFile(
   context: BuildContext,
   outputDir: string,
   pathMap: Map<string, string | string[]>,
+  otherFiles: string[],
 ): Promise<void> {
   const {extension, options} = context
 
@@ -45,7 +46,7 @@ export async function generateManifestFile(
     }
   }
 
-  if (anchoredIncs.length === 0 && rootIncs.length === 0) return
+  if (anchoredIncs.length === 0 && rootIncs.length === 0 && otherFiles.length === 0) return
 
   const manifest: {[key: string]: unknown} = {}
 
@@ -99,6 +100,10 @@ export async function generateManifestFile(
       }
       manifest[manifestKey] = shallowMerge(partials)
     }
+  }
+
+  if (otherFiles.length > 0) {
+    manifest.files = otherFiles
   }
 
   if (Object.keys(manifest).length === 0) {
