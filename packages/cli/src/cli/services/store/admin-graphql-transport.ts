@@ -1,11 +1,12 @@
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {clearStoredStoreAppSession} from './session.js'
-import {outputContent, outputToken} from '@shopify/cli-kit/node/output'
+import {outputContent} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {reauthenticateStoreAuthError} from './auth-recovery.js'
 import {PreparedStoreExecuteRequest} from './execute-request.js'
+import {clearStoredStoreAppSession} from './session.js'
 
 function isGraphQLClientError(error: unknown): error is {response: {errors?: unknown; status?: number}} {
   if (!error || typeof error !== 'object' || !('response' in error)) return false
@@ -38,9 +39,10 @@ export async function runAdminStoreGraphQLOperation(input: {
   } catch (error) {
     if (isGraphQLClientError(error) && error.response.status === 401) {
       clearStoredStoreAppSession(input.store, input.sessionUserId)
-      throw new AbortError(
+      throw reauthenticateStoreAuthError(
         `Stored app authentication for ${input.store} is no longer valid.`,
-        `Run ${outputToken.genericShellCommand(`shopify store auth --store ${input.store} --scopes <comma-separated-scopes>`).value} to re-authenticate.`,
+        input.store,
+        '<comma-separated-scopes>',
       )
     }
 

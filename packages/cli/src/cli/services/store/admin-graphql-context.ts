@@ -4,6 +4,7 @@ import {fetch} from '@shopify/cli-kit/node/http'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {maskToken, STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
+import {createStoredStoreAuthError, reauthenticateStoreAuthError} from './auth-recovery.js'
 import {
   clearStoredStoreAppSession,
   getStoredStoreAppSession,
@@ -20,10 +21,7 @@ export interface AdminStoreGraphQLContext {
 
 async function refreshStoreToken(session: StoredStoreAppSession): Promise<StoredStoreAppSession> {
   if (!session.refreshToken) {
-    throw new AbortError(
-      `No refresh token stored for ${session.store}.`,
-      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
-    )
+    throw reauthenticateStoreAuthError(`No refresh token stored for ${session.store}.`, session.store, session.scopes.join(','))
   }
 
   const endpoint = `https://${session.store}/admin/oauth/access_token`
@@ -49,9 +47,10 @@ async function refreshStoreToken(session: StoredStoreAppSession): Promise<Stored
       outputContent`Token refresh failed with HTTP ${outputToken.raw(String(response.status))}: ${outputToken.raw(body.slice(0, 300))}`,
     )
     clearStoredStoreAppSession(session.store, session.userId)
-    throw new AbortError(
+    throw reauthenticateStoreAuthError(
       `Token refresh failed for ${session.store} (HTTP ${response.status}).`,
-      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
+      session.store,
+      session.scopes.join(','),
     )
   }
 
@@ -65,9 +64,10 @@ async function refreshStoreToken(session: StoredStoreAppSession): Promise<Stored
 
   if (!data.access_token) {
     clearStoredStoreAppSession(session.store, session.userId)
-    throw new AbortError(
+    throw reauthenticateStoreAuthError(
       `Token refresh returned an invalid response for ${session.store}.`,
-      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
+      session.store,
+      session.scopes.join(','),
     )
   }
 
@@ -97,10 +97,7 @@ async function loadStoredStoreSession(store: string): Promise<StoredStoreAppSess
   let session = getStoredStoreAppSession(store)
 
   if (!session) {
-    throw new AbortError(
-      `No stored app authentication found for ${store}.`,
-      `Run ${outputToken.genericShellCommand(`shopify store auth --store ${store} --scopes <comma-separated-scopes>`).value} to create stored auth for this store.`,
-    )
+    throw createStoredStoreAuthError(store)
   }
 
   outputDebug(
@@ -133,9 +130,10 @@ async function resolveApiVersion(options: {
       /\b(?:401|404)\b/.test(error.message)
     ) {
       clearStoredStoreAppSession(session.store, session.userId)
-      throw new AbortError(
+      throw reauthenticateStoreAuthError(
         `Stored app authentication for ${session.store} is no longer valid.`,
-        `Run ${outputToken.genericShellCommand(`shopify store auth --store ${session.store} --scopes ${session.scopes.join(',')}`).value} to re-authenticate.`,
+        session.store,
+        session.scopes.join(','),
       )
     }
 
