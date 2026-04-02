@@ -197,18 +197,37 @@ describe('applying environments', async () => {
     },
   )
 
-  runTestInTmpDir('does not apply flags when multiple environments are specified', async (tmpDir: string) => {
+  runTestInTmpDir('deduplicates identical environments and applies single-env path', async (tmpDir: string) => {
+    // Given
+    const outputMock = mockAndCaptureOutput()
+    outputMock.clear()
+
+    // When — duplicate environments are deduplicated to a single entry
+    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--environment', 'validEnvironment'])
+
+    // Then — deduplicated to one environment, so single-env path applies flags
+    expectFlags(tmpDir, 'validEnvironment')
+  })
+
+  runTestInTmpDir('does not apply flags when multiple distinct environments are specified', async (tmpDir: string) => {
     // Given
     const outputMock = mockAndCaptureOutput()
     outputMock.clear()
 
     // When
-    await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment', '--environment', 'validEnvironment'])
+    await MockCommand.run([
+      '--path',
+      tmpDir,
+      '--environment',
+      'validEnvironment',
+      '--environment',
+      'environmentWithPassword',
+    ])
 
     // Then
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
-      environment: ['validEnvironment', 'validEnvironment'],
+      environment: ['validEnvironment', 'environmentWithPassword'],
       someStringWithDefault: 'default stringy',
     })
     expect(outputMock.info()).toEqual('')
@@ -339,7 +358,7 @@ describe('applying environments', async () => {
     // When
     await MockCommand.run(['--path', tmpDir, '--environment', 'nonexistentEnvironment'])
 
-    // Then
+    // Then — expansion found no match, original flags preserved unchanged
     expect(testResult).toEqual({
       path: resolvePath(tmpDir),
       environment: ['nonexistentEnvironment'],
@@ -491,6 +510,69 @@ describe('applying environments', async () => {
       ╰──────────────────────────────────────────────────────────────────────────────╯
       "
     `)
+  })
+
+  describe('glob pattern expansion', () => {
+    runTestInTmpDir('expands a glob pattern matching one environment to single-env path', async (tmpDir: string) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When — "*WithPassword" matches only "environmentWithPassword"
+      await MockCommand.run(['--path', tmpDir, '--environment', '*WithPassword'])
+
+      // Then — single-env path applies the environment's flags
+      expectFlags(tmpDir, 'environmentWithPassword')
+    })
+
+    runTestInTmpDir(
+      'expands a glob pattern matching multiple environments to multi-env passthrough',
+      async (tmpDir: string) => {
+        // Given
+        const outputMock = mockAndCaptureOutput()
+        outputMock.clear()
+
+        // When — "valid*" matches "validEnvironment" and "validEnvironmentWithIrrelevantFlag"
+        await MockCommand.run(['--path', tmpDir, '--environment', 'valid*'])
+
+        // Then — multi-env path: flags are not applied, expanded names are passed through
+        expect(testResult).toEqual({
+          path: resolvePath(tmpDir),
+          environment: ['validEnvironment', 'validEnvironmentWithIrrelevantFlag'],
+          someStringWithDefault: 'default stringy',
+        })
+        expect(outputMock.info()).toEqual('')
+      },
+    )
+
+    runTestInTmpDir('returns original result when glob pattern matches nothing', async (tmpDir: string) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await MockCommand.run(['--path', tmpDir, '--environment', '*-nonexistent'])
+
+      // Then — no environment applied, original flags preserved unchanged
+      expect(testResult).toEqual({
+        path: resolvePath(tmpDir),
+        environment: ['*-nonexistent'],
+        someStringWithDefault: 'default stringy',
+      })
+      expect(outputMock.warn()).toMatch(/No environments matching/)
+    })
+
+    runTestInTmpDir('literal names still work unchanged', async (tmpDir: string) => {
+      // Given
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      // When
+      await MockCommand.run(['--path', tmpDir, '--environment', 'validEnvironment'])
+
+      // Then
+      expectFlags(tmpDir, 'validEnvironment')
+    })
   })
 
   test('shows a warning about NPM separator when using a flag that matches a NPM config env variable', async () => {

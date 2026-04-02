@@ -132,3 +132,152 @@ describe('loading environments', async () => {
     })
   })
 })
+
+const globFileName = 'shopify.theme.toml'
+const globEnvironments = {
+  'us-production': {store: 'us.myshopify.com'},
+  'eu-production': {store: 'eu.myshopify.com'},
+  'int-production': {store: 'int.myshopify.com'},
+  staging: {store: 'staging.myshopify.com'},
+  development: {store: 'dev.myshopify.com'},
+}
+
+describe('getEnvironmentNames', () => {
+  test('returns all environment names', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const names = await environments.getEnvironmentNames(globFileName, {from: tmpDir})
+
+      expect(names).toEqual(['us-production', 'eu-production', 'int-production', 'staging', 'development'])
+    })
+  })
+
+  test('returns empty array when no file exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const names = await environments.getEnvironmentNames(globFileName, {from: tmpDir})
+
+      expect(names).toEqual([])
+    })
+  })
+
+  test('returns empty array when no environments section exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, '# no content')
+
+      const names = await environments.getEnvironmentNames(globFileName, {from: tmpDir})
+
+      expect(names).toEqual([])
+    })
+  })
+})
+
+describe('expandEnvironmentPatterns', () => {
+  test('passes through literal names unchanged', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const result = await environments.expandEnvironmentPatterns(['staging'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual(['staging'])
+    })
+  })
+
+  test('expands * wildcard to matching environments', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const result = await environments.expandEnvironmentPatterns(['*-production'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual(['us-production', 'eu-production', 'int-production'])
+    })
+  })
+
+  test('expands ? single-character wildcard', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const result = await environments.expandEnvironmentPatterns(['??-production'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual(['us-production', 'eu-production'])
+    })
+  })
+
+  test('expands [abc] character class', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const result = await environments.expandEnvironmentPatterns(['[ue]*-production'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual(['us-production', 'eu-production'])
+    })
+  })
+
+  test('expands {a,b} brace expansion', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const result = await environments.expandEnvironmentPatterns(['{us,eu}-production'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual(['us-production', 'eu-production'])
+    })
+  })
+
+  test('deduplicates environments matched by multiple patterns', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+
+      const result = await environments.expandEnvironmentPatterns(['us-*', '*-production'], globFileName, {
+        from: tmpDir,
+      })
+
+      expect(result).toEqual(['us-production', 'eu-production', 'int-production'])
+    })
+  })
+
+  test('warns when a pattern matches nothing', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      const result = await environments.expandEnvironmentPatterns(['*-sandbox'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual([])
+      expect(outputMock.warn()).toMatch(/No environments matching/)
+    })
+  })
+
+  test('returns matches from valid patterns even when another pattern matches nothing', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const filePath = joinPath(tmpDir, globFileName)
+      await writeFile(filePath, tomlEncode({environments: globEnvironments}))
+      const outputMock = mockAndCaptureOutput()
+      outputMock.clear()
+
+      const result = await environments.expandEnvironmentPatterns(['staging', '*-sandbox'], globFileName, {
+        from: tmpDir,
+      })
+
+      expect(result).toEqual(['staging'])
+      expect(outputMock.warn()).toMatch(/No environments matching/)
+    })
+  })
+
+  test('returns empty array when no environments file exists', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const result = await environments.expandEnvironmentPatterns(['*'], globFileName, {from: tmpDir})
+
+      expect(result).toEqual([])
+    })
+  })
+})
