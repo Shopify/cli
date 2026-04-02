@@ -335,8 +335,8 @@ export async function deleteApp(
   await browserPage.waitForTimeout(3000)
 }
 
-/** Best-effort cleanup: find app on dashboard by name, uninstall from all stores, delete. */
-export async function cleanupApp(
+/** Best-effort teardown: find app on dashboard by name, uninstall from all stores, delete. */
+export async function teardownApp(
   ctx: BrowserContext & {
     appName: string
     email?: string
@@ -352,19 +352,19 @@ export async function cleanupApp(
         await deleteApp({browserPage: ctx.browserPage, appUrl: app.url})
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
-        // Best-effort per app — continue cleaning up remaining apps
+        // Best-effort per app — continue teardown of remaining apps
         if (process.env.DEBUG === '1') {
           const msg = err instanceof Error ? err.message : String(err)
-          process.stderr.write(`[e2e] Cleanup failed for app ${app.name}: ${msg}\n`)
+          process.stderr.write(`[e2e] Teardown failed for app ${app.name}: ${msg}\n`)
         }
       }
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
   } catch (err) {
-    // Best-effort — don't fail the test if cleanup fails
+    // Best-effort — don't fail the test if teardown fails
     if (process.env.DEBUG === '1') {
       const msg = err instanceof Error ? err.message : String(err)
-      process.stderr.write(`[e2e] Cleanup failed for ${ctx.appName}: ${msg}\n`)
+      process.stderr.write(`[e2e] Teardown failed for ${ctx.appName}: ${msg}\n`)
     }
   }
 }
