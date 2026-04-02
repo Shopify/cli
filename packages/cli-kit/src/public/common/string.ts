@@ -182,6 +182,16 @@ export function getRandomName(family: RandomNameFamily = 'business'): string {
 }
 
 /**
+ * Generates a random Title Case name by combining an adjective and noun.
+ *
+ * @param family - Theme to use for the random name (business or creative).
+ * @returns A Title Case random name (e.g. "Adaptive Vertical").
+ */
+export function getRandomTitleCaseName(family: RandomNameFamily = 'business'): string {
+  return capitalizeWords(getRandomName(family))
+}
+
+/**
  * Given a string, it returns it with the first letter capitalized.
  *
  * @param str - String to capitalize.

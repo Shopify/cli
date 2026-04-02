@@ -1,7 +1,7 @@
 import {outputContent, outputToken, outputDebug} from './output.js'
 import {joinPath, normalizePath} from './path.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
-import {getRandomName, RandomNameFamily} from '../common/string.js'
+import {capitalize, getRandomName, getRandomTitleCaseName, hyphenate, RandomNameFamily} from '../common/string.js'
 import {
   copy as fsCopy,
   ensureFile as fsEnsureFile,
@@ -537,6 +537,9 @@ interface GenerateRandomDirectoryOptions {
 
   /** Type of word to use for random name. */
   family?: RandomNameFamily
+
+  /** If true, return a Title Case name instead of kebab-case. */
+  titleCase?: boolean
 }
 
 /**
@@ -547,8 +550,12 @@ interface GenerateRandomDirectoryOptions {
  * @returns It returns the name of the directory.
  */
 export async function generateRandomNameForSubdirectory(options: GenerateRandomDirectoryOptions): Promise<string> {
-  const generated = `${getRandomName(options.family ?? 'business')}-${options.suffix}`
-  const randomDirectoryPath = joinPath(options.directory, generated)
+  const family = options.family ?? 'business'
+  const baseName = options.titleCase ? getRandomTitleCaseName(family) : getRandomName(family)
+  const suffix = options.titleCase ? capitalize(options.suffix) : options.suffix
+  const generated = options.titleCase ? `${baseName} ${suffix}` : `${baseName}-${suffix}`
+  const directoryName = options.titleCase ? hyphenate(generated) : generated
+  const randomDirectoryPath = joinPath(options.directory, directoryName)
   const isAppDirectoryTaken = await fileExists(randomDirectoryPath)
 
   if (isAppDirectoryTaken) {
