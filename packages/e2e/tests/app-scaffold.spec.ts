@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-imports */
-import {appTestFixture as test, createApp, buildApp, generateExtension, cleanupApp} from '../setup/app.js'
+import {appTestFixture as test, createApp, buildApp, generateExtension, teardownApp} from '../setup/app.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -39,7 +39,7 @@ test.describe('App scaffold', () => {
       expect(buildResult.exitCode, `build failed:\nstderr: ${buildResult.stderr}`).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
-      await cleanupApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
     }
   })
 
@@ -64,7 +64,7 @@ test.describe('App scaffold', () => {
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
-      await cleanupApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
     }
   })
 
@@ -106,7 +106,7 @@ test.describe('App scaffold', () => {
       expect(buildResult.exitCode, `build failed:\nstderr: ${buildResult.stderr}`).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
-      await cleanupApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
     }
   })
 })

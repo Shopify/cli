@@ -1,4 +1,4 @@
-import {appTestFixture as test, createApp, cleanupApp} from '../setup/app.js'
+import {appTestFixture as test, createApp, teardownApp} from '../setup/app.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -44,7 +44,7 @@ test.describe('App dev server', () => {
       expect(exitCode).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})
-      await cleanupApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
     }
   })
 })
