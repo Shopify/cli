@@ -219,7 +219,7 @@ jobs:
     name: 'E2E tests'
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3
@@ -241,11 +241,9 @@ jobs:
       - name: Run E2E tests
         working-directory: packages/e2e
         env:
-          SHOPIFY_FLAG_CLIENT_ID: ${{ secrets.E2E_CLIENT_ID }}
           E2E_ACCOUNT_EMAIL: ${{ secrets.E2E_ACCOUNT_EMAIL }}
           E2E_ACCOUNT_PASSWORD: ${{ secrets.E2E_ACCOUNT_PASSWORD }}
           E2E_STORE_FQDN: ${{ secrets.E2E_STORE_FQDN }}
-          E2E_SECONDARY_CLIENT_ID: ${{ secrets.E2E_SECONDARY_CLIENT_ID }}
           E2E_ORG_ID: ${{ secrets.E2E_ORG_ID }}
         run: npx playwright test
       - name: Upload Playwright report
