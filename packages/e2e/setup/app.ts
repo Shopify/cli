@@ -1,27 +1,16 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
 import {authFixture} from './auth.js'
+import {navigateToDashboard} from './browser.js'
 import * as path from 'path'
 import * as fs from 'fs'
-import type {CLIProcess, ExecResult} from './cli.js'
-import type {Page} from '@playwright/test'
-
-// ---------------------------------------------------------------------------
-// Shared context types
-// ---------------------------------------------------------------------------
-
-export interface CLIContext {
-  cli: CLIProcess
-  appDir: string
-}
+import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
+import type {BrowserContext} from './browser.js'
 
 // Env override applied to all CLI helpers — strips CLIENT_ID so commands use the app's own toml.
 // NOTE: Do NOT add SHOPIFY_CLI_PARTNERS_TOKEN here. The partners token overrides OAuth in the
-// CLI's auth priority, and its App Management API exchange can't create apps. OAuth handles everything.
+// CLI's auth priority, and the App Management API token it exchanges to lacks permissions to
+// create apps (403). OAuth provides the full set of required permissions.
 const FRESH_APP_ENV = {SHOPIFY_FLAG_CLIENT_ID: undefined}
-
-export interface BrowserContext {
-  browserPage: Page
-}
 
 // ---------------------------------------------------------------------------
 // CLI helpers — thin wrappers around cli.exec()
@@ -177,39 +166,8 @@ export async function configLink(
 }
 
 // ---------------------------------------------------------------------------
-// Browser helpers — use Playwright for actions without CLI commands
+// Browser helpers — app-specific dashboard automation
 // ---------------------------------------------------------------------------
-
-/** Navigate to the dev dashboard for the configured org. */
-export async function navigateToDashboard(
-  ctx: BrowserContext & {
-    email?: string
-    orgId?: string
-  },
-): Promise<void> {
-  const {browserPage} = ctx
-  const orgId = ctx.orgId ?? (process.env.E2E_ORG_ID ?? '').split('#')[0]!.trim()
-  const dashboardUrl = orgId ? `https://dev.shopify.com/dashboard/${orgId}/apps` : 'https://dev.shopify.com/dashboard'
-  await browserPage.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
-  await browserPage.waitForTimeout(3000)
-
-  // Handle account picker (skip if email not provided)
-  if (ctx.email) {
-    const accountButton = browserPage.locator(`text=${ctx.email}`).first()
-    if (await accountButton.isVisible({timeout: 5000}).catch(() => false)) {
-      await accountButton.click()
-      await browserPage.waitForTimeout(3000)
-    }
-  }
-
-  // Retry on 500 errors
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    await browserPage.waitForTimeout(3000)
-    const pageText = (await browserPage.textContent('body')) ?? ''
-    if (!pageText.includes('500') && !pageText.includes('Internal Server Error')) break
-    await browserPage.reload({waitUntil: 'domcontentloaded'})
-  }
-}
 
 /** Find apps matching a name pattern on the dashboard. Call navigateToDashboard first. */
 export async function findAppsOnDashboard(
@@ -225,7 +183,7 @@ export async function findAppsOnDashboard(
     const text = await card.textContent()
     if (!href || !text || !href.match(/\/apps\/\d+/)) continue
 
-    const name = text.split(/\d+ install/)[0]?.trim() ?? text.split('\n')[0]?.trim() ?? text.trim()
+    const name = text.split(/\d+\s+install/i)[0]?.trim() ?? text.split('\n')[0]?.trim() ?? text.trim()
     if (!name || name.length > 200) continue
     if (!name.includes(ctx.namePattern)) continue
 
@@ -245,7 +203,7 @@ export async function uninstallApp(
   },
 ): Promise<boolean> {
   const {browserPage, appUrl, appName} = ctx
-  const orgId = ctx.orgId ?? (process.env.E2E_ORG_ID ?? '').split('#')[0]!.trim()
+  const orgId = ctx.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
 
   await browserPage.goto(`${appUrl}/installs`, {waitUntil: 'domcontentloaded'})
   await browserPage.waitForTimeout(3000)
@@ -264,7 +222,9 @@ export async function uninstallApp(
   for (const storeName of storeNames) {
     try {
       // Navigate to store admin via the dev dashboard dropdown
-      const dashboardUrl = `https://dev.shopify.com/dashboard/${orgId}/apps`
+      const dashboardUrl = orgId
+        ? `https://dev.shopify.com/dashboard/${orgId}/apps`
+        : 'https://dev.shopify.com/dashboard'
       let navigated = false
       for (let attempt = 1; attempt <= 3; attempt++) {
         await browserPage.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
@@ -293,7 +253,7 @@ export async function uninstallApp(
 
       // Navigate to store's apps settings page
       const storeAdminUrl = browserPage.url()
-      await browserPage.goto(`${storeAdminUrl.replace(/\/$/, '')}/settings/apps`, {waitUntil: 'networkidle'})
+      await browserPage.goto(`${storeAdminUrl.replace(/\/$/, '')}/settings/apps`, {waitUntil: 'domcontentloaded'})
       await browserPage.waitForTimeout(5000)
 
       // Dismiss any Dev Console dialog
@@ -392,13 +352,21 @@ export async function cleanupApp(
         await uninstallApp({browserPage: ctx.browserPage, appUrl: app.url, appName: app.name, orgId: ctx.orgId})
         await deleteApp({browserPage: ctx.browserPage, appUrl: app.url})
         // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (_err) {
+      } catch (err) {
         // Best-effort per app — continue cleaning up remaining apps
+        if (process.env.DEBUG === '1') {
+          const msg = err instanceof Error ? err.message : String(err)
+          process.stderr.write(`[e2e] Cleanup failed for app ${app.name}: ${msg}\n`)
+        }
       }
     }
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_err) {
+  } catch (err) {
     // Best-effort — don't fail the test if cleanup fails
+    if (process.env.DEBUG === '1') {
+      const msg = err instanceof Error ? err.message : String(err)
+      process.stderr.write(`[e2e] Cleanup failed for ${ctx.appName}: ${msg}\n`)
+    }
   }
 }
 

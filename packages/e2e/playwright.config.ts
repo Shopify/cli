@@ -1,8 +1,8 @@
 /* eslint-disable line-comment-position */
-import {loadEnv} from './helpers/load-env.js'
+import {config} from 'dotenv'
 import {defineConfig} from '@playwright/test'
 
-loadEnv(import.meta.url)
+config()
 
 const isCI = Boolean(process.env.CI)
 

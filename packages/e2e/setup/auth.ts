@@ -17,14 +17,6 @@ import {execa} from 'execa'
 export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
   authLogin: [
     async ({env, browserPage}, use) => {
-      // Remove the partners token BEFORE any CLI commands run (and before the early-return).
-      // The token takes highest priority in the CLI auth chain (getAppAutomationToken in session.ts).
-      // When present, the CLI exchanges it for an App Management token that can't create apps (403).
-      // We must delete from BOTH env.processEnv AND process.env because execa merges its env
-      // option with the parent's process.env by default (extendEnv: true).
-      delete env.processEnv.SHOPIFY_CLI_PARTNERS_TOKEN
-      delete process.env.SHOPIFY_CLI_PARTNERS_TOKEN
-
       const email = process.env.E2E_ACCOUNT_EMAIL
       const password = process.env.E2E_ACCOUNT_PASSWORD
 
