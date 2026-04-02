@@ -20,17 +20,15 @@ import type {BuildContext} from '../../client-steps.js'
  * value to its output-relative location. File sources map to a single string.
  * Directory sources map to a `string[]` of every output-relative file path.
  */
-export async function copyConfigKeyEntry(
-  config: {
-    key: string
-    baseDir: string
-    outputDir: string
-    context: BuildContext
-    destination?: string
-  },
-  options: {stdout: NodeJS.WritableStream},
-): Promise<{filesCopied: number; pathMap: Map<string, string | string[]>}> {
+export async function copyConfigKeyEntry(config: {
+  key: string
+  baseDir: string
+  outputDir: string
+  context: BuildContext
+  destination?: string
+}): Promise<{filesCopied: number; pathMap: Map<string, string | string[]>}> {
   const {key, baseDir, outputDir, context, destination} = config
+  const {stdout} = context.options
   const value = getNestedValue(context.extension.configuration, key)
   let paths: string[]
   if (typeof value === 'string') {
@@ -42,7 +40,7 @@ export async function copyConfigKeyEntry(
   }
 
   if (paths.length === 0) {
-    outputDebug(`No value for configKey '${key}', skipping\n`, context.options.stdout)
+    outputDebug(`No value for configKey '${key}', skipping\n`, stdout)
     return {filesCopied: 0, pathMap: new Map()}
   }
 
@@ -62,7 +60,7 @@ export async function copyConfigKeyEntry(
     const fullPath = joinPath(baseDir, sourcePath)
     const exists = await fileExists(fullPath)
     if (!exists) {
-      options.stdout.write(`Warning: path '${sourcePath}' does not exist, skipping\n`)
+      stdout.write(`Warning: path '${sourcePath}' does not exist, skipping\n`)
       continue
     }
 
@@ -73,7 +71,7 @@ export async function copyConfigKeyEntry(
     if (sourceIsDir) {
       await copyDirectoryContents(fullPath, destDir)
       const copied = await glob(['**/*'], {cwd: destDir, absolute: false})
-      options.stdout.write(`Included '${sourcePath}'\n`)
+      stdout.write(`Included '${sourcePath}'\n`)
       const relFiles = copied.map((file) => relativePath(outputDir, joinPath(destDir, file)))
       pathMap.set(sourcePath, relFiles)
       filesCopied += copied.length
@@ -82,7 +80,7 @@ export async function copyConfigKeyEntry(
       const uniqueDestPath = await findUniqueDestPath(destDir, basename(fullPath))
       await copyFile(fullPath, uniqueDestPath)
       const outputRelative = relativePath(outputDir, uniqueDestPath)
-      options.stdout.write(`Included '${sourcePath}'\n`)
+      stdout.write(`Included '${sourcePath}'\n`)
       pathMap.set(sourcePath, outputRelative)
       filesCopied += 1
     }
