@@ -2147,6 +2147,9 @@ FLAGS
                                 For backwards compatibility, :theme_app_extension is also supported
   -a, --auto-correct            [env: SHOPIFY_FLAG_AUTO_CORRECT] Automatically fix offenses
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -o, --output=<option>         [default: text, env: SHOPIFY_FLAG_OUTPUT] The output format to use
                                 <options: text|json>
   -v, --version                 [env: SHOPIFY_FLAG_VERSION] Print Theme Check version
@@ -2179,6 +2182,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -2213,6 +2219,9 @@ FLAGS
   -a, --show-all                [env: SHOPIFY_FLAG_SHOW_ALL] Include others development themes in theme list.
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Delete your development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -f, --force                   [env: SHOPIFY_FLAG_FORCE] Skip confirmation.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2252,7 +2261,9 @@ FLAGS
       [env: SHOPIFY_FLAG_ALLOW_LIVE] Allow development on a live theme.
 
   -e, --environment=<value>...
-      [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+      [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command. Supports glob patterns (e.g.
+      "*-production"). Patterns that resolve to multiple environments only work on commands that support multiple
+      environments. Wrap the value in double quotes if you're using wildcards.
 
   -n, --nodelete
       [env: SHOPIFY_FLAG_NODELETE] Prevents files from being deleted in the remote theme when a file has been deleted
@@ -2369,6 +2380,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -f, --force                   [env: SHOPIFY_FLAG_FORCE] Force the duplicate operation to run without prompts or
                                 confirmations.
   -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
@@ -2431,6 +2445,9 @@ USAGE
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Retrieve info from your development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2510,6 +2527,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2539,6 +2559,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
       --no-color                [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -2569,6 +2592,9 @@ FLAGS
   -E, --editor                  [env: SHOPIFY_FLAG_EDITOR] Open the theme editor for the specified theme in the browser.
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Open your development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -l, --live                    [env: SHOPIFY_FLAG_LIVE] Open your live (published) theme.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2635,6 +2661,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
   -t, --theme=<value>           (required) [env: SHOPIFY_FLAG_THEME_ID] Theme ID or name of the remote theme.
@@ -2671,6 +2700,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -j, --json                    [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2705,6 +2737,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -f, --force                   [env: SHOPIFY_FLAG_FORCE] Skip confirmation.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
@@ -2743,6 +2778,9 @@ USAGE
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Pull theme files from your remote development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -l, --live                    [env: SHOPIFY_FLAG_LIVE] Pull theme files from your remote live theme.
   -n, --nodelete                [env: SHOPIFY_FLAG_NODELETE] Prevent deleting local files that don't exist remotely.
   -o, --only=<value>...         [env: SHOPIFY_FLAG_ONLY] Download only the specified files (Multiple flags allowed).
@@ -2784,6 +2822,9 @@ FLAGS
   -d, --development                  [env: SHOPIFY_FLAG_DEVELOPMENT] Push theme files from your remote development
                                      theme.
   -e, --environment=<value>...       [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                     Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                     environments only work on commands that support multiple environments. Wrap the
+                                     value in double quotes if you're using wildcards.
   -j, --json                         [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color
                                      output.
   -l, --live                         [env: SHOPIFY_FLAG_LIVE] Push theme files from your remote live theme.
@@ -2858,6 +2899,9 @@ USAGE
 FLAGS
   -d, --development             [env: SHOPIFY_FLAG_DEVELOPMENT] Rename your development theme.
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -l, --live                    [env: SHOPIFY_FLAG_LIVE] Rename your remote live theme.
   -n, --name=<value>            [env: SHOPIFY_FLAG_NEW_NAME] The new name for the theme.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
@@ -2890,6 +2934,9 @@ USAGE
 
 FLAGS
   -e, --environment=<value>...  [env: SHOPIFY_FLAG_ENVIRONMENT] The environment to apply to the current command.
+                                Supports glob patterns (e.g. "*-production"). Patterns that resolve to multiple
+                                environments only work on commands that support multiple environments. Wrap the value in
+                                double quotes if you're using wildcards.
   -s, --store=<value>           [env: SHOPIFY_FLAG_STORE] Store URL. It can be the store prefix (example) or the full
                                 myshopify.com URL (example.myshopify.com, https://example.myshopify.com).
       --listing=<value>         [env: SHOPIFY_FLAG_LISTING] The listing preset to use for multi-preset themes. Applies
