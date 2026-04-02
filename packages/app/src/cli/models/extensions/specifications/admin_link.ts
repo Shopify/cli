@@ -41,7 +41,8 @@ const adminLinkSpec = createContractBasedModuleSpecification({
       ],
     },
   ],
-  appModuleFeatures: () => ['localization'],
+  getOutputRelativePath: (extension) => extension.handle,
+  appModuleFeatures: () => ['localization', 'ui_preview'],
 })
 
 export default adminLinkSpec

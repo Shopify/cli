@@ -32,10 +32,18 @@ describe('admin_link', async () => {
     })
   })
 
-  test('has localization in appModuleFeatures', async () => {
+  test('has localization and ui_preview in appModuleFeatures', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const extension = await getTestAdminLink(tmpDir)
       expect(extension.specification.appModuleFeatures()).toContain('localization')
+      expect(extension.specification.appModuleFeatures()).toContain('ui_preview')
+    })
+  })
+
+  test('is previewable', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const extension = await getTestAdminLink(tmpDir)
+      expect(extension.isPreviewable).toBe(true)
     })
   })
 
@@ -49,15 +57,15 @@ describe('admin_link', async () => {
       const steps = clientSteps[0]!.steps
       expect(steps).toHaveLength(1)
       expect(steps[0]).toMatchObject({
-        id: 'copy-admin-link-assets',
-        name: 'Copy Admin Link Assets',
+        id: 'include-admin-link-assets',
+        name: 'Include Admin Link Assets',
         type: 'include_assets',
         config: {
-          generateManifest: true,
+          generatesAssetsManifest: true,
           inclusions: [
-            {type: 'configKey', key: 'targeting[].tools'},
-            {type: 'configKey', key: 'targeting[].instructions'},
-            {type: 'configKey', key: 'targeting[].intents[].schema'},
+            {type: 'configKey', key: 'extensions[].targeting[].tools'},
+            {type: 'configKey', key: 'extensions[].targeting[].instructions'},
+            {type: 'configKey', key: 'extensions[].targeting[].intents[].schema'},
           ],
         },
       })
