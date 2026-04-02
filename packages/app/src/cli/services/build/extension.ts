@@ -8,7 +8,7 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
@@ -124,6 +124,8 @@ export async function buildFunctionExtension(
   extension: ExtensionInstance,
   options: BuildFunctionExtensionOptions,
 ): Promise<void> {
+  await warnIfSchemaMismatch(extension as ExtensionInstance<FunctionConfigType>)
+
   const lockfilePath = joinPath(extension.directory, '.build-lock')
   let releaseLock
   try {
@@ -219,6 +221,30 @@ async function buildOtherFunction(extension: ExtensionInstance, options: BuildFu
     await buildGraphqlTypes(extension, options)
   }
   return runCommand(extension.buildCommand, extension, options)
+}
+
+const API_VERSION_DIRECTIVE_RE = /@apiVersion\(version:\s*"([^"]+)"\)/
+
+async function warnIfSchemaMismatch(extension: ExtensionInstance<FunctionConfigType>) {
+  const schemaPath = joinPath(extension.directory, 'schema.graphql')
+  let content: string
+  try {
+    content = await readFile(schemaPath)
+  } catch (error) {
+    if (error instanceof Error && 'code' in error) return
+    throw error
+  }
+
+  const match = API_VERSION_DIRECTIVE_RE.exec(content)
+  if (!match) return
+
+  const schemaVersion = match[1]!
+  const tomlVersion = extension.configuration.api_version
+  if (schemaVersion !== tomlVersion) {
+    outputWarn(
+      `schema.graphql was generated for API version ${schemaVersion} but your extension targets ${tomlVersion}. Run \`shopify app function schema\` to update.`,
+    )
+  }
 }
 
 async function runCommand(buildCommand: string, extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
