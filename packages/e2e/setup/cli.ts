@@ -239,4 +239,9 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
   },
 })
 
+export interface CLIContext {
+  cli: CLIProcess
+  appDir: string
+}
+
 export {type E2EEnv}
