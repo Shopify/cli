@@ -295,6 +295,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     | 'clientSteps'
     | 'experience'
     | 'transformRemoteToLocal'
+    | 'getOutputRelativePath'
   >,
 ) {
   return createExtensionSpecification({
@@ -305,6 +306,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     buildConfig: spec.buildConfig ?? {mode: 'none'},
     clientSteps: spec.clientSteps,
     uidStrategy: spec.uidStrategy,
+    getOutputRelativePath: spec.getOutputRelativePath,
     transformRemoteToLocal: spec.transformRemoteToLocal,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)

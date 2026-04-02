@@ -28,6 +28,7 @@ import webPixelSpec from './specifications/web_pixel_extension.js'
 import editorExtensionCollectionSpecification from './specifications/editor_extension_collection.js'
 import channelSpecificationSpec from './specifications/channel.js'
 import adminSpecificationSpec from './specifications/admin.js'
+import adminLinkSpec from './specifications/admin_link.js'
 
 const SORTED_CONFIGURATION_SPEC_IDENTIFIERS = [
   BrandingSpecIdentifier,
@@ -80,6 +81,7 @@ function loadSpecifications() {
     webPixelSpec,
     editorExtensionCollectionSpecification,
     channelSpecificationSpec,
+    adminLinkSpec,
   ]
 
   return [...configModuleSpecs, ...moduleSpecs] as ExtensionSpecification[]

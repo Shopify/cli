@@ -1,4 +1,3 @@
-import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
@@ -239,6 +238,45 @@ describe('getUIExtensionPayload', () => {
               },
             },
           ],
+        },
+      ])
+    })
+  })
+
+  test('reads from targeting when extension_points is not set', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-admin-link',
+          type: 'admin_link',
+          targeting: [{target: 'admin.app.link', url: '/editor', tools: './tools.json'}],
+        } as any,
+        devUUID: 'devUUID',
+      })
+
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {'admin.app.link': {tools: 'tools.json'}},
+        {'tools.json': '{"tools": []}'},
+      )
+
+      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'admin.app.link',
+          assets: {
+            tools: {
+              name: 'tools',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/tools.json',
+              lastUpdated: expect.any(Number),
+            },
+          },
         },
       ])
     })
