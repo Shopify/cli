@@ -90,6 +90,21 @@ const MODULE_CLI_A_NO_UID: AppModuleVersion = {
   },
 }
 
+const MODULE_CLI_A_EXTERNAL_IDENTIFIER: AppModuleVersion = {
+  registrationId: 'A',
+  registrationUuid: 'UUID_A',
+  registrationTitle: 'Checkout post purchase',
+  type: 'checkout_post_purchase_external',
+  specification: {
+    identifier: 'checkout_post_purchase_external',
+    name: 'Post purchase UI extension',
+    experience: 'extension',
+    options: {
+      managementExperience: 'cli',
+    },
+  },
+}
+
 const MODULE_DASHBOARD_MIGRATED_CLI_A: AppModuleVersion = {
   registrationId: 'A',
   registrationUuid: 'UUID_A',
@@ -567,6 +582,52 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
       })
     })
+
+    test('and there is an active version with a module matching a local spec external identifier then cli extension should be unchanged', async () => {
+      // Given
+      const extensionsToConfirm = {
+        validMatches: {EXTENSION_A: 'UUID_A'},
+        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
+        extensionsToCreate: [EXTENSION_A_2],
+        didMigrateDashboardExtensions: false,
+      }
+      vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
+      const remoteExtensionRegistrations = {
+        app: {
+          extensionRegistrations: [REGISTRATION_A],
+          configurationRegistrations: [],
+          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
+        },
+      }
+      const activeAppVersion = {
+        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A_EXTERNAL_IDENTIFIER],
+      }
+
+      const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
+        appExtensionRegistrations: (_app: MinimalAppIdentifiers) => Promise.resolve(remoteExtensionRegistrations),
+      })
+
+      // When
+      const result = await extensionsIdentifiersDeployBreakdown(
+        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
+      )
+
+      // Then
+      expect(result).toEqual({
+        extensionIdentifiersBreakdown: {
+          onlyRemote: [],
+          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
+          toUpdate: [],
+          unchanged: [
+            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
+            buildDashboardBreakdownInfo('Dashboard A'),
+          ],
+        },
+        extensionsToConfirm,
+        remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
+      })
+    })
+
     test('and there is an active version with matching dashboard migrated cli app modules then migrated extension should be returned in the to create', async () => {
       // Given
       const remoteExtensionRegistrations = {
