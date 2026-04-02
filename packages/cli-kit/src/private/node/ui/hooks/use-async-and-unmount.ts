@@ -1,5 +1,5 @@
-import {useComplete} from '../../ui.js'
-import {useEffect, useState} from 'react'
+import {useApp} from 'ink'
+import {useEffect} from 'react'
 
 interface Options {
   onFulfilled?: () => unknown
@@ -10,24 +10,17 @@ export default function useAsyncAndUnmount(
   asyncFunction: () => Promise<unknown>,
   {onFulfilled = () => {}, onRejected = () => {}}: Options = {},
 ) {
-  const complete = useComplete()
-  const [result, setResult] = useState<{error?: Error} | null>(null)
+  const {exit: unmountInk} = useApp()
 
   useEffect(() => {
     asyncFunction()
       .then(() => {
         onFulfilled()
-        setResult({})
+        unmountInk()
       })
       .catch((error) => {
         onRejected(error)
-        setResult({error})
+        unmountInk(error)
       })
   }, [])
-
-  useEffect(() => {
-    if (result !== null) {
-      complete(result.error)
-    }
-  }, [result])
 }

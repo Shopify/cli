@@ -28,7 +28,6 @@ describe('ConcurrentOutput', () => {
     // Given
     const backendSync = new Synchronizer()
     const frontendSync = new Synchronizer()
-    const gate = new Synchronizer()
 
     const backendProcess = {
       prefix: 'backend',
@@ -38,7 +37,6 @@ describe('ConcurrentOutput', () => {
         stdout.write('third backend message')
 
         backendSync.resolve()
-        await gate.promise
       },
     }
 
@@ -52,7 +50,6 @@ describe('ConcurrentOutput', () => {
         stdout.write('third frontend message')
 
         frontendSync.resolve()
-        await gate.promise
       },
     }
     // When
@@ -75,8 +72,6 @@ describe('ConcurrentOutput', () => {
       00:00:00 │ frontend │ third frontend message
       "
     `)
-
-    gate.resolve()
   })
 
   test('strips ansi codes from the output by default', async () => {
@@ -84,14 +79,12 @@ describe('ConcurrentOutput', () => {
 
     // Given
     const processSync = new Synchronizer()
-    const gate = new Synchronizer()
     const processes = [
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write(`\u001b[32m${output}\u001b[39m`)
           processSync.resolve()
-          await gate.promise
         },
       },
     ]
@@ -105,7 +98,6 @@ describe('ConcurrentOutput', () => {
     const logColumns = renderInstance.lastFrame()!.split('│')
     expect(logColumns.length).toBe(3)
     expect(logColumns[2]?.trim()).toEqual(output)
-    gate.resolve()
   })
 
   test('does not strip ansi codes from the output when stripAnsi is false', async () => {
@@ -113,7 +105,6 @@ describe('ConcurrentOutput', () => {
 
     // Given
     const processSync = new Synchronizer()
-    const gate = new Synchronizer()
     const processes = [
       {
         prefix: '1',
@@ -122,7 +113,6 @@ describe('ConcurrentOutput', () => {
             stdout.write(output)
           })
           processSync.resolve()
-          await gate.promise
         },
       },
     ]
@@ -136,13 +126,11 @@ describe('ConcurrentOutput', () => {
     const logColumns = renderInstance.lastFrame()!.split('│')
     expect(logColumns.length).toBe(3)
     expect(logColumns[2]?.trim()).toEqual(output)
-    gate.resolve()
   })
 
   test('renders custom prefixes on log lines', async () => {
     // Given
     const processSync = new Synchronizer()
-    const gate = new Synchronizer()
     const extensionName = 'my-extension'
     const processes = [
       {
@@ -152,7 +140,6 @@ describe('ConcurrentOutput', () => {
             stdout.write('foo bar')
           })
           processSync.resolve()
-          await gate.promise
         },
       },
     ]
@@ -174,14 +161,12 @@ describe('ConcurrentOutput', () => {
     const logColumns = unstyled(renderInstance.lastFrame()!).split('│')
     expect(logColumns.length).toBe(3)
     expect(logColumns[1]?.trim()).toEqual(extensionName)
-    gate.resolve()
   })
 
   test('renders prefix column width based on prefixColumnSize', async () => {
     // Given
     const processSync1 = new Synchronizer()
     const processSync2 = new Synchronizer()
-    const gate = new Synchronizer()
 
     const columnSize = 5
     const processes = [
@@ -190,7 +175,6 @@ describe('ConcurrentOutput', () => {
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('foo')
           processSync1.resolve()
-          await gate.promise
         },
       },
       {
@@ -198,7 +182,6 @@ describe('ConcurrentOutput', () => {
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('bar')
           processSync2.resolve()
-          await gate.promise
         },
       },
     ]
@@ -223,25 +206,22 @@ describe('ConcurrentOutput', () => {
       // Including spacing
       expect(logColumns[1]?.length).toBe(columnSize + 2)
     })
-    gate.resolve()
   })
 
   test('renders prefix column width based on processes by default', async () => {
     // Given
     const processSync = new Synchronizer()
-    const gate = new Synchronizer()
     const processes = [
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('foo')
           processSync.resolve()
-          await gate.promise
         },
       },
-      {prefix: '12', action: async () => gate.promise},
-      {prefix: '123', action: async () => gate.promise},
-      {prefix: '1234', action: async () => gate.promise},
+      {prefix: '12', action: async () => {}},
+      {prefix: '123', action: async () => {}},
+      {prefix: '1234', action: async () => {}},
     ]
 
     // When
@@ -254,23 +234,20 @@ describe('ConcurrentOutput', () => {
     expect(logColumns.length).toBe(3)
     // 4 is largest prefix, plus spacing
     expect(logColumns[1]?.length).toBe(4 + 2)
-    gate.resolve()
   })
 
   test('does not render prefix column larger than max', async () => {
     // Given
     const processSync = new Synchronizer()
-    const gate = new Synchronizer()
     const processes = [
       {
         prefix: '1',
         action: async (stdout: Writable, _stderr: Writable, _signal: AbortSignal) => {
           stdout.write('foo')
           processSync.resolve()
-          await gate.promise
         },
       },
-      {prefix: new Array(26).join('0'), action: async () => gate.promise},
+      {prefix: new Array(26).join('0'), action: async () => {}},
     ]
 
     // When
@@ -283,7 +260,6 @@ describe('ConcurrentOutput', () => {
     expect(logColumns.length).toBe(3)
     // 25 is largest column allowed, plus spacing
     expect(logColumns[1]?.length).toBe(25 + 2)
-    gate.resolve()
   })
 
   test('rejects with the error thrown inside one of the processes', async () => {

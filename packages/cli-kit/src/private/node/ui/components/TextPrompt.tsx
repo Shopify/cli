@@ -1,6 +1,6 @@
 import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {TextInput} from './TextInput.js'
-import {handleCtrlC, useComplete} from '../../ui.js'
+import {handleCtrlC} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -8,7 +8,7 @@ import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
 
-import {Box, useInput, Text} from 'ink'
+import {Box, useApp, useInput, Text} from 'ink'
 import figures from 'figures'
 
 export interface TextPromptProps {
@@ -60,7 +60,7 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   const answerOrDefault = answer.length > 0 ? answer : defaultValue
   const displayEmptyValue = answerOrDefault === ''
   const displayedAnswer = displayEmptyValue ? emptyDisplayedValue : answerOrDefault
-  const complete = useComplete()
+  const {exit: unmountInk} = useApp()
   const [error, setError] = useState<string | undefined>(undefined)
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
@@ -84,9 +84,9 @@ const TextPrompt: FunctionComponent<TextPromptProps> = ({
   useEffect(() => {
     if (promptState === PromptState.Submitted) {
       onSubmit(answerOrDefault)
-      complete()
+      unmountInk()
     }
-  }, [answerOrDefault, onSubmit, promptState, complete])
+  }, [answerOrDefault, onSubmit, promptState, unmountInk])
 
   return isAborted ? null : (
     <Box flexDirection="column" marginBottom={1} width={oneThird}>

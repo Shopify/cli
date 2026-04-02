@@ -1,5 +1,5 @@
-import {Stdout, InkLifecycleRoot} from '../ui.js'
-import React, {ReactElement} from 'react'
+import {Stdout} from '../ui.js'
+import {ReactElement} from 'react'
 import {render as inkRender} from 'ink'
 
 import {EventEmitter} from 'events'
@@ -66,7 +66,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
   const stderr = new Stderr()
   const stdin = new Stdin()
 
-  const instance = inkRender(React.createElement(InkLifecycleRoot, null, tree), {
+  const instance = inkRender(tree, {
     stdout: options.stdout ?? (stdout as any),
 
     stderr: options.stderr ?? (stderr as any),
@@ -78,7 +78,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
   })
 
   return {
-    rerender: (tree: ReactElement) => instance.rerender(React.createElement(InkLifecycleRoot, null, tree)),
+    rerender: instance.rerender,
     unmount: instance.unmount,
     cleanup: instance.cleanup,
     waitUntilExit: () => trackPromise(instance.waitUntilExit().then(() => {})),

@@ -5,11 +5,10 @@ import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {throttle} from '../../../../public/common/function.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
-import {useComplete} from '../../ui.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 
 import React, {ReactElement, useCallback, useEffect, useRef, useState} from 'react'
-import {Box} from 'ink'
+import {Box, useApp} from 'ink'
 
 export interface SearchResults<T> {
   data: SelectItem<T>[]
@@ -43,7 +42,7 @@ function AutocompletePrompt<T>({
   infoMessage,
   groupOrder,
 }: React.PropsWithChildren<AutocompletePromptProps<T>>): ReactElement | null {
-  const complete = useComplete()
+  const {exit: unmountInk} = useApp()
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState<SelectItem<T>[]>(choices)
   const canSearch = choices.length > MIN_NUMBER_OF_ITEMS_FOR_SEARCH
@@ -73,10 +72,10 @@ function AutocompletePrompt<T>({
   useEffect(() => {
     if (promptState === PromptState.Submitted && answer) {
       setSearchTerm('')
+      unmountInk()
       onSubmit(answer.value)
-      complete()
     }
-  }, [answer, onSubmit, promptState, complete])
+  }, [answer, onSubmit, promptState, unmountInk])
 
   const setLoadingWhenSlow = useRef<NodeJS.Timeout>()
 

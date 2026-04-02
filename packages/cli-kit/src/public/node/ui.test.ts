@@ -504,31 +504,3 @@ describe('renderSingleTask', async () => {
     expect(result3).toBe('result3')
   })
 })
-
-describe('sequential renders', () => {
-  test('consecutive renders do not interleave or leak teardown output', async () => {
-    const output = mockAndCaptureOutput()
-
-    await renderTasks([
-      {
-        title: 'First batch',
-        task: async () => {
-          await new Promise((resolve) => setTimeout(resolve, 50))
-        },
-      },
-    ])
-
-    await renderSingleTask({
-      title: new TokenizedString('Second batch'),
-      task: async () => {
-        await new Promise((resolve) => setTimeout(resolve, 50))
-        return 'done'
-      },
-    })
-
-    // The key assertion: no interleaving. The second render's output should
-    // not contain fragments from the first render's teardown.
-    const frames = output.output()
-    expect(frames).not.toContain('First batch')
-  })
-})
