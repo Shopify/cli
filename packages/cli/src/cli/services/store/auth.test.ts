@@ -7,13 +7,16 @@ import {
   generateCodeVerifier,
   computeCodeChallenge,
   exchangeStoreAuthCodeForToken,
+  resolveExistingStoreAuthScopes,
   waitForStoreAuthCode,
 } from './auth.js'
-import {setStoredStoreAppSession} from './session.js'
+import {loadStoredStoreSession} from './stored-session.js'
+import {getStoredStoreAppSession, setStoredStoreAppSession} from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {fetch} from '@shopify/cli-kit/node/http'
 
 vi.mock('./session.js')
+vi.mock('./stored-session.js', () => ({loadStoredStoreSession: vi.fn()}))
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
@@ -113,6 +116,131 @@ describe('store auth service', () => {
     expect(url.searchParams.get('code_challenge')).toBe('test-challenge-value')
     expect(url.searchParams.get('code_challenge_method')).toBe('S256')
     expect(url.searchParams.get('grant_options[]')).toBeNull()
+  })
+
+  test('resolveExistingStoreAuthScopes returns no scopes when no stored auth exists', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue(undefined)
+
+    await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({scopes: [], authoritative: true})
+    expect(loadStoredStoreSession).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  test('resolveExistingStoreAuthScopes prefers current remote scopes over stale local scopes', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'existing-token',
+      refreshToken: 'existing-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    })
+    vi.mocked(loadStoredStoreSession).mockResolvedValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'fresh-token',
+      refreshToken: 'fresh-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    } as any)
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(JSON.stringify({access_scopes: [{handle: 'read_products'}, {handle: 'read_customers'}]})),
+    } as any)
+
+    await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({
+      scopes: ['read_products', 'read_customers'],
+      authoritative: true,
+    })
+    expect(fetch).toHaveBeenCalledWith(
+      'https://shop.myshopify.com/admin/oauth/access_scopes.json',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({'X-Shopify-Access-Token': 'fresh-token'}),
+      }),
+    )
+  })
+
+  test('resolveExistingStoreAuthScopes falls back to locally stored scopes when remote lookup fails', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'existing-token',
+      refreshToken: 'existing-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    })
+    vi.mocked(loadStoredStoreSession).mockRejectedValue(new Error('boom'))
+
+    await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({
+      scopes: ['read_orders'],
+      authoritative: false,
+    })
+  })
+
+  test('resolveExistingStoreAuthScopes falls back to locally stored scopes when access scopes request fails', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'existing-token',
+      refreshToken: 'existing-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    })
+    vi.mocked(loadStoredStoreSession).mockResolvedValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'fresh-token',
+      refreshToken: 'fresh-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    } as any)
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      text: vi.fn().mockResolvedValue('shopify exploded'),
+    } as any)
+
+    await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({
+      scopes: ['read_orders'],
+      authoritative: false,
+    })
+  })
+
+  test('resolveExistingStoreAuthScopes falls back to locally stored scopes when access scopes response is invalid', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'existing-token',
+      refreshToken: 'existing-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    })
+    vi.mocked(loadStoredStoreSession).mockResolvedValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'fresh-token',
+      refreshToken: 'fresh-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    } as any)
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue('{"not_access_scopes":[]}'),
+    } as any)
+
+    await expect(resolveExistingStoreAuthScopes('shop.myshopify.com')).resolves.toEqual({
+      scopes: ['read_orders'],
+      authoritative: false,
+    })
   })
 
   test('waitForStoreAuthCode resolves after a valid callback', async () => {
@@ -352,6 +480,186 @@ describe('store auth service', () => {
       lastName: undefined,
       accountOwner: undefined,
     })
+  })
+
+  test('authenticateStoreWithApp uses remote scopes by default when available', async () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'existing-token',
+      refreshToken: 'existing-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    })
+    vi.mocked(loadStoredStoreSession).mockResolvedValue({
+      store: 'shop.myshopify.com',
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'fresh-token',
+      refreshToken: 'fresh-refresh-token',
+      scopes: ['read_orders'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    } as any)
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(JSON.stringify({access_scopes: [{handle: 'read_customers'}]})),
+    } as any)
+
+    const openURL = vi.fn().mockResolvedValue(true)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_customers,read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter,
+      },
+    )
+
+    const authorizationUrl = new URL(openURL.mock.calls[0]![0])
+    expect(authorizationUrl.searchParams.get('scope')).toBe('read_customers,read_products')
+  })
+
+  test('authenticateStoreWithApp reuses resolved existing scopes when requesting additional access', async () => {
+    const openURL = vi.fn().mockResolvedValue(true)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_orders,read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['read_orders'], authoritative: true}),
+        presenter,
+      },
+    )
+
+    const authorizationUrl = new URL(openURL.mock.calls[0]![0])
+    expect(authorizationUrl.searchParams.get('scope')).toBe('read_orders,read_products')
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['read_orders', 'read_products'],
+      }),
+    )
+  })
+
+  test('authenticateStoreWithApp does not require non-authoritative cached scopes to still be granted', async () => {
+    const openURL = vi.fn().mockResolvedValue(true)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['read_orders'], authoritative: false}),
+        presenter,
+      },
+    )
+
+    const authorizationUrl = new URL(openURL.mock.calls[0]![0])
+    expect(authorizationUrl.searchParams.get('scope')).toBe('read_orders,read_products')
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['read_products'],
+      }),
+    )
+  })
+
+  test('authenticateStoreWithApp avoids requesting redundant read scopes already implied by existing write scopes', async () => {
+    const openURL = vi.fn().mockResolvedValue(true)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'write_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        resolveExistingScopes: vi.fn().mockResolvedValue({scopes: ['write_products'], authoritative: true}),
+        presenter,
+      },
+    )
+
+    const authorizationUrl = new URL(openURL.mock.calls[0]![0])
+    expect(authorizationUrl.searchParams.get('scope')).toBe('write_products')
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['write_products'],
+      }),
+    )
   })
 
   test('authenticateStoreWithApp shows a manual auth URL when the browser does not open automatically', async () => {
