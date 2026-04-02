@@ -177,7 +177,6 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       for (const assetKey of Object.keys(payloadOptions.appAssets)) {
         payloadStore.updateAppAssetTimestamp(assetKey)
       }
-      return
     }
 
     for (const event of extensionEvents) {
