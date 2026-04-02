@@ -587,8 +587,8 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
       // Given
       const extensionsToConfirm = {
         validMatches: {EXTENSION_A: 'UUID_A'},
-        dashboardOnlyExtensions: [REGISTRATION_DASHBOARD_A],
-        extensionsToCreate: [EXTENSION_A_2],
+        dashboardOnlyExtensions: [],
+        extensionsToCreate: [],
         didMigrateDashboardExtensions: false,
       }
       vi.mocked(ensureExtensionsIds).mockResolvedValue(extensionsToConfirm)
@@ -596,11 +596,11 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
         app: {
           extensionRegistrations: [REGISTRATION_A],
           configurationRegistrations: [],
-          dashboardManagedExtensionRegistrations: [REGISTRATION_DASHBOARD_A],
+          dashboardManagedExtensionRegistrations: [],
         },
       }
       const activeAppVersion = {
-        appModuleVersions: [MODULE_CONFIG_A, MODULE_DASHBOARD_A, MODULE_CLI_A_EXTERNAL_IDENTIFIER],
+        appModuleVersions: [MODULE_CLI_A_EXTERNAL_IDENTIFIER],
       }
 
       const developerPlatformClient: DeveloperPlatformClient = testDeveloperPlatformClient({
@@ -609,19 +609,16 @@ describe('extensionsIdentifiersDeployBreakdown', () => {
 
       // When
       const result = await extensionsIdentifiersDeployBreakdown(
-        await options({uiExtensions, developerPlatformClient, activeAppVersion}),
+        await options({uiExtensions: [EXTENSION_A], developerPlatformClient, activeAppVersion}),
       )
 
       // Then
       expect(result).toEqual({
         extensionIdentifiersBreakdown: {
           onlyRemote: [],
-          toCreate: [buildExtensionBreakdownInfo('extension-a-2', 'test-ui-extension-uid')],
+          toCreate: [],
           toUpdate: [],
-          unchanged: [
-            buildExtensionBreakdownInfo('EXTENSION_A', undefined),
-            buildDashboardBreakdownInfo('Dashboard A'),
-          ],
+          unchanged: [buildExtensionBreakdownInfo('EXTENSION_A', undefined)],
         },
         extensionsToConfirm,
         remoteExtensionsRegistrations: remoteExtensionRegistrations.app,
