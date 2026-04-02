@@ -156,7 +156,7 @@ describe('store auth service', () => {
     ).rejects.toThrow('OAuth callback state does not match the original request.')
   })
 
-  test('waitForStoreAuthCode rejects when callback store does not match', async () => {
+  test('waitForStoreAuthCode rejects when callback store does not match and suggests the returned permanent domain', async () => {
     const port = await getAvailablePort()
     const params = callbackParams({shop: 'other-shop.myshopify.com'})
 
@@ -172,7 +172,11 @@ describe('store auth service', () => {
           await response.text()
         },
       }),
-    ).rejects.toThrow('OAuth callback store does not match the requested store.')
+    ).rejects.toMatchObject({
+      message: 'OAuth callback store does not match the requested store.',
+      tryMessage:
+        'Shopify returned other-shop.myshopify.com during authentication. Re-run shopify store auth --store other-shop.myshopify.com --scopes <comma-separated-scopes> using the permanent store domain instead of an alias or vanity domain.',
+    })
   })
 
   test('waitForStoreAuthCode rejects when Shopify returns an OAuth error', async () => {
