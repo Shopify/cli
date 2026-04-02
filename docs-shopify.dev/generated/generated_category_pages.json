@@ -18,5 +18,10 @@
     "category": "theme",
     "title": "Shopify CLI Theme commands",
     "sections": []
+  },
+  {
+    "category": "store",
+    "title": "Shopify CLI Store commands",
+    "sections": []
   }
 ]
