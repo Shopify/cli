@@ -26,7 +26,7 @@ const data: ReferenceEntityTemplateSchema = {
     type: 'organizationlist',
   },
   ],
-  category: 'organization',
+  category: 'general commands',
   related: [
   ],
 }
