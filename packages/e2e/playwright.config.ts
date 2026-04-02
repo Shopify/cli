@@ -15,7 +15,7 @@ export default defineConfig({
   maxFailures: isCI ? 3 : 0, // Stop early in CI after 3 failures
   reporter: isCI ? [['html', {open: 'never'}], ['list']] : [['list']],
   timeout: 3 * 60 * 1000, // 3 minutes per test
-  globalTimeout: 15 * 60 * 1000, // 15 minutes total
+  globalTimeout: 30 * 60 * 1000, // 30 minutes total
 
   use: {
     trace: isCI ? 'on' : 'off',

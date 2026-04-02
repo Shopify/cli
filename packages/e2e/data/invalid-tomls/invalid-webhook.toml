@@ -1,5 +1,5 @@
 # Invalid TOML: bad webhook config (missing required uri)
-client_id = "__E2E_CLIENT_ID__"
+client_id = "1234567890"
 name = "Invalid Webhook App"
 application_url = "https://example.com"
 embedded = true
