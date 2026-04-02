@@ -3,7 +3,7 @@ import {HostThemeManager} from '../../../utilities/extensions/theme/host-theme-m
 import {AppInterface} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {ClientName} from '../../../utilities/developer-platform-client.js'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputDebug, outputNewline} from '@shopify/cli-kit/node/output'
 import {AdminSession, ensureAuthenticatedAdmin} from '@shopify/cli-kit/node/session'
 import {fetchTheme} from '@shopify/cli-kit/node/themes/api'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -90,6 +90,12 @@ export async function setupPreviewThemeAppExtensionsProcess(
       ],
     ],
   })
+
+  /*
+   * This line is a workaround for the recent Ink upgrade that consumes the last
+   * line from the terminal.
+   */
+  outputNewline()
 
   return {
     type: 'theme-app-extensions',
