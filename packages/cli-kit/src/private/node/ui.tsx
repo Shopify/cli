@@ -8,14 +8,19 @@ import {Key, render as inkRender, RenderOptions, useApp} from 'ink'
 
 import {EventEmitter} from 'events'
 
-const CompletionContext = createContext<(error?: Error) => void>(() => {})
+const CompletionContext = createContext<((error?: Error) => void) | null>(null)
 
 /**
- * Signal that the current Ink tree is done. The root wrapper will call
- * `exit()` after React finishes rendering.
+ * Signal that the current Ink tree is done. Must be called within an
+ * InkLifecycleRoot — throws if the provider is missing so lifecycle
+ * bugs surface immediately instead of silently hanging.
  */
 export function useComplete(): (error?: Error) => void {
-  return useContext(CompletionContext)
+  const complete = useContext(CompletionContext)
+  if (!complete) {
+    throw new Error('useComplete() called outside InkLifecycleRoot')
+  }
+  return complete
 }
 
 /**

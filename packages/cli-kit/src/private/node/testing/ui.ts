@@ -78,7 +78,7 @@ export const render = (tree: ReactElement, options: RenderOptions = {}): Instanc
   })
 
   return {
-    rerender: instance.rerender,
+    rerender: (tree: ReactElement) => instance.rerender(React.createElement(InkLifecycleRoot, null, tree)),
     unmount: instance.unmount,
     cleanup: instance.cleanup,
     waitUntilExit: () => trackPromise(instance.waitUntilExit().then(() => {})),
