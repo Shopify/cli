@@ -1,7 +1,7 @@
-import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {executeStoreOperation} from './execute.js'
 import {getStoredStoreAppSession} from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
+import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -13,7 +13,9 @@ vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
-  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>('@shopify/cli-kit/node/api/admin')
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>(
+    '@shopify/cli-kit/node/api/admin',
+  )
   return {
     ...actual,
     fetchApiVersions: vi.fn(),
@@ -34,7 +36,6 @@ describe('executeStoreOperation', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(getStoredStoreAppSession).mockReturnValue(storedSession)
     vi.mocked(fetchApiVersions).mockResolvedValue([
       {handle: '2025-10', supported: true},
@@ -215,5 +216,4 @@ describe('executeStoreOperation', () => {
       }),
     ).rejects.toThrow('GraphQL operation failed.')
   })
-
 })

@@ -1,7 +1,3 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {fetch} from '@shopify/cli-kit/node/http'
 import {
   clearStoredStoreAppSession,
   getStoredStoreAppSession,
@@ -10,11 +6,17 @@ import {
 } from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {prepareAdminStoreGraphQLContext} from './admin-graphql-context.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {fetch} from '@shopify/cli-kit/node/http'
 
 vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
-  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>('@shopify/cli-kit/node/api/admin')
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>(
+    '@shopify/cli-kit/node/api/admin',
+  )
   return {
     ...actual,
     fetchApiVersions: vi.fn(),
@@ -35,7 +37,6 @@ describe('prepareAdminStoreGraphQLContext', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(getStoredStoreAppSession).mockReturnValue(storedSession)
     vi.mocked(isSessionExpired).mockReturnValue(false)
     vi.mocked(fetchApiVersions).mockResolvedValue([

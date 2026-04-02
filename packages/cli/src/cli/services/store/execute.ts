@@ -1,8 +1,8 @@
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {outputContent} from '@shopify/cli-kit/node/output'
 import {prepareStoreExecuteRequest} from './execute-request.js'
 import {writeOrOutputStoreExecuteResult} from './execute-result.js'
 import {getStoreGraphQLTarget, StoreGraphQLApi} from './graphql-targets.js'
+import {outputContent} from '@shopify/cli-kit/node/output'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 
 interface ExecuteStoreOperationInput {
   store: string

@@ -1,14 +1,10 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 import {prepareStoreExecuteRequest} from './execute-request.js'
+import {describe, expect, test, vi} from 'vitest'
+import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
 
 vi.mock('@shopify/cli-kit/node/fs')
 
 describe('prepareStoreExecuteRequest', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   test('returns a prepared request for an inline query', async () => {
     const request = await prepareStoreExecuteRequest({
       query: 'query { shop { name } }',
