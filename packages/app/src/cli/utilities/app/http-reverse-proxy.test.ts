@@ -55,6 +55,34 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     })
   })
 
+  test('responds to CORS preflight OPTIONS with default headers', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
+      method: 'OPTIONS',
+      headers: {
+        Origin: 'https://extensions.shopifycdn.com',
+        'Access-Control-Request-Method': 'GET',
+        'Access-Control-Request-Headers': 'Authorization',
+      },
+      agent,
+    })
+    expect(response.status).toBe(204)
+    expect(response.headers.get('access-control-allow-origin')).toBe('https://extensions.shopifycdn.com')
+    expect(response.headers.get('access-control-allow-methods')).toBe('GET')
+    expect(response.headers.get('access-control-allow-headers')).toBe('Authorization')
+    expect(response.headers.get('access-control-max-age')).toBe('86400')
+  })
+
+  test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
+      method: 'OPTIONS',
+      agent,
+    })
+    expect(response.status).toBe(204)
+    expect(response.headers.get('access-control-allow-origin')).toBe('*')
+    expect(response.headers.get('access-control-allow-methods')).toBe('GET, POST, PUT, DELETE, PATCH, OPTIONS')
+    expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type, Authorization')
+  })
+
   test('closes the server when aborted', {retry: 2}, async ({setup}) => {
     setup.abortController.abort()
     // Try the assertion immediately, and if it fails, wait and retry
