@@ -121,7 +121,6 @@
     "chalk": "5.4.1",
     "change-case": "4.1.2",
     "color-json": "3.0.5",
-    "commondir": "1.0.1",
     "conf": "11.0.2",
     "deepmerge": "4.3.1",
     "dotenv": "16.4.7",
@@ -165,7 +164,6 @@
     "zod": "3.24.4"
   },
   "devDependencies": {
-    "@types/commondir": "^1.0.0",
     "@types/diff": "^5.2.3",
     "@types/fs-extra": "9.0.13",
     "@types/gradient-string": "^1.1.2",
