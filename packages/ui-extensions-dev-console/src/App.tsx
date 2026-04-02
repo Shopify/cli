@@ -1,5 +1,5 @@
 import {Layout} from '@/foundation/Layout'
-import {Routes} from '@/foundation/Routes'
+import {Extensions} from '@/sections/Extensions'
 import {Toast} from '@/foundation/Toast'
 import {Theme} from '@/foundation/Theme'
 import {ModalContainer} from '@/foundation/ModalContainer'
@@ -29,7 +29,7 @@ function App() {
     <ExtensionServerProvider options={extensionServerOptions}>
       <Theme>
         <Layout>
-          <Routes />
+          <Extensions />
           <Toast />
           <ModalContainer />
         </Layout>
