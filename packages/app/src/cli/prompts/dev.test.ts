@@ -311,8 +311,33 @@ describe('appName', () => {
     expect(renderTextPrompt).toHaveBeenCalledWith({
       message: 'App name',
       defaultValue: 'suggested-name',
+      preview: expect.any(Function),
       validate: expect.any(Function),
     })
+  })
+
+  test('preview shows hyphenated folder name for Title Case input', async () => {
+    // Given
+    vi.mocked(renderTextPrompt).mockResolvedValue('My Cool App')
+
+    // When
+    await appNamePrompt('Default Name')
+
+    // Then
+    const call = vi.mocked(renderTextPrompt).mock.calls[0]![0] as {preview: (value: string) => unknown}
+    expect(call.preview('My Cool App')).toEqual(['Folder name:', {userInput: 'my-cool-app'}])
+  })
+
+  test('preview falls back to defaultValue when input is empty', async () => {
+    // Given
+    vi.mocked(renderTextPrompt).mockResolvedValue('Default Name')
+
+    // When
+    await appNamePrompt('Default Name')
+
+    // Then
+    const call = vi.mocked(renderTextPrompt).mock.calls[0]![0] as {preview: (value: string) => unknown}
+    expect(call.preview('')).toEqual(['Folder name:', {userInput: 'default-name'}])
   })
 })
 

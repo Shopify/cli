@@ -2,6 +2,7 @@ import {
   formatDate,
   formatLocalDate,
   getRandomName,
+  getRandomTitleCaseName,
   joinWithAnd,
   linesToColumns,
   normalizeDelimitedString,
@@ -18,6 +19,27 @@ describe('getRandomName', () => {
 
     // Then
     expect(got.length).not.toBe(0)
+  })
+})
+
+describe('getRandomTitleCaseName', () => {
+  test('generates a Title Case name with spaces', () => {
+    const got = getRandomTitleCaseName()
+    expect(got.length).not.toBe(0)
+    // Should not contain hyphens, should have spaces and capitalized words
+    expect(got).not.toContain('-')
+    expect(got).toContain(' ')
+    // Each word should start with an uppercase letter
+    got.split(' ').forEach((word) => {
+      expect(word[0]).toBe(word[0]!.toUpperCase())
+    })
+  })
+
+  test('works with creative family', () => {
+    const got = getRandomTitleCaseName('creative')
+    expect(got.length).not.toBe(0)
+    expect(got).not.toContain('-')
+    expect(got).toContain(' ')
   })
 })
 
