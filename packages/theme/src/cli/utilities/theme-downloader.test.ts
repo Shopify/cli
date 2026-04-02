@@ -6,19 +6,6 @@ import {test, describe, expect, vi} from 'vitest'
 
 vi.mock('./theme-fs.js')
 vi.mock('@shopify/cli-kit/node/themes/api')
-vi.mock('@shopify/cli-kit/node/ui', async () => {
-  const actual = await vi.importActual('@shopify/cli-kit/node/ui')
-  return {
-    ...actual,
-    renderTasks: vi.fn(async (tasks: any[]) => {
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
-      }
-      return {}
-    }),
-  }
-})
 
 describe('theme-downloader', () => {
   describe('downloadTheme', () => {

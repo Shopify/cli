@@ -22,18 +22,9 @@ vi.mock('@shopify/cli-kit/node/themes/api')
 vi.mock('@shopify/cli-kit/node/context/fqdn')
 vi.mock('@shopify/cli-kit/node/ui', async (realImport) => {
   const realModule = await realImport<typeof import('@shopify/cli-kit/node/ui')>()
+  const mockModule = {renderInfo: vi.fn()}
 
-  return {
-    ...realModule,
-    renderInfo: vi.fn(),
-    renderTasks: vi.fn(async (tasks: any[]) => {
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
-      }
-      return {}
-    }),
-  }
+  return {...realModule, ...mockModule}
 })
 
 describe('setupPreviewThemeAppExtensionsProcess', () => {

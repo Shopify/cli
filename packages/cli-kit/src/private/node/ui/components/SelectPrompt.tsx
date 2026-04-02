@@ -3,10 +3,10 @@ import {InfoTableProps} from './Prompts/InfoTable.js'
 import {InfoMessageProps} from './Prompts/InfoMessage.js'
 import {Message, PromptLayout} from './Prompts/PromptLayout.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
-import {useComplete} from '../../ui.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 
 import React, {ReactElement, useCallback, useEffect} from 'react'
+import {useApp} from 'ink'
 
 export interface SelectPromptProps<T> {
   message: Message
@@ -32,7 +32,7 @@ function SelectPrompt<T>({
   if (choices.length === 0) {
     throw new Error('SelectPrompt requires at least one choice')
   }
-  const complete = useComplete()
+  const {exit: unmountInk} = useApp()
   const {promptState, setPromptState, answer, setAnswer} = usePrompt<SelectItem<T> | undefined>({
     initialAnswer: undefined,
   })
@@ -47,10 +47,10 @@ function SelectPrompt<T>({
 
   useEffect(() => {
     if (promptState === PromptState.Submitted && answer) {
+      unmountInk()
       onSubmit(answer.value)
-      complete()
     }
-  }, [answer, onSubmit, promptState, complete])
+  }, [answer, onSubmit, promptState, unmountInk])
 
   return (
     <PromptLayout

@@ -27,13 +27,6 @@ vi.mock('@shopify/cli-kit/node/ui', async () => {
   return {
     ...actual,
     renderSelectPrompt: vi.fn(),
-    renderTasks: vi.fn(async (tasks: any[]) => {
-      for (const task of tasks) {
-        // eslint-disable-next-line no-await-in-loop
-        await task.task({}, task)
-      }
-      return {}
-    }),
   }
 })
 
