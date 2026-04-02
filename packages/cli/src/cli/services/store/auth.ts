@@ -1,6 +1,10 @@
 import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, STORE_AUTH_CALLBACK_PATH, maskToken, storeAuthRedirectUri} from './auth-config.js'
 import {retryStoreAuthWithPermanentDomainError} from './auth-recovery.js'
-import {setStoredStoreAppSession} from './session.js'
+import {getStoredStoreAppSession, setStoredStoreAppSession} from './session.js'
+import type {StoredStoreAppSession} from './session.js'
+import {loadStoredStoreSession} from './stored-session.js'
+import {adminUrl} from '@shopify/cli-kit/node/api/admin'
+import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -91,6 +95,106 @@ function expandImpliedStoreScopes(scopes: string[]): Set<string> {
   }
 
   return expandedScopes
+}
+
+function mergeRequestedAndStoredScopes(requestedScopes: string[], storedScopes: string[]): string[] {
+  const mergedScopes = [...storedScopes]
+  const expandedScopes = expandImpliedStoreScopes(storedScopes)
+
+  for (const scope of requestedScopes) {
+    if (expandedScopes.has(scope)) continue
+
+    mergedScopes.push(scope)
+    for (const expandedScope of expandImpliedStoreScopes([scope])) {
+      expandedScopes.add(expandedScope)
+    }
+  }
+
+  return mergedScopes
+}
+
+interface StoreAccessScopesResponse {
+  currentAppInstallation?: {
+    accessScopes?: {handle?: string}[]
+  }
+}
+
+interface ResolvedStoreAuthScopes {
+  scopes: string[]
+  authoritative: boolean
+}
+
+function truncateDebugMessage(message: string, length = 300): string {
+  return message.slice(0, length)
+}
+
+function formatStoreScopeLookupError(error: unknown): string {
+  if (error && typeof error === 'object' && 'response' in error) {
+    const response = (error as {response?: {status?: number; errors?: unknown}}).response
+    const status = response?.status
+    const details = response?.errors
+
+    if (typeof status === 'number') {
+      const summary = typeof details === 'string' ? details : JSON.stringify(details)
+      return truncateDebugMessage(summary ? `HTTP ${status}: ${summary}` : `HTTP ${status}`)
+    }
+  }
+
+  return truncateDebugMessage(error instanceof Error ? error.message : String(error))
+}
+
+const CurrentAppInstallationAccessScopesQuery = `#graphql
+  query CurrentAppInstallationAccessScopes {
+    currentAppInstallation {
+      accessScopes {
+        handle
+      }
+    }
+  }
+`
+
+async function fetchCurrentStoreAuthScopes(session: StoredStoreAppSession): Promise<string[]> {
+  outputDebug(
+    outputContent`Fetching current app installation scopes for ${outputToken.raw(session.store)} using token ${outputToken.raw(maskToken(session.accessToken))}`,
+  )
+
+  const data = await graphqlRequest<StoreAccessScopesResponse>({
+    query: CurrentAppInstallationAccessScopesQuery,
+    api: 'Admin',
+    url: adminUrl(session.store, 'unstable'),
+    token: session.accessToken,
+    responseOptions: {handleErrors: false},
+  })
+
+  if (!Array.isArray(data.currentAppInstallation?.accessScopes)) {
+    throw new Error('Shopify did not return currentAppInstallation.accessScopes.')
+  }
+
+  return data.currentAppInstallation.accessScopes.flatMap((scope) =>
+    typeof scope.handle === 'string' ? [scope.handle] : [],
+  )
+}
+
+export async function resolveExistingStoreAuthScopes(store: string): Promise<ResolvedStoreAuthScopes> {
+  const normalizedStore = normalizeStoreFqdn(store)
+  const storedSession = getStoredStoreAppSession(normalizedStore)
+  if (!storedSession) return {scopes: [], authoritative: true}
+
+  try {
+    const usableSession = await loadStoredStoreSession(normalizedStore)
+    const remoteScopes = await fetchCurrentStoreAuthScopes(usableSession)
+
+    outputDebug(
+      outputContent`Resolved current remote scopes for ${outputToken.raw(normalizedStore)}: ${outputToken.raw(remoteScopes.join(',') || 'none')}`,
+    )
+
+    return {scopes: remoteScopes, authoritative: true}
+  } catch (error) {
+    outputDebug(
+      outputContent`Falling back to locally stored scopes for ${outputToken.raw(normalizedStore)} after remote scope lookup failed: ${outputToken.raw(formatStoreScopeLookupError(error))}`,
+    )
+    return {scopes: storedSession.scopes, authoritative: false}
+  }
 }
 
 function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requestedScopes: string[]): string[] {
@@ -363,6 +467,7 @@ interface StoreAuthDependencies {
   openURL: typeof openURL
   waitForStoreAuthCode: typeof waitForStoreAuthCode
   exchangeStoreAuthCodeForToken: typeof exchangeStoreAuthCodeForToken
+  resolveExistingScopes?: (store: string) => Promise<ResolvedStoreAuthScopes>
   presenter: StoreAuthPresenter
 }
 
@@ -394,12 +499,12 @@ const defaultStoreAuthDependencies: StoreAuthDependencies = {
   presenter: defaultStoreAuthPresenter,
 }
 
-function createPkceBootstrap(
-  input: StoreAuthInput,
-  exchangeCodeForToken: typeof exchangeStoreAuthCodeForToken,
-): StoreAuthBootstrap {
-  const store = normalizeStoreFqdn(input.store)
-  const scopes = parseStoreAuthScopes(input.scopes)
+function createPkceBootstrap(options: {
+  store: string
+  scopes: string[]
+  exchangeCodeForToken: typeof exchangeStoreAuthCodeForToken
+}): StoreAuthBootstrap {
+  const {store, scopes, exchangeCodeForToken} = options
   const port = DEFAULT_STORE_AUTH_PORT
   const state = randomUUID()
   const redirectUri = storeAuthRedirectUri(port)
@@ -434,10 +539,20 @@ export async function authenticateStoreWithApp(
   input: StoreAuthInput,
   dependencies: StoreAuthDependencies = defaultStoreAuthDependencies,
 ): Promise<void> {
-  const bootstrap = createPkceBootstrap(input, dependencies.exchangeStoreAuthCodeForToken)
-  const {
-    authorization: {store, scopes, redirectUri, authorizationUrl},
-  } = bootstrap
+  const store = normalizeStoreFqdn(input.store)
+  const requestedScopes = parseStoreAuthScopes(input.scopes)
+  const existingScopeResolution = await (dependencies.resolveExistingScopes ?? resolveExistingStoreAuthScopes)(store)
+  const scopes = mergeRequestedAndStoredScopes(requestedScopes, existingScopeResolution.scopes)
+  const validationScopes = existingScopeResolution.authoritative ? scopes : requestedScopes
+
+  if (existingScopeResolution.scopes.length > 0) {
+    outputDebug(
+      outputContent`Merged requested scopes ${outputToken.raw(requestedScopes.join(','))} with existing scopes ${outputToken.raw(existingScopeResolution.scopes.join(','))} for ${outputToken.raw(store)}`,
+    )
+  }
+
+  const bootstrap = createPkceBootstrap({store, scopes, exchangeCodeForToken: dependencies.exchangeStoreAuthCodeForToken})
+  const {authorization: {authorizationUrl}} = bootstrap
 
   dependencies.presenter.openingBrowser()
 
@@ -467,7 +582,7 @@ export async function authenticateStoreWithApp(
     // Store the raw scopes returned by Shopify. Validation may treat implied
     // write_* -> read_* permissions as satisfied, so callers should not assume
     // session.scopes is an expanded/effective permission set.
-    scopes: resolveGrantedScopes(tokenResponse, scopes),
+    scopes: resolveGrantedScopes(tokenResponse, validationScopes),
     acquiredAt: new Date(now).toISOString(),
     expiresAt,
     refreshTokenExpiresAt: tokenResponse.refresh_token_expires_in
