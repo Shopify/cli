@@ -1,6 +1,7 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {executeStoreOperation} from './execute.js'
 import {getStoredStoreAppSession} from './session.js'
+import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
@@ -25,7 +26,7 @@ describe('executeStoreOperation', () => {
   const session = {token: 'token', storeFqdn: store}
   const storedSession = {
     store,
-    clientId: 'b16de5d7ba3e2e22279a38c22ef025a0',
+    clientId: STORE_AUTH_APP_CLIENT_ID,
     userId: '42',
     accessToken: 'token',
     scopes: ['read_products'],

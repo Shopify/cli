@@ -1,4 +1,4 @@
-export const STORE_AUTH_APP_CLIENT_ID = 'b16de5d7ba3e2e22279a38c22ef025a0'
+export const STORE_AUTH_APP_CLIENT_ID = '7e9cb568cfd431c538f36d1ad3f2b4f6'
 export const DEFAULT_STORE_AUTH_PORT = 13387
 export const STORE_AUTH_CALLBACK_PATH = '/auth/callback'
 
