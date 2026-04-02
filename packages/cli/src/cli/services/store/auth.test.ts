@@ -378,6 +378,69 @@ describe('store auth service', () => {
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
+  test('authenticateStoreWithApp accepts compressed write scopes that imply requested read scopes', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products,write_products',
+      },
+      {
+        openURL: vi.fn().mockResolvedValue(true),
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'write_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        renderInfo: vi.fn(),
+        renderSuccess: vi.fn(),
+      },
+    )
+
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['write_products'],
+      }),
+    )
+  })
+
+  test('authenticateStoreWithApp still rejects when other requested scopes are missing', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products,write_products,read_orders',
+        },
+        {
+          openURL: vi.fn().mockResolvedValue(true),
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+            access_token: 'token',
+            scope: 'write_products',
+            expires_in: 86400,
+            associated_user: {id: 42, email: 'test@example.com'},
+          }),
+          renderInfo: vi.fn(),
+          renderSuccess: vi.fn(),
+        },
+      ),
+    ).rejects.toThrow('Shopify granted fewer scopes than were requested.')
+
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
   test('authenticateStoreWithApp falls back to requested scopes when Shopify omits granted scopes', async () => {
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
@@ -406,6 +469,39 @@ describe('store auth service', () => {
       expect.objectContaining({
         store: 'shop.myshopify.com',
         scopes: ['read_products'],
+      }),
+    )
+  })
+
+  test('authenticateStoreWithApp accepts compressed unauthenticated write scopes that imply requested unauthenticated read scopes', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'unauthenticated_read_product_listings,unauthenticated_write_product_listings',
+      },
+      {
+        openURL: vi.fn().mockResolvedValue(true),
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'unauthenticated_write_product_listings',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        renderInfo: vi.fn(),
+        renderSuccess: vi.fn(),
+      },
+    )
+
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['unauthenticated_write_product_listings'],
       }),
     )
   })

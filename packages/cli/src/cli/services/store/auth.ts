@@ -80,6 +80,19 @@ export function parseStoreAuthScopes(input: string): string[] {
   return [...new Set(scopes)]
 }
 
+function expandImpliedStoreScopes(scopes: string[]): Set<string> {
+  const expandedScopes = new Set(scopes)
+
+  for (const scope of scopes) {
+    const matches = scope.match(/^(unauthenticated_)?write_(.*)$/)
+    if (matches) {
+      expandedScopes.add(`${matches[1] ?? ''}read_${matches[2]}`)
+    }
+  }
+
+  return expandedScopes
+}
+
 function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requestedScopes: string[]): string[] {
   if (!tokenResponse.scope) {
     outputDebug(outputContent`Token response did not include scope; falling back to requested scopes`)
@@ -87,7 +100,8 @@ function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requestedScopes
   }
 
   const grantedScopes = parseStoreAuthScopes(tokenResponse.scope)
-  const missingScopes = requestedScopes.filter((scope) => !grantedScopes.includes(scope))
+  const expandedGrantedScopes = expandImpliedStoreScopes(grantedScopes)
+  const missingScopes = requestedScopes.filter((scope) => !expandedGrantedScopes.has(scope))
 
   if (missingScopes.length > 0) {
     throw new AbortError(
@@ -419,6 +433,9 @@ export async function authenticateStoreWithApp(
     userId,
     accessToken: tokenResponse.access_token,
     refreshToken: tokenResponse.refresh_token,
+    // Store the raw scopes returned by Shopify. Validation may treat implied
+    // write_* -> read_* permissions as satisfied, so callers should not assume
+    // session.scopes is an expanded/effective permission set.
     scopes: resolveGrantedScopes(tokenResponse, scopes),
     acquiredAt: new Date(now).toISOString(),
     expiresAt,
