@@ -1,100 +1,70 @@
 import {getAvailableTCPPort, checkPortAvailability} from './tcp.js'
-import * as system from './system.js'
-import {AbortError} from './error.js'
-import * as port from 'get-port-please'
-import {describe, expect, test, vi} from 'vitest'
-
-vi.mock('get-port-please')
-
-const errorMessage = 'Unable to generate random port'
+import {describe, expect, test} from 'vitest'
+import {createServer} from 'net'
 
 describe('getAvailableTCPPort', () => {
-  test('returns random port if the number retries is not exceeded', async () => {
-    // Given
-    vi.mocked(port.getRandomPort).mockRejectedValueOnce(new Error(errorMessage))
-    vi.mocked(port.getRandomPort).mockResolvedValue(5)
-    const debugError = vi.spyOn(system, 'sleep')
-
-    // When
-    const got = await getAvailableTCPPort(undefined, {waitTimeInSeconds: 0})
-
-    // Then
-    expect(got).toBe(5)
-    expect(debugError).toHaveBeenCalledOnce()
+  test('returns a valid port number', async () => {
+    const port = await getAvailableTCPPort()
+    expect(port).toBeGreaterThan(0)
+    expect(port).toBeLessThanOrEqual(65535)
   })
 
-  test('throws an abort exception with same error message received from third party getRandomPort if the number retries is exceeded', async () => {
-    // Given
-    const maxTries = 5
-    for (let i = 0; i < maxTries; i++) {
-      vi.mocked(port.getRandomPort).mockRejectedValueOnce(new Error(errorMessage))
+  test('returns the preferred port when it is available', async () => {
+    const freePort = await getAvailableTCPPort()
+    const got = await getAvailableTCPPort(freePort)
+    expect(got).toBe(freePort)
+  })
+
+  test('returns a different port when the preferred one is in use', async () => {
+    const server = createServer()
+    const occupiedPort = await new Promise<number>((resolve) => {
+      server.listen(0, 'localhost', () => {
+        const address = server.address()
+        resolve((address as {port: number}).port)
+      })
+    })
+
+    try {
+      const got = await getAvailableTCPPort(occupiedPort)
+      expect(got).not.toBe(occupiedPort)
+      expect(got).toBeGreaterThan(0)
+    } finally {
+      server.close()
     }
-
-    // When/Then
-    await expect(() => getAvailableTCPPort(undefined, {waitTimeInSeconds: 0})).rejects.toThrowError(
-      new AbortError(errorMessage),
-    )
   })
 
-  test('returns the provided port when it is available', async () => {
-    // Given
-    vi.mocked(port.checkPort).mockResolvedValue(666)
-
-    // When
-    const got = await getAvailableTCPPort(666)
-
-    // Then
-    expect(got).toBe(666)
-  })
-
-  test('returns a random port when the provided one is not available', async () => {
-    // Given
-    vi.mocked(port.checkPort).mockResolvedValue(false)
-    vi.mocked(port.getRandomPort).mockResolvedValue(5)
-
-    // When
-    const got = await getAvailableTCPPort(666)
-
-    // Then
-    expect(got).toBe(5)
-  })
-
-  test('reserves random ports and does not reuse them', async () => {
-    vi.mocked(port.checkPort).mockResolvedValue(false)
-    vi.mocked(port.getRandomPort).mockResolvedValueOnce(55).mockResolvedValueOnce(55).mockResolvedValueOnce(66)
-
-    let got = await getAvailableTCPPort(123)
-    expect(got).toBe(55)
-
-    got = await getAvailableTCPPort(123)
-    expect(got).toBe(66)
+  test('returns unique ports across multiple calls', async () => {
+    const ports = new Set<number>()
+    for (let i = 0; i < 5; i++) {
+      // eslint-disable-next-line no-await-in-loop
+      const port = await getAvailableTCPPort()
+      ports.add(port)
+    }
+    expect(ports.size).toBe(5)
   })
 })
 
 describe('checkPortAvailability', () => {
   test('returns true when port is available', async () => {
-    // Given
-    const portNumber = 3000
-    vi.mocked(port.checkPort).mockResolvedValue(portNumber)
-
-    // When
-    const result = await checkPortAvailability(portNumber)
-
-    // Then
+    const freePort = await getAvailableTCPPort()
+    const result = await checkPortAvailability(freePort)
     expect(result).toBe(true)
-    expect(port.checkPort).toHaveBeenCalledWith(portNumber, 'localhost')
   })
 
-  test('returns false when port is not available', async () => {
-    // Given
-    const portNumber = 3000
-    vi.mocked(port.checkPort).mockResolvedValue(false)
+  test('returns false when port is in use', async () => {
+    const server = createServer()
+    const occupiedPort = await new Promise<number>((resolve) => {
+      server.listen(0, 'localhost', () => {
+        const address = server.address()
+        resolve((address as {port: number}).port)
+      })
+    })
 
-    // When
-    const result = await checkPortAvailability(portNumber)
-
-    // Then
-    expect(result).toBe(false)
-    expect(port.checkPort).toHaveBeenCalledWith(portNumber, 'localhost')
+    try {
+      const result = await checkPortAvailability(occupiedPort)
+      expect(result).toBe(false)
+    } finally {
+      server.close()
+    }
   })
 })
