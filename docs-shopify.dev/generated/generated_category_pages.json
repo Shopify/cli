@@ -15,13 +15,18 @@
     "sections": []
   },
   {
-    "category": "theme",
-    "title": "Shopify CLI Theme commands",
+    "category": "organization",
+    "title": "Shopify CLI Organization commands",
     "sections": []
   },
   {
     "category": "store",
     "title": "Shopify CLI Store commands",
+    "sections": []
+  },
+  {
+    "category": "theme",
+    "title": "Shopify CLI Theme commands",
     "sections": []
   }
 ]
