@@ -3,6 +3,7 @@ import {createContractBasedModuleSpecification} from '../specification.js'
 const adminSpecificationSpec = createContractBasedModuleSpecification({
   identifier: 'admin',
   uidStrategy: 'single',
+  experience: 'configuration',
   transformRemoteToLocal: (remoteContent) => {
     return {
       admin: {
@@ -24,7 +25,8 @@ const adminSpecificationSpec = createContractBasedModuleSpecification({
           name: 'Hosted App Copy Files',
           type: 'include_assets',
           config: {
-            generatesAssetsManifest: true,
+            // Remove this until we fix the bug related to recreating the manifest during dev
+            generatesAssetsManifest: false,
             inclusions: [
               {
                 type: 'configKey',

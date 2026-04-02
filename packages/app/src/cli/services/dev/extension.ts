@@ -13,10 +13,8 @@ import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {getPathValue} from '@shopify/cli-kit/common/object'
-import {fileExists} from '@shopify/cli-kit/node/fs'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
-import type {FSWatcher} from 'chokidar'
 
 interface AppAssets {
   [key: string]: string
@@ -170,64 +168,16 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
-  // Set up asset directory watchers
-  let assetWatchers: FSWatcher[] = []
-  const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
-
-  function createDebouncedAssetUpdater(assetKey: string) {
-    return () => {
-      const existing = debounceTimers.get(assetKey)
-      if (existing) clearTimeout(existing)
-      debounceTimers.set(
-        assetKey,
-        setTimeout(() => {
-          debounceTimers.delete(assetKey)
-          payloadStore.updateAppAssetTimestamp(assetKey)
-        }, 200),
-      )
-    }
-  }
-
-  function clearDebounceTimers() {
-    for (const timer of debounceTimers.values()) {
-      clearTimeout(timer)
-    }
-    debounceTimers.clear()
-  }
-
-  async function startAssetWatchers(assets: Record<string, string>) {
-    // Clear pending debounce timers and close existing watchers
-    clearDebounceTimers()
-    await Promise.all(assetWatchers.map((watcher) => watcher.close()))
-    // eslint-disable-next-line require-atomic-updates
-    assetWatchers = []
-
-    const {default: chokidar} = await import('chokidar')
-    for (const [assetKey, directoryPath] of Object.entries(assets)) {
-      const exists = await fileExists(directoryPath)
-      if (!exists) continue
-
-      const watcher = chokidar.watch(directoryPath, {ignoreInitial: true})
-      watcher.on('all', createDebouncedAssetUpdater(assetKey))
-      assetWatchers.push(watcher)
-    }
-  }
-
-  const initialAppAssets = payloadOptions.appAssets
-  if (initialAppAssets && Object.keys(initialAppAssets).length > 0) {
-    await startAssetWatchers(initialAppAssets)
-  }
-
-  const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
+  const eventHandler = async ({appWasReloaded, app, extensionEvents, appAssetsUpdated}: AppEvent) => {
     if (appWasReloaded) {
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
+    }
 
-      // Re-resolve app assets in case admin extension was added/removed/changed
-      const newAppAssets = resolveAppAssets(app.allExtensions)
-      const hasAssets = Object.keys(newAppAssets).length > 0
-      payloadOptions.appAssets = hasAssets ? newAppAssets : undefined
-      payloadStore.updateAppAssets(payloadOptions.appAssets, payloadOptions.url)
-      await startAssetWatchers(hasAssets ? newAppAssets : {})
+    if (appAssetsUpdated && payloadOptions.appAssets) {
+      for (const assetKey of Object.keys(payloadOptions.appAssets)) {
+        payloadStore.updateAppAssetTimestamp(assetKey)
+      }
+      return
     }
 
     for (const event of extensionEvents) {
@@ -264,10 +214,6 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
 
   payloadOptions.signal.addEventListener('abort', () => {
     outputDebug('Closing the UI extensions dev server...')
-    clearDebounceTimers()
-    for (const watcher of assetWatchers) {
-      watcher.close().catch(() => {})
-    }
     websocketConnection.close()
     httpServer.close()
   })
