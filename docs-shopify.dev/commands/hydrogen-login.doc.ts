@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen login',
-  description: `Logs in to the specified shop and saves the shop domain to the project.`,
-  overviewPreviewDescription: `Logs in to the specified shop and saves the shop domain to the project.`,
+  description: `The following flags are available for the \`hydrogen login\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen login\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

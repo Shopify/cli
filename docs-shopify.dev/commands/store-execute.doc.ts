@@ -3,11 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'store execute',
-  description: `Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.
-
-Run \`shopify store auth\` first to create stored auth for the store.
-
-Mutations are disabled by default. Re-run with \`--allow-mutations\` if you intend to modify store data.`,
+  description: `The following flags are available for the \`store execute\` command:`,
   overviewPreviewDescription: `Execute GraphQL queries and mutations on a store.`,
   type: 'command',
   isVisualComponent: false,

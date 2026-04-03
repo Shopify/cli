@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen check',
-  description: `Checks whether your Hydrogen app includes a set of standard Shopify routes.`,
-  overviewPreviewDescription: `Checks whether your Hydrogen app includes a set of standard Shopify routes.`,
+  description: `The following flags are available for the \`hydrogen check\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen check\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

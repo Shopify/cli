@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen setup',
-  description: `Scaffold routes and core functionality.`,
-  overviewPreviewDescription: `Scaffold routes and core functionality.`,
+  description: `The following flags are available for the \`hydrogen setup\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen setup\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app import-extensions',
-  description: `Import dashboard-managed extensions into your app.`,
-  overviewPreviewDescription: `Import dashboard-managed extensions into your app.`,
+  description: `The following flags are available for the \`app import-extensions\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`app import-extensions\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

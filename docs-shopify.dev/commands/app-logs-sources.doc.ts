@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app logs sources',
-  description: `The output source names can be used with the \`--source\` argument of \`shopify app logs\` to filter log output. Currently only function extensions are supported as sources.`,
+  description: `The following flags are available for the \`app logs sources\` command:`,
   overviewPreviewDescription: `Print out a list of sources that may be used with the logs command.`,
   type: 'command',
   isVisualComponent: false,

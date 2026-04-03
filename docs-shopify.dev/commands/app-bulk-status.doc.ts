@@ -3,11 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app bulk status',
-  description: `Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.
-
-  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](/docs/api/usage/bulk-operations/imports).
-
-  Use [\`bulk execute\`](/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.`,
+  description: `The following flags are available for the \`app bulk status\` command:`,
   overviewPreviewDescription: `Check the status of bulk operations.`,
   type: 'command',
   isVisualComponent: false,

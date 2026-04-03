@@ -3,9 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app env pull',
-  description: `Creates or updates an \`.env\` files that contains app and app extension environment variables.
-
-  When an existing \`.env\` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.`,
+  description: `The following flags are available for the \`app env pull\` command:`,
   overviewPreviewDescription: `Pull app and extensions environment variables.`,
   type: 'command',
   isVisualComponent: false,

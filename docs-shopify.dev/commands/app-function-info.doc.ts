@@ -3,15 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function info',
-  description: `The information returned includes the following:
-
-  - The function handle
-  - The function name
-  - The function API version
-  - The targeting configuration
-  - The schema path
-  - The WASM path
-  - The function runner path`,
+  description: `The following flags are available for the \`app function info\` command:`,
   overviewPreviewDescription: `Print basic information about your function.`,
   type: 'command',
   isVisualComponent: false,
