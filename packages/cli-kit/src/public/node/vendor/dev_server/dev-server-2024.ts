@@ -1,7 +1,7 @@
 import {assertConnectable, getIpFromHosts} from './network/index.js'
 import {assertCompatibleEnvironment} from './env.js'
-import * as ni from 'network-interfaces'
 import fs from 'node:fs'
+import os from 'node:os'
 
 import type {HostOptions} from './types.js'
 
@@ -52,7 +52,7 @@ function assertRunning2024(projectName: string): void {
 function getBackendIp(projectName: string): string {
   try {
     const backendIp = resolveBackendHost(projectName)
-    ni.fromIp(backendIp, {internal: true, ipVersion: 4})
+    assertIpOnLocalInterface(backendIp)
 
     return backendIp
   } catch (error) {
@@ -73,6 +73,18 @@ function resolveBackendHost(name: string): string {
   } catch {
     return host
   }
+}
+
+function assertIpOnLocalInterface(ip: string): void {
+  const interfaces = os.networkInterfaces()
+  for (const addresses of Object.values(interfaces)) {
+    for (const addr of addresses ?? []) {
+      if (addr.address === ip && addr.internal && addr.family === 'IPv4') {
+        return
+      }
+    }
+  }
+  throw new Error(`No suitable interfaces were found with IP address "${ip}"`)
 }
 
 // Allow overrides for more concise test setup. Meh.
