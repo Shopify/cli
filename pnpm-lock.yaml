@@ -396,9 +396,6 @@ importers:
       is-executable:
         specifier: 2.0.1
         version: 2.0.1
-      is-interactive:
-        specifier: 2.0.0
-        version: 2.0.0
       is-wsl:
         specifier: 3.1.0
         version: 3.1.0
@@ -6253,10 +6250,6 @@ packages:
   is-interactive@1.0.0:
     resolution: {integrity: sha512-2HvIEKRoqS62guEC+qBjpvRubdX910WCMuJTZ+I9yvqKU2/12eSL549HMwtabb4oupdj2sMP50k+XJfB/8JE6w==}
     engines: {node: '>=8'}
-
-  is-interactive@2.0.0:
-    resolution: {integrity: sha512-qP1vozQRI+BMOPcjFzrjXuQvdak2pHNUMZoeG2eRbiSqyvbEf/wQtEOTOX1guk6E3t36RkaqiSt8A/6YElNxLQ==}
-    engines: {node: '>=12'}
 
   is-lower-case@2.0.2:
     resolution: {integrity: sha512-bVcMJy4X5Og6VZfdOZstSexlEy20Sr0k/p/b2IlQJlfdKAQuMpiv5w2Ccxb8sKdRUNAG1PnHVHjFSdRDVS6NlQ==}
@@ -15884,8 +15877,6 @@ snapshots:
       is-docker: 3.0.0
 
   is-interactive@1.0.0: {}
-
-  is-interactive@2.0.0: {}
 
   is-lower-case@2.0.2:
     dependencies:
