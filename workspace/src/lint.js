@@ -4,10 +4,12 @@ import * as path from 'pathe'
 import fg from 'fast-glob'
 import * as url from 'url'
 import {promises as fs} from 'fs'
-import {createRequire} from 'module'
-
-const require = createRequire(import.meta.url)
-const colors = require('ansi-colors')
+const ansi = {
+  bold: (s) => `\x1b[1m${s}\x1b[22m`,
+  dim: (s) => `\x1b[2m${s}\x1b[22m`,
+  green: Object.assign((s) => `\x1b[32m${s}\x1b[39m`, {bold: (s) => `\x1b[1m\x1b[32m${s}\x1b[39m\x1b[22m`}),
+  red: Object.assign((s) => `\x1b[31m${s}\x1b[39m`, {bold: (s) => `\x1b[1m\x1b[31m${s}\x1b[39m\x1b[22m`}),
+}
 
 const rootDirectory = path.join(url.fileURLToPath(new URL('.', import.meta.url)), '../..')
 let exitCode = 0
@@ -21,7 +23,7 @@ let exitCode = 0
  * often in the Javascript ecosystem than in others due to the deep nature of dependency graphs and the
  * lack of automated testing in projects.
  */
-console.info(colors.green.bold(`Linting that packages have strict version requirements`))
+console.info(ansi.green.bold(`Linting that packages have strict version requirements`))
 const packageJsonPaths = await fg(path.join(rootDirectory, 'packages/*/package.json'), {type: 'file'})
 const dependenciesWithLooseVersionRequirement = []
 const internalPackages = ['@shopify/ui-extensions-dev-console-app']
@@ -40,13 +42,13 @@ for (const packageJsonPath of packageJsonPaths) {
 
 if (dependenciesWithLooseVersionRequirement.length !== 0) {
   exitCode = 1
-  console.error(colors.red.bold(`The following dependencies have dependencies with loose version requirements:`))
-  console.error(colors.dim(`Loose version requirements might result in broken installations on the user end`))
+  console.error(ansi.red.bold(`The following dependencies have dependencies with loose version requirements:`))
+  console.error(ansi.dim(`Loose version requirements might result in broken installations on the user end`))
   for (const dependency of dependenciesWithLooseVersionRequirement) {
     console.error(
-      ` - ${colors.bold('Package')}: ${dependency.pkg} | ${colors.bold('Dependency')}: ${
+      ` - ${ansi.bold('Package')}: ${dependency.pkg} | ${ansi.bold('Dependency')}: ${
         dependency.dependency
-      } | ${colors.bold('Version')}: ${dependency.version}`,
+      } | ${ansi.bold('Version')}: ${dependency.version}`,
     )
   }
 }
