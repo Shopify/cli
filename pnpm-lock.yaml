@@ -423,9 +423,6 @@ importers:
       mrmime:
         specifier: 1.0.1
         version: 1.0.1
-      network-interfaces:
-        specifier: 1.1.0
-        version: 1.1.0
       node-abort-controller:
         specifier: 3.1.1
         version: 3.1.1
@@ -6918,9 +6915,6 @@ packages:
   natural-orderby@3.0.2:
     resolution: {integrity: sha512-x7ZdOwBxZCEm9MM7+eQCjkrNLrW3rkBKNHVr78zbtqnMGVNlnDi6C/eUEYgxHNrcbu0ymvjzcwIL/6H1iHri9g==}
     engines: {node: '>=18'}
-
-  network-interfaces@1.1.0:
-    resolution: {integrity: sha512-fBk/Cm/RminFKhyUYKolI5nWI2de1m0pHlikz1mnTDbbe/1d2+ti+x/pWlOYuK8o/9p9vyK912+66h2NXGNUwQ==}
 
   no-case@3.0.4:
     resolution: {integrity: sha512-fgAN3jGAh+RoxUGZHTSOLJIqUc2wmoBwGR4tbpNAKmmovFoWq0OdRkb0VkldReO2a2iBT/OEulG9XSUc10r3zg==}
@@ -16580,8 +16574,6 @@ snapshots:
   natural-orderby@2.0.3: {}
 
   natural-orderby@3.0.2: {}
-
-  network-interfaces@1.1.0: {}
 
   no-case@3.0.4:
     dependencies:
