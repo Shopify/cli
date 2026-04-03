@@ -15,3 +15,14 @@ eval $COMPILE_DOCS
 eval $COMPILE_STATIC_PAGES
 eval $COMPILE_CATEGORY_PAGES
 echo "DONE"
+
+# Copy generated docs to shopify-dev in the world repo if available
+WORLD_DEST="$HOME/world/trees/root/src/areas/platforms/shopify-dev/db/data/docs/templated_apis/shopify_cli"
+if [ -d "$WORLD_DEST" ]; then
+  for file in generated_docs_data.json generated_docs_data_v2.json generated_static_pages.json generated_category_pages.json; do
+    if [ -f "./docs-shopify.dev/generated/$file" ]; then
+      cp "./docs-shopify.dev/generated/$file" "$WORLD_DEST/$file"
+      echo "Copied $file to $WORLD_DEST"
+    fi
+  done
+fi

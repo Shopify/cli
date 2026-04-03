@@ -15,7 +15,7 @@ async function createPR() {
 
   const generatedDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../docs-shopify.dev/generated")
 
-  const fileNames = ['generated_category_pages.json', 'generated_docs_data.json', 'generated_static_pages.json']
+  const fileNames = ['generated_category_pages.json', 'generated_docs_data.json', 'generated_docs_data_v2.json', 'generated_static_pages.json']
 
   const files = {}
   for (const fileName of fileNames) {
