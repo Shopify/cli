@@ -20,7 +20,6 @@
     "@typescript-eslint/eslint-plugin": "8.56.1",
     "@typescript-eslint/parser": "8.56.1",
     "eslint-config-prettier": "10.1.5",
-    "eslint-plugin-jsdoc": "50.7.1",
     "eslint-plugin-no-catch-all": "1.1.0",
     "eslint-plugin-prettier": "5.5.1",
     "eslint-plugin-react": "7.37.5",
