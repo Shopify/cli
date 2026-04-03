@@ -81,6 +81,10 @@ async function refreshStoreToken(session: StoredStoreAppSession): Promise<Stored
     outputContent`Token refresh succeeded for ${outputToken.raw(session.store)}: ${outputToken.raw(maskToken(session.accessToken))} → ${outputToken.raw(maskToken(refreshedSession.accessToken))}, new expiry ${outputToken.raw(expiresAt ?? 'unknown')}`,
   )
 
+  if (refreshedSession.refreshToken && !data.refresh_token_expires_in && !session.refreshTokenExpiresAt) {
+    outputDebug(outputContent`Token refresh response did not include refresh_token_expires_in; refresh token expiry will remain unknown`)
+  }
+
   setStoredStoreAppSession(refreshedSession)
   return refreshedSession
 }

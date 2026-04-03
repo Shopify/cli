@@ -1,0 +1,1 @@
+shopify store auth info [flags]

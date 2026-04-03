@@ -2,14 +2,16 @@ import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
-import {authenticateStoreWithApp} from '../../services/store/auth.js'
+import {authenticateStoreWithApp} from '../../../services/store/auth.js'
 
 export default class StoreAuth extends Command {
   static summary = 'Authenticate an app against a store for store commands.'
 
   static descriptionWithMarkdown = `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
 
-Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`
+Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
+
+To inspect the locally stored auth state for a store, run [\`shopify store auth info\`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).`
 
   static description = this.descriptionWithoutMarkdown()
 

@@ -31,6 +31,72 @@ interface StoreSessionSchema {
 
 let _storeSessionStorage: LocalStorage<StoreSessionSchema> | undefined
 
+function sanitizeAssociatedUser(associatedUser: unknown): StoredStoreAppSession['associatedUser'] | undefined {
+  if (!associatedUser || typeof associatedUser !== 'object') return undefined
+
+  const {
+    id,
+    email,
+    firstName,
+    lastName,
+    accountOwner,
+  } = associatedUser as Partial<NonNullable<StoredStoreAppSession['associatedUser']>>
+
+  if (typeof id !== 'number') return undefined
+
+  return {
+    id,
+    ...(typeof email === 'string' ? {email} : {}),
+    ...(typeof firstName === 'string' ? {firstName} : {}),
+    ...(typeof lastName === 'string' ? {lastName} : {}),
+    ...(typeof accountOwner === 'boolean' ? {accountOwner} : {}),
+  }
+}
+
+function sanitizeStoredStoreAppSession(session: unknown): StoredStoreAppSession | undefined {
+  if (!session || typeof session !== 'object') return undefined
+
+  const {
+    store,
+    clientId,
+    userId,
+    accessToken,
+    refreshToken,
+    scopes,
+    acquiredAt,
+    expiresAt,
+    refreshTokenExpiresAt,
+    associatedUser,
+  } = session as Partial<StoredStoreAppSession>
+
+  if (
+    typeof store !== 'string' ||
+    typeof clientId !== 'string' ||
+    typeof userId !== 'string' ||
+    typeof accessToken !== 'string' ||
+    !Array.isArray(scopes) ||
+    !scopes.every((scope) => typeof scope === 'string') ||
+    typeof acquiredAt !== 'string'
+  ) {
+    return undefined
+  }
+
+  const sanitizedAssociatedUser = sanitizeAssociatedUser(associatedUser)
+
+  return {
+    store,
+    clientId,
+    userId,
+    accessToken,
+    scopes,
+    acquiredAt,
+    ...(typeof refreshToken === 'string' ? {refreshToken} : {}),
+    ...(typeof expiresAt === 'string' ? {expiresAt} : {}),
+    ...(typeof refreshTokenExpiresAt === 'string' ? {refreshTokenExpiresAt} : {}),
+    ...(sanitizedAssociatedUser ? {associatedUser: sanitizedAssociatedUser} : {}),
+  }
+}
+
 // Per-store, per-user session storage for PKCE online tokens.
 function storeSessionStorage() {
   _storeSessionStorage ??= new LocalStorage<StoreSessionSchema>({projectName: 'shopify-cli-store'})
@@ -52,7 +118,7 @@ export function getStoredStoreAppSession(
     return undefined
   }
 
-  const session = sessionsByUserId[currentUserId]
+  const session = sanitizeStoredStoreAppSession(sessionsByUserId[currentUserId])
   if (!session) {
     storage.delete(key)
     return undefined
