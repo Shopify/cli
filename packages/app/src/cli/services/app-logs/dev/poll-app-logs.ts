@@ -14,11 +14,11 @@ import {
   handleFetchAppLogsError,
   AppLogsOptions,
 } from '../utils.js'
+import camelcaseKeys from '../camelcase-keys.js'
 import {AppLogData, FunctionRunLog} from '../types.js'
 import {AppLogsError, AppLogsSuccess, DeveloperPlatformClient} from '../../../utilities/developer-platform-client.js'
 import {outputContent, outputDebug, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
-import camelcaseKeys from 'camelcase-keys'
 import {Writable} from 'stream'
 
 export const pollAppLogs = async ({
