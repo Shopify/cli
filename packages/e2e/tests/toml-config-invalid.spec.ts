@@ -35,7 +35,10 @@ test.describe('TOML config invalid', () => {
         expect(result.exitCode, `expected deploy to fail for ${label}, but it succeeded:\n${output}`).not.toBe(0)
         expect(output.toLowerCase(), `expected error output for ${label}:\n${output}`).toMatch(/error|invalid|failed/)
       } finally {
-        fs.rmSync(appDir, {recursive: true, force: true})
+        // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+        if (!process.env.E2E_SKIP_CLEANUP) {
+          fs.rmSync(appDir, {recursive: true, force: true})
+        }
       }
     })
   }

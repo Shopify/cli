@@ -80,8 +80,11 @@ include_config_on_deploy = true
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      }
     }
   })
 
@@ -142,8 +145,11 @@ api_version = "2025-01"
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      }
     }
   })
 })

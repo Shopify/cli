@@ -43,8 +43,11 @@ test.describe('App dev server', () => {
       const exitCode = await dev.waitForExit(30_000)
       expect(exitCode).toBe(0)
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      }
     }
   })
 })
