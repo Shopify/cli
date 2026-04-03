@@ -1,5 +1,4 @@
 import {InstallGlobalCLIPromptResult, installGlobalCLIPrompt} from '@shopify/cli-kit/node/is-global'
-import {isHostedAppsMode} from '@shopify/cli-kit/node/context/local'
 import {renderSelectPrompt} from '@shopify/cli-kit/node/ui'
 
 export interface InitOptions {
@@ -26,19 +25,6 @@ interface Template {
   branches?: {
     prompt: string
     options: {[key: string]: TemplateBranch}
-  }
-}
-
-export function buildNoneTemplate(): Template {
-  const hostedAppsEnabled = isHostedAppsMode()
-  return {
-    url: hostedAppsEnabled
-      ? 'https://github.com/Shopify/shopify-app-template-extension-only'
-      : 'https://github.com/Shopify/shopify-app-template-none',
-    label: hostedAppsEnabled
-      ? 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)'
-      : 'Build an extension-only app',
-    visible: true,
   }
 }
 
@@ -69,7 +55,11 @@ export const templates = {
       },
     },
   } as Template,
-  none: buildNoneTemplate(),
+  none: {
+    url: 'https://github.com/Shopify/shopify-app-template-extension-only',
+    label: 'Build an extension-only app (Shopify-hosted Preact app home and extensions, no back-end)',
+    visible: true,
+  } as Template,
   node: {
     url: 'https://github.com/Shopify/shopify-app-template-node',
     visible: false,
@@ -78,7 +68,7 @@ export const templates = {
     url: 'https://github.com/Shopify/shopify-app-template-ruby',
     visible: false,
   } as Template,
-}
+} as const
 type PredefinedTemplate = keyof typeof templates
 
 const allTemplates = Object.keys(templates) as Readonly<PredefinedTemplate[]>
