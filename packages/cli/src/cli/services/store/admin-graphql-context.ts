@@ -2,10 +2,10 @@ import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
-import {reauthenticateStoreAuthError} from './auth-recovery.js'
-import {clearStoredStoreAppSession} from './session.js'
-import type {StoredStoreAppSession} from './session.js'
-import {loadStoredStoreSession} from './stored-session.js'
+import {reauthenticateStoreAuthError} from './auth/recovery.js'
+import {clearStoredStoreAppSession} from './auth/session-store.js'
+import type {StoredStoreAppSession} from './auth/session-store.js'
+import {loadStoredStoreSession} from './auth/session-lifecycle.js'
 
 export interface AdminStoreGraphQLContext {
   adminSession: AdminSession

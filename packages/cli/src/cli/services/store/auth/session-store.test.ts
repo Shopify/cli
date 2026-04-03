@@ -1,13 +1,12 @@
 import {describe, test, expect} from 'vitest'
 import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
-import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './auth-config.js'
+import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './config.js'
 import {
   clearStoredStoreAppSession,
-  getStoredStoreAppSession,
+  getCurrentStoredStoreAppSession,
   setStoredStoreAppSession,
-  isSessionExpired,
   type StoredStoreAppSession,
-} from './session.js'
+} from './session-store.js'
 
 function inMemoryStorage() {
   const values = new Map<string, unknown>()
@@ -43,7 +42,7 @@ describe('store session storage', () => {
 
     setStoredStoreAppSession(buildSession(), storage as any)
 
-    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(buildSession())
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(buildSession())
   })
 
   test('keeps multiple user sessions per store and returns the current one', () => {
@@ -54,7 +53,7 @@ describe('store session storage', () => {
     setStoredStoreAppSession(firstSession, storage as any)
     setStoredStoreAppSession(secondSession, storage as any)
 
-    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(secondSession)
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(secondSession)
   })
 
   test('clears all stored sessions for a store', () => {
@@ -63,7 +62,7 @@ describe('store session storage', () => {
     setStoredStoreAppSession(buildSession(), storage as any)
     clearStoredStoreAppSession('shop.myshopify.com', storage as any)
 
-    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
   })
 
   test('clears only the specified user session and preserves the rest of the bucket', () => {
@@ -75,7 +74,7 @@ describe('store session storage', () => {
     setStoredStoreAppSession(secondSession, storage as any)
     clearStoredStoreAppSession('shop.myshopify.com', '84', storage as any)
 
-    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(firstSession)
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(firstSession)
   })
 
   test('returns undefined and clears the bucket when the current user session is missing', () => {
@@ -87,7 +86,7 @@ describe('store session storage', () => {
       },
     })
 
-    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
     expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
 
@@ -98,37 +97,73 @@ describe('store session storage', () => {
       sessionsByUserId: null,
     })
 
-    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
     expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
-})
 
-describe('isSessionExpired', () => {
-  test('returns false when expiresAt is not set', () => {
-    expect(isSessionExpired(buildSession())).toBe(false)
+  test('returns undefined and clears the bucket when the current stored session is malformed', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: {
+        '42': {userId: '42'},
+      },
+    })
+
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+    expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
 
-  test('returns false when token is still valid', () => {
-    const future = new Date(Date.now() + 60 * 60 * 1000).toISOString()
-    expect(isSessionExpired(buildSession({expiresAt: future}))).toBe(false)
+  test('drops malformed optional fields from a stored session instead of rejecting the whole session', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: {
+        '42': {
+          ...buildSession(),
+          refreshToken: 123,
+          expiresAt: 456,
+          refreshTokenExpiresAt: true,
+          associatedUser: {
+            id: 42,
+            email: 123,
+            firstName: 'Merchant',
+            lastName: false,
+            accountOwner: 'yes',
+          },
+        },
+      },
+    })
+
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual({
+      ...buildSession(),
+      associatedUser: {
+        id: 42,
+        firstName: 'Merchant',
+      },
+    })
   })
 
-  test('returns true when token is expired', () => {
-    const past = new Date(Date.now() - 60 * 1000).toISOString()
-    expect(isSessionExpired(buildSession({expiresAt: past}))).toBe(true)
+  test('overwrites a malformed bucket when writing a new session', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: null,
+    })
+
+    setStoredStoreAppSession(buildSession(), storage as any)
+
+    expect(getCurrentStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual(buildSession())
   })
 
-  test('returns true within the 4-minute expiry margin', () => {
-    const almostExpired = new Date(Date.now() + 3 * 60 * 1000).toISOString()
-    expect(isSessionExpired(buildSession({expiresAt: almostExpired}))).toBe(true)
-  })
+  test('clears malformed buckets without throwing when removing a specific user', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: null,
+    })
 
-  test('returns false just outside the 4-minute expiry margin', () => {
-    const safelyValid = new Date(Date.now() + 5 * 60 * 1000).toISOString()
-    expect(isSessionExpired(buildSession({expiresAt: safelyValid}))).toBe(false)
-  })
-
-  test('returns true when expiresAt is invalid', () => {
-    expect(isSessionExpired(buildSession({expiresAt: 'not-a-date'}))).toBe(true)
+    expect(() => clearStoredStoreAppSession('shop.myshopify.com', '42', storage as any)).not.toThrow()
+    expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
 })
