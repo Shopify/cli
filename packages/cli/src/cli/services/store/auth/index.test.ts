@@ -16,7 +16,7 @@ describe('store auth service', () => {
     vi.restoreAllMocks()
   })
 
-  test('authenticateStoreWithApp opens the browser and stores the session with refresh token', async () => {
+  test('authenticateStoreWithApp opens the browser, stores the session, and returns auth result', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {
       openingBrowser: vi.fn(),
@@ -28,7 +28,7 @@ describe('store auth service', () => {
       return 'abc123'
     })
 
-    await authenticateStoreWithApp(
+    const result = await authenticateStoreWithApp(
       {
         store: 'shop.myshopify.com',
         scopes: 'read_products',
@@ -50,7 +50,16 @@ describe('store auth service', () => {
     expect(presenter.openingBrowser).toHaveBeenCalledOnce()
     expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/admin/oauth/authorize?'))
     expect(presenter.manualAuthUrl).not.toHaveBeenCalled()
-    expect(presenter.success).toHaveBeenCalledWith('shop.myshopify.com', 'test@example.com')
+    expect(result).toEqual(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        userId: '42',
+        scopes: ['read_products'],
+        hasRefreshToken: true,
+        associatedUser: expect.objectContaining({email: 'test@example.com'}),
+      }),
+    )
+    expect(presenter.success).toHaveBeenCalledWith(result)
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
     expect(storedSession.store).toBe('shop.myshopify.com')
@@ -239,7 +248,7 @@ describe('store auth service', () => {
       return 'abc123'
     })
 
-    await authenticateStoreWithApp(
+    const result = await authenticateStoreWithApp(
       {
         store: 'shop.myshopify.com',
         scopes: 'read_products',
@@ -261,7 +270,7 @@ describe('store auth service', () => {
     expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
       expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
     )
-    expect(presenter.success).toHaveBeenCalledWith('shop.myshopify.com', 'test@example.com')
+    expect(presenter.success).toHaveBeenCalledWith(result)
   })
 
   test('authenticateStoreWithApp rejects when Shopify grants fewer scopes than requested', async () => {
