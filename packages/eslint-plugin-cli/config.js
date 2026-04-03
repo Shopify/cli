@@ -175,8 +175,8 @@ const baseRules = {
       message: "Be human - prefer don't to do not, won't to will not etc.",
     },
   ],
-  'tsdoc/syntax': 'error',
   'jsdoc/require-returns-description': 'error',
+  'tsdoc/syntax': 'error',
   'promise/catch-or-return': ['error', {allowFinally: true}],
   'no-unused-vars': 'off',
   '@typescript-eslint/no-unused-vars': [
@@ -279,8 +279,8 @@ const config = [
     plugins: {
       vitest: vitestPlugin,
       'unused-imports': unusedImportsPlugin,
-      tsdoc: tsdocPlugin,
       jsdoc: jsdocPlugin,
+      tsdoc: tsdocPlugin,
       'no-catch-all': noCatchAllPlugin,
       '@shopify/cli': cliPlugin,
     },
