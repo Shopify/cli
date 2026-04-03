@@ -46,9 +46,10 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
       // No confirmation page — expected
     }
   } catch (error) {
-    // Intentionally omit page HTML from the error — it may contain filled
-    // credential values in input elements, which would leak into test reports.
     const pageUrl = page.url()
+    // Clear the page so failure artifacts (screenshots, trace snapshots) do
+    // not capture the login form with credentials still populated.
+    await page.goto('about:blank').catch(() => {})
     throw new Error(`Login failed at ${pageUrl}\nOriginal error: ${error}`)
   }
 }
