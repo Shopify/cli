@@ -569,9 +569,6 @@ importers:
       '@vitest/eslint-plugin':
         specifier: 1.1.44
         version: 1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)(vitest@3.2.4(@types/node@22.19.15)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@22.19.15)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.3))
-      debug:
-        specifier: 4.4.0
-        version: 4.4.0(supports-color@8.1.1)
       eslint:
         specifier: ^9.0.0
         version: 9.39.3(jiti@2.6.1)
@@ -12595,7 +12592,6 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 8.56.1(@typescript-eslint/parser@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
       '@typescript-eslint/parser': 8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)
       '@vitest/eslint-plugin': 1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)(vitest@3.2.4(@types/node@18.19.70)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@18.19.70)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.3))
-      debug: 4.4.0(supports-color@8.1.1)
       eslint: 9.39.3(jiti@2.6.1)
       eslint-config-prettier: 10.1.5(eslint@9.39.3(jiti@2.6.1))
       eslint-plugin-jsdoc: 50.7.1(eslint@9.39.3(jiti@2.6.1))
