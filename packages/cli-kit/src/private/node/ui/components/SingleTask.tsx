@@ -9,11 +9,12 @@ interface SingleTaskProps<T> {
   title: TokenizedString
   task: (updateStatus: (status: TokenizedString) => void) => Promise<T>
   onComplete?: (result: T) => void
+  onError?: (error: Error) => void
   onAbort?: () => void
   noColor?: boolean
 }
 
-const SingleTask = <T,>({task, title, onComplete, onAbort, noColor}: SingleTaskProps<T>) => {
+const SingleTask = <T,>({task, title, onComplete, onError, onAbort, noColor}: SingleTaskProps<T>) => {
   const [status, setStatus] = useState(title)
   const [isDone, setIsDone] = useState(false)
   const {exit: unmountInk} = useApp()
@@ -35,13 +36,16 @@ const SingleTask = <T,>({task, title, onComplete, onAbort, noColor}: SingleTaskP
       .then((result) => {
         setIsDone(true)
         onComplete?.(result)
-        unmountInk()
+        // Defer unmount so React 19 can flush batched state updates
+        // before the component tree is torn down.
+        setImmediate(() => unmountInk())
       })
       .catch((error) => {
         setIsDone(true)
-        unmountInk(error)
+        onError?.(error)
+        setImmediate(() => unmountInk(error))
       })
-  }, [task, unmountInk, onComplete])
+  }, [task, unmountInk, onComplete, onError])
 
   if (isDone) {
     // clear things once done
