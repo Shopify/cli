@@ -1,14 +1,14 @@
 import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {executeStoreOperation} from './execute.js'
-import {getStoredStoreAppSession} from './session.js'
-import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
+import {getCurrentStoredStoreAppSession} from './auth/session-store.js'
+import {STORE_AUTH_APP_CLIENT_ID} from './auth/config.js'
 import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
-vi.mock('./session.js')
+vi.mock('./auth/session-store.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/fs')
@@ -35,7 +35,7 @@ describe('executeStoreOperation', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getStoredStoreAppSession).mockReturnValue(storedSession)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedSession)
     vi.mocked(fetchApiVersions).mockResolvedValue([
       {handle: '2025-10', supported: true},
       {handle: '2025-07', supported: true},
@@ -63,7 +63,7 @@ describe('executeStoreOperation', () => {
         title: expect.anything(),
       }),
     )
-    expect(getStoredStoreAppSession).toHaveBeenCalledWith(store)
+    expect(getCurrentStoredStoreAppSession).toHaveBeenCalledWith(store)
     expect(fetchApiVersions).toHaveBeenCalledWith(session)
     expect(graphqlRequest).toHaveBeenCalledWith({
       query: 'query { shop { name } }',
@@ -131,11 +131,11 @@ describe('executeStoreOperation', () => {
       }),
     ).rejects.toThrow('Mutations are disabled by default')
 
-    expect(getStoredStoreAppSession).not.toHaveBeenCalled()
+    expect(getCurrentStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
   test('throws when no stored app session exists', async () => {
-    vi.mocked(getStoredStoreAppSession).mockReturnValue(undefined)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
 
     await expect(
       executeStoreOperation({
