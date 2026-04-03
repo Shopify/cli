@@ -1,10 +1,11 @@
+import {createProxyServer} from './http-proxy.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 import {outputDebug, outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import * as http from 'http'
 import * as https from 'https'
 import {Writable} from 'stream'
-import type Server from 'http-proxy-node16'
+import type {ProxyServer} from './http-proxy.js'
 
 function isAggregateError(err: Error): err is Error & {errors: Error[]} {
   return 'errors' in err && Array.isArray((err as {errors?: unknown}).errors)
@@ -22,10 +23,7 @@ export async function getProxyingWebServer(
   localhostCert?: LocalhostCert,
   stdout?: Writable,
 ) {
-  // Lazy-importing it because it's CJS and we don't want it
-  // to block the loading of the ESM module graph.
-  const httpProxy = await import('http-proxy-node16')
-  const proxy = httpProxy.default.createProxyServer()
+  const proxy = createProxyServer()
 
   const requestListener = getProxyServerRequestListener(rules, proxy, stdout)
 
@@ -43,13 +41,13 @@ export async function getProxyingWebServer(
 
 function getProxyServerWebsocketUpgradeListener(
   rules: {[key: string]: string},
-  proxy: Server,
+  proxy: ProxyServer,
   stdout?: Writable,
 ): (req: http.IncomingMessage, socket: import('stream').Duplex, head: Buffer) => void {
   return function (req, socket, head) {
     const target = match(rules, req, true)
     if (target) {
-      return proxy.ws(req, socket, head, {target}, (err) => {
+      return proxy.ws(req, socket as import('net').Socket, head, {target}, (err) => {
         useConcurrentOutputContext({outputPrefix: 'proxy', stripAnsi: false}, () => {
           const lastError = isAggregateError(err) ? err.errors[err.errors.length - 1] : undefined
           const error = lastError ?? err
@@ -64,7 +62,7 @@ function getProxyServerWebsocketUpgradeListener(
 
 function getProxyServerRequestListener(
   rules: {[key: string]: string},
-  proxy: Server,
+  proxy: ProxyServer,
   stdout?: Writable,
 ): http.RequestListener | undefined {
   return function (req, res) {
