@@ -1,8 +1,8 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
-import {authenticateStoreWithApp} from '../../../services/store/auth.js'
+import {authenticateStoreWithApp, createStoreAuthPresenter} from '../../../services/store/auth.js'
 
 export default class StoreAuth extends Command {
   static summary = 'Authenticate an app against a store for store commands.'
@@ -17,10 +17,14 @@ To clear the locally stored auth state for a store, run [\`shopify store auth lo
 
   static description = this.descriptionWithoutMarkdown()
 
-  static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products']
+  static examples = [
+    '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products',
+    '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products --json',
+  ]
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     store: Flags.string({
       char: 's',
       description: 'The myshopify.com domain of the store to authenticate against.',
@@ -38,9 +42,14 @@ To clear the locally stored auth state for a store, run [\`shopify store auth lo
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreAuth)
 
-    await authenticateStoreWithApp({
-      store: flags.store,
-      scopes: flags.scopes,
-    })
+    await authenticateStoreWithApp(
+      {
+        store: flags.store,
+        scopes: flags.scopes,
+      },
+      {
+        presenter: createStoreAuthPresenter(flags.json ? 'json' : 'text'),
+      },
+    )
   }
 }

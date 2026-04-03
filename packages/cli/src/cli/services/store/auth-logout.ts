@@ -1,6 +1,8 @@
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {outputCompleted, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputCompleted, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 import {clearStoredStoreAppSession, getStoredStoreAppSession} from './session.js'
+
+type StoreAuthLogoutFormat = 'text' | 'json'
 
 interface StoreAuthLogoutResult {
   store: string
@@ -26,7 +28,12 @@ export function logoutStoreAuth(store: string): StoreAuthLogoutResult {
   }
 }
 
-export function displayStoreAuthLogout(result: StoreAuthLogoutResult): void {
+export function displayStoreAuthLogout(result: StoreAuthLogoutResult, format: StoreAuthLogoutFormat = 'text'): void {
+  if (format === 'json') {
+    outputResult(JSON.stringify(result, null, 2))
+    return
+  }
+
   if (!result.cleared) {
     outputInfo(`No locally stored store auth found for ${result.store}.`)
     return

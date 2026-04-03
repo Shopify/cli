@@ -13,14 +13,12 @@ describe('prepareStoreExecuteRequest', () => {
     const request = await prepareStoreExecuteRequest({
       query: 'query { shop { name } }',
       variables: '{"id":"gid://shopify/Shop/1"}',
-      outputFile: '/tmp/result.json',
       version: '2025-07',
     })
 
     expect(request).toMatchObject({
       query: 'query { shop { name } }',
       parsedVariables: {id: 'gid://shopify/Shop/1'},
-      outputFile: '/tmp/result.json',
       requestedVersion: '2025-07',
     })
   })

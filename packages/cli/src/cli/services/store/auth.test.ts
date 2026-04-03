@@ -3,6 +3,7 @@ import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {
   authenticateStoreWithApp,
   buildStoreAuthUrl,
+  createStoreAuthPresenter,
   parseStoreAuthScopes,
   generateCodeVerifier,
   computeCodeChallenge,
@@ -14,7 +15,7 @@ import {loadStoredStoreSession} from './stored-session.js'
 import {getStoredStoreAppSession, setStoredStoreAppSession} from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputDebug} from '@shopify/cli-kit/node/output'
+import {outputCompleted, outputDebug, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 
 vi.mock('./session.js')
 vi.mock('./stored-session.js', () => ({loadStoredStoreSession: vi.fn()}))
@@ -23,7 +24,10 @@ vi.mock('@shopify/cli-kit/node/output', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/output')>('@shopify/cli-kit/node/output')
   return {
     ...actual,
+    outputCompleted: vi.fn(),
     outputDebug: vi.fn(),
+    outputInfo: vi.fn(),
+    outputResult: vi.fn(),
   }
 })
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
@@ -444,6 +448,32 @@ describe('store auth service', () => {
     ).toBe(true)
   })
 
+  test('createStoreAuthPresenter supports json success output', () => {
+    const presenter = createStoreAuthPresenter('json')
+
+    presenter.success({
+      store: 'shop.myshopify.com',
+      userId: '42',
+      scopes: ['read_products'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+      hasRefreshToken: true,
+      isExpired: false,
+    })
+
+    expect(outputResult).toHaveBeenCalledWith(`{
+  "store": "shop.myshopify.com",
+  "userId": "42",
+  "scopes": [
+    "read_products"
+  ],
+  "acquiredAt": "2026-04-02T00:00:00.000Z",
+  "hasRefreshToken": true,
+  "isExpired": false
+}`)
+    expect(outputCompleted).not.toHaveBeenCalled()
+    expect(outputInfo).not.toHaveBeenCalled()
+  })
+
   test('authenticateStoreWithApp opens the browser and stores the session with refresh token', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {
@@ -478,7 +508,15 @@ describe('store auth service', () => {
     expect(presenter.openingBrowser).toHaveBeenCalledOnce()
     expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/admin/oauth/authorize?'))
     expect(presenter.manualAuthUrl).not.toHaveBeenCalled()
-    expect(presenter.success).toHaveBeenCalledWith('shop.myshopify.com', 'test@example.com')
+    expect(presenter.success).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        userId: '42',
+        scopes: ['read_products'],
+        hasRefreshToken: true,
+        associatedUser: expect.objectContaining({email: 'test@example.com'}),
+      }),
+    )
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
     expect(storedSession.store).toBe('shop.myshopify.com')
@@ -711,7 +749,14 @@ describe('store auth service', () => {
     expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
       expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
     )
-    expect(presenter.success).toHaveBeenCalledWith('shop.myshopify.com', 'test@example.com')
+    expect(presenter.success).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        userId: '42',
+        scopes: ['read_products'],
+        associatedUser: expect.objectContaining({email: 'test@example.com'}),
+      }),
+    )
   })
 
   test('authenticateStoreWithApp rejects when Shopify grants fewer scopes than requested', async () => {

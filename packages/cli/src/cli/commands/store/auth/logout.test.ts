@@ -17,7 +17,7 @@ describe('store auth logout command', () => {
     await StoreAuthLogout.run(['--store', 'shop.myshopify.com'])
 
     expect(logoutStoreAuth).toHaveBeenCalledWith('shop.myshopify.com')
-    expect(displayStoreAuthLogout).toHaveBeenCalledWith({store: 'shop.myshopify.com', cleared: true})
+    expect(displayStoreAuthLogout).toHaveBeenCalledWith({store: 'shop.myshopify.com', cleared: true}, 'text')
   })
 
   test('normalizes the store flag before calling the auth logout service', async () => {
@@ -26,7 +26,14 @@ describe('store auth logout command', () => {
     expect(logoutStoreAuth).toHaveBeenCalledWith('shop.myshopify.com')
   })
 
+  test('supports json output', async () => {
+    await StoreAuthLogout.run(['--store', 'shop.myshopify.com', '--json'])
+
+    expect(displayStoreAuthLogout).toHaveBeenCalledWith({store: 'shop.myshopify.com', cleared: true}, 'json')
+  })
+
   test('defines the expected flags', () => {
     expect(StoreAuthLogout.flags.store).toBeDefined()
+    expect(StoreAuthLogout.flags.json).toBeDefined()
   })
 })
