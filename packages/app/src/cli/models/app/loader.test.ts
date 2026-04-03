@@ -8,9 +8,11 @@ import {
   getAppConfigurationContext,
   loadConfigForAppCreation,
   reloadApp,
+  AppConfigValidationError,
 } from './loader.js'
 import {App, AppInterface, AppLinkedInterface, AppSchema, WebConfigurationSchema} from './app.js'
 import {DEFAULT_CONFIG, buildVersionedAppSchema, getWebhookConfig} from './app.test-data.js'
+import {ProjectError} from '../project/project.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {configurationFileNames, blocks} from '../../constants.js'
 import metadata from '../../metadata.js'
@@ -235,26 +237,31 @@ describe('load', () => {
     cmd_app_linked_config_used: false,
   })
 
-  test("throws an error if the directory doesn't exist", async () => {
+  test("throws ProjectError if the directory doesn't exist", async () => {
     await inTemporaryDirectory(async (tmp) => {
       // Given
       await rmdir(tmp, {force: true})
 
       // When/Then
-      await expect(loadApp({directory: tmp, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-        /Could not find a Shopify app configuration file/,
+      const error = await loadApp({directory: tmp, specifications, userProvidedConfigName: undefined}).catch(
+        (err) => err,
       )
+      expect(error).toBeInstanceOf(ProjectError)
+      expect(error.code).toBe('no-project-root')
+      expect(error.details.directory).toBe(tmp)
     })
   })
 
-  test("throws an error if the configuration file doesn't exist", async () => {
+  test("throws ProjectError if the configuration file doesn't exist", async () => {
     // Given
     const currentDir = cwd()
 
     // When/Then
-    await expect(loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined})).rejects.toThrow(
-      /Could not find a Shopify app configuration file/,
+    const error = await loadApp({directory: currentDir, specifications, userProvidedConfigName: undefined}).catch(
+      (err) => err,
     )
+    expect(error).toBeInstanceOf(ProjectError)
+    expect(error.code).toBe('no-project-root')
   })
 
   test('throws an error when the configuration file is invalid', async () => {
@@ -268,13 +275,18 @@ describe('load', () => {
     await expect(loadTestingApp()).rejects.toThrow()
   })
 
-  test('throws an error when the application_url is invalid', async () => {
+  test('throws AppConfigValidationError when the application_url is invalid', async () => {
     // Given
     const config = buildAppConfiguration({applicationUrl: 'wrong'})
     await writeConfig(config)
 
     // When/Then
-    await expect(loadTestingApp()).rejects.toThrow(/\[application_url\]: Invalid URL/)
+    const error = await loadTestingApp().catch((err) => err)
+    expect(error).toBeInstanceOf(AppConfigValidationError)
+    expect(error.code).toBe('schema-validation')
+    expect(
+      error.details.errors.some((err: {path?: string[]; message: string}) => err.path?.includes('application_url')),
+    ).toBe(true)
   })
 
   test('loads the app when the configuration is valid and has no blocks', async () => {
@@ -389,12 +401,14 @@ describe('load', () => {
     expect(app.webs.length).toBe(1)
   }, 30000)
 
-  test("throws an error if the extension configuration file doesn't exist", async () => {
+  test("throws ProjectError if the extension configuration file doesn't exist", async () => {
     // Given
     await makeBlockDir({name: 'my-extension'})
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Could not find a Shopify app configuration file/)
+    const error = await loadTestingApp().catch((err) => err)
+    expect(error).toBeInstanceOf(ProjectError)
+    expect(error.code).toBe('no-project-root')
   })
 
   test('throws an error if the extension configuration file is invalid', async () => {
@@ -960,12 +974,14 @@ describe('load', () => {
     await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
-  test("throws an error if the configuration file doesn't exist", async () => {
+  test("throws ProjectError if the configuration file doesn't exist", async () => {
     // Given
     await makeBlockDir({name: 'my-functions'})
 
     // When
-    await expect(loadTestingApp()).rejects.toThrow(/Could not find a Shopify app configuration file/)
+    const error = await loadTestingApp().catch((err) => err)
+    expect(error).toBeInstanceOf(ProjectError)
+    expect(error.code).toBe('no-project-root')
   })
 
   test('throws an error if the function configuration file is invalid', async () => {

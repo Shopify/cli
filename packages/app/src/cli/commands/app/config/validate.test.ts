@@ -6,7 +6,7 @@ import {Project} from '../../../models/project/project.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import {outputResult} from '@shopify/cli-kit/node/output'
-import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
+import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../../services/app-context.js')
@@ -64,7 +64,10 @@ describe('app config validate command', () => {
     vi.mocked(Project.load).mockResolvedValue({errors: []} as unknown as Project)
     vi.mocked(selectActiveConfig).mockResolvedValue({file: new TomlFile('shopify.app.toml', {})} as any)
     vi.mocked(errorsForConfig).mockReturnValue([
-      {path: '/app/shopify.app.toml', message: 'Unexpected character at row 1, col 5'} as any,
+      new TomlFileError('toml-parse-error', {
+        path: '/app/shopify.app.toml',
+        message: 'Unexpected character at row 1, col 5',
+      }),
     ])
 
     await expect(Validate.run(['--json'], import.meta.url)).rejects.toThrow()
