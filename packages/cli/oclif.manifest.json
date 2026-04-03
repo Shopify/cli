@@ -5739,8 +5739,8 @@
       ],
       "args": {
       },
-      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nTo inspect the locally stored auth state for a store, run \"`shopify store auth info`\" (https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).",
-      "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nTo inspect the locally stored auth state for a store, run [`shopify store auth info`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).",
+      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nTo inspect the locally stored auth state for a store, run \"`shopify store auth info`\" (https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).\n\nTo clear the locally stored auth state for a store, run \"`shopify store auth logout`\" (https://shopify.dev/docs/api/shopify-cli/store/store-auth-logout).",
+      "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.\n\nTo inspect the locally stored auth state for a store, run [`shopify store auth info`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).\n\nTo clear the locally stored auth state for a store, run [`shopify store auth logout`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-logout).",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products"
@@ -5850,6 +5850,55 @@
       "pluginType": "core",
       "strict": true,
       "summary": "Show locally stored store auth information for a store."
+    },
+    "store:auth:logout": {
+      "aliases": [
+      ],
+      "args": {
+      },
+      "description": "Clears the locally stored store auth for the specified store on this machine.\n\nThis does not revoke the app or remove granted scopes on Shopify.",
+      "descriptionWithMarkdown": "Clears the locally stored store auth for the specified store on this machine.\n\nThis does not revoke the app or remove granted scopes on Shopify.",
+      "enableJsonFlag": false,
+      "examples": [
+        "<%= config.bin %> <%= command.id %> --store shop.myshopify.com"
+      ],
+      "flags": {
+        "no-color": {
+          "allowNo": false,
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "type": "boolean"
+        },
+        "store": {
+          "char": "s",
+          "description": "The myshopify.com domain of the store to clear local auth for.",
+          "env": "SHOPIFY_FLAG_STORE",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "store",
+          "required": true,
+          "type": "option"
+        },
+        "verbose": {
+          "allowNo": false,
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [
+      ],
+      "id": "store:auth:logout",
+      "pluginAlias": "@shopify/cli",
+      "pluginName": "@shopify/cli",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Clear locally stored store auth for a store."
     },
     "store:execute": {
       "aliases": [

@@ -7,7 +7,9 @@ const data: ReferenceEntityTemplateSchema = {
 
 Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
-To inspect the locally stored auth state for a store, run [\`shopify store auth info\`](/docs/api/shopify-cli/store/store-auth-info).`,
+To inspect the locally stored auth state for a store, run [\`shopify store auth info\`](/docs/api/shopify-cli/store/store-auth-info).
+
+To clear the locally stored auth state for a store, run [\`shopify store auth logout\`](/docs/api/shopify-cli/store/store-auth-logout).`,
   overviewPreviewDescription: `Authenticate an app against a store for store commands.`,
   type: 'command',
   isVisualComponent: false,

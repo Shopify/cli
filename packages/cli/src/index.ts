@@ -17,6 +17,7 @@ import Generate from './cli/commands/notifications/generate.js'
 import ClearCache from './cli/commands/cache/clear.js'
 import StoreAuth from './cli/commands/store/auth/index.js'
 import StoreAuthInfo from './cli/commands/store/auth/info.js'
+import StoreAuthLogout from './cli/commands/store/auth/logout.js'
 import StoreExecute from './cli/commands/store/execute.js'
 import {createGlobalProxyAgent} from 'global-agent'
 import ThemeCommands from '@shopify/theme'
@@ -155,6 +156,7 @@ export const COMMANDS: any = {
   'cache:clear': ClearCache,
   'store:auth': StoreAuth,
   'store:auth:info': StoreAuthInfo,
+  'store:auth:logout': StoreAuthLogout,
   'store:execute': StoreExecute,
 }
 

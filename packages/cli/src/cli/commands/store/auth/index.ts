@@ -11,7 +11,9 @@ export default class StoreAuth extends Command {
 
 Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
-To inspect the locally stored auth state for a store, run [\`shopify store auth info\`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).`
+To inspect the locally stored auth state for a store, run [\`shopify store auth info\`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).
+
+To clear the locally stored auth state for a store, run [\`shopify store auth logout\`](https://shopify.dev/docs/api/shopify-cli/store/store-auth-logout).`
 
   static description = this.descriptionWithoutMarkdown()
 
