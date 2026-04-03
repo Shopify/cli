@@ -89,9 +89,12 @@ export async function writeCommandDocumentation(
   const typeDescriptions = JSON.parse(await readFile(typeDescriptionsPath)) as Record<string, string>
   const description =
     typeDescriptions[interfaceName] ?? command.descriptionWithMarkdown ?? command.description ?? command.summary ?? ''
-  const cleanDescription = description.replace(/`/g, '\\`')
+  const cleanDescription = description.replace(/\\/g, '\\\\').replace(/`/g, '\\`')
   const previewDescription = command.summary ?? description ?? ''
-  const cleanPreview = previewDescription.replace(/`/g, '\\`').replace(/https:\/\/shopify\.dev/g, '')
+  const cleanPreview = previewDescription
+    .replace(/\\/g, '\\\\')
+    .replace(/`/g, '\\`')
+    .replace(/https:\/\/shopify\.dev/g, '')
 
   const category = hasTopic && !generalTopics.includes(topic!) ? topic : 'general commands'
 
