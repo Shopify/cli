@@ -26,7 +26,8 @@
           "appbuild": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
             "name": "appbuild",
-            "description": "",
+            "description": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](/docs/apps/online-store/theme-app-extensions), then running the `build` command runs [Theme Check](/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
@@ -127,7 +128,8 @@
           "appbulkcancel": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
             "name": "appbulkcancel",
-            "description": "",
+            "description": "Cancels a running bulk operation by ID.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
@@ -236,7 +238,8 @@
           "appbulkexecute": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
             "name": "appbulkexecute",
-            "description": "",
+            "description": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk status`](/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
@@ -400,7 +403,8 @@
           "appbulkstatus": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
             "name": "appbulkstatus",
-            "description": "",
+            "description": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk execute`](/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
@@ -510,7 +514,8 @@
           "appconfiglink": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
             "name": "appconfiglink",
-            "description": "",
+            "description": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the [App configuration](/docs/apps/tools/cli/configuration) page.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
@@ -602,7 +607,8 @@
           "appconfigpull": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
             "name": "appconfigpull",
-            "description": "",
+            "description": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
@@ -694,7 +700,8 @@
           "appconfiguse": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
             "name": "appconfiguse",
-            "description": "",
+            "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
@@ -777,7 +784,8 @@
           "appconfigvalidate": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
             "name": "appconfigvalidate",
-            "description": "",
+            "description": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
@@ -878,7 +886,8 @@
           "appdeploy": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
             "name": "appdeploy",
-            "description": "",
+            "description": "[Builds the app](/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your [web app](/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](/docs/apps/deployment/web) to your own hosting solution.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
@@ -1042,7 +1051,8 @@
           "appdevclean": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
             "name": "appdevclean",
-            "description": "",
+            "description": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
@@ -1143,7 +1153,8 @@
           "appdev": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
             "name": "appdev",
-            "description": "",
+            "description": "Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](/docs/apps/build/cli-for-apps/test-apps-locally).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
@@ -1334,7 +1345,8 @@
           "appenvpull": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
             "name": "appenvpull",
-            "description": "",
+            "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
@@ -1435,7 +1447,8 @@
           "appenvshow": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
             "name": "appenvshow",
-            "description": "",
+            "description": "Displays environment variables that can be used to deploy apps and app extensions.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
@@ -1527,7 +1540,8 @@
           "appexecute": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
             "name": "appexecute",
-            "description": "",
+            "description": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use [`bulk execute`](/docs/api/shopify-cli/app/app-bulk-execute) instead.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
@@ -1682,7 +1696,8 @@
           "appfunctionbuild": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
             "name": "appfunctionbuild",
-            "description": "",
+            "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
@@ -1774,7 +1789,8 @@
           "appfunctioninfo": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
             "name": "appfunctioninfo",
-            "description": "",
+            "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
@@ -1875,7 +1891,8 @@
           "appfunctionreplay": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
             "name": "appfunctionreplay",
-            "description": "",
+            "description": "Runs the function from your current directory for [testing purposes](/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](/docs/api/functions/errors).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
@@ -1994,7 +2011,8 @@
           "appfunctionrun": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
             "name": "appfunctionrun",
-            "description": "",
+            "description": "Runs the function from your current directory for [testing purposes](/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](/docs/api/functions/errors).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
@@ -2113,7 +2131,8 @@
           "appfunctionschema": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
             "name": "appfunctionschema",
-            "description": "",
+            "description": "Generates the latest [GraphQL schema](/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
@@ -2214,7 +2233,8 @@
           "appfunctiontypegen": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
             "name": "appfunctiontypegen",
-            "description": "",
+            "description": "Creates GraphQL types based on your [input query](/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
@@ -2306,7 +2326,8 @@
           "appgenerateextension": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
             "name": "appgenerateextension",
-            "description": "",
+            "description": "Generates a new [app extension](/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
@@ -2434,7 +2455,8 @@
           "appimportcustomdatadefinitions": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
             "name": "appimportcustomdatadefinitions",
-            "description": "",
+            "description": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](/docs/apps/build/custom-data/declarative-custom-data-definitions).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
@@ -2544,7 +2566,8 @@
           "appimportextensions": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
             "name": "appimportextensions",
-            "description": "",
+            "description": "Import dashboard-managed extensions into your app.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
@@ -2636,7 +2659,8 @@
           "appinfo": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
             "name": "appinfo",
-            "description": "",
+            "description": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the [dev](/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [`dev --reset`](/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The [structure](/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
@@ -2746,7 +2770,8 @@
           "appinit": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
             "name": "appinit",
-            "description": "",
+            "description": "Create a new app project",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
@@ -2865,7 +2890,8 @@
           "applogssources": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
             "name": "applogssources",
-            "description": "",
+            "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
@@ -2957,7 +2983,8 @@
           "applogs": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
             "name": "applogs",
-            "description": "",
+            "description": "\nOpens a real-time stream of detailed app logs from the selected app and store. Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources. Use the `--status` argument to filter on status, either `success` or `failure`. ``` shopify app logs --status=success --source=extension.discount-function ```",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
@@ -3085,7 +3112,8 @@
           "apprelease": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
             "name": "apprelease",
-            "description": "",
+            "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
@@ -3212,7 +3240,8 @@
           "appversionslist": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
             "name": "appversionslist",
-            "description": "",
+            "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
@@ -3313,7 +3342,8 @@
           "appwebhooktrigger": {
             "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
             "name": "appwebhooktrigger",
-            "description": "",
+            "description": "\nTriggers the delivery of a sample Admin API event topic payload to a designated address.\n\nYou should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\nBecause most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\nTo learn more about using webhooks in a Shopify app, refer to [Webhooks overview](/docs/apps/webhooks).\n\n### Limitations\n\n- Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n- Webhooks triggered using this method aren't retried when they fail.\n- Trigger requests are rate-limited using the [Partner API rate limit](/docs/api/partner#rate_limits).\n- You can't use this method to validate your API webhook subscriptions.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
@@ -3450,7 +3480,8 @@
           "authlogin": {
             "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
             "name": "authlogin",
-            "description": "",
+            "description": "Logs you in to your Shopify account.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
@@ -3519,7 +3550,8 @@
           "commands": {
             "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
             "name": "commands",
-            "description": "",
+            "description": "List all shopify commands.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
@@ -3687,7 +3719,8 @@
           "help": {
             "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
             "name": "help",
-            "description": "",
+            "description": "Display help for Shopify CLI",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
@@ -3734,7 +3767,8 @@
           "hydrogenbuild": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
             "name": "hydrogenbuild",
-            "description": "",
+            "description": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
@@ -3859,7 +3893,8 @@
           "hydrogencheck": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
             "name": "hydrogencheck",
-            "description": "",
+            "description": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
@@ -3906,7 +3941,8 @@
           "hydrogencodegen": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
             "name": "hydrogencodegen",
-            "description": "",
+            "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
@@ -3969,7 +4005,8 @@
           "hydrogencustomeraccountpush": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
             "name": "hydrogencustomeraccountpush",
-            "description": "",
+            "description": "Push project configuration to admin",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
@@ -4047,7 +4084,8 @@
           "hydrogendebugcpu": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
             "name": "hydrogendebugcpu",
-            "description": "",
+            "description": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
@@ -4111,7 +4149,8 @@
           "hydrogendeploy": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
             "name": "hydrogendeploy",
-            "description": "",
+            "description": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
@@ -4305,7 +4344,8 @@
           "hydrogendev": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
             "name": "hydrogendev",
-            "description": "",
+            "description": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
@@ -4481,7 +4521,8 @@
           "hydrogenenvlist": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
             "name": "hydrogenenvlist",
-            "description": "",
+            "description": "Lists all environments available on the linked Hydrogen storefront.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
@@ -4528,7 +4569,8 @@
           "hydrogenenvpull": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
             "name": "hydrogenenvpull",
-            "description": "",
+            "description": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
@@ -4609,7 +4651,8 @@
           "hydrogenenvpush": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
             "name": "hydrogenenvpush",
-            "description": "",
+            "description": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
@@ -4672,7 +4715,8 @@
           "hydrogengenerateroute": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
             "name": "hydrogengenerateroute",
-            "description": "",
+            "description": "Generates a set of default routes from the starter template.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
@@ -4755,7 +4799,8 @@
           "hydrogengenerateroutes": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
             "name": "hydrogengenerateroutes",
-            "description": "",
+            "description": "Generates all supported standard shopify routes.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
@@ -4838,7 +4883,8 @@
           "hydrogeninit": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
             "name": "hydrogeninit",
-            "description": "",
+            "description": "Creates a new Hydrogen storefront.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
@@ -4975,7 +5021,8 @@
           "hydrogenlink": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
             "name": "hydrogenlink",
-            "description": "",
+            "description": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
@@ -5040,7 +5087,8 @@
           "hydrogenlist": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
             "name": "hydrogenlist",
-            "description": "",
+            "description": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
@@ -5087,7 +5135,8 @@
           "hydrogenlogin": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
             "name": "hydrogenlogin",
-            "description": "",
+            "description": "Logs in to the specified shop and saves the shop domain to the project.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
@@ -5143,7 +5192,8 @@
           "hydrogenlogout": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
             "name": "hydrogenlogout",
-            "description": "",
+            "description": "Log out from the current shop.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
@@ -5190,7 +5240,8 @@
           "hydrogenpreview": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
             "name": "hydrogenpreview",
-            "description": "",
+            "description": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
@@ -5339,7 +5390,8 @@
           "hydrogensetupcss": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
             "name": "hydrogensetupcss",
-            "description": "",
+            "description": "Adds support for certain CSS strategies to your project.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
@@ -5404,7 +5456,8 @@
           "hydrogensetupmarkets": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
             "name": "hydrogensetupmarkets",
-            "description": "",
+            "description": "Adds support for multiple [markets](/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
@@ -5451,7 +5504,8 @@
           "hydrogensetupvite": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
             "name": "hydrogensetupvite",
-            "description": "",
+            "description": "EXPERIMENTAL: Upgrades the project to use Vite.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
@@ -5498,7 +5552,8 @@
           "hydrogensetup": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
             "name": "hydrogensetup",
-            "description": "",
+            "description": "Scaffold routes and core functionality.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
@@ -5603,7 +5658,8 @@
           "hydrogenunlink": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
             "name": "hydrogenunlink",
-            "description": "",
+            "description": "Unlinks your local development environment from a remote Hydrogen storefront.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
@@ -5650,7 +5706,8 @@
           "hydrogenupgrade": {
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
             "name": "hydrogenupgrade",
-            "description": "",
+            "description": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
@@ -5714,7 +5771,8 @@
           "organizationlist": {
             "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
             "name": "organizationlist",
-            "description": "",
+            "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
@@ -5801,7 +5859,8 @@
           "storeauth": {
             "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
             "name": "storeauth",
-            "description": "",
+            "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
@@ -5882,7 +5941,8 @@
           "storeexecute": {
             "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
             "name": "storeexecute",
-            "description": "",
+            "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
@@ -6018,7 +6078,8 @@
           "themecheck": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
             "name": "themecheck",
-            "description": "",
+            "description": "Calls and runs [Theme Check](/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](/docs/themes/tools/theme-check/checks)",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
@@ -6164,7 +6225,8 @@
           "themeconsole": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
             "name": "themeconsole",
-            "description": "",
+            "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
@@ -6274,7 +6336,8 @@
           "themedelete": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
             "name": "themedelete",
-            "description": "",
+            "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
@@ -6402,7 +6465,8 @@
           "themedev": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
             "name": "themedev",
-            "description": "",
+            "description": "\nUploads the current theme as the specified theme, or a [development theme](/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\nYou can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](/docs/api/shopify-cli/theme/theme-share) your theme or [push](/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
@@ -6620,7 +6684,8 @@
           "themeduplicate": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
             "name": "themeduplicate",
-            "description": "",
+            "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json {\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json {\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
@@ -6739,7 +6804,8 @@
           "themeinfo": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
             "name": "themeinfo",
-            "description": "",
+            "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
@@ -6858,7 +6924,8 @@
           "themeinit": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
             "name": "themeinit",
-            "description": "",
+            "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
@@ -6941,7 +7008,8 @@
           "themelanguageserver": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-language-server.interface.ts",
             "name": "themelanguageserver",
-            "description": "",
+            "description": "Starts the [Language Server](/docs/themes/tools/cli/language-server).",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-language-server.interface.ts",
@@ -6997,7 +7065,8 @@
           "themelist": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
             "name": "themelist",
-            "description": "",
+            "description": "Lists the themes in your store, along with their IDs and statuses.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
@@ -7125,7 +7194,8 @@
           "thememetafieldspull": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
             "name": "thememetafieldspull",
-            "description": "",
+            "description": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
@@ -7217,7 +7287,8 @@
           "themeopen": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
             "name": "themeopen",
-            "description": "",
+            "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
@@ -7345,7 +7416,8 @@
           "themepackage": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-package.interface.ts",
             "name": "themepackage",
-            "description": "",
+            "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per [Theme Store requirements](/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-package.interface.ts",
@@ -7410,7 +7482,8 @@
           "themepreview": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
             "name": "themepreview",
-            "description": "",
+            "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
@@ -7545,7 +7618,8 @@
           "themeprofile": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
             "name": "themeprofile",
-            "description": "",
+            "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
@@ -7673,7 +7747,8 @@
           "themepublish": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
             "name": "themepublish",
-            "description": "",
+            "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
@@ -7783,7 +7858,8 @@
           "themepull": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
             "name": "themepull",
-            "description": "",
+            "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
@@ -7929,7 +8005,8 @@
           "themepush": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
             "name": "themepush",
-            "description": "",
+            "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
@@ -8138,7 +8215,8 @@
           "themerename": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
             "name": "themerename",
-            "description": "",
+            "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
@@ -8266,7 +8344,8 @@
           "themeshare": {
             "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
             "name": "themeshare",
-            "description": "",
+            "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
