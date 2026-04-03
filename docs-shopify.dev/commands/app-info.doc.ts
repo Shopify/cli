@@ -3,12 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app info',
-  description: `The information returned includes the following:
-
-  - The app and dev store that's used when you run the [dev](/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [\`dev --reset\`](/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).
-  - The [structure](/docs/apps/tools/cli/structure) of your app project.
-  - The [access scopes](/docs/api/usage) your app has requested.
-  - System information, including the package manager and version of Shopify CLI used in the project.`,
+  description: `The following flags are available for the \`app info\` command:`,
   overviewPreviewDescription: `Print basic information about your app and extensions.`,
   type: 'command',
   isVisualComponent: false,

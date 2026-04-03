@@ -3,9 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme metafields pull',
-  description: `Retrieves metafields from Shopify Admin.
-
-If the metafields file already exists, it will be overwritten.`,
+  description: `The following flags are available for the \`theme metafields pull\` command:`,
   overviewPreviewDescription: `Download metafields definitions from your shop into a local file.`,
   type: 'command',
   isVisualComponent: false,

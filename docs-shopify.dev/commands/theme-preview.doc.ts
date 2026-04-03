@@ -3,9 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme preview',
-  description: `Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.
-
-  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with \`--preview-id\` to update an existing preview instead of creating a new one.`,
+  description: `The following flags are available for the \`theme preview\` command:`,
   overviewPreviewDescription: `Applies JSON overrides to a theme and returns a preview URL.`,
   type: 'command',
   isVisualComponent: false,

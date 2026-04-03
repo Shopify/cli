@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app env show',
-  description: `Displays environment variables that can be used to deploy apps and app extensions.`,
+  description: `The following flags are available for the \`app env show\` command:`,
   overviewPreviewDescription: `Display app and extensions environment variables.`,
   type: 'command',
   isVisualComponent: false,

@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen build',
-  description: `Builds a Hydrogen storefront for production. The client and app worker files are compiled to a \`/dist\` folder in your Hydrogen project directory.`,
-  overviewPreviewDescription: `Builds a Hydrogen storefront for production. The client and app worker files are compiled to a \`/dist\` folder in your Hydrogen project directory.`,
+  description: `The following flags are available for the \`hydrogen build\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen build\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

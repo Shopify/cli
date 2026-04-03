@@ -3,9 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app execute',
-  description: `Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.
-
-  For operations that process large amounts of data, use [\`bulk execute\`](/docs/api/shopify-cli/app/app-bulk-execute) instead.`,
+  description: `The following flags are available for the \`app execute\` command:`,
   overviewPreviewDescription: `Execute GraphQL queries and mutations.`,
   type: 'command',
   isVisualComponent: false,

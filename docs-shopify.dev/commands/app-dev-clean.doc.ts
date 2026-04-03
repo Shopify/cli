@@ -3,10 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app dev clean',
-  description: `Stop the dev preview that was started with \`shopify app dev\`.
-
-  It restores the app's active version to the selected development store.
-  `,
+  description: `The following flags are available for the \`app dev clean\` command:`,
   overviewPreviewDescription: `Cleans up the dev preview from the selected store.`,
   type: 'command',
   isVisualComponent: false,

@@ -3,9 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app config pull',
-  description: `Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.
-
-This command reuses the existing linked app and organization and skips all interactive prompts. Use \`--config\` to target a specific configuration file, or omit it to use the default one.`,
+  description: `The following flags are available for the \`app config pull\` command:`,
   overviewPreviewDescription: `Refresh an already-linked app configuration without prompts.`,
   type: 'command',
   isVisualComponent: false,
