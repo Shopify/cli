@@ -16,7 +16,7 @@ const typeDescriptions: Record<string, string> = {
 }
 
 beforeEach(() => {
-  vi.mocked(readFile).mockResolvedValue(JSON.stringify(typeDescriptions))
+  vi.mocked(readFile).mockResolvedValue(JSON.stringify(typeDescriptions) as any)
 })
 
 const testCommand: CommandWithMarkdown = {
