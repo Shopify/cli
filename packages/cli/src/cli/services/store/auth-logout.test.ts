@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {clearStoredStoreAppSession, getStoredStoreAppSession} from './session.js'
 import {displayStoreAuthLogout, logoutStoreAuth} from './auth-logout.js'
-import {outputCompleted, outputInfo} from '@shopify/cli-kit/node/output'
+import {outputCompleted, outputInfo, outputResult} from '@shopify/cli-kit/node/output'
 
 vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/output')
@@ -85,6 +85,21 @@ describe('store auth logout service', () => {
     })
 
     expect(outputInfo).toHaveBeenCalledWith('No locally stored store auth found for shop.myshopify.com.')
+  })
+
+  test('renders json output', () => {
+    displayStoreAuthLogout(
+      {
+        store: 'shop.myshopify.com',
+        cleared: true,
+      },
+      'json',
+    )
+
+    expect(outputResult).toHaveBeenCalledWith(`{
+  "store": "shop.myshopify.com",
+  "cleared": true
+}`)
   })
 
   test('clears all locally stored users for the store so logout leaves no active session', () => {

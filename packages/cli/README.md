@@ -2059,9 +2059,10 @@ Authenticate an app against a store for store commands.
 
 ```
 USAGE
-  $ shopify store auth --scopes <value> -s <value> [--no-color] [--verbose]
+  $ shopify store auth --scopes <value> -s <value> [-j] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json            [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>   (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to authenticate
                         against.
       --no-color        [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -2084,6 +2085,8 @@ DESCRIPTION
 
 EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
+
+  $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
 ```
 
 ## `shopify store auth info`
@@ -2118,9 +2121,10 @@ Clear locally stored store auth for a store.
 
 ```
 USAGE
-  $ shopify store auth logout -s <value> [--no-color] [--verbose]
+  $ shopify store auth logout -s <value> [-j] [--no-color] [--verbose]
 
 FLAGS
+  -j, --json           [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -s, --store=<value>  (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to clear local auth
                        for.
       --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
@@ -2135,6 +2139,8 @@ DESCRIPTION
 
 EXAMPLES
   $ shopify store auth logout --store shop.myshopify.com
+
+  $ shopify store auth logout --store shop.myshopify.com --json
 ```
 
 ## `shopify store execute`
@@ -2143,10 +2149,11 @@ Execute GraphQL queries and mutations on a store.
 
 ```
 USAGE
-  $ shopify store execute -s <value> [--allow-mutations] [--no-color] [--output-file <value>] [-q <value>]
+  $ shopify store execute -s <value> [--allow-mutations] [-j] [--no-color] [--output-file <value>] [-q <value>]
     [--query-file <value>] [--variable-file <value> | -v <value>] [--verbose] [--version <value>]
 
 FLAGS
+  -j, --json                   [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -q, --query=<value>          [env: SHOPIFY_FLAG_QUERY] The GraphQL query or mutation, as a string.
   -s, --store=<value>          (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to execute
                                against.
@@ -2180,6 +2187,8 @@ EXAMPLES
   $ shopify store execute --store shop.myshopify.com --query-file ./operation.graphql --variables '{"id":"gid://shopify/Product/1"}'
 
   $ shopify store execute --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations
+
+  $ shopify store execute --store shop.myshopify.com --query "query { shop { name } }" --json
 ```
 
 ## `shopify theme check`

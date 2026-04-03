@@ -31,4 +31,13 @@ describe('writeOrOutputStoreExecuteResult', () => {
     expect(renderSuccess).toHaveBeenCalledWith({headline: 'Operation succeeded.'})
     expect(output.info()).toContain('Test shop')
   })
+
+  test('suppresses success rendering in json mode', async () => {
+    const output = mockAndCaptureOutput()
+
+    await writeOrOutputStoreExecuteResult({data: {shop: {name: 'Test shop'}}}, undefined, 'json')
+
+    expect(renderSuccess).not.toHaveBeenCalled()
+    expect(output.info()).toContain('Test shop')
+  })
 })

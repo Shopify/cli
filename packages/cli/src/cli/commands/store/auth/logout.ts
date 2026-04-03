@@ -1,5 +1,5 @@
 import Command from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
 import {displayStoreAuthLogout, logoutStoreAuth} from '../../../services/store/auth-logout.js'
@@ -13,10 +13,14 @@ This does not revoke the app or remove granted scopes on Shopify.`
 
   static description = this.descriptionWithoutMarkdown()
 
-  static examples = ['<%= config.bin %> <%= command.id %> --store shop.myshopify.com']
+  static examples = [
+    '<%= config.bin %> <%= command.id %> --store shop.myshopify.com',
+    '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --json',
+  ]
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     store: Flags.string({
       char: 's',
       description: 'The myshopify.com domain of the store to clear local auth for.',
@@ -30,6 +34,6 @@ This does not revoke the app or remove granted scopes on Shopify.`
     const {flags} = await this.parse(StoreAuthLogout)
 
     const result = logoutStoreAuth(flags.store)
-    displayStoreAuthLogout(result)
+    displayStoreAuthLogout(result, flags.json ? 'json' : 'text')
   }
 }

@@ -52,6 +52,28 @@ describe('store auth info service', () => {
     expect(createStoredStoreAuthError).toHaveBeenCalledWith('shop.myshopify.com')
   })
 
+  test('normalizes the store before loading stored auth info', () => {
+    vi.mocked(getStoredStoreAppSession).mockReturnValue({
+      store: 'shop.myshopify.com',
+      clientId: 'client-id',
+      userId: '42',
+      accessToken: 'token',
+      scopes: ['read_products'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+    } as any)
+    vi.mocked(isSessionExpired).mockReturnValue(false)
+
+    expect(getStoreAuthInfo('https://shop.myshopify.com/admin')).toEqual({
+      store: 'shop.myshopify.com',
+      userId: '42',
+      scopes: ['read_products'],
+      acquiredAt: '2026-04-02T00:00:00.000Z',
+      hasRefreshToken: false,
+      isExpired: false,
+    })
+    expect(getStoredStoreAppSession).toHaveBeenCalledWith('shop.myshopify.com')
+  })
+
   test('renders text output', () => {
     displayStoreAuthInfo(
       {

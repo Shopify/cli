@@ -1,12 +1,11 @@
-import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
+import {describe, test, expect, vi, beforeEach} from 'vitest'
 import {executeStoreOperation} from './execute.js'
 import {getStoredStoreAppSession} from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {fetchApiVersions, adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
-import {renderSingleTask, renderSuccess} from '@shopify/cli-kit/node/ui'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {fileExists, readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
@@ -45,15 +44,10 @@ describe('executeStoreOperation', () => {
     vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
   })
 
-  afterEach(() => {
-    mockAndCaptureOutput().clear()
-  })
-
-  test('executes a query successfully', async () => {
+  test('executes a query successfully and returns the GraphQL result', async () => {
     vi.mocked(graphqlRequest).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
-    const output = mockAndCaptureOutput()
 
-    await executeStoreOperation({
+    const result = await executeStoreOperation({
       store,
       query: 'query { shop { name } }',
     })
@@ -73,8 +67,8 @@ describe('executeStoreOperation', () => {
       variables: undefined,
       responseOptions: {handleErrors: false},
     })
-    expect(output.info()).toContain('"name": "Test shop"')
-    expect(renderSuccess).toHaveBeenCalledWith({headline: 'Operation succeeded.'})
+    expect(result).toEqual({data: {shop: {name: 'Test shop'}}})
+    expect(writeFile).not.toHaveBeenCalled()
   })
 
   test('passes parsed variables when provided inline', async () => {
@@ -170,20 +164,15 @@ describe('executeStoreOperation', () => {
     expect(adminUrl).toHaveBeenCalledWith(store, '2025-07', session)
   })
 
-  test('writes results to a file when outputFile is provided', async () => {
+  test('does not write output as part of the execution service', async () => {
     vi.mocked(graphqlRequest).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
 
     await executeStoreOperation({
       store,
       query: 'query { shop { name } }',
-      outputFile: '/tmp/results.json',
     })
 
-    expect(writeFile).toHaveBeenCalledWith('/tmp/results.json', expect.stringContaining('Test shop'))
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Operation succeeded.',
-      body: 'Results written to /tmp/results.json',
-    })
+    expect(writeFile).not.toHaveBeenCalled()
   })
 
   test('throws when stored auth is no longer valid', async () => {

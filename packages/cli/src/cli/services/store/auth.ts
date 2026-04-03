@@ -1,5 +1,6 @@
 import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, STORE_AUTH_CALLBACK_PATH, maskToken, storeAuthRedirectUri} from './auth-config.js'
 import {retryStoreAuthWithPermanentDomainError} from './auth-recovery.js'
+import {buildStoreAuthState, type StoreAuthState} from './auth-state.js'
 import {getStoredStoreAppSession, setStoredStoreAppSession} from './session.js'
 import type {StoredStoreAppSession} from './session.js'
 import {loadStoredStoreSession} from './stored-session.js'
@@ -7,7 +8,7 @@ import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputCompleted, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputCompleted, outputContent, outputDebug, outputInfo, outputResult, outputToken} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {createHash, randomBytes, timingSafeEqual} from 'crypto'
 import {createServer} from 'http'
@@ -440,10 +441,12 @@ export async function exchangeStoreAuthCodeForToken(options: {
   return parsed
 }
 
+type StoreAuthOutputFormat = 'text' | 'json'
+
 interface StoreAuthPresenter {
   openingBrowser: () => void
   manualAuthUrl: (authorizationUrl: string) => void
-  success: (store: string, email?: string) => void
+  success: (result: StoreAuthState) => void
 }
 
 interface StoreAuthDependencies {
@@ -454,32 +457,44 @@ interface StoreAuthDependencies {
   presenter: StoreAuthPresenter
 }
 
-const defaultStoreAuthPresenter: StoreAuthPresenter = {
-  openingBrowser() {
-    outputInfo('Shopify CLI will open the app authorization page in your browser.')
-    outputInfo('')
-  },
-  manualAuthUrl(authorizationUrl: string) {
-    outputInfo('Browser did not open automatically. Open this URL manually:')
-    outputInfo(outputContent`${outputToken.link(authorizationUrl)}`)
-    outputInfo('')
-  },
-  success(store: string, email?: string) {
-    const displayName = email ? ` as ${email}` : ''
+function displayAuthenticatedStore(result: StoreAuthState, format: StoreAuthOutputFormat = 'text'): void {
+  if (format === 'json') {
+    outputResult(JSON.stringify(result, null, 2))
+    return
+  }
 
-    outputCompleted('Logged in.')
-    outputCompleted(`Authenticated${displayName} against ${store}.`)
-    outputInfo('')
-    outputInfo('To verify that authentication worked, run:')
-    outputInfo(`shopify store execute --store ${store} --query 'query { shop { name id } }'`)
-  },
+  const email = result.associatedUser?.email
+  const displayName = email ? ` as ${email}` : ''
+
+  outputCompleted('Logged in.')
+  outputCompleted(`Authenticated${displayName} against ${result.store}.`)
+  outputInfo('')
+  outputInfo('To verify that authentication worked, run:')
+  outputInfo(`shopify store execute --store ${result.store} --query 'query { shop { name id } }'`)
+}
+
+export function createStoreAuthPresenter(format: StoreAuthOutputFormat = 'text'): StoreAuthPresenter {
+  return {
+    openingBrowser() {
+      outputInfo('Shopify CLI will open the app authorization page in your browser.')
+      outputInfo('')
+    },
+    manualAuthUrl(authorizationUrl: string) {
+      outputInfo('Browser did not open automatically. Open this URL manually:')
+      outputInfo(outputContent`${outputToken.link(authorizationUrl)}`)
+      outputInfo('')
+    },
+    success(result: StoreAuthState) {
+      displayAuthenticatedStore(result, format)
+    },
+  }
 }
 
 const defaultStoreAuthDependencies: StoreAuthDependencies = {
   openURL,
   waitForStoreAuthCode,
   exchangeStoreAuthCodeForToken,
-  presenter: defaultStoreAuthPresenter,
+  presenter: createStoreAuthPresenter('text'),
 }
 
 function createPkceBootstrap(options: {
@@ -520,11 +535,17 @@ function createPkceBootstrap(options: {
 
 export async function authenticateStoreWithApp(
   input: StoreAuthInput,
-  dependencies: StoreAuthDependencies = defaultStoreAuthDependencies,
-): Promise<void> {
+  dependencies: Partial<StoreAuthDependencies> = {},
+): Promise<StoreAuthState> {
+  const resolvedDependencies: StoreAuthDependencies = {
+    ...defaultStoreAuthDependencies,
+    ...dependencies,
+    presenter: dependencies.presenter ?? defaultStoreAuthDependencies.presenter,
+  }
+
   const store = normalizeStoreFqdn(input.store)
   const requestedScopes = parseStoreAuthScopes(input.scopes)
-  const existingScopeResolution = await (dependencies.resolveExistingScopes ?? resolveExistingStoreAuthScopes)(store)
+  const existingScopeResolution = await (resolvedDependencies.resolveExistingScopes ?? resolveExistingStoreAuthScopes)(store)
   const scopes = mergeRequestedAndStoredScopes(requestedScopes, existingScopeResolution.scopes)
   const validationScopes = existingScopeResolution.authoritative ? scopes : requestedScopes
 
@@ -534,16 +555,16 @@ export async function authenticateStoreWithApp(
     )
   }
 
-  const bootstrap = createPkceBootstrap({store, scopes, exchangeCodeForToken: dependencies.exchangeStoreAuthCodeForToken})
+  const bootstrap = createPkceBootstrap({store, scopes, exchangeCodeForToken: resolvedDependencies.exchangeStoreAuthCodeForToken})
   const {authorization: {authorizationUrl}} = bootstrap
 
-  dependencies.presenter.openingBrowser()
+  resolvedDependencies.presenter.openingBrowser()
 
-  const code = await dependencies.waitForStoreAuthCode({
+  const code = await resolvedDependencies.waitForStoreAuthCode({
     ...bootstrap.waitForAuthCodeOptions,
     onListening: async () => {
-      const opened = await dependencies.openURL(authorizationUrl)
-      if (!opened) dependencies.presenter.manualAuthUrl(authorizationUrl)
+      const opened = await resolvedDependencies.openURL(authorizationUrl)
+      if (!opened) resolvedDependencies.presenter.manualAuthUrl(authorizationUrl)
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
@@ -556,7 +577,7 @@ export async function authenticateStoreWithApp(
   const now = Date.now()
   const expiresAt = tokenResponse.expires_in ? new Date(now + tokenResponse.expires_in * 1000).toISOString() : undefined
 
-  setStoredStoreAppSession({
+  const storedSession: StoredStoreAppSession = {
     store,
     clientId: STORE_AUTH_APP_CLIENT_ID,
     userId,
@@ -580,11 +601,15 @@ export async function authenticateStoreWithApp(
           accountOwner: tokenResponse.associated_user.account_owner,
         }
       : undefined,
-  })
+  }
+
+  setStoredStoreAppSession(storedSession)
 
   outputDebug(
     outputContent`Session persisted for ${outputToken.raw(store)} (user ${outputToken.raw(userId)}, expires ${outputToken.raw(expiresAt ?? 'unknown')})`,
   )
 
-  dependencies.presenter.success(store, tokenResponse.associated_user?.email)
+  const result = buildStoreAuthState(storedSession)
+  resolvedDependencies.presenter.success(result)
+  return result
 }
