@@ -15,7 +15,7 @@ import {Liquid} from 'liquidjs'
 const require = createRequire(import.meta.url)
 const {readFile, mkdir, lstat, copy, outputFile, pathExists, rm} = require('fs-extra')
 const {program} = require('commander')
-const colors = require('ansi-colors')
+const colors = {green: (s) => `\x1b[32m${s}\x1b[39m`, bold: (s) => `\x1b[1m${s}\x1b[22m`}
 import {withOctokit} from './github-utils.js'
 
 const packagingDirectory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../packaging")
