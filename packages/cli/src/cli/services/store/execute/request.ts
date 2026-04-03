@@ -11,7 +11,6 @@ export interface PreparedStoreExecuteRequest {
   query: string
   parsedOperation: ParsedGraphQLOperation
   parsedVariables?: {[key: string]: unknown}
-  outputFile?: string
   requestedVersion?: string
 }
 
@@ -132,7 +131,6 @@ export async function prepareStoreExecuteRequest(input: {
   queryFile?: string
   variables?: string
   variableFile?: string
-  outputFile?: string
   version?: string
   allowMutations?: boolean
 }): Promise<PreparedStoreExecuteRequest> {
@@ -145,7 +143,6 @@ export async function prepareStoreExecuteRequest(input: {
     query,
     parsedOperation,
     parsedVariables,
-    outputFile: input.outputFile,
     requestedVersion: input.version,
   }
 }
