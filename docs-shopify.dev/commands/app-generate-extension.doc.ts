@@ -5,8 +5,7 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'app generate extension',
   description: `Generates a new [app extension](/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](/docs/apps/build/app-extensions/list-of-app-extensions).
 
-  Each new app extension is created in a folder under \`extensions/\`. To learn more about the extensions file structure, refer to [App structure](/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.
-  `,
+  Each new app extension is created in a folder under \`extensions/\`. To learn more about the extensions file structure, refer to [App structure](/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.`,
   overviewPreviewDescription: `Generate a new app Extension.`,
   type: 'command',
   isVisualComponent: false,

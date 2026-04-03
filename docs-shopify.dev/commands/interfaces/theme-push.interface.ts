@@ -27,7 +27,6 @@
  *     }
  *   }
  *   ```
- *     
  * @publicDocs
  */
 export interface themepush {

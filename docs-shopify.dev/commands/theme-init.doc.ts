@@ -7,8 +7,7 @@ const data: ReferenceEntityTemplateSchema = {
 
   If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.
 
-  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
-  `,
+  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](/docs/themes/store/requirements#uniqueness) so that it provides added value for users.`,
   overviewPreviewDescription: `Clones a Git repository to use as a starting point for building a new theme.`,
   type: 'command',
   isVisualComponent: false,

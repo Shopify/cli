@@ -3,7 +3,6 @@
  * Stop the dev preview that was started with `shopify app dev`.
  * 
  *   It restores the app's active version to the selected development store.
- *   
  * @publicDocs
  */
 export interface appdevclean {

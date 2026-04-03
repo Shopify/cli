@@ -3,7 +3,6 @@
  * Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.
  * 
  *   For more information on the format of the created TOML configuration file, refer to the [App configuration](/docs/apps/tools/cli/configuration) page.
- *   
  * @publicDocs
  */
 export interface appconfiglink {
