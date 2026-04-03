@@ -49,9 +49,16 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       async exec(args, opts = {}) {
         // 3 min default
         const timeout = opts.timeout ?? 3 * 60 * 1000
+        const execEnv: {[key: string]: string} = {}
+        for (const [key, value] of Object.entries({...env.processEnv, ...opts.env})) {
+          if (value !== undefined) {
+            execEnv[key] = value
+          }
+        }
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
-          env: {...env.processEnv, ...opts.env},
+          env: execEnv,
+          extendEnv: false,
           timeout,
           reject: false,
         }
@@ -72,9 +79,16 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
       async execCreateApp(args, opts = {}) {
         // 5 min default for scaffolding
         const timeout = opts.timeout ?? 5 * 60 * 1000
+        const execEnv: {[key: string]: string} = {}
+        for (const [key, value] of Object.entries({...env.processEnv, ...opts.env})) {
+          if (value !== undefined) {
+            execEnv[key] = value
+          }
+        }
         const execaOpts: ExecaOptions = {
           cwd: opts.cwd,
-          env: {...env.processEnv, ...opts.env},
+          env: execEnv,
+          extendEnv: false,
           timeout,
           reject: false,
         }
