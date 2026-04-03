@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {prepareStoreExecuteRequest} from './execute-request.js'
+import {prepareStoreExecuteRequest} from './request.js'
 
 vi.mock('@shopify/cli-kit/node/fs')
 

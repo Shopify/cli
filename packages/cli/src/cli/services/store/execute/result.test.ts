@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {writeOrOutputStoreExecuteResult} from './execute-result.js'
+import {writeOrOutputStoreExecuteResult} from './result.js'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/ui')

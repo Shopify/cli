@@ -1,7 +1,7 @@
 import {BugError} from '@shopify/cli-kit/node/error'
-import {PreparedStoreExecuteRequest} from './execute-request.js'
-import {prepareAdminStoreGraphQLContext, AdminStoreGraphQLContext} from './admin-graphql-context.js'
-import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
+import type {PreparedStoreExecuteRequest} from './request.js'
+import {prepareAdminStoreGraphQLContext, type AdminStoreGraphQLContext} from './admin-context.js'
+import {runAdminStoreGraphQLOperation} from './admin-transport.js'
 
 export type StoreGraphQLApi = 'admin'
 
@@ -11,13 +11,10 @@ interface PrepareStoreGraphQLTargetContextInput {
 }
 
 interface ExecuteStoreGraphQLTargetInput<TContext> {
-  store: string
   context: TContext
   request: PreparedStoreExecuteRequest
 }
 
-// Internal seam for store-scoped GraphQL APIs. Different targets may need different
-// auth/context preparation and execution behavior, so each target owns both phases.
 interface StoreGraphQLTarget<TContext> {
   id: StoreGraphQLApi
   prepareContext(input: PrepareStoreGraphQLTargetContextInput): Promise<TContext>
@@ -29,14 +26,8 @@ const adminStoreGraphQLTarget: StoreGraphQLTarget<AdminStoreGraphQLContext> = {
   prepareContext: async ({store, requestedVersion}) => {
     return prepareAdminStoreGraphQLContext({store, userSpecifiedVersion: requestedVersion})
   },
-  execute: async ({store, context, request}) => {
-    return runAdminStoreGraphQLOperation({
-      store,
-      adminSession: context.adminSession,
-      sessionUserId: context.sessionUserId,
-      version: context.version,
-      request,
-    })
+  execute: async ({context, request}) => {
+    return runAdminStoreGraphQLOperation({context, request})
   },
 }
 
