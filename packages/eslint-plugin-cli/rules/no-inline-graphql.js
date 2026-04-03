@@ -2,7 +2,7 @@
 const path = require('path')
 const fs = require('fs')
 const crypto = require('crypto')
-const debug = require('debug')('eslint-plugin-cli:no-inline-graphql')
+const debugEnabled = process.env.DEBUG && process.env.DEBUG.includes('eslint-plugin-cli')
 
 /**
  * Check if using a gql`` template literal
@@ -38,7 +38,7 @@ function checkKnownFailuresIfShouldFail(context) {
   const shouldFail = !knownFailures[relativePath] || knownFailures[relativePath] !== fileHash
 
   if (shouldFail) {
-    debug(`Reporting inline GraphQL tag fail for - '${relativePath}': '${fileHash}',`)
+    if (debugEnabled) console.error(`eslint-plugin-cli:no-inline-graphql Reporting inline GraphQL tag fail for - '${relativePath}': '${fileHash}',`)
   }
 
   return shouldFail
