@@ -1,8 +1,8 @@
 import {describe, test, expect, vi, beforeEach} from 'vitest'
-import StoreAuth from './auth.js'
-import {authenticateStoreWithApp} from '../../services/store/auth.js'
+import StoreAuth from './index.js'
+import {authenticateStoreWithApp} from '../../../services/store/auth.js'
 
-vi.mock('../../services/store/auth.js')
+vi.mock('../../../services/store/auth.js')
 
 describe('store auth command', () => {
   beforeEach(() => {

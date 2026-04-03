@@ -74,6 +74,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store auth info`](#shopify-store-auth-info)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
@@ -2074,8 +2075,37 @@ DESCRIPTION
 
   Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
 
+  To inspect the locally stored auth state for a store, run "`shopify store auth info`"
+  (https://shopify.dev/docs/api/shopify-cli/store/store-auth-info).
+
 EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
+```
+
+## `shopify store auth info`
+
+Show locally stored store auth information for a store.
+
+```
+USAGE
+  $ shopify store auth info -s <value> [-j] [--no-color] [--verbose]
+
+FLAGS
+  -j, --json           [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -s, --store=<value>  (required) [env: SHOPIFY_FLAG_STORE] The myshopify.com domain of the store to inspect.
+      --no-color       [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --verbose        [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Show locally stored store auth information for a store.
+
+  Shows the locally stored store auth information for the specified store, including scopes, associated user, and token
+  status.
+
+EXAMPLES
+  $ shopify store auth info --store shop.myshopify.com
+
+  $ shopify store auth info --store shop.myshopify.com --json
 ```
 
 ## `shopify store execute`

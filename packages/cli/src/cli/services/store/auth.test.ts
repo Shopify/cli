@@ -14,10 +14,18 @@ import {loadStoredStoreSession} from './stored-session.js'
 import {getStoredStoreAppSession, setStoredStoreAppSession} from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 
 vi.mock('./session.js')
 vi.mock('./stored-session.js', () => ({loadStoredStoreSession: vi.fn()}))
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/output', async () => {
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/output')>('@shopify/cli-kit/node/output')
+  return {
+    ...actual,
+    outputDebug: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
 
@@ -427,6 +435,13 @@ describe('store auth service', () => {
     expect(sentBody.code_verifier).toBe('test-verifier')
     expect(sentBody.redirect_uri).toBe('http://127.0.0.1:13387/auth/callback')
     expect(sentBody.client_secret).toBeUndefined()
+    expect(
+      vi.mocked(outputDebug).mock.calls.some(([message]) =>
+        String((message as {value?: string})?.value ?? message).includes(
+          'Token exchange response did not include refresh_token_expires_in',
+        ),
+      ),
+    ).toBe(true)
   })
 
   test('authenticateStoreWithApp opens the browser and stores the session with refresh token', async () => {

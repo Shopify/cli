@@ -2,6 +2,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {outputDebug} from '@shopify/cli-kit/node/output'
 import {
   clearStoredStoreAppSession,
   getStoredStoreAppSession,
@@ -13,6 +14,13 @@ import {prepareAdminStoreGraphQLContext} from './admin-graphql-context.js'
 
 vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/http')
+vi.mock('@shopify/cli-kit/node/output', async () => {
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/output')>('@shopify/cli-kit/node/output')
+  return {
+    ...actual,
+    outputDebug: vi.fn(),
+  }
+})
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>('@shopify/cli-kit/node/api/admin')
   return {
@@ -105,6 +113,30 @@ describe('prepareAdminStoreGraphQLContext', () => {
       tryMessage: 'To create stored auth for this store, run:',
       nextSteps: [[{command: `shopify store auth --store ${store} --scopes <comma-separated-scopes>`}]],
     })
+  })
+
+  test('logs when refresh token expiry is not returned during refresh', async () => {
+    vi.mocked(isSessionExpired).mockReturnValue(true)
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          access_token: 'fresh-token',
+          refresh_token: 'fresh-refresh-token',
+          expires_in: 3600,
+        }),
+      ),
+    } as any)
+
+    await prepareAdminStoreGraphQLContext({store})
+
+    expect(
+      vi.mocked(outputDebug).mock.calls.some(([message]) =>
+        String((message as {value?: string})?.value ?? message).includes(
+          'Token refresh response did not include refresh_token_expires_in',
+        ),
+      ),
+    ).toBe(true)
   })
 
   test('clears stored auth when token refresh fails', async () => {

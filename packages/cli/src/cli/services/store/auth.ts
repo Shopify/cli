@@ -433,6 +433,10 @@ export async function exchangeStoreAuthCodeForToken(options: {
     outputContent`Token exchange succeeded: access_token=${outputToken.raw(maskToken(parsed.access_token))}, refresh_token=${outputToken.raw(parsed.refresh_token ? maskToken(parsed.refresh_token) : 'none')}, expires_in=${outputToken.raw(String(parsed.expires_in ?? 'unknown'))}s, user=${outputToken.raw(String(parsed.associated_user?.id ?? 'unknown'))} (${outputToken.raw(parsed.associated_user?.email ?? 'no email')})`,
   )
 
+  if (parsed.refresh_token && !parsed.refresh_token_expires_in) {
+    outputDebug(outputContent`Token exchange response did not include refresh_token_expires_in; refresh token expiry will remain unknown`)
+  }
+
   return parsed
 }
 

@@ -5,7 +5,9 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'store auth',
   description: `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
 
-Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`,
+Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.
+
+To inspect the locally stored auth state for a store, run [\`shopify store auth info\`](/docs/api/shopify-cli/store/store-auth-info).`,
   overviewPreviewDescription: `Authenticate an app against a store for store commands.`,
   type: 'command',
   isVisualComponent: false,

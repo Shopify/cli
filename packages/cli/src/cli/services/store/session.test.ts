@@ -101,6 +101,48 @@ describe('store session storage', () => {
     expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
     expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
   })
+
+  test('returns undefined and clears malformed current sessions', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: {
+        '42': {
+          ...buildSession(),
+          scopes: 'read_products',
+        },
+      },
+    })
+
+    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toBeUndefined()
+    expect(storage.get(storeAuthSessionKey('shop.myshopify.com'))).toBeUndefined()
+  })
+
+  test('ignores malformed optional fields in an otherwise valid session', () => {
+    const storage = inMemoryStorage()
+    storage.set(storeAuthSessionKey('shop.myshopify.com'), {
+      currentUserId: '42',
+      sessionsByUserId: {
+        '42': {
+          ...buildSession(),
+          refreshTokenExpiresAt: 123,
+          associatedUser: {
+            id: 42,
+            email: 'merchant@example.com',
+            accountOwner: 'yes',
+          },
+        },
+      },
+    })
+
+    expect(getStoredStoreAppSession('shop.myshopify.com', storage as any)).toEqual({
+      ...buildSession(),
+      associatedUser: {
+        id: 42,
+        email: 'merchant@example.com',
+      },
+    })
+  })
 })
 
 describe('isSessionExpired', () => {
