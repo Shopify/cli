@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import { node } from "@bugsnag/source-maps";
 import reportBuild from 'bugsnag-build-reporter';
 import glob from 'fast-glob';
-import tmp from 'tmp';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,34 +27,26 @@ if (!packageName) {
 
     console.log(`Preparing @shopify/${packageName}`);
 
-    await new Promise((resolve, reject) => {
-      tmp.dir({unsafeCleanup: true}, async (err, temporaryDirectory) => {
-        if (err) {
-          reject(err);
-        }
-        try {
-          const temporaryShopifyPackage = await fsPromise.mkdir(path.join(temporaryDirectory, '@shopify'), { recursive: true});
-          const temporaryPackageCopy = await fsPromise.mkdir(path.join(temporaryShopifyPackage, `${packageName}`), { recursive: true });
+    const temporaryDirectory = await fsPromise.mkdtemp(path.join(os.tmpdir(), 'bugsnag-'));
+    try {
+      const temporaryShopifyPackage = await fsPromise.mkdir(path.join(temporaryDirectory, '@shopify'), { recursive: true});
+      const temporaryPackageCopy = await fsPromise.mkdir(path.join(temporaryShopifyPackage, `${packageName}`), { recursive: true });
 
-          console.log('Copying to temporary directory');
-          fs.cpSync(sourceDirectory, temporaryPackageCopy, {recursive: true});
+      console.log('Copying to temporary directory');
+      fs.cpSync(sourceDirectory, temporaryPackageCopy, {recursive: true});
 
-          console.log('Uploading to Bugsnag');
-          process.chdir(temporaryDirectory);
-          await node.uploadMultiple({
-            apiKey,
-            appVersion,
-            overwrite: true,
-            directory: '.',
-            endpoint: 'https://error-analytics-production.shopifysvc.com/api/v1/sourcemap/browser'
-          });
-
-          resolve();
-        } catch (e) {
-          reject(e);
-        }
+      console.log('Uploading to Bugsnag');
+      process.chdir(temporaryDirectory);
+      await node.uploadMultiple({
+        apiKey,
+        appVersion,
+        overwrite: true,
+        directory: '.',
+        endpoint: 'https://error-analytics-production.shopifysvc.com/api/v1/sourcemap/browser'
       });
-    });
+    } finally {
+      await fsPromise.rm(temporaryDirectory, {recursive: true, force: true});
+    }
 
     console.log(`Cleaning sourcemaps from @shopify/${packageName}`);
 
