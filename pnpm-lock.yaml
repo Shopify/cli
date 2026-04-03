@@ -545,6 +545,9 @@ importers:
       '@types/node':
         specifier: 18.19.70
         version: 18.19.70
+      dotenv:
+        specifier: 16.4.7
+        version: 16.4.7
       execa:
         specifier: ^7.2.0
         version: 7.2.0
