@@ -12,7 +12,7 @@ import type {Page} from '@playwright/test'
  */
 async function fillSensitive(page: Page, selector: string, value: string): Promise<void> {
   const locator = page.locator(selector).first()
-  await locator.evaluate((el: Element, val: string) => {
+  await locator.evaluate((el, val) => {
     ;(el as unknown as {value: string}).value = val
     el.dispatchEvent(new Event('input', {bubbles: true}))
     el.dispatchEvent(new Event('change', {bubbles: true}))
@@ -49,6 +49,6 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
     // Intentionally omit page HTML from the error — it may contain filled
     // credential values in input elements, which would leak into test reports.
     const pageUrl = page.url()
-    throw new Error(`Login failed at ${pageUrl}\n` + `Original error: ${error}`)
+    throw new Error(`Login failed at ${pageUrl}\nOriginal error: ${error}`)
   }
 }
