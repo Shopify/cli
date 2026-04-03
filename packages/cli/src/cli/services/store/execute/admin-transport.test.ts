@@ -2,11 +2,12 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {clearStoredStoreAppSession} from './auth/session-store.js'
-import {prepareStoreExecuteRequest} from './execute-request.js'
-import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
+import {clearStoredStoreAppSession} from '../auth/session-store.js'
+import {prepareStoreExecuteRequest} from './request.js'
+import {runAdminStoreGraphQLOperation} from './admin-transport.js'
+import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 
-vi.mock('./auth/session-store.js')
+vi.mock('../auth/session-store.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
@@ -19,7 +20,18 @@ vi.mock('@shopify/cli-kit/node/api/admin', async () => {
 
 describe('runAdminStoreGraphQLOperation', () => {
   const store = 'shop.myshopify.com'
-  const adminSession = {token: 'token', storeFqdn: store}
+  const context = {
+    adminSession: {token: 'token', storeFqdn: store},
+    version: '2025-10',
+    session: {
+      store,
+      clientId: STORE_AUTH_APP_CLIENT_ID,
+      userId: '42',
+      accessToken: 'token',
+      scopes: ['read_products', 'write_orders'],
+      acquiredAt: '2026-03-27T00:00:00.000Z',
+    },
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -31,13 +43,7 @@ describe('runAdminStoreGraphQLOperation', () => {
     vi.mocked(graphqlRequest).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
 
-    const result = await runAdminStoreGraphQLOperation({
-      store,
-      adminSession,
-      sessionUserId: '42',
-      version: '2025-10',
-      request,
-    })
+    const result = await runAdminStoreGraphQLOperation({context, request})
 
     expect(result).toEqual({data: {shop: {name: 'Test shop'}}})
     expect(graphqlRequest).toHaveBeenCalledWith({
@@ -50,16 +56,14 @@ describe('runAdminStoreGraphQLOperation', () => {
     })
   })
 
-  test('clears stored auth and throws a re-auth error on 401', async () => {
+  test('clears stored auth and throws a re-auth error on 401 using the real session scopes', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue({response: {status: 401}})
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
 
-    await expect(
-      runAdminStoreGraphQLOperation({store, adminSession, sessionUserId: '42', version: '2025-10', request}),
-    ).rejects.toMatchObject({
+    await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toMatchObject({
       message: `Stored app authentication for ${store} is no longer valid.`,
       tryMessage: 'To re-authenticate, run:',
-      nextSteps: [[{command: `shopify store auth --store ${store} --scopes <comma-separated-scopes>`}]],
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes read_products,write_orders`}]],
     })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
@@ -68,17 +72,13 @@ describe('runAdminStoreGraphQLOperation', () => {
     vi.mocked(graphqlRequest).mockRejectedValue({response: {errors: [{message: 'Field does not exist'}]}})
     const request = await prepareStoreExecuteRequest({query: 'query { nope }'})
 
-    await expect(
-      runAdminStoreGraphQLOperation({store, adminSession, sessionUserId: '42', version: '2025-10', request}),
-    ).rejects.toThrow('GraphQL operation failed.')
+    await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toThrow('GraphQL operation failed.')
   })
 
   test('rethrows non-GraphQL errors', async () => {
     vi.mocked(graphqlRequest).mockRejectedValue(new Error('boom'))
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
 
-    await expect(
-      runAdminStoreGraphQLOperation({store, adminSession, sessionUserId: '42', version: '2025-10', request}),
-    ).rejects.toThrow('boom')
+    await expect(runAdminStoreGraphQLOperation({context, request})).rejects.toThrow('boom')
   })
 })
