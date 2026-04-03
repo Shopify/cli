@@ -357,9 +357,6 @@ importers:
       color-json:
         specifier: 3.0.5
         version: 3.0.5
-      commondir:
-        specifier: 1.0.1
-        version: 1.0.1
       conf:
         specifier: 11.0.2
         version: 11.0.2
@@ -484,9 +481,6 @@ importers:
         specifier: 3.24.4
         version: 3.24.4
     devDependencies:
-      '@types/commondir':
-        specifier: ^1.0.0
-        version: 1.0.2
       '@types/diff':
         specifier: ^5.2.3
         version: 5.2.3
@@ -3906,9 +3900,6 @@ packages:
   '@types/cli-progress@3.11.6':
     resolution: {integrity: sha512-cE3+jb9WRlu+uOSAugewNpITJDt1VF8dHOopPO4IABFc3SXYL5WE/+PTz/FCdZRRfIujiWW3n3aMbv1eIGVRWA==}
 
-  '@types/commondir@1.0.2':
-    resolution: {integrity: sha512-ugIRUhO6vLS6Pi5Pz/0yuMYX7Q1rsEpXNrU7ef6rVdH+cb3hTDz8HL55C0QINDqMB4ZWsrE8lLWyYUbZKPhduQ==}
-
   '@types/deep-eql@4.0.2':
     resolution: {integrity: sha512-c9h9dVVMigMPc4bwTvC5dxqtqJZwQPePsWjPlpSOnojbor6pGqdk541lfA7AqFQr5pB1BRdq0juY9db81BwyFw==}
 
@@ -4861,9 +4852,6 @@ packages:
   common-tags@1.8.2:
     resolution: {integrity: sha512-gk/Z852D2Wtb//0I+kRFNKKE9dIIVirjoqPoA1wJU+XePVXZfGeBpk45+A1rKO4Q43prqWBNY/MiIeRLbPWUaA==}
     engines: {node: '>=4.0.0'}
-
-  commondir@1.0.1:
-    resolution: {integrity: sha512-W9pAhw0ja1Edb5GVdIF1mjZw/ASI0AlShXM83UUGe2DVr5TdAPEA1OA8m/g8zWp9x6On7gqufY+FatDbC3MDQg==}
 
   compress-commons@4.1.2:
     resolution: {integrity: sha512-D3uMHtGc/fcO1Gt1/L7i1e33VOvD4A9hfQLP+6ewd+BvG/gQ84Yh4oftEhAdjSMgBgwGL+jsppT7JYNpo6MHHg==}
@@ -13280,8 +13268,6 @@ snapshots:
     dependencies:
       '@types/node': 18.19.70
 
-  '@types/commondir@1.0.2': {}
-
   '@types/deep-eql@4.0.2': {}
 
   '@types/diff@5.2.3': {}
@@ -14344,8 +14330,6 @@ snapshots:
   comment-parser@1.4.5: {}
 
   common-tags@1.8.2: {}
-
-  commondir@1.0.1: {}
 
   compress-commons@4.1.2:
     dependencies:
