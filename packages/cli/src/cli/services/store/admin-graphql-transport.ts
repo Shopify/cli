@@ -4,9 +4,9 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {AdminSession} from '@shopify/cli-kit/node/session'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {reauthenticateStoreAuthError} from './auth-recovery.js'
+import {reauthenticateStoreAuthError} from './auth/recovery.js'
 import {PreparedStoreExecuteRequest} from './execute-request.js'
-import {clearStoredStoreAppSession} from './session.js'
+import {clearStoredStoreAppSession} from './auth/session-store.js'
 
 function isGraphQLClientError(error: unknown): error is {response: {errors?: unknown; status?: number}} {
   if (!error || typeof error !== 'object' || !('response' in error)) return false

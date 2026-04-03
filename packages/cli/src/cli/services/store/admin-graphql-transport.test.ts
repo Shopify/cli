@@ -2,11 +2,11 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {clearStoredStoreAppSession} from './session.js'
+import {clearStoredStoreAppSession} from './auth/session-store.js'
 import {prepareStoreExecuteRequest} from './execute-request.js'
 import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
 
-vi.mock('./session.js')
+vi.mock('./auth/session-store.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {

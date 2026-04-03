@@ -4,14 +4,13 @@ import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {
   clearStoredStoreAppSession,
-  getStoredStoreAppSession,
-  isSessionExpired,
+  getCurrentStoredStoreAppSession,
   setStoredStoreAppSession,
-} from './session.js'
-import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
+} from './auth/session-store.js'
+import {STORE_AUTH_APP_CLIENT_ID} from './auth/config.js'
 import {prepareAdminStoreGraphQLContext} from './admin-graphql-context.js'
 
-vi.mock('./session.js')
+vi.mock('./auth/session-store.js')
 vi.mock('@shopify/cli-kit/node/http')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
   const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>('@shopify/cli-kit/node/api/admin')
@@ -23,6 +22,9 @@ vi.mock('@shopify/cli-kit/node/api/admin', async () => {
 
 describe('prepareAdminStoreGraphQLContext', () => {
   const store = 'shop.myshopify.com'
+  const futureExpiry = new Date(Date.now() + 60 * 60 * 1000).toISOString()
+  const expiredAt = new Date(Date.now() - 60 * 1000).toISOString()
+
   const storedSession = {
     store,
     clientId: STORE_AUTH_APP_CLIENT_ID,
@@ -31,13 +33,12 @@ describe('prepareAdminStoreGraphQLContext', () => {
     refreshToken: 'refresh-token',
     scopes: ['read_products'],
     acquiredAt: '2026-03-27T00:00:00.000Z',
-    expiresAt: '2026-03-27T01:00:00.000Z',
+    expiresAt: futureExpiry,
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.mocked(getStoredStoreAppSession).mockReturnValue(storedSession)
-    vi.mocked(isSessionExpired).mockReturnValue(false)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(storedSession)
     vi.mocked(fetchApiVersions).mockResolvedValue([
       {handle: '2025-10', supported: true},
       {handle: '2025-07', supported: true},
@@ -59,7 +60,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   })
 
   test('refreshes expired sessions before resolving the API version', async () => {
-    vi.mocked(isSessionExpired).mockReturnValue(true)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({...storedSession, expiresAt: expiredAt})
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(
@@ -98,7 +99,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   })
 
   test('throws when no stored auth exists', async () => {
-    vi.mocked(getStoredStoreAppSession).mockReturnValue(undefined)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
 
     await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
       message: `No stored app authentication found for ${store}.`,
@@ -108,7 +109,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   })
 
   test('clears stored auth when token refresh fails', async () => {
-    vi.mocked(isSessionExpired).mockReturnValue(true)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({...storedSession, expiresAt: expiredAt})
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 401,
@@ -124,8 +125,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   })
 
   test('throws when an expired session cannot be refreshed because no refresh token is stored', async () => {
-    vi.mocked(isSessionExpired).mockReturnValue(true)
-    vi.mocked(getStoredStoreAppSession).mockReturnValue({...storedSession, refreshToken: undefined})
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({...storedSession, refreshToken: undefined, expiresAt: expiredAt})
 
     await expect(prepareAdminStoreGraphQLContext({store})).rejects.toMatchObject({
       message: `No refresh token stored for ${store}.`,
@@ -136,7 +136,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   })
 
   test('clears only the current stored auth when token refresh returns an invalid response body', async () => {
-    vi.mocked(isSessionExpired).mockReturnValue(true)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({...storedSession, expiresAt: expiredAt})
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue(JSON.stringify({refresh_token: 'fresh-refresh-token'})),
@@ -151,7 +151,7 @@ describe('prepareAdminStoreGraphQLContext', () => {
   })
 
   test('clears only the current stored auth when token refresh returns malformed JSON', async () => {
-    vi.mocked(isSessionExpired).mockReturnValue(true)
+    vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue({...storedSession, expiresAt: expiredAt})
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
       text: vi.fn().mockResolvedValue('not-json'),
