@@ -1,6 +1,6 @@
 import Command from '@shopify/cli-kit/node/base-command'
 import {Command as oclifCommand} from '@oclif/core'
-import {mkdir, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {mkdir, readFile, rmdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {cwd, joinPath} from '@shopify/cli-kit/node/path'
 import {outputInfo} from '@shopify/cli-kit/node/output'
 
@@ -85,9 +85,11 @@ export async function writeCommandDocumentation(
     type: '${interfaceName}',
   },`
 
-  const description = command.descriptionWithMarkdown ?? command.description ?? command.summary ?? ''
-  const normalizedDescription = normalizeDescription(description)
-  const cleanDescription = normalizedDescription.replace(/`/g, '\\`')
+  const typeDescriptionsPath = joinPath(cwd(), 'docs-shopify.dev', 'type-descriptions.json')
+  const typeDescriptions = JSON.parse(await readFile(typeDescriptionsPath)) as Record<string, string>
+  const description =
+    typeDescriptions[interfaceName] ?? command.descriptionWithMarkdown ?? command.description ?? command.summary ?? ''
+  const cleanDescription = description.replace(/`/g, '\\`')
   const previewDescription = command.summary ?? description ?? ''
   const cleanPreview = previewDescription.replace(/`/g, '\\`').replace(/https:\/\/shopify\.dev/g, '')
 
@@ -131,8 +133,8 @@ export default data`
 
 // Generates an interface for the flags of a command and writes it to a file
 export async function writeCommandFlagInterface(
-  command: CommandWithMarkdown,
-  {commandName, fileName, interfaceName}: CommandData,
+  command: oclifCommand.Loadable,
+  {fileName, interfaceName}: CommandData,
 ) {
   const flagsDetails = Object.keys(command.flags)
     .map((flagName) => {
@@ -157,10 +159,10 @@ export async function writeCommandFlagInterface(
     .filter((str) => str && str?.length > 0)
     .join('\n\n')
 
-  const description = command.descriptionWithMarkdown ?? command.description ?? command.summary ?? ''
+  const typeDescriptionsPath = joinPath(cwd(), 'docs-shopify.dev', 'type-descriptions.json')
+  const typeDescriptions = JSON.parse(await readFile(typeDescriptionsPath)) as Record<string, string>
+  const description = typeDescriptions[interfaceName] ?? ''
   const jsDocDescription = description
-    .replace(/<%= config\.bin %>/g, 'shopify')
-    .replace(/https:\/\/shopify\.dev/g, '')
     .split('\n')
     .map((line) => ` * ${line}`)
     .join('\n')

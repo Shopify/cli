@@ -29,8 +29,7 @@ const data: ReferenceEntityTemplateSchema = {
       "preview_url": "https://mystore.myshopify.com/?preview_theme_id=108267175958"
     }
   }
-  \`\`\`
-    `,
+  \`\`\``,
   overviewPreviewDescription: `Uploads your local theme files to the connected store, overwriting the remote version if specified.`,
   type: 'command',
   isVisualComponent: false,

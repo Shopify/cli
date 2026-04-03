@@ -3,8 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app webhook trigger',
-  description: `
-  Triggers the delivery of a sample Admin API event topic payload to a designated address.
+  description: `Triggers the delivery of a sample Admin API event topic payload to a designated address.
 
   You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.
 
@@ -17,8 +16,7 @@ const data: ReferenceEntityTemplateSchema = {
   - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.
   - Webhooks triggered using this method aren't retried when they fail.
   - Trigger requests are rate-limited using the [Partner API rate limit](/docs/api/partner#rate_limits).
-  - You can't use this method to validate your API webhook subscriptions.
-  `,
+  - You can't use this method to validate your API webhook subscriptions.`,
   overviewPreviewDescription: `Trigger delivery of a sample webhook topic payload to a designated address.`,
   type: 'command',
   isVisualComponent: false,

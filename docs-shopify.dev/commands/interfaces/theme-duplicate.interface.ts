@@ -12,8 +12,7 @@
  * 
  * Sample JSON output:
  * 
- * ```json
- * {
+ * ```json {
  *   "theme": {
  *     "id": 108267175958,
  *     "name": "A Duplicated Theme",
@@ -23,8 +22,7 @@
  * }
  * ```
  * 
- * ```json
- * {
+ * ```json {
  *   "message": "The theme 'Summer Edition' could not be duplicated due to errors",
  *   "errors": ["Maximum number of themes reached"],
  *   "requestId": "12345-abcde-67890"

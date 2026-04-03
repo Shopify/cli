@@ -5,8 +5,7 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'app dev clean',
   description: `Stop the dev preview that was started with \`shopify app dev\`.
 
-  It restores the app's active version to the selected development store.
-  `,
+  It restores the app's active version to the selected development store.`,
   overviewPreviewDescription: `Cleans up the dev preview from the selected store.`,
   type: 'command',
   isVisualComponent: false,

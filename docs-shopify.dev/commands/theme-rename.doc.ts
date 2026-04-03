@@ -5,8 +5,7 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'theme rename',
   description: `Renames a theme in your store.
 
-  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.
-  `,
+  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.`,
   overviewPreviewDescription: `Renames an existing theme.`,
   type: 'command',
   isVisualComponent: false,

@@ -2241,7 +2241,7 @@
     "docs-shopify.dev/commands/interfaces/app-logs.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
       "name": "applogs",
-      "description": "\nOpens a real-time stream of detailed app logs from the selected app and store. Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources. Use the `--status` argument to filter on status, either `success` or `failure`. ``` shopify app logs --status=success --source=extension.discount-function ```",
+      "description": "Opens a real-time stream of detailed app logs from the selected app and store.   Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.   Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```",
       "isPublicDocs": true,
       "members": [
         {
@@ -2516,7 +2516,7 @@
     "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
       "name": "appwebhooktrigger",
-      "description": "\nTriggers the delivery of a sample Admin API event topic payload to a designated address.\n\nYou should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\nBecause most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\nTo learn more about using webhooks in a Shopify app, refer to [Webhooks overview](/docs/apps/webhooks).\n\n### Limitations\n\n- Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n- Webhooks triggered using this method aren't retried when they fail.\n- Trigger requests are rate-limited using the [Partner API rate limit](/docs/api/partner#rate_limits).\n- You can't use this method to validate your API webhook subscriptions.",
+      "description": "Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.",
       "isPublicDocs": true,
       "members": [
         {
@@ -2646,7 +2646,7 @@
     "docs-shopify.dev/commands/interfaces/auth-logout.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/auth-logout.interface.ts",
       "name": "authlogout",
-      "description": "Logs you out of the Shopify account or Partner account and store.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface authlogout {\n\n}"
@@ -2731,7 +2731,7 @@
     "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts",
       "name": "configautocorrectoff",
-      "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrectoff {\n\n}"
@@ -2741,7 +2741,7 @@
     "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts",
       "name": "configautocorrecton",
-      "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrecton {\n\n}"
@@ -2751,7 +2751,7 @@
     "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts",
       "name": "configautocorrectstatus",
-      "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrectstatus {\n\n}"
@@ -4034,7 +4034,7 @@
     "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts",
       "name": "hydrogenshortcut",
-      "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface hydrogenshortcut {\n\n}"
@@ -4139,7 +4139,7 @@
     "docs-shopify.dev/commands/interfaces/search.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/search.interface.ts",
       "name": "search",
-      "description": "Starts a search on shopify.dev.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface search {\n\n}"
@@ -4597,7 +4597,7 @@
     "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
       "name": "themedev",
-      "description": "\nUploads the current theme as the specified theme, or a [development theme](/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\nYou can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](/docs/api/shopify-cli/theme/theme-share) your theme or [push](/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).",
+      "description": "Uploads the current theme as the specified theme, or a [development theme](/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](/docs/api/shopify-cli/theme/theme-share) your theme or [push](/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](/docs/themes/tools/cli#directory-structure).",
       "isPublicDocs": true,
       "members": [
         {
@@ -4788,7 +4788,7 @@
     "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
       "name": "themeduplicate",
-      "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json {\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json {\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+      "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json {   \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json {   \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
       "isPublicDocs": true,
       "members": [
         {
@@ -6130,7 +6130,7 @@
     "docs-shopify.dev/commands/interfaces/upgrade.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
       "name": "upgrade",
-      "description": "Upgrades Shopify CLI using your package manager.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface upgrade {\n\n}"
@@ -6140,7 +6140,7 @@
     "docs-shopify.dev/commands/interfaces/version.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/version.interface.ts",
       "name": "version",
-      "description": "Shopify CLI version currently installed.",
+      "description": "",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface version {\n\n}"
