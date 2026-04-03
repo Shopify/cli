@@ -1,8 +1,8 @@
 import {describe, test, expect, vi, beforeEach} from 'vitest'
 import StoreExecute from './execute.js'
-import {executeStoreOperation} from '../../services/store/execute.js'
+import {executeStoreOperation} from '../../services/store/execute/index.js'
 
-vi.mock('../../services/store/execute.js')
+vi.mock('../../services/store/execute/index.js')
 
 describe('store execute command', () => {
   beforeEach(() => {
