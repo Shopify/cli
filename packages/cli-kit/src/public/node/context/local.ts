@@ -101,15 +101,6 @@ export function isUnitTest(env = process.env): boolean {
   return isTruthy(env[environmentVariables.unitTest])
 }
 
-/**
- * Returns true if the CLI is running in hosted apps mode.
- *
- * @param env - The environment variables from the environment of the current process.
- * @returns True if the HOSTED_APPS environment variable is truthy.
- */
-export function isHostedAppsMode(env = process.env): boolean {
-  return isTruthy(env[environmentVariables.hostedApps])
-}
 
 /**
  * Returns true if reporting analytics is enabled.
