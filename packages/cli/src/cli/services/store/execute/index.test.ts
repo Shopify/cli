@@ -2,12 +2,10 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {executeStoreOperation} from './index.js'
 import {prepareStoreExecuteRequest} from './request.js'
-import {writeOrOutputStoreExecuteResult} from './result.js'
 import {getStoreGraphQLTarget} from './targets.js'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('./request.js')
-vi.mock('./result.js')
 vi.mock('./targets.js')
 vi.mock('@shopify/cli-kit/node/ui')
 
@@ -17,7 +15,6 @@ describe('executeStoreOperation', () => {
     parsedOperation: {operationDefinition: {operation: 'query'}},
     parsedVariables: {id: 'gid://shopify/Shop/1'},
     requestedVersion: '2025-10',
-    outputFile: '/tmp/result.json',
   } as any
   const context = {kind: 'admin-context'} as any
   const result = {data: {shop: {name: 'Test shop'}}}
@@ -39,14 +36,15 @@ describe('executeStoreOperation', () => {
     mockAndCaptureOutput().clear()
   })
 
-  test('prepares the request, loads context, executes the target, and writes the result', async () => {
-    await executeStoreOperation({
-      store: 'shop.myshopify.com',
-      query: 'query { shop { name } }',
-      variables: '{"id":"gid://shopify/Shop/1"}',
-      outputFile: '/tmp/result.json',
-      version: '2025-10',
-    })
+  test('prepares the request, loads context, and returns the execution result', async () => {
+    await expect(
+      executeStoreOperation({
+        store: 'shop.myshopify.com',
+        query: 'query { shop { name } }',
+        variables: '{"id":"gid://shopify/Shop/1"}',
+        version: '2025-10',
+      }),
+    ).resolves.toEqual(result)
 
     expect(getStoreGraphQLTarget).toHaveBeenCalledWith('admin')
     expect(prepareStoreExecuteRequest).toHaveBeenCalledWith({
@@ -54,7 +52,6 @@ describe('executeStoreOperation', () => {
       queryFile: undefined,
       variables: '{"id":"gid://shopify/Shop/1"}',
       variableFile: undefined,
-      outputFile: '/tmp/result.json',
       version: '2025-10',
       allowMutations: undefined,
     })
@@ -63,7 +60,6 @@ describe('executeStoreOperation', () => {
       requestedVersion: '2025-10',
     })
     expect(target.execute).toHaveBeenCalledWith({context, request})
-    expect(writeOrOutputStoreExecuteResult).toHaveBeenCalledWith(result, '/tmp/result.json')
   })
 
   test('defaults to the admin target', async () => {

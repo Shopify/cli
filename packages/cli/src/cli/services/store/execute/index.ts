@@ -1,7 +1,6 @@
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
 import {prepareStoreExecuteRequest} from './request.js'
-import {writeOrOutputStoreExecuteResult} from './result.js'
 import {getStoreGraphQLTarget, type StoreGraphQLApi} from './targets.js'
 
 interface ExecuteStoreOperationInput {
@@ -11,12 +10,11 @@ interface ExecuteStoreOperationInput {
   queryFile?: string
   variables?: string
   variableFile?: string
-  outputFile?: string
   version?: string
   allowMutations?: boolean
 }
 
-export async function executeStoreOperation(input: ExecuteStoreOperationInput): Promise<void> {
+export async function executeStoreOperation(input: ExecuteStoreOperationInput): Promise<unknown> {
   const target = getStoreGraphQLTarget(input.api ?? 'admin')
 
   const request = await prepareStoreExecuteRequest({
@@ -24,7 +22,6 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
     queryFile: input.queryFile,
     variables: input.variables,
     variableFile: input.variableFile,
-    outputFile: input.outputFile,
     version: input.version,
     allowMutations: input.allowMutations,
   })
@@ -35,7 +32,5 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
     renderOptions: {stdout: process.stderr},
   })
 
-  const result = await target.execute({context, request})
-
-  await writeOrOutputStoreExecuteResult(result, request.outputFile)
+  return await target.execute({context, request})
 }
