@@ -144,7 +144,7 @@ export async function writeCommandFlagInterface(
       const flag = command.flags[flagName]
       if (!flag) return
       if (flag.hidden) return
-      const flagDescription = flag.description || ''
+      const flagDescription = flag.description ?? ''
       const char = flag.char ? `-${flag.char}, ` : ''
       const type = flag.type === 'option' ? 'string' : "''"
       const value = flag.type === 'option' ? ' <value>' : ''
