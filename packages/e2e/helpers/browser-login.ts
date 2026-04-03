@@ -1,12 +1,27 @@
+/* eslint-disable no-console */
 import type {Page} from '@playwright/test'
 
 /**
  * Completes the Shopify OAuth login flow on a Playwright page.
  */
 export async function completeLogin(page: Page, loginUrl: string, email: string, password: string): Promise<void> {
-  await page.goto(loginUrl)
+  const tracing = page.context().tracing
+
+  // Traces are uploaded as public CI artifacts, so we must stop
+  // tracing before entering credentials and restart it after login completes.
+  let tracingWasActive = false
+  try {
+    await tracing.stop()
+    tracingWasActive = true
+    console.log('[e2e] Tracing paused for credential entry')
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    // tracing.stop() throws if tracing was never started — that's fine
+  }
 
   try {
+    await page.goto(loginUrl)
+
     // Fill in email
     await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: 60_000})
     await page.locator('input[name="account[email]"], input[type="email"]').first().fill(email)
@@ -27,12 +42,20 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
       // No confirmation page — expected
     }
   } catch (error) {
-    const pageContent = await page.content().catch(() => '(failed to get content)')
+    // Intentionally omit page HTML from the error — it may contain filled
+    // credential values in input elements, which would leak into test reports.
     const pageUrl = page.url()
     throw new Error(
       `Login failed at ${pageUrl}\n` +
-        `Original error: ${error}\n` +
-        `Page HTML (first 2000 chars): ${pageContent.slice(0, 2000)}`,
+        `Original error: ${error}`,
     )
+  } finally {
+    if (tracingWasActive) {
+      // Navigate to blank page before restarting tracing so the first snapshot
+      // does not capture any residual credentials on the login form.
+      await page.goto('about:blank').catch(() => {})
+      await tracing.start({screenshots: true, snapshots: true})
+      console.log('[e2e] Tracing resumed after credential entry')
+    }
   }
 }
