@@ -82,6 +82,9 @@ importers:
       eslint:
         specifier: ^9.26.0
         version: 9.39.3(jiti@2.6.1)
+      eslint-plugin-jsdoc:
+        specifier: 50.7.1
+        version: 50.7.1(eslint@9.39.3(jiti@2.6.1))
       execa:
         specifier: ^7.2.0
         version: 7.2.0
@@ -569,9 +572,6 @@ importers:
       eslint-config-prettier:
         specifier: 10.1.5
         version: 10.1.5(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-jsdoc:
-        specifier: 50.7.1
-        version: 50.7.1(eslint@9.39.3(jiti@2.6.1))
       eslint-plugin-no-catch-all:
         specifier: 1.1.0
         version: 1.1.0(eslint@9.39.3(jiti@2.6.1))
@@ -12532,7 +12532,6 @@ snapshots:
       '@vitest/eslint-plugin': 1.1.44(@typescript-eslint/utils@8.56.1(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3))(eslint@9.39.3(jiti@2.6.1))(typescript@5.9.3)(vitest@3.2.4(@types/node@18.19.70)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@18.19.70)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.3))
       eslint: 9.39.3(jiti@2.6.1)
       eslint-config-prettier: 10.1.5(eslint@9.39.3(jiti@2.6.1))
-      eslint-plugin-jsdoc: 50.7.1(eslint@9.39.3(jiti@2.6.1))
       eslint-plugin-no-catch-all: 1.1.0(eslint@9.39.3(jiti@2.6.1))
       eslint-plugin-prettier: 5.5.1(eslint-config-prettier@10.1.5(eslint@9.39.3(jiti@2.6.1)))(eslint@9.39.3(jiti@2.6.1))(prettier@3.8.1)
       eslint-plugin-react: 7.37.5(eslint@9.39.3(jiti@2.6.1))

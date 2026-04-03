@@ -1,5 +1,6 @@
 import nxPlugin from '@nx/eslint-plugin'
 import cliPlugin from '@shopify/eslint-plugin-cli'
+import jsdocPlugin from 'eslint-plugin-jsdoc'
 
 // Spread the CLI plugin's base config which includes all necessary plugins
 const config = [
@@ -44,6 +45,9 @@ const config = [
       '**/public/node/result.ts',
       '**/public/node/themes/**/*',
     ],
+    plugins: {
+      jsdoc: jsdocPlugin,
+    },
     settings: {
       jsdoc: {
         publicFunctionsOnly: true,
