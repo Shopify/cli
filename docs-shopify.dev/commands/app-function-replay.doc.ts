@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function replay',
-  description: `Runs the function from your current directory for [testing purposes](/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](/docs/api/functions/errors).`,
+  description: `The following flags are available for the \`app function replay\` command:`,
   overviewPreviewDescription: `Replays a function run from an app log.`,
   type: 'command',
   isVisualComponent: false,

@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen preview',
-  description: `Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.`,
-  overviewPreviewDescription: `Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.`,
+  description: `The following flags are available for the \`hydrogen preview\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen preview\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

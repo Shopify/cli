@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen logout',
-  description: `Log out from the current shop.`,
-  overviewPreviewDescription: `Log out from the current shop.`,
+  description: `The following flags are available for the \`hydrogen logout\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen logout\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

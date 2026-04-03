@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app bulk cancel',
-  description: `Cancels a running bulk operation by ID.`,
+  description: `The following flags are available for the \`app bulk cancel\` command:`,
   overviewPreviewDescription: `Cancel a bulk operation.`,
   type: 'command',
   isVisualComponent: false,

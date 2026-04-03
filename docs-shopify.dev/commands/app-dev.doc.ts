@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app dev',
-  description: `Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](/docs/apps/build/cli-for-apps/test-apps-locally).`,
+  description: `The following flags are available for the \`app dev\` command:`,
   overviewPreviewDescription: `Run the app.`,
   type: 'command',
   isVisualComponent: false,

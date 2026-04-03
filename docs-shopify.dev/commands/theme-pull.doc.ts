@@ -3,9 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme pull',
-  description: `Retrieves theme files from Shopify.
-
-If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.`,
+  description: `The following flags are available for the \`theme pull\` command:`,
   overviewPreviewDescription: `Download your remote theme files locally.`,
   type: 'command',
   isVisualComponent: false,

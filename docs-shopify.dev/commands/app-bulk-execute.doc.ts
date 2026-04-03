@@ -3,11 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app bulk execute',
-  description: `Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.
-
-  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](/docs/api/usage/bulk-operations/imports).
-
-  Use [\`bulk status\`](/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.`,
+  description: `The following flags are available for the \`app bulk execute\` command:`,
   overviewPreviewDescription: `Execute bulk operations.`,
   type: 'command',
   isVisualComponent: false,

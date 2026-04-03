@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen customer-account-push',
-  description: `Push project configuration to admin`,
-  overviewPreviewDescription: `Push project configuration to admin`,
+  description: `The following flags are available for the \`hydrogen customer-account-push\` command:`,
+  overviewPreviewDescription: `The following flags are available for the \`hydrogen customer-account-push\` command:`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {
