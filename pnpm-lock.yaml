@@ -652,8 +652,8 @@ importers:
         version: 2.8.3
     devDependencies:
       '@shopify/theme-hot-reload':
-        specifier: ^0.0.18
-        version: 0.0.18
+        specifier: ^0.0.22
+        version: 0.0.22
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
         version: 3.2.4(vitest@3.2.4(@types/node@22.19.15)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@22.19.15)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.3))
@@ -3559,8 +3559,8 @@ packages:
     resolution: {integrity: sha512-UsnAJlBmG5b7L4FqL8An+RWqLvAd/hCD52H+RUMb/xECkfRnrjOOOVRrPVYOawRhd56Wu3XNjkLdP2WHS25OKQ==}
     hasBin: true
 
-  '@shopify/theme-hot-reload@0.0.18':
-    resolution: {integrity: sha512-l+IBuk+rG5T+5PKYyPrwgh7PDCxmEMpBFJeen6PM+h6RI4CDhAGRaiwUo5eN1o1JX51HdHHCts3rTEW+KUgq+Q==}
+  '@shopify/theme-hot-reload@0.0.22':
+    resolution: {integrity: sha512-RiaLPqhW3iAJKlO3KRvU4sQJ0cJIwhZ5Zx77wYw+3+oFXHC+vNrB+mjIarxoqCbUdm+E1eUwAs0aGU74YjFWkA==}
 
   '@shopify/theme-language-server-common@2.20.2':
     resolution: {integrity: sha512-Cc6IU2e250l0jfRtlxaEtPJ0qfjiFwHBq2hfcozRcX2vYMzcbgNDVeVsmApMFXSe5K/vthA2plzrijy2IG1MOw==}
@@ -12668,7 +12668,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@shopify/theme-hot-reload@0.0.18': {}
+  '@shopify/theme-hot-reload@0.0.22': {}
 
   '@shopify/theme-language-server-common@2.20.2':
     dependencies:
