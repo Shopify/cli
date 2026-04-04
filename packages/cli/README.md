@@ -2238,8 +2238,8 @@ Uploads the current theme as a development theme to the connected store, then pr
 USAGE
   $ shopify theme dev [-a] [-e <value>...] [--error-overlay silent|default] [--host <value>] [-x <value>...]
     [--listing <value>] [--live-reload hot-reload|full-page|off] [--no-color] [-n] [--notify <value>] [-o <value>...]
-    [--open] [--password <value>] [--path <value>] [--port <value>] [-s <value>] [--store-password <value>] [-t <value>]
-    [--theme-editor-sync] [--verbose]
+    [--open] [--password <value>] [--path <value>] [--poll] [--port <value>] [-s <value>] [--store-password <value>] [-t
+    <value>] [--theme-editor-sync] [--verbose]
 
 FLAGS
   -a, --allow-live
@@ -2304,6 +2304,10 @@ FLAGS
 
   --path=<value>
       [env: SHOPIFY_FLAG_PATH] The path where you want to run the command. Defaults to the current working directory.
+
+  --poll
+      [env: SHOPIFY_FLAG_POLL] Use polling to detect file changes. Use this when file system events are unreliable, such
+      as with build tools that preserve timestamps, Docker volumes, or network filesystems.
 
   --port=<value>
       [env: SHOPIFY_FLAG_PORT] Local port to serve theme preview from.

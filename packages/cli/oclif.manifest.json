@@ -6400,9 +6400,8 @@
         },
         "poll": {
           "allowNo": false,
-          "description": "Force polling to detect file changes.",
+          "description": "Use polling to detect file changes. Use this when file system events are unreliable, such as with build tools that preserve timestamps, Docker volumes, or network filesystems.",
           "env": "SHOPIFY_FLAG_POLL",
-          "hidden": true,
           "name": "poll",
           "type": "boolean"
         },
@@ -8045,9 +8044,8 @@
         },
         "poll": {
           "allowNo": false,
-          "description": "Force polling to detect file changes.",
+          "description": "Use polling to detect file changes. Use this when file system events are unreliable, such as with build tools that preserve timestamps, Docker volumes, or network filesystems.",
           "env": "SHOPIFY_FLAG_POLL",
-          "hidden": true,
           "name": "poll",
           "type": "boolean"
         },

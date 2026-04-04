@@ -135,6 +135,42 @@ describe('theme-fs', () => {
       )
     })
 
+    test('passes usePolling and useFsEvents options to chokidar when poll is true', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root, {poll: true})
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      expect(watchSpy).toHaveBeenCalledWith(expect.any(Array), {
+        ignored: expect.any(Array),
+        persistent: expect.any(Boolean),
+        ignoreInitial: true,
+        usePolling: true,
+        useFsEvents: false,
+      })
+    })
+
+    test('does not include usePolling or useFsEvents in chokidar options when poll is not set', async () => {
+      // Given
+      const root = joinPath(locationOfThisFile, 'fixtures/theme')
+      const watchSpy = vi.spyOn(chokidar, 'watch')
+
+      // When
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher('123', {token: 'token'} as any)
+
+      // Then
+      const chokidarOptions = watchSpy.mock.calls[0]?.[1] as Record<string, unknown>
+      expect(chokidarOptions).not.toHaveProperty('usePolling')
+      expect(chokidarOptions).not.toHaveProperty('useFsEvents')
+    })
+
     test('does not include listing directory when no listing is specified', async () => {
       // Given
       const root = joinPath(locationOfThisFile, 'fixtures/theme')
