@@ -5937,7 +5937,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6060,7 +6060,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6161,7 +6161,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6273,7 +6273,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6478,7 +6478,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6586,7 +6586,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6784,7 +6784,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6896,7 +6896,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -6993,7 +6993,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7128,7 +7128,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7241,7 +7241,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7352,7 +7352,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7453,7 +7453,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7617,7 +7617,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7802,7 +7802,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -7918,7 +7918,7 @@
         },
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
@@ -8123,7 +8123,7 @@
       "flags": {
         "environment": {
           "char": "e",
-          "description": "The environment to apply to the current command.",
+          "description": "The environment to apply to the current command. Supports glob patterns (e.g. \"*-production\"). Patterns that resolve to multiple environments only work on commands that support multiple environments. Wrap the value in double quotes if you're using wildcards.",
           "env": "SHOPIFY_FLAG_ENVIRONMENT",
           "hasDynamicHelp": false,
           "multiple": true,
