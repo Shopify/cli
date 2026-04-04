@@ -46,6 +46,10 @@ export const UIExtensionSchema = BaseSchema.extend({
 })
   .refine((config) => validatePoints(config), missingExtensionPointsMessage)
   .transform((config) => {
+    const apiVersion = config.api_version
+    const {year, month} = parseApiVersion(apiVersion ?? '') ?? {year: 0, month: 0}
+    const remoteDom = year > 2025 || (year === 2025 && month >= 10)
+
     const extensionPoints = (config.targeting ?? config.extension_points ?? []).map((targeting) => {
       const buildManifest: BuildManifest = {
         assets: {
@@ -61,7 +65,7 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
-          ...(targeting.tools
+          ...(remoteDom && targeting.tools
             ? {
                 [AssetIdentifier.Tools]: {
                   filepath: `${config.handle}-${AssetIdentifier.Tools}-${basename(targeting.tools)}`,
@@ -70,7 +74,7 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
-          ...(targeting.instructions
+          ...(remoteDom && targeting.instructions
             ? {
                 [AssetIdentifier.Instructions]: {
                   filepath: `${config.handle}-${AssetIdentifier.Instructions}-${basename(targeting.instructions)}`,
@@ -91,8 +95,8 @@ export const UIExtensionSchema = BaseSchema.extend({
         capabilities: targeting.capabilities,
         preloads: targeting.preloads ?? {},
         build_manifest: buildManifest,
-        tools: targeting.tools,
-        instructions: targeting.instructions,
+        tools: remoteDom ? targeting.tools : undefined,
+        instructions: remoteDom ? targeting.instructions : undefined,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -435,7 +439,7 @@ async function validateUIExtensionPointConfig(
 
 function isRemoteDomExtension(
   config: ExtensionInstance['configuration'],
-): config is ExtensionInstance<{api_version: string}>['configuration'] {
+): config is ExtensionInstance['configuration'] & {api_version: string} {
   const apiVersion = config.api_version
   if (!apiVersion) {
     return false
