@@ -42,6 +42,46 @@ beforeEach(() => {
 })
 
 describe('setupDevServer', () => {
+  const decoder = new TextDecoder()
+
+  const createH3Event = (options: {url: string; headers?: Record<string, string>}) => {
+    const req = new IncomingMessage(new Socket())
+    req.url = options.url
+    if (options.headers) req.headers = options.headers
+    const res = new ServerResponse(req)
+    return createEvent(req, res)
+  }
+
+  const dispatchEvent = async (
+    server: ReturnType<typeof setupDevServer>,
+    url: string,
+    headers?: Record<string, string>,
+  ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
+    const event = createH3Event({url, headers})
+    const {res} = event.node
+    let body = ''
+    const resWrite = res.write.bind(res)
+    res.write = (chunk) => {
+      body ??= ''
+      body += decoder.decode(chunk)
+      return resWrite(chunk)
+    }
+    const resEnd = res.end.bind(res)
+    res.end = (content) => {
+      if (!body) body = content ?? ''
+      return resEnd(content)
+    }
+
+    await server.dispatchEvent(event)
+
+    if (!body && '_data' in res) {
+      // eslint-disable-next-line require-atomic-updates
+      body = await new Response(res._data as ReadableStream).text()
+    }
+
+    return {res, status: res.statusCode, body}
+  }
+
   const developmentTheme = buildTheme({id: 1, name: 'Theme', role: DEVELOPMENT_THEME_ROLE})!
   const localFiles = new Map([
     ['templates/asset.json', {checksum: '1', key: 'templates/asset.json'}],
@@ -206,59 +246,61 @@ describe('setupDevServer', () => {
     await expect(backgroundJobPromise).rejects.toThrow('Failed to fetch checksums from API')
   })
 
+  describe('DNS rebinding protection', () => {
+    const context = {...defaultServerContext}
+    const server = setupDevServer(developmentTheme, context)
+
+    test.each([
+      ['localhost:9292', 'localhost variant'],
+      ['127.0.0.1:9292', 'IPv4 loopback'],
+      ['[::1]:9292', 'IPv6 loopback'],
+      ['LOCALHOST:9292', 'case insensitive'],
+      ['localhost.:9292', 'trailing dot with port'],
+    ])('accepts %s (%s)', async (host) => {
+      const response = await dispatchEvent(server, '/wpm@something', {host})
+      expect(response.status).not.toBe(400)
+      expect(response.status).toBe(204)
+    })
+
+    test.each([
+      ['attacker.com:9292', 'attacker domain'],
+      ['poc.mzero.cloud:9292', 'DNS rebinding domain'],
+      ['localhost:1234', 'wrong port'],
+    ])('rejects %s (%s)', async (host) => {
+      const response = await dispatchEvent(server, '/', {host})
+      expect(response.status).toBe(400)
+    })
+
+    test('accepts requests when --host flag is uppercase (LOCALHOST)', async () => {
+      const uppercaseHostContext = {
+        ...defaultServerContext,
+        options: {...defaultServerContext.options, host: 'LOCALHOST'},
+      }
+      const uppercaseServer = setupDevServer(developmentTheme, uppercaseHostContext)
+      const response = await dispatchEvent(uppercaseServer, '/wpm@something', {host: 'localhost:9292'})
+      expect(response.status).not.toBe(400)
+      expect(response.status).toBe(204)
+    })
+  })
+
   describe('request handling', async () => {
     const context = {...defaultServerContext}
     const server = setupDevServer(developmentTheme, context)
 
     const html = String.raw
-    const decoder = new TextDecoder()
-
-    const createH3Event = (options: {url: string; headers?: Record<string, string>}) => {
-      const req = new IncomingMessage(new Socket())
-      req.url = options.url
-      if (options.headers) req.headers = options.headers
-      const res = new ServerResponse(req)
-      return createEvent(req, res)
-    }
-
-    const dispatchEvent = async (
-      url: string,
-      headers?: Record<string, string>,
-    ): Promise<{res: ServerResponse; status: number; body: string | Buffer}> => {
-      const event = createH3Event({url, headers})
-      const {res} = event.node
-      let body = ''
-      const resWrite = res.write.bind(res)
-      res.write = (chunk) => {
-        body ??= ''
-        body += decoder.decode(chunk)
-        return resWrite(chunk)
-      }
-      const resEnd = res.end.bind(res)
-      res.end = (content) => {
-        if (!body) body = content ?? ''
-        return resEnd(content)
-      }
-
-      await server.dispatchEvent(event)
-
-      if (!body && '_data' in res) {
-        // When returning a Response from H3, we get the body here:
-        // eslint-disable-next-line require-atomic-updates
-        body = await new Response(res._data as ReadableStream).text()
-      }
-
-      return {res, status: res.statusCode, body}
-    }
+    const defaultHost = `${context.options.host}:${context.options.port}`
 
     test('mocks known endpoints', async () => {
-      await expect(dispatchEvent('/wpm@something')).resolves.toHaveProperty('status', 204)
-      await expect(dispatchEvent('/.well-known/shopify/monorail')).resolves.toHaveProperty('status', 204)
+      await expect(dispatchEvent(server, '/wpm@something', {host: defaultHost})).resolves.toHaveProperty('status', 204)
+      await expect(dispatchEvent(server, '/.well-known/shopify/monorail', {host: defaultHost})).resolves.toHaveProperty(
+        'status',
+        204,
+      )
       expect(vi.mocked(render)).not.toHaveBeenCalled()
     })
 
     test('serves proxied local assets', async () => {
-      const eventPromise = dispatchEvent('/cdn/somepathhere/assets/file1.css')
+      const eventPromise = dispatchEvent(server, '/cdn/somepathhere/assets/file1.css', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
 
       expect(vi.mocked(render)).not.toHaveBeenCalled()
@@ -273,7 +315,7 @@ describe('setupDevServer', () => {
 
     test('serves local assets from the root in a backward compatible way', async () => {
       // Also serves assets from the root, similar to what the old server did:
-      const eventPromise = dispatchEvent('/assets/file2.css')
+      const eventPromise = dispatchEvent(server, '/assets/file2.css', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
 
       expect(vi.mocked(render)).not.toHaveBeenCalled()
@@ -284,7 +326,7 @@ describe('setupDevServer', () => {
     })
 
     test('handles non-breaking spaces in files correctly', async () => {
-      const eventPromise = dispatchEvent('/assets/file-with-nbsp.js')
+      const eventPromise = dispatchEvent(server, '/assets/file-with-nbsp.js', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
@@ -372,7 +414,7 @@ describe('setupDevServer', () => {
       localThemeFileSystem.files.set(snippetFile.key, snippetFile)
 
       // Request the compiled CSS
-      const response = await dispatchEvent('/compiled_assets/styles.css')
+      const response = await dispatchEvent(server, '/compiled_assets/styles.css', {host: defaultHost})
 
       // Just verify the content-type is set correctly
       expect(response.res.getHeader('content-type')).toEqual('text/css')
@@ -420,7 +462,7 @@ describe('setupDevServer', () => {
       localThemeFileSystem.files.set(blockFile2.key, blockFile2)
       localThemeFileSystem.files.set(blockFile3.key, blockFile3)
 
-      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/block-scripts.js')
+      const eventPromise = dispatchEvent(server, '/cdn/somepath/compiled_assets/block-scripts.js', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
@@ -505,7 +547,9 @@ describe('setupDevServer', () => {
       localThemeFileSystem.files.set(snippetFile2.key, snippetFile2)
       localThemeFileSystem.files.set(snippetFile3.key, snippetFile3)
 
-      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/snippet-scripts.js')
+      const eventPromise = dispatchEvent(server, '/cdn/somepath/compiled_assets/snippet-scripts.js', {
+        host: defaultHost,
+      })
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
@@ -589,7 +633,7 @@ describe('setupDevServer', () => {
       localThemeFileSystem.files.set(sectionFile1.key, sectionFile1)
       localThemeFileSystem.files.set(sectionFile2.key, sectionFile2)
       localThemeFileSystem.files.set(sectionFile3.key, sectionFile3)
-      const eventPromise = dispatchEvent('/cdn/somepath/compiled_assets/scripts.js')
+      const eventPromise = dispatchEvent(server, '/cdn/somepath/compiled_assets/scripts.js', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
@@ -655,7 +699,9 @@ describe('setupDevServer', () => {
 
       localThemeFileSystem.files.set(snippetFile.key, snippetFile)
 
-      const {res, body} = await dispatchEvent('/cdn/somepath/compiled_assets/snippet-scripts.js')
+      const {res, body} = await dispatchEvent(server, '/cdn/somepath/compiled_assets/snippet-scripts.js', {
+        host: defaultHost,
+      })
 
       const bodyString = body.toString()
       const bodyByteLength = Buffer.byteLength(bodyString)
@@ -671,7 +717,7 @@ describe('setupDevServer', () => {
       vi.stubGlobal('fetch', fetchStub)
 
       // Request a compiled asset that doesn't exist
-      await dispatchEvent('/compiled_assets/nonexistent.js')
+      await dispatchEvent(server, '/compiled_assets/nonexistent.js', {host: defaultHost})
 
       // Should fall back to proxy
       expect(fetchStub).toHaveBeenCalledOnce()
@@ -701,7 +747,7 @@ describe('setupDevServer', () => {
         ),
       )
 
-      const eventPromise = dispatchEvent('/', {accept: 'text/html'})
+      const eventPromise = dispatchEvent(server, '/', {host: defaultHost, accept: 'text/html'})
       await expect(eventPromise).resolves.not.toThrow()
 
       const {res, body} = await eventPromise
@@ -721,7 +767,7 @@ describe('setupDevServer', () => {
       vi.stubGlobal('fetch', fetchStub)
 
       // --- Unknown endpoint:
-      const eventPromise = dispatchEvent('/path/to/something-else.js')
+      const eventPromise = dispatchEvent(server, '/path/to/something-else.js', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
@@ -747,7 +793,9 @@ describe('setupDevServer', () => {
 
       // --- Unknown assets:
       fetchStub.mockClear()
-      await expect(dispatchEvent('/cdn/somepathhere/assets/file42.css')).resolves.not.toThrow()
+      await expect(
+        dispatchEvent(server, '/cdn/somepathhere/assets/file42.css', {host: defaultHost}),
+      ).resolves.not.toThrow()
       expect(fetchStub).toHaveBeenCalledOnce()
       expect(fetchStub).toHaveBeenLastCalledWith(
         new URL(
@@ -779,7 +827,7 @@ describe('setupDevServer', () => {
 
       vi.stubGlobal('fetch', fetchStub)
 
-      const eventPromise = dispatchEvent('/cdn/shop/t/img/assets/file3.css')
+      const eventPromise = dispatchEvent(server, '/cdn/shop/t/img/assets/file3.css', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
@@ -794,7 +842,7 @@ describe('setupDevServer', () => {
       const now = Date.now()
 
       const pathname = '/cdn/shop/t/img/assets/file4.js'
-      const eventPromise = dispatchEvent(`${pathname}?1234`)
+      const eventPromise = dispatchEvent(server, `${pathname}?1234`, {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
@@ -810,7 +858,7 @@ describe('setupDevServer', () => {
       fetchStub.mockResolvedValueOnce(new Response(null, {status: 302}))
       vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
 
-      const eventPromise = dispatchEvent('/non-renderable-path')
+      const eventPromise = dispatchEvent(server, '/non-renderable-path', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).toHaveBeenCalled()
 
@@ -837,7 +885,7 @@ describe('setupDevServer', () => {
       fetchStub.mockResolvedValueOnce(new Response(null, {status: 404}))
       vi.mocked(render).mockResolvedValueOnce(new Response(null, {status: 401}))
 
-      const eventPromise = dispatchEvent('/non-renderable-path')
+      const eventPromise = dispatchEvent(server, '/non-renderable-path', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).toHaveBeenCalled()
 
@@ -864,14 +912,22 @@ describe('setupDevServer', () => {
       fetchStub.mockResolvedValueOnce(new Response(null, {status: 200}))
       vi.mocked(render).mockResolvedValue(new Response(null, {status: 404}))
 
-      await expect(dispatchEvent('/non-renderable-path?sections=xyz')).resolves.toHaveProperty('status', 404)
-      await expect(dispatchEvent('/non-renderable-path?section_id=xyz')).resolves.toHaveProperty('status', 404)
-      await expect(dispatchEvent('/non-renderable-path?app_block_id=xyz')).resolves.toHaveProperty('status', 404)
+      await expect(
+        dispatchEvent(server, '/non-renderable-path?sections=xyz', {host: defaultHost}),
+      ).resolves.toHaveProperty('status', 404)
+      await expect(
+        dispatchEvent(server, '/non-renderable-path?section_id=xyz', {host: defaultHost}),
+      ).resolves.toHaveProperty('status', 404)
+      await expect(
+        dispatchEvent(server, '/non-renderable-path?app_block_id=xyz', {host: defaultHost}),
+      ).resolves.toHaveProperty('status', 404)
 
       expect(vi.mocked(render)).toHaveBeenCalledTimes(3)
       expect(fetchStub).not.toHaveBeenCalled()
 
-      await expect(dispatchEvent('/non-renderable-path?unknown=xyz')).resolves.toHaveProperty('status', 200)
+      await expect(
+        dispatchEvent(server, '/non-renderable-path?unknown=xyz', {host: defaultHost}),
+      ).resolves.toHaveProperty('status', 200)
       expect(fetchStub).toHaveBeenCalledOnce()
     })
 
@@ -887,7 +943,7 @@ describe('setupDevServer', () => {
       vi.stubGlobal('fetch', fetchStub)
 
       // When
-      const event = createH3Event({url: '/compiled_assets/styles.css'})
+      const event = createH3Event({url: '/compiled_assets/styles.css', headers: {host: defaultHost}})
       await themeExtServer.dispatchEvent(event)
 
       // Then
@@ -908,7 +964,7 @@ describe('setupDevServer', () => {
       fetchStub.mockClear()
 
       // When requesting the same compiled asset with theme context
-      const themeEvent = createH3Event({url: '/compiled_assets/styles.css'})
+      const themeEvent = createH3Event({url: '/compiled_assets/styles.css', headers: {host: defaultHost}})
       await server.dispatchEvent(themeEvent)
 
       // Then it should handle it locally, not proxy
@@ -920,7 +976,7 @@ describe('setupDevServer', () => {
       vi.stubGlobal('fetch', fetchStub)
       vi.mocked(render).mockRejectedValueOnce(new Error('Network error'))
 
-      const eventPromise = dispatchEvent('/')
+      const eventPromise = dispatchEvent(server, '/', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).toHaveBeenCalled()
 
@@ -935,7 +991,7 @@ describe('setupDevServer', () => {
       vi.stubGlobal('fetch', fetchStub)
       localThemeFileSystem.uploadErrors.set('templates/asset.json', ['Error 1', 'Error 2'])
 
-      const eventPromise = dispatchEvent('/')
+      const eventPromise = dispatchEvent(server, '/', {host: defaultHost})
       await expect(eventPromise).resolves.not.toThrow()
       expect(vi.mocked(render)).not.toHaveBeenCalled()
 
