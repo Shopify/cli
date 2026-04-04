@@ -1,5 +1,6 @@
 import {ZodSchemaType, BaseConfigType, BaseSchema} from './schemas.js'
 import {ExtensionInstance} from './extension-instance.js'
+import {TypeDefinitionsByFile} from './specifications/type-generation.js'
 import {blocks} from '../../constants.js'
 import {ClientSteps} from '../../services/build/client-steps.js'
 
@@ -129,7 +130,8 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
 
   contributeToSharedTypeFile?: (
     extension: ExtensionInstance<TConfiguration>,
-    typeDefinitionsByFile: Map<string, Set<string>>,
+    typeDefinitionsByFile: TypeDefinitionsByFile,
+    appDirectory?: string,
   ) => Promise<void>
 
   /**
