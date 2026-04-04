@@ -1,5 +1,6 @@
 import {
   corsMiddleware,
+  getAppAssetsMiddleware,
   getExtensionAssetMiddleware,
   getExtensionPayloadMiddleware,
   fileServerMiddleware,
@@ -571,5 +572,43 @@ describe('getExtensionPointMiddleware()', () => {
     await getExtensionPayloadMiddleware(options)(event)
 
     expect(h3.sendRedirect).toHaveBeenCalledWith(event, 'http://www.mock.com/redirect/url', 307)
+  })
+})
+
+describe('getAppAssetsMiddleware()', () => {
+  test('serves a file from the matching asset directory', async () => {
+    await inTemporaryDirectory(async (tmpDir: string) => {
+      const assetDir = joinPath(tmpDir, 'public')
+      await mkdir(assetDir)
+      await writeFile(joinPath(assetDir, 'icon.png'), 'png-content')
+
+      const middleware = getAppAssetsMiddleware(() => ({staticRoot: assetDir}))
+
+      const event = getMockEvent({
+        params: {assetKey: 'staticRoot', filePath: 'icon.png'},
+      })
+
+      const result = await middleware(event)
+
+      expect(event.node.res.setHeader).toHaveBeenCalledWith('Content-Type', 'image/png')
+      expect(result).toBe('png-content')
+    })
+  })
+
+  test('returns 404 for an unknown asset key', async () => {
+    vi.spyOn(utilities, 'sendError').mockImplementation(() => {})
+
+    const middleware = getAppAssetsMiddleware(() => ({staticRoot: '/some/path'}))
+
+    const event = getMockEvent({
+      params: {assetKey: 'unknown', filePath: 'icon.png'},
+    })
+
+    await middleware(event)
+
+    expect(utilities.sendError).toHaveBeenCalledWith(event, {
+      statusCode: 404,
+      statusMessage: 'No app assets configured for key: unknown',
+    })
   })
 })

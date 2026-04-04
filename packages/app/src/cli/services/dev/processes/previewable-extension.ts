@@ -1,5 +1,5 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
-import {devUIExtensions} from '../extension.js'
+import {devUIExtensions, resolveAppAssets} from '../extension.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -24,6 +24,7 @@ interface PreviewableExtensionOptions {
   grantedScopes: string[]
   previewableExtensions: ExtensionInstance[]
   appWatcher: AppEventWatcher
+  appAssets?: Record<string, string>
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -47,6 +48,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     previewableExtensions,
     appDirectory,
     appWatcher,
+    appAssets,
   },
 ) => {
   await devUIExtensions({
@@ -68,6 +70,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     subscriptionProductUrl,
     manifestVersion: MANIFEST_VERSION,
     appWatcher,
+    appAssets,
   })
 }
 
@@ -84,6 +87,8 @@ export async function setupPreviewableExtensionsProcess({
 
   const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl)
 
+  const appAssets = resolveAppAssets(allExtensions)
+
   return {
     prefix: 'extensions',
     type: 'previewable-extension',
@@ -94,6 +99,7 @@ export async function setupPreviewableExtensionsProcess({
       storeFqdn,
       previewableExtensions,
       cartUrl,
+      appAssets: Object.keys(appAssets).length > 0 ? appAssets : undefined,
       ...options,
     },
   }

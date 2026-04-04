@@ -32,6 +32,7 @@ export async function handleWatcherEvents(
     const affectedExtensions = app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
     const newEvent = handlers[event.type]({event, app: appEvent.app, extensions: affectedExtensions, options})
     appEvent.extensionEvents.push(...newEvent.extensionEvents)
+    if (newEvent.appAssetsUpdated) appEvent.appAssetsUpdated = true
   }
 
   return appEvent
@@ -61,6 +62,7 @@ const handlers: {[key in WatcherEvent['type']]: Handler} = {
   file_deleted: FileChangeHandler,
   file_updated: FileChangeHandler,
   app_config_deleted: AppConfigDeletedHandler,
+  app_asset_updated: AppAssetUpdatedHandler,
   // These two are processed manually to avoid multiple reloads
   extension_folder_created: EmptyHandler,
   extensions_config_updated: EmptyHandler,
@@ -89,6 +91,17 @@ function ExtensionFolderDeletedHandler({event, app, extensions}: HandlerInput): 
 function FileChangeHandler({event, app, extensions}: HandlerInput): AppEvent {
   const events: ExtensionEvent[] = extensions.map((ext) => ({type: EventType.Updated, extension: ext}))
   return {app, extensionEvents: events, startTime: event.startTime, path: event.path}
+}
+
+/**
+ * When a file inside an app asset directory (e.g. static_root) is updated:
+ * Find the owning extension via extensionPath and return an Updated event so it gets rebuilt.
+ * The rebuild runs the include_assets step which copies the changed files into the bundle.
+ */
+function AppAssetUpdatedHandler({event, app}: HandlerInput): AppEvent {
+  const adminExtension = app.realExtensions.find((ext) => ext.specification.identifier === 'admin')
+  const events: ExtensionEvent[] = adminExtension ? [{type: EventType.Updated, extension: adminExtension}] : []
+  return {app, extensionEvents: events, startTime: event.startTime, path: event.path, appAssetsUpdated: true}
 }
 
 /**

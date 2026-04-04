@@ -82,6 +82,7 @@ export interface AppEvent {
   path: string
   startTime: [number, number]
   appWasReloaded?: boolean
+  appAssetsUpdated?: boolean
 }
 
 type ExtensionBuildResult = {status: 'ok'; uid: string} | {status: 'error'; error: string; file?: string; uid: string}

@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {configurationFileNames} from '../../../constants.js'
+import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {dirname, joinPath, normalizePath, relativePath} from '@shopify/cli-kit/node/path'
 import {FSWatcher} from 'chokidar'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -9,6 +10,7 @@ import {startHRTime, StartTime} from '@shopify/cli-kit/node/hrtime'
 import {fileExistsSync, matchGlob, mkdir, readFileSync} from '@shopify/cli-kit/node/fs'
 import {debounce} from '@shopify/cli-kit/common/function'
 import ignore from 'ignore'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 import {Writable} from 'stream'
 
 const DEFAULT_DEBOUNCE_TIME_IN_MS = 200
@@ -36,6 +38,7 @@ export interface WatcherEvent {
     | 'file_deleted'
     | 'extensions_config_updated'
     | 'app_config_deleted'
+    | 'app_asset_updated'
   path: string
   extensionPath: string
   startTime: StartTime
@@ -58,6 +61,8 @@ export class FileWatcher {
   private readonly ignored: {[key: string]: ignore.Ignore | undefined} = {}
   // Map of file paths to the extensions that watch them
   private readonly extensionWatchedFiles = new Map<string, Set<string>>()
+  // Map of asset directory path to the extension directory that owns it
+  private appAssetToExtensionDir = new Map<string, string>()
 
   constructor(
     app: AppLinkedInterface,
@@ -104,7 +109,9 @@ export class FileWatcher {
       }),
     )
 
+    this.appAssetToExtensionDir = this.resolveAppAssetWatchPaths(this.app.realExtensions)
     const watchPaths = [this.app.configPath, ...fullExtensionDirectories]
+    Array.from(this.appAssetToExtensionDir.keys()).forEach((key) => watchPaths.push(key))
 
     // Get all watched files from extensions
     const allWatchedFiles = this.getAllWatchedFiles()
@@ -114,15 +121,24 @@ export class FileWatcher {
 
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
+    const appAssetDirs = [...this.appAssetToExtensionDir.keys()]
     this.watcher = chokidar.watch(watchPaths, {
       ignored: [
         '**/node_modules/**',
         '**/.git/**',
         '**/*.test.*',
-        '**/dist/**',
         '**/*.swp',
         '**/generated/**',
         '**/.gitignore',
+        // Ignore files inside dist/ directories, unless the path falls under a watched
+        // app asset directory (e.g. static_root may point to a dist/ folder).
+        // Non-dist paths are never ignored here (return false). For dist paths, we only
+        // allow them through if they are inside one of the app asset directories.
+        (filePath: string) => {
+          const normalized = normalizePath(filePath)
+          if (!normalized.includes('/dist/') && !normalized.endsWith('/dist')) return false
+          return !appAssetDirs.some((assetDir) => normalized.startsWith(assetDir))
+        },
       ],
       persistent: true,
       ignoreInitial: true,
@@ -178,6 +194,36 @@ export class FileWatcher {
   }
 
   /**
+   * Resolves app asset directories that should be watched.
+   * Returns a map of absolute asset directory path → owning extension directory.
+   */
+  private resolveAppAssetWatchPaths(allExtensions: ExtensionInstance[]): Map<string, string> {
+    const result = new Map<string, string>()
+    const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
+    if (adminExtension) {
+      const staticRootPath = getPathValue<string>(adminExtension.configuration, 'admin.static_root')
+      if (staticRootPath) {
+        const absolutePath = joinPath(adminExtension.directory, staticRootPath)
+        result.set(normalizePath(absolutePath), normalizePath(adminExtension.directory))
+      }
+    }
+    return result
+  }
+
+  /**
+   * Checks if a file path is inside any app asset directory.
+   * Returns the owning extension directory if found, undefined otherwise.
+   */
+  private findAppAssetExtensionDir(filePath: string): string | undefined {
+    for (const [assetDir, extensionDir] of this.appAssetToExtensionDir) {
+      if (filePath.startsWith(assetDir)) {
+        return extensionDir
+      }
+    }
+    return undefined
+  }
+
+  /**
    * Emits the accumulated events and resets the current events list.
    * It also logs the number of events emitted and their paths for debugging purposes.
    */
@@ -227,7 +273,12 @@ export class FileWatcher {
    * Explicit watch paths have priority over custom gitignore files
    */
   private shouldIgnoreEvent(event: WatcherEvent) {
-    if (event.type === 'extension_folder_deleted' || event.type === 'extension_folder_created') return false
+    if (
+      event.type === 'extension_folder_deleted' ||
+      event.type === 'extension_folder_created' ||
+      event.type === 'app_asset_updated'
+    )
+      return false
 
     const extension = this.app.realExtensions.find((ext) => ext.directory === event.extensionPath)
     const watchPaths = extension?.watchedFiles()
@@ -257,6 +308,16 @@ export class FileWatcher {
     } else {
       const affectedExtensions = this.extensionWatchedFiles.get(normalizedPath)
       const isUnknownExtension = affectedExtensions === undefined || affectedExtensions.size === 0
+
+      // Check if the file is inside an app asset directory (e.g. static_root)
+      const appAssetExtensionDir = this.findAppAssetExtensionDir(normalizedPath)
+      if (appAssetExtensionDir) {
+        if (event === 'change' || event === 'add' || event === 'unlink') {
+          this.pushEvent({type: 'app_asset_updated', path, extensionPath: appAssetExtensionDir, startTime})
+        }
+        this.debouncedEmit()
+        return
+      }
 
       if (isUnknownExtension && !isExtensionToml && !isConfigAppPath) {
         // Ignore an event if it's not part of an existing extension
