@@ -29,6 +29,7 @@ import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {zod} from '@shopify/cli-kit/node/schema'
 import colors from '@shopify/cli-kit/node/colors'
 import {showMultipleCLIWarningIfNeeded} from '@shopify/cli-kit/node/multiple-installation-warning'
+import {stringifyMessage} from '@shopify/cli-kit/node/output'
 
 vi.mock('../../services/local-storage.js')
 vi.mock('@shopify/cli-kit/node/system')
@@ -698,6 +699,28 @@ describe('load', () => {
     expect(app.webs.length).toBe(0)
   })
 
+  test('collects an error for unrecognized keys in web TOML', async () => {
+    // Given
+    const {webDirectory} = await writeConfig(appConfiguration)
+    const webConfiguration = `
+      type = "backend"
+      unknown_key = "should-not-be-here"
+
+      [commands]
+      build = "build"
+      dev = "dev"
+      `
+    await writeFile(joinPath(webDirectory, blocks.web.configurationName), webConfiguration)
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.errors.isEmpty()).toBe(false)
+    const errors = app.errors.toJSON().map(stringifyMessage).join('\n')
+    expect(errors).toMatch(/Unrecognized key.*unknown_key/)
+  })
+
   test('loads the app when it has a extension with a valid configuration', async () => {
     // Given
     await writeConfig(appConfiguration)
@@ -998,40 +1021,63 @@ describe('load', () => {
     await expect(() => loadTestingApp()).rejects.toThrowError()
   })
 
-  test('loads the app when it has a function with a valid configuration', async () => {
+  test('collects an error for unrecognized keys in unified extension TOML', async () => {
     // Given
     await writeConfig(appConfiguration)
 
     const blockConfiguration = `
-      name = "my-function"
-      type = "order_discounts"
-      api_version = "2022-07"
+      api_version = "2024-01"
 
-      [build]
-      command = "make build"
-      path = "dist/index.wasm"
+      [metaobjects]
+      something = "misplaced"
 
-      # extra fields not included in the schema should be ignored
-      [[invalid_field]]
-      namespace = "my-namespace"
-      key = "my-key"
+      [[extensions]]
+      type = "flow_action"
+      handle = "my-flow-action"
+      name = "My Flow Action"
+      description = "A flow action"
+      runtime_url = "https://example.com"
       `
     await writeBlockConfig({
       blockConfiguration,
-      name: 'my-function',
+      name: 'my-extension',
     })
-    await mkdir(joinPath(blockPath('my-function'), 'src'))
-    await writeFile(joinPath(blockPath('my-function'), 'src', 'index.js'), '')
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
 
     // When
     const app = await loadTestingApp()
-    const myFunction = app.allExtensions[0]!
 
     // Then
-    expect(myFunction.configuration.name).toBe('my-function')
-    expect(myFunction.idEnvironmentVariableName).toBe('SHOPIFY_MY_FUNCTION_ID')
-    expect(myFunction.localIdentifier).toBe('my-function')
-    expect(myFunction.entrySourceFilePath).toContain(joinPath(blockPath('my-function'), 'src', 'index.js'))
+    expect(app.errors.isEmpty()).toBe(false)
+    const errors = app.errors.toJSON().map(stringifyMessage).join('\n')
+    expect(errors).toMatch(/Unrecognized key.*metaobjects/)
+  })
+
+  test('does not collect errors when unified extension TOML has only recognized keys', async () => {
+    // Given
+    await writeConfig(appConfiguration)
+
+    const blockConfiguration = `
+      api_version = "2024-01"
+
+      [[extensions]]
+      type = "flow_action"
+      handle = "my-flow-action"
+      name = "My Flow Action"
+      description = "A flow action"
+      runtime_url = "https://example.com"
+      `
+    await writeBlockConfig({
+      blockConfiguration,
+      name: 'my-extension',
+    })
+    await writeFile(joinPath(blockPath('my-extension'), 'index.js'), '')
+
+    // When
+    const app = await loadTestingApp()
+
+    // Then
+    expect(app.errors.isEmpty()).toBe(true)
   })
 
   test('loads the app with a Flow trigger extension that has a full valid configuration', async () => {
@@ -1053,11 +1099,6 @@ describe('load', () => {
         [[settings.fields]]
         type = "single_line_text_field"
         key = "your field key"
-
-      # extra fields not included in the schema should be ignored
-      [[invalid_field]]
-      namespace = "my-namespace"
-      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,
@@ -1122,11 +1163,6 @@ describe('load', () => {
         name = "Display name"
         description = "A description of my field"
         required = true
-
-      # extra fields not included in the schema should be ignored
-      [[invalid_field]]
-      namespace = "my-namespace"
-      key = "my-key"
       `
     await writeBlockConfig({
       blockConfiguration,

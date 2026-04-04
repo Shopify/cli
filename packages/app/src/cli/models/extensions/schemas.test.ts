@@ -1,4 +1,4 @@
-import {BaseSchema, MAX_UID_LENGTH} from './schemas.js'
+import {BaseSchema, MAX_UID_LENGTH, UnifiedSchema} from './schemas.js'
 import {describe, expect, test} from 'vitest'
 
 const validUIDTestCases = [
@@ -28,6 +28,47 @@ const invalidUIDTestCases = [
   ['-', "UID can't start or end with a hyphen"],
   ['-----', "UID can't start or end with a hyphen"],
 ]
+
+describe('UnifiedSchema', () => {
+  test('rejects unrecognized top-level keys', () => {
+    // Given
+    const config = {
+      api_version: '2024-01',
+      extensions: [{type: 'ui_extension', handle: 'my-ext'}],
+      metaobjects: {something: 'misplaced'},
+    }
+
+    // When
+    const result = UnifiedSchema.safeParse(config)
+
+    // Then
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]!.code).toBe('unrecognized_keys')
+      expect(result.error.issues[0]!.message).toMatch(/metaobjects/)
+    }
+  })
+
+  test('rejects multiple unrecognized keys', () => {
+    // Given
+    const config = {
+      extensions: [],
+      metaobjects: {},
+      unknown_field: 'value',
+    }
+
+    // When
+    const result = UnifiedSchema.safeParse(config)
+
+    // Then
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]!.code).toBe('unrecognized_keys')
+      expect(result.error.issues[0]!.message).toMatch(/metaobjects/)
+      expect(result.error.issues[0]!.message).toMatch(/unknown_field/)
+    }
+  })
+})
 
 describe('UIDSchema', () => {
   describe('valid UIDs', () => {
