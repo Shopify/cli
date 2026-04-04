@@ -3,7 +3,7 @@ import {loadEnvironment, environmentFilePath} from './environments.js'
 import {isDevelopment} from './context/local.js'
 import {addPublicMetadata} from './metadata.js'
 import {AbortError} from './error.js'
-import {renderInfo, renderWarning} from './ui.js'
+import {renderInfo, renderWarning, RenderAlertOptions} from './ui.js'
 import {outputContent, outputResult, outputToken} from './output.js'
 import {terminalSupportsPrompting} from './system.js'
 import {hashString} from './crypto.js'
@@ -24,6 +24,10 @@ export type FlagOutput = OutputFlags<any>
 interface EnvironmentFlags {
   environment?: string[]
   path?: string
+}
+
+export function deprecated<T>(flag: T, warning: RenderAlertOptions): T {
+  return Object.assign(flag as object, {deprecationWarning: warning}) as T
 }
 
 abstract class BaseCommand extends Command {
@@ -104,6 +108,7 @@ abstract class BaseCommand extends Command {
     let result = await super.parse<TFlags, TGlobalFlags, TArgs>(options, argv)
     result = await this.resultWithEnvironment<TFlags, TGlobalFlags, TArgs>(result, options, argv)
     await addFromParsedFlags(result.flags)
+    this.showDeprecatedFlagWarnings(result.flags)
     return {...result, ...{argv: result.argv as string[]}}
   }
 
@@ -127,6 +132,16 @@ This flag is required in non-interactive terminal environments, such as a CI env
         )
       }
     })
+  }
+
+  private showDeprecatedFlagWarnings(parsedFlags: FlagOutput): void {
+    const commandVariables = this.constructor as unknown as {flags: JsonMap}
+    for (const [name, def] of Object.entries(commandVariables.flags ?? {})) {
+      const warning = (def as {deprecationWarning?: RenderAlertOptions}).deprecationWarning
+      if (warning && parsedFlags[name]) {
+        renderWarning(warning)
+      }
+    }
   }
 
   private async resultWithEnvironment<
