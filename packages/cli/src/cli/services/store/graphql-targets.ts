@@ -1,7 +1,7 @@
-import {BugError} from '@shopify/cli-kit/node/error'
 import {PreparedStoreExecuteRequest} from './execute-request.js'
 import {prepareAdminStoreGraphQLContext, AdminStoreGraphQLContext} from './admin-graphql-context.js'
 import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
+import {BugError} from '@shopify/cli-kit/node/error'
 
 export type StoreGraphQLApi = 'admin'
 

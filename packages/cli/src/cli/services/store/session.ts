@@ -1,5 +1,5 @@
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {storeAuthSessionKey} from './auth-config.js'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 export interface StoredStoreAppSession {
   store: string
@@ -85,8 +85,7 @@ export function clearStoredStoreAppSession(
   maybeStorage?: LocalStorage<StoreSessionSchema>,
 ): void {
   const userId = typeof userIdOrStorage === 'string' ? userIdOrStorage : undefined
-  const storage =
-    (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeSessionStorage()
+  const storage = (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeSessionStorage()
 
   const key = storeAuthSessionKey(store)
 
@@ -107,8 +106,7 @@ export function clearStoredStoreAppSession(
   }
 
   storage.set(key, {
-    currentUserId:
-      existingBucket.currentUserId === userId ? remainingUserIds[0]! : existingBucket.currentUserId,
+    currentUserId: existingBucket.currentUserId === userId ? remainingUserIds[0]! : existingBucket.currentUserId,
     sessionsByUserId: remainingSessions,
   })
 }

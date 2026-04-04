@@ -1,5 +1,3 @@
-import {describe, test, expect} from 'vitest'
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {STORE_AUTH_APP_CLIENT_ID, storeAuthSessionKey} from './auth-config.js'
 import {
   clearStoredStoreAppSession,
@@ -8,6 +6,8 @@ import {
   isSessionExpired,
   type StoredStoreAppSession,
 } from './session.js'
+import {describe, test, expect} from 'vitest'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 function inMemoryStorage() {
   const values = new Map<string, unknown>()

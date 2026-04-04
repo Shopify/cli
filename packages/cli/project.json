@@ -37,14 +37,14 @@
     "lint": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint \"src/**/*.ts\" 'bin/*.js' ",
+        "command": "pnpm eslint src bin",
         "cwd": "packages/cli"
       }
     },
     "lint:fix": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "pnpm eslint 'src/**/*.ts' 'bin/*.js' --fix",
+        "command": "pnpm eslint src bin --fix",
         "cwd": "packages/cli"
       }
     },

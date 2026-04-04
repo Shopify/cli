@@ -1,14 +1,10 @@
-import {describe, test, expect, vi, beforeEach} from 'vitest'
 import StoreAuth from './auth.js'
 import {authenticateStoreWithApp} from '../../services/store/auth.js'
+import {describe, test, expect, vi} from 'vitest'
 
 vi.mock('../../services/store/auth.js')
 
 describe('store auth command', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   test('passes parsed flags through to the auth service', async () => {
     await StoreAuth.run(['--store', 'shop.myshopify.com', '--scopes', 'read_products,write_products'])
 

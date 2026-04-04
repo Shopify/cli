@@ -1,16 +1,18 @@
+import {clearStoredStoreAppSession} from './session.js'
+import {prepareStoreExecuteRequest} from './execute-request.js'
+import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {clearStoredStoreAppSession} from './session.js'
-import {prepareStoreExecuteRequest} from './execute-request.js'
-import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
 
 vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/api/graphql')
 vi.mock('@shopify/cli-kit/node/ui')
 vi.mock('@shopify/cli-kit/node/api/admin', async () => {
-  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>('@shopify/cli-kit/node/api/admin')
+  const actual = await vi.importActual<typeof import('@shopify/cli-kit/node/api/admin')>(
+    '@shopify/cli-kit/node/api/admin',
+  )
   return {
     ...actual,
     adminUrl: vi.fn(),
@@ -22,7 +24,6 @@ describe('runAdminStoreGraphQLOperation', () => {
   const adminSession = {token: 'token', storeFqdn: store}
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(adminUrl).mockReturnValue('https://shop.myshopify.com/admin/api/2025-10/graphql.json')
     vi.mocked(renderSingleTask).mockImplementation(async ({task}) => task(() => {}))
   })

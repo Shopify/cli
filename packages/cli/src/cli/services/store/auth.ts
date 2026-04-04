@@ -1,4 +1,10 @@
-import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, STORE_AUTH_CALLBACK_PATH, maskToken, storeAuthRedirectUri} from './auth-config.js'
+import {
+  DEFAULT_STORE_AUTH_PORT,
+  STORE_AUTH_APP_CLIENT_ID,
+  STORE_AUTH_CALLBACK_PATH,
+  maskToken,
+  storeAuthRedirectUri,
+} from './auth-config.js'
 import {retryStoreAuthWithPermanentDomainError} from './auth-recovery.js'
 import {setStoredStoreAppSession} from './session.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
@@ -138,16 +144,8 @@ export function buildStoreAuthUrl(options: {
 }
 
 function renderAuthCallbackPage(title: string, message: string): string {
-  const safeTitle = title
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-  const safeMessage = message
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+  const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
   return `<!doctype html>
 <html lang="en">
@@ -243,7 +241,9 @@ export async function waitForStoreAuthCode({
       res.setHeader('Content-Type', 'text/html')
       res.setHeader('Connection', 'close')
       res.once('finish', () => settle(() => resolve(code)))
-      res.end(renderAuthCallbackPage('Authentication succeeded', 'You can close this window and return to the terminal.'))
+      res.end(
+        renderAuthCallbackPage('Authentication succeeded', 'You can close this window and return to the terminal.'),
+      )
     })
 
     const settle = (callback: () => void) => {
@@ -285,7 +285,7 @@ export async function waitForStoreAuthCode({
       settleWithError(error)
     })
 
-    server.listen(port, '127.0.0.1', async () => {
+    server.listen(port, '127.0.0.1', () => {
       isListening = true
       outputDebug(
         outputContent`PKCE callback server listening on http://127.0.0.1:${outputToken.raw(String(port))}${outputToken.raw(STORE_AUTH_CALLBACK_PATH)}`,
@@ -293,18 +293,16 @@ export async function waitForStoreAuthCode({
 
       if (!onListening) return
 
-      try {
-        await onListening()
-      } catch (error) {
+      onListening()?.catch((error: unknown) => {
         settleWithError(error instanceof Error ? error : new Error(String(error)))
-      }
+      })
     })
   })
 }
 
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false
-  return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'))
+function constantTimeEqual(first: string, second: string): boolean {
+  if (first.length !== second.length) return false
+  return timingSafeEqual(Buffer.from(first, 'utf8'), Buffer.from(second, 'utf8'))
 }
 
 export async function exchangeStoreAuthCodeForToken(options: {
@@ -329,28 +327,28 @@ export async function exchangeStoreAuthCodeForToken(options: {
   })
 
   const body = await response.text()
-  if (!response.ok) {
-    outputDebug(
-      outputContent`Token exchange failed with HTTP ${outputToken.raw(String(response.status))}: ${outputToken.raw(body.slice(0, 300))}`,
-    )
-    throw new AbortError(
-      `Failed to exchange OAuth code for an access token (HTTP ${response.status}).`,
-      body || response.statusText,
-    )
-  }
+  if (response.ok) {
+    let parsed: StoreTokenResponse
+    try {
+      parsed = JSON.parse(body) as StoreTokenResponse
+    } catch {
+      throw new AbortError('Received an invalid token response from Shopify.')
+    }
 
-  let parsed: StoreTokenResponse
-  try {
-    parsed = JSON.parse(body) as StoreTokenResponse
-  } catch {
-    throw new AbortError('Received an invalid token response from Shopify.')
+    outputDebug(
+      outputContent`Token exchange succeeded: access_token=${outputToken.raw(maskToken(parsed.access_token))}, refresh_token=${outputToken.raw(parsed.refresh_token ? maskToken(parsed.refresh_token) : 'none')}, expires_in=${outputToken.raw(String(parsed.expires_in ?? 'unknown'))}s, user=${outputToken.raw(String(parsed.associated_user?.id ?? 'unknown'))} (${outputToken.raw(parsed.associated_user?.email ?? 'no email')})`,
+    )
+
+    return parsed
   }
 
   outputDebug(
-    outputContent`Token exchange succeeded: access_token=${outputToken.raw(maskToken(parsed.access_token))}, refresh_token=${outputToken.raw(parsed.refresh_token ? maskToken(parsed.refresh_token) : 'none')}, expires_in=${outputToken.raw(String(parsed.expires_in ?? 'unknown'))}s, user=${outputToken.raw(String(parsed.associated_user?.id ?? 'unknown'))} (${outputToken.raw(parsed.associated_user?.email ?? 'no email')})`,
+    outputContent`Token exchange failed with HTTP ${outputToken.raw(String(response.status))}: ${outputToken.raw(body.slice(0, 300))}`,
   )
-
-  return parsed
+  throw new AbortError(
+    `Failed to exchange OAuth code for an access token (HTTP ${response.status}).`,
+    body === '' ? response.statusText : body,
+  )
 }
 
 interface StoreAuthPresenter {
@@ -436,7 +434,7 @@ export async function authenticateStoreWithApp(
 ): Promise<void> {
   const bootstrap = createPkceBootstrap(input, dependencies.exchangeStoreAuthCodeForToken)
   const {
-    authorization: {store, scopes, redirectUri, authorizationUrl},
+    authorization: {store, scopes, authorizationUrl},
   } = bootstrap
 
   dependencies.presenter.openingBrowser()

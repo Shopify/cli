@@ -1,5 +1,3 @@
-import {createServer} from 'http'
-import {describe, test, expect, vi, beforeEach, afterEach} from 'vitest'
 import {
   authenticateStoreWithApp,
   buildStoreAuthUrl,
@@ -11,7 +9,9 @@ import {
 } from './auth.js'
 import {setStoredStoreAppSession} from './session.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './auth-config.js'
+import {describe, test, expect, vi} from 'vitest'
 import {fetch} from '@shopify/cli-kit/node/http'
+import {createServer} from 'http'
 
 vi.mock('./session.js')
 vi.mock('@shopify/cli-kit/node/http')
@@ -19,7 +19,7 @@ vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedVal
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
 
 async function getAvailablePort(): Promise<number> {
-  return await new Promise<number>((resolve, reject) => {
+  return new Promise<number>((resolve, reject) => {
     const server = createServer()
 
     server.on('error', reject)
@@ -42,12 +42,7 @@ async function getAvailablePort(): Promise<number> {
   })
 }
 
-function callbackParams(options?: {
-  code?: string
-  shop?: string
-  state?: string
-  error?: string
-}): URLSearchParams {
+function callbackParams(options?: {code?: string; shop?: string; state?: string; error?: string}): URLSearchParams {
   const params = new URLSearchParams()
   params.set('shop', options?.shop ?? 'shop.myshopify.com')
   params.set('state', options?.state ?? 'state-123')
@@ -60,23 +55,15 @@ function callbackParams(options?: {
 }
 
 describe('store auth service', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
   test('generateCodeVerifier produces a base64url string of 43 chars', () => {
     const verifier = generateCodeVerifier()
     expect(verifier).toMatch(/^[A-Za-z0-9_-]{43}$/)
   })
 
   test('generateCodeVerifier produces unique values', () => {
-    const a = generateCodeVerifier()
-    const b = generateCodeVerifier()
-    expect(a).not.toBe(b)
+    const firstVerifier = generateCodeVerifier()
+    const secondVerifier = generateCodeVerifier()
+    expect(firstVerifier).not.toBe(secondVerifier)
   })
 
   test('computeCodeChallenge produces a deterministic S256 hash', () => {

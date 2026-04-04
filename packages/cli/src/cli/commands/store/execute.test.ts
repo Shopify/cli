@@ -1,14 +1,10 @@
-import {describe, test, expect, vi, beforeEach} from 'vitest'
 import StoreExecute from './execute.js'
 import {executeStoreOperation} from '../../services/store/execute.js'
+import {describe, test, expect, vi} from 'vitest'
 
 vi.mock('../../services/store/execute.js')
 
 describe('store execute command', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   test('passes the inline query through to the service', async () => {
     await StoreExecute.run(['--store', 'shop.myshopify.com', '--query', 'query { shop { name } }'])
 
