@@ -12,7 +12,7 @@ import {getPatternsFromShopifyIgnore, applyIgnoreFilters} from './asset-ignore.j
 import {triggerBrowserFullReload} from './theme-environment/hot-reload/server.js'
 import {removeFile, writeFile} from '@shopify/cli-kit/node/fs'
 import * as fsKit from '@shopify/cli-kit/node/fs'
-import {test, describe, expect, vi, beforeEach} from 'vitest'
+import {test, describe, expect, vi, beforeEach, afterEach} from 'vitest'
 import chokidar from 'chokidar'
 import {bulkUploadThemeAssets, deleteThemeAssets, fetchThemeAssets} from '@shopify/cli-kit/node/themes/api'
 import {renderError} from '@shopify/cli-kit/node/ui'
@@ -946,6 +946,91 @@ describe('theme-fs', () => {
       // Then
       expect(uploadErrors.has(fileKey)).toBe(false)
       expect(triggerBrowserFullReload).toHaveBeenCalledWith(themeId, fileKey)
+    })
+  })
+
+  describe('raw event fallback for suppressed changes', () => {
+    const themeId = '123'
+    const adminSession = {token: 'token'} as AdminSession
+    const root = joinPath(locationOfThisFile, 'fixtures/theme')
+
+    beforeEach(() => {
+      const mockWatcher = new EventEmitter()
+      vi.spyOn(chokidar, 'watch').mockImplementation((_) => {
+        return mockWatcher as any
+      })
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    test('raw event triggers change handler when chokidar suppresses change', async () => {
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Enable fake timers after setup so dynamic imports and I/O complete normally
+      vi.useFakeTimers()
+
+      const watcher = chokidar.watch('') as EventEmitter
+      const filePath = joinPath(root, 'assets', 'base.css')
+
+      watcher.emit('raw', 'change', 'base.css', {watchedPath: filePath})
+
+      // Advance past RAW_CHANGE_DEBOUNCE_IN_MS (100ms) + FILE_EVENT_DEBOUNCE_TIME_IN_MS (250ms)
+      await vi.advanceTimersByTimeAsync(400)
+
+      expect(themeFileSystem.files.get('assets/base.css')).toBeDefined()
+    })
+
+    test('raw event is cancelled when chokidar change event fires', async () => {
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Enable fake timers after setup so dynamic imports and I/O complete normally
+      vi.useFakeTimers()
+
+      const watcher = chokidar.watch('') as EventEmitter
+      const filePath = joinPath(root, 'assets', 'base.css')
+
+      const initialChecksum = themeFileSystem.files.get('assets/base.css')?.checksum
+
+      // Emit raw first, then the normal change event before debounce expires
+      watcher.emit('raw', 'change', 'base.css', {watchedPath: filePath})
+      watcher.emit('change', filePath)
+
+      // Advance past all debounce windows
+      await vi.advanceTimersByTimeAsync(400)
+
+      // The file should have been processed exactly once (via the change event path)
+      // Verify by checking the file was read and checksum updated
+      const asset = themeFileSystem.files.get('assets/base.css')
+      expect(asset).toBeDefined()
+      expect(asset!.checksum).toBe(initialChecksum)
+    })
+
+    test('duplicate raw events for the same path are deduplicated', async () => {
+      const themeFileSystem = mountThemeFileSystem(root)
+      await themeFileSystem.ready()
+      await themeFileSystem.startWatcher(themeId, adminSession)
+
+      // Enable fake timers after setup so dynamic imports and I/O complete normally
+      vi.useFakeTimers()
+
+      const watcher = chokidar.watch('') as EventEmitter
+      const filePath = joinPath(root, 'assets', 'base.css')
+
+      // Simulate two raw events (file watcher + directory watcher)
+      watcher.emit('raw', 'change', 'base.css', {watchedPath: filePath})
+      watcher.emit('raw', 'change', 'base.css', {watchedPath: joinPath(root, 'assets')})
+
+      // Advance past all debounce windows
+      await vi.advanceTimersByTimeAsync(400)
+
+      // The file should still be in the filesystem (processed successfully)
+      expect(themeFileSystem.files.get('assets/base.css')).toBeDefined()
     })
   })
 

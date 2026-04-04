@@ -270,8 +270,12 @@ function buildUploadJob(
     return Promise.all(
       createBatches(fileType).map((batch) =>
         uploadBatch(batch, themeFileSystem, session, theme.id, uploadResults).then(() => {
-          progress.current += batch.length
-          batch.forEach((file) => themeFileSystem.unsyncedFileKeys.delete(file.key))
+          batch.forEach((file) => {
+            if (uploadResults.get(file.key)?.success === true) {
+              progress.current += 1
+              themeFileSystem.unsyncedFileKeys.delete(file.key)
+            }
+          })
         }),
       ),
     ).then(() => {})

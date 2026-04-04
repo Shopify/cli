@@ -26,6 +26,7 @@ import type {
 } from '@shopify/cli-kit/node/themes/types'
 
 const FILE_EVENT_DEBOUNCE_TIME_IN_MS = 250
+const RAW_CHANGE_DEBOUNCE_IN_MS = 100
 
 const THEME_DIRECTORY_PATTERNS = [
   'assets/**/*.*',
@@ -343,12 +344,61 @@ export function mountThemeFileSystem(root: string, options?: ThemeFileSystemOpti
         pendingEvents.set(eventKey, timeout)
       }
 
+      // Track pending raw-event timeouts so the normal 'change' path can cancel them
+      const pendingRawChanges = new Map<string, ReturnType<typeof setTimeout>>()
+
       watcher
         .on('add', queueFsEvent.bind(null, 'add'))
-        .on('change', queueFsEvent.bind(null, 'change'))
+        .on('change', (filePath: string) => {
+          const pending = pendingRawChanges.get(filePath)
+          if (pending !== undefined) {
+            clearTimeout(pending)
+            pendingRawChanges.delete(filePath)
+          }
+          queueFsEvent('change', filePath)
+        })
         .on('unlink', queueFsEvent.bind(null, 'unlink'))
+        .on('raw', (rawEvent: string, evPath: string, details: {watchedPath?: string}) => {
+          if (rawEvent !== 'change' && rawEvent !== 'modified') return
+          if (!evPath) return
+
+          const fullPath = resolveRawChangePath(rawEvent, evPath, details)
+          if (!fullPath) return
+
+          const existingTimeout = pendingRawChanges.get(fullPath)
+          if (existingTimeout !== undefined) {
+            clearTimeout(existingTimeout)
+          }
+
+          pendingRawChanges.set(
+            fullPath,
+            setTimeout(() => {
+              pendingRawChanges.delete(fullPath)
+              queueFsEvent('change', fullPath)
+            }, RAW_CHANGE_DEBOUNCE_IN_MS),
+          )
+        })
     },
   }
+}
+
+function resolveRawChangePath(
+  rawEvent: string,
+  evPath: string,
+  details: {watchedPath?: string},
+): string | undefined {
+  // FSEvents (macOS): evPath is already the full absolute path
+  if (rawEvent === 'modified') return evPath
+
+  // fs.watch (Linux/Windows): resolve from watchedPath + evPath
+  const watchedPath = details?.watchedPath
+  if (!watchedPath) return undefined
+
+  // File watcher: watchedPath is the full file path, evPath is the basename
+  if (watchedPath.endsWith(evPath)) return watchedPath
+
+  // Directory watcher: watchedPath is the directory, evPath is the filename
+  return joinPath(watchedPath, evPath)
 }
 
 export function handleSyncUpdate(
