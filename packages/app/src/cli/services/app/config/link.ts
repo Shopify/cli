@@ -2,7 +2,6 @@ import {setCurrentConfigPreference} from './use.js'
 import {
   AppConfiguration,
   CurrentAppConfiguration,
-  getAppVersionedSchema,
   CliBuildPreferences,
   getAppScopes,
 } from '../../../models/app/app.js'
@@ -366,9 +365,7 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   delete (mergedAppConfiguration as any).scopes
 
-  // Always output using the canonical schema
-  const schema = getAppVersionedSchema(specifications)
-  await writeAppConfigurationFile(mergedAppConfiguration, schema, configFilePath)
+  await writeAppConfigurationFile(mergedAppConfiguration, configFilePath)
   setCurrentConfigPreference(mergedAppConfiguration, {configFileName, directory: appDirectory})
 
   return mergedAppConfiguration
