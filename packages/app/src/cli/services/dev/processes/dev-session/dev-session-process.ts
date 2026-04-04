@@ -1,3 +1,4 @@
+import {DevSessionEventLog} from './dev-session-event-log.js'
 import {DevSessionStatusManager} from './dev-session-status-manager.js'
 import {DevSession} from './dev-session.js'
 import {BaseProcess, DevProcessFunction} from '../types.js'
@@ -17,6 +18,7 @@ export interface DevSessionProcessOptions {
   appPreviewURL: string
   appLocalProxyURL: string
   devSessionStatusManager: DevSessionStatusManager
+  eventLog?: DevSessionEventLog
 }
 
 export interface DevSessionProcess extends BaseProcess<DevSessionProcessOptions> {
@@ -42,6 +44,9 @@ export async function setupDevSessionProcess({
   }
 }
 
-export const pushUpdatesForDevSession: DevProcessFunction<DevSessionProcessOptions> = async ({stdout}, options) => {
-  await DevSession.start(options, stdout)
+export const pushUpdatesForDevSession: DevProcessFunction<DevSessionProcessOptions> = async (
+  {stdout, abortSignal},
+  options,
+) => {
+  await DevSession.start(options, stdout, abortSignal)
 }
