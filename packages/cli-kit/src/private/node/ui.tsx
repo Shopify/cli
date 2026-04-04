@@ -5,7 +5,7 @@ import {treeKill} from '../../public/node/tree-kill.js'
 
 import {ReactElement} from 'react'
 import {Key, render as inkRender, RenderOptions} from 'ink'
-
+import ansiEscapes from 'ansi-escapes'
 import {EventEmitter} from 'events'
 
 interface RenderOnceOptions {
@@ -26,9 +26,49 @@ export function renderOnce(element: JSX.Element, {logLevel = 'info', renderOptio
   return renderedString
 }
 
-export async function render(element: JSX.Element, options?: RenderOptions) {
-  const {waitUntilExit} = inkRender(element, options)
-  await waitUntilExit()
+interface ExtendedRenderOptions extends RenderOptions {
+  // When true, erase the final output after the Ink instance exits.
+  // Use for transient UI (loading bars, progress indicators) that should
+  // not persist on screen after completion.
+  //
+  // This is necessary because Ink 6's unmount() calls onRender() before the
+  // React tree is cleared. With React 19's batched state updates, the
+  // component's null render (from setIsDone(true)) hasn't committed yet, so
+  // Ink renders the stale loading bar frame. Unlike Ink 5, Ink 6's log.done()
+  // no longer erases output — it only resets counters.
+  eraseOnExit?: boolean
+}
+
+export async function render(element: JSX.Element, options?: ExtendedRenderOptions) {
+  const {eraseOnExit, ...inkOptions} = options ?? {}
+  const stdout = inkOptions.stdout ?? process.stdout
+  let lastOutputHeight = 0
+  if (eraseOnExit && 'write' in stdout && typeof stdout.write === 'function') {
+    const origWrite = stdout.write.bind(stdout) as typeof stdout.write
+    stdout.write = ((...args: Parameters<typeof stdout.write>) => {
+      const data = args[0]
+      if (typeof data === 'string' && data.length > 0) {
+        const lineCount = data.split('\n').length
+        // Track the maximum height to avoid being clobbered by small
+        // writes (e.g. cursor escape sequences) after the final render.
+        if (lineCount > lastOutputHeight) {
+          lastOutputHeight = lineCount
+        }
+      }
+      return origWrite(...args)
+    }) as typeof stdout.write
+
+    const {waitUntilExit} = inkRender(element, inkOptions)
+    await waitUntilExit()
+
+    stdout.write = origWrite
+    if (lastOutputHeight > 0) {
+      stdout.write(ansiEscapes.eraseLines(lastOutputHeight))
+    }
+  } else {
+    const {waitUntilExit} = inkRender(element, inkOptions)
+    await waitUntilExit()
+  }
   // We need to wait for other pending tasks -- unmounting of the ink component -- to complete
   return new Promise((resolve) => setImmediate(resolve))
 }
