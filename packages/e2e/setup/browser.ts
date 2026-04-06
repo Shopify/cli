@@ -70,7 +70,7 @@ export async function navigateToDashboard(
   // Retry on 500 errors
   for (let attempt = 1; attempt <= 3; attempt++) {
     const pageText = (await browserPage.textContent('body')) ?? '' // eslint-disable-line no-await-in-loop
-    if (!pageText.includes('500') && !pageText.includes('Internal Server Error')) break
+    if (!pageText.includes('500: Internal Server Error') && !pageText.includes('Internal Server Error')) break
     await browserPage.waitForTimeout(3000) // eslint-disable-line no-await-in-loop
     await browserPage.reload({waitUntil: 'domcontentloaded'}) // eslint-disable-line no-await-in-loop
   }
