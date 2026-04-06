@@ -1,5 +1,11 @@
 # @shopify/cli
 
+## 3.93.1
+
+### Patch Changes
+
+- 84875b8: Improve `shopify store` command behavior by preserving existing auth scopes during re-auth and adding JSON output support for store auth and execute flows.
+
 ## 3.93.0
 
 ### Minor Changes
