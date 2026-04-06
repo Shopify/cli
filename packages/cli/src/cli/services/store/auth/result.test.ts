@@ -1,6 +1,6 @@
+import {createStoreAuthPresenter} from './result.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {createStoreAuthPresenter} from './result.js'
 
 function captureStandardStreams() {
   const stdout: string[] = []
@@ -51,7 +51,9 @@ describe('store auth presenter', () => {
 
     expect(output.completed()).toContain('Logged in.')
     expect(output.completed()).toContain('Authenticated as merchant@example.com against shop.myshopify.com.')
-    expect(output.info()).toContain("shopify store execute --store shop.myshopify.com --query 'query { shop { name id } }'")
+    expect(output.info()).toContain(
+      "shopify store execute --store shop.myshopify.com --query 'query { shop { name id } }'",
+    )
     expect(output.output()).not.toContain('"store": "shop.myshopify.com"')
   })
 

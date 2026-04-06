@@ -1,9 +1,9 @@
-import {createServer} from 'http'
-import {describe, expect, test} from 'vitest'
 import {waitForStoreAuthCode} from './callback.js'
+import {describe, expect, test} from 'vitest'
+import {createServer} from 'http'
 
 async function getAvailablePort(): Promise<number> {
-  return await new Promise<number>((resolve, reject) => {
+  return new Promise<number>((resolve, reject) => {
     const server = createServer()
 
     server.on('error', reject)
@@ -26,12 +26,7 @@ async function getAvailablePort(): Promise<number> {
   })
 }
 
-function callbackParams(options?: {
-  code?: string
-  shop?: string
-  state?: string
-  error?: string
-}): URLSearchParams {
+function callbackParams(options?: {code?: string; shop?: string; state?: string; error?: string}): URLSearchParams {
   const params = new URLSearchParams()
   params.set('shop', options?.shop ?? 'shop.myshopify.com')
   params.set('state', options?.state ?? 'state-123')
@@ -101,7 +96,8 @@ describe('store auth callback server', () => {
       }),
     ).rejects.toMatchObject({
       message: 'OAuth callback store does not match the requested store.',
-      tryMessage: 'Shopify returned other-shop.myshopify.com during authentication. Re-run using the permanent store domain:',
+      tryMessage:
+        'Shopify returned other-shop.myshopify.com during authentication. Re-run using the permanent store domain:',
       nextSteps: [[{command: 'shopify store auth --store other-shop.myshopify.com --scopes <comma-separated-scopes>'}]],
     })
   })

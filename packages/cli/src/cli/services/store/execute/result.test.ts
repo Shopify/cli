@@ -1,8 +1,8 @@
+import {writeOrOutputStoreExecuteResult} from './result.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {writeFile} from '@shopify/cli-kit/node/fs'
 import {renderSuccess} from '@shopify/cli-kit/node/ui'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
-import {writeOrOutputStoreExecuteResult} from './result.js'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/ui')
@@ -34,7 +34,6 @@ describe('writeOrOutputStoreExecuteResult', () => {
   const originalUnitTestEnv = process.env.SHOPIFY_UNIT_TEST
 
   beforeEach(() => {
-    vi.clearAllMocks()
     mockAndCaptureOutput().clear()
   })
 

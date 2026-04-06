@@ -1,6 +1,6 @@
-import {describe, expect, test} from 'vitest'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {buildStoreAuthUrl, computeCodeChallenge, generateCodeVerifier} from './pkce.js'
+import {describe, expect, test} from 'vitest'
 
 describe('store auth PKCE helpers', () => {
   test('generateCodeVerifier produces a base64url string of 43 chars', () => {
@@ -9,9 +9,9 @@ describe('store auth PKCE helpers', () => {
   })
 
   test('generateCodeVerifier produces unique values', () => {
-    const a = generateCodeVerifier()
-    const b = generateCodeVerifier()
-    expect(a).not.toBe(b)
+    const first = generateCodeVerifier()
+    const second = generateCodeVerifier()
+    expect(first).not.toBe(second)
   })
 
   test('computeCodeChallenge produces a deterministic S256 hash', () => {

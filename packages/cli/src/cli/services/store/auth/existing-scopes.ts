@@ -1,8 +1,8 @@
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {getCurrentStoredStoreAppSession} from './session-store.js'
 import {loadStoredStoreSession} from './session-lifecycle.js'
 import {fetchCurrentStoreAuthScopes} from './token-client.js'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 export interface ResolvedStoreAuthScopes {
   scopes: string[]
@@ -46,9 +46,12 @@ export async function resolveExistingStoreAuthScopes(store: string): Promise<Res
 
     return {scopes: remoteScopes, authoritative: true}
   } catch (error) {
-    outputDebug(
-      outputContent`Falling back to locally stored scopes for ${outputToken.raw(normalizedStore)} after remote scope lookup failed: ${outputToken.raw(formatStoreScopeLookupError(error))}`,
-    )
-    return {scopes: storedSession.scopes, authoritative: false}
+    if (error instanceof Error) {
+      outputDebug(
+        outputContent`Falling back to locally stored scopes for ${outputToken.raw(normalizedStore)} after remote scope lookup failed: ${outputToken.raw(formatStoreScopeLookupError(error))}`,
+      )
+      return {scopes: storedSession.scopes, authoritative: false}
+    }
+    throw error
   }
 }

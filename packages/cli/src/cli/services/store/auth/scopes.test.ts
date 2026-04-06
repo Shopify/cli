@@ -1,5 +1,5 @@
-import {describe, expect, test} from 'vitest'
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
+import {describe, expect, test} from 'vitest'
 
 describe('store auth scope helpers', () => {
   test('parseStoreAuthScopes splits and deduplicates scopes', () => {

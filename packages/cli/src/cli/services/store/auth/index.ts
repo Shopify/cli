@@ -1,7 +1,3 @@
-import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
-import {openURL} from '@shopify/cli-kit/node/system'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {setStoredStoreAppSession} from './session-store.js'
 import {exchangeStoreAuthCodeForToken} from './token-client.js'
@@ -10,6 +6,10 @@ import {createPkceBootstrap} from './pkce.js'
 import {mergeRequestedAndStoredScopes, parseStoreAuthScopes, resolveGrantedScopes} from './scopes.js'
 import {resolveExistingStoreAuthScopes, type ResolvedStoreAuthScopes} from './existing-scopes.js'
 import {createStoreAuthPresenter, type StoreAuthPresenter, type StoreAuthResult} from './result.js'
+import {openURL} from '@shopify/cli-kit/node/system'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 
 interface StoreAuthInput {
   store: string
@@ -86,7 +86,7 @@ export async function authenticateStoreWithApp(
     refreshTokenExpiresAt: tokenResponse.refresh_token_expires_in
       ? new Date(now + tokenResponse.refresh_token_expires_in * 1000).toISOString()
       : undefined,
-    hasRefreshToken: !!tokenResponse.refresh_token,
+    hasRefreshToken: Boolean(tokenResponse.refresh_token),
     associatedUser: tokenResponse.associated_user
       ? {
           id: tokenResponse.associated_user.id,

@@ -1,7 +1,7 @@
+import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, storeAuthRedirectUri} from './config.js'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {createHash, randomBytes} from 'crypto'
-import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, storeAuthRedirectUri} from './config.js'
 import type {StoreTokenResponse} from './token-client.js'
 import type {WaitForAuthCodeOptions} from './callback.js'
 

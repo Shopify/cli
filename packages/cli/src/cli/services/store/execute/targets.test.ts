@@ -1,18 +1,14 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {prepareStoreExecuteRequest} from './request.js'
 import {prepareAdminStoreGraphQLContext} from './admin-context.js'
 import {runAdminStoreGraphQLOperation} from './admin-transport.js'
 import {getStoreGraphQLTarget} from './targets.js'
 import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./admin-context.js')
 vi.mock('./admin-transport.js')
 
 describe('getStoreGraphQLTarget', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   test('returns the admin target adapter', async () => {
     const target = getStoreGraphQLTarget('admin')
     const request = await prepareStoreExecuteRequest({query: 'query { shop { name } }'})
@@ -32,7 +28,9 @@ describe('getStoreGraphQLTarget', () => {
     vi.mocked(prepareAdminStoreGraphQLContext).mockResolvedValue(context)
     vi.mocked(runAdminStoreGraphQLOperation).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
 
-    await expect(target.prepareContext({store: 'shop.myshopify.com', requestedVersion: '2025-10'})).resolves.toEqual(context)
+    await expect(target.prepareContext({store: 'shop.myshopify.com', requestedVersion: '2025-10'})).resolves.toEqual(
+      context,
+    )
     await expect(target.execute({context, request})).resolves.toEqual({data: {shop: {name: 'Test shop'}}})
 
     expect(prepareAdminStoreGraphQLContext).toHaveBeenCalledWith({
