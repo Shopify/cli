@@ -85,8 +85,9 @@ export async function linkedAppContext({
   let {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
   let remoteApp: OrganizationApp | undefined
 
-  if (activeConfig.file.errors.length > 0) {
-    throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+  const firstTomlError = activeConfig.file.errors[0]
+  if (firstTomlError) {
+    throw firstTomlError
   }
 
   if (!activeConfig.isLinked || forceRelink) {
@@ -178,8 +179,9 @@ export async function localAppContext({
 }: LocalAppContextOptions): Promise<LocalAppContextOutput> {
   const {project, activeConfig} = await getAppConfigurationContext(directory, userProvidedConfigName)
 
-  if (activeConfig.file.errors.length > 0) {
-    throw new AbortError(activeConfig.file.errors.map((err) => err.message).join('\n'))
+  const firstTomlError = activeConfig.file.errors[0]
+  if (firstTomlError) {
+    throw firstTomlError
   }
 
   const specifications = await loadLocalExtensionsSpecifications()

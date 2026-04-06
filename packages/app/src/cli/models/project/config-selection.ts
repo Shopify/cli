@@ -133,8 +133,8 @@ export function errorsForConfig(project: Project, activeConfig: TomlFile): TomlF
   const allPatterns = [...extPatterns, ...webPatterns]
 
   return project.errors.filter((err) => {
-    if (err.path === activeConfig.path) return true
-    const relPath = relativePath(project.directory, err.path).replace(/\\/g, '/')
+    if (err.details.path === activeConfig.path) return true
+    const relPath = relativePath(project.directory, err.details.path).replace(/\\/g, '/')
     return allPatterns.some((pattern) => matchGlob(relPath, pattern))
   })
 }

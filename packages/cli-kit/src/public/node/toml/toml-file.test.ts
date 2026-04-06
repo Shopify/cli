@@ -28,18 +28,23 @@ describe('TomlFile', () => {
       })
     })
 
-    test('throws TomlFileError with file path on invalid TOML', async () => {
+    test('throws TomlFileError with parse details on invalid TOML', async () => {
       await inTemporaryDirectory(async (dir) => {
         const path = joinPath(dir, 'bad.toml')
         await writeFile(path, 'name = [invalid')
 
-        await expect(TomlFile.read(path)).rejects.toThrow(TomlFileError)
-        await expect(TomlFile.read(path)).rejects.toThrow(/row.*col/)
+        const error = await TomlFile.read(path).catch((err) => err)
+        expect(error).toBeInstanceOf(TomlFileError)
+        expect(error.code).toBe('toml-parse-error')
+        expect(error.details.path).toBe(path)
+        expect(error.details.message).toMatch(/row.*col/)
       })
     })
 
     test('throws TomlFileError if file does not exist', async () => {
-      await expect(TomlFile.read('/nonexistent/path/test.toml')).rejects.toThrow(TomlFileError)
+      const error = await TomlFile.read('/nonexistent/path/test.toml').catch((err) => err)
+      expect(error).toBeInstanceOf(TomlFileError)
+      expect(error.code).toBe('toml-not-found')
     })
   })
 

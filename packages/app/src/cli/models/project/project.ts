@@ -9,8 +9,19 @@ import {
   usesWorkspaces as detectUsesWorkspaces,
 } from '@shopify/cli-kit/node/node-package-manager'
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, type DomainError} from '@shopify/cli-kit/node/error'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
+
+export type ProjectErrorCode = 'no-project-root' | 'no-app-configs'
+
+export class ProjectError extends AbortError implements DomainError<ProjectErrorCode, {directory: string}> {
+  constructor(
+    public readonly code: ProjectErrorCode,
+    public readonly details: {directory: string},
+  ) {
+    super(`ProjectError: ${code}`)
+  }
+}
 
 const APP_CONFIG_GLOB = 'shopify.app*.toml'
 const APP_CONFIG_REGEX = /^shopify\.app(\.[-\w]+)?\.toml$/
@@ -47,7 +58,7 @@ export class Project {
     // Discover all app config files
     const appConfigFiles = await discoverAppConfigFiles(directory, errors)
     if (appConfigFiles.length === 0) {
-      throw new AbortError(`Could not find a Shopify app TOML file in ${directory}`)
+      throw new ProjectError('no-app-configs', {directory})
     }
 
     // Discover extension files from all app configs' extension_directories (union).
@@ -173,9 +184,7 @@ async function findProjectRoot(startDirectory: string): Promise<string> {
     },
   )
   if (!found) {
-    throw new AbortError(
-      `Could not find a Shopify app configuration file. Looked in ${startDirectory} and parent directories.`,
-    )
+    throw new ProjectError('no-project-root', {directory: startDirectory})
   }
   return found
 }
@@ -219,7 +228,10 @@ async function readTomlFilesCollectingErrors(paths: string[], errors: TomlFileEr
         files.push(await TomlFile.read(filePath))
         // eslint-disable-next-line no-catch-all/no-catch-all
       } catch (err) {
-        const tomlError = err instanceof TomlFileError ? err : new TomlFileError(filePath, `Failed to read ${filePath}`)
+        const tomlError =
+          err instanceof TomlFileError
+            ? err
+            : new TomlFileError('toml-parse-error', {path: filePath, message: `Failed to read ${filePath}`})
         const file = new TomlFile(filePath, {})
         file.errors.push(tomlError)
         files.push(file)

@@ -1,20 +1,25 @@
 import {JsonMapType, decodeToml, encodeToml} from './codec.js'
 import {fileExists, readFile, writeFile} from '../fs.js'
+import {AbortError, type DomainError} from '../error.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 
 type TomlPatchValue = string | number | boolean | undefined | (string | number | boolean)[]
 
+export type TomlFileErrorCode = 'toml-not-found' | 'toml-parse-error'
+
 /**
  * An error on a TOML file — missing or malformed.
- * Extends Error so it can be thrown. Carries path and a clean message suitable for JSON output.
+ * Carries structured data; rendering happens at the display boundary.
  */
-export class TomlFileError extends Error {
-  readonly path: string
-
-  constructor(path: string, message: string) {
-    super(message)
-    this.name = 'TomlFileError'
-    this.path = path
+export class TomlFileError
+  extends AbortError
+  implements DomainError<TomlFileErrorCode, {path: string; message: string}>
+{
+  constructor(
+    public readonly code: TomlFileErrorCode,
+    public readonly details: {path: string; message: string},
+  ) {
+    super(`TomlFileError: ${code}`)
   }
 }
 
@@ -40,7 +45,7 @@ export class TomlFile {
    */
   static async read(path: string): Promise<TomlFile> {
     if (!(await fileExists(path))) {
-      throw new TomlFileError(path, `TOML file not found: ${path}`)
+      throw new TomlFileError('toml-not-found', {path, message: `TOML file not found: ${path}`})
     }
     const raw = await readFile(path)
     const file = new TomlFile(path, {})
@@ -143,7 +148,10 @@ export class TomlFile {
     } catch (err: any) {
       if (err.line !== undefined && err.col !== undefined) {
         const description = String(err.message).split('\n')[0] ?? 'Invalid TOML'
-        throw new TomlFileError(this.path, `${description} at row ${err.line}, col ${err.col}`)
+        throw new TomlFileError('toml-parse-error', {
+          path: this.path,
+          message: `${description} at row ${err.line}, col ${err.col}`,
+        })
       }
       throw err
     }
