@@ -1,11 +1,12 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {prepareStoreExecuteRequest} from './execute-request.js'
-import {prepareAdminStoreGraphQLContext} from './admin-graphql-context.js'
-import {runAdminStoreGraphQLOperation} from './admin-graphql-transport.js'
-import {getStoreGraphQLTarget} from './graphql-targets.js'
+import {prepareStoreExecuteRequest} from './request.js'
+import {prepareAdminStoreGraphQLContext} from './admin-context.js'
+import {runAdminStoreGraphQLOperation} from './admin-transport.js'
+import {getStoreGraphQLTarget} from './targets.js'
+import {STORE_AUTH_APP_CLIENT_ID} from '../auth/config.js'
 
-vi.mock('./admin-graphql-context.js')
-vi.mock('./admin-graphql-transport.js')
+vi.mock('./admin-context.js')
+vi.mock('./admin-transport.js')
 
 describe('getStoreGraphQLTarget', () => {
   beforeEach(() => {
@@ -18,28 +19,26 @@ describe('getStoreGraphQLTarget', () => {
     const context = {
       adminSession: {token: 'token', storeFqdn: 'shop.myshopify.com'},
       version: '2025-10',
-      sessionUserId: '42',
+      session: {
+        store: 'shop.myshopify.com',
+        clientId: STORE_AUTH_APP_CLIENT_ID,
+        userId: '42',
+        accessToken: 'token',
+        scopes: ['read_products'],
+        acquiredAt: '2026-03-27T00:00:00.000Z',
+      },
     }
 
     vi.mocked(prepareAdminStoreGraphQLContext).mockResolvedValue(context)
     vi.mocked(runAdminStoreGraphQLOperation).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
 
     await expect(target.prepareContext({store: 'shop.myshopify.com', requestedVersion: '2025-10'})).resolves.toEqual(context)
-
-    await expect(target.execute({store: 'shop.myshopify.com', context, request})).resolves.toEqual({
-      data: {shop: {name: 'Test shop'}},
-    })
+    await expect(target.execute({context, request})).resolves.toEqual({data: {shop: {name: 'Test shop'}}})
 
     expect(prepareAdminStoreGraphQLContext).toHaveBeenCalledWith({
       store: 'shop.myshopify.com',
       userSpecifiedVersion: '2025-10',
     })
-    expect(runAdminStoreGraphQLOperation).toHaveBeenCalledWith({
-      store: 'shop.myshopify.com',
-      adminSession: context.adminSession,
-      sessionUserId: context.sessionUserId,
-      version: context.version,
-      request,
-    })
+    expect(runAdminStoreGraphQLOperation).toHaveBeenCalledWith({context, request})
   })
 })

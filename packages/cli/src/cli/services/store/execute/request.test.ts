@@ -1,6 +1,6 @@
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {prepareStoreExecuteRequest} from './execute-request.js'
+import {prepareStoreExecuteRequest} from './request.js'
 
 vi.mock('@shopify/cli-kit/node/fs')
 
@@ -13,16 +13,15 @@ describe('prepareStoreExecuteRequest', () => {
     const request = await prepareStoreExecuteRequest({
       query: 'query { shop { name } }',
       variables: '{"id":"gid://shopify/Shop/1"}',
-      outputFile: '/tmp/result.json',
       version: '2025-07',
     })
 
     expect(request).toMatchObject({
       query: 'query { shop { name } }',
       parsedVariables: {id: 'gid://shopify/Shop/1'},
-      outputFile: '/tmp/result.json',
       requestedVersion: '2025-07',
     })
+    expect(request).not.toHaveProperty('outputFile')
   })
 
   test('reads the query from a file', async () => {
