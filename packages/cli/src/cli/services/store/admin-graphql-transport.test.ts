@@ -56,7 +56,11 @@ describe('runAdminStoreGraphQLOperation', () => {
 
     await expect(
       runAdminStoreGraphQLOperation({store, adminSession, sessionUserId: '42', version: '2025-10', request}),
-    ).rejects.toThrow('Stored app authentication for')
+    ).rejects.toMatchObject({
+      message: `Stored app authentication for ${store} is no longer valid.`,
+      tryMessage: 'To re-authenticate, run:',
+      nextSteps: [[{command: `shopify store auth --store ${store} --scopes <comma-separated-scopes>`}]],
+    })
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith(store, '42')
   })
 

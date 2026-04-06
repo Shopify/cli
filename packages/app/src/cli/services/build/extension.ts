@@ -159,7 +159,11 @@ export async function buildFunctionExtension(
       await runTrampoline(extension.outputPath)
     }
 
-    if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
+    if (
+      fileExistsSync(extension.outputPath) &&
+      bundlePath !== extension.outputPath &&
+      dirname(bundlePath) !== dirname(extension.outputPath)
+    ) {
       await bundleFunctionExtension(extension.outputPath, bundlePath)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

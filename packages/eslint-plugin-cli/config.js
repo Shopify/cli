@@ -2,7 +2,6 @@ const shopifyPlugin = require('@shopify/eslint-plugin')
 const vitestPlugin = require('@vitest/eslint-plugin')
 const unusedImportsPlugin = require('eslint-plugin-unused-imports')
 const tsdocPlugin = require('eslint-plugin-tsdoc')
-const jsdocPlugin = require('eslint-plugin-jsdoc')
 const noCatchAllPlugin = require('eslint-plugin-no-catch-all')
 const eslintConfigPrettier = require('eslint-config-prettier')
 const globals = require('globals')
@@ -176,7 +175,6 @@ const baseRules = {
     },
   ],
   'tsdoc/syntax': 'error',
-  'jsdoc/require-returns-description': 'error',
   'promise/catch-or-return': ['error', {allowFinally: true}],
   'no-unused-vars': 'off',
   '@typescript-eslint/no-unused-vars': [
@@ -280,7 +278,6 @@ const config = [
       vitest: vitestPlugin,
       'unused-imports': unusedImportsPlugin,
       tsdoc: tsdocPlugin,
-      jsdoc: jsdocPlugin,
       'no-catch-all': noCatchAllPlugin,
       '@shopify/cli': cliPlugin,
     },

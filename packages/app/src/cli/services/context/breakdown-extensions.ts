@@ -348,7 +348,10 @@ function loadExtensionsIdentifiersBreakdown(
   developerPlatformClient: DeveloperPlatformClient,
 ) {
   const extensionModules = activeAppVersion?.appModuleVersions.filter((ext) => {
-    const spec = specs.find((spec) => spec.identifier === ext.specification?.identifier)
+    const spec = specs.find(
+      (spec) =>
+        spec.identifier === ext.specification?.identifier || spec.externalIdentifier === ext.specification?.identifier,
+    )
     return spec && !isAppConfigSpecification(spec)
   })
 

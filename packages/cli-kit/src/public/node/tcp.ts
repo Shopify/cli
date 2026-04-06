@@ -1,7 +1,7 @@
 import {sleep} from './system.js'
 import {AbortError} from './error.js'
 import {outputDebug, outputContent, outputToken} from './output.js'
-import * as port from 'get-port-please'
+import {createServer} from 'net'
 
 interface GetTCPPortOptions {
   waitTimeInSeconds?: number
@@ -23,14 +23,14 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
     return preferredPort
   }
   outputDebug(outputContent`Getting a random port...`)
-  let randomPort = await retryOnError(() => port.getRandomPort(host()), options?.maxTries, options?.waitTimeInSeconds)
+  let randomPort = await retryOnError(() => getRandomPort(), options?.maxTries, options?.waitTimeInSeconds)
 
   for (let i = 0; i < (options?.maxTries ?? 5); i++) {
     if (!obtainedRandomPorts.has(randomPort)) {
       break
     }
     // eslint-disable-next-line no-await-in-loop
-    randomPort = await retryOnError(() => port.getRandomPort(host()), options?.maxTries, options?.waitTimeInSeconds)
+    randomPort = await retryOnError(() => getRandomPort(), options?.maxTries, options?.waitTimeInSeconds)
   }
 
   outputDebug(outputContent`Random port obtained: ${outputToken.raw(`${randomPort}`)}`)
@@ -45,13 +45,36 @@ export async function getAvailableTCPPort(preferredPort?: number, options?: GetT
  * @returns A promise that resolves with a boolean indicating if the port is available.
  */
 export async function checkPortAvailability(portNumber: number): Promise<boolean> {
-  return (await port.checkPort(portNumber, host())) === portNumber
+  return new Promise((resolve) => {
+    const server = createServer()
+    server.unref()
+    server.once('error', () => resolve(false))
+    server.listen(portNumber, 'localhost', () => {
+      server.close(() => resolve(true))
+    })
+  })
 }
 
-function host(): string | undefined {
-  // The get-port-please library does not work as expected when HOST env var is defined,
-  // so explicitly set the host to localhost to avoid conflicts
-  return 'localhost'
+/**
+ * Gets a random available port by binding to port 0 on localhost.
+ *
+ * @returns A promise that resolves with an available port number.
+ */
+function getRandomPort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = createServer()
+    server.unref()
+    server.once('error', reject)
+    server.listen(0, 'localhost', () => {
+      const address = server.address()
+      if (address && typeof address === 'object') {
+        const assignedPort = address.port
+        server.close(() => resolve(assignedPort))
+      } else {
+        server.close(() => reject(new Error('Unable to determine assigned port')))
+      }
+    })
+  })
 }
 
 /**

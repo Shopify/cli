@@ -5739,8 +5739,8 @@
       ],
       "args": {
       },
-      "description": "Starts a PKCE OAuth flow against the specified store and stores an online access token for later use by `shopify store execute`.\n\nThis flow authenticates the app on behalf of the current user. Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
-      "descriptionWithMarkdown": "Starts a PKCE OAuth flow against the specified store and stores an online access token for later use by `shopify store execute`.\n\nThis flow authenticates the app on behalf of the current user. Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
+      "description": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
+      "descriptionWithMarkdown": "Authenticates the app against the specified store for store commands and stores an online access token for later reuse.\n\nRe-run this command if the stored token is missing, expires, or no longer has the scopes you need.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %> --store shop.myshopify.com --scopes read_products,write_products"
@@ -8380,5 +8380,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.92.0"
+  "version": "3.93.0"
 }

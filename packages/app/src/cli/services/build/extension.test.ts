@@ -7,7 +7,8 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/system')
 vi.mock('../function/build.js')
@@ -415,5 +416,27 @@ describe('buildFunctionExtension', () => {
     })
     expect(releaseLock).toHaveBeenCalled()
     expect(runWasmOpt).toHaveBeenCalled()
+  })
+
+  test('does not rebundle when build.path stays in the default output directory', async () => {
+    // Given
+    extension.configuration.build!.path = 'dist/custom.wasm'
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then
+    expect(fileExistsSync).toHaveBeenCalledWith(joinPath(extension.directory, 'dist/custom.wasm'))
+    expect(touchFile).not.toHaveBeenCalled()
+    expect(writeFile).not.toHaveBeenCalled()
   })
 })

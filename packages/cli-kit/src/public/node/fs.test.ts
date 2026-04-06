@@ -32,7 +32,10 @@ import * as os from 'os'
 
 vi.mock('../common/array.js')
 vi.mock('fast-glob')
-vi.mock('os')
+vi.mock('os', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('os')>()
+  return {...actual, EOL: actual.EOL}
+})
 
 describe('inTemporaryDirectory', () => {
   test('ties the lifecycle of the temporary directory to the lifecycle of the callback', async () => {

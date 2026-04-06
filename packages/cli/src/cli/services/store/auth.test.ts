@@ -156,7 +156,7 @@ describe('store auth service', () => {
     ).rejects.toThrow('OAuth callback state does not match the original request.')
   })
 
-  test('waitForStoreAuthCode rejects when callback store does not match', async () => {
+  test('waitForStoreAuthCode rejects when callback store does not match and suggests the returned permanent domain', async () => {
     const port = await getAvailablePort()
     const params = callbackParams({shop: 'other-shop.myshopify.com'})
 
@@ -172,7 +172,11 @@ describe('store auth service', () => {
           await response.text()
         },
       }),
-    ).rejects.toThrow('OAuth callback store does not match the requested store.')
+    ).rejects.toMatchObject({
+      message: 'OAuth callback store does not match the requested store.',
+      tryMessage: 'Shopify returned other-shop.myshopify.com during authentication. Re-run using the permanent store domain:',
+      nextSteps: [[{command: 'shopify store auth --store other-shop.myshopify.com --scopes <comma-separated-scopes>'}]],
+    })
   })
 
   test('waitForStoreAuthCode rejects when Shopify returns an OAuth error', async () => {
@@ -299,7 +303,11 @@ describe('store auth service', () => {
 
   test('authenticateStoreWithApp opens the browser and stores the session with refresh token', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
-    const renderSuccess = vi.fn()
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
       return 'abc123'
@@ -320,16 +328,14 @@ describe('store auth service', () => {
           refresh_token: 'refresh-token',
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        renderInfo: vi.fn(),
-        renderSuccess,
+        presenter,
       },
     )
 
+    expect(presenter.openingBrowser).toHaveBeenCalledOnce()
     expect(openURL).toHaveBeenCalledWith(expect.stringContaining('/admin/oauth/authorize?'))
-    expect(renderSuccess).toHaveBeenCalledWith({
-      headline: 'Store authentication succeeded.',
-      body: 'Authenticated as test@example.com against shop.myshopify.com.',
-    })
+    expect(presenter.manualAuthUrl).not.toHaveBeenCalled()
+    expect(presenter.success).toHaveBeenCalledWith('shop.myshopify.com', 'test@example.com')
 
     const storedSession = vi.mocked(setStoredStoreAppSession).mock.calls[0]![0]
     expect(storedSession.store).toBe('shop.myshopify.com')
@@ -346,6 +352,43 @@ describe('store auth service', () => {
       lastName: undefined,
       accountOwner: undefined,
     })
+  })
+
+  test('authenticateStoreWithApp shows a manual auth URL when the browser does not open automatically', async () => {
+    const openURL = vi.fn().mockResolvedValue(false)
+    const presenter = {
+      openingBrowser: vi.fn(),
+      manualAuthUrl: vi.fn(),
+      success: vi.fn(),
+    }
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products',
+      },
+      {
+        openURL,
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter,
+      },
+    )
+
+    expect(presenter.openingBrowser).toHaveBeenCalledOnce()
+    expect(presenter.manualAuthUrl).toHaveBeenCalledWith(
+      expect.stringContaining('https://shop.myshopify.com/admin/oauth/authorize?'),
+    )
+    expect(presenter.success).toHaveBeenCalledWith('shop.myshopify.com', 'test@example.com')
   })
 
   test('authenticateStoreWithApp rejects when Shopify grants fewer scopes than requested', async () => {
@@ -369,8 +412,88 @@ describe('store auth service', () => {
             expires_in: 86400,
             associated_user: {id: 42, email: 'test@example.com'},
           }),
-          renderInfo: vi.fn(),
-          renderSuccess: vi.fn(),
+          presenter: {
+            openingBrowser: vi.fn(),
+            manualAuthUrl: vi.fn(),
+            success: vi.fn(),
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      message: 'Shopify granted fewer scopes than were requested.',
+      tryMessage: 'Missing scopes: write_products.',
+      nextSteps: [
+        'Update the app or store installation scopes.',
+        'See https://shopify.dev/app/scopes',
+        'Re-run shopify store auth.',
+      ],
+    })
+
+    expect(setStoredStoreAppSession).not.toHaveBeenCalled()
+  })
+
+  test('authenticateStoreWithApp accepts compressed write scopes that imply requested read scopes', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products,write_products',
+      },
+      {
+        openURL: vi.fn().mockResolvedValue(true),
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'write_products',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter: {
+          openingBrowser: vi.fn(),
+          manualAuthUrl: vi.fn(),
+          success: vi.fn(),
+        },
+      },
+    )
+
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['write_products'],
+      }),
+    )
+  })
+
+  test('authenticateStoreWithApp still rejects when other requested scopes are missing', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await expect(
+      authenticateStoreWithApp(
+        {
+          store: 'shop.myshopify.com',
+          scopes: 'read_products,write_products,read_orders',
+        },
+        {
+          openURL: vi.fn().mockResolvedValue(true),
+          waitForStoreAuthCode: waitForStoreAuthCodeMock,
+          exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+            access_token: 'token',
+            scope: 'write_products',
+            expires_in: 86400,
+            associated_user: {id: 42, email: 'test@example.com'},
+          }),
+          presenter: {
+            openingBrowser: vi.fn(),
+            manualAuthUrl: vi.fn(),
+            success: vi.fn(),
+          },
         },
       ),
     ).rejects.toThrow('Shopify granted fewer scopes than were requested.')
@@ -397,8 +520,11 @@ describe('store auth service', () => {
           expires_in: 86400,
           associated_user: {id: 42, email: 'test@example.com'},
         }),
-        renderInfo: vi.fn(),
-        renderSuccess: vi.fn(),
+        presenter: {
+          openingBrowser: vi.fn(),
+          manualAuthUrl: vi.fn(),
+          success: vi.fn(),
+        },
       },
     )
 
@@ -406,6 +532,42 @@ describe('store auth service', () => {
       expect.objectContaining({
         store: 'shop.myshopify.com',
         scopes: ['read_products'],
+      }),
+    )
+  })
+
+  test('authenticateStoreWithApp accepts compressed unauthenticated write scopes that imply requested unauthenticated read scopes', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'unauthenticated_read_product_listings,unauthenticated_write_product_listings',
+      },
+      {
+        openURL: vi.fn().mockResolvedValue(true),
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'unauthenticated_write_product_listings',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter: {
+          openingBrowser: vi.fn(),
+          manualAuthUrl: vi.fn(),
+          success: vi.fn(),
+        },
+      },
+    )
+
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        store: 'shop.myshopify.com',
+        scopes: ['unauthenticated_write_product_listings'],
       }),
     )
   })

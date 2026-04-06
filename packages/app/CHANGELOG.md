@@ -1,5 +1,31 @@
 # @shopify/app
 
+## 3.93.0
+
+### Minor Changes
+
+- f7c2de7: Add `shopify organization list` command to list Shopify organizations you have access to. Supports `--json` flag for structured output.
+- a52b36d: Add support for SHOPIFY_APP_AUTOMATION_TOKEN env var as a new name for SHOPIFY_CLI_PARTNERS_TOKEN
+
+### Patch Changes
+
+- f09f258: Deprecation warning for `--force` flag on `app deploy` and `app release`. The flag will be removed in the next major release. Use `--allow-updates` for CI/CD environments, or `--allow-updates --allow-deletes` if you also want to allow removals. The `SHOPIFY_FLAG_FORCE` environment variable is also deprecated.
+- 0bef4a6: Fix crash when organization is not found in app-management-client by throwing NoOrgError instead of accessing properties on undefined
+- 280da79: Enable non-interactive `app init` via a new `--organization-id` flag and not prompting to link to an existing app if `--name` is provided.
+- Updated dependencies [07d4304]
+- Updated dependencies [ae77bc6]
+- Updated dependencies [35ba22b]
+- Updated dependencies [a910517]
+- Updated dependencies [a52b36d]
+- Updated dependencies [f0db25b]
+- Updated dependencies [34e19bc]
+- Updated dependencies [9a39b44]
+- Updated dependencies [962e932]
+- Updated dependencies [5dd39d0]
+  - @shopify/cli-kit@3.93.0
+  - @shopify/theme@3.93.0
+  - @shopify/plugin-cloudflare@3.93.0
+
 ## 3.92.0
 
 ### Minor Changes
@@ -308,7 +334,6 @@
 - aebbc75: Fix: Pin GraphiQL CSS version to match JS version
 - c3a5189: Bug-fix: Handling mis-configured extension TOML files
 - acc904f: Bump Shopify/theme-tools packages to
-
   - Fix validation for static blocks in JSON templates
   - Introduce ability the disable theme checks for the next Liquid statement
 
@@ -833,7 +858,6 @@
 - ca218cd31: Use a random port for GraphiQL when the default one is not available
 - ca218cd31: Do not show api-key flag deprecation warning when using SHOPIFY_API_KEY
 - ca218cd31: Bump Shopify/theme-tools packages
-
   - TL;DR
     - (New) `ValidJson` check - JSON schema validation on `.json` files
     - (New) Section/block schema `t:` translation completion

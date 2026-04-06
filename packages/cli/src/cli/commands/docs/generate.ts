@@ -49,7 +49,7 @@ export default class DocsGenerate extends Command {
 const hiddenTopics: string[] = ['commands', 'help', 'plugins']
 
 // Topics that are included in the general commands category
-const generalTopics: string[] = ['config', 'auth']
+const generalTopics: string[] = ['config', 'auth', 'organization']
 
 function isHidden(command: oclifCommand.Loadable) {
   // Some commands rely on the hidden property of the parent topic, but is not returned in the oclif command object

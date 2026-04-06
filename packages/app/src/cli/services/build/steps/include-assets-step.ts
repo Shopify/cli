@@ -140,16 +140,13 @@ export async function executeIncludeAssetsStep(
     const rawDest = entry.destination ? sanitizeRelativePath(entry.destination, warn) : undefined
     const sanitizedDest = rawDest === '' ? undefined : rawDest
     // eslint-disable-next-line no-await-in-loop
-    const result = await copyConfigKeyEntry(
-      {
-        key: entry.key,
-        baseDir: extension.directory,
-        outputDir,
-        context,
-        destination: sanitizedDest,
-      },
-      options,
-    )
+    const result = await copyConfigKeyEntry({
+      key: entry.key,
+      baseDir: extension.directory,
+      outputDir,
+      context,
+      destination: sanitizedDest,
+    })
     result.pathMap.forEach((val, key) => aggregatedPathMap.set(key, val))
     configKeyCount += result.filesCopied
   }

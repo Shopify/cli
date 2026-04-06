@@ -1,12 +1,12 @@
 import {DEFAULT_STORE_AUTH_PORT, STORE_AUTH_APP_CLIENT_ID, STORE_AUTH_CALLBACK_PATH, maskToken, storeAuthRedirectUri} from './auth-config.js'
+import {retryStoreAuthWithPermanentDomainError} from './auth-recovery.js'
 import {setStoredStoreAppSession} from './session.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {randomUUID} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
-import {outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
+import {outputCompleted, outputContent, outputDebug, outputInfo, outputToken} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
-import {renderInfo, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {createHash, randomBytes, timingSafeEqual} from 'crypto'
 import {createServer} from 'http'
 
@@ -80,6 +80,19 @@ export function parseStoreAuthScopes(input: string): string[] {
   return [...new Set(scopes)]
 }
 
+function expandImpliedStoreScopes(scopes: string[]): Set<string> {
+  const expandedScopes = new Set(scopes)
+
+  for (const scope of scopes) {
+    const matches = scope.match(/^(unauthenticated_)?write_(.*)$/)
+    if (matches) {
+      expandedScopes.add(`${matches[1] ?? ''}read_${matches[2]}`)
+    }
+  }
+
+  return expandedScopes
+}
+
 function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requestedScopes: string[]): string[] {
   if (!tokenResponse.scope) {
     outputDebug(outputContent`Token response did not include scope; falling back to requested scopes`)
@@ -87,12 +100,18 @@ function resolveGrantedScopes(tokenResponse: StoreTokenResponse, requestedScopes
   }
 
   const grantedScopes = parseStoreAuthScopes(tokenResponse.scope)
-  const missingScopes = requestedScopes.filter((scope) => !grantedScopes.includes(scope))
+  const expandedGrantedScopes = expandImpliedStoreScopes(grantedScopes)
+  const missingScopes = requestedScopes.filter((scope) => !expandedGrantedScopes.has(scope))
 
   if (missingScopes.length > 0) {
     throw new AbortError(
       'Shopify granted fewer scopes than were requested.',
-      `Missing scopes: ${missingScopes.join(', ')}. Update the app or store installation scopes, then re-run shopify store auth.`,
+      `Missing scopes: ${missingScopes.join(', ')}.`,
+      [
+        'Update the app or store installation scopes.',
+        'See https://shopify.dev/app/scopes',
+        'Re-run shopify store auth.',
+      ],
     )
   }
 
@@ -176,19 +195,27 @@ export async function waitForStoreAuthCode({
 
       const {searchParams} = requestUrl
 
-      const fail = (message: string) => {
+      const fail = (error: AbortError | string, tryMessage?: string) => {
+        const abortError = typeof error === 'string' ? new AbortError(error, tryMessage) : error
+
         res.statusCode = 400
         res.setHeader('Content-Type', 'text/html')
         res.setHeader('Connection', 'close')
-        res.once('finish', () => settleWithError(new AbortError(message)))
-        res.end(renderAuthCallbackPage('Authentication failed', message))
+        res.once('finish', () => settleWithError(abortError))
+        res.end(renderAuthCallbackPage('Authentication failed', abortError.message))
       }
 
       const returnedStore = searchParams.get('shop')
       outputDebug(outputContent`Received OAuth callback for shop ${outputToken.raw(returnedStore ?? 'unknown')}`)
 
-      if (!returnedStore || normalizeStoreFqdn(returnedStore) !== normalizedStore) {
+      if (!returnedStore) {
         fail('OAuth callback store does not match the requested store.')
+        return
+      }
+
+      const normalizedReturnedStore = normalizeStoreFqdn(returnedStore)
+      if (normalizedReturnedStore !== normalizedStore) {
+        fail(retryStoreAuthWithPermanentDomainError(normalizedReturnedStore))
         return
       }
 
@@ -326,20 +353,45 @@ export async function exchangeStoreAuthCodeForToken(options: {
   return parsed
 }
 
+interface StoreAuthPresenter {
+  openingBrowser: () => void
+  manualAuthUrl: (authorizationUrl: string) => void
+  success: (store: string, email?: string) => void
+}
+
 interface StoreAuthDependencies {
   openURL: typeof openURL
   waitForStoreAuthCode: typeof waitForStoreAuthCode
   exchangeStoreAuthCodeForToken: typeof exchangeStoreAuthCodeForToken
-  renderInfo: typeof renderInfo
-  renderSuccess: typeof renderSuccess
+  presenter: StoreAuthPresenter
+}
+
+const defaultStoreAuthPresenter: StoreAuthPresenter = {
+  openingBrowser() {
+    outputInfo('Shopify CLI will open the app authorization page in your browser.')
+    outputInfo('')
+  },
+  manualAuthUrl(authorizationUrl: string) {
+    outputInfo('Browser did not open automatically. Open this URL manually:')
+    outputInfo(outputContent`${outputToken.link(authorizationUrl)}`)
+    outputInfo('')
+  },
+  success(store: string, email?: string) {
+    const displayName = email ? ` as ${email}` : ''
+
+    outputCompleted('Logged in.')
+    outputCompleted(`Authenticated${displayName} against ${store}.`)
+    outputInfo('')
+    outputInfo('To verify that authentication worked, run:')
+    outputInfo(`shopify store execute --store ${store} --query 'query { shop { name id } }'`)
+  },
 }
 
 const defaultStoreAuthDependencies: StoreAuthDependencies = {
   openURL,
   waitForStoreAuthCode,
   exchangeStoreAuthCodeForToken,
-  renderInfo,
-  renderSuccess,
+  presenter: defaultStoreAuthPresenter,
 }
 
 function createPkceBootstrap(
@@ -387,20 +439,13 @@ export async function authenticateStoreWithApp(
     authorization: {store, scopes, redirectUri, authorizationUrl},
   } = bootstrap
 
-  dependencies.renderInfo({
-    headline: 'Authenticate the app against your store.',
-    body: `Shopify CLI will open the app authorization page in your browser.`,
-  })
+  dependencies.presenter.openingBrowser()
 
   const code = await dependencies.waitForStoreAuthCode({
     ...bootstrap.waitForAuthCodeOptions,
     onListening: async () => {
       const opened = await dependencies.openURL(authorizationUrl)
-      if (!opened) {
-        outputInfo('Browser did not open automatically. Open this URL manually:')
-        outputInfo(authorizationUrl)
-        outputInfo('')
-      }
+      if (!opened) dependencies.presenter.manualAuthUrl(authorizationUrl)
     },
   })
   const tokenResponse = await bootstrap.exchangeCodeForToken(code)
@@ -419,6 +464,9 @@ export async function authenticateStoreWithApp(
     userId,
     accessToken: tokenResponse.access_token,
     refreshToken: tokenResponse.refresh_token,
+    // Store the raw scopes returned by Shopify. Validation may treat implied
+    // write_* -> read_* permissions as satisfied, so callers should not assume
+    // session.scopes is an expanded/effective permission set.
     scopes: resolveGrantedScopes(tokenResponse, scopes),
     acquiredAt: new Date(now).toISOString(),
     expiresAt,
@@ -440,13 +488,5 @@ export async function authenticateStoreWithApp(
     outputContent`Session persisted for ${outputToken.raw(store)} (user ${outputToken.raw(userId)}, expires ${outputToken.raw(expiresAt ?? 'unknown')})`,
   )
 
-  const email = tokenResponse.associated_user?.email
-  const displayName = email ? ` as ${email}` : ''
-
-  dependencies.renderSuccess({
-    headline: 'Store authentication succeeded.',
-    body: `Authenticated${displayName} against ${store}.`,
-  })
-
-  outputInfo(`Next step: shopify store execute --store ${store} --query 'query { shop { name id } }'`)
+  dependencies.presenter.success(store, tokenResponse.associated_user?.email)
 }

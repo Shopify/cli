@@ -2,6 +2,7 @@ import {outputContent, outputToken, outputDebug} from './output.js'
 import {joinPath, normalizePath} from './path.js'
 import {OverloadParameters} from '../../private/common/ts/overloaded-parameters.js'
 import {capitalize, getRandomName, getRandomTitleCaseName, hyphenate, RandomNameFamily} from '../common/string.js'
+import {systemTempDir} from '../../private/node/temp-dir.js'
 import {
   copy as fsCopy,
   ensureFile as fsEnsureFile,
@@ -13,7 +14,6 @@ import {
   // @ts-ignore
 } from 'fs-extra/esm'
 
-import {temporaryDirectory, temporaryDirectoryTask} from 'tempy'
 import {sep, join} from 'pathe'
 import {findUp as internalFindUp, findUpSync as internalFindUpSync} from 'find-up'
 import {minimatch} from 'minimatch'
@@ -29,6 +29,7 @@ import {
   constants as fsConstants,
   existsSync as fsFileExistsSync,
   unlinkSync as fsUnlinkSync,
+  mkdtempSync as fsMkdtempSync,
   accessSync,
   ReadStream,
   WriteStream,
@@ -75,7 +76,12 @@ export function stripUpPath(path: string, strip: number): string {
  * @param callback - The callback that receives the temporary directory.
  */
 export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | Promise<T>): Promise<T> {
-  return temporaryDirectoryTask(callback)
+  const tmpDir = await fsMkdtemp(join(systemTempDir, 'tmp-'))
+  try {
+    return await callback(tmpDir)
+  } finally {
+    await fsRm(tmpDir, {recursive: true, force: true, maxRetries: 2})
+  }
 }
 
 /**
@@ -83,7 +89,7 @@ export async function inTemporaryDirectory<T>(callback: (tmpDir: string) => T | 
  * @returns - The path to the temporary directory.
  */
 export function tempDirectory(): string {
-  return temporaryDirectory()
+  return fsMkdtempSync(join(systemTempDir, 'tmp-'))
 }
 
 /**
