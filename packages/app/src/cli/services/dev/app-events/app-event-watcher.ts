@@ -5,6 +5,7 @@ import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
+import {formatBundleSize} from '../../build/bundle-size.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -259,7 +260,8 @@ export class AppEventWatcher extends EventEmitter {
         try {
           if (this.esbuildManager.contexts?.[ext.uid]?.length) {
             await this.esbuildManager.rebuildContext(ext)
-            this.options.stdout.write(`Build successful`)
+            const sizeInfo = await formatBundleSize(ext.outputPath)
+            this.options.stdout.write(`Build successful${sizeInfo}`)
           } else {
             await this.buildExtension(ext)
           }
