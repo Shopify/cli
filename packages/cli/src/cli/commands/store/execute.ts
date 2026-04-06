@@ -3,7 +3,7 @@ import {globalFlags} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
-import {executeStoreOperation} from '../../services/store/execute.js'
+import {executeStoreOperation} from '../../services/store/execute/index.js'
 
 export default class StoreExecute extends Command {
   static summary = 'Execute GraphQL queries and mutations on a store.'

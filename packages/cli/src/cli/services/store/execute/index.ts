@@ -1,8 +1,8 @@
 import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {outputContent} from '@shopify/cli-kit/node/output'
-import {prepareStoreExecuteRequest} from './execute-request.js'
-import {writeOrOutputStoreExecuteResult} from './execute-result.js'
-import {getStoreGraphQLTarget, StoreGraphQLApi} from './graphql-targets.js'
+import {prepareStoreExecuteRequest} from './request.js'
+import {writeOrOutputStoreExecuteResult} from './result.js'
+import {getStoreGraphQLTarget, type StoreGraphQLApi} from './targets.js'
 
 interface ExecuteStoreOperationInput {
   store: string
@@ -35,11 +35,7 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
     renderOptions: {stdout: process.stderr},
   })
 
-  const result = await target.execute({
-    store: input.store,
-    context,
-    request,
-  })
+  const result = await target.execute({context, request})
 
   await writeOrOutputStoreExecuteResult(result, request.outputFile)
 }
