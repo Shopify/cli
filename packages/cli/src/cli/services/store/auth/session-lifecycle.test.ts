@@ -1,9 +1,4 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {
-  isSessionExpired,
-  loadStoredStoreSession,
-} from './session-lifecycle.js'
+import {isSessionExpired, loadStoredStoreSession} from './session-lifecycle.js'
 import {
   clearStoredStoreAppSession,
   getCurrentStoredStoreAppSession,
@@ -12,6 +7,8 @@ import {
 } from './session-store.js'
 import {refreshStoreAccessToken} from './token-client.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./session-store.js')
 vi.mock('./token-client.js')
@@ -61,10 +58,6 @@ describe('isSessionExpired', () => {
 })
 
 describe('loadStoredStoreSession', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
   test('throws when no stored auth exists', async () => {
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(undefined)
 
@@ -157,7 +150,9 @@ describe('loadStoredStoreSession', () => {
   test('clears only the current stored auth and throws on malformed refresh JSON', async () => {
     const session = buildSession({expiresAt: new Date(Date.now() - 60 * 1000).toISOString()})
     vi.mocked(getCurrentStoredStoreAppSession).mockReturnValue(session)
-    vi.mocked(refreshStoreAccessToken).mockRejectedValue(new AbortError('Received an invalid refresh response from Shopify.'))
+    vi.mocked(refreshStoreAccessToken).mockRejectedValue(
+      new AbortError('Received an invalid refresh response from Shopify.'),
+    )
 
     await expect(loadStoredStoreSession('shop.myshopify.com')).rejects.toThrow('Received an invalid refresh response')
     expect(clearStoredStoreAppSession).toHaveBeenCalledWith('shop.myshopify.com', '42')

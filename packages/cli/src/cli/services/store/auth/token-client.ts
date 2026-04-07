@@ -1,9 +1,9 @@
+import {maskToken, STORE_AUTH_APP_CLIENT_ID} from './config.js'
 import {adminUrl} from '@shopify/cli-kit/node/api/admin'
 import {graphqlRequest} from '@shopify/cli-kit/node/api/graphql'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {fetch} from '@shopify/cli-kit/node/http'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
-import {maskToken, STORE_AUTH_APP_CLIENT_ID} from './config.js'
 
 export interface StoreTokenResponse {
   access_token: string
@@ -145,10 +145,7 @@ const CurrentAppInstallationAccessScopesQuery = `#graphql
   }
 `
 
-export async function fetchCurrentStoreAuthScopes(options: {
-  store: string
-  accessToken: string
-}): Promise<string[]> {
+export async function fetchCurrentStoreAuthScopes(options: {store: string; accessToken: string}): Promise<string[]> {
   outputDebug(
     outputContent`Fetching current app installation scopes for ${outputToken.raw(options.store)} using token ${outputToken.raw(maskToken(options.accessToken))}`,
   )

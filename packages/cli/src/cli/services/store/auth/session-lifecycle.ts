@@ -1,14 +1,10 @@
-import {AbortError} from '@shopify/cli-kit/node/error'
-import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {maskToken} from './config.js'
-import {createStoredStoreAuthError, reauthenticateStoreAuthError} from './recovery.js'
-import {
-  clearStoredStoreAppSession,
-  getCurrentStoredStoreAppSession,
-  setStoredStoreAppSession,
-} from './session-store.js'
-import type {StoredStoreAppSession} from './session-store.js'
+import {throwStoredStoreAuthError, throwReauthenticateStoreAuthError} from './recovery.js'
+import {clearStoredStoreAppSession, getCurrentStoredStoreAppSession, setStoredStoreAppSession} from './session-store.js'
 import {refreshStoreAccessToken} from './token-client.js'
+import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
+import {AbortError} from '@shopify/cli-kit/node/error'
+import type {StoredStoreAppSession} from './session-store.js'
 
 const EXPIRY_MARGIN_MS = 4 * 60 * 1000
 
@@ -49,7 +45,7 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
   let session = getCurrentStoredStoreAppSession(store)
 
   if (!session) {
-    throw createStoredStoreAuthError(store)
+    throwStoredStoreAuthError(store)
   }
 
   outputDebug(
@@ -61,7 +57,11 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
   }
 
   if (!session.refreshToken) {
-    throw reauthenticateStoreAuthError(`No refresh token stored for ${session.store}.`, session.store, session.scopes.join(','))
+    throwReauthenticateStoreAuthError(
+      `No refresh token stored for ${session.store}.`,
+      session.store,
+      session.scopes.join(','),
+    )
   }
 
   outputDebug(
@@ -80,11 +80,14 @@ export async function loadStoredStoreSession(store: string): Promise<StoredStore
     clearStoredStoreAppSession(session.store, session.userId)
 
     if (error instanceof AbortError && error.message.startsWith(`Token refresh failed for ${session.store} (HTTP `)) {
-      throw reauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))
+      throwReauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))
     }
 
-    if (error instanceof AbortError && error.message === `Token refresh returned an invalid response for ${session.store}.`) {
-      throw reauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))
+    if (
+      error instanceof AbortError &&
+      error.message === `Token refresh returned an invalid response for ${session.store}.`
+    ) {
+      throwReauthenticateStoreAuthError(error.message, session.store, session.scopes.join(','))
     }
 
     if (error instanceof AbortError && error.message === 'Received an invalid refresh response from Shopify.') {

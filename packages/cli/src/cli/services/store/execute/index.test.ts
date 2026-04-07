@@ -1,8 +1,8 @@
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
 import {executeStoreOperation} from './index.js'
 import {prepareStoreExecuteRequest} from './request.js'
 import {getStoreGraphQLTarget} from './targets.js'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {mockAndCaptureOutput} from '@shopify/cli-kit/node/testing/output'
 
 vi.mock('./request.js')
@@ -24,7 +24,6 @@ describe('executeStoreOperation', () => {
   }
 
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(prepareStoreExecuteRequest).mockResolvedValue(request)
     vi.mocked(getStoreGraphQLTarget).mockReturnValue(target as any)
     target.prepareContext.mockResolvedValue(context)

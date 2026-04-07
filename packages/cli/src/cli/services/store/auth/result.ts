@@ -34,7 +34,11 @@ function buildStoreAuthSuccessText(result: StoreAuthResult): {completed: string[
 
   return {
     completed: ['Logged in.', `Authenticated${displayName} against ${result.store}.`],
-    info: ['', 'To verify that authentication worked, run:', `shopify store execute --store ${result.store} --query 'query { shop { name id } }'`],
+    info: [
+      '',
+      'To verify that authentication worked, run:',
+      `shopify store execute --store ${result.store} --query 'query { shop { name id } }'`,
+    ],
   }
 }
 

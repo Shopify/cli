@@ -1,21 +1,13 @@
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {authenticateStoreWithApp} from './index.js'
 import {setStoredStoreAppSession} from './session-store.js'
 import {STORE_AUTH_APP_CLIENT_ID} from './config.js'
+import {describe, expect, test, vi} from 'vitest'
 
 vi.mock('./session-store.js')
 vi.mock('@shopify/cli-kit/node/system', () => ({openURL: vi.fn().mockResolvedValue(true)}))
 vi.mock('@shopify/cli-kit/node/crypto', () => ({randomUUID: vi.fn().mockReturnValue('state-123')}))
 
 describe('store auth service', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
   test('authenticateStoreWithApp opens the browser, stores the session, and returns auth result', async () => {
     const openURL = vi.fn().mockResolvedValue(true)
     const presenter = {

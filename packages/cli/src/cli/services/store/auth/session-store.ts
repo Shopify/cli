@@ -1,5 +1,5 @@
-import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 import {storeAuthSessionKey} from './config.js'
+import {LocalStorage} from '@shopify/cli-kit/node/local-storage'
 
 export interface StoredStoreAppSession {
   store: string
@@ -81,7 +81,9 @@ function sanitizeStoredStoreAppSession(value: unknown): StoredStoreAppSession | 
     ...(isString(session.refreshToken) ? {refreshToken: session.refreshToken} : {}),
     ...(isString(session.expiresAt) ? {expiresAt: session.expiresAt} : {}),
     ...(isString(session.refreshTokenExpiresAt) ? {refreshTokenExpiresAt: session.refreshTokenExpiresAt} : {}),
-    ...(sanitizeAssociatedUser(session.associatedUser) ? {associatedUser: sanitizeAssociatedUser(session.associatedUser)} : {}),
+    ...(sanitizeAssociatedUser(session.associatedUser)
+      ? {associatedUser: sanitizeAssociatedUser(session.associatedUser)}
+      : {}),
   }
 }
 
@@ -94,7 +96,12 @@ function readStoredStoreAppSessionBucket(
   if (!storedBucket || typeof storedBucket !== 'object') return undefined
 
   const {sessionsByUserId, currentUserId} = storedBucket as Partial<StoredStoreAppSessionBucket>
-  if (!sessionsByUserId || typeof sessionsByUserId !== 'object' || Array.isArray(sessionsByUserId) || typeof currentUserId !== 'string') {
+  if (
+    !sessionsByUserId ||
+    typeof sessionsByUserId !== 'object' ||
+    Array.isArray(sessionsByUserId) ||
+    typeof currentUserId !== 'string'
+  ) {
     storage.delete(key)
     return undefined
   }
@@ -164,8 +171,7 @@ export function clearStoredStoreAppSession(
   maybeStorage?: LocalStorage<StoreSessionSchema>,
 ): void {
   const userId = typeof userIdOrStorage === 'string' ? userIdOrStorage : undefined
-  const storage =
-    (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeSessionStorage()
+  const storage = (typeof userIdOrStorage === 'string' ? maybeStorage : userIdOrStorage) ?? storeSessionStorage()
 
   const key = storeAuthSessionKey(store)
 

@@ -1,10 +1,10 @@
+import {STORE_AUTH_CALLBACK_PATH, maskToken} from './config.js'
+import {retryStoreAuthWithPermanentDomainError} from './recovery.js'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {timingSafeEqual} from 'crypto'
 import {createServer} from 'http'
-import {STORE_AUTH_CALLBACK_PATH, maskToken} from './config.js'
-import {retryStoreAuthWithPermanentDomainError} from './recovery.js'
 
 export interface WaitForAuthCodeOptions {
   store: string
@@ -15,16 +15,8 @@ export interface WaitForAuthCodeOptions {
 }
 
 function renderAuthCallbackPage(title: string, message: string): string {
-  const safeTitle = title
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-  const safeMessage = message
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
+  const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const safeMessage = message.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
   return `<!doctype html>
 <html lang="en">
@@ -120,7 +112,9 @@ export async function waitForStoreAuthCode({
       res.setHeader('Content-Type', 'text/html')
       res.setHeader('Connection', 'close')
       res.once('finish', () => settle(() => resolve(code)))
-      res.end(renderAuthCallbackPage('Authentication succeeded', 'You can close this window and return to the terminal.'))
+      res.end(
+        renderAuthCallbackPage('Authentication succeeded', 'You can close this window and return to the terminal.'),
+      )
     })
 
     const settle = (callback: () => void) => {
@@ -162,7 +156,7 @@ export async function waitForStoreAuthCode({
       settleWithError(error)
     })
 
-    server.listen(port, '127.0.0.1', async () => {
+    server.listen(port, '127.0.0.1', () => {
       isListening = true
       outputDebug(
         outputContent`PKCE callback server listening on http://127.0.0.1:${outputToken.raw(String(port))}${outputToken.raw(STORE_AUTH_CALLBACK_PATH)}`,
@@ -170,16 +164,14 @@ export async function waitForStoreAuthCode({
 
       if (!onListening) return
 
-      try {
-        await onListening()
-      } catch (error) {
+      Promise.resolve(onListening()).catch((error: unknown) => {
         settleWithError(error instanceof Error ? error : new Error(String(error)))
-      }
+      })
     })
   })
 }
 
-function constantTimeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false
-  return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'))
+function constantTimeEqual(left: string, right: string): boolean {
+  if (left.length !== right.length) return false
+  return timingSafeEqual(Buffer.from(left, 'utf8'), Buffer.from(right, 'utf8'))
 }

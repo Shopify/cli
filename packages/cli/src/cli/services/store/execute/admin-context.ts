@@ -1,10 +1,10 @@
+import {throwReauthenticateStoreAuthError} from '../auth/recovery.js'
+import {clearStoredStoreAppSession} from '../auth/session-store.js'
+import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 import {fetchApiVersions} from '@shopify/cli-kit/node/api/admin'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import type {AdminSession} from '@shopify/cli-kit/node/session'
-import {reauthenticateStoreAuthError} from '../auth/recovery.js'
-import {clearStoredStoreAppSession} from '../auth/session-store.js'
 import type {StoredStoreAppSession} from '../auth/session-store.js'
-import {loadStoredStoreSession} from '../auth/session-lifecycle.js'
 
 export interface AdminStoreGraphQLContext {
   adminSession: AdminSession
@@ -31,7 +31,7 @@ async function resolveApiVersion(options: {
       /\b(?:401|404)\b/.test(error.message)
     ) {
       clearStoredStoreAppSession(session.store, session.userId)
-      throw reauthenticateStoreAuthError(
+      throwReauthenticateStoreAuthError(
         `Stored app authentication for ${session.store} is no longer valid.`,
         session.store,
         session.scopes.join(','),

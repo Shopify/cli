@@ -1,9 +1,9 @@
+import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
+import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {Flags} from '@oclif/core'
-import {authenticateStoreWithApp} from '../../services/store/auth/index.js'
-import {createStoreAuthPresenter} from '../../services/store/auth/result.js'
 
 export default class StoreAuth extends Command {
   static summary = 'Authenticate an app against a store for store commands.'

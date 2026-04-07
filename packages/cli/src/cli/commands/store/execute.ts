@@ -1,10 +1,10 @@
+import {executeStoreOperation} from '../../services/store/execute/index.js'
+import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
 import Command from '@shopify/cli-kit/node/base-command'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
-import {executeStoreOperation} from '../../services/store/execute/index.js'
-import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
 
 export default class StoreExecute extends Command {
   static summary = 'Execute GraphQL queries and mutations on a store.'

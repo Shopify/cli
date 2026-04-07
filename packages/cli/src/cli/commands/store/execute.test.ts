@@ -1,14 +1,13 @@
-import {beforeEach, describe, expect, test, vi} from 'vitest'
 import StoreExecute from './execute.js'
 import {executeStoreOperation} from '../../services/store/execute/index.js'
 import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
+import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('../../services/store/execute/index.js')
 vi.mock('../../services/store/execute/result.js')
 
 describe('store execute command', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
     vi.mocked(executeStoreOperation).mockResolvedValue({data: {shop: {name: 'Test shop'}}})
   })
 
@@ -24,11 +23,7 @@ describe('store execute command', () => {
       version: undefined,
       allowMutations: false,
     })
-    expect(writeOrOutputStoreExecuteResult).toHaveBeenCalledWith(
-      {data: {shop: {name: 'Test shop'}}},
-      undefined,
-      'text',
-    )
+    expect(writeOrOutputStoreExecuteResult).toHaveBeenCalledWith({data: {shop: {name: 'Test shop'}}}, undefined, 'text')
   })
 
   test('passes the query file through to the service', async () => {
@@ -46,11 +41,7 @@ describe('store execute command', () => {
   test('writes json output when --json is provided', async () => {
     await StoreExecute.run(['--store', 'shop.myshopify.com', '--query', 'query { shop { name } }', '--json'])
 
-    expect(writeOrOutputStoreExecuteResult).toHaveBeenCalledWith(
-      {data: {shop: {name: 'Test shop'}}},
-      undefined,
-      'json',
-    )
+    expect(writeOrOutputStoreExecuteResult).toHaveBeenCalledWith({data: {shop: {name: 'Test shop'}}}, undefined, 'json')
   })
 
   test('defines the expected flags', () => {

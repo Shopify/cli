@@ -1,7 +1,7 @@
-import {renderSingleTask} from '@shopify/cli-kit/node/ui'
-import {outputContent} from '@shopify/cli-kit/node/output'
 import {prepareStoreExecuteRequest} from './request.js'
 import {getStoreGraphQLTarget, type StoreGraphQLApi} from './targets.js'
+import {renderSingleTask} from '@shopify/cli-kit/node/ui'
+import {outputContent} from '@shopify/cli-kit/node/output'
 
 interface ExecuteStoreOperationInput {
   store: string
@@ -32,5 +32,5 @@ export async function executeStoreOperation(input: ExecuteStoreOperationInput): 
     renderOptions: {stdout: process.stderr},
   })
 
-  return await target.execute({context, request})
+  return target.execute({context, request})
 }
