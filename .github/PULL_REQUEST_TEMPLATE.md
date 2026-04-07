@@ -35,15 +35,9 @@ Fixes #0000 <!-- link to issue if one exists -->
   If it doesn't, feel free to remove this section.
 -->
 
-### Measuring impact
-
-How do we know this change was effective? Please choose one:
-
-- [ ] n/a - this doesn't need measurement, e.g. a linting rule or a bug-fix
-- [ ] Existing analytics will cater for this addition
-- [ ] PR includes analytics changes to measure impact
-
 ### Checklist
 
 - [ ] I've considered possible cross-platform impacts (Mac, Linux, Windows)
 - [ ] I've considered possible [documentation](https://shopify.dev) changes
+- [ ] I've considered analytics changes to measure impact
+- [ ] The change is user-facing, so I've added a changelog entry with `pnpm changeset add`
