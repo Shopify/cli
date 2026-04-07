@@ -25,6 +25,7 @@ Fixes #0000 <!-- link to issue if one exists -->
 
 <!--
   Please, provide steps for the reviewer to test your changes locally.
+  You can post a comment with `/snapit` to generate a snapshot of the changes to be tested.
 -->
 
 ### Post-release steps
