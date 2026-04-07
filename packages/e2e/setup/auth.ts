@@ -1,18 +1,22 @@
-import {cliFixture} from './cli.js'
+import {browserFixture} from './browser.js'
 import {executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
-import {chromium, type Browser} from '@playwright/test'
 import {execa} from 'execa'
 
 /**
- * Worker-scoped fixture that performs OAuth login via browser automation.
- * Runs once per worker, stores the session in shared XDG dirs.
+ * Worker-scoped fixture that performs OAuth login using the shared browser page.
+ *
+ * Extends browserFixture — the browser is already running when auth starts.
+ * After login, the CLI session is stored in XDG dirs and the browser page
+ * remains available for other browser-based actions (dashboard navigation, etc.).
+ *
+ * Fixture chain: envFixture → cliFixture → browserFixture → authFixture
  */
-export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
+export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
   authLogin: [
-    async ({env}, use) => {
+    async ({env, browserPage}, use) => {
       const email = process.env.E2E_ACCOUNT_EMAIL
       const password = process.env.E2E_ACCOUNT_PASSWORD
 
@@ -20,6 +24,8 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         await use()
         return
       }
+
+      process.stdout.write('[e2e] Authenticating automatically — no action required.\n')
 
       // Clear any existing session
       await execa('node', [executables.cli, 'auth', 'logout'], {
@@ -34,8 +40,7 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         if (value !== undefined) spawnEnv[key] = value
       }
       spawnEnv.CI = ''
-      // Pretend we're in a cloud environment so the CLI prints the login URL
-      // directly instead of opening a system browser (BROWSER=none doesn't work on macOS)
+      // Print login URL directly instead of opening system browser
       spawnEnv.CODESPACES = 'true'
 
       const ptyProcess = nodePty.spawn('node', [executables.cli, 'auth', 'login'], {
@@ -59,19 +64,7 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
         throw new Error(`Could not find login URL in output:\n${stripped}`)
       }
 
-      let browser: Browser | undefined
-      try {
-        browser = await chromium.launch({headless: !process.env.E2E_HEADED})
-        const context = await browser.newContext({
-          extraHTTPHeaders: {
-            'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-          },
-        })
-        const page = await context.newPage()
-        await completeLogin(page, urlMatch[0], email, password)
-      } finally {
-        await browser?.close()
-      }
+      await completeLogin(browserPage, urlMatch[0], email, password)
 
       await waitForText(() => output, 'Logged in', 60_000)
       try {
@@ -80,10 +73,6 @@ export const authFixture = cliFixture.extend<{}, {authLogin: void}>({
       } catch (_error) {
         // Process may already be dead
       }
-
-      // Remove the partners token so CLI uses the OAuth session
-      // instead of the token (which can't auth against Business Platform API)
-      delete env.processEnv.SHOPIFY_CLI_PARTNERS_TOKEN
 
       await use()
     },
