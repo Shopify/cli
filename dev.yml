@@ -21,6 +21,14 @@ up:
       # Always fetch these on dev up
       met?: pnpm graphql-codegen:get-graphql-schemas
       meet: 'true'
+  - custom:
+      name: 'Install Playwright Chromium'
+      met?: cd packages/e2e && npx playwright install chromium
+      meet: 'true'
+  - custom:
+      name: 'Rebuild node-pty'
+      met?: pnpm rebuild node-pty
+      meet: 'true'
 
 env:
   SHOPIFY_CLI_ENV: development
