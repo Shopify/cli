@@ -6,7 +6,9 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 test.describe('App scaffold', () => {
-  test('init creates a react-router app and builds', async ({appScaffold, env}) => {
+  test('init creates a react-router app and builds', async ({appScaffold, env}, testInfo) => {
+    // npm install for react-router + build can exceed the default 3-minute test timeout in CI
+    testInfo.setTimeout(5 * 60 * 1000)
     requireEnv(env, 'clientId')
 
     // Step 1: Create a new app from the react-router template
