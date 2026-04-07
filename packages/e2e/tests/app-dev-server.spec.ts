@@ -9,7 +9,6 @@ test.describe('App dev server', () => {
     // Step 1: Create an extension-only app (no scopes needed)
     const initResult = await appScaffold.init({
       template: 'none',
-      packageManager: 'npm',
     })
     expect(initResult.exitCode).toBe(0)
 
