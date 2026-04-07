@@ -6,14 +6,15 @@ import * as fs from 'fs'
 import * as path from 'path'
 
 test.describe('App scaffold', () => {
-  test('init creates a react-router app and builds', async ({appScaffold, env}) => {
+  test('init creates a react-router app and builds', async ({appScaffold, env}, testInfo) => {
+    // npm install for react-router + build can exceed the default 3-minute test timeout in CI
+    testInfo.setTimeout(5 * 60 * 1000)
     requireEnv(env, 'clientId')
 
     // Step 1: Create a new app from the react-router template
     const initResult = await appScaffold.init({
       template: 'reactRouter',
       flavor: 'javascript',
-      packageManager: 'npm',
     })
     expect(initResult.exitCode).toBe(0)
     // Ink writes to stderr
@@ -36,7 +37,6 @@ test.describe('App scaffold', () => {
     const initResult = await appScaffold.init({
       name: 'e2e-ext-only',
       template: 'none',
-      packageManager: 'npm',
     })
     expect(initResult.exitCode).toBe(0)
     expect(fs.existsSync(appScaffold.appDir)).toBe(true)
@@ -52,7 +52,6 @@ test.describe('App scaffold', () => {
     await appScaffold.init({
       template: 'reactRouter',
       flavor: 'javascript',
-      packageManager: 'npm',
     })
 
     const extensionConfigs = [

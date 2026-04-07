@@ -1,11 +1,11 @@
 import {getProxyingWebServer} from './http-reverse-proxy.js'
 import {AbortController} from '@shopify/cli-kit/node/abort'
-import {getAvailableTCPPort} from '@shopify/cli-kit/node/tcp'
 import {describe, test, expect} from 'vitest'
 import fetch from 'node-fetch'
 import WebSocket, {WebSocketServer} from 'ws'
 import http from 'http'
 import https from 'https'
+import net from 'net'
 
 const each = ['http', 'https'] as const
 
@@ -17,29 +17,29 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
       ? new http.Agent({keepAlive: false})
       : new https.Agent({ca: localhostCert.cert, keepAlive: false})
 
-  test('routes requests to the correct target based on path', {retry: 2}, async ({ports, servers}) => {
-    const response1 = await fetch(`${protocol}://localhost:${ports.proxyPort}/path1/test`, {agent})
+  test('routes requests to the correct target based on path', {retry: 2}, async ({setup}) => {
+    const response1 = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {agent})
     await expect(response1.text()).resolves.toBe('Response from target server 1')
 
-    const response2 = await fetch(`${protocol}://localhost:${ports.proxyPort}/path2/test`, {agent})
+    const response2 = await fetch(`${protocol}://localhost:${setup.proxyPort}/path2/test`, {agent})
     await expect(response2.text()).resolves.toBe('Response from target server 2')
   })
 
-  test('routes requests to the default target when no matching path is found', {retry: 2}, async ({ports, servers}) => {
-    const response = await fetch(`${protocol}://localhost:${ports.proxyPort}/unknown/path`, {agent})
+  test('routes requests to the default target when no matching path is found', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/unknown/path`, {agent})
     await expect(response.text()).resolves.toBe('Response from target server 1')
   })
 
-  test('handles websocket connections', {retry: 2}, async ({ports, servers}) => {
+  test('handles websocket connections', {retry: 2}, async ({setup}) => {
     return new Promise<void>((resolve, reject) => {
-      const wss = new WebSocketServer({server: servers.targetServer1})
+      const wss = new WebSocketServer({server: setup.targetServer1})
       wss.on('connection', (ws) => {
         ws.on('message', (message) => {
           ws.send(`Echo: ${String(message)}`)
         })
       })
 
-      const ws = new WebSocket(`${wsProtocol}://localhost:${ports.proxyPort}/path1`, {agent})
+      const ws = new WebSocket(`${wsProtocol}://localhost:${setup.proxyPort}/path1`, {agent})
 
       ws.on('open', () => {
         ws.send('Hello, WebSocket!')
@@ -55,8 +55,8 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     })
   })
 
-  test('responds to CORS preflight OPTIONS with default headers', {retry: 2}, async ({ports, servers}) => {
-    const response = await fetch(`${protocol}://localhost:${ports.proxyPort}/path1/test`, {
+  test('responds to CORS preflight OPTIONS with default headers', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
       method: 'OPTIONS',
       headers: {
         Origin: 'https://extensions.shopifycdn.com',
@@ -72,8 +72,8 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-max-age')).toBe('86400')
   })
 
-  test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({ports, servers}) => {
-    const response = await fetch(`${protocol}://localhost:${ports.proxyPort}/path1/test`, {
+  test('responds to CORS preflight OPTIONS with defaults when no request headers', {retry: 2}, async ({setup}) => {
+    const response = await fetch(`${protocol}://localhost:${setup.proxyPort}/path1/test`, {
       method: 'OPTIONS',
       agent,
     })
@@ -83,28 +83,24 @@ describe.sequential.each(each)('http-reverse-proxy for %s', (protocol) => {
     expect(response.headers.get('access-control-allow-headers')).toBe('Content-Type, Authorization')
   })
 
-  test('closes the server when aborted', {retry: 2}, async ({ports, servers}) => {
-    servers.abortController.abort()
+  test('closes the server when aborted', {retry: 2}, async ({setup}) => {
+    setup.abortController.abort()
     // Try the assertion immediately, and if it fails, wait and retry
     try {
-      await expect(fetch(`${protocol}://localhost:${ports.proxyPort}/path1`, {agent})).rejects.toThrow()
+      await expect(fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})).rejects.toThrow()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (error) {
       // If the assertion fails, wait a bit and try again
       await new Promise((resolve) => setTimeout(resolve, 10))
-      await expect(fetch(`${protocol}://localhost:${ports.proxyPort}/path1`, {agent})).rejects.toThrow()
+      await expect(fetch(`${protocol}://localhost:${setup.proxyPort}/path1`, {agent})).rejects.toThrow()
     }
   })
 })
 
 function getTestReverseProxy(protocol: 'http' | 'https') {
   return test.extend<{
-    ports: {
+    setup: {
       proxyPort: number
-      targetPort1: number
-      targetPort2: number
-    }
-    servers: {
       targetServer1: http.Server
       targetServer2: http.Server
       proxyServer: http.Server
@@ -112,13 +108,7 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
     }
   }>({
     // eslint-disable-next-line no-empty-pattern
-    ports: async ({}, use) => {
-      const proxyPort = await getAvailableTCPPort()
-      const targetPort1 = await getAvailableTCPPort()
-      const targetPort2 = await getAvailableTCPPort()
-      await use({proxyPort, targetPort1, targetPort2})
-    },
-    servers: async ({ports}, use) => {
+    setup: async ({}, use) => {
       const targetServer1 = http.createServer((req, res) => {
         res.writeHead(200, {'Content-Type': 'text/plain'})
         res.end('Response from target server 1')
@@ -129,22 +119,30 @@ function getTestReverseProxy(protocol: 'http' | 'https') {
         res.end('Response from target server 2')
       })
 
-      await new Promise<void>((resolve) => targetServer1.listen(ports.targetPort1, 'localhost', resolve))
-      await new Promise<void>((resolve) => targetServer2.listen(ports.targetPort2, 'localhost', resolve))
+      // Listen on port 0 to let the OS assign available ports, avoiding the
+      // TOCTOU race where getAvailableTCPPort() returns a port that gets
+      // claimed by another process before listen() is called.
+      await new Promise<void>((resolve) => targetServer1.listen(0, 'localhost', resolve))
+      await new Promise<void>((resolve) => targetServer2.listen(0, 'localhost', resolve))
+
+      const targetPort1 = (targetServer1.address() as net.AddressInfo).port
+      const targetPort2 = (targetServer2.address() as net.AddressInfo).port
 
       const abortController = new AbortController()
       const {server: proxyServer} = await getProxyingWebServer(
         {
-          '/path1': `http://localhost:${ports.targetPort1}`,
-          '/path2': `http://localhost:${ports.targetPort2}`,
-          default: `http://localhost:${ports.targetPort1}`,
+          '/path1': `http://localhost:${targetPort1}`,
+          '/path2': `http://localhost:${targetPort2}`,
+          default: `http://localhost:${targetPort1}`,
         },
         abortController.signal,
         protocol === 'https' ? localhostCert : undefined,
       )
 
-      await new Promise<void>((resolve) => proxyServer.listen(ports.proxyPort, 'localhost', resolve))
-      await use({targetServer1, targetServer2, proxyServer, abortController})
+      await new Promise<void>((resolve) => proxyServer.listen(0, 'localhost', resolve))
+      const proxyPort = (proxyServer.address() as net.AddressInfo).port
+
+      await use({proxyPort, targetServer1, targetServer2, proxyServer, abortController})
 
       proxyServer.closeAllConnections()
       await new Promise<void>((resolve) => proxyServer.close(() => resolve()))

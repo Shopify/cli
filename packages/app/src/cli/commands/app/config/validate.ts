@@ -5,10 +5,19 @@ import {linkedAppContext} from '../../../services/app-context.js'
 import {selectActiveConfig} from '../../../models/project/active-config.js'
 import {errorsForConfig} from '../../../models/project/config-selection.js'
 import {Project} from '../../../models/project/project.js'
+import metadata from '../../../metadata.js'
 import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import {outputResult, stringifyMessage, unstyled} from '@shopify/cli-kit/node/output'
 import {renderError} from '@shopify/cli-kit/node/ui'
+
+async function recordValidationFailure(issueCount: number, fileCount: number) {
+  await metadata.addPublicMetadata(() => ({
+    cmd_app_validate_valid: false,
+    cmd_app_validate_issue_count: issueCount,
+    cmd_app_validate_file_count: fileCount,
+  }))
+}
 
 export default class Validate extends AppLinkedCommand {
   static summary = 'Validate your app configuration and extensions.'
@@ -26,12 +35,17 @@ export default class Validate extends AppLinkedCommand {
   public async run(): Promise<AppLinkedCommandOutput> {
     const {flags} = await this.parse(Validate)
 
+    await metadata.addPublicMetadata(() => ({
+      cmd_app_validate_json: flags.json,
+    }))
+
     // Stage 1: Load project
     let project: Project
     try {
       project = await Project.load(flags.path)
     } catch (err) {
       if (err instanceof AbortError && flags.json) {
+        await recordValidationFailure(1, 1)
         const message = unstyled(stringifyMessage(err.message)).trim()
         outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
         throw new AbortSilentError()
@@ -45,6 +59,7 @@ export default class Validate extends AppLinkedCommand {
       activeConfig = await selectActiveConfig(project, flags.config)
     } catch (err) {
       if (err instanceof AbortError && flags.json) {
+        await recordValidationFailure(1, 1)
         const message = unstyled(stringifyMessage(err.message)).trim()
         outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
         throw new AbortSilentError()
@@ -55,6 +70,8 @@ export default class Validate extends AppLinkedCommand {
     const configErrors = errorsForConfig(project, activeConfig.file)
     if (configErrors.length > 0) {
       const issues = configErrors.map((err) => ({file: err.path, message: err.message}))
+      const fileCount = new Set(configErrors.map((err) => err.path)).size
+      await recordValidationFailure(issues.length, fileCount)
       if (flags.json) {
         outputResult(JSON.stringify({valid: false, issues}, null, 2))
         throw new AbortSilentError()
@@ -83,6 +100,7 @@ export default class Validate extends AppLinkedCommand {
       const message = err instanceof AbortError ? unstyled(stringifyMessage(err.message)).trim() : ''
       const isValidationError = message.startsWith('Validation errors in ')
       if (isValidationError && flags.json) {
+        await recordValidationFailure(1, 1)
         outputResult(JSON.stringify({valid: false, issues: [{message}]}, null, 2))
         throw new AbortSilentError()
       }

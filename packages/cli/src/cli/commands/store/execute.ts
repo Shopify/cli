@@ -1,9 +1,10 @@
+import {executeStoreOperation} from '../../services/store/execute/index.js'
+import {writeOrOutputStoreExecuteResult} from '../../services/store/execute/result.js'
 import Command from '@shopify/cli-kit/node/base-command'
-import {globalFlags} from '@shopify/cli-kit/node/cli'
+import {globalFlags, jsonFlag} from '@shopify/cli-kit/node/cli'
 import {normalizeStoreFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {resolvePath} from '@shopify/cli-kit/node/path'
 import {Flags} from '@oclif/core'
-import {executeStoreOperation} from '../../services/store/execute.js'
 
 export default class StoreExecute extends Command {
   static summary = 'Execute GraphQL queries and mutations on a store.'
@@ -20,10 +21,12 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query "query { shop { name } }"',
     `<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query-file ./operation.graphql --variables '{"id":"gid://shopify/Product/1"}'`,
     '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query "mutation { shop { id } }" --allow-mutations',
+    '<%= config.bin %> <%= command.id %> --store shop.myshopify.com --query "query { shop { name } }" --json',
   ]
 
   static flags = {
     ...globalFlags,
+    ...jsonFlag,
     query: Flags.string({
       char: 'q',
       description: 'The GraphQL query or mutation, as a string.',
@@ -75,15 +78,16 @@ Mutations are disabled by default. Re-run with \`--allow-mutations\` if you inte
   async run(): Promise<void> {
     const {flags} = await this.parse(StoreExecute)
 
-    await executeStoreOperation({
+    const result = await executeStoreOperation({
       store: flags.store,
       query: flags.query,
       queryFile: flags['query-file'],
       variables: flags.variables,
       variableFile: flags['variable-file'],
-      outputFile: flags['output-file'],
       version: flags.version,
       allowMutations: flags['allow-mutations'],
     })
+
+    await writeOrOutputStoreExecuteResult(result, flags['output-file'], flags.json ? 'json' : 'text')
   }
 }

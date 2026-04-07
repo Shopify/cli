@@ -58,7 +58,8 @@ export const appScaffoldFixture = authFixture.extend<{appScaffold: AppScaffold}>
       async init(opts: AppInitOptions) {
         const name = opts.name ?? 'e2e-test-app'
         const template = opts.template ?? 'reactRouter'
-        const packageManager = opts.packageManager ?? 'npm'
+        const packageManager =
+          opts.packageManager ?? (process.env.E2E_PACKAGE_MANAGER as AppInitOptions['packageManager']) ?? 'npm'
 
         const args = [
           '--name',

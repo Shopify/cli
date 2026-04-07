@@ -33,8 +33,7 @@
     "@types/node": "18.19.70",
     "execa": "^7.2.0",
     "node-pty": "^1.0.0",
-    "strip-ansi": "^7.1.0",
-    "tempy": "^1.0.1"
+    "strip-ansi": "^7.1.0"
   },
   "engines": {
     "node": ">=20.10.0"

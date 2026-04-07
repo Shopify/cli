@@ -1,4 +1,3 @@
-import commondir from 'commondir'
 import {
   relative,
   dirname as patheDirname,
@@ -107,6 +106,23 @@ export function parsePath(path: string): {root: string; dir: string; base: strin
 }
 
 /**
+ * Returns the longest common parent directory of two absolute paths.
+ *
+ * @param first - First absolute path.
+ * @param second - Second absolute path.
+ * @returns The common parent directory, or '/' if they share only the root.
+ */
+export function commonParentDirectory(first: string, second: string): string {
+  const firstParts = first.split(/\/+|\\+/)
+  const secondParts = second.split(/\/+|\\+/)
+  let i = 0
+  while (i < firstParts.length && i < secondParts.length && firstParts[i] === secondParts[i]) {
+    i++
+  }
+  return i > 1 ? firstParts.slice(0, i).join('/') : '/'
+}
+
+/**
  * Given an absolute filesystem path, it makes it relative to
  * the current working directory. This is useful when logging paths
  * to allow the users to click on the file and let the OS open it
@@ -117,7 +133,7 @@ export function parsePath(path: string): {root: string; dir: string; base: strin
  * @returns Relativized path.
  */
 export function relativizePath(path: string, dir: string = cwd()): string {
-  const result = commondir([path, dir])
+  const result = commonParentDirectory(path, dir)
   const relativePath = relative(dir, path)
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore

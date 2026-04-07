@@ -9,7 +9,6 @@ test.describe('App deploy', () => {
     // Step 1: Create an extension-only app (no scopes needed for deploy)
     const initResult = await appScaffold.init({
       template: 'none',
-      packageManager: 'npm',
     })
     expect(initResult.exitCode).toBe(0)
 

@@ -1,5 +1,32 @@
 # @shopify/theme
 
+## 3.93.0
+
+### Minor Changes
+
+- f0db25b: Add --json flag to theme preview to configure a json output
+- 9a39b44: Add `--development-context` flag to `theme push`
+
+  The new `--development-context` flag (short: `-c`) allows you to specify a unique identifier for a development theme context (e.g., PR number, branch name). This gives developers the ability to programmatically create or reuse named development themes; particularly useful when running `shopify theme push` in a CI environment where you might want to associate a particular development theme to a branch or pull request.
+
+- 962e932: Add support for theme previews using a JSON via `theme preview`. Pass a JSON via --override to quickly preview overrides on a live theme. Also adds a --preview-id flag to to handle in-place updates for previews created from an override JSON.
+
+### Patch Changes
+
+- ae77bc6: Fix theme editor shortcut tracking fetch requests instead of page navigation
+- a910517: Add a 250ms debounce on our filewatcher for themes to stop potential file deletes
+- 34e19bc: Change wording for current development theme in `theme list`
+
+  Previously you could only have one development theme at a time so we'd add `[yours]` beside the development theme that you were currently attached to. Now you can have multiple development themes so we're changing the language to `[current]` to show which theme you are actively connected to.
+
+- 5dd39d0: Fix Cart rate limiting issue
+- Updated dependencies [07d4304]
+- Updated dependencies [35ba22b]
+- Updated dependencies [a52b36d]
+- Updated dependencies [34e19bc]
+- Updated dependencies [9a39b44]
+  - @shopify/cli-kit@3.93.0
+
 ## 3.92.0
 
 ### Patch Changes
@@ -185,7 +212,6 @@
 - 02b417b: Ensure all theme commands accept the --path flag
 - 9b52391: Add /listings folder to theme package command
 - 5188073: Improvement and fixes when handling multi-environment commands
-
   - Fixes a bug where passing a single environment to multi-env commands would cause it to fail if the environment didn't have all of the required attributes for multi-env
   - Updates output when running multi-env commands to ensure the results from each command don't overlap one another
 
@@ -248,7 +274,6 @@
 - eaa8b7c: Fix an issue with hot-reloading the compiled assets (scripts.js, block-scripts.js, etc)
 - 44e8bc7: Improved theme upload ordering to ensure layout files are uploaded before templates
 - acc904f: Bump Shopify/theme-tools packages to
-
   - Fix validation for static blocks in JSON templates
   - Introduce ability the disable theme checks for the next Liquid statement
 
@@ -611,7 +636,6 @@
 - ca218cd31: Update theme selection text for `shopify theme push` command
 - ca218cd31: Improve Glob Pattern subdirectory mismatch error handling
 - ca218cd31: Bump Shopify/theme-tools packages
-
   - TL;DR
     - (New) `ValidJson` check - JSON schema validation on `.json` files
     - (New) Section/block schema `t:` translation completion
