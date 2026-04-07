@@ -288,6 +288,11 @@ export class AppEventWatcher extends EventEmitter {
             })
           } else {
             this.options.stderr.write(error.message)
+            if (error.tryMessage) {
+              this.options.stderr.write(
+                typeof error.tryMessage === 'string' ? error.tryMessage : String(error.tryMessage),
+              )
+            }
           }
 
           // Update all events for this extension with error result

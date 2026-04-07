@@ -6,7 +6,7 @@ import {FunctionConfigType} from '../../models/extensions/specifications/functio
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
-import {AbortError} from '@shopify/cli-kit/node/error'
+import {AbortError, ExternalError} from '@shopify/cli-kit/node/error'
 import {fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
@@ -438,5 +438,49 @@ describe('buildFunctionExtension', () => {
     expect(fileExistsSync).toHaveBeenCalledWith(joinPath(extension.directory, 'dist/custom.wasm'))
     expect(touchFile).not.toHaveBeenCalled()
     expect(writeFile).not.toHaveBeenCalled()
+  })
+
+  test('preserves stderr details from build command failures in the error tryMessage', async () => {
+    // Given
+    // Simulate an ExternalError like exec() throws when cargo/rust is not installed
+    const externalError = new ExternalError('Command failed with exit code 127: cargo build --release', 'cargo', [
+      'build',
+      '--release',
+    ])
+    vi.mocked(exec).mockRejectedValueOnce(externalError)
+
+    // When
+    const error = await buildFunctionExtension(extension, {
+      stdout,
+      stderr,
+      signal,
+      app,
+      environment: 'production',
+    }).catch((err) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    // The tryMessage should contain the original error details, not just a generic message
+    expect(error.tryMessage).toContain('Command failed with exit code 127')
+    expect(error.tryMessage).toContain('cargo build --release')
+  })
+
+  test('preserves generic error messages from build command failures in the error tryMessage', async () => {
+    // Given
+    const genericError = new Error('cargo: command not found')
+    vi.mocked(exec).mockRejectedValueOnce(genericError)
+
+    // When
+    const error = await buildFunctionExtension(extension, {
+      stdout,
+      stderr,
+      signal,
+      app,
+      environment: 'production',
+    }).catch((err) => err)
+
+    // Then
+    expect(error).toBeInstanceOf(AbortError)
+    expect(error.tryMessage).toContain('cargo: command not found')
   })
 })
