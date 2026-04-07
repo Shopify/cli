@@ -5,7 +5,7 @@ import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, resolvePath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -66,7 +66,7 @@ export async function fileServerMiddleware(event: H3Event, options: {filePath: s
   return fileContent
 }
 
-export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExtensionsMiddlewareOptions) {
+export function getExtensionAssetMiddleware({getExtensions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler(async (event) => {
     const {extensionId, assetPath = ''} = getRouterParams(event)
     const extension = getExtensions().find((ext) => ext.devUUID === extensionId)
@@ -78,14 +78,13 @@ export function getExtensionAssetMiddleware({devOptions, getExtensions}: GetExte
       })
     }
 
-    const bundlePath = devOptions.appWatcher.buildOutputPath
-    const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
-
-    const buildDirectory = dirname(extensionOutputPath)
-
-    return fileServerMiddleware(event, {
-      filePath: joinPath(buildDirectory, assetPath),
-    })
+    // Try the extension's build output first (for compiled assets), then fall back
+    // to the extension's source directory (for static assets like tools, instructions).
+    const buildPath = joinPath(extension.directory, extension.outputRelativePath)
+    if (await fileExists(buildPath)) {
+      return fileServerMiddleware(event, {filePath: buildPath})
+    }
+    return fileServerMiddleware(event, {filePath: joinPath(extension.directory, assetPath)})
   })
 }
 

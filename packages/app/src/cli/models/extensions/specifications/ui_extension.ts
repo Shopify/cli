@@ -14,7 +14,7 @@ import {ExtensionInstance} from '../extension-instance.js'
 import {formatContent} from '../../../utilities/file-formatter.js'
 import {err, ok, Result} from '@shopify/cli-kit/node/result'
 import {copyFile, fileExists, readFile} from '@shopify/cli-kit/node/fs'
-import {joinPath, basename, dirname} from '@shopify/cli-kit/node/path'
+import {joinPath, dirname} from '@shopify/cli-kit/node/path'
 import {outputContent, outputToken, outputWarn} from '@shopify/cli-kit/node/output'
 import {zod} from '@shopify/cli-kit/node/schema'
 
@@ -29,8 +29,6 @@ export interface BuildManifest {
     // Main asset is always required
     [AssetIdentifier.Main]: BuildAsset
     [AssetIdentifier.ShouldRender]?: BuildAsset
-    [AssetIdentifier.Tools]?: BuildAsset
-    [AssetIdentifier.Instructions]?: BuildAsset
   }
 }
 
@@ -61,24 +59,6 @@ export const UIExtensionSchema = BaseSchema.extend({
                 },
               }
             : null),
-          ...(targeting.tools
-            ? {
-                [AssetIdentifier.Tools]: {
-                  filepath: `${config.handle}-${AssetIdentifier.Tools}-${basename(targeting.tools)}`,
-                  module: targeting.tools,
-                  static: true,
-                },
-              }
-            : null),
-          ...(targeting.instructions
-            ? {
-                [AssetIdentifier.Instructions]: {
-                  filepath: `${config.handle}-${AssetIdentifier.Instructions}-${basename(targeting.instructions)}`,
-                  module: targeting.instructions,
-                  static: true,
-                },
-              }
-            : null),
         },
       }
 
@@ -93,6 +73,7 @@ export const UIExtensionSchema = BaseSchema.extend({
         build_manifest: buildManifest,
         tools: targeting.tools,
         instructions: targeting.instructions,
+        intents: targeting.intents,
       }
     })
     return {...config, extension_points: extensionPoints}
@@ -108,7 +89,7 @@ const uiExtensionSpec = createExtensionSpecification({
     {
       lifecycle: 'deploy',
       steps: [
-        {id: 'bundle-ui', name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
+        {id: 'bundle-ui', generatesAssetsManifest: true, name: 'Bundle UI Extension', type: 'bundle_ui', config: {}},
         {
           id: 'include-ui-extension-assets',
           name: 'Include UI Extension Assets',
@@ -118,21 +99,21 @@ const uiExtensionSpec = createExtensionSpecification({
             inclusions: [
               {
                 type: 'configKey',
-                anchor: 'targeting[]',
+                anchor: 'extension_points[]',
                 groupBy: 'target',
-                key: 'targeting[].tools',
+                key: 'extension_points[].tools',
               },
               {
                 type: 'configKey',
-                anchor: 'targeting[]',
+                anchor: 'extension_points[]',
                 groupBy: 'target',
-                key: 'targeting[].instructions',
+                key: 'extension_points[].instructions',
               },
               {
                 type: 'configKey',
-                anchor: 'targeting[]',
+                anchor: 'extension_points[]',
                 groupBy: 'target',
-                key: 'targeting[].intents[].schema',
+                key: 'extension_points[].intents[].schema',
               },
             ],
           },
@@ -415,31 +396,11 @@ async function validateUIExtensionPointConfig(
   }
 
   for await (const extensionPoint of extensionPoints) {
-    const {module, target, build_manifest: buildManifest} = extensionPoint
+    const {module, target} = extensionPoint
 
     const missingModuleError = await checkForMissingPath(directory, module, target, 'module')
     if (missingModuleError) {
       errors.push(missingModuleError)
-    }
-
-    const missingToolsError = await checkForMissingPath(
-      directory,
-      buildManifest?.assets[AssetIdentifier.Tools]?.module,
-      target,
-      AssetIdentifier.Tools,
-    )
-    if (missingToolsError) {
-      errors.push(missingToolsError)
-    }
-
-    const missingInstructionsError = await checkForMissingPath(
-      directory,
-      buildManifest?.assets[AssetIdentifier.Instructions]?.module,
-      target,
-      AssetIdentifier.Instructions,
-    )
-    if (missingInstructionsError) {
-      errors.push(missingInstructionsError)
     }
 
     if (uniqueTargets.includes(target)) {

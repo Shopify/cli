@@ -6,7 +6,8 @@ import {getUIExtensionResourceURL} from '../../../utilities/extensions/configura
 import {getUIExtensionRendererVersion} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {NewExtensionPointSchemaType} from '../../../models/extensions/schemas.js'
-import {fileExists, fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
+import {BuildManifest} from '../../../models/extensions/specifications/ui_extension.js'
+import {fileLastUpdatedTimestamp, readFile} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 
@@ -155,17 +156,20 @@ async function getExtensionPoints(extension: ExtensionInstance, url: string, bui
 async function readBundleManifest(
   buildDirectory: string,
 ): Promise<{[target: string]: {[assetName: string]: unknown}} | null> {
-  const manifestPath = joinPath(buildDirectory, 'manifest.json')
-  if (!(await fileExists(manifestPath))) {
+  try {
+    const manifestPath = joinPath(buildDirectory, 'manifest.json')
+    const content = await readFile(manifestPath)
+    return JSON.parse(content)
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
     return null
   }
-  const content = await readFile(manifestPath)
-  return JSON.parse(content)
 }
 
 /**
- * Default asset mapper - reads the source path from the extension point config
- * and adds asset to the assets object
+ * Default asset mapper - reads the source path from the extension point config,
+ * falling back to build_manifest.assets for compiled assets like main and
+ * should_render where the config field name doesn't match the asset identifier.
  */
 async function defaultAssetMapper({
   identifier,
@@ -174,11 +178,20 @@ async function defaultAssetMapper({
   extension,
 }: AssetMapperContext): Promise<Partial<DevNewExtensionPointSchema>> {
   const filepath = (extensionPoint as Record<string, unknown>)[identifier]
-  if (typeof filepath !== 'string') return {}
-  const payload = await getAssetPayload(identifier, filepath, url, extension)
-  return {
-    assets: {[payload.name]: payload},
+  if (typeof filepath === 'string') {
+    const payload = await getAssetPayload(identifier, filepath, url, extension)
+    return {assets: {[payload.name]: payload}}
   }
+
+  const buildManifest = (extensionPoint as NewExtensionPointSchemaType & {build_manifest?: BuildManifest})
+    .build_manifest
+  const asset = buildManifest?.assets?.[identifier as keyof typeof buildManifest.assets]
+  if (asset?.module) {
+    const payload = await getAssetPayload(identifier, asset.module, url, extension)
+    return {assets: {[payload.name]: payload}}
+  }
+
+  return {}
 }
 
 /**

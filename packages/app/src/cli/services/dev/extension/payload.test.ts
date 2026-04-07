@@ -1,11 +1,10 @@
-import {UIExtensionPayload} from './payload/models.js'
 import {getUIExtensionPayload} from './payload.js'
 import {ExtensionsPayloadStoreOptions} from './payload/store.js'
 import {testUIExtension} from '../../../models/app/app.test-data.js'
 import * as appModel from '../../../models/app/app.js'
 import {describe, expect, test, vi, beforeEach} from 'vitest'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {dirname, joinPath} from '@shopify/cli-kit/node/path'
+import {dirname, extname, joinPath} from '@shopify/cli-kit/node/path'
 
 describe('getUIExtensionPayload', () => {
   beforeEach(() => {
@@ -44,9 +43,9 @@ describe('getUIExtensionPayload', () => {
     sourceFiles: Record<string, string>,
   ) {
     const extensionOutputPath = extension.getOutputPathForDirectory(bundlePath)
-    const buildDir = dirname(extensionOutputPath)
+    const buildDir = extname(extensionOutputPath) ? dirname(extensionOutputPath) : extensionOutputPath
     await mkdir(buildDir)
-    await touchFile(extensionOutputPath)
+    if (extname(extensionOutputPath)) await touchFile(extensionOutputPath)
     await writeFile(joinPath(buildDir, 'manifest.json'), JSON.stringify(manifest))
 
     for (const [filepath, content] of Object.entries(sourceFiles)) {
@@ -183,6 +182,68 @@ describe('getUIExtensionPayload', () => {
     })
   })
 
+  test('maps main and should_render from build_manifest', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const buildManifest = {
+        assets: {
+          main: {module: './src/ExtensionPointA.js', filepath: 'test-ui-extension.js'},
+          should_render: {module: './src/ShouldRender.js', filepath: 'test-ui-extension-conditions.js'},
+        },
+      }
+
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {
+              target: 'CUSTOM_EXTENSION_POINT',
+              module: './src/ExtensionPointA.js',
+              build_manifest: buildManifest,
+            },
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // Create source files so lastUpdated resolves
+      await mkdir(joinPath(tmpDir, 'src'))
+      await writeFile(joinPath(tmpDir, 'src', 'ExtensionPointA.js'), '// main')
+      await writeFile(joinPath(tmpDir, 'src', 'ShouldRender.js'), '// should render')
+
+      await setupBuildOutput(
+        uiExtension,
+        tmpDir,
+        {CUSTOM_EXTENSION_POINT: {main: 'test-ui-extension.js', should_render: 'test-ui-extension-conditions.js'}},
+        {},
+      )
+
+      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          assets: {
+            main: {
+              name: 'main',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/src/ExtensionPointA.js',
+              lastUpdated: expect.any(Number),
+            },
+            should_render: {
+              name: 'should_render',
+              url: 'http://tunnel-url.com/extensions/devUUID/assets/src/ShouldRender.js',
+              lastUpdated: expect.any(Number),
+            },
+          },
+        },
+      ])
+    })
+  })
+
   test('maps intents from manifest.json to asset payloads', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const uiExtension = await testUIExtension({
@@ -241,6 +302,68 @@ describe('getUIExtensionPayload', () => {
           ],
         },
       ])
+    })
+  })
+
+  test('returns extension points without assets when manifest.json does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [
+            {target: 'CUSTOM_EXTENSION_POINT', module: './src/ExtensionPointA.js', tools: './tools.json'},
+          ],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // No setupBuildOutput — manifest.json doesn't exist
+      const got = await getUIExtensionPayload(uiExtension, tmpDir, {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          surface: expect.any(String),
+          root: {url: expect.any(String)},
+          resource: {url: ''},
+        },
+      ])
+      expect((got.extensionPoints as any[])[0].assets).toBeUndefined()
+    })
+  })
+
+  test('returns extension points without assets when build directory does not exist', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const uiExtension = await testUIExtension({
+        directory: tmpDir,
+        configuration: {
+          name: 'test-ui-extension',
+          type: 'ui_extension',
+          extension_points: [{target: 'CUSTOM_EXTENSION_POINT', module: './src/ExtensionPointA.js'}],
+        },
+        devUUID: 'devUUID',
+      })
+
+      // Use a non-existent bundle path — parent directory doesn't exist
+      const got = await getUIExtensionPayload(uiExtension, joinPath(tmpDir, 'nonexistent', 'bundle'), {
+        ...createMockOptions(tmpDir, [uiExtension]),
+        currentDevelopmentPayload: {hidden: true, status: 'success'},
+      })
+
+      expect(got.extensionPoints).toMatchObject([
+        {
+          target: 'CUSTOM_EXTENSION_POINT',
+          surface: expect.any(String),
+          root: {url: expect.any(String)},
+          resource: {url: ''},
+        },
+      ])
+      expect((got.extensionPoints as any[])[0].assets).toBeUndefined()
     })
   })
 

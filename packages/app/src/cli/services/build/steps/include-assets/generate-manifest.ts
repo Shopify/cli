@@ -1,6 +1,6 @@
 import {getNestedValue, tokenizePath} from './copy-config-key-entry.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
-import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {joinPath, dirname, extname} from '@shopify/cli-kit/node/path'
+import {fileExists, mkdir, readFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
 
@@ -28,7 +28,6 @@ interface ConfigKeyManifestEntry {
 export async function generateManifestFile(
   configKeyEntries: ConfigKeyManifestEntry[],
   context: BuildContext,
-  outputDir: string,
   pathMap: Map<string, string | string[]>,
   otherFiles: string[],
 ): Promise<void> {
@@ -96,10 +95,8 @@ export async function generateManifestFile(
         )
       }
 
-      if (Object.prototype.hasOwnProperty.call(manifest, manifestKey)) {
-        options.stdout.write(`Warning: duplicate manifest key '${manifestKey}' — later entry overwrites earlier one\n`)
-      }
-      manifest[manifestKey] = shallowMerge(partials)
+      const existing = (manifest[manifestKey] ?? {}) as {[key: string]: unknown}
+      manifest[manifestKey] = shallowMerge([existing, ...partials])
     }
   }
 
@@ -112,10 +109,51 @@ export async function generateManifestFile(
     return
   }
 
+  await mergeManifestEntries(context, manifest)
+}
+
+/**
+ * Merges new entries into the manifest.json for an extension.
+ * Reads the existing manifest if present and deep merges the new entries.
+ * This allows multiple build steps to contribute to the same manifest.
+ */
+export async function mergeManifestEntries(context: BuildContext, entries: {[key: string]: unknown}): Promise<void> {
+  const outputPath = context.extension.outputPath
+  /**
+   * Resolves the output directory from an extension's outputPath.
+   * When outputPath is a file (has extension), uses dirname. Otherwise uses outputPath directly.
+   */
+  const outputDir = extname(outputPath) ? dirname(outputPath) : outputPath
+
   const manifestPath = joinPath(outputDir, 'manifest.json')
-  await mkdir(outputDir)
-  await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
-  outputDebug(`Generated manifest.json in ${outputDir}\n`, options.stdout)
+
+  let existing: {[key: string]: unknown} = {}
+  if (await fileExists(manifestPath)) {
+    const content = await readFile(manifestPath)
+    existing = JSON.parse(content)
+  } else {
+    // Create the output directory
+    await mkdir(outputDir)
+  }
+
+  // Deep merge: for each key, if both old and new are objects, merge their fields
+  for (const [key, value] of Object.entries(entries)) {
+    const existingValue = existing[key]
+    if (
+      existingValue &&
+      typeof existingValue === 'object' &&
+      !Array.isArray(existingValue) &&
+      typeof value === 'object' &&
+      !Array.isArray(value)
+    ) {
+      existing[key] = {...(existingValue as Record<string, unknown>), ...(value as Record<string, unknown>)}
+    } else {
+      existing[key] = value
+    }
+  }
+
+  await writeFile(manifestPath, JSON.stringify(existing, null, 2))
+  outputDebug(`Updated manifest.json in ${outputDir}\n`, context.options.stdout)
 }
 
 /**
