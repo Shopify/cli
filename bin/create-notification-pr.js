@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 
 import {randomUUID} from 'node:crypto'
 import {createRequire} from 'node:module'
