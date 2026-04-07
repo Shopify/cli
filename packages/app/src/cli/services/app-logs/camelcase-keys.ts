@@ -1,19 +1,4 @@
-/**
- * Converts a string from snake_case or kebab-case to camelCase.
- */
-function toCamelCase(str: string): string {
-  const stripped = str.replace(/^[-_]+/, '')
-  if (!stripped.includes('_') && !stripped.includes('-')) return stripped
-  const parts = stripped.split(/[-_]+/).filter(Boolean)
-  if (parts.length === 0) return stripped
-  return (
-    parts[0]!.toLowerCase() +
-    parts
-      .slice(1)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
-      .join('')
-  )
-}
+import {camelize} from '@shopify/cli-kit/common/string'
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return (
@@ -49,7 +34,7 @@ export default function camelcaseKeys<T = any>(input: T, options?: {deep?: boole
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result: Record<string, any> = {}
     for (const [key, value] of Object.entries(input)) {
-      result[toCamelCase(key)] = transformValue(value, options)
+      result[camelize(key)] = transformValue(value, options)
     }
     return result as T
   }

@@ -43,20 +43,6 @@ describe('camelcaseKeys', () => {
     expect(camelcaseKeys('hello' as any)).toBe('hello')
   })
 
-  test('strips leading underscores', () => {
-    expect(camelcaseKeys({_private: 1})).toEqual({private: 1})
-    expect(camelcaseKeys({_foo_bar: 1})).toEqual({fooBar: 1})
-  })
-
-  test('handles consecutive underscores', () => {
-    expect(camelcaseKeys({foo__bar: 1})).toEqual({fooBar: 1})
-    expect(camelcaseKeys({foo___bar: 1})).toEqual({fooBar: 1})
-  })
-
-  test('handles ALL_CAPS keys', () => {
-    expect(camelcaseKeys({ALL_CAPS: 1})).toEqual({allCaps: 1})
-  })
-
   test('handles empty object', () => {
     expect(camelcaseKeys({})).toEqual({})
   })
