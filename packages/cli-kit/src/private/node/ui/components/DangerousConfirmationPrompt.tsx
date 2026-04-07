@@ -1,7 +1,7 @@
 import {TextInput} from './TextInput.js'
 import {InlineToken, TokenItem, TokenizedText} from './TokenizedText.js'
 import {InfoTable, InfoTableProps} from './Prompts/InfoTable.js'
-import {handleCtrlC} from '../../ui.js'
+import {handleCtrlC, useComplete} from '../../ui.js'
 import useLayout from '../hooks/use-layout.js'
 import {messageWithPunctuation} from '../utilities.js'
 import {AbortSignal} from '../../../../public/node/abort.js'
@@ -9,7 +9,7 @@ import useAbortSignal from '../hooks/use-abort-signal.js'
 import usePrompt, {PromptState} from '../hooks/use-prompt.js'
 
 import React, {FunctionComponent, useCallback, useEffect, useState} from 'react'
-import {Box, useApp, useInput, Text} from 'ink'
+import {Box, useInput, Text} from 'ink'
 import figures from 'figures'
 
 export interface DangerousConfirmationPromptProps {
@@ -38,7 +38,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   const {promptState, setPromptState, answer, setAnswer} = usePrompt<string>({
     initialAnswer: '',
   })
-  const {exit: unmountInk} = useApp()
+  const complete = useComplete()
   const [error, setError] = useState<TokenItem<InlineToken> | undefined>(undefined)
   const color = promptState === PromptState.Error ? 'red' : 'cyan'
   const underline = new Array(oneThird - 3).fill('▔')
@@ -67,12 +67,12 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   useEffect(() => {
     if (promptState === PromptState.Submitted) {
       onSubmit(true)
-      unmountInk()
+      complete()
     } else if (promptState === PromptState.Cancelled) {
       onSubmit(false)
-      unmountInk()
+      complete()
     }
-  }, [onSubmit, promptState, unmountInk])
+  }, [onSubmit, promptState, complete])
 
   const completed = promptState === PromptState.Submitted || promptState === PromptState.Cancelled
 
