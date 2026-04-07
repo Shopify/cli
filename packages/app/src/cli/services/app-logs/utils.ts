@@ -7,12 +7,12 @@ import {
   ErrorResponse,
   AppLogData,
 } from './types.js'
+import camelcaseKeys from './camelcase-keys.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {AppInterface} from '../../models/app/app.js'
 import {AppLogsSubscribeMutationVariables} from '../../api/graphql/app-management/generated/app-logs-subscribe.js'
 import {outputDebug, outputWarn} from '@shopify/cli-kit/node/output'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import camelcaseKeys from 'camelcase-keys'
 import {formatLocalDate} from '@shopify/cli-kit/common/string'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {Writable} from 'stream'
