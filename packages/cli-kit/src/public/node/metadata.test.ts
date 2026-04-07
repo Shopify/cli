@@ -118,16 +118,16 @@ describe('runtime metadata', () => {
 
     const entries = Object.fromEntries(performanceEntries.map((entry) => [entry.name, entry.duration]))
     expect(entries).toMatchObject({
-      'a#wall': a + b + c + d + e,
-      'a#measurable': a,
-      'b#wall': b + c + d + e,
-      'b#measurable': b,
-      'c#wall': c,
-      'c#measurable': c,
-      'd#wall': d + e,
-      'd#measurable': d,
-      'e#wall': e,
-      'e#measurable': e,
+      'a#wall': expect.closeTo(a + b + c + d + e, 5),
+      'a#measurable': expect.closeTo(a, 5),
+      'b#wall': expect.closeTo(b + c + d + e, 5),
+      'b#measurable': expect.closeTo(b, 5),
+      'c#wall': expect.closeTo(c, 5),
+      'c#measurable': expect.closeTo(c, 5),
+      'd#wall': expect.closeTo(d + e, 5),
+      'd#measurable': expect.closeTo(d, 5),
+      'e#wall': expect.closeTo(e, 5),
+      'e#measurable': expect.closeTo(e, 5),
     })
   })
 
@@ -163,10 +163,10 @@ describe('runtime metadata', () => {
 
     const entries = Object.fromEntries(performanceEntries.map((entry) => [entry.name, entry.duration]))
     expect(entries).toMatchObject({
-      'a#wall': a + b,
-      'a#measurable': a,
-      'b#wall': b,
-      'b#measurable': b,
+      'a#wall': expect.closeTo(a + b, 5),
+      'a#measurable': expect.closeTo(a, 5),
+      'b#wall': expect.closeTo(b, 5),
+      'b#measurable': expect.closeTo(b, 5),
     })
   })
 })
