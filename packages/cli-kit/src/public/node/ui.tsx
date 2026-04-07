@@ -486,7 +486,7 @@ interface RenderTasksOptions {
 export async function renderTasks<TContext>(
   tasks: Task<TContext>[],
   {renderOptions, noProgressBar}: RenderTasksOptions = {},
-) {
+): Promise<TContext> {
   let taskResult: TContext
   await render(
     <Tasks
