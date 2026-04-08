@@ -1,3 +1,4 @@
+import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import type {Page} from '@playwright/test'
 
 /**
@@ -27,20 +28,22 @@ export async function completeLogin(page: Page, loginUrl: string, email: string,
 
   try {
     // Fill in email
-    await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: 60_000})
+    await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: BROWSER_TIMEOUT.max})
     await fillSensitive(page, 'input[name="account[email]"], input[type="email"]', email)
     await page.locator('button[type="submit"]').first().click()
 
     // Fill in password
-    await page.waitForSelector('input[name="account[password]"], input[type="password"]', {timeout: 60_000})
+    await page.waitForSelector('input[name="account[password]"], input[type="password"]', {
+      timeout: BROWSER_TIMEOUT.max,
+    })
     await fillSensitive(page, 'input[name="account[password]"], input[type="password"]', password)
     await page.locator('button[type="submit"]').first().click()
 
     // Handle any confirmation/approval page
-    await page.waitForTimeout(3000)
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     try {
       const btn = page.locator('button[type="submit"]').first()
-      if (await btn.isVisible({timeout: 5000})) await btn.click()
+      if (await btn.isVisible({timeout: BROWSER_TIMEOUT.long})) await btn.click()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_error) {
       // No confirmation page — expected

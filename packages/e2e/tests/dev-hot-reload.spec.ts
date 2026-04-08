@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
 import {appTestFixture as test, createApp, injectFixtureToml, teardownApp} from '../setup/app.js'
+import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -36,7 +37,7 @@ description = "E2E test trigger"
 
 test.describe('Dev hot reload', () => {
   test('editing app config TOML triggers reload', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId', 'storeFqdn')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -54,7 +55,7 @@ test.describe('Dev hot reload', () => {
       })
 
       try {
-        await proc.waitForOutput(READY_MESSAGE, 3 * 60 * 1000)
+        await proc.waitForOutput(READY_MESSAGE, CLI_TIMEOUT.medium)
 
         // Edit scopes in the TOML to trigger a reload
         const tomlPath = path.join(appDir, 'shopify.app.toml')
@@ -67,15 +68,15 @@ test.describe('Dev hot reload', () => {
           ),
         )
 
-        await proc.waitForOutput('App config updated', 2 * 60 * 1000)
-        await proc.waitForOutput(UPDATED_MESSAGE, 2 * 60 * 1000)
+        await proc.waitForOutput('App config updated', CLI_TIMEOUT.medium)
+        await proc.waitForOutput(UPDATED_MESSAGE, CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
         expect(output, 'Expected app config update in output').toContain('App config updated')
         expect(output, 'Expected dev preview update in output').toContain(UPDATED_MESSAGE)
 
         proc.sendKey('q')
-        const exitCode = await proc.waitForExit(30_000)
+        const exitCode = await proc.waitForExit(CLI_TIMEOUT.short)
         expect(exitCode, `dev exited with non-zero code. Output:\n${output}`).toBe(0)
       } catch (error) {
         console.error(`[hot-reload app-config] Captured PTY output:\n${proc.getOutput()}`)
@@ -90,7 +91,7 @@ test.describe('Dev hot reload', () => {
   })
 
   test('creating a new extension mid-dev is detected', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId', 'storeFqdn')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -108,17 +109,17 @@ test.describe('Dev hot reload', () => {
       })
 
       try {
-        await proc.waitForOutput(READY_MESSAGE, 3 * 60 * 1000)
+        await proc.waitForOutput(READY_MESSAGE, CLI_TIMEOUT.medium)
 
         writeFlowTriggerExtension(appDir, 'mid-dev-ext')
 
-        await proc.waitForOutput('Extension created', 2 * 60 * 1000)
+        await proc.waitForOutput('Extension created', CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
         expect(output, 'Expected extension created event in output').toContain('Extension created')
 
         proc.sendKey('q')
-        const exitCode = await proc.waitForExit(30_000)
+        const exitCode = await proc.waitForExit(CLI_TIMEOUT.short)
         expect(exitCode, `dev exited with non-zero code. Output:\n${output}`).toBe(0)
       } catch (error) {
         console.error(`[hot-reload create] Captured PTY output:\n${proc.getOutput()}`)
@@ -133,7 +134,7 @@ test.describe('Dev hot reload', () => {
   })
 
   test('deleting an extension mid-dev is detected', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId', 'storeFqdn')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -151,23 +152,23 @@ test.describe('Dev hot reload', () => {
       })
 
       try {
-        await proc.waitForOutput(READY_MESSAGE, 3 * 60 * 1000)
+        await proc.waitForOutput(READY_MESSAGE, CLI_TIMEOUT.medium)
 
         writeFlowTriggerExtension(appDir, 'doomed-ext')
-        await proc.waitForOutput('Extension created', 2 * 60 * 1000)
+        await proc.waitForOutput('Extension created', CLI_TIMEOUT.medium)
 
         // Wait for the dev session to settle before deleting
         await new Promise((resolve) => setTimeout(resolve, 5000))
 
         fs.rmSync(path.join(appDir, 'extensions', 'doomed-ext'), {recursive: true, force: true})
 
-        await proc.waitForOutput('Extension deleted', 2 * 60 * 1000)
+        await proc.waitForOutput('Extension deleted', CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
         expect(output, 'Expected extension deleted event in output').toContain('Extension deleted')
 
         proc.sendKey('q')
-        const exitCode = await proc.waitForExit(30_000)
+        const exitCode = await proc.waitForExit(CLI_TIMEOUT.short)
         expect(exitCode, `dev exited with non-zero code. Output:\n${output}`).toBe(0)
       } catch (error) {
         console.error(`[hot-reload delete] Captured PTY output:\n${proc.getOutput()}`)

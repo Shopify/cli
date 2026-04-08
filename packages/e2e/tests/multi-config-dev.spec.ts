@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
 import {appTestFixture as test, createApp, extractClientId, injectFixtureToml, teardownApp} from '../setup/app.js'
+import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -12,7 +13,7 @@ const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/sho
 
 test.describe('Multi-config dev', () => {
   test('dev with -c flag loads the named config', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId', 'storeFqdn')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -62,7 +63,7 @@ include_config_on_deploy = true
       )
 
       try {
-        await proc.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
+        await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
 
@@ -71,7 +72,7 @@ include_config_on_deploy = true
         expect(output, 'Should not contain write_products from default config').not.toContain('write_products')
 
         proc.sendKey('q')
-        const exitCode = await proc.waitForExit(30_000)
+        const exitCode = await proc.waitForExit(CLI_TIMEOUT.short)
         expect(exitCode, `dev exited with non-zero code. Output:\n${output}`).toBe(0)
       } catch (error) {
         console.error(`[multi-config dev] Captured PTY output:\n${proc.getOutput()}`)
@@ -86,7 +87,7 @@ include_config_on_deploy = true
   })
 
   test('dev without -c flag uses default config', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId', 'storeFqdn')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -125,7 +126,7 @@ api_version = "2025-01"
       })
 
       try {
-        await proc.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
+        await proc.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
 
         const output = proc.getOutput()
 
@@ -133,7 +134,7 @@ api_version = "2025-01"
         expect(output, 'Expected default scopes (write_products) in output').toContain('write_products')
 
         proc.sendKey('q')
-        const exitCode = await proc.waitForExit(30_000)
+        const exitCode = await proc.waitForExit(CLI_TIMEOUT.short)
         expect(exitCode, `dev exited with non-zero code. Output:\n${output}`).toBe(0)
       } catch (error) {
         console.error(`[multi-config default] Captured PTY output:\n${proc.getOutput()}`)
