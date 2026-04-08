@@ -82,6 +82,7 @@ import {ListOrganizations} from '../../api/graphql/business-platform-destination
 import {AppHomeSpecIdentifier} from '../../models/extensions/specifications/app_config_app_home.js'
 import {BrandingSpecIdentifier} from '../../models/extensions/specifications/app_config_branding.js'
 import {AppAccessSpecIdentifier} from '../../models/extensions/specifications/app_config_app_access.js'
+import {AdminSpecIdentifier} from '../../models/extensions/specifications/admin.js'
 
 import {DevSessionCreate, DevSessionCreateMutation} from '../../api/graphql/app-dev/generated/dev-session-create.js'
 import {
@@ -1212,6 +1213,9 @@ function createAppVars(
   apiVersion: string,
 ): CreateAppMutationVariables {
   const {isLaunchable, scopesArray, name} = options
+  const defaultAppUrl = isLaunchable ? 'https://example.com' : MAGIC_URL
+  const defaultRedirectUrl = isLaunchable ? 'https://example.com/api/auth' : MAGIC_REDIRECT_URL
+
   const source: AppVersionSource = {
     source: {
       name,
@@ -1219,7 +1223,7 @@ function createAppVars(
         {
           type: AppHomeSpecIdentifier,
           config: {
-            app_url: isLaunchable ? 'https://example.com' : MAGIC_URL,
+            app_url: options.applicationUrl ?? defaultAppUrl,
             // Ext-only apps should be embedded = false, however we are hardcoding this to
             // match Partners behaviour for now
             // https://github.com/Shopify/develop-app-inner-loop/issues/2789
@@ -1237,10 +1241,18 @@ function createAppVars(
         {
           type: AppAccessSpecIdentifier,
           config: {
-            redirect_url_allowlist: isLaunchable ? ['https://example.com/api/auth'] : [MAGIC_REDIRECT_URL],
+            redirect_url_allowlist: options.redirectUrls ?? [defaultRedirectUrl],
             ...(scopesArray && {scopes: scopesArray.map((scope) => scope.trim()).join(',')}),
           },
         },
+        ...(options.staticRoot
+          ? [
+              {
+                type: AdminSpecIdentifier,
+                config: {admin: {static_root: options.staticRoot}},
+              },
+            ]
+          : []),
       ],
     },
   }
