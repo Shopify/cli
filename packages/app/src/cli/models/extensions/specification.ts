@@ -320,6 +320,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     clientSteps: spec.clientSteps,
     uidStrategy: spec.uidStrategy,
     transformRemoteToLocal: spec.transformRemoteToLocal,
+    devSessionWatchConfig: spec.devSessionWatchConfig,
     deployConfig: async (config, directory) => {
       let parsedConfig = configWithoutFirstClassFields(config)
       if (spec.appModuleFeatures().includes('localization')) {
