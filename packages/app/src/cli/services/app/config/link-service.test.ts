@@ -102,22 +102,22 @@ name = "app1"
 application_url = ""
 embedded = true
 
-[build]
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true
+[pos]
+embedded = false
+
+[webhooks]
+api_version = "2023-07"
+
+[auth]
+redirect_urls = [ ]
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_something_unusual"
 
-[auth]
-redirect_urls = [ ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
+[build]
+include_config_on_deploy = true
+automatically_update_urls_on_dev = true
 `
       expect(configuration).toEqual({
         client_id: 'api-key',

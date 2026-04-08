@@ -1,10 +1,5 @@
 import {setCurrentConfigPreference} from './use.js'
-import {
-  AppConfiguration,
-  CurrentAppConfiguration,
-  CliBuildPreferences,
-  getAppScopes,
-} from '../../../models/app/app.js'
+import {AppConfiguration, CurrentAppConfiguration, CliBuildPreferences, getAppScopes} from '../../../models/app/app.js'
 import {OrganizationApp} from '../../../models/organization.js'
 import {selectConfigName} from '../../../prompts/config.js'
 import {
