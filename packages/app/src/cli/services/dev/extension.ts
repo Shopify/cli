@@ -11,8 +11,14 @@ import {buildCartURLIfNeeded} from './extension/utilities.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {joinPath} from '@shopify/cli-kit/node/path'
+import {getPathValue} from '@shopify/cli-kit/common/object'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
 import {Writable} from 'stream'
+
+interface AppAssets {
+  [key: string]: string
+}
 
 export interface ExtensionDevOptions {
   /**
@@ -112,6 +118,23 @@ export interface ExtensionDevOptions {
    * The app watcher that emits events when the app is updated
    */
   appWatcher: AppEventWatcher
+
+  /**
+   * Map of asset key to absolute directory path for app-level assets (e.g., admin static_root)
+   */
+  appAssets?: AppAssets
+}
+
+export function resolveAppAssets(allExtensions: ExtensionInstance[]): Record<string, string> {
+  const appAssets: Record<string, string> = {}
+  const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
+  if (adminExtension) {
+    const staticRootPath = getPathValue<string>(adminExtension.configuration, 'admin.static_root')
+    if (staticRootPath) {
+      appAssets.staticRoot = joinPath(adminExtension.directory, staticRootPath)
+    }
+  }
+  return appAssets
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
@@ -133,15 +156,27 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
+  const getAppAssets = () => payloadOptions.appAssets
+  const httpServer = setupHTTPServer({
+    devOptions: payloadOptions,
+    payloadStore,
+    getExtensions,
+    getAppAssets,
+  })
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
   outputDebug(`Setting up the UI extensions bundler and file watching...`, payloadOptions.stdout)
 
-  const eventHandler = async ({appWasReloaded, app, extensionEvents}: AppEvent) => {
+  const eventHandler = async ({appWasReloaded, app, extensionEvents, appAssetsUpdated}: AppEvent) => {
     if (appWasReloaded) {
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
+    }
+
+    if (appAssetsUpdated && payloadOptions.appAssets) {
+      for (const assetKey of Object.keys(payloadOptions.appAssets)) {
+        payloadStore.updateAppAssetTimestamp(assetKey)
+      }
     }
 
     for (const event of extensionEvents) {

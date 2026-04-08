@@ -294,11 +294,12 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     | 'clientSteps'
     | 'experience'
     | 'transformRemoteToLocal'
+    | 'schema'
   >,
 ) {
   return createExtensionSpecification({
     identifier: spec.identifier,
-    schema: zod.any({}) as unknown as ZodSchemaType<TConfiguration>,
+    schema: spec.schema ?? (zod.any({}) as unknown as ZodSchemaType<TConfiguration>),
     appModuleFeatures: spec.appModuleFeatures,
     experience: spec.experience,
     buildConfig: spec.buildConfig ?? {mode: 'none'},
