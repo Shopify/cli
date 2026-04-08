@@ -3,6 +3,7 @@
 import {appTestFixture as test, createApp, injectFixtureToml, teardownApp} from '../setup/app.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
+import {updateTomlValues} from '@shopify/toml-patch'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -60,13 +61,8 @@ test.describe('Dev hot reload', () => {
         // Edit scopes in the TOML to trigger a reload
         const tomlPath = path.join(appDir, 'shopify.app.toml')
         const original = fs.readFileSync(tomlPath, 'utf8')
-        fs.writeFileSync(
-          tomlPath,
-          original.replace(
-            'scopes = "read_products,write_products,read_orders"',
-            'scopes = "read_products,write_products"',
-          ),
-        )
+        const patched = updateTomlValues(original, [[['access_scopes', 'scopes'], 'read_products,write_products']])
+        fs.writeFileSync(tomlPath, patched)
 
         await proc.waitForOutput('App config updated', CLI_TIMEOUT.medium)
         await proc.waitForOutput(UPDATED_MESSAGE, CLI_TIMEOUT.medium)

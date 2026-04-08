@@ -1,7 +1,7 @@
 # Comprehensive shopify.app.toml for E2E regression testing
-# client_id is injected at runtime via injectFixtureToml()
-client_id = "__CLIENT_ID__"
-name = "__NAME__"
+# client_id and name are patched at runtime via injectFixtureToml()
+client_id = "placeholder"
+name = "placeholder"
 application_url = "https://example.com"
 embedded = true
 

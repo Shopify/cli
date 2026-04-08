@@ -2,6 +2,8 @@
 import {authFixture} from './auth.js'
 import {navigateToDashboard} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
+import {updateTomlValues} from '@shopify/toml-patch'
+import * as toml from '@iarna/toml'
 import * as path from 'path'
 import * as fs from 'fs'
 import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
@@ -84,23 +86,27 @@ export async function createApp(ctx: {
  * Read the client_id from a shopify.app.toml file.
  */
 export function extractClientId(appDir: string): string {
-  const toml = fs.readFileSync(path.join(appDir, 'shopify.app.toml'), 'utf8')
-  const match = toml.match(/client_id\s*=\s*"([^"]+)"/)
-  if (!match?.[1]) {
-    throw new Error(`Could not find client_id in ${path.join(appDir, 'shopify.app.toml')}`)
+  const tomlPath = path.join(appDir, 'shopify.app.toml')
+  const parsed = toml.parse(fs.readFileSync(tomlPath, 'utf8'))
+  const clientId = parsed.client_id as string | undefined
+  if (!clientId) {
+    throw new Error(`Could not find client_id in ${tomlPath}`)
   }
-  return match[1]
+  return clientId
 }
 
 /**
  * Overwrite a created app's shopify.app.toml with a fixture TOML template.
- * The template should contain `__CLIENT_ID__` and `__NAME__` placeholders which get
- * replaced with the app's real client_id and the provided name.
+ * Uses toml-patch to surgically set client_id and name while
+ * preserving comments and formatting in the fixture file.
  */
 export function injectFixtureToml(appDir: string, fixtureTomlContent: string, name: string): void {
   const clientId = extractClientId(appDir)
-  const toml = fixtureTomlContent.replace(/__CLIENT_ID__/g, clientId).replace(/__NAME__/g, name)
-  fs.writeFileSync(path.join(appDir, 'shopify.app.toml'), toml)
+  const patched = updateTomlValues(fixtureTomlContent, [
+    [['client_id'], clientId],
+    [['name'], name],
+  ])
+  fs.writeFileSync(path.join(appDir, 'shopify.app.toml'), patched)
 }
 
 export async function generateExtension(
