@@ -1,3 +1,4 @@
+import {formatBundleSize} from './bundle-size.js'
 import {AppInterface} from '../../models/app/app.js'
 import {bundleExtension} from '../extensions/bundle.js'
 import {buildGraphqlTypes, buildJSFunction, runTrampoline, runWasmOpt} from '../function/build.js'
@@ -110,7 +111,8 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
   await extension.buildValidation()
 
-  options.stdout.write(`${extension.localIdentifier} successfully built`)
+  const sizeInfo = await formatBundleSize(extension.outputPath)
+  options.stdout.write(`${extension.localIdentifier} successfully built${sizeInfo}`)
 }
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions
