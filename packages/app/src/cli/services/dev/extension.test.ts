@@ -182,35 +182,28 @@ describe('devUIExtensions()', () => {
 })
 
 describe('resolveAppAssets()', () => {
-  test('returns empty object when no admin extension exists', () => {
-    const extensions = [
-      {specification: {identifier: 'ui_extension'}, configuration: {}, directory: '/app'},
-    ] as unknown as Parameters<typeof resolveAppAssets>[0]
+  test('returns empty object when app has no admin config', () => {
+    const app = {configuration: {}, directory: '/app'} as unknown as Parameters<typeof resolveAppAssets>[0]
 
-    expect(resolveAppAssets(extensions)).toStrictEqual({})
+    expect(resolveAppAssets(app)).toStrictEqual({})
   })
 
-  test('returns empty object when admin extension has no static_root', () => {
-    const extensions = [
-      {specification: {identifier: 'admin'}, configuration: {admin: {}}, directory: '/app/extensions/admin'},
-    ] as unknown as Parameters<typeof resolveAppAssets>[0]
+  test('returns empty object when admin config has no static_root', () => {
+    const app = {configuration: {admin: {}}, directory: '/app'} as unknown as Parameters<typeof resolveAppAssets>[0]
 
-    expect(resolveAppAssets(extensions)).toStrictEqual({})
+    expect(resolveAppAssets(app)).toStrictEqual({})
   })
 
   test('returns staticRoot mapped to resolved absolute path when static_root is set', () => {
-    const extensions = [
-      {
-        specification: {identifier: 'admin'},
-        configuration: {admin: {static_root: 'public'}},
-        directory: '/app/extensions/admin',
-      },
-    ] as unknown as Parameters<typeof resolveAppAssets>[0]
+    const app = {
+      configuration: {admin: {static_root: 'public'}},
+      directory: '/app',
+    } as unknown as Parameters<typeof resolveAppAssets>[0]
 
-    const result = resolveAppAssets(extensions)
+    const result = resolveAppAssets(app)
 
     expect(result).toStrictEqual({
-      staticRoot: '/app/extensions/admin/public',
+      staticRoot: '/app/public',
     })
   })
 })

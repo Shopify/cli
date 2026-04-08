@@ -8,6 +8,7 @@ import {
 } from './extension/payload/store.js'
 import {AppEvent, AppEventWatcher, EventType} from './app-events/app-event-watcher.js'
 import {buildCartURLIfNeeded} from './extension/utilities.js'
+import {AppLinkedInterface} from '../../models/app/app.js'
 import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
@@ -125,14 +126,11 @@ export interface ExtensionDevOptions {
   appAssets?: AppAssets
 }
 
-export function resolveAppAssets(allExtensions: ExtensionInstance[]): Record<string, string> {
+export function resolveAppAssets(app: AppLinkedInterface): Record<string, string> {
   const appAssets: Record<string, string> = {}
-  const adminExtension = allExtensions.find((ext) => ext.specification.identifier === 'admin')
-  if (adminExtension) {
-    const staticRootPath = getPathValue<string>(adminExtension.configuration, 'admin.static_root')
-    if (staticRootPath) {
-      appAssets.staticRoot = joinPath(adminExtension.directory, staticRootPath)
-    }
+  const staticRootPath = getPathValue<string>(app.configuration, 'admin.static_root')
+  if (staticRootPath) {
+    appAssets.staticRoot = joinPath(app.directory, staticRootPath)
   }
   return appAssets
 }

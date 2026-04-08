@@ -1,5 +1,6 @@
 import {BaseProcess, DevProcessFunction} from './types.js'
 import {devUIExtensions, resolveAppAssets} from '../extension.js'
+import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {buildCartURLIfNeeded} from '../extension/utilities.js'
 import {AppEventWatcher} from '../app-events/app-event-watcher.js'
@@ -75,11 +76,13 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
 }
 
 export async function setupPreviewableExtensionsProcess({
+  app,
   allExtensions,
   storeFqdn,
   checkoutCartUrl,
   ...options
 }: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'previewableExtensions' | 'port' | 'cartUrl'> & {
+  app: AppLinkedInterface
   allExtensions: ExtensionInstance[]
   checkoutCartUrl?: string
 }): Promise<PreviewableExtensionProcess | undefined> {
@@ -87,7 +90,7 @@ export async function setupPreviewableExtensionsProcess({
 
   const cartUrl = await buildCartURLIfNeeded(previewableExtensions, storeFqdn, checkoutCartUrl)
 
-  const appAssets = resolveAppAssets(allExtensions)
+  const appAssets = resolveAppAssets(app)
 
   return {
     prefix: 'extensions',

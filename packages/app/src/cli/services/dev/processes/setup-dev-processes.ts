@@ -149,6 +149,7 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
+      app: reloadedApp,
       allExtensions: reloadedApp.allExtensions,
       storeFqdn,
       storeId,
