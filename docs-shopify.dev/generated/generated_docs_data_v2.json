@@ -5,7 +5,7 @@
       "name": "DataGeneratedType",
       "description": "Template schema for reference entity documentation pages.",
       "isPublicDocs": true,
-      "value": "data: ReferenceEntityTemplateSchema = {\n  name: 'app build',\n  description: `The following flags are available for the \\`app build\\` command:`,\n  overviewPreviewDescription: `Build the app, including extensions.`,\n  type: 'command',\n  isVisualComponent: false,\n  defaultExample: {\n    codeblock: {\n      tabs: [\n        {\n          title: 'app build',\n          code: './examples/app-build.example.sh',\n          language: 'bash',\n        },\n      ],\n      title: 'app build',\n    },\n  },\n  definitions: [\n  {\n    title: 'Flags',\n    description: 'The following flags are available for the `app build` command:',\n    type: 'appbuild',\n  },\n  ],\n  category: 'app',\n  related: [\n  ],\n}"
+      "value": "data: ReferenceEntityTemplateSchema = {\n  name: 'app build',\n  description: `This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the \\`build\\` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.`,\n  overviewPreviewDescription: `Build the app, including extensions.`,\n  type: 'command',\n  isVisualComponent: false,\n  defaultExample: {\n    codeblock: {\n      tabs: [\n        {\n          title: 'app build',\n          code: './examples/app-build.example.sh',\n          language: 'bash',\n        },\n      ],\n      title: 'app build',\n    },\n  },\n  definitions: [\n  {\n    title: 'Flags',\n    description: 'The following flags are available for the `app build` command:',\n    type: 'appbuild',\n  },\n  ],\n  category: 'app',\n  related: [\n  ],\n}"
     }
   },
   "appbuild": {
@@ -2646,7 +2646,7 @@
     "docs-shopify.dev/commands/interfaces/auth-logout.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/auth-logout.interface.ts",
       "name": "authlogout",
-      "description": "",
+      "description": "The following flags are available for the `auth logout` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface authlogout {\n\n}"
@@ -2731,7 +2731,7 @@
     "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-off.interface.ts",
       "name": "configautocorrectoff",
-      "description": "",
+      "description": "The following flags are available for the `config autocorrect off` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrectoff {\n\n}"
@@ -2741,7 +2741,7 @@
     "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-on.interface.ts",
       "name": "configautocorrecton",
-      "description": "",
+      "description": "The following flags are available for the `config autocorrect on` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrecton {\n\n}"
@@ -2751,7 +2751,7 @@
     "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/config-autocorrect-status.interface.ts",
       "name": "configautocorrectstatus",
-      "description": "",
+      "description": "The following flags are available for the `config autocorrect status` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface configautocorrectstatus {\n\n}"
@@ -4034,7 +4034,7 @@
     "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-shortcut.interface.ts",
       "name": "hydrogenshortcut",
-      "description": "",
+      "description": "The following flags are available for the `hydrogen shortcut` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface hydrogenshortcut {\n\n}"
@@ -4139,7 +4139,7 @@
     "docs-shopify.dev/commands/interfaces/search.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/search.interface.ts",
       "name": "search",
-      "description": "",
+      "description": "The following flags are available for the `search` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface search {\n\n}"
@@ -6130,7 +6130,7 @@
     "docs-shopify.dev/commands/interfaces/upgrade.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/upgrade.interface.ts",
       "name": "upgrade",
-      "description": "",
+      "description": "The following flags are available for the `upgrade` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface upgrade {\n\n}"
@@ -6140,7 +6140,7 @@
     "docs-shopify.dev/commands/interfaces/version.interface.ts": {
       "filePath": "docs-shopify.dev/commands/interfaces/version.interface.ts",
       "name": "version",
-      "description": "",
+      "description": "The following flags are available for the `version` command:",
       "isPublicDocs": true,
       "members": [],
       "value": "export interface version {\n\n}"

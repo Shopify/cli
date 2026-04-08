@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function build',
-  description: `The following flags are available for the \`app function build\` command:`,
+  description: `Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.`,
   overviewPreviewDescription: `Compile a function to wasm.`,
   type: 'command',
   isVisualComponent: false,

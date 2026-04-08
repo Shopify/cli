@@ -3,7 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function schema',
-  description: `The following flags are available for the \`app function schema\` command:`,
+  description: `Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.
+
+  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the \`schema.graphql\` file.`,
   overviewPreviewDescription: `Fetch the latest GraphQL schema for a function.`,
   type: 'command',
   isVisualComponent: false,

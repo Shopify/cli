@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app import-custom-data-definitions',
-  description: `The following flags are available for the \`app import-custom-data-definitions\` command:`,
+  description: `Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).`,
   overviewPreviewDescription: `Import metafield and metaobject definitions.`,
   type: 'command',
   isVisualComponent: false,

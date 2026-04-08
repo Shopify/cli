@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen unlink',
-  description: `The following flags are available for the \`hydrogen unlink\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen unlink\` command:`,
+  description: `Unlinks your local development environment from a remote Hydrogen storefront.`,
+  overviewPreviewDescription: `Unlinks your local development environment from a remote Hydrogen storefront.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

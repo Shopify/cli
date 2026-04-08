@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme info',
-  description: `The following flags are available for the \`theme info\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`theme info\` command:`,
+  description: `Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.`,
+  overviewPreviewDescription: `Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

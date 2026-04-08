@@ -3,7 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'store auth',
-  description: `The following flags are available for the \`store auth\` command:`,
+  description: `Authenticates the app against the specified store for store commands and stores an online access token for later reuse.
+
+Re-run this command if the stored token is missing, expires, or no longer has the scopes you need.`,
   overviewPreviewDescription: `Authenticate an app against a store for store commands.`,
   type: 'command',
   isVisualComponent: false,

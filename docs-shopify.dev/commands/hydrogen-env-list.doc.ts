@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen env list',
-  description: `The following flags are available for the \`hydrogen env list\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen env list\` command:`,
+  description: `Lists all environments available on the linked Hydrogen storefront.`,
+  overviewPreviewDescription: `Lists all environments available on the linked Hydrogen storefront.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

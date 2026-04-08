@@ -3,8 +3,12 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen debug cpu',
-  description: `The following flags are available for the \`hydrogen debug cpu\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen debug cpu\` command:`,
+  description: `Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.
+
+  The profiling results are written to a \`.cpuprofile\` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).`,
+  overviewPreviewDescription: `Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.
+
+  The profiling results are written to a \`.cpuprofile\` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

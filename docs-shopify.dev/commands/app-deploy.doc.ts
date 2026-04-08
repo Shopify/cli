@@ -3,7 +3,12 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app deploy',
-  description: `The following flags are available for the \`app deploy\` command:`,
+  description: `[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.
+
+  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.
+
+  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
+  `,
   overviewPreviewDescription: `Deploy your Shopify app.`,
   type: 'command',
   isVisualComponent: false,

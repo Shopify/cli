@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'organization list',
-  description: `The following flags are available for the \`organization list\` command:`,
+  description: `Lists the Shopify organizations that you have access to, along with their organization IDs.`,
   overviewPreviewDescription: `List Shopify organizations you have access to.`,
   type: 'command',
   isVisualComponent: false,

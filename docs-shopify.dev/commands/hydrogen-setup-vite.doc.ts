@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen setup vite',
-  description: `The following flags are available for the \`hydrogen setup vite\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen setup vite\` command:`,
+  description: `EXPERIMENTAL: Upgrades the project to use Vite.`,
+  overviewPreviewDescription: `EXPERIMENTAL: Upgrades the project to use Vite.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

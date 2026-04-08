@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app function typegen',
-  description: `The following flags are available for the \`app function typegen\` command:`,
+  description: `Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the \`build.typegen_command\` configuration.`,
   overviewPreviewDescription: `Generate GraphQL types for a function.`,
   type: 'command',
   isVisualComponent: false,

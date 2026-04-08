@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app release',
-  description: `The following flags are available for the \`app release\` command:`,
+  description: `Releases an existing app version. Pass the name of the version that you want to release using the \`--version\` flag.`,
   overviewPreviewDescription: `Release an app version.`,
   type: 'command',
   isVisualComponent: false,

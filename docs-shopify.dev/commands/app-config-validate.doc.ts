@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'app config validate',
-  description: `The following flags are available for the \`app config validate\` command:`,
+  description: `Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.`,
   overviewPreviewDescription: `Validate your app configuration and extensions.`,
   type: 'command',
   isVisualComponent: false,

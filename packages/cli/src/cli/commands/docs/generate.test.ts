@@ -6,18 +6,10 @@ import {
   writeCommandFlagInterface,
   writeCommandUsageExampleFile,
 } from './generate.js'
-import {readFile, writeFile} from '@shopify/cli-kit/node/fs'
-import {beforeEach, describe, test, vi, expect} from 'vitest'
+import {writeFile} from '@shopify/cli-kit/node/fs'
+import {describe, test, vi, expect} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/fs')
-
-const typeDescriptions: Record<string, string> = {
-  topictestcommand: 'The following flags are available for the `topic test-command` command:',
-}
-
-beforeEach(() => {
-  vi.mocked(readFile).mockResolvedValue(JSON.stringify(typeDescriptions) as any)
-})
 
 const testCommand: CommandWithMarkdown = {
   aliases: [],
@@ -119,7 +111,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'topic test-command',
-  description: \`The following flags are available for the \\\`topic test-command\\\` command:\`,
+  description: \`command markdown description\`,
   overviewPreviewDescription: \`command summary\`,
   type: 'command',
   isVisualComponent: false,

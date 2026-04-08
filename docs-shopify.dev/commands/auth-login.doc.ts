@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'auth login',
-  description: `The following flags are available for the \`auth login\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`auth login\` command:`,
+  description: `Logs you in to your Shopify account.`,
+  overviewPreviewDescription: `Logs you in to your Shopify account.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

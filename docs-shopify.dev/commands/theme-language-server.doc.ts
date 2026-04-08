@@ -3,7 +3,7 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme language-server',
-  description: `The following flags are available for the \`theme language-server\` command:`,
+  description: `Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).`,
   overviewPreviewDescription: `Start a Language Server Protocol server.`,
   type: 'command',
   isVisualComponent: false,

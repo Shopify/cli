@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen upgrade',
-  description: `The following flags are available for the \`hydrogen upgrade\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen upgrade\` command:`,
+  description: `Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.`,
+  overviewPreviewDescription: `Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

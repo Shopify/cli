@@ -3,7 +3,12 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme init',
-  description: `The following flags are available for the \`theme init\` command:`,
+  description: `Clones a Git repository to your local machine to use as the starting point for building a theme.
+
+  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.
+
+  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
+  `,
   overviewPreviewDescription: `Clones a Git repository to use as a starting point for building a new theme.`,
   type: 'command',
   isVisualComponent: false,

@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen setup markets',
-  description: `The following flags are available for the \`hydrogen setup markets\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen setup markets\` command:`,
+  description: `Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.`,
+  overviewPreviewDescription: `Adds support for multiple [markets](/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

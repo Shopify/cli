@@ -3,8 +3,8 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'hydrogen generate routes',
-  description: `The following flags are available for the \`hydrogen generate routes\` command:`,
-  overviewPreviewDescription: `The following flags are available for the \`hydrogen generate routes\` command:`,
+  description: `Generates all supported standard shopify routes.`,
+  overviewPreviewDescription: `Generates all supported standard shopify routes.`,
   type: 'command',
   isVisualComponent: false,
   defaultExample: {

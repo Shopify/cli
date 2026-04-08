@@ -3,7 +3,9 @@ import {ReferenceEntityTemplateSchema} from '@shopify/generate-docs'
 
 const data: ReferenceEntityTemplateSchema = {
   name: 'theme share',
-  description: `The following flags are available for the \`theme share\` command:`,
+  description: `Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.
+
+  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.`,
   overviewPreviewDescription: `Creates a shareable, unpublished, and new theme on your theme library with a randomized name.`,
   type: 'command',
   isVisualComponent: false,
