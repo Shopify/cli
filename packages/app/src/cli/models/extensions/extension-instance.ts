@@ -458,6 +458,8 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     if (!watchConfig) {
       const importedFiles = this.scanImports()
       watchedFiles.push(...importedFiles)
+      const wildcard = joinPath(this.directory, '**/*')
+      watchedFiles.push(wildcard)
     }
 
     return [...new Set(watchedFiles.map((file) => normalizePath(file)))]
