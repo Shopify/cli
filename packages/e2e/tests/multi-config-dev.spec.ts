@@ -54,11 +54,11 @@ include_config_on_deploy = true
       fs.writeFileSync(path.join(appDir, 'shopify.app.staging.toml'), stagingToml)
       fs.mkdirSync(path.join(appDir, 'staging-ext'), {recursive: true})
 
-      // Start dev with -c staging. SHOPIFY_FLAG_CLIENT_ID must be unset
-      // because --config and --client-id are mutually exclusive.
+      // Start dev with -c staging.
+      // --config and --client-id are mutually exclusive. CLIENT_ID is stripped globally in env.ts.
       const proc = await cli.spawn(
         ['app', 'dev', '--path', appDir, '-c', 'staging', '--skip-dependencies-installation'],
-        {env: {CI: '', SHOPIFY_FLAG_CLIENT_ID: undefined} as NodeJS.ProcessEnv},
+        {env: {CI: ''}},
       )
 
       try {
