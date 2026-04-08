@@ -274,15 +274,6 @@ describe('file-watcher events', () => {
 
       // Then
       expect(watchSpy).toHaveBeenCalledWith([joinPath(dir, '/shopify.app.toml'), joinPath(dir, '/extensions')], {
-        ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/*.test.*',
-          '**/dist/**',
-          '**/*.swp',
-          '**/generated/**',
-          '**/.gitignore',
-        ],
         ignoreInitial: true,
         persistent: true,
       })

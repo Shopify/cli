@@ -2070,9 +2070,12 @@ describe('load', () => {
     const app = await loadTestingApp()
 
     // Then
-    expect(app.allExtensions).toHaveLength(6)
+    expect(app.allExtensions).toHaveLength(7)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
+      expect.objectContaining({
+        name: 'for-testing',
+      }),
       expect.objectContaining({
         name: 'for-testing',
       }),
@@ -2128,9 +2131,12 @@ describe('load', () => {
     const app = await loadTestingApp({remoteFlags: []})
 
     // Then
-    expect(app.allExtensions).toHaveLength(7)
+    expect(app.allExtensions).toHaveLength(8)
     const extensionsConfig = app.allExtensions.map((ext) => ext.configuration)
     expect(extensionsConfig).toEqual([
+      {
+        name: 'for-testing-webhooks',
+      },
       {
         name: 'for-testing-webhooks',
       },
