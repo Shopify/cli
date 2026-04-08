@@ -29,7 +29,9 @@ export async function handleWatcherEvents(
   const appEvent: AppEvent = {app, extensionEvents: [], path: events[0].path, startTime: events[0].startTime}
 
   for (const event of otherEvents) {
-    const affectedExtensions = app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
+    const affectedExtensions = event.extensionHandle
+      ? app.realExtensions.filter((ext) => ext.handle === event.extensionHandle)
+      : app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
     const newEvent = handlers[event.type]({event, app: appEvent.app, extensions: affectedExtensions, options})
     appEvent.extensionEvents.push(...newEvent.extensionEvents)
   }
