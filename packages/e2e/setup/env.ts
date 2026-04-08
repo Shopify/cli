@@ -95,6 +95,7 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
         NODE_OPTIONS: '',
         CI: '1',
         SHOPIFY_CLI_1P_DEV: undefined,
+        SHOPIFY_FLAG_CLIENT_ID: undefined,
       }
 
       if (storeFqdn) {

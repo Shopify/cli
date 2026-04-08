@@ -40,8 +40,7 @@ export async function createApp(ctx: {
   if (ctx.flavor) args.push('--flavor', ctx.flavor)
 
   const result = await cli.execCreateApp(args, {
-    // Disable color output and strip CLIENT_ID to prevent leaking from parent process.env
-    env: {FORCE_COLOR: '0', SHOPIFY_FLAG_CLIENT_ID: undefined},
+    env: {FORCE_COLOR: '0'},
     timeout: 5 * 60 * 1000,
   })
 
