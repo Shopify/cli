@@ -134,6 +134,23 @@ export const devConsoleAssetsMiddleware = defineEventHandler(async (event) => {
   })
 })
 
+export function getAppAssetsMiddleware(getAppAssets: () => Record<string, string> | undefined) {
+  return defineEventHandler(async (event) => {
+    const {assetKey = '', filePath = ''} = getRouterParams(event)
+
+    const appAssets = getAppAssets()
+    const directory = appAssets?.[assetKey]
+
+    if (!directory) {
+      return sendError(event, {statusCode: 404, statusMessage: `No app assets configured for key: ${assetKey}`})
+    }
+
+    return fileServerMiddleware(event, {
+      filePath: joinPath(directory, filePath),
+    })
+  })
+}
+
 export function getLogMiddleware({devOptions}: GetExtensionsMiddlewareOptions) {
   return defineEventHandler((event) => {
     outputDebug(`UI extensions server received a ${event.method} request to URL ${event.path}`, devOptions.stdout)

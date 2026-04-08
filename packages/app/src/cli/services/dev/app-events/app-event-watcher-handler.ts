@@ -4,9 +4,11 @@ import {appDiff} from './app-diffing.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {reloadApp} from '../../../models/app/loader.js'
+import {globPatternBaseDir} from '../../../models/extensions/specification.js'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {endHRTimeInMs, startHRTime} from '@shopify/cli-kit/node/hrtime'
 import {outputDebug} from '@shopify/cli-kit/node/output'
+import {normalizePath} from '@shopify/cli-kit/node/path'
 
 /**
  * Transforms an array of WatcherEvents from the file system into a processed AppEvent.
@@ -32,7 +34,17 @@ export async function handleWatcherEvents(
     const affectedExtensions = event.extensionHandle
       ? app.realExtensions.filter((ext) => ext.handle === event.extensionHandle)
       : app.realExtensions.filter((ext) => ext.directory === event.extensionPath)
-    const newEvent = handlers[event.type]({event, app: appEvent.app, extensions: affectedExtensions, options})
+
+    // Check if this is an app asset change (e.g. file inside admin static_root).
+    // If so, mark assetsUpdated and skip the normal rebuild for those extensions.
+    const assetExtensions = affectedExtensions.filter((ext) => isAppAssetChange(ext, event.path))
+    const nonAssetExtensions = affectedExtensions.filter((ext) => !isAppAssetChange(ext, event.path))
+
+    if (assetExtensions.length > 0) {
+      appEvent.appAssetsUpdated = true
+    }
+
+    const newEvent = handlers[event.type]({event, app: appEvent.app, extensions: nonAssetExtensions, options})
     appEvent.extensionEvents.push(...newEvent.extensionEvents)
   }
 
@@ -123,6 +135,22 @@ async function ReloadAppHandler({event, app}: HandlerInput): Promise<AppEvent> {
   const updatedEvents = diff.updated.map((ext) => ({type: EventType.Updated, extension: ext}))
   const extensionEvents = [...createdEvents, ...deletedEvents, ...updatedEvents]
   return {app: newApp, extensionEvents, startTime: event.startTime, path: event.path, appWasReloaded: true}
+}
+
+/**
+ * Checks whether a file change is inside an app asset directory (e.g. admin static_root).
+ * App asset changes should only update asset timestamps, not trigger a full extension rebuild.
+ */
+function isAppAssetChange(extension: ExtensionInstance, filePath: string): boolean {
+  if (!extension.isAppConfigExtension) return false
+  const watchConfig = extension.devSessionWatchConfig
+  if (!watchConfig || watchConfig.paths.length === 0 || !watchConfig.assetKey) return false
+
+  const normalizedFile = normalizePath(filePath)
+  return watchConfig.paths.some((pattern) => {
+    const baseDir = normalizePath(globPatternBaseDir(pattern))
+    return normalizedFile.startsWith(baseDir)
+  })
 }
 
 /*

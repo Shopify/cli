@@ -150,6 +150,8 @@ export interface DevSessionWatchConfig {
   paths: string[]
   /** Additional glob patterns to ignore (on top of the default ignore list) */
   ignore?: string[]
+  /** If set, files under these paths are served as app assets under this key (e.g. 'static_root') */
+  assetKey?: string
 }
 
 /**
@@ -445,4 +447,10 @@ function defaultAppConfigReverseTransform<T>(schema: zod.ZodType<T, any, any>, c
 export function configWithoutFirstClassFields(config: JsonMapType): JsonMapType {
   const {type, handle, uid, path, extensions, ...configWithoutFirstClassFields} = config
   return configWithoutFirstClassFields
+}
+
+// Extracts the base directory from a glob pattern by stripping the glob suffix.
+// e.g. "/app/public/" + glob -> "/app/public"
+export function globPatternBaseDir(pattern: string): string {
+  return pattern.replace(/\/\*.*$/, '')
 }

@@ -24,7 +24,7 @@ const adminSpecificationSpec = createExtensionSpecification({
     if (!staticRoot) return {paths: []}
 
     const path = joinPath(extension.directory, staticRoot, '**/*')
-    return {paths: [path], ignore: []}
+    return {paths: [path], ignore: [], assetKey: 'staticRoot'}
   },
   transformRemoteToLocal: (remoteContent) => {
     return {
