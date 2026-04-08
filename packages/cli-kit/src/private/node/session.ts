@@ -93,6 +93,16 @@ interface BusinessPlatformAPIOAuthOptions {
 }
 
 /**
+ * A scope supported by the Signups API.
+ * The Signups API uses the Identity bearer token directly (no application token exchange).
+ */
+export type SignupsScope = 'shop-create'
+interface SignupsAPIOAuthOptions {
+  /** List of scopes to request permissions for. */
+  scopes: SignupsScope[]
+}
+
+/**
  * It represents the authentication requirements and
  * is the input necessary to trigger the authentication
  * flow.
@@ -103,6 +113,7 @@ export interface OAuthApplications {
   partnersApi?: PartnersAPIOAuthOptions
   businessPlatformApi?: BusinessPlatformAPIOAuthOptions
   appManagementApi?: AppManagementAPIOauthOptions
+  signupsApi?: SignupsAPIOAuthOptions
 }
 
 export interface OAuthSession {
@@ -111,6 +122,7 @@ export interface OAuthSession {
   storefront?: string
   businessPlatform?: string
   appManagement?: string
+  identity?: string
   userId: string
 }
 
@@ -397,6 +409,10 @@ async function tokensFor(applications: OAuthApplications, session: Session): Pro
     tokens.appManagement = session.applications[appId]?.accessToken
   }
 
+  if (applications.signupsApi) {
+    tokens.identity = session.identity.accessToken
+  }
+
   return tokens
 }
 
@@ -413,7 +429,8 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
   const storefront = apps.storefrontRendererApi?.scopes ?? []
   const businessPlatform = apps.businessPlatformApi?.scopes ?? []
   const appManagement = apps.appManagementApi?.scopes ?? []
-  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement]
+  const signups = apps.signupsApi?.scopes ?? []
+  const requestedScopes = [...admin, ...partner, ...storefront, ...businessPlatform, ...appManagement, ...signups]
   return allDefaultScopes(requestedScopes)
 }
 
@@ -424,6 +441,9 @@ function getFlattenScopes(apps: OAuthApplications): string[] {
  * @returns An object containing the scopes for each application.
  */
 function getExchangeScopes(apps: OAuthApplications): ExchangeScopes {
+  // Note: signupsApi is intentionally excluded here. The Signups API uses the Identity bearer
+  // token directly rather than an exchanged application token. Its scopes are included in
+  // getFlattenScopes so they appear on the Identity token, but no exchange is needed.
   const adminScope = apps.adminApi?.scopes ?? []
   const partnerScope = apps.partnersApi?.scopes ?? []
   const storefrontScopes = apps.storefrontRendererApi?.scopes ?? []

@@ -74,6 +74,7 @@
 * [`shopify plugins update`](#shopify-plugins-update)
 * [`shopify search [query]`](#shopify-search-query)
 * [`shopify store auth`](#shopify-store-auth)
+* [`shopify store create`](#shopify-store-create)
 * [`shopify store execute`](#shopify-store-execute)
 * [`shopify theme check`](#shopify-theme-check)
 * [`shopify theme console`](#shopify-theme-console)
@@ -2079,6 +2080,41 @@ EXAMPLES
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products
 
   $ shopify store auth --store shop.myshopify.com --scopes read_products,write_products --json
+```
+
+## `shopify store create`
+
+Create a new Shopify store.
+
+```
+USAGE
+  $ shopify store create [-c <value>] [--dev] [-j] [-n <value>] [--no-color] [--subdomain <value>] [--verbose]
+
+FLAGS
+  -c, --country=<value>    [default: US, env: SHOPIFY_FLAG_STORE_COUNTRY] The country code for the store (e.g., US, CA,
+                           GB).
+  -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
+  -n, --name=<value>       [env: SHOPIFY_FLAG_STORE_NAME] The name of the store.
+      --dev                [env: SHOPIFY_FLAG_STORE_DEV] Create a development store instead of a trial store.
+      --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --subdomain=<value>  [env: SHOPIFY_FLAG_STORE_SUBDOMAIN] The custom myshopify.com subdomain for the store.
+      --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
+
+DESCRIPTION
+  Create a new Shopify store.
+
+  Creates a new Shopify store associated with your account.
+
+  By default, creates a trial store. Use `--dev` to create a development store instead.
+
+EXAMPLES
+  $ shopify store create
+
+  $ shopify store create --name "My Store" --country US
+
+  $ shopify store create --name "My Dev Store" --dev
+
+  $ shopify store create --name "My Store" --json
 ```
 
 ## `shopify store execute`

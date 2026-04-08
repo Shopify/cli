@@ -81,6 +81,8 @@ function scopeTransform(scope: string): string {
       return 'https://api.shopify.com/auth/organization.on-demand-user-access'
     case 'app-management':
       return 'https://api.shopify.com/auth/organization.apps.manage'
+    case 'shop-create':
+      return 'https://api.shopify.com/auth/shop.create'
     default:
       return scope
   }

@@ -15,6 +15,7 @@ import {
   BusinessPlatformScope,
   EnsureAuthenticatedAdditionalOptions,
   PartnersAPIScope,
+  SignupsScope,
   StorefrontRendererScope,
   ensureAuthenticated,
   setLastSeenAuthMethod,
@@ -272,6 +273,30 @@ ${outputToken.json(scopes)}
     throw new BugError('No business-platform token found after ensuring authenticated')
   }
   return tokens.businessPlatform
+}
+
+/**
+ * Ensure that we have a valid session to access the Signups API.
+ * The Signups API uses the Identity bearer token directly (no application token exchange).
+ *
+ * @param scopes - Optional array of extra scopes to authenticate with.
+ * @param env - Optional environment variables to use.
+ * @param options - Optional extra options to use.
+ * @returns The Identity access token and user ID.
+ */
+export async function ensureAuthenticatedSignups(
+  scopes: SignupsScope[] = ['shop-create'],
+  env = process.env,
+  options: EnsureAuthenticatedAdditionalOptions = {},
+): Promise<{token: string; userId: string}> {
+  outputDebug(outputContent`Ensuring that the user is authenticated with the Signups API with the following scopes:
+${outputToken.json(scopes)}
+`)
+  const tokens = await ensureAuthenticated({signupsApi: {scopes}}, env, options)
+  if (!tokens.identity) {
+    throw new BugError('No identity token found after ensuring authenticated')
+  }
+  return {token: tokens.identity, userId: tokens.userId}
 }
 
 /**

@@ -5915,6 +5915,108 @@
     "related": []
   },
   {
+    "name": "store create",
+    "description": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store instead.",
+    "overviewPreviewDescription": "Create a new Shopify store.",
+    "type": "command",
+    "isVisualComponent": false,
+    "defaultExample": {
+      "codeblock": {
+        "tabs": [
+          {
+            "title": "store create",
+            "code": "shopify store create [flags]",
+            "language": "bash"
+          }
+        ],
+        "title": "store create"
+      }
+    },
+    "definitions": [
+      {
+        "title": "Flags",
+        "description": "The following flags are available for the `store create` command:",
+        "type": "storecreate",
+        "typeDefinitions": {
+          "storecreate": {
+            "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+            "name": "storecreate",
+            "description": "The following flags are available for the `store create` command:",
+            "isPublicDocs": true,
+            "members": [
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--dev",
+                "value": "''",
+                "description": "Create a development store instead of a trial store.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_DEV"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--no-color",
+                "value": "''",
+                "description": "Disable color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--subdomain <value>",
+                "value": "string",
+                "description": "The custom myshopify.com subdomain for the store.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_SUBDOMAIN"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--verbose",
+                "value": "''",
+                "description": "Increase the verbosity of the output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_VERBOSE"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-c, --country <value>",
+                "value": "string",
+                "description": "The country code for the store (e.g., US, CA, GB).",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_COUNTRY"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-j, --json",
+                "value": "''",
+                "description": "Output the result as JSON. Automatically disables color output.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_JSON"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "-n, --name <value>",
+                "value": "string",
+                "description": "The name of the store.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_NAME"
+              }
+            ],
+            "value": "export interface storecreate {\n  /**\n   * The country code for the store (e.g., US, CA, GB).\n   * @environment SHOPIFY_FLAG_STORE_COUNTRY\n   */\n  '-c, --country <value>'?: string\n\n  /**\n   * Create a development store instead of a trial store.\n   * @environment SHOPIFY_FLAG_STORE_DEV\n   */\n  '--dev'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The name of the store.\n   * @environment SHOPIFY_FLAG_STORE_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The custom myshopify.com subdomain for the store.\n   * @environment SHOPIFY_FLAG_STORE_SUBDOMAIN\n   */\n  '--subdomain <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+          }
+        }
+      }
+    ],
+    "category": "store",
+    "related": []
+  },
+  {
     "name": "store execute",
     "description": "Executes an Admin API GraphQL query or mutation on the specified store using previously stored app authentication.\n\nRun `shopify store auth` first to create stored auth for the store.\n\nMutations are disabled by default. Re-run with `--allow-mutations` if you intend to modify store data.",
     "overviewPreviewDescription": "Execute GraphQL queries and mutations on a store.",
