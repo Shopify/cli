@@ -27,6 +27,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
             "name": "appbuild",
             "description": "The following flags are available for the `app build` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
@@ -41,7 +42,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -59,7 +60,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -68,7 +69,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--skip-dependencies-installation",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION"
@@ -77,7 +78,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -128,6 +129,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
             "name": "appbulkcancel",
             "description": "The following flags are available for the `app bulk cancel` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
@@ -150,7 +152,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -168,7 +170,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -177,7 +179,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-cancel.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -237,6 +239,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
             "name": "appbulkexecute",
             "description": "The following flags are available for the `app bulk execute` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
@@ -251,7 +254,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -287,7 +290,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -305,7 +308,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -323,7 +326,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--watch",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Wait for bulk operation results before exiting. Defaults to false.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_WATCH"
@@ -401,6 +404,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
             "name": "appbulkstatus",
             "description": "The following flags are available for the `app bulk status` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
@@ -424,7 +428,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -442,7 +446,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -451,7 +455,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-bulk-status.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -511,6 +515,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
             "name": "appconfiglink",
             "description": "The following flags are available for the `app config link` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
@@ -525,7 +530,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -543,7 +548,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -552,7 +557,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -603,6 +608,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
             "name": "appconfigpull",
             "description": "The following flags are available for the `app config pull` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
@@ -617,7 +623,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -635,7 +641,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -644,7 +650,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -695,6 +701,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
             "name": "appconfiguse",
             "description": "The following flags are available for the `app config use` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
@@ -709,7 +716,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -727,7 +734,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -736,7 +743,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-use.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -778,6 +785,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
             "name": "appconfigvalidate",
             "description": "The following flags are available for the `app config validate` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
@@ -792,7 +800,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -810,7 +818,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -819,7 +827,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -837,7 +845,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-config-validate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -879,12 +887,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
             "name": "appdeploy",
             "description": "The following flags are available for the `app deploy` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-deletes",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_DELETES"
@@ -893,7 +902,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-updates",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_UPDATES"
@@ -920,7 +929,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-build",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Use with caution: Skips building any elements of the app that require building. You should ensure your app has been prepared in advance, such as by running `shopify app build` or by caching build artifacts.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_BUILD"
@@ -929,7 +938,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -938,7 +947,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-release",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Creates a version but doesn't release it - it's not made available to merchants. With this flag, a user confirmation is not required.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_RELEASE"
@@ -956,7 +965,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -974,7 +983,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1001,7 +1010,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "[Deprecated] Deploy without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
@@ -1043,6 +1052,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
             "name": "appdevclean",
             "description": "The following flags are available for the `app dev clean` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
@@ -1057,7 +1067,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1075,7 +1085,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1084,7 +1094,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev-clean.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1144,6 +1154,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
             "name": "appdev",
             "description": "The following flags are available for the `app dev` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
@@ -1176,7 +1187,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1185,7 +1196,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-update",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Uses the app URL from the toml file instead an autogenerated URL for dev.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_UPDATE"
@@ -1212,7 +1223,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1221,7 +1232,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--skip-dependencies-installation",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Skips the installation of dependencies. Deprecated, use workspaces instead.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_SKIP_DEPENDENCIES_INSTALLATION"
@@ -1257,7 +1268,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--use-localhost",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Service entry point will listen to localhost. A tunnel won't be used. Will work for testing many app features, but not those that directly invoke your app (E.g: Webhooks)",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_USE_LOCALHOST"
@@ -1266,7 +1277,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1335,6 +1346,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
             "name": "appenvpull",
             "description": "The following flags are available for the `app env pull` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
@@ -1358,7 +1370,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1376,7 +1388,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1385,7 +1397,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1436,6 +1448,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
             "name": "appenvshow",
             "description": "The following flags are available for the `app env show` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
@@ -1450,7 +1463,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1468,7 +1481,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1477,7 +1490,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-env-show.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1528,6 +1541,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
             "name": "appexecute",
             "description": "The following flags are available for the `app execute` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
@@ -1542,7 +1556,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1578,7 +1592,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1596,7 +1610,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1683,6 +1697,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
             "name": "appfunctionbuild",
             "description": "The following flags are available for the `app function build` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
@@ -1697,7 +1712,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1715,7 +1730,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1724,7 +1739,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1775,6 +1790,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
             "name": "appfunctioninfo",
             "description": "The following flags are available for the `app function info` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
@@ -1789,7 +1805,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1807,7 +1823,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1816,7 +1832,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1834,7 +1850,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -1876,6 +1892,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
             "name": "appfunctionreplay",
             "description": "The following flags are available for the `app function replay` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
@@ -1890,7 +1907,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -1908,7 +1925,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -1917,7 +1934,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -1935,7 +1952,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -1953,7 +1970,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-replay.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-w, --watch",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Re-run the function when the source code changes.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_WATCH"
@@ -1995,6 +2012,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
             "name": "appfunctionrun",
             "description": "The following flags are available for the `app function run` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
@@ -2009,7 +2027,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2027,7 +2045,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2036,7 +2054,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2072,7 +2090,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-run.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -2114,6 +2132,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
             "name": "appfunctionschema",
             "description": "The following flags are available for the `app function schema` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
@@ -2128,7 +2147,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2146,7 +2165,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2155,7 +2174,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--stdout",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the schema to stdout instead of writing to a file.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_STDOUT"
@@ -2164,7 +2183,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-schema.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2215,6 +2234,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
             "name": "appfunctiontypegen",
             "description": "The following flags are available for the `app function typegen` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
@@ -2229,7 +2249,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2247,7 +2267,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2256,7 +2276,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-function-typegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2307,6 +2327,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
             "name": "appgenerateextension",
             "description": "The following flags are available for the `app generate extension` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
@@ -2330,7 +2351,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2348,7 +2369,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2357,7 +2378,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-generate-extension.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2435,6 +2456,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
             "name": "appimportcustomdatadefinitions",
             "description": "The following flags are available for the `app import-custom-data-definitions` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
@@ -2449,7 +2471,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--include-existing",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Include existing declared definitions in the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_INCLUDE_EXISTING"
@@ -2458,7 +2480,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2476,7 +2498,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2485,7 +2507,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-custom-data-definitions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2545,6 +2567,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
             "name": "appimportextensions",
             "description": "The following flags are available for the `app import-extensions` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
@@ -2559,7 +2582,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2577,7 +2600,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2586,7 +2609,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-import-extensions.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2637,6 +2660,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
             "name": "appinfo",
             "description": "The following flags are available for the `app info` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
@@ -2651,7 +2675,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2669,7 +2693,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2678,7 +2702,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2687,7 +2711,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--web-env",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Outputs environment variables necessary for running and deploying web/.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_OUTPUT_WEB_ENV"
@@ -2705,7 +2729,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -2747,6 +2771,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
             "name": "appinit",
             "description": "The following flags are available for the `app init` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
@@ -2770,7 +2795,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2797,7 +2822,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2866,6 +2891,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
             "name": "applogssources",
             "description": "The following flags are available for the `app logs sources` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
@@ -2880,7 +2906,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2898,7 +2924,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -2907,7 +2933,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs-sources.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -2958,6 +2984,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
             "name": "applogs",
             "description": "The following flags are available for the `app logs` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
@@ -2972,7 +2999,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -2990,7 +3017,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -3017,7 +3044,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -3035,7 +3062,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-logs.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -3086,12 +3113,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
             "name": "apprelease",
             "description": "The following flags are available for the `app release` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-deletes",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allows removing extensions and configuration without requiring user confirmation. For CI/CD environments, the recommended flag is --allow-updates.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_DELETES"
@@ -3100,7 +3128,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-updates",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allows adding and updating extensions and configuration without requiring user confirmation. Recommended option for CI/CD environments.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_UPDATES"
@@ -3118,7 +3146,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -3136,7 +3164,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -3145,7 +3173,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -3171,7 +3199,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-release.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "[Deprecated] Release without asking for confirmation. Equivalent to --allow-updates --allow-deletes. Use --allow-updates for CI/CD environments instead.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
@@ -3213,6 +3241,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
             "name": "appversionslist",
             "description": "The following flags are available for the `app versions list` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
@@ -3227,7 +3256,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -3245,7 +3274,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -3254,7 +3283,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -3272,7 +3301,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-versions-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -3314,6 +3343,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
             "name": "appwebhooktrigger",
             "description": "The following flags are available for the `app webhook trigger` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
@@ -3364,7 +3394,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--help",
-                "value": "\"\"",
+                "value": "''",
                 "description": "This help. When you run the trigger command the CLI will prompt you for any information that isn't passed using flags.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_HELP"
@@ -3382,7 +3412,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/app-webhook-trigger.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--reset",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Reset all your settings.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_RESET"
@@ -3451,6 +3481,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
             "name": "authlogin",
             "description": "The following flags are available for the `auth login` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/auth-login.interface.ts",
@@ -3520,12 +3551,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
             "name": "commands",
             "description": "The following flags are available for the `commands` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--deprecated",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Show deprecated commands.",
                 "isOptional": true
               },
@@ -3533,7 +3565,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--hidden",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Show hidden commands.",
                 "isOptional": true
               },
@@ -3541,7 +3573,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Format output as json.",
                 "isOptional": true
               },
@@ -3549,7 +3581,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-truncate",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Do not truncate output.",
                 "isOptional": true
               },
@@ -3565,7 +3597,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--tree",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Show tree of commands.",
                 "isOptional": true
               },
@@ -3581,7 +3613,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/commands.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-x, --extended",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Show extra columns.",
                 "isOptional": true
               }
@@ -3688,12 +3720,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
             "name": "help",
             "description": "The following flags are available for the `help` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/help.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nested-commands",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Include all nested commands in the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_CLI_NESTED_COMMANDS"
@@ -3735,12 +3768,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
             "name": "hydrogenbuild",
             "description": "The following flags are available for the `hydrogen build` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--bundle-stats",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Show a bundle size summary after building. Defaults to true, use `--no-bundle-stats` to disable.",
                 "isOptional": true
               },
@@ -3748,7 +3782,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--codegen",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
                 "isOptional": true
               },
@@ -3764,7 +3798,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--disable-route-warning",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disables any warnings about missing standard routes.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_DISABLE_ROUTE_WARNING"
@@ -3782,7 +3816,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--force-client-sourcemap",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP"
@@ -3791,7 +3825,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--lockfile-check",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK"
@@ -3809,7 +3843,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--sourcemap",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Controls whether server sourcemaps are generated. Default to `true`. Deactivate `--no-sourcemaps`.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_SOURCEMAP"
@@ -3818,7 +3852,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-build.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--watch",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Watches for changes and rebuilds the project writing output to disk.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_WATCH"
@@ -3860,6 +3894,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
             "name": "hydrogencheck",
             "description": "The following flags are available for the `hydrogen check` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-check.interface.ts",
@@ -3907,6 +3942,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
             "name": "hydrogencodegen",
             "description": "The following flags are available for the `hydrogen codegen` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
@@ -3929,7 +3965,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-codegen.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--watch",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Watch the project for changes to update types on file save.",
                 "isOptional": true
               }
@@ -3970,6 +4006,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
             "name": "hydrogencustomeraccountpush",
             "description": "The following flags are available for the `hydrogen customer-account-push` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-customer-account-push.interface.ts",
@@ -4048,6 +4085,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
             "name": "hydrogendebugcpu",
             "description": "The following flags are available for the `hydrogen debug cpu` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-debug-cpu.interface.ts",
@@ -4112,12 +4150,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
             "name": "hydrogendeploy",
             "description": "The following flags are available for the `hydrogen deploy` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--auth-bypass-token",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Generate an authentication bypass token, which can be used to perform end-to-end tests against the deployment.",
                 "isOptional": true,
                 "environmentValue": "AUTH_BYPASS_TOKEN"
@@ -4177,7 +4216,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--force-client-sourcemap",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Client sourcemapping is avoided by default because it makes backend code visible in the browser. Use this flag to force enabling it.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE_CLIENT_SOURCEMAP"
@@ -4186,7 +4225,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--json-output",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Create a JSON file containing the deployment details in CI environments. Defaults to true, use `--no-json-output` to disable.",
                 "isOptional": true
               },
@@ -4194,7 +4233,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--lockfile-check",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Checks that there is exactly one valid lockfile in the project. Defaults to `true`. Deactivate with `--no-lockfile-check`.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_LOCKFILE_CHECK"
@@ -4221,7 +4260,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-verify",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Skip the routability verification step after deployment.",
                 "isOptional": true
               },
@@ -4238,7 +4277,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--preview",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Deploys to the Preview environment.",
                 "isOptional": true
               },
@@ -4246,7 +4285,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-deploy.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Forces a deployment to proceed if there are uncommited changes in its Git repository.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -4306,12 +4345,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
             "name": "hydrogendev",
             "description": "The following flags are available for the `hydrogen dev` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--codegen",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
                 "isOptional": true
               },
@@ -4327,7 +4367,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--customer-account-push",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Use tunneling for local development and push the tunneling domain to admin. Required to use Customer Account API's OAuth flow",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_CUSTOMER_ACCOUNT_PUSH"
@@ -4336,7 +4376,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--debug",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_DEBUG"
@@ -4345,7 +4385,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--disable-deps-optimizer",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable adding dependencies to Vite's `ssr.optimizeDeps.include` automatically",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_DISABLE_DEPS_OPTIMIZER"
@@ -4354,7 +4394,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--disable-version-check",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Skip the version check when running `hydrogen dev`",
                 "isOptional": true
               },
@@ -4362,7 +4402,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--disable-virtual-routes",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable rendering fallback routes when a route file doesn't exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_DISABLE_VIRTUAL_ROUTES"
@@ -4405,7 +4445,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--host",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Expose the server to the local network",
                 "isOptional": true
               },
@@ -4440,7 +4480,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Outputs more information about the command's execution.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_VERBOSE"
@@ -4482,6 +4522,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
             "name": "hydrogenenvlist",
             "description": "The following flags are available for the `hydrogen env list` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-list.interface.ts",
@@ -4529,6 +4570,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
             "name": "hydrogenenvpull",
             "description": "The following flags are available for the `hydrogen env pull` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
@@ -4568,7 +4610,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -4610,6 +4652,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
             "name": "hydrogenenvpush",
             "description": "The following flags are available for the `hydrogen env push` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-env-push.interface.ts",
@@ -4673,6 +4716,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
             "name": "hydrogengenerateroute",
             "description": "The following flags are available for the `hydrogen generate route` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
@@ -4705,7 +4749,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--typescript",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Generate TypeScript files",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT"
@@ -4714,7 +4758,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-route.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -4756,6 +4800,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
             "name": "hydrogengenerateroutes",
             "description": "The following flags are available for the `hydrogen generate routes` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
@@ -4788,7 +4833,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--typescript",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Generate TypeScript files",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_TYPESCRIPT"
@@ -4797,7 +4842,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-generate-routes.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -4839,12 +4884,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
             "name": "hydrogeninit",
             "description": "The following flags are available for the `hydrogen init` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--git",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Init Git and create initial commits.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_GIT"
@@ -4853,7 +4899,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--install-deps",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Auto installs dependencies using the active package manager.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS"
@@ -4880,7 +4926,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--mock-shop",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Use mock.shop as the data source for the storefront.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_MOCK_DATA"
@@ -4898,7 +4944,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--quickstart",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Scaffolds a new Hydrogen project with a set of sensible defaults. Equivalent to `shopify hydrogen init --path hydrogen-quickstart --mock-shop --language js --shortcut --markets none`",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_QUICKSTART"
@@ -4907,7 +4953,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--shortcut",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_SHORTCUT"
@@ -4934,7 +4980,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -4976,6 +5022,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
             "name": "hydrogenlink",
             "description": "The following flags are available for the `hydrogen link` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
@@ -4999,7 +5046,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-link.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -5041,6 +5088,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
             "name": "hydrogenlist",
             "description": "The following flags are available for the `hydrogen list` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-list.interface.ts",
@@ -5088,6 +5136,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
             "name": "hydrogenlogin",
             "description": "The following flags are available for the `hydrogen login` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-login.interface.ts",
@@ -5144,6 +5193,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
             "name": "hydrogenlogout",
             "description": "The following flags are available for the `hydrogen logout` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-logout.interface.ts",
@@ -5191,12 +5241,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
             "name": "hydrogenpreview",
             "description": "The following flags are available for the `hydrogen preview` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--build",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Builds the app before starting the preview server.",
                 "isOptional": true
               },
@@ -5204,7 +5255,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--codegen",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Automatically generates GraphQL types for your project’s Storefront API queries.",
                 "isOptional": true
               },
@@ -5220,7 +5271,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--debug",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Enables inspector connections to the server with a debugger such as Visual Studio Code or Chrome DevTools.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_DEBUG"
@@ -5290,7 +5341,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Outputs more information about the command's execution.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_VERBOSE"
@@ -5299,7 +5350,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--watch",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Watches for changes and rebuilds the project.",
                 "isOptional": true
               }
@@ -5340,12 +5391,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
             "name": "hydrogensetupcss",
             "description": "The following flags are available for the `hydrogen setup css` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--install-deps",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Auto installs dependencies using the active package manager.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS"
@@ -5363,7 +5415,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-css.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -5405,6 +5457,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
             "name": "hydrogensetupmarkets",
             "description": "The following flags are available for the `hydrogen setup markets` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-markets.interface.ts",
@@ -5452,6 +5505,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
             "name": "hydrogensetupvite",
             "description": "The following flags are available for the `hydrogen setup vite` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup-vite.interface.ts",
@@ -5499,12 +5553,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
             "name": "hydrogensetup",
             "description": "The following flags are available for the `hydrogen setup` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--install-deps",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Auto installs dependencies using the active package manager.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_INSTALL_DEPS"
@@ -5531,7 +5586,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--shortcut",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Creates a global h2 shortcut for Shopify CLI using shell aliases. Deactivate with `--no-shortcut`.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_SHORTCUT"
@@ -5540,7 +5595,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-setup.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Overwrites the destination directory and files if they already exist.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -5604,6 +5659,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
             "name": "hydrogenunlink",
             "description": "The following flags are available for the `hydrogen unlink` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-unlink.interface.ts",
@@ -5651,6 +5707,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
             "name": "hydrogenupgrade",
             "description": "The following flags are available for the `hydrogen upgrade` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
@@ -5665,7 +5722,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/hydrogen-upgrade.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Ignore warnings and force the upgrade to the target version",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_HYDROGEN_FLAG_FORCE"
@@ -5715,12 +5772,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
             "name": "organizationlist",
             "description": "The following flags are available for the `organization list` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -5729,7 +5787,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -5738,7 +5796,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/organization-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -5802,12 +5860,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
             "name": "storeauth",
             "description": "The following flags are available for the `store auth` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -5824,7 +5883,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -5833,7 +5892,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -5882,7 +5941,7 @@
           "storecreate": {
             "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
             "name": "storecreate",
-            "description": "The following flags are available for the `store create` command:",
+            "description": "",
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
@@ -5984,12 +6043,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
             "name": "storeexecute",
             "description": "The following flags are available for the `store execute` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--allow-mutations",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allow GraphQL mutations to run against the target store.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_MUTATIONS"
@@ -5998,7 +6058,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6034,7 +6094,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6052,7 +6112,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -6120,6 +6180,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
             "name": "themecheck",
             "description": "The following flags are available for the `theme check` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
@@ -6134,7 +6195,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--init",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Generate a .theme-check.yml file",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_INIT"
@@ -6143,7 +6204,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--list",
-                "value": "\"\"",
+                "value": "''",
                 "description": "List enabled checks",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LIST"
@@ -6152,7 +6213,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6170,7 +6231,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--print",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output active config to STDOUT",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PRINT"
@@ -6179,7 +6240,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6188,7 +6249,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --auto-correct",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Automatically fix offenses",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_AUTO_CORRECT"
@@ -6224,7 +6285,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-check.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-v, --version",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Print Theme Check version",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERSION"
@@ -6266,12 +6327,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
             "name": "themeconsole",
             "description": "The following flags are available for the `theme console` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6316,7 +6378,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-console.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6376,12 +6438,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
             "name": "themedelete",
             "description": "The following flags are available for the `theme delete` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6408,7 +6471,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6417,7 +6480,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --show-all",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Include others development themes in theme list.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_SHOW_ALL"
@@ -6426,7 +6489,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Delete your development theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
@@ -6444,7 +6507,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-delete.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Skip confirmation.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
@@ -6504,13 +6567,14 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
             "name": "themedev",
             "description": "The following flags are available for the `theme dev` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--error-overlay <value>",
                 "value": "string",
-                "description": "Controls the visibility of the error overlay when an theme asset upload fails: - silent Prevents the error overlay from appearing. - default Displays the error overlay.",
+                "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ERROR_OVERLAY"
               },
@@ -6537,7 +6601,7 @@
                 "syntaxKind": "PropertySignature",
                 "name": "--live-reload <value>",
                 "value": "string",
-                "description": "The live reload mode switches the server behavior when a file is modified: - hot-reload Hot reloads local changes to CSS and sections (default) - full-page  Always refreshes the entire page - off        Deactivate live reload",
+                "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LIVE_RELOAD"
               },
@@ -6545,7 +6609,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6563,7 +6627,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--open",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Automatically launch the theme preview in your default web browser.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_OPEN"
@@ -6608,7 +6672,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--theme-editor-sync",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Synchronize Theme Editor updates in the local theme files.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_THEME_EDITOR_SYNC"
@@ -6617,7 +6681,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6626,7 +6690,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --allow-live",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allow development on a live theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_LIVE"
@@ -6644,7 +6708,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-dev.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NODELETE"
@@ -6722,12 +6786,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
             "name": "themeduplicate",
             "description": "The following flags are available for the `theme duplicate` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6745,7 +6810,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6763,7 +6828,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Force the duplicate operation to run without prompts or confirmations.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
@@ -6772,7 +6837,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-duplicate.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -6841,12 +6906,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
             "name": "themeinfo",
             "description": "The following flags are available for the `theme info` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6873,7 +6939,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6882,7 +6948,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Retrieve info from your development theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
@@ -6900,7 +6966,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-info.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -6960,12 +7026,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
             "name": "themeinit",
             "description": "The following flags are available for the `theme init` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -6983,7 +7050,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -6992,7 +7059,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-init.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --latest",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Downloads the latest release of the `clone-url`",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LATEST"
@@ -7043,12 +7110,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-language-server.interface.ts",
             "name": "themelanguageserver",
             "description": "The following flags are available for the `theme language-server` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-language-server.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7057,7 +7125,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-language-server.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7099,6 +7167,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
             "name": "themelist",
             "description": "The following flags are available for the `theme list` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
@@ -7122,7 +7191,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7158,7 +7227,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7176,7 +7245,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-list.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -7227,12 +7296,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
             "name": "thememetafieldspull",
             "description": "The following flags are available for the `theme metafields pull` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7259,7 +7329,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-metafields-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7319,12 +7389,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
             "name": "themeopen",
             "description": "The following flags are available for the `theme open` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7351,7 +7422,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7360,7 +7431,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Open your development theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
@@ -7369,7 +7440,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-E, --editor",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Open the theme editor for the specified theme in the browser.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_EDITOR"
@@ -7387,7 +7458,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-open.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Open your live (published) theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LIVE"
@@ -7447,12 +7518,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-package.interface.ts",
             "name": "themepackage",
             "description": "The following flags are available for the `theme package` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-package.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7470,7 +7542,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-package.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7512,12 +7584,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
             "name": "themepreview",
             "description": "The following flags are available for the `theme preview` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the preview URL and identifier as JSON.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -7526,7 +7599,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7535,7 +7608,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--open",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Automatically launch the theme preview in your default web browser.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_OPEN"
@@ -7579,7 +7652,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-preview.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7647,12 +7720,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
             "name": "themeprofile",
             "description": "The following flags are available for the `theme profile` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7697,7 +7771,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7715,7 +7789,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-profile.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -7775,12 +7849,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
             "name": "themepublish",
             "description": "The following flags are available for the `theme publish` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7807,7 +7882,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7825,7 +7900,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-publish.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-f, --force",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Skip confirmation.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_FORCE"
@@ -7885,12 +7960,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
             "name": "themepull",
             "description": "The following flags are available for the `theme pull` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -7917,7 +7993,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -7926,7 +8002,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Pull theme files from your remote development theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
@@ -7944,7 +8020,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Pull theme files from your remote live theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LIVE"
@@ -7953,7 +8029,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-pull.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Prevent deleting local files that don't exist remotely.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NODELETE"
@@ -8031,6 +8107,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
             "name": "themepush",
             "description": "The following flags are available for the `theme push` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
@@ -8045,7 +8122,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -8072,7 +8149,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--strict",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Require theme check to pass without errors before pushing. Warnings are allowed.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_STRICT_PUSH"
@@ -8081,7 +8158,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -8090,7 +8167,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-a, --allow-live",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Allow push to a live theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_ALLOW_LIVE"
@@ -8108,7 +8185,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Push theme files from your remote development theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
@@ -8126,7 +8203,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -8135,7 +8212,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Push theme files from your remote live theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LIVE"
@@ -8144,7 +8221,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-n, --nodelete",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Prevent deleting remote files that don't exist locally.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NODELETE"
@@ -8162,7 +8239,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-p, --publish",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Publish as the live theme after uploading.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_PUBLISH"
@@ -8189,7 +8266,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-push.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-u, --unpublished",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Create a new unpublished theme and push to it.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_UNPUBLISHED"
@@ -8240,12 +8317,13 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
             "name": "themerename",
             "description": "The following flags are available for the `theme rename` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -8272,7 +8350,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -8281,7 +8359,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-d, --development",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Rename your development theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_DEVELOPMENT"
@@ -8299,7 +8377,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-rename.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-l, --live",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Rename your remote live theme.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_LIVE"
@@ -8368,6 +8446,7 @@
             "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
             "name": "themeshare",
             "description": "The following flags are available for the `theme share` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
@@ -8382,7 +8461,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
@@ -8409,7 +8488,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/theme-share.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
