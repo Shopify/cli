@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-imports */
 import {appTestFixture as test, createApp, buildApp, generateExtension, teardownApp} from '../setup/app.js'
+import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -7,7 +8,7 @@ import * as path from 'path'
 
 test.describe('App scaffold', () => {
   test('init creates a react-router app and builds', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -44,7 +45,7 @@ test.describe('App scaffold', () => {
   })
 
   test('init creates an extension-only app', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -72,7 +73,7 @@ test.describe('App scaffold', () => {
   // even with a valid OAuth session. The Business Platform Organizations API token
   // exchange needs investigation. OAuth login works, but this specific API rejects it.
   test.skip('generate extensions and build', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))

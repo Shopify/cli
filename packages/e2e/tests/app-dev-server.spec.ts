@@ -1,4 +1,5 @@
 import {appTestFixture as test, createApp, teardownApp} from '../setup/app.js'
+import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -6,7 +7,7 @@ import * as path from 'path' // eslint-disable-line no-restricted-imports
 
 test.describe('App dev server', () => {
   test('dev starts, shows ready message, and quits with q', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId', 'storeFqdn')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
@@ -30,7 +31,7 @@ test.describe('App dev server', () => {
       const dev = await cli.spawn(['app', 'dev', '--path', appDir], {env: {CI: ''}})
 
       // Step 3: Wait for the ready message
-      await dev.waitForOutput('Ready, watching for changes in your app', 3 * 60 * 1000)
+      await dev.waitForOutput('Ready, watching for changes in your app', CLI_TIMEOUT.medium)
 
       // Step 4: Verify keyboard shortcuts are shown (indicates TTY mode is working)
       const output = dev.getOutput()
@@ -40,7 +41,7 @@ test.describe('App dev server', () => {
       dev.sendKey('q')
 
       // Step 6: Wait for clean exit
-      const exitCode = await dev.waitForExit(30_000)
+      const exitCode = await dev.waitForExit(CLI_TIMEOUT.short)
       expect(exitCode).toBe(0)
     } finally {
       fs.rmSync(parentDir, {recursive: true, force: true})

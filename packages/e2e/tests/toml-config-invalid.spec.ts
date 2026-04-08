@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
 import {appTestFixture as test} from '../setup/app.js'
+import {CLI_TIMEOUT} from '../setup/constants.js'
 import {expect} from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
@@ -28,7 +29,7 @@ test.describe('TOML config invalid', () => {
         )
 
         const result = await cli.exec(['app', 'deploy', '--path', appDir, '--force'], {
-          timeout: 2 * 60 * 1000,
+          timeout: CLI_TIMEOUT.medium,
         })
         const output = result.stdout + result.stderr
         console.log(`[${label}] exit code: ${result.exitCode}\n[${label}] output:\n${output}`)
