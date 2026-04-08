@@ -76,6 +76,7 @@ interface TestCaseSingleEvent {
   fileSystemEvent: string
   path: string
   expectedEvent?: Omit<WatcherEvent, 'startTime'> & {startTime?: WatcherEvent['startTime']}
+  expectedEventCount?: number
 }
 
 /**
@@ -104,6 +105,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       path: '/extensions/ui_extension_1/index.js',
       extensionPath: '/extensions/ui_extension_1',
     },
+    expectedEventCount: 2,
   },
   {
     name: 'change in toml',
@@ -114,6 +116,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
     },
+    expectedEventCount: 2,
   },
   {
     name: 'change in app config',
@@ -134,6 +137,7 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       path: '/extensions/ui_extension_1/new-file.js',
       extensionPath: '/extensions/ui_extension_1',
     },
+    expectedEventCount: 2,
   },
   {
     name: 'delete a file',
@@ -280,7 +284,7 @@ describe('file-watcher events', () => {
 
   test.each(singleEventTestCases)(
     'The event $name returns the expected WatcherEvent',
-    async ({fileSystemEvent, path, expectedEvent}) => {
+    async ({fileSystemEvent, path, expectedEvent, expectedEventCount}) => {
       // Given
       let eventHandler: any
 
@@ -369,7 +373,8 @@ describe('file-watcher events', () => {
               throw new Error('Expected onChange to be called with events, but all calls had empty arrays')
             }
 
-            expect(actualEvents).toHaveLength(1)
+            const eventCount = expectedEventCount ?? 1
+            expect(actualEvents).toHaveLength(eventCount)
             const actualEvent = actualEvents[0]
 
             expect(actualEvent.type).toBe(expectedEvent.type)
