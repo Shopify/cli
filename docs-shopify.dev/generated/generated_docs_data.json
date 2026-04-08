@@ -5892,7 +5892,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-auth.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -6011,7 +6011,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-execute.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
