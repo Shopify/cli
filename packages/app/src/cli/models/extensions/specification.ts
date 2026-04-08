@@ -136,6 +136,20 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * Copy static assets from the extension directory to the output path
    */
   copyStaticAssets?: (configuration: TConfiguration, directory: string, outputPath: string) => Promise<void>
+
+  /**
+   * Custom watch configuration for dev sessions.
+   * Return a DevSessionWatchConfig with paths to watch and optionally paths to ignore,
+   * or undefined to watch all files in the extension directory.
+   */
+  devSessionWatchConfig?: (extension: ExtensionInstance<TConfiguration>) => DevSessionWatchConfig | undefined
+}
+
+export interface DevSessionWatchConfig {
+  /** Absolute paths or globs to watch */
+  paths: string[]
+  /** Additional glob patterns to ignore (on top of the default ignore list) */
+  ignore?: string[]
 }
 
 /**
@@ -294,6 +308,7 @@ export function createContractBasedModuleSpecification<TConfiguration extends Ba
     | 'clientSteps'
     | 'experience'
     | 'transformRemoteToLocal'
+    | 'devSessionWatchConfig'
   >,
 ) {
   return createExtensionSpecification({
