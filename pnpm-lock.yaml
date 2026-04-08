@@ -518,9 +518,15 @@ importers:
 
   packages/e2e:
     devDependencies:
+      '@iarna/toml':
+        specifier: 2.2.5
+        version: 2.2.5
       '@playwright/test':
         specifier: ^1.50.0
         version: 1.58.2
+      '@shopify/toml-patch':
+        specifier: 0.3.0
+        version: 0.3.0
       '@types/node':
         specifier: 18.19.70
         version: 18.19.70
