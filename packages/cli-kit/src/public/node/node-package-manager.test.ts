@@ -846,11 +846,7 @@ describe('getPackageManager', () => {
   test('finds if npm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJSON = {name: 'mock name'}
-
-      // When
-      await writePackageJSON(tmpDir, packageJSON)
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
+      await writePackageJSON(tmpDir, {name: 'mock name'})
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -861,13 +857,8 @@ describe('getPackageManager', () => {
   test('finds if yarn is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJSON = {name: 'mock name'}
-      const yarnLock = joinPath(tmpDir, 'yarn.lock')
-
-      // When
-      await writePackageJSON(tmpDir, packageJSON)
-      await writeFile(yarnLock, '')
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -878,13 +869,8 @@ describe('getPackageManager', () => {
   test('finds if pnpm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
-      const packageJSON = {name: 'mock name'}
-      const pnpmLock = joinPath(tmpDir, 'pnpm-lock.yaml')
-
-      // When
-      await writePackageJSON(tmpDir, packageJSON)
-      await writeFile(pnpmLock, '')
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '')
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -892,34 +878,23 @@ describe('getPackageManager', () => {
     })
   })
 
-  test('falls back to packageManagerFromUserAgent when npm prefix fails', async () => {
+  test('falls back to packageManagerFromUserAgent when no package.json is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
+      // Given — no package.json in tmpDir, stub user agent to yarn
       vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
-
-      // Mock npm prefix to fail
-      mockedCaptureOutput.mockRejectedValueOnce(new Error('npm prefix failed'))
 
       // When
       const packageManager = await getPackageManager(tmpDir)
 
       // Then
-      expect(mockedCaptureOutput).toHaveBeenCalledWith('npm', ['prefix'], expect.anything())
-      expect(packageManager).toEqual('yarn')
-
-      // Restore original implementation
       vi.unstubAllEnvs()
+      expect(packageManager).toEqual('yarn')
     })
   })
 
   test("tries to guess the package manager from the environment if it can't find a package.json", async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
-      const subDirectory = joinPath(tmpDir, 'subdir')
-      await mkdir(subDirectory)
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
-
-      // When/Then
+      // When/Then — no package.json, falls back to user agent
       const packageManager = await getPackageManager(tmpDir)
       // pnpm is used locally and in CI
       expect(packageManager).toEqual('pnpm')
