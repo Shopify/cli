@@ -26,6 +26,8 @@ export type Scalars = {
   BulkDataOperationID: { input: any; output: any; }
   /** The ID for a BusinessUser. */
   BusinessUserID: { input: any; output: any; }
+  /** The ID for a BusinessUsersImport. */
+  BusinessUsersImportID: { input: any; output: any; }
   /** A signed decimal number, which supports arbitrary precision and is serialized as a string. */
   Decimal: { input: any; output: any; }
   /** The ID for a DocumentAttachment. */
