@@ -132,7 +132,9 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   }
   const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
   if (packageJsonPath) {
-    outputDebug(outputContent`Found package.json but no lockfile in ${outputToken.path(dirname(packageJsonPath))}, defaulting to npm`)
+    outputDebug(
+      outputContent`Found package.json but no lockfile in ${outputToken.path(dirname(packageJsonPath))}, defaulting to npm`,
+    )
     return 'npm'
   }
   return packageManagerFromUserAgent()
