@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {copyFile, fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -418,7 +418,32 @@ describe('buildFunctionExtension', () => {
     expect(runWasmOpt).toHaveBeenCalled()
   })
 
-  test('does not rebundle when build.path stays in the default output directory', async () => {
+  test('copies raw binary (not base64) to dist/index.wasm when build.path is in a different dir (standalone build)', async () => {
+    // Given
+    extension.configuration.build!.path = 'target/wasm32-wasi/release/my_func.wasm'
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+
+    // When
+    await expect(
+      buildFunctionExtension(extension, {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      }),
+    ).resolves.toBeUndefined()
+
+    // Then: copyFile is used (raw binary copy), NOT base64 bundling via touchFile/writeFile
+    expect(copyFile).toHaveBeenCalledWith(
+      joinPath(extension.directory, 'target/wasm32-wasi/release/my_func.wasm'),
+      joinPath(extension.directory, 'dist', 'index.wasm'),
+    )
+    expect(touchFile).not.toHaveBeenCalled()
+    expect(writeFile).not.toHaveBeenCalled()
+  })
+
+  test('copies raw binary to dist/index.wasm when build.path stays in the default output directory', async () => {
     // Given
     extension.configuration.build!.path = 'dist/custom.wasm'
     vi.mocked(fileExistsSync).mockReturnValue(true)
@@ -434,8 +459,11 @@ describe('buildFunctionExtension', () => {
       }),
     ).resolves.toBeUndefined()
 
-    // Then
-    expect(fileExistsSync).toHaveBeenCalledWith(joinPath(extension.directory, 'dist/custom.wasm'))
+    // Then: copyFile is used (raw binary copy), NOT base64 bundling via touchFile/writeFile
+    expect(copyFile).toHaveBeenCalledWith(
+      joinPath(extension.directory, 'dist/custom.wasm'),
+      joinPath(extension.directory, 'dist', 'index.wasm'),
+    )
     expect(touchFile).not.toHaveBeenCalled()
     expect(writeFile).not.toHaveBeenCalled()
   })
