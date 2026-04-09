@@ -649,7 +649,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const query = AppInstallCount
     const variables = {appId: id}
     const result = await this.appManagementRequest({query, variables})
-    return result.app.installCount
+    return result.app.installCount ?? 0
   }
 
   async appVersionByTag(
