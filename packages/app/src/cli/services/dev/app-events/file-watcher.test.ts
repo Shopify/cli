@@ -77,6 +77,7 @@ interface TestCaseSingleEvent {
   path: string
   expectedEvent?: Omit<WatcherEvent, 'startTime'> & {startTime?: WatcherEvent['startTime']}
   expectedEventCount?: number
+  expectedHandles?: string[]
 }
 
 /**
@@ -104,8 +105,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_updated',
       path: '/extensions/ui_extension_1/index.js',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
     expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'change in toml',
@@ -115,8 +118,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'extensions_config_updated',
       path: '/extensions/ui_extension_1/shopify.ui.extension.toml',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
     expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'change in app config',
@@ -136,8 +141,10 @@ const singleEventTestCases: TestCaseSingleEvent[] = [
       type: 'file_created',
       path: '/extensions/ui_extension_1/new-file.js',
       extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
     },
     expectedEventCount: 2,
+    expectedHandles: ['h1', 'h2'],
   },
   {
     name: 'delete a file',
@@ -284,7 +291,7 @@ describe('file-watcher events', () => {
 
   test.each(singleEventTestCases)(
     'The event $name returns the expected WatcherEvent',
-    async ({fileSystemEvent, path, expectedEvent, expectedEventCount}) => {
+    async ({fileSystemEvent, path, expectedEvent, expectedEventCount, expectedHandles}) => {
       // Given
       let eventHandler: any
 
@@ -382,6 +389,14 @@ describe('file-watcher events', () => {
             expect(actualEvent.extensionPath).toBe(normalizePath(expectedEvent.extensionPath))
             expect(Array.isArray(actualEvent.startTime)).toBe(true)
             expect(actualEvent.startTime).toHaveLength(2)
+
+            // Verify extensionHandle is set correctly on file-level events
+            if (expectedHandles) {
+              const actualHandles = actualEvents.map((e: WatcherEvent) => e.extensionHandle).sort()
+              expect(actualHandles).toEqual(expectedHandles.sort())
+            } else if (expectedEvent.extensionHandle) {
+              expect(actualEvent.extensionHandle).toBe(expectedEvent.extensionHandle)
+            }
           },
           {timeout: 1000, interval: 50},
         )
