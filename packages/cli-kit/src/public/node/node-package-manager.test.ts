@@ -713,7 +713,6 @@ describe('addResolutionOrOverride', () => {
   test('when no package.json then an abort exception is thrown', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given/When
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       const result = () => addResolutionOrOverride(tmpDir, {'@types/react': '17.0.30'})
 
       // Then
@@ -731,7 +730,6 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'yarn.lock'))
 
       // When
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -752,7 +750,6 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'pnpm-lock.yaml'))
 
       // When
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -773,7 +770,6 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'pnpm-workspace.yaml'))
 
       // When
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -794,7 +790,6 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'yarn.lock'))
 
       // When
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -815,7 +810,6 @@ describe('addResolutionOrOverride', () => {
       await touchFile(joinPath(tmpDir, 'yarn.lock'))
 
       // When
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
       await addResolutionOrOverride(tmpDir, reactType)
 
       // Then
@@ -823,6 +817,48 @@ describe('addResolutionOrOverride', () => {
       expect(packageJsonContent.resolutions).toBeDefined()
       expect(packageJsonContent.resolutions).toEqual({'@types/node': '^17.0.38', '@types/react': '17.0.30'})
       expect(packageJsonContent.overrides).toBeUndefined()
+    })
+  })
+
+  test('when nested package.json uses a parent yarn lockfile then resolutions are added to the nested package', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      await writeFile(joinPath(tmpDir, 'yarn.lock'), '')
+      const packageDirectory = joinPath(tmpDir, 'extensions', 'my-extension')
+      await mkdir(packageDirectory)
+      const packageJsonPath = joinPath(packageDirectory, 'package.json')
+      await writeFile(packageJsonPath, JSON.stringify({}))
+
+      // When
+      await addResolutionOrOverride(packageDirectory, reactType)
+
+      // Then
+      const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+      expect(packageJsonContent.resolutions).toEqual(reactType)
+      expect(packageJsonContent.overrides).toBeUndefined()
+    })
+  })
+
+  test('when package.json has no lockfile and the user agent is yarn then overrides still default to npm behavior', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const reactType = {'@types/react': '17.0.30'}
+      const packageJsonPath = joinPath(tmpDir, 'package.json')
+      await writeFile(packageJsonPath, JSON.stringify({}))
+      vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
+
+      try {
+        // When
+        await addResolutionOrOverride(tmpDir, reactType)
+
+        // Then
+        const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
+        expect(packageJsonContent.overrides).toEqual(reactType)
+        expect(packageJsonContent.resolutions).toBeUndefined()
+      } finally {
+        vi.unstubAllEnvs()
+      }
     })
   })
 })

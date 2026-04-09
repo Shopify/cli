@@ -1,6 +1,16 @@
 import {isDevelopment} from './context/local.js'
-import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
-import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
+import {currentProcessIsGlobal, getProjectDir, inferPackageManagerForGlobalCLI} from './is-global.js'
+import {
+  addNPMDependencies,
+  checkForCachedNewVersion,
+  checkForNewVersion,
+  findUpAndReadPackageJson,
+  getPackageManager,
+  inferPackageManagerForDirectory,
+  packageManagerFromUserAgent,
+  PackageManager,
+  usesWorkspaces,
+} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
 import {cliInstallCommand, runCLIUpgrade, versionToAutoUpgrade} from './upgrade.js'
 import {isPreReleaseVersion} from './version.js'
@@ -161,6 +171,57 @@ describe('runCLIUpgrade', () => {
 
     // Then
     expect(exec).not.toHaveBeenCalled()
+  })
+
+  test('uses directory-based package manager inference with npm default semantics for local project upgrades', async () => {
+    // Given
+    vi.mocked(currentProcessIsGlobal).mockReturnValue(false)
+    vi.mocked(isDevelopment).mockReturnValue(false)
+    vi.mocked(getProjectDir).mockReturnValue('/project')
+    vi.mocked(findUpAndReadPackageJson)
+      .mockResolvedValueOnce({
+        path: '/project/package.json',
+        content: {
+          dependencies: {'@shopify/cli': '3.0.0'},
+          devDependencies: {'@shopify/plugin-example': '1.0.0'},
+        },
+      })
+      .mockResolvedValueOnce({
+        path: '/cli-kit/package.json',
+        content: {name: '@shopify/cli', oclif: {plugins: ['@shopify/plugin-example']}},
+      })
+    vi.mocked(checkForNewVersion).mockResolvedValue(undefined)
+    vi.mocked(usesWorkspaces).mockResolvedValue(false)
+    vi.mocked(inferPackageManagerForDirectory).mockResolvedValue('pnpm')
+    vi.mocked(addNPMDependencies).mockResolvedValue()
+
+    // When
+    await runCLIUpgrade()
+
+    // Then
+    expect(inferPackageManagerForDirectory).toHaveBeenNthCalledWith(1, '/project', {})
+    expect(inferPackageManagerForDirectory).toHaveBeenNthCalledWith(2, '/project', {})
+    expect(getPackageManager).not.toHaveBeenCalled()
+    expect(addNPMDependencies).toHaveBeenNthCalledWith(
+      1,
+      [{name: '@shopify/cli', version: 'latest'}],
+      expect.objectContaining({
+        packageManager: 'pnpm',
+        type: 'prod',
+        directory: '/project',
+        addToRootDirectory: false,
+      }),
+    )
+    expect(addNPMDependencies).toHaveBeenNthCalledWith(
+      2,
+      [{name: '@shopify/plugin-example', version: 'latest'}],
+      expect.objectContaining({
+        packageManager: 'pnpm',
+        type: 'dev',
+        directory: '/project',
+        addToRootDirectory: false,
+      }),
+    )
   })
 })
 

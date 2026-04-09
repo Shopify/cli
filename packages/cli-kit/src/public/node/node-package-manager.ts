@@ -761,7 +761,7 @@ export async function findUpAndReadPackageJson(fromDirectory: string): Promise<{
 }
 
 export async function addResolutionOrOverride(directory: string, dependencies: Record<string, string>): Promise<void> {
-  const packageManager = await getPackageManager(directory)
+  const packageManager = await inferPackageManagerForDirectory(directory, {})
   const packageJsonPath = joinPath(directory, 'package.json')
   const packageJsonContent = await readAndParsePackageJson(packageJsonPath)
 
