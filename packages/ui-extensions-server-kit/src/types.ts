@@ -182,4 +182,10 @@ export interface App {
   }
   supportEmail?: string
   supportLocales?: string[]
+  assets?: {
+    [key: string]: {
+      url: string
+      lastUpdated: number
+    }
+  }
 }
