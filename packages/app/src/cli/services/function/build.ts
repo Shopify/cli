@@ -19,7 +19,7 @@ import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {build as esBuild, BuildResult} from 'esbuild'
 import {findPathUp, inTemporaryDirectory, readFile, readFileSync, writeFile} from '@shopify/cli-kit/node/fs'
-import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
@@ -144,7 +144,7 @@ export async function buildGraphqlTypes(
     )
   }
 
-  const packageManager = inferPackageManager(undefined)
+  const packageManager = await getPackageManager(fun.directory)
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
     return exec(packageManager, ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
       cwd: fun.directory,

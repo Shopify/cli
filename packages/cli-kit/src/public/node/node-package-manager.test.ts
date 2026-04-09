@@ -850,7 +850,6 @@ describe('getPackageManager', () => {
 
       // When
       await writePackageJSON(tmpDir, packageJSON)
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -867,7 +866,6 @@ describe('getPackageManager', () => {
       // When
       await writePackageJSON(tmpDir, packageJSON)
       await writeFile(yarnLock, '')
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -884,7 +882,6 @@ describe('getPackageManager', () => {
       // When
       await writePackageJSON(tmpDir, packageJSON)
       await writeFile(pnpmLock, '')
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -892,22 +889,17 @@ describe('getPackageManager', () => {
     })
   })
 
-  test('falls back to packageManagerFromUserAgent when npm prefix fails', async () => {
+  test('falls back to packageManagerFromUserAgent when no package.json is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
       vi.stubEnv('npm_config_user_agent', 'yarn/1.22.0')
-
-      // Mock npm prefix to fail
-      mockedCaptureOutput.mockRejectedValueOnce(new Error('npm prefix failed'))
 
       // When
       const packageManager = await getPackageManager(tmpDir)
 
       // Then
-      expect(mockedCaptureOutput).toHaveBeenCalledWith('npm', ['prefix'], expect.anything())
       expect(packageManager).toEqual('yarn')
 
-      // Restore original implementation
       vi.unstubAllEnvs()
     })
   })
@@ -917,7 +909,6 @@ describe('getPackageManager', () => {
       // Given
       const subDirectory = joinPath(tmpDir, 'subdir')
       await mkdir(subDirectory)
-      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(tmpDir))
 
       // When/Then
       const packageManager = await getPackageManager(tmpDir)

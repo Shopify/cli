@@ -22,7 +22,7 @@ import {
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
-import {inferPackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
@@ -33,7 +33,7 @@ vi.mock('@shopify/cli-kit/node/node-package-manager', async (importOriginal) => 
   const actual: any = await importOriginal()
   return {
     ...actual,
-    inferPackageManager: vi.fn().mockReturnValue('npm'),
+    getPackageManager: vi.fn().mockResolvedValue('npm'),
   }
 })
 
@@ -84,7 +84,7 @@ beforeEach(async () => {
   stderr = {write: vi.fn()}
   stdout = {write: vi.fn()}
   signal = vi.fn()
-  vi.mocked(inferPackageManager).mockReturnValue('npm')
+  vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
 describe('buildGraphqlTypes', () => {
