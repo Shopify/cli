@@ -158,7 +158,7 @@ export class FileWatcher {
   private getAllWatchedFiles(): string[] {
     this.extensionWatchedFiles.clear()
 
-    const extensionResults = this.app.realExtensions.map((extension) => ({
+    const extensionResults = this.app.nonConfigExtensions.map((extension) => ({
       extension,
       watchedFiles: extension.watchedFiles(),
     }))
@@ -235,13 +235,13 @@ export class FileWatcher {
       ? this.app.realExtensions.find((ext) => ext.handle === event.extensionHandle)
       : undefined
     const watchPaths = extension?.watchedFiles()
-    const ignoreInstance = extension ? this.ignored[extension.directory] : undefined
+    const ignoreInstance = this.ignored[event.extensionPath]
 
     if (watchPaths) {
       const isAValidWatchedPath = watchPaths.some((pattern) => matchGlob(event.path, pattern))
       return !isAValidWatchedPath
     } else if (ignoreInstance) {
-      const relative = relativePath(extension!.directory, event.path)
+      const relative = relativePath(event.extensionPath, event.path)
       return ignoreInstance.ignores(relative)
     }
 

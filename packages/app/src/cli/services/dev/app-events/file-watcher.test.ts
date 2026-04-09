@@ -392,7 +392,7 @@ describe('file-watcher events', () => {
 
             // Verify extensionHandle is set correctly on file-level events
             if (expectedHandles) {
-              const actualHandles = actualEvents.map((e: WatcherEvent) => e.extensionHandle).sort()
+              const actualHandles = actualEvents.map((event: WatcherEvent) => event.extensionHandle).sort()
               expect(actualHandles).toEqual(expectedHandles.sort())
             } else if (expectedEvent.extensionHandle) {
               expect(actualEvent.extensionHandle).toBe(expectedEvent.extensionHandle)
