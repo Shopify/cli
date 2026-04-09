@@ -10,7 +10,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {copyFile, readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -161,12 +161,17 @@ export async function buildFunctionExtension(
       await runTrampoline(extension.outputPath)
     }
 
-    if (
-      fileExistsSync(extension.outputPath) &&
-      bundlePath !== extension.outputPath &&
-      dirname(bundlePath) !== dirname(extension.outputPath)
-    ) {
-      await bundleFunctionExtension(extension.outputPath, bundlePath)
+    if (fileExistsSync(extension.outputPath) && bundlePath !== extension.outputPath) {
+      const projectOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+      if (bundlePath === projectOutputPath) {
+        // Standalone build (e.g. `shopify app build`): copy raw binary to dist/index.wasm so
+        // vitest and other local tooling can load the wasm directly.
+        await copyFile(extension.outputPath, bundlePath)
+      } else if (dirname(bundlePath) !== dirname(extension.outputPath)) {
+        // Bundle build for deploy: base64-encode into the bundle directory to satisfy the
+        // server-side contract of uploaded_files["dist/index.wasm"].
+        await bundleFunctionExtension(extension.outputPath, bundlePath)
+      }
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
