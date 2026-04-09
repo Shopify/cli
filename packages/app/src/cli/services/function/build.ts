@@ -56,16 +56,20 @@ interface JSFunctionBuildOptions {
   useTasks?: boolean
 }
 
-export async function buildJSFunction(fun: ExtensionInstance<FunctionConfigType>, options: JSFunctionBuildOptions) {
+export async function buildJSFunction(
+  fun: ExtensionInstance<FunctionConfigType>,
+  options: JSFunctionBuildOptions,
+  outputPath?: string,
+) {
   const exports = jsExports(fun)
   const javyBuilder: JavyBuilder = exports.length === 0 ? DefaultJavyBuilder : new ExportJavyBuilder(exports)
 
   const deps = await validateShopifyFunctionPackageVersion(fun)
 
   if (options.useTasks) {
-    return buildJSFunctionWithTasks(fun, options, javyBuilder, deps)
+    return buildJSFunctionWithTasks(fun, options, javyBuilder, deps, outputPath)
   } else {
-    return buildJSFunctionWithoutTasks(fun, options, javyBuilder, deps)
+    return buildJSFunctionWithoutTasks(fun, options, javyBuilder, deps, outputPath)
   }
 }
 
@@ -74,6 +78,7 @@ async function buildJSFunctionWithoutTasks(
   options: JSFunctionBuildOptions,
   builder: JavyBuilder,
   deps: BinaryDependencies,
+  outputPath?: string,
 ) {
   if (!options.signal?.aborted) {
     options.stdout.write(`Building function ${fun.localIdentifier}...`)
@@ -86,7 +91,7 @@ async function buildJSFunctionWithoutTasks(
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Running javy...\n`)
-    await builder.compile(fun, options, deps)
+    await builder.compile(fun, options, deps, outputPath)
   }
   if (!options.signal?.aborted) {
     options.stdout.write(`Done!\n`)
@@ -98,6 +103,7 @@ async function buildJSFunctionWithTasks(
   options: JSFunctionBuildOptions,
   builder: JavyBuilder,
   deps: BinaryDependencies,
+  outputPath?: string,
 ) {
   await renderTasks([
     {
@@ -115,7 +121,7 @@ async function buildJSFunctionWithTasks(
     {
       title: 'Running javy',
       task: async () => {
-        await builder.compile(fun, options, deps)
+        await builder.compile(fun, options, deps, outputPath)
       },
     },
   ])
@@ -313,6 +319,7 @@ export async function runJavy(
   options: JSFunctionBuildOptions,
   binaryDeps: BinaryDependencies,
   extra: string[] = [],
+  outputPath?: string,
 ) {
   const javy = javyBinary(binaryDeps.javy)
   const plugin = javyPluginBinary(binaryDeps.javyPlugin)
@@ -329,7 +336,7 @@ export async function runJavy(
     `plugin=${plugin.path}`,
     ...extra,
     '-o',
-    fun.outputPath,
+    outputPath ?? fun.outputPath,
     'dist/function.js',
   ]
 
@@ -377,6 +384,7 @@ interface JavyBuilder {
     fun: ExtensionInstance<FunctionConfigType>,
     options: JSFunctionBuildOptions,
     binaryDeps: BinaryDependencies,
+    outputPath?: string,
   ): Promise<void>
 }
 
@@ -389,8 +397,9 @@ const DefaultJavyBuilder: JavyBuilder = {
     fun: ExtensionInstance<FunctionConfigType>,
     options: JSFunctionBuildOptions,
     binaryDeps: BinaryDependencies,
+    outputPath?: string,
   ) {
-    return runJavy(fun, options, binaryDeps)
+    return runJavy(fun, options, binaryDeps, [], outputPath)
   },
 }
 
@@ -424,6 +433,7 @@ export class ExportJavyBuilder implements JavyBuilder {
     fun: ExtensionInstance<FunctionConfigType>,
     options: JSFunctionBuildOptions,
     binaryDeps: BinaryDependencies,
+    outputPath?: string,
   ) {
     const witContent = this.wit
     outputDebug('Generating world to use with Javy:')
@@ -433,7 +443,7 @@ export class ExportJavyBuilder implements JavyBuilder {
       const witPath = joinPath(dir, 'javy-world.wit')
       await writeFile(witPath, witContent)
 
-      return runJavy(fun, options, binaryDeps, ['-C', `wit=${witPath}`, '-C', `wit-world=${JAVY_WORLD}`])
+      return runJavy(fun, options, binaryDeps, ['-C', `wit=${witPath}`, '-C', `wit-world=${JAVY_WORLD}`], outputPath)
     })
   }
 

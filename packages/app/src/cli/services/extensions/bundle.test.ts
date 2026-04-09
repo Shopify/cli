@@ -322,9 +322,8 @@ describe('bundleExtension()', () => {
           specification,
         })
 
-        const outputPath = joinPath(tmpDir, 'dist')
-        await mkdir(outputPath)
-        themeExtension.outputPath = outputPath
+        const bundleOutputPath = joinPath(tmpDir, 'dist')
+        await mkdir(bundleOutputPath)
 
         const app = testApp({
           directory: '/project',
@@ -361,10 +360,11 @@ describe('bundleExtension()', () => {
           stdout,
           stderr,
           environment: 'production',
+          bundleOutputPath,
         })
 
         // Then
-        const filePaths = await glob(joinPath(themeExtension.outputPath, '/**/*'))
+        const filePaths = await glob(joinPath(bundleOutputPath, '/**/*'))
         const hasFiles = filePaths
           .map((filePath) => basename(filePath))
           .some((filename) => ignoredFiles.includes(filename))

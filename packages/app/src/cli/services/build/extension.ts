@@ -10,7 +10,7 @@ import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import lockfile from 'proper-lockfile'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
-import {readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
+import {copyFile, readFile, touchFile, writeFile, fileExistsSync} from '@shopify/cli-kit/node/fs'
 import {Writable} from 'stream'
 
 export interface ExtensionBuildOptions {
@@ -53,6 +53,14 @@ export interface ExtensionBuildOptions {
    * The URL where the app is running.
    */
   appURL?: string
+
+  /**
+   * When building for a deploy or dev bundle, this is the output path inside the
+   * bundle directory. When set, build functions write their final artifact here
+   * instead of extension.outputPath. This avoids mutating extension.outputPath at
+   * runtime.
+   */
+  bundleOutputPath?: string
 }
 
 /**
@@ -66,12 +74,13 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
     env.APP_URL = options.appURL
   }
 
+  const outputPath = options.bundleOutputPath ?? extension.outputPath
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
   try {
     await bundleExtension({
       minify: true,
-      outputPath: extension.outputPath,
+      outputPath,
       stdin: {
         contents: main,
         resolveDir: extension.directory,
@@ -88,7 +97,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         assets.map(async (asset) => {
           await bundleExtension({
             minify: true,
-            outputPath: joinPath(dirname(extension.outputPath), asset.outputFileName),
+            outputPath: joinPath(dirname(outputPath), asset.outputFileName),
             stdin: {
               contents: asset.content,
               resolveDir: extension.directory,
@@ -111,7 +120,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
   await extension.buildValidation()
 
-  const sizeInfo = await formatBundleSize(extension.outputPath)
+  const sizeInfo = await formatBundleSize(outputPath)
   options.stdout.write(`${extension.localIdentifier} successfully built${sizeInfo}`)
 }
 
@@ -140,33 +149,31 @@ export async function buildFunctionExtension(
   }
 
   try {
-    const bundlePath = extension.outputPath
     const relativeBuildPath =
       (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.path ?? extension.outputRelativePath
-
-    extension.outputPath = joinPath(extension.directory, relativeBuildPath)
+    const buildOutputPath = joinPath(extension.directory, relativeBuildPath)
 
     if (extension.isJavaScript) {
-      await runCommandOrBuildJSFunction(extension, options)
+      await runCommandOrBuildJSFunction(extension, options, buildOutputPath)
     } else {
       await buildOtherFunction(extension, options)
     }
 
     const wasmOpt = (extension as ExtensionInstance<FunctionConfigType>).configuration.build?.wasm_opt
-    if (fileExistsSync(extension.outputPath) && wasmOpt) {
-      await runWasmOpt(extension.outputPath)
+    if (fileExistsSync(buildOutputPath) && wasmOpt) {
+      await runWasmOpt(buildOutputPath)
     }
 
-    if (fileExistsSync(extension.outputPath)) {
-      await runTrampoline(extension.outputPath)
+    if (fileExistsSync(buildOutputPath)) {
+      await runTrampoline(buildOutputPath)
     }
 
-    if (
-      fileExistsSync(extension.outputPath) &&
-      bundlePath !== extension.outputPath &&
-      dirname(bundlePath) !== dirname(extension.outputPath)
-    ) {
-      await bundleFunctionExtension(extension.outputPath, bundlePath)
+    // When building for a bundle, copy + base64-encode into the bundle directory.
+    // This mirrors how buildUIExtension writes directly to bundleOutputPath via esbuild.
+    if (options.bundleOutputPath && fileExistsSync(buildOutputPath)) {
+      await touchFile(options.bundleOutputPath)
+      await copyFile(buildOutputPath, options.bundleOutputPath)
+      await bundleFunctionExtension(options.bundleOutputPath)
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
@@ -188,21 +195,24 @@ export async function buildFunctionExtension(
   }
 }
 
-export async function bundleFunctionExtension(wasmPath: string, bundlePath: string) {
-  outputDebug(`Converting WASM from ${wasmPath} to base64 in ${bundlePath}`)
+export async function bundleFunctionExtension(wasmPath: string) {
+  outputDebug(`Converting WASM to base64 in ${wasmPath}`)
   const base64Contents = await readFile(wasmPath, {encoding: 'base64'})
-  await touchFile(bundlePath)
-  await writeFile(bundlePath, base64Contents)
+  await writeFile(wasmPath, base64Contents)
 }
 
-async function runCommandOrBuildJSFunction(extension: ExtensionInstance, options: BuildFunctionExtensionOptions) {
+async function runCommandOrBuildJSFunction(
+  extension: ExtensionInstance,
+  options: BuildFunctionExtensionOptions,
+  buildOutputPath: string,
+) {
   if (extension.buildCommand) {
     if (extension.typegenCommand) {
       await buildGraphqlTypes(extension, options)
     }
     return runCommand(extension.buildCommand, extension, options)
   } else {
-    return buildJSFunction(extension as ExtensionInstance<FunctionConfigType>, options)
+    return buildJSFunction(extension as ExtensionInstance<FunctionConfigType>, options, buildOutputPath)
   }
 }
 

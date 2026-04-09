@@ -224,10 +224,11 @@ describe('build', async () => {
       await extension.copyIntoBundle(options, bundleDirectory, 'uuid')
 
       // Then
-      const outputTomlPath = joinPath(extension.outputPath, 'shopify.extension.toml')
+      const bundleOutputPath = extension.getOutputPathForDirectory(bundleDirectory, 'uuid')
+      const outputTomlPath = joinPath(bundleOutputPath, 'shopify.extension.toml')
       expect(fileExistsSync(outputTomlPath)).toBe(false)
 
-      const outputProductPath = joinPath(extension.outputPath, 'blocks', 'product.liquid')
+      const outputProductPath = joinPath(bundleOutputPath, 'blocks', 'product.liquid')
       expect(fileExistsSync(outputProductPath)).toBe(true)
     })
   })

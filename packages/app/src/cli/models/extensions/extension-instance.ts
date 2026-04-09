@@ -14,7 +14,7 @@ import {constantize, slugify} from '@shopify/cli-kit/common/string'
 import {hashString, nonRandomUUID} from '@shopify/cli-kit/node/crypto'
 import {partnersFqdn} from '@shopify/cli-kit/node/context/fqdn'
 import {joinPath, normalizePath, resolvePath, relativePath, basename} from '@shopify/cli-kit/node/path'
-import {fileExists, moveFile, glob, copyFile, globSync} from '@shopify/cli-kit/node/fs'
+import {fileExists, moveFile, glob, copyFile, globSync, touchFile} from '@shopify/cli-kit/node/fs'
 import {getPathValue} from '@shopify/cli-kit/common/object'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {
@@ -46,7 +46,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   directory: string
   configuration: TConfiguration
   configurationPath: string
-  outputPath: string
+  readonly outputPath: string
   handle: string
   specification: ExtensionSpecification
   uid: string
@@ -337,29 +337,26 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
   }
 
   async buildForBundle(options: ExtensionBuildOptions, bundleDirectory: string, outputId?: string) {
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
-    await this.build(options)
+    const bundleOutputPath = this.getOutputPathForDirectory(bundleDirectory, outputId)
+    await this.build({...options, bundleOutputPath})
 
     const bundleInputPath = joinPath(bundleDirectory, this.getOutputFolderId(outputId))
     await this.keepBuiltSourcemapsLocally(bundleInputPath)
   }
 
   async copyIntoBundle(options: ExtensionBuildOptions, bundleDirectory: string, extensionUuid?: string) {
-    const defaultOutputPath = this.outputPath
-
-    this.outputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
-
-    const buildMode = this.specification.buildConfig.mode
+    const bundleOutputPath = this.getOutputPathForDirectory(bundleDirectory, extensionUuid)
 
     if (this.isThemeExtension) {
-      await bundleThemeExtension(this, options)
-    } else if (buildMode !== 'none') {
-      outputDebug(`Will copy pre-built file from ${defaultOutputPath} to ${this.outputPath}`)
-      if (await fileExists(defaultOutputPath)) {
-        await copyFile(defaultOutputPath, this.outputPath)
+      await bundleThemeExtension(this, {...options, bundleOutputPath})
+    } else if (this.specification.buildConfig.mode !== 'none') {
+      outputDebug(`Copying pre-built output from ${this.outputPath} to ${bundleOutputPath}`)
+      if (await fileExists(this.outputPath)) {
+        await touchFile(bundleOutputPath)
+        await copyFile(this.outputPath, bundleOutputPath)
 
-        if (buildMode === 'function') {
-          await bundleFunctionExtension(this.outputPath, this.outputPath)
+        if (this.isFunctionExtension) {
+          await bundleFunctionExtension(bundleOutputPath)
         }
       }
     }

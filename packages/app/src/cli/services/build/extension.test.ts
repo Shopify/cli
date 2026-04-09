@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
 import lockfile from 'proper-lockfile'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
+import {copyFile, fileExistsSync, touchFile, writeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
 vi.mock('@shopify/cli-kit/node/system')
@@ -106,13 +106,17 @@ describe('buildFunctionExtension', () => {
     ).resolves.toBeUndefined()
 
     // Then
-    expect(buildJSFunction).toHaveBeenCalledWith(extension, {
-      stdout,
-      stderr,
-      signal,
-      app,
-      environment: 'production',
-    })
+    expect(buildJSFunction).toHaveBeenCalledWith(
+      extension,
+      {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      },
+      joinPath(extension.directory, 'dist/index.wasm'),
+    )
     expect(releaseLock).toHaveBeenCalled()
   })
 
@@ -243,13 +247,17 @@ describe('buildFunctionExtension', () => {
     ).resolves.toBeUndefined()
 
     // Then
-    expect(buildJSFunction).toHaveBeenCalledWith(extension, {
-      stdout,
-      stderr,
-      signal,
-      app,
-      environment: 'production',
-    })
+    expect(buildJSFunction).toHaveBeenCalledWith(
+      extension,
+      {
+        stdout,
+        stderr,
+        signal,
+        app,
+        environment: 'production',
+      },
+      joinPath(extension.directory, 'dist', 'index.wasm'),
+    )
     expect(releaseLock).toHaveBeenCalled()
     // wasm_opt should not be called when build config is undefined
     expect(runWasmOpt).not.toHaveBeenCalled()
@@ -418,7 +426,7 @@ describe('buildFunctionExtension', () => {
     expect(runWasmOpt).toHaveBeenCalled()
   })
 
-  test('does not rebundle when build.path stays in the default output directory', async () => {
+  test('copies raw binary when build.path differs from default output path', async () => {
     // Given
     extension.configuration.build!.path = 'dist/custom.wasm'
     vi.mocked(fileExistsSync).mockReturnValue(true)
@@ -435,8 +443,31 @@ describe('buildFunctionExtension', () => {
     ).resolves.toBeUndefined()
 
     // Then
-    expect(fileExistsSync).toHaveBeenCalledWith(joinPath(extension.directory, 'dist/custom.wasm'))
-    expect(touchFile).not.toHaveBeenCalled()
+    const buildOutputPath = joinPath(extension.directory, 'dist/custom.wasm')
+    const canonicalOutputPath = joinPath(extension.directory, 'dist', 'index.wasm')
+    expect(fileExistsSync).toHaveBeenCalledWith(buildOutputPath)
+    expect(touchFile).toHaveBeenCalledWith(canonicalOutputPath)
+    expect(copyFile).toHaveBeenCalledWith(buildOutputPath, canonicalOutputPath)
+    // Must NOT base64-encode during build — only raw binary copy
     expect(writeFile).not.toHaveBeenCalled()
+  })
+
+  test('does not mutate extension.outputPath', async () => {
+    // Given
+    extension.configuration.build!.path = 'target/wasm32-wasi/release/func.wasm'
+    vi.mocked(fileExistsSync).mockReturnValue(true)
+    const originalOutputPath = extension.outputPath
+
+    // When
+    await buildFunctionExtension(extension, {
+      stdout,
+      stderr,
+      signal,
+      app,
+      environment: 'production',
+    })
+
+    // Then
+    expect(extension.outputPath).toBe(originalOutputPath)
   })
 })

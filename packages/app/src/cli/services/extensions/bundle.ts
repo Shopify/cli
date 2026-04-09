@@ -71,12 +71,13 @@ export async function bundleThemeExtension(
   options: ExtensionBuildOptions,
 ): Promise<void> {
   options.stdout.write(`Bundling theme extension ${extension.localIdentifier}...`)
+  const outputDir = options.bundleOutputPath ?? extension.outputPath
   const files = await themeExtensionFiles(extension)
 
   await Promise.all(
     files.map(function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
-      const outputFile = joinPath(extension.outputPath, relativePathName)
+      const outputFile = joinPath(outputDir, relativePathName)
       if (filepath === outputFile) return
       return copyFile(filepath, outputFile)
     }),
@@ -90,6 +91,7 @@ export async function copyFilesForExtension(
   ignoredPatterns: string[] = [],
 ): Promise<void> {
   options.stdout.write(`Copying files for extension ${extension.localIdentifier}...`)
+  const outputDir = options.bundleOutputPath ?? extension.outputPath
   const include = includePatterns.map((pattern) => joinPath('**', pattern))
   const ignored = ignoredPatterns.map((pattern) => joinPath('**', pattern))
   const files = await glob(include, {
@@ -101,7 +103,7 @@ export async function copyFilesForExtension(
   await Promise.all(
     files.map(function (filepath) {
       const relativePathName = relativePath(extension.directory, filepath)
-      const outputFile = joinPath(extension.outputPath, relativePathName)
+      const outputFile = joinPath(outputDir, relativePathName)
       if (filepath === outputFile) return
       return copyFile(filepath, outputFile)
     }),
