@@ -149,7 +149,7 @@ export async function setupDevProcesses({
         })
       : undefined,
     await setupPreviewableExtensionsProcess({
-      allExtensions: reloadedApp.allExtensions,
+      allExtensions: reloadedApp.realExtensions,
       storeFqdn,
       storeId,
       apiKey,
@@ -162,6 +162,7 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: reloadedApp.directory,
       appWatcher,
+      appAssetsConfigs: reloadedApp.appAssetsConfigs,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({

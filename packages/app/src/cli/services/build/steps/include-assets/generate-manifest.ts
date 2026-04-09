@@ -1,6 +1,6 @@
 import {getNestedValue, tokenizePath} from './copy-config-key-entry.js'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, mkdir, writeFile} from '@shopify/cli-kit/node/fs'
+import {mkdir, writeFile} from '@shopify/cli-kit/node/fs'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import type {BuildContext} from '../../client-steps.js'
 
@@ -20,7 +20,7 @@ interface ConfigKeyManifestEntry {
  * 3. Build root-level entries.
  * 4. Build grouped entries (anchor/groupBy logic) with path strings resolved
  *    via `resolveManifestPaths` using the copy-tracked `pathMap`.
- * 5. Write `outputDir/manifest.json`; throw if the file already exists.
+ * 5. Write `outputDir/manifest.json`, overwriting any existing file.
  *
  * @param pathMap - Map from raw config path values to their output-relative
  *   paths, as recorded during the copy phase by `copyConfigKeyEntry`.
@@ -113,12 +113,6 @@ export async function generateManifestFile(
   }
 
   const manifestPath = joinPath(outputDir, 'manifest.json')
-  if (await fileExists(manifestPath)) {
-    throw new Error(
-      `Can't write manifest.json: a file already exists at '${manifestPath}'. ` +
-        `Remove or rename the conflicting inclusion to avoid overwriting the generated manifest.`,
-    )
-  }
   await mkdir(outputDir)
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2))
   outputDebug(`Generated manifest.json in ${outputDir}\n`, options.stdout)

@@ -229,6 +229,7 @@ export interface AppInterface<
   realExtensions: ExtensionInstance[]
   nonConfigExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
+  appAssetsConfigs: Record<string, string> | undefined
   errors: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
@@ -332,6 +333,15 @@ export class App<
     return this.realExtensions.filter(
       (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
     )
+  }
+
+  get appAssetsConfigs(): Record<string, string> | undefined {
+    if (!this.realExtensions.some((ext) => ext.specification.appAssetsConfig)) return undefined
+    return this.realExtensions.reduce<Record<string, string>>((acc, ext) => {
+      const config = ext.specification.appAssetsConfig?.(ext.configuration)
+      if (config) acc[config.assetsKey] = joinPath(this.directory, config.assetsDir)
+      return acc
+    }, {})
   }
 
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {

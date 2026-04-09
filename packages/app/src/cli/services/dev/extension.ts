@@ -12,6 +12,7 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
+import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {
@@ -112,6 +113,11 @@ export interface ExtensionDevOptions {
    * The app watcher that emits events when the app is updated
    */
   appWatcher: AppEventWatcher
+
+  /**
+   * Map of asset key to absolute directory path for app-level assets (e.g., admin static_root)
+   */
+  appAssets?: Record<string, string>
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
@@ -133,7 +139,13 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
+  const getAppAssets = () => payloadOptions.appAssets
+  const httpServer = setupHTTPServer({
+    devOptions: payloadOptions,
+    payloadStore,
+    getExtensions,
+    getAppAssets,
+  })
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
@@ -143,6 +155,14 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
     if (appWasReloaded) {
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
     }
+
+    // Handle App Assets updates.
+    const appAssetsConfigs = extensionEvents.map((event) =>
+      event.extension.specification.appAssetsConfig?.(event.extension.configuration),
+    )
+    getArrayRejectingUndefined(appAssetsConfigs).forEach((config) => {
+      payloadStore.updateAppAssetTimestamp(config.assetsKey)
+    })
 
     for (const event of extensionEvents) {
       if (!event.extension.isPreviewable) continue

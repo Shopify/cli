@@ -62,6 +62,11 @@ const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
     },
   ],
   appModuleFeatures: () => [],
+  appAssetsConfig: (config) => {
+    const dir = config.admin?.static_root
+    if (!dir) return undefined
+    return {assetsKey: 'staticRoot', assetsDir: dir}
+  },
 })
 
 export default adminSpecificationSpec
