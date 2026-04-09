@@ -1064,7 +1064,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
     const url = `https://${await developerDashboardFqdn()}/dashboard/${org.id}/stores`
     return [
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Dev Dashboard.`,
-      {link: {url, label: 'Create one now'}},
+      {link: {url, label: 'Create a store in Dev Dashboard'}},
     ]
   }
 
