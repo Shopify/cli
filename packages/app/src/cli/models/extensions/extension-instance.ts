@@ -285,7 +285,7 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       return this.specification.devSessionWatchConfig(this)
     }
 
-    return this.specification.experience === 'configuration' ? {paths: []} : undefined
+    return this.isAppConfigExtension ? {paths: []} : undefined
   }
 
   async watchConfigurationPaths() {

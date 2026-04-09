@@ -9,6 +9,7 @@ import {EventEmitter} from 'events'
 
 export interface ExtensionsPayloadStoreOptions extends ExtensionDevOptions {
   websocketURL: string
+  appAssets?: Record<string, string>
 }
 
 export enum ExtensionsPayloadStoreEvent {
@@ -19,7 +20,7 @@ export async function getExtensionsPayloadStoreRawPayload(
   options: Omit<ExtensionsPayloadStoreOptions, 'appWatcher'>,
   bundlePath: string,
 ): Promise<ExtensionsEndpointPayload> {
-  return {
+  const payload: ExtensionsEndpointPayload = {
     app: {
       title: options.appName,
       apiKey: options.apiKey,
@@ -40,6 +41,18 @@ export async function getExtensionsPayloadStoreRawPayload(
     store: options.storeFqdn,
     extensions: await Promise.all(options.extensions.map((ext) => getUIExtensionPayload(ext, bundlePath, options))),
   }
+
+  if (options.appAssets) {
+    const assets: Record<string, {url: string; lastUpdated: number}> = {}
+    for (const assetKey of Object.keys(options.appAssets)) {
+      assets[assetKey] = {
+        url: new URL(`/extensions/assets/${assetKey}/`, options.url).toString(),
+        lastUpdated: Date.now(),
+      }
+    }
+    payload.app.assets = assets
+  }
+  return payload
 }
 
 export class ExtensionsPayloadStore extends EventEmitter {
@@ -168,6 +181,14 @@ export class ExtensionsPayloadStore extends EventEmitter {
   async addExtension(extension: ExtensionInstance, bundlePath: string) {
     this.rawPayload.extensions.push(await getUIExtensionPayload(extension, bundlePath, this.options))
     this.emitUpdate([extension.devUUID])
+  }
+
+  updateAppAssetTimestamp(assetKey: string) {
+    const asset = this.rawPayload.app.assets?.[assetKey]
+    if (asset) {
+      asset.lastUpdated = Date.now()
+      this.emitUpdate([])
+    }
   }
 
   private emitUpdate(extensionIds: string[]) {

@@ -143,6 +143,19 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
    * or undefined to watch all files in the extension directory.
    */
   devSessionWatchConfig?: (extension: ExtensionInstance<TConfiguration>) => DevSessionWatchConfig | undefined
+
+  /**
+   * App assets configuration for this extension.
+   * Return undefined if this extension doesn't serve app assets.
+   */
+  appAssetsConfig?: (config: TConfiguration) => AppAssetsConfig | undefined
+}
+
+export interface AppAssetsConfig {
+  /** The config key that points to the assets directory (e.g. 'admin.static_root') */
+  assetsKey: string
+  /** The assets directory relative to the extension directory */
+  assetsDir: string
 }
 
 export interface DevSessionWatchConfig {

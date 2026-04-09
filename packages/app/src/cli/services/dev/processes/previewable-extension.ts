@@ -24,6 +24,7 @@ interface PreviewableExtensionOptions {
   grantedScopes: string[]
   previewableExtensions: ExtensionInstance[]
   appWatcher: AppEventWatcher
+  appAssetsConfigs: Record<string, string> | undefined
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -47,6 +48,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     previewableExtensions,
     appDirectory,
     appWatcher,
+    appAssetsConfigs,
   },
 ) => {
   await devUIExtensions({
@@ -68,6 +70,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     subscriptionProductUrl,
     manifestVersion: MANIFEST_VERSION,
     appWatcher,
+    appAssets: appAssetsConfigs,
   })
 }
 
