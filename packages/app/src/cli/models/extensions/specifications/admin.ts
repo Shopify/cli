@@ -1,9 +1,9 @@
 import {createExtensionSpecification} from '../specification.js'
-import {BaseSchemaWithoutHandle} from '../schemas.js'
+import {BaseConfigType, ZodSchemaType} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
-const AdminSchema = BaseSchemaWithoutHandle.extend({
+const AdminSchema = zod.object({
   admin: zod
     .object({
       static_root: zod.string().optional(),
@@ -11,11 +11,13 @@ const AdminSchema = BaseSchemaWithoutHandle.extend({
     .optional(),
 })
 
-const adminSpecificationSpec = createExtensionSpecification({
+type AdminConfigType = zod.infer<typeof AdminSchema> & BaseConfigType
+
+const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
   identifier: 'admin',
   uidStrategy: 'single',
   experience: 'configuration',
-  schema: AdminSchema,
+  schema: AdminSchema as ZodSchemaType<AdminConfigType>,
   deployConfig: async (config, _) => {
     return {admin: config.admin}
   },

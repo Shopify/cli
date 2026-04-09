@@ -148,7 +148,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
 export interface DevSessionWatchConfig {
   /** Absolute paths or globs to watch */
   paths: string[]
-  /** Additional glob patterns to ignore (on top of the default ignore list) */
+  /** Glob patterns to ignore. When provided, replaces the default ignore list entirely. */
   ignore?: string[]
 }
 
