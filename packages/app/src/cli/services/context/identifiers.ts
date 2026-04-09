@@ -58,11 +58,16 @@ export async function ensureDeploymentIdsPresence(options: EnsureDeploymentIdsPr
     activeAppVersion: options.activeAppVersion,
   })
 
+  const shouldFetchInstallCount =
+    extensionIdentifiersBreakdown.onlyRemote.length > 0 &&
+    !options.force &&
+    !(options.allowUpdates && options.allowDeletes)
+
   let installCount: number | undefined
-  if (extensionIdentifiersBreakdown.onlyRemote.length > 0) {
+  if (shouldFetchInstallCount) {
     try {
       installCount = await options.developerPlatformClient.appInstallCount({
-        id: options.appId,
+        id: options.remoteApp.id,
         apiKey: options.remoteApp.apiKey,
         organizationId: options.remoteApp.organizationId,
       })

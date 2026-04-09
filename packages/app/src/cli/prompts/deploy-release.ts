@@ -162,7 +162,7 @@ async function deployConfirmationPrompt({
       confirmation: appTitle,
       ...(showInstallCountWarning
         ? {
-            body: `This release removes extensions and related data from ${installCount} app installations.\nUse caution as this may include production data on live stores.`,
+            body: `This ${release ? 'release' : 'version'} removes extensions and related data from ${installCount} app installations.\nUse caution as this may include production data on live stores.`,
           }
         : {}),
     })
