@@ -3,6 +3,7 @@ import {ensurePathStartsWithSlash} from './validation/common.js'
 import {Identifiers} from './identifiers.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {FunctionConfigType} from '../extensions/specifications/function.js'
+import {AdminConfigType} from '../extensions/specifications/admin.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../extensions/specification.js'
 import {AppConfigurationUsedByCli} from '../extensions/specifications/types/app_config.js'
 import {EditorExtensionCollectionType} from '../extensions/specifications/editor_extension_collection.js'
@@ -230,6 +231,7 @@ export interface AppInterface<
   nonConfigExtensions: ExtensionInstance[]
   draftableExtensions: ExtensionInstance[]
   appAssetsConfigs: Record<string, string> | undefined
+  allowedDomains: string[] | undefined
   errors: AppErrors
   hiddenConfig: AppHiddenConfig
   includeConfigOnDeploy: boolean | undefined
@@ -342,6 +344,11 @@ export class App<
       if (config) acc[config.assetsKey] = joinPath(this.directory, config.assetsDir)
       return acc
     }, {})
+  }
+
+  get allowedDomains(): string[] | undefined {
+    const adminExt = this.realExtensions.find((ext) => ext.specification.identifier === 'admin')
+    return (adminExt?.configuration as AdminConfigType | undefined)?.admin?.allowed_domains
   }
 
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {

@@ -163,6 +163,7 @@ export async function setupDevProcesses({
       appDirectory: reloadedApp.directory,
       appWatcher,
       appAssetsConfigs: reloadedApp.appAssetsConfigs,
+      allowedDomains: reloadedApp.allowedDomains,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({

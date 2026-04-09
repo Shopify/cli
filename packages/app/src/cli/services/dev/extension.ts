@@ -118,6 +118,11 @@ export interface ExtensionDevOptions {
    * Map of asset key to absolute directory path for app-level assets (e.g., admin static_root)
    */
   appAssets?: Record<string, string>
+
+  /**
+   * Allowed domains from the admin module config
+   */
+  allowedDomains?: string[]
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {

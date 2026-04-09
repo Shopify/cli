@@ -25,6 +25,7 @@ interface PreviewableExtensionOptions {
   previewableExtensions: ExtensionInstance[]
   appWatcher: AppEventWatcher
   appAssetsConfigs: Record<string, string> | undefined
+  allowedDomains?: string[]
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -49,6 +50,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     appDirectory,
     appWatcher,
     appAssetsConfigs,
+    allowedDomains,
   },
 ) => {
   await devUIExtensions({
@@ -71,6 +73,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     manifestVersion: MANIFEST_VERSION,
     appWatcher,
     appAssets: appAssetsConfigs,
+    allowedDomains,
   })
 }
 

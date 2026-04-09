@@ -52,6 +52,11 @@ export async function getExtensionsPayloadStoreRawPayload(
     }
     payload.app.assets = assets
   }
+
+  if (options.allowedDomains) {
+    payload.app.allowedDomains = options.allowedDomains
+  }
+
   return payload
 }
 

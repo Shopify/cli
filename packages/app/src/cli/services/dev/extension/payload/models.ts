@@ -14,6 +14,7 @@ interface ExtensionsPayloadInterface {
         lastUpdated: number
       }
     }
+    allowedDomains?: string[]
   }
   appId?: string
   store: string

@@ -52,6 +52,52 @@ describe('getExtensionsPayloadStoreRawPayload()', () => {
       extensions: [{mock: 'extension-payload'}, {mock: 'extension-payload'}, {mock: 'extension-payload'}],
     })
   })
+  test('includes allowedDomains in app when provided', async () => {
+    // Given
+    vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
+      mock: 'extension-payload',
+    } as unknown as UIExtensionPayload)
+
+    const options = {
+      apiKey: 'mock-api-key',
+      appName: 'mock-app-name',
+      url: 'https://mock-url.com',
+      websocketURL: 'wss://mock-websocket-url.com',
+      extensions: [],
+      storeFqdn: 'mock-store-fqdn.myshopify.com',
+      manifestVersion: '3',
+      allowedDomains: ['example.com', 'cdn.example.com'],
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    // When
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
+
+    // Then
+    expect(rawPayload.app.allowedDomains).toEqual(['example.com', 'cdn.example.com'])
+  })
+
+  test('does not include allowedDomains in app when not provided', async () => {
+    // Given
+    vi.spyOn(payload, 'getUIExtensionPayload').mockResolvedValue({
+      mock: 'extension-payload',
+    } as unknown as UIExtensionPayload)
+
+    const options = {
+      apiKey: 'mock-api-key',
+      appName: 'mock-app-name',
+      url: 'https://mock-url.com',
+      websocketURL: 'wss://mock-websocket-url.com',
+      extensions: [],
+      storeFqdn: 'mock-store-fqdn.myshopify.com',
+      manifestVersion: '3',
+    } as unknown as ExtensionsPayloadStoreOptions
+
+    // When
+    const rawPayload = await getExtensionsPayloadStoreRawPayload(options, 'mock-bundle-path')
+
+    // Then
+    expect(rawPayload.app.allowedDomains).toBeUndefined()
+  })
 })
 
 describe('ExtensionsPayloadStore()', () => {

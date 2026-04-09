@@ -7,11 +7,12 @@ const AdminSchema = zod.object({
   admin: zod
     .object({
       static_root: zod.string().optional(),
+      allowed_domains: zod.array(zod.string()).optional(),
     })
     .optional(),
 })
 
-type AdminConfigType = zod.infer<typeof AdminSchema> & BaseConfigType
+export type AdminConfigType = zod.infer<typeof AdminSchema> & BaseConfigType
 
 const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
   identifier: 'admin',
@@ -33,6 +34,8 @@ const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
       admin: {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         static_root: (remoteContent as any).admin.static_root,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        allowed_domains: (remoteContent as any).admin.allowed_domains,
       },
     }
   },
