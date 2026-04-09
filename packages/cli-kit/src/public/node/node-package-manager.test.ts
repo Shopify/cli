@@ -12,6 +12,7 @@ import {
   addResolutionOrOverride,
   writePackageJSON,
   getPackageManager,
+  inferPackageManagerForDirectory,
   installNPMDependenciesRecursively,
   addNPMDependencies,
   DependencyVersion,
@@ -892,6 +893,25 @@ describe('getPackageManager', () => {
     })
   })
 
+  test('finds pnpm from an ancestor workspace root', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given
+      const workspaceFile = joinPath(tmpDir, 'pnpm-workspace.yaml')
+      const extensionDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
+      const extensionPackageJson = joinPath(extensionDirectory, 'package.json')
+
+      // When
+      await mkdir(extensionDirectory)
+      await writeFile(workspaceFile, 'packages:\n  - extensions/*\n')
+      await writeFile(extensionPackageJson, JSON.stringify({name: 'mock name'}))
+      mockedCaptureOutput.mockReturnValueOnce(Promise.resolve(extensionDirectory))
+
+      // Then
+      const packageManager = await getPackageManager(extensionDirectory)
+      expect(packageManager).toEqual('pnpm')
+    })
+  })
+
   test('falls back to packageManagerFromUserAgent when npm prefix fails', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
@@ -923,6 +943,187 @@ describe('getPackageManager', () => {
       const packageManager = await getPackageManager(tmpDir)
       // pnpm is used locally and in CI
       expect(packageManager).toEqual('pnpm')
+    })
+  })
+})
+
+describe('inferPackageManagerForDirectory', () => {
+  beforeEach(() => {
+    mockedCaptureOutput.mockClear()
+    vi.mocked(inferPackageManagerForGlobalCLI).mockClear()
+  })
+
+  test('finds pnpm from a workspace root above the nearest package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const workspaceRootPackageJson = joinPath(tmpDir, 'package.json')
+      const workspaceFile = joinPath(tmpDir, 'pnpm-workspace.yaml')
+      const functionDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
+      const functionPackageJson = joinPath(functionDirectory, 'package.json')
+
+      await mkdir(functionDirectory)
+      await writeFile(workspaceRootPackageJson, JSON.stringify({}))
+      await writeFile(workspaceFile, 'packages:\n  - extensions/*\n')
+      await writeFile(functionPackageJson, JSON.stringify({}))
+
+      const packageManager = await inferPackageManagerForDirectory(functionDirectory, {})
+
+      expect(packageManager).toEqual('pnpm')
+      expect(mockedCaptureOutput).not.toHaveBeenCalled()
+      expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
+    })
+  })
+
+  test('finds pnpm from a workspace root without a root package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const workspaceFile = joinPath(tmpDir, 'pnpm-workspace.yaml')
+      const functionDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
+      const functionPackageJson = joinPath(functionDirectory, 'package.json')
+
+      await mkdir(functionDirectory)
+      await writeFile(workspaceFile, 'packages:\n  - extensions/*\n')
+      await writeFile(functionPackageJson, JSON.stringify({}))
+
+      const packageManager = await inferPackageManagerForDirectory(functionDirectory, {})
+
+      expect(packageManager).toEqual('pnpm')
+      expect(mockedCaptureOutput).not.toHaveBeenCalled()
+      expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
+    })
+  })
+
+  test('works from a nested child directory below the package root', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const workspaceRootPackageJson = joinPath(tmpDir, 'package.json')
+      const workspaceLockfile = joinPath(tmpDir, 'pnpm-lock.yaml')
+      const functionDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
+      const srcDirectory = joinPath(functionDirectory, 'src')
+      const functionPackageJson = joinPath(functionDirectory, 'package.json')
+
+      await mkdir(srcDirectory)
+      await writeFile(workspaceRootPackageJson, JSON.stringify({}))
+      await writeFile(workspaceLockfile, 'lockfileVersion: 9.0\n')
+      await writeFile(functionPackageJson, JSON.stringify({}))
+
+      const packageManager = await inferPackageManagerForDirectory(srcDirectory, {})
+
+      expect(packageManager).toEqual('pnpm')
+      expect(mockedCaptureOutput).not.toHaveBeenCalled()
+      expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
+    })
+  })
+
+  test('prefers the nearest lockfile over an ancestor workspace lockfile', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const workspaceRootPackageJson = joinPath(tmpDir, 'package.json')
+      const workspaceLockfile = joinPath(tmpDir, 'pnpm-lock.yaml')
+      const functionDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
+      const functionPackageJson = joinPath(functionDirectory, 'package.json')
+      const functionLockfile = joinPath(functionDirectory, 'yarn.lock')
+
+      await mkdir(functionDirectory)
+      await writeFile(workspaceRootPackageJson, JSON.stringify({}))
+      await writeFile(workspaceLockfile, 'lockfileVersion: 9.0\n')
+      await writeFile(functionPackageJson, JSON.stringify({}))
+      await writeFile(functionLockfile, '')
+
+      const packageManager = await inferPackageManagerForDirectory(functionDirectory, {})
+
+      expect(packageManager).toEqual('yarn')
+    })
+  })
+
+  test('falls back to the user agent when no lockfile is found in the package tree', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      await writeFile(packageJson, JSON.stringify({}))
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {npm_config_user_agent: 'bun/1.0.0'})
+
+      expect(packageManager).toEqual('bun')
+      expect(mockedCaptureOutput).not.toHaveBeenCalled()
+      expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
+    })
+  })
+
+  test('falls back to the user agent when no package.json exists in the ancestry', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const nestedDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
+      await mkdir(nestedDirectory)
+
+      const packageManager = await inferPackageManagerForDirectory(nestedDirectory, {npm_config_user_agent: 'yarn/1.22.0'})
+
+      expect(packageManager).toEqual('yarn')
+      expect(mockedCaptureOutput).not.toHaveBeenCalled()
+      expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
+    })
+  })
+
+  test('detects bun from bun.lockb', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      const bunLockfile = joinPath(tmpDir, 'bun.lockb')
+      await writeFile(packageJson, JSON.stringify({}))
+      await writeFile(bunLockfile, '')
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {})
+
+      expect(packageManager).toEqual('bun')
+    })
+  })
+
+  test('detects npm from package-lock.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      const npmLockfile = joinPath(tmpDir, 'package-lock.json')
+      await writeFile(packageJson, JSON.stringify({}))
+      await writeFile(npmLockfile, '{}')
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {})
+
+      expect(packageManager).toEqual('npm')
+    })
+  })
+
+  test('prefers yarn when multiple lockfiles exist in the same directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      const yarnLockfile = joinPath(tmpDir, 'yarn.lock')
+      const pnpmLockfile = joinPath(tmpDir, 'pnpm-lock.yaml')
+      await writeFile(packageJson, JSON.stringify({}))
+      await writeFile(yarnLockfile, '')
+      await writeFile(pnpmLockfile, 'lockfileVersion: 9.0\n')
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {})
+
+      expect(packageManager).toEqual('yarn')
+    })
+  })
+
+  test('prefers bun over npm when both lockfiles exist in the same directory', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      const bunLockfile = joinPath(tmpDir, 'bun.lockb')
+      const npmLockfile = joinPath(tmpDir, 'package-lock.json')
+      await writeFile(packageJson, JSON.stringify({}))
+      await writeFile(bunLockfile, '')
+      await writeFile(npmLockfile, '{}')
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {})
+
+      expect(packageManager).toEqual('bun')
+    })
+  })
+
+  test('defaults to npm when neither the package tree nor the user agent identify a package manager', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      await writeFile(packageJson, JSON.stringify({}))
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {})
+
+      expect(packageManager).toEqual('npm')
+      expect(mockedCaptureOutput).not.toHaveBeenCalled()
+      expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
     })
   })
 })

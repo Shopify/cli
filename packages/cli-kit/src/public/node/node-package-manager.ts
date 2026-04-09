@@ -110,7 +110,12 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
 }
 
 /**
- * Returns the dependency manager used in a directory.
+ * Returns the dependency manager for the package root resolved from a directory.
+ *
+ * This preserves the existing `npm prefix`-based behavior: first ask npm for the
+ * package root, then detect lockfiles/workspace markers from that resolved root upward.
+ * If `npm prefix` or the package.json lookup fails, fall back to the current user agent.
+ *
  * @param fromDirectory - The starting directory
  * @returns The dependency manager
  */
@@ -129,18 +134,56 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   if (!directory || !packageJson || !(await fileExists(packageJson))) {
     return packageManagerFromUserAgent()
   }
+  return (await detectPackageManagerFromDirectory(directory)) ?? 'npm'
+}
+
+async function inferPackageManagerAtDirectory(directory: string): Promise<PackageManager | undefined> {
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)
+  const pnpmWorkspacePath = joinPath(directory, pnpmWorkspaceFile)
   const bunLockPath = joinPath(directory, bunLockfile)
-  if (await fileExists(yarnLockPath)) {
-    return 'yarn'
-  } else if (await fileExists(pnpmLockPath)) {
-    return 'pnpm'
-  } else if (await fileExists(bunLockPath)) {
-    return 'bun'
-  } else {
-    return 'npm'
+  const npmLockPath = joinPath(directory, npmLockfile)
+
+  if (await fileExists(yarnLockPath)) return 'yarn'
+  if ((await fileExists(pnpmLockPath)) || (await fileExists(pnpmWorkspacePath))) return 'pnpm'
+  if (await fileExists(bunLockPath)) return 'bun'
+  if (await fileExists(npmLockPath)) return 'npm'
+
+  return undefined
+}
+
+async function detectPackageManagerFromDirectory(fromDirectory: string): Promise<PackageManager | undefined> {
+  let currentDirectory = fromDirectory
+
+  while (true) {
+    const packageManager = await inferPackageManagerAtDirectory(currentDirectory)
+    if (packageManager) return packageManager
+
+    const parentDirectory = dirname(currentDirectory)
+    if (parentDirectory === currentDirectory) return undefined
+    currentDirectory = parentDirectory
   }
+}
+
+/**
+ * Infers the dependency manager directly from filesystem context starting at a directory,
+ * without spawning package-manager subprocesses.
+ *
+ * Unlike `getPackageManager`, this helper does not call `npm prefix` to resolve a package root first.
+ * It walks upward from the provided directory itself, prefers the closest lockfile/workspace marker,
+ * and falls back to the current user agent before defaulting to npm.
+ *
+ * Unlike `inferPackageManager`, this helper never uses global CLI installation detection.
+ */
+export async function inferPackageManagerForDirectory(
+  fromDirectory: string,
+  env = process.env,
+): Promise<PackageManager> {
+  const packageManager = await detectPackageManagerFromDirectory(fromDirectory)
+  if (packageManager) return packageManager
+
+  const userAgentPackageManager = packageManagerFromUserAgent(env)
+  return userAgentPackageManager === 'unknown' ? 'npm' : userAgentPackageManager
 }
 
 interface InstallNPMDependenciesRecursivelyOptions {
