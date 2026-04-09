@@ -128,16 +128,28 @@ export async function warnIfUpgradeAvailable(): Promise<void> {
 
 /**
  * Generates a message to remind the user to update the CLI.
+ * For major version bumps, appends a link to the GitHub release notes so users
+ * can review breaking changes before deciding to upgrade.
  *
  * @param version - The version to update to.
+ * @param isMajor - Whether the version bump is a major version change.
  * @returns The message to remind the user to update the CLI.
  */
-export function getOutputUpdateCLIReminder(version: string): string {
+export function getOutputUpdateCLIReminder(version: string, isMajor = false): string {
   const installCommand = cliInstallCommand()
-  if (installCommand) {
-    return outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
+  const base = installCommand
+    ? outputContent`💡 Version ${version} available! Run ${outputToken.genericShellCommand(installCommand)}`.value
+    : outputContent`💡 Version ${version} available!`.value
+
+  if (isMajor) {
+    const releaseUrl = `https://github.com/Shopify/cli/releases/tag/v${version}`
+    const majorNotice =
+      outputContent`⚠️  This is a major version — review breaking changes before upgrading:\n   ${outputToken.link(releaseUrl, releaseUrl)}`
+        .value
+    return `${base}\n\n${majorNotice}`
   }
-  return outputContent`💡 Version ${version} available!`.value
+
+  return base
 }
 
 /**

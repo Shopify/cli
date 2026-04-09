@@ -2,7 +2,7 @@ import {isDevelopment} from './context/local.js'
 import {currentProcessIsGlobal, inferPackageManagerForGlobalCLI} from './is-global.js'
 import {checkForCachedNewVersion, packageManagerFromUserAgent, PackageManager} from './node-package-manager.js'
 import {exec, isCI} from './system.js'
-import {cliInstallCommand, runCLIUpgrade, versionToAutoUpgrade} from './upgrade.js'
+import {cliInstallCommand, getOutputUpdateCLIReminder, runCLIUpgrade, versionToAutoUpgrade} from './upgrade.js'
 import {isPreReleaseVersion} from './version.js'
 import {getAutoUpgradeEnabled} from '../../private/node/conf-store.js'
 import {vi, describe, test, expect, beforeEach} from 'vitest'
@@ -96,6 +96,38 @@ describe('cliInstallCommand', () => {
     expect(got).toBeUndefined()
   })
 })
+describe('getOutputUpdateCLIReminder', () => {
+  test('returns a basic upgrade message for a minor version bump', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+
+    const message = getOutputUpdateCLIReminder('3.91.0')
+
+    expect(message).toContain('3.91.0')
+    expect(message).toContain('brew upgrade shopify-cli')
+    expect(message).not.toContain('major version')
+  })
+
+  test('appends the GitHub release URL for a major version bump', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('homebrew')
+
+    const message = getOutputUpdateCLIReminder('4.0.0', true)
+
+    expect(message).toContain('4.0.0')
+    expect(message).toContain('brew upgrade shopify-cli')
+    expect(message).toContain('major version')
+    expect(message).toContain('https://github.com/Shopify/cli/releases/tag/v4.0.0')
+  })
+
+  test('does not append the release URL for a minor version bump even when isMajor is false', () => {
+    vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
+
+    const message = getOutputUpdateCLIReminder('3.91.0', false)
+
+    expect(message).not.toContain('major version')
+    expect(message).not.toContain('releases/tag')
+  })
+})
+
 describe('runCLIUpgrade', () => {
   beforeEach(() => {
     // Mock isDevelopment to return false by default (not in CLI development mode)

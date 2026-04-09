@@ -90,6 +90,7 @@ describe('autoUpgradeIfNeeded', () => {
 
     // Then
     expect(runCLIUpgrade).not.toHaveBeenCalled()
+    expect(getOutputUpdateCLIReminder).toHaveBeenCalledWith('4.0.0', true)
     expect(outputMock.warn()).toMatch(installReminder)
   })
 })
