@@ -1,8 +1,8 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
 import {authFixture} from './auth.js'
 import {navigateToDashboard} from './browser.js'
-import {completeLogin} from '../helpers/browser-login.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
+import {completeLogin} from '../helpers/browser-login.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import * as toml from '@iarna/toml'
 import * as path from 'path'

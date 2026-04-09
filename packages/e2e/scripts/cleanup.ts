@@ -27,6 +27,7 @@ import {config} from 'dotenv'
 import * as path from 'path'
 import {fileURLToPath} from 'url'
 import {chromium} from '@playwright/test'
+import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import {navigateToDashboard} from '../setup/browser.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import type {Page} from '@playwright/test'
@@ -96,8 +97,8 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
       'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
     },
   })
-  context.setDefaultTimeout(30_000)
-  context.setDefaultNavigationTimeout(30_000)
+  context.setDefaultTimeout(BROWSER_TIMEOUT.max)
+  context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)
   const page = await context.newPage()
 
   try {
@@ -182,7 +183,7 @@ export async function cleanupAllApps(opts: CleanupOptions = {}): Promise<void> {
           const msg = err instanceof Error ? err.message : String(err)
           if (attempt <= maxRetries) {
             console.warn(`  Attempt ${attempt} failed: ${msg}`)
-            await page.waitForTimeout(3000)
+            await page.waitForTimeout(BROWSER_TIMEOUT.medium)
           } else {
             console.warn(`  Failed: ${msg}`)
           }
@@ -238,12 +239,12 @@ async function findAppsOnDashboard(
 
     // Check for next page — navigate via href since the button click may not work
     const nextLink = page.locator('a[href*="next_cursor"]').first()
-    if (!(await nextLink.isVisible({timeout: 2000}).catch(() => false))) break
+    if (!(await nextLink.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) break
     const nextHref = await nextLink.getAttribute('href')
     if (!nextHref) break
     const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`
     await page.goto(nextUrl, {waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(3000)
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
   return apps
@@ -257,7 +258,7 @@ async function uninstallApp(
   orgId: string,
 ): Promise<boolean> {
   await page.goto(`${appUrl}/installs`, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   const rows = await page.locator('table tbody tr').all()
   const storeNames: string[] = []
@@ -276,14 +277,14 @@ async function uninstallApp(
       let navigated = false
       for (let attempt = 1; attempt <= 3; attempt++) {
         const orgButton = page.locator('button[popovertarget="store-switcher-popover"]').first()
-        if (!(await orgButton.isVisible({timeout: 5000}).catch(() => false))) continue
+        if (!(await orgButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) continue
         await orgButton.click()
-        await page.waitForTimeout(1000)
+        await page.waitForTimeout(BROWSER_TIMEOUT.short)
 
         const storeLink = page.locator('a, button').filter({hasText: storeName}).first()
-        if (!(await storeLink.isVisible({timeout: 5000}).catch(() => false))) continue
+        if (!(await storeLink.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false))) continue
         await storeLink.click()
-        await page.waitForTimeout(3000)
+        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
         navigated = true
         break
       }
@@ -296,18 +297,18 @@ async function uninstallApp(
       // Navigate to store's apps settings page
       const storeAdminUrl = page.url()
       await page.goto(`${storeAdminUrl.replace(/\/$/, '')}/settings/apps`, {waitUntil: 'domcontentloaded'})
-      await page.waitForTimeout(5000)
+      await page.waitForTimeout(BROWSER_TIMEOUT.long)
 
       // Dismiss any Dev Console dialog
       const cancelButton = page.locator('button:has-text("Cancel")')
-      if (await cancelButton.isVisible({timeout: 2000}).catch(() => false)) {
+      if (await cancelButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
         await cancelButton.click()
-        await page.waitForTimeout(1000)
+        await page.waitForTimeout(BROWSER_TIMEOUT.short)
       }
 
       // Find the app in the installed list
       const appSpan = page.locator(`span:has-text("${appName}"):not([class*="Polaris"])`).first()
-      if (!(await appSpan.isVisible({timeout: 5000}).catch(() => false))) {
+      if (!(await appSpan.isVisible({timeout: BROWSER_TIMEOUT.max}).catch(() => false))) {
         allUninstalled = false
         continue
       }
@@ -315,22 +316,22 @@ async function uninstallApp(
       // Click the ⋯ menu button next to the app name
       const menuButton = appSpan.locator('xpath=./following::button[1]')
       await menuButton.click()
-      await page.waitForTimeout(1000)
+      await page.waitForTimeout(BROWSER_TIMEOUT.short)
 
       // Click "Uninstall" in the dropdown menu
       const uninstallOption = page.locator('text=Uninstall').last()
-      if (!(await uninstallOption.isVisible({timeout: 3000}).catch(() => false))) {
+      if (!(await uninstallOption.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) {
         allUninstalled = false
         continue
       }
       await uninstallOption.click()
-      await page.waitForTimeout(2000)
+      await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
       // Handle confirmation dialog
       const confirmButton = page.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
-      if (await confirmButton.isVisible({timeout: 3000}).catch(() => false)) {
+      if (await confirmButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
         await confirmButton.click()
-        await page.waitForTimeout(3000)
+        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
       }
     } catch (_err) {
       allUninstalled = false
@@ -343,7 +344,7 @@ async function uninstallApp(
 /** Delete an app from the dev dashboard settings page. */
 async function deleteApp(page: Page, appUrl: string): Promise<void> {
   await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Retry if delete button is disabled (uninstall propagation delay)
   const deleteButton = page.locator('button:has-text("Delete app")').first()
@@ -351,24 +352,24 @@ async function deleteApp(page: Page, appUrl: string): Promise<void> {
     await deleteButton.scrollIntoViewIfNeeded()
     const isDisabled = await deleteButton.getAttribute('disabled')
     if (!isDisabled) break
-    await page.waitForTimeout(5000)
+    await page.waitForTimeout(BROWSER_TIMEOUT.long)
     await page.reload({waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(3000)
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
-  await deleteButton.click({timeout: 10_000})
-  await page.waitForTimeout(2000)
+  await deleteButton.click({timeout: BROWSER_TIMEOUT.max})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Handle confirmation dialog — may need to type "DELETE"
   const confirmInput = page.locator('input[type="text"]').last()
-  if (await confirmInput.isVisible({timeout: 3000}).catch(() => false)) {
+  if (await confirmInput.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
     await confirmInput.fill('DELETE')
-    await page.waitForTimeout(500)
+    await page.waitForTimeout(BROWSER_TIMEOUT.short)
   }
 
   const confirmButton = page.locator('button:has-text("Delete app")').last()
   await confirmButton.click()
-  await page.waitForTimeout(3000)
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 }
 
 // ---------------------------------------------------------------------------
