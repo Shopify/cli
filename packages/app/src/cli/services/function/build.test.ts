@@ -22,12 +22,20 @@ import {
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 import {exec} from '@shopify/cli-kit/node/system'
+import {inferPackageManagerForDirectory} from '@shopify/cli-kit/node/node-package-manager'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
 import {build as esBuild} from 'esbuild'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/node-package-manager')
+  return {
+    ...actual,
+    inferPackageManagerForDirectory: vi.fn(),
+  }
+})
 
 vi.mock('./binaries.js', async (importOriginal) => {
   const actual: any = await importOriginal()
@@ -76,6 +84,7 @@ beforeEach(async () => {
   stderr = {write: vi.fn()}
   stdout = {write: vi.fn()}
   signal = vi.fn()
+  vi.mocked(inferPackageManagerForDirectory).mockResolvedValue('npm')
 })
 
 describe('buildGraphqlTypes', () => {
@@ -88,7 +97,43 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
+    expect(inferPackageManagerForDirectory).toHaveBeenCalledTimes(1)
+    expect(inferPackageManagerForDirectory).toHaveBeenCalledWith(ourFunction.directory)
     expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+      cwd: ourFunction.directory,
+      stderr,
+      signal,
+    })
+  })
+
+  test('generate types uses pnpm-specific exec args when pnpm is inferred', {timeout: 20000}, async () => {
+    // Given
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+    vi.mocked(inferPackageManagerForDirectory).mockResolvedValue('pnpm')
+
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith('pnpm', ['exec', 'graphql-code-generator', '--config', 'package.json'], {
+      cwd: ourFunction.directory,
+      stderr,
+      signal,
+    })
+  })
+
+  test('generate types uses bun-specific exec args when bun is inferred', {timeout: 20000}, async () => {
+    // Given
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+    vi.mocked(inferPackageManagerForDirectory).mockResolvedValue('bun')
+
+    // When
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    // Then
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith('bun', ['x', 'graphql-code-generator', '--config', 'package.json'], {
       cwd: ourFunction.directory,
       stderr,
       signal,
@@ -105,6 +150,7 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).rejects.toThrow(/No typegen_command specified/)
+    expect(inferPackageManagerForDirectory).not.toHaveBeenCalled()
   })
 
   test('runs custom typegen_command when provided', async () => {
@@ -129,6 +175,7 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
+    expect(inferPackageManagerForDirectory).not.toHaveBeenCalled()
     expect(exec).toHaveBeenCalledWith('npx', ['shopify-function-codegen', '--schema', 'schema.graphql'], {
       cwd: ourFunction.directory,
       stdout,
@@ -159,6 +206,7 @@ describe('buildGraphqlTypes', () => {
 
     // Then
     await expect(got).resolves.toBeUndefined()
+    expect(inferPackageManagerForDirectory).not.toHaveBeenCalled()
     expect(exec).toHaveBeenCalledWith('custom-typegen', ['--output', 'types.ts'], {
       cwd: ourFunction.directory,
       stdout,

@@ -13,6 +13,7 @@ import {
   writePackageJSON,
   getPackageManager,
   inferPackageManagerForDirectory,
+  packageManagerBinaryCommand,
   installNPMDependenciesRecursively,
   addNPMDependencies,
   DependencyVersion,
@@ -1060,7 +1061,20 @@ describe('inferPackageManagerForDirectory', () => {
     })
   })
 
-  test('detects bun from bun.lockb', async () => {
+  test('detects bun from bun.lock', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      const packageJson = joinPath(tmpDir, 'package.json')
+      const bunLockfile = joinPath(tmpDir, 'bun.lock')
+      await writeFile(packageJson, JSON.stringify({}))
+      await writeFile(bunLockfile, '')
+
+      const packageManager = await inferPackageManagerForDirectory(tmpDir, {})
+
+      expect(packageManager).toEqual('bun')
+    })
+  })
+
+  test('detects bun from legacy bun.lockb', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const packageJson = joinPath(tmpDir, 'package.json')
       const bunLockfile = joinPath(tmpDir, 'bun.lockb')
@@ -1104,7 +1118,7 @@ describe('inferPackageManagerForDirectory', () => {
   test('prefers bun over npm when both lockfiles exist in the same directory', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       const packageJson = joinPath(tmpDir, 'package.json')
-      const bunLockfile = joinPath(tmpDir, 'bun.lockb')
+      const bunLockfile = joinPath(tmpDir, 'bun.lock')
       const npmLockfile = joinPath(tmpDir, 'package-lock.json')
       await writeFile(packageJson, JSON.stringify({}))
       await writeFile(bunLockfile, '')
@@ -1126,6 +1140,33 @@ describe('inferPackageManagerForDirectory', () => {
       expect(packageManager).toEqual('npm')
       expect(mockedCaptureOutput).not.toHaveBeenCalled()
       expect(inferPackageManagerForGlobalCLI).not.toHaveBeenCalled()
+    })
+  })
+})
+
+describe('packageManagerBinaryCommand', () => {
+  test('uses npm exec with -- for npm', () => {
+    expect(packageManagerBinaryCommand('npm', 'graphql-code-generator', '--config', 'package.json')).toEqual({
+      command: 'npm',
+      args: ['exec', '--', 'graphql-code-generator', '--config', 'package.json'],
+    })
+  })
+
+  test('uses exec without -- for pnpm and yarn', () => {
+    expect(packageManagerBinaryCommand('pnpm', 'graphql-code-generator', '--config', 'package.json')).toEqual({
+      command: 'pnpm',
+      args: ['exec', 'graphql-code-generator', '--config', 'package.json'],
+    })
+    expect(packageManagerBinaryCommand('yarn', 'graphql-code-generator', '--config', 'package.json')).toEqual({
+      command: 'yarn',
+      args: ['exec', 'graphql-code-generator', '--config', 'package.json'],
+    })
+  })
+
+  test('uses bun x for bun', () => {
+    expect(packageManagerBinaryCommand('bun', 'graphql-code-generator', '--config', 'package.json')).toEqual({
+      command: 'bun',
+      args: ['x', 'graphql-code-generator', '--config', 'package.json'],
     })
   })
 })

@@ -56,6 +56,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
  */
 export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'homebrew', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
+export type ProjectPackageManager = 'yarn' | 'npm' | 'pnpm' | 'bun'
 
 /**
  * Returns an abort error that's thrown when the package manager can't be determined.
@@ -137,22 +138,23 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   return (await detectPackageManagerFromDirectory(directory)) ?? 'npm'
 }
 
-async function inferPackageManagerAtDirectory(directory: string): Promise<PackageManager | undefined> {
+async function inferPackageManagerAtDirectory(directory: string): Promise<ProjectPackageManager | undefined> {
   const yarnLockPath = joinPath(directory, yarnLockfile)
   const pnpmLockPath = joinPath(directory, pnpmLockfile)
   const pnpmWorkspacePath = joinPath(directory, pnpmWorkspaceFile)
   const bunLockPath = joinPath(directory, bunLockfile)
+  const modernBunLockPath = joinPath(directory, 'bun.lock')
   const npmLockPath = joinPath(directory, npmLockfile)
 
   if (await fileExists(yarnLockPath)) return 'yarn'
   if ((await fileExists(pnpmLockPath)) || (await fileExists(pnpmWorkspacePath))) return 'pnpm'
-  if (await fileExists(bunLockPath)) return 'bun'
+  if ((await fileExists(bunLockPath)) || (await fileExists(modernBunLockPath))) return 'bun'
   if (await fileExists(npmLockPath)) return 'npm'
 
   return undefined
 }
 
-async function detectPackageManagerFromDirectory(fromDirectory: string): Promise<PackageManager | undefined> {
+async function detectPackageManagerFromDirectory(fromDirectory: string): Promise<ProjectPackageManager | undefined> {
   const packageManager = await inferPackageManagerAtDirectory(fromDirectory)
   if (packageManager) return packageManager
 
@@ -160,6 +162,25 @@ async function detectPackageManagerFromDirectory(fromDirectory: string): Promise
   if (parentDirectory === fromDirectory) return undefined
 
   return detectPackageManagerFromDirectory(parentDirectory)
+}
+
+/**
+ * Builds the command and argv needed to execute a local binary through a project package manager.
+ */
+export function packageManagerBinaryCommand(
+  packageManager: ProjectPackageManager,
+  binary: string,
+  ...binaryArgs: string[]
+): {command: string; args: string[]} {
+  switch (packageManager) {
+    case 'npm':
+      return {command: 'npm', args: ['exec', '--', binary, ...binaryArgs]}
+    case 'pnpm':
+    case 'yarn':
+      return {command: packageManager, args: ['exec', binary, ...binaryArgs]}
+    case 'bun':
+      return {command: 'bun', args: ['x', binary, ...binaryArgs]}
+  }
 }
 
 /**
@@ -175,12 +196,24 @@ async function detectPackageManagerFromDirectory(fromDirectory: string): Promise
 export async function inferPackageManagerForDirectory(
   fromDirectory: string,
   env = process.env,
-): Promise<PackageManager> {
+): Promise<ProjectPackageManager> {
   const packageManager = await detectPackageManagerFromDirectory(fromDirectory)
   if (packageManager) return packageManager
 
   const userAgentPackageManager = packageManagerFromUserAgent(env)
-  return userAgentPackageManager === 'unknown' ? 'npm' : userAgentPackageManager
+  switch (userAgentPackageManager) {
+    case 'npm':
+      return 'npm'
+    case 'pnpm':
+      return 'pnpm'
+    case 'yarn':
+      return 'yarn'
+    case 'bun':
+      return 'bun'
+    case 'homebrew':
+    case 'unknown':
+      return 'npm'
+  }
 }
 
 interface InstallNPMDependenciesRecursivelyOptions {
