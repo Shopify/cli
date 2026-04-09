@@ -115,24 +115,27 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
-  const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
-  if (!packageJsonPath) {
-    return packageManagerFromUserAgent()
-  }
-  const directory = dirname(packageJsonPath)
-  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
-  const yarnLockPath = joinPath(directory, yarnLockfile)
-  const pnpmLockPath = joinPath(directory, pnpmLockfile)
-  const bunLockPath = joinPath(directory, bunLockfile)
-  if (await fileExists(yarnLockPath)) {
+  const yarnLockPath = await findPathUp(yarnLockfile, {cwd: fromDirectory, type: 'file'})
+  if (yarnLockPath) {
+    outputDebug(outputContent`Found ${yarnLockfile} in ${outputToken.path(dirname(yarnLockPath))}`)
     return 'yarn'
-  } else if (await fileExists(pnpmLockPath)) {
+  }
+  const pnpmLockPath = await findPathUp(pnpmLockfile, {cwd: fromDirectory, type: 'file'})
+  if (pnpmLockPath) {
+    outputDebug(outputContent`Found ${pnpmLockfile} in ${outputToken.path(dirname(pnpmLockPath))}`)
     return 'pnpm'
-  } else if (await fileExists(bunLockPath)) {
+  }
+  const bunLockPath = await findPathUp(bunLockfile, {cwd: fromDirectory, type: 'file'})
+  if (bunLockPath) {
+    outputDebug(outputContent`Found ${bunLockfile} in ${outputToken.path(dirname(bunLockPath))}`)
     return 'bun'
-  } else {
+  }
+  const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
+  if (packageJsonPath) {
+    outputDebug(outputContent`Found package.json but no lockfile in ${outputToken.path(dirname(packageJsonPath))}, defaulting to npm`)
     return 'npm'
   }
+  return packageManagerFromUserAgent()
 }
 
 interface InstallNPMDependenciesRecursivelyOptions {

@@ -889,6 +889,23 @@ describe('getPackageManager', () => {
     })
   })
 
+  test('finds lockfile at parent when subdirectory has its own package.json', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      // Given: app root has pnpm-lock.yaml, function subdir has its own package.json
+      await writePackageJSON(tmpDir, {name: 'app-root'})
+      await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '')
+      const functionDir = joinPath(tmpDir, 'extensions', 'my-function')
+      await mkdir(functionDir)
+      await writePackageJSON(functionDir, {name: 'my-function'})
+
+      // When: detecting from the function subdirectory
+      const packageManager = await getPackageManager(functionDir)
+
+      // Then: finds pnpm-lock.yaml at the app root
+      expect(packageManager).toEqual('pnpm')
+    })
+  })
+
   test('falls back to packageManagerFromUserAgent when no package.json is found', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
       // Given
