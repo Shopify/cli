@@ -1050,7 +1050,9 @@ describe('inferPackageManagerForDirectory', () => {
       const nestedDirectory = joinPath(tmpDir, 'extensions', 'discount-function')
       await mkdir(nestedDirectory)
 
-      const packageManager = await inferPackageManagerForDirectory(nestedDirectory, {npm_config_user_agent: 'yarn/1.22.0'})
+      const packageManager = await inferPackageManagerForDirectory(nestedDirectory, {
+        npm_config_user_agent: 'yarn/1.22.0',
+      })
 
       expect(packageManager).toEqual('yarn')
       expect(mockedCaptureOutput).not.toHaveBeenCalled()

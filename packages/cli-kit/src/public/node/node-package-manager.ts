@@ -153,16 +153,13 @@ async function inferPackageManagerAtDirectory(directory: string): Promise<Packag
 }
 
 async function detectPackageManagerFromDirectory(fromDirectory: string): Promise<PackageManager | undefined> {
-  let currentDirectory = fromDirectory
+  const packageManager = await inferPackageManagerAtDirectory(fromDirectory)
+  if (packageManager) return packageManager
 
-  while (true) {
-    const packageManager = await inferPackageManagerAtDirectory(currentDirectory)
-    if (packageManager) return packageManager
+  const parentDirectory = dirname(fromDirectory)
+  if (parentDirectory === fromDirectory) return undefined
 
-    const parentDirectory = dirname(currentDirectory)
-    if (parentDirectory === currentDirectory) return undefined
-    currentDirectory = parentDirectory
-  }
+  return detectPackageManagerFromDirectory(parentDirectory)
 }
 
 /**
