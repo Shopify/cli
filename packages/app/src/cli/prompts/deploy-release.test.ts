@@ -227,13 +227,13 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       // Then
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         expect.objectContaining({
-          installCount: 1243,
+          warningItem: expect.arrayContaining([{error: '1243'}]),
         }),
       )
       expect(result).toBe(true)
     })
 
-    test('and no force with deleted extensions but installCount 0 should not pass installCount to danger prompt', async () => {
+    test('and no force with deleted extensions but installCount 0 should not pass warningItem to danger prompt', async () => {
       // Given
       const breakdownInfo = buildCompleteBreakdownInfo()
       const renderDangerousConfirmationPromptSpyOn = vi
@@ -254,7 +254,7 @@ describe('deployOrReleaseConfirmationPrompt', () => {
       // Then
       expect(renderDangerousConfirmationPromptSpyOn).toHaveBeenCalledWith(
         expect.not.objectContaining({
-          installCount: expect.anything(),
+          warningItem: expect.anything(),
         }),
       )
       expect(result).toBe(true)
