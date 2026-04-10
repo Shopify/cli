@@ -49,6 +49,51 @@ describe('functionInfo', () => {
       expect(parsed).toHaveProperty('apiVersion')
     })
 
+    test('uses build.path from config for wasmPath when present', async () => {
+      // Given
+      const funcWithBuildPath = await testFunctionExtension({
+        dir: '/path/to/function',
+        config: {
+          name: 'My Function',
+          type: 'function',
+          handle: 'my-function',
+          api_version: '2024-01',
+          configuration_ui: false,
+          build: {
+            path: 'custom/output.wasm',
+          },
+        },
+      })
+      const options = {
+        format: 'json' as const,
+        functionRunnerPath: '/path/to/runner',
+        schemaPath: '/path/to/schema.graphql',
+      }
+
+      // When
+      const result = functionInfo(funcWithBuildPath, options)
+
+      // Then
+      const parsed = JSON.parse(result as string)
+      expect(parsed.wasmPath).toBe('/path/to/function/custom/output.wasm')
+    })
+
+    test('falls back to outputRelativePath when build.path is not set', async () => {
+      // Given
+      const options = {
+        format: 'json' as const,
+        functionRunnerPath: '/path/to/runner',
+        schemaPath: '/path/to/schema.graphql',
+      }
+
+      // When
+      const result = functionInfo(ourFunction, options)
+
+      // Then
+      const parsed = JSON.parse(result as string)
+      expect(parsed.wasmPath).toBe(ourFunction.outputPath)
+    })
+
     test('returns AlertCustomSection array when format is text', async () => {
       // Given
       const options = {
@@ -174,7 +219,8 @@ describe('functionInfo', () => {
       }
 
       // When
-      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner', '/path/to/schema.graphql')
+      const functionOutputPath = '/path/to/function/output.wasm'
+      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner', functionOutputPath, '/path/to/schema.graphql')
 
       // Then
       const parsed = JSON.parse(result)
@@ -189,7 +235,7 @@ describe('functionInfo', () => {
           },
         },
         schemaPath: '/path/to/schema.graphql',
-        wasmPath: testFunc.outputPath,
+        wasmPath: functionOutputPath,
         functionRunnerPath: '/path/to/runner',
       })
     })
@@ -209,7 +255,7 @@ describe('functionInfo', () => {
       const targeting = {}
 
       // When
-      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner')
+      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner', 'path/to/function.wasm', undefined)
 
       // Then
       const parsed = JSON.parse(result)
@@ -362,7 +408,7 @@ describe('functionInfo', () => {
       }
 
       // When
-      const result = buildTextFormatSections(testFunc, config, targeting, '/path/to/runner', '/path/to/schema.graphql')
+      const result = buildTextFormatSections(testFunc, config, targeting, '/path/to/runner', '/path/to/function/output.wasm', '/path/to/schema.graphql')
 
       // Then
       // configuration, targeting, build, function runner
