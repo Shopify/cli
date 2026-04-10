@@ -1465,9 +1465,8 @@ USAGE
     [--typescript]
 
 ARGUMENTS
-  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|tokenlessApi|all) The
-             route to generate. One of
-             home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,tokenlessApi,all.
+  ROUTENAME  (home|page|cart|products|collections|policies|blogs|account|search|robots|sitemap|all) The route to
+             generate. One of home,page,cart,products,collections,policies,blogs,account,search,robots,sitemap,all.
 
 FLAGS
   -f, --force                 [env: SHOPIFY_HYDROGEN_FLAG_FORCE] Overwrites the destination directory and files if they
