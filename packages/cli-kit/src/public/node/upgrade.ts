@@ -142,7 +142,7 @@ export function getOutputUpdateCLIReminder(version: string, isMajor = false): st
     : outputContent`💡 Version ${version} available!`.value
 
   if (isMajor) {
-    const releaseUrl = `https://github.com/Shopify/cli/releases/tag/v${version}`
+    const releaseUrl = `https://github.com/Shopify/cli/releases/tag/${version}`
     const majorNotice =
       outputContent`⚠️  This is a major version — review breaking changes before upgrading:\n   ${outputToken.link(releaseUrl, releaseUrl)}`
         .value
