@@ -118,15 +118,7 @@ export class FileWatcher {
     // Create new watcher
     const {default: chokidar} = await import('chokidar')
     this.watcher = chokidar.watch(watchPaths, {
-      ignored: [
-        '**/node_modules/**',
-        '**/.git/**',
-        '**/*.test.*',
-        '**/dist/**',
-        '**/*.swp',
-        '**/generated/**',
-        '**/.gitignore',
-      ],
+      ignored: ['**/node_modules/**', '**/.git/**'],
       persistent: true,
       ignoreInitial: true,
     })

@@ -1,8 +1,33 @@
-import {createContractBasedModuleSpecification} from '../specification.js'
+import {createExtensionSpecification} from '../specification.js'
+import {BaseConfigType, ZodSchemaType} from '../schemas.js'
+import {zod} from '@shopify/cli-kit/node/schema'
+import {joinPath} from '@shopify/cli-kit/node/path'
 
-const adminSpecificationSpec = createContractBasedModuleSpecification({
+const AdminSchema = zod.object({
+  admin: zod
+    .object({
+      static_root: zod.string().optional(),
+    })
+    .optional(),
+})
+
+type AdminConfigType = zod.infer<typeof AdminSchema> & BaseConfigType
+
+const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
   identifier: 'admin',
   uidStrategy: 'single',
+  experience: 'configuration',
+  schema: AdminSchema as ZodSchemaType<AdminConfigType>,
+  deployConfig: async (config, _) => {
+    return {admin: config.admin}
+  },
+  devSessionWatchConfig: (extension) => {
+    const staticRoot = extension.configuration.admin?.static_root
+    if (!staticRoot) return {paths: []}
+
+    const path = joinPath(extension.directory, staticRoot, '**/*')
+    return {paths: [path], ignore: []}
+  },
   transformRemoteToLocal: (remoteContent) => {
     return {
       admin: {
