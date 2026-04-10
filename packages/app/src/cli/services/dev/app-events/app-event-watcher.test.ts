@@ -15,6 +15,7 @@ import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/a
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {AbortError} from '@shopify/cli-kit/node/error'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -574,6 +575,50 @@ describe('app-event-watcher', () => {
 
         // Then
         expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
+      })
+    })
+
+    test('AbortError tryMessage details are included in stderr output', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        // Use a fresh extension to avoid interference from other tests sharing flowExtension
+        const freshExtension = await testFlowActionExtension('/extensions/flow_action_fresh')
+        const fileWatchEvent: WatcherEvent = {
+          type: 'file_updated',
+          path: '/extensions/flow_action_fresh/src/file.js',
+          extensionPath: '/extensions/flow_action_fresh',
+          startTime: [0, 0],
+        }
+
+        // Given
+        // This simulates the error thrown by buildFunctionExtension when cargo/rust fails:
+        // AbortError('Failed to build function.', 'Command failed with exit code 127: cargo build --release')
+        const buildError = new AbortError(
+          'Failed to build function.',
+          'Command failed with exit code 127: cargo build --release',
+        )
+        freshExtension.buildForBundle = vi.fn().mockRejectedValueOnce(buildError)
+
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+        const app = testAppLinked({
+          allExtensions: [freshExtension],
+          configPath: 'shopify.app.custom.toml',
+          configuration: testAppConfiguration,
+        })
+
+        // When
+        const mockManager = new MockESBuildContextManager()
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const stderr = {write: vi.fn()} as unknown as Writable
+        const stdout = {write: vi.fn()} as unknown as Writable
+
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+
+        await flushPromises()
+
+        // Then - stderr should include the tryMessage with the actual failure reason
+        const allStderrWrites = (stderr.write as any).mock.calls.map((call: any[]) => call[0]).join('\n')
+        expect(allStderrWrites).toContain('Command failed with exit code 127')
       })
     })
 
