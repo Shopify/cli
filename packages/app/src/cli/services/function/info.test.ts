@@ -61,6 +61,7 @@ describe('functionInfo', () => {
           configuration_ui: false,
           build: {
             path: 'custom/output.wasm',
+            wasm_opt: false,
           },
         },
       })
@@ -220,7 +221,14 @@ describe('functionInfo', () => {
 
       // When
       const functionOutputPath = '/path/to/function/output.wasm'
-      const result = formatAsJson(testFunc, config, targeting, '/path/to/runner', functionOutputPath, '/path/to/schema.graphql')
+      const result = formatAsJson(
+        testFunc,
+        config,
+        targeting,
+        '/path/to/runner',
+        functionOutputPath,
+        '/path/to/schema.graphql',
+      )
 
       // Then
       const parsed = JSON.parse(result)
@@ -408,7 +416,14 @@ describe('functionInfo', () => {
       }
 
       // When
-      const result = buildTextFormatSections(testFunc, config, targeting, '/path/to/runner', '/path/to/function/output.wasm', '/path/to/schema.graphql')
+      const result = buildTextFormatSections(
+        testFunc,
+        config,
+        targeting,
+        '/path/to/runner',
+        '/path/to/function/output.wasm',
+        '/path/to/schema.graphql',
+      )
 
       // Then
       // configuration, targeting, build, function runner
