@@ -12,7 +12,6 @@ import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {DotEnvFile} from '@shopify/cli-kit/node/dot-env'
-import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {Writable} from 'stream'
 
 export interface ExtensionDevOptions {
@@ -36,7 +35,8 @@ export interface ExtensionDevOptions {
   buildDirectory?: string
 
   /**
-   * The extension to be built.
+   * All real extensions in the app, including non-previewable ones (e.g., admin config).
+   * Previewable extensions are filtered internally for the UI payload.
    */
   extensions: ExtensionInstance[]
 
@@ -113,11 +113,6 @@ export interface ExtensionDevOptions {
    * The app watcher that emits events when the app is updated
    */
   appWatcher: AppEventWatcher
-
-  /**
-   * Map of asset key to absolute directory path for app-level assets (e.g., admin static_root)
-   */
-  appAssets?: Record<string, string>
 }
 
 export async function devUIExtensions(options: ExtensionDevOptions): Promise<void> {
@@ -132,14 +127,14 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const bundlePath = payloadOptions.appWatcher.buildOutputPath
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
-  let extensions = payloadOptions.extensions
+  let extensions = payloadOptions.extensions.filter((ext) => ext.isPreviewable)
 
   const getExtensions = () => {
     return extensions
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const getAppAssets = () => payloadOptions.appAssets
+  const getAppAssets = () => payloadStore.getAppAssets()
   const httpServer = setupHTTPServer({
     devOptions: payloadOptions,
     payloadStore,
@@ -156,13 +151,7 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
     }
 
-    // Handle App Assets updates.
-    const appAssetsConfigs = extensionEvents.map((event) =>
-      event.extension.specification.appAssetsConfig?.(event.extension.configuration),
-    )
-    getArrayRejectingUndefined(appAssetsConfigs).forEach((config) => {
-      payloadStore.updateAppAssetTimestamp(config.assetsKey)
-    })
+    payloadStore.updateAdminConfigFromExtensionEvents(extensionEvents)
 
     for (const event of extensionEvents) {
       if (!event.extension.isPreviewable) continue

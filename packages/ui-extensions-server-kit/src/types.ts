@@ -182,6 +182,7 @@ export interface App {
   }
   supportEmail?: string
   supportLocales?: string[]
+  allowed_domains?: string[]
   assets?: {
     [key: string]: {
       url: string

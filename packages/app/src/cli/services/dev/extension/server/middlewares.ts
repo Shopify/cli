@@ -5,7 +5,7 @@ import {getHTML} from '../templates.js'
 import {getWebSocketUrl} from '../../extension.js'
 import {fileExists, isDirectory, readFile, findPathUp} from '@shopify/cli-kit/node/fs'
 import {sendRedirect, defineEventHandler, getRequestHeader, getRouterParams, setResponseHeader} from 'h3'
-import {joinPath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
+import {joinPath, resolvePath, dirname, extname, moduleDirectory} from '@shopify/cli-kit/node/path'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 
 import type {H3Event} from 'h3'
@@ -142,8 +142,13 @@ export function getAppAssetsMiddleware(getAppAssets: () => Record<string, string
     if (!directory) {
       return sendError(event, {statusCode: 404, statusMessage: `No app assets configured for key: ${assetKey}`})
     }
+    const resolvedDirectory = resolvePath(directory)
+    const resolvedFilePath = resolvePath(directory, filePath)
+    if (!resolvedFilePath.startsWith(resolvedDirectory)) {
+      return sendError(event, {statusCode: 403, statusMessage: 'Path traversal is not allowed'})
+    }
     return fileServerMiddleware(event, {
-      filePath: joinPath(directory, filePath),
+      filePath: resolvedFilePath,
     })
   })
 }

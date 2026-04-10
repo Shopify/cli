@@ -162,7 +162,6 @@ export async function setupDevProcesses({
       appId: remoteApp.id,
       appDirectory: reloadedApp.directory,
       appWatcher,
-      appAssetsConfigs: reloadedApp.appAssetsConfigs,
     }),
     developerPlatformClient.supportsDevSessions
       ? await setupDevSessionProcess({
