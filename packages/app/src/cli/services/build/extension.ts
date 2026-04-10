@@ -161,13 +161,18 @@ export async function buildFunctionExtension(
       await runTrampoline(extension.outputPath)
     }
 
+    const projectOutputPath = joinPath(extension.directory, extension.outputRelativePath)
+
     if (
       fileExistsSync(extension.outputPath) &&
       bundlePath !== extension.outputPath &&
+      bundlePath !== projectOutputPath &&
       dirname(bundlePath) !== dirname(extension.outputPath)
     ) {
+      // Bundle build for deploy: base64-encode into the bundle directory
       await bundleFunctionExtension(extension.outputPath, bundlePath)
     }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     // To avoid random user-code errors being reported as CLI bugs, we capture and rethrow them as AbortError.
