@@ -25,9 +25,24 @@ vi.mock('../../../models/app/loader.js')
 vi.mock('./app-watcher-esbuild.js')
 
 // Extensions 1 and 1B simulate extensions defined in the same directory (same toml)
-const extension1 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1'})
-const extension1B = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_1', uid: 'uid1B'})
-const extension2 = await testUIExtension({type: 'ui_extension', directory: '/extensions/ui_extension_2', uid: 'uid2'})
+const extension1 = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h1',
+  directory: '/extensions/ui_extension_1',
+  uid: 'uid1',
+})
+const extension1B = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h2',
+  directory: '/extensions/ui_extension_1',
+  uid: 'uid1B',
+})
+const extension2 = await testUIExtension({
+  type: 'ui_extension',
+  handle: 'h3',
+  directory: '/extensions/ui_extension_2',
+  uid: 'uid2',
+})
 const flowExtension = await testFlowActionExtension('/extensions/flow_action')
 const posExtension = await testAppConfigExtensions()
 const appAccessExtension = await testAppAccessConfigExtension()
@@ -36,12 +51,14 @@ const webhookExtension = await testSingleWebhookSubscriptionExtension()
 // Simulate updated extensions
 const extension1Updated = await testUIExtension({
   type: 'ui_extension',
+  handle: 'h1',
   name: 'updated_name1',
   directory: '/extensions/ui_extension_1',
   uid: 'uid1',
 })
 const extension1BUpdated = await testUIExtension({
   type: 'ui_extension',
+  handle: 'h2',
   name: 'updated_name1B',
   directory: '/extensions/ui_extension_1',
   uid: 'uid1B',
@@ -211,6 +228,32 @@ const testCases: TestCase[] = [
       {type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', uid: 'uid1'}},
       {type: EventType.Updated, extension: extension1B, buildResult: {status: 'ok', uid: 'uid1B'}},
     ],
+  },
+  {
+    name: 'file_updated with extensionHandle targets only the specified extension',
+    fileWatchEvent: {
+      type: 'file_updated',
+      path: '/extensions/ui_extension_1/src/file.js',
+      extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h1',
+      startTime: [0, 0],
+    },
+    initialExtensions: [extension1, extension1B, extension2, posExtension],
+    finalExtensions: [extension1, extension1B, extension2, posExtension],
+    extensionEvents: [{type: EventType.Updated, extension: extension1, buildResult: {status: 'ok', uid: 'uid1'}}],
+  },
+  {
+    name: 'file_created with extensionHandle targets only the specified extension',
+    fileWatchEvent: {
+      type: 'file_created',
+      path: '/extensions/ui_extension_1/src/new-file.js',
+      extensionPath: '/extensions/ui_extension_1',
+      extensionHandle: 'h2',
+      startTime: [0, 0],
+    },
+    initialExtensions: [extension1, extension1B, extension2, posExtension],
+    finalExtensions: [extension1, extension1B, extension2, posExtension],
+    extensionEvents: [{type: EventType.Updated, extension: extension1B, buildResult: {status: 'ok', uid: 'uid1B'}}],
   },
   {
     name: 'app config updated with multiple extensions affected',
