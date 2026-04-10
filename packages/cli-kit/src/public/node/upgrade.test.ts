@@ -115,7 +115,7 @@ describe('getOutputUpdateCLIReminder', () => {
     expect(message).toContain('4.0.0')
     expect(message).toContain('brew upgrade shopify-cli')
     expect(message).toContain('major version')
-    expect(message).toContain('https://github.com/Shopify/cli/releases/tag/v4.0.0')
+    expect(message).toContain('https://github.com/Shopify/cli/releases/tag/4.0.0')
   })
 
   test('does not append the release URL for a minor version bump even when isMajor is false', () => {
