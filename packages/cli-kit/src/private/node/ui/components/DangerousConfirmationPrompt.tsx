@@ -16,6 +16,7 @@ export interface DangerousConfirmationPromptProps {
   message: string
   confirmation: string
   infoTable?: InfoTableProps['table']
+  warningItem?: TokenItem<InlineToken>
   onSubmit: (value: boolean) => void
   abortSignal?: AbortSignal
 }
@@ -24,6 +25,7 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
   message,
   confirmation,
   infoTable,
+  warningItem,
   onSubmit,
   abortSignal,
 }) => {
@@ -101,6 +103,12 @@ const DangerousConfirmationPrompt: FunctionComponent<DangerousConfirmationPrompt
                 gap={1}
               >
                 <InfoTable table={infoTable} />
+              </Box>
+            ) : null}
+            {warningItem ? (
+              <Box flexDirection="column">
+                <Text color="red">{figures.warning} WARNING</Text>
+                <TokenizedText item={warningItem} />
               </Box>
             ) : null}
             <Box>
