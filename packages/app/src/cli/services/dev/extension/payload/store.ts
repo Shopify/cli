@@ -3,6 +3,7 @@ import {ExtensionDevOptions} from '../../extension.js'
 import {getUIExtensionPayload, isNewExtensionPointsSchema} from '../payload.js'
 import {buildAppURLForMobile, buildAppURLForWeb} from '../../../../utilities/app/app-url.js'
 import {ExtensionInstance} from '../../../../models/extensions/extension-instance.js'
+import {AdminConfigType} from '../../../../models/extensions/specifications/admin.js'
 import {deepMergeObjects} from '@shopify/cli-kit/common/object'
 import {outputDebug, outputContent} from '@shopify/cli-kit/node/output'
 import {EventEmitter} from 'events'
@@ -40,6 +41,15 @@ export async function getExtensionsPayloadStoreRawPayload(
     },
     store: options.storeFqdn,
     extensions: await Promise.all(options.extensions.map((ext) => getUIExtensionPayload(ext, bundlePath, options))),
+  }
+
+  // Admin extension contributes app-level config to the payload
+  const adminExtension = options.extensions.find((ext) => ext.type === 'admin')
+  if (adminExtension) {
+    const adminConfig = (adminExtension.configuration as AdminConfigType).admin
+    if (adminConfig?.allowed_domains) {
+      payload.app.allowed_domains = adminConfig.allowed_domains
+    }
   }
 
   if (options.appAssets) {

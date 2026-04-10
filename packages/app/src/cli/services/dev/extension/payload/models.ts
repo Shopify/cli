@@ -8,6 +8,7 @@ interface ExtensionsPayloadInterface {
     url: string
     mobileUrl: string
     title: string
+    allowed_domains?: string[]
     assets?: {
       [key: string]: {
         url: string
