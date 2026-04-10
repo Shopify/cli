@@ -674,7 +674,7 @@ export class PartnersClient implements DeveloperPlatformClient {
     const url = `https://${await partnersFqdn()}/${org.id}/stores`
     return [
       `Looks like you don't have any dev stores associated with ${org.businessName}'s Partner Dashboard.`,
-      {link: {url, label: 'Create one now'}},
+      {link: {url, label: 'Create a store in Partner Dashboard'}},
     ]
   }
 
