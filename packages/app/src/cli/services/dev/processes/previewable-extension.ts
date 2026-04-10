@@ -22,9 +22,8 @@ interface PreviewableExtensionOptions {
   appDirectory: string
   appId?: string
   grantedScopes: string[]
-  previewableExtensions: ExtensionInstance[]
+  allExtensions: ExtensionInstance[]
   appWatcher: AppEventWatcher
-  appAssetsConfigs: Record<string, string> | undefined
 }
 
 export interface PreviewableExtensionProcess extends BaseProcess<PreviewableExtensionOptions> {
@@ -45,10 +44,9 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     appDotEnvFile,
     appId,
     grantedScopes,
-    previewableExtensions,
+    allExtensions,
     appDirectory,
     appWatcher,
-    appAssetsConfigs,
   },
 ) => {
   await devUIExtensions({
@@ -56,7 +54,7 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     appDotEnvFile,
     appDirectory,
     id: appId,
-    extensions: previewableExtensions,
+    extensions: allExtensions,
     stdout,
     stderr,
     signal: abortSignal,
@@ -70,7 +68,6 @@ export const launchPreviewableExtensionProcess: DevProcessFunction<PreviewableEx
     subscriptionProductUrl,
     manifestVersion: MANIFEST_VERSION,
     appWatcher,
-    appAssets: appAssetsConfigs,
   })
 }
 
@@ -79,7 +76,7 @@ export async function setupPreviewableExtensionsProcess({
   storeFqdn,
   checkoutCartUrl,
   ...options
-}: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'previewableExtensions' | 'port' | 'cartUrl'> & {
+}: Omit<PreviewableExtensionOptions, 'pathPrefix' | 'allExtensions' | 'port' | 'cartUrl'> & {
   allExtensions: ExtensionInstance[]
   checkoutCartUrl?: string
 }): Promise<PreviewableExtensionProcess | undefined> {
@@ -95,7 +92,7 @@ export async function setupPreviewableExtensionsProcess({
       pathPrefix: '/extensions',
       port: -1,
       storeFqdn,
-      previewableExtensions,
+      allExtensions,
       cartUrl,
       ...options,
     },
