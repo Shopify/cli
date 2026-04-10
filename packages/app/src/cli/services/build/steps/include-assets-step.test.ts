@@ -1082,10 +1082,7 @@ describe('executeIncludeAssetsStep', () => {
 
       // When / Then — overwrites existing manifest.json
       await expect(executeIncludeAssetsStep(step, contextWithConfig)).resolves.not.toThrow()
-      expect(fs.writeFile).toHaveBeenCalledWith(
-        '/test/output/manifest.json',
-        expect.any(String),
-      )
+      expect(fs.writeFile).toHaveBeenCalledWith('/test/output/manifest.json', expect.any(String))
     })
 
     test('writes an empty manifest when anchor resolves to a non-array value', async () => {

@@ -151,7 +151,7 @@ export interface ExtensionSpecification<TConfiguration extends BaseConfigType = 
   appAssetsConfig?: (config: TConfiguration) => AppAssetsConfig | undefined
 }
 
-export interface AppAssetsConfig {
+interface AppAssetsConfig {
   /** The config key that points to the assets directory (e.g. 'admin.static_root') */
   assetsKey: string
   /** The assets directory relative to the extension directory */

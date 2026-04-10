@@ -69,6 +69,7 @@ describe('devUIExtensions()', () => {
       devOptions: {...options, websocketURL: 'wss://mock.url/extensions'},
       payloadStore: {mock: 'payload-store'},
       getExtensions: expect.any(Function),
+      getAppAssets: expect.any(Function),
     })
   })
 
