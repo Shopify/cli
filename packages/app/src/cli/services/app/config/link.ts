@@ -165,6 +165,7 @@ async function getAppCreationDefaultsFromLocalApp(options: LinkOptions): Promise
       directory: options.directory,
       userProvidedConfigName: options.configName,
       remoteFlags: undefined,
+      skipPrompts: true,
     })
 
     return {creationOptions: app.creationDefaultOptions(), appDirectory: app.directory}
@@ -231,6 +232,7 @@ export async function loadLocalAppOptions(
     configName: options.configName,
     specifications,
     remoteFlags,
+    skipPrompts: true,
   })
 
   switch (result.state) {
