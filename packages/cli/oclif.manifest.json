@@ -8399,5 +8399,5 @@
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },
-  "version": "3.93.1"
+  "version": "3.93.2"
 }

@@ -1,5 +1,14 @@
 # @shopify/app
 
+## 3.93.2
+
+### Patch Changes
+
+- f53c1f4: Fix wrong wasmPath value on "app function run" command
+  - @shopify/cli-kit@3.93.2
+  - @shopify/theme@3.93.2
+  - @shopify/plugin-cloudflare@3.93.2
+
 ## 3.93.1
 
 ### Patch Changes
