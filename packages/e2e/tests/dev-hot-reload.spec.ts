@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {appTestFixture as test, createApp, injectFixtureToml, teardownApp} from '../setup/app.js'
+import {createApp, injectFixtureToml} from '../setup/app.js'
+import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
+import {storeTestFixture as test} from '../setup/store.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -37,9 +39,9 @@ description = "E2E test trigger"
 }
 
 test.describe('Dev hot reload', () => {
-  test('editing app config TOML triggers reload', async ({cli, env, browserPage}) => {
+  test('editing app config TOML triggers reload', async ({cli, env, browserPage, storeFqdn}) => {
     test.setTimeout(TEST_TIMEOUT.long)
-    requireEnv(env, 'orgId', 'storeFqdn')
+    requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = `E2E-hot-reload-${Date.now()}`
@@ -52,7 +54,7 @@ test.describe('Dev hot reload', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: ''},
+        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
@@ -81,14 +83,23 @@ test.describe('Dev hot reload', () => {
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 
-  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage}) => {
+  test('creating a new extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}) => {
     test.setTimeout(TEST_TIMEOUT.long)
-    requireEnv(env, 'orgId', 'storeFqdn')
+    requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = `E2E-hot-create-${Date.now()}`
@@ -101,7 +112,7 @@ test.describe('Dev hot reload', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: ''},
+        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
@@ -124,14 +135,23 @@ test.describe('Dev hot reload', () => {
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 
-  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage}) => {
+  test('deleting an extension mid-dev is detected', async ({cli, env, browserPage, storeFqdn}) => {
     test.setTimeout(TEST_TIMEOUT.long)
-    requireEnv(env, 'orgId', 'storeFqdn')
+    requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = `E2E-hot-delete-${Date.now()}`
@@ -144,7 +164,7 @@ test.describe('Dev hot reload', () => {
       injectFixtureToml(appDir, FIXTURE_TOML, appName)
 
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: ''},
+        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
@@ -173,8 +193,17 @@ test.describe('Dev hot reload', () => {
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 })

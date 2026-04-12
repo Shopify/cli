@@ -1,8 +1,10 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-imports */
-import {appTestFixture as test, createApp, extractClientId, injectFixtureToml, teardownApp} from '../setup/app.js'
+import {createApp, extractClientId, injectFixtureToml} from '../setup/app.js'
+import {teardownAll} from '../setup/teardown.js'
 import {CLI_TIMEOUT, TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
+import {storeTestFixture as test} from '../setup/store.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -12,9 +14,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FIXTURE_TOML = fs.readFileSync(path.join(__dirname, '../data/valid-app/shopify.app.toml'), 'utf8')
 
 test.describe('Multi-config dev', () => {
-  test('dev with -c flag loads the named config', async ({cli, env, browserPage}) => {
+  test('dev with -c flag loads the named config', async ({cli, env, browserPage, storeFqdn}) => {
     test.setTimeout(TEST_TIMEOUT.long)
-    requireEnv(env, 'orgId', 'storeFqdn')
+    requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = `E2E-multi-cfg-${Date.now()}`
@@ -59,7 +61,7 @@ include_config_on_deploy = true
       // --config and --client-id are mutually exclusive. CLIENT_ID is stripped globally in env.ts.
       const proc = await cli.spawn(
         ['app', 'dev', '--path', appDir, '-c', 'staging', '--skip-dependencies-installation'],
-        {env: {CI: ''}},
+        {env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn}},
       )
 
       try {
@@ -81,14 +83,23 @@ include_config_on_deploy = true
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 
-  test('dev without -c flag uses default config', async ({cli, env, browserPage}) => {
+  test('dev without -c flag uses default config', async ({cli, env, browserPage, storeFqdn}) => {
     test.setTimeout(TEST_TIMEOUT.long)
-    requireEnv(env, 'orgId', 'storeFqdn')
+    requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))
     const appName = `E2E-mcfg-def-${Date.now()}`
@@ -122,7 +133,7 @@ api_version = "2025-01"
 
       // Start dev without -c flag — should use shopify.app.toml
       const proc = await cli.spawn(['app', 'dev', '--path', appDir, '--skip-dependencies-installation'], {
-        env: {CI: ''},
+        env: {CI: '', SHOPIFY_FLAG_STORE: storeFqdn},
       })
 
       try {
@@ -143,8 +154,17 @@ api_version = "2025-01"
         proc.kill()
       }
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          storeFqdn,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 })

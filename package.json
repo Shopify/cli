@@ -29,6 +29,7 @@
     "shopify:run": "node packages/cli/bin/dev.js",
     "shopify": "nx build cli && node packages/cli/bin/dev.js",
     "test:e2e": "nx run-many --target=build --projects=cli,create-app --skip-nx-cache && pnpm --filter e2e exec playwright test",
+    "test:e2e-cleanup": "npx tsx packages/e2e/scripts/cleanup-stores.ts && npx tsx packages/e2e/scripts/cleanup-apps.ts",
     "test:regenerate-snapshots": "packages/e2e/scripts/regenerate-snapshots.sh",
     "test": "pnpm vitest run",
     "type-check:affected": "nx affected --target=type-check",
@@ -143,9 +144,13 @@
       "unresolved": "error"
     },
     "ignoreBinaries": [
-      "playwright"
+      "playwright",
+      "tsx"
     ],
-    "ignoreDependencies": [],
+    "ignoreDependencies": [
+      "dotenv",
+      "@playwright/test"
+    ],
     "ignoreWorkspaces": [
       "packages/eslint-plugin-cli",
       "packages/e2e"

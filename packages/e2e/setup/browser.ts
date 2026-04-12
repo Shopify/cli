@@ -28,10 +28,12 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
       const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
+      const storageStatePath = process.env.E2E_BROWSER_STATE_PATH
       const context = await browser.newContext({
         extraHTTPHeaders: {
           'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
         },
+        ...(storageStatePath ? {storageState: storageStatePath} : {}),
       })
       context.setDefaultTimeout(BROWSER_TIMEOUT.max)
       context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)

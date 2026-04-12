@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 import {CLI_TIMEOUT} from './constants.js'
-import {envFixture, executables} from './env.js'
+import {createLogger, envFixture, executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {execa, type Options as ExecaOptions} from 'execa'
 import type {E2EEnv} from './env.js'
@@ -45,6 +45,7 @@ export interface CLIProcess {
 export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
   cli: async ({env}, use) => {
     const spawnedProcesses: SpawnedProcess[] = []
+    const cliLog = createLogger('cli')
 
     const cli: CLIProcess = {
       async exec(args, opts = {}) {
@@ -56,9 +57,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           reject: false,
         }
 
-        if (process.env.DEBUG === '1') {
-          console.log(`[e2e] exec: node ${executables.cli} ${args.join(' ')}`)
-        }
+        cliLog.log(env, `exec: node ${executables.cli} ${args.join(' ')}`)
 
         const result = await execa('node', [executables.cli, ...args], execaOpts)
 
@@ -78,9 +77,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           reject: false,
         }
 
-        if (process.env.DEBUG === '1') {
-          console.log(`[e2e] exec: node ${executables.createApp} ${args.join(' ')}`)
-        }
+        cliLog.log(env, `exec: node ${executables.createApp} ${args.join(' ')}`)
 
         const result = await execa('node', [executables.createApp, ...args], execaOpts)
 
@@ -102,9 +99,7 @@ export const cliFixture = envFixture.extend<{cli: CLIProcess}>({
           }
         }
 
-        if (process.env.DEBUG === '1') {
-          console.log(`[e2e] spawn: node ${executables.cli} ${args.join(' ')}`)
-        }
+        cliLog.log(env, `spawn: node ${executables.cli} ${args.join(' ')}`)
 
         const ptyProcess = nodePty.spawn('node', [executables.cli, ...args], {
           name: 'xterm-color',

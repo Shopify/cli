@@ -1,4 +1,5 @@
-import {appTestFixture as test, createApp, deployApp, versionsList, teardownApp} from '../setup/app.js'
+import {appTestFixture as test, createApp, deployApp, versionsList} from '../setup/app.js'
+import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
@@ -40,8 +41,16 @@ test.describe('App deploy', () => {
       expect(listResult.exitCode, `versions list failed:\n${listOutput}`).toBe(0)
       expect(listOutput).toContain(versionTag)
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 })
