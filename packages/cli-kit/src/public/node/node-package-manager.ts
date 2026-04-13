@@ -27,6 +27,7 @@ export const pnpmLockfile = 'pnpm-lock.yaml'
 
 /** The name of the bun lock file */
 export const bunLockfile = 'bun.lockb'
+const modernBunLockfile = 'bun.lock'
 
 /** The name of the pnpm workspace file */
 export const pnpmWorkspaceFile = 'pnpm-workspace.yaml'
@@ -56,6 +57,7 @@ export type DependencyType = 'dev' | 'prod' | 'peer'
  */
 export const packageManager = ['yarn', 'npm', 'pnpm', 'bun', 'homebrew', 'unknown'] as const
 export type PackageManager = (typeof packageManager)[number]
+type ProjectPackageManager = Extract<PackageManager, 'yarn' | 'npm' | 'pnpm' | 'bun'>
 
 /**
  * Returns an abort error that's thrown when the package manager can't be determined.
@@ -109,6 +111,40 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
   return 'unknown'
 }
 
+function hasBunLockfileSync(directory: string): boolean {
+  return fileExistsSync(joinPath(directory, bunLockfile)) || fileExistsSync(joinPath(directory, modernBunLockfile))
+}
+
+function normalizePackageManagerForProject(packageManager: PackageManager): ProjectPackageManager {
+  switch (packageManager) {
+    case 'yarn':
+    case 'npm':
+    case 'pnpm':
+    case 'bun':
+      return packageManager
+    case 'homebrew':
+    case 'unknown':
+      return 'npm'
+  }
+}
+
+function packageManagerBinaryCommand(
+  packageManager: ProjectPackageManager,
+  binary: string,
+  ...binaryArgs: string[]
+): {command: string; args: string[]} {
+  switch (packageManager) {
+    case 'npm':
+      return {command: 'npm', args: ['exec', '--', binary, ...binaryArgs]}
+    case 'pnpm':
+      return {command: 'pnpm', args: ['exec', binary, ...binaryArgs]}
+    case 'yarn':
+      return {command: 'yarn', args: ['run', binary, ...binaryArgs]}
+    case 'bun':
+      return {command: 'bun', args: ['x', binary, ...binaryArgs]}
+  }
+}
+
 /**
  * Returns the dependency manager used in a directory.
  * Walks upward from `fromDirectory` so workspace packages (e.g. `extensions/my-fn/package.json`)
@@ -123,8 +159,10 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   outputDebug(outputContent`Looking for a lockfile in ${outputToken.path(current)}...`)
   while (true) {
     if (fileExistsSync(joinPath(current, yarnLockfile))) return 'yarn'
-    if (fileExistsSync(joinPath(current, pnpmLockfile))) return 'pnpm'
-    if (fileExistsSync(joinPath(current, bunLockfile))) return 'bun'
+    if (fileExistsSync(joinPath(current, pnpmLockfile)) || fileExistsSync(joinPath(current, pnpmWorkspaceFile))) {
+      return 'pnpm'
+    }
+    if (hasBunLockfileSync(current)) return 'bun'
     if (fileExistsSync(joinPath(current, npmLockfile))) return 'npm'
     const parent = dirname(current)
     if (parent === current) break
@@ -135,6 +173,19 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   if (pm !== 'unknown') return pm
 
   return 'npm'
+}
+
+/**
+ * Builds the command and argv needed to execute a local binary using the package manager
+ * detected from the provided directory or its ancestors.
+ */
+export async function packageManagerBinaryCommandForDirectory(
+  fromDirectory: string,
+  binary: string,
+  ...binaryArgs: string[]
+): Promise<{command: string; args: string[]}> {
+  const packageManager = normalizePackageManagerForProject(await getPackageManager(fromDirectory))
+  return packageManagerBinaryCommand(packageManager, binary, ...binaryArgs)
 }
 
 interface InstallNPMDependenciesRecursivelyOptions {
