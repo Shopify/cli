@@ -7,26 +7,10 @@ import {waitForText} from '../helpers/wait-for-text.js'
 import {completeLogin} from '../helpers/browser-login.js'
 import {execa} from 'execa'
 import * as fs from 'fs'
-import * as path from 'path'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const log = {log: (_ctx: any, msg: string) => globalLog('auth', msg)}
 
-/**
- * Copy directory contents recursively.
- */
-function copyDirSync(src: string, dest: string): void {
-  fs.mkdirSync(dest, {recursive: true})
-  for (const entry of fs.readdirSync(src, {withFileTypes: true})) {
-    const srcPath = path.join(src, entry.name)
-    const destPath = path.join(dest, entry.name)
-    if (entry.isDirectory()) {
-      copyDirSync(srcPath, destPath)
-    } else {
-      fs.copyFileSync(srcPath, destPath)
-    }
-  }
-}
 
 /**
  * Worker-scoped fixture that provides an authenticated CLI session.
@@ -57,10 +41,10 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
         // Copy pre-authenticated session from global setup
         log.log(env, 'copying session from global setup')
 
-        copyDirSync(authConfigDir, env.processEnv.XDG_CONFIG_HOME!)
-        copyDirSync(authDataDir, env.processEnv.XDG_DATA_HOME!)
-        copyDirSync(authStateDir, env.processEnv.XDG_STATE_HOME!)
-        copyDirSync(authCacheDir, env.processEnv.XDG_CACHE_HOME!)
+        fs.cpSync(authConfigDir, env.processEnv.XDG_CONFIG_HOME!, {recursive: true})
+        fs.cpSync(authDataDir, env.processEnv.XDG_DATA_HOME!, {recursive: true})
+        fs.cpSync(authStateDir, env.processEnv.XDG_STATE_HOME!, {recursive: true})
+        fs.cpSync(authCacheDir, env.processEnv.XDG_CACHE_HOME!, {recursive: true})
 
         await use()
         return
