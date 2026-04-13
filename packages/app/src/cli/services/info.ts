@@ -1,5 +1,6 @@
 import {outputEnv} from './app/env/show.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {formatProjectFollowUpCommand} from '../utilities/project-command.js'
 import {AppLinkedInterface, getAppScopes} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import {configurationFileNames} from '../constants.js'
@@ -8,12 +9,7 @@ import {Organization, OrganizationApp} from '../models/organization.js'
 import {isServiceAccount, isUserAccount} from '@shopify/cli-kit/node/session'
 import {platformAndArch} from '@shopify/cli-kit/node/os'
 import {basename, relativePath} from '@shopify/cli-kit/node/path'
-import {
-  OutputMessage,
-  formatPackageManagerCommand,
-  outputContent,
-  shouldDisplayColors,
-} from '@shopify/cli-kit/node/output'
+import {OutputMessage, outputContent, shouldDisplayColors} from '@shopify/cli-kit/node/output'
 import {AlertCustomSection, InlineToken} from '@shopify/cli-kit/node/ui'
 import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 
@@ -172,7 +168,7 @@ class AppInfo {
       {
         body: [
           '💡 To change these, run',
-          {command: formatPackageManagerCommand(this.project.packageManager, 'shopify app config link')},
+          {command: formatProjectFollowUpCommand(this.project, 'shopify app config link')},
         ],
       },
     ]

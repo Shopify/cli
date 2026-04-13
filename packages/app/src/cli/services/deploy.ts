@@ -8,6 +8,7 @@ import {AppLinkedInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import {updateAppIdentifiers} from '../models/app/identifiers.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {formatProjectFollowUpCommand} from '../utilities/project-command.js'
 import {Organization, OrganizationApp} from '../models/organization.js'
 import {reloadApp} from '../models/app/loader.js'
 import {ExtensionRegistration} from '../api/graphql/all_app_extension_registrations.js'
@@ -15,7 +16,7 @@ import {getTomls} from '../utilities/app/config/getTomls.js'
 import {renderInfo, renderSuccess, renderTasks, renderConfirmationPrompt, isTTY} from '@shopify/cli-kit/node/ui'
 import {mkdir} from '@shopify/cli-kit/node/fs'
 import {joinPath, dirname} from '@shopify/cli-kit/node/path'
-import {outputNewline, outputInfo, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {outputNewline, outputInfo} from '@shopify/cli-kit/node/output'
 import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {AbortError, AbortSilentError} from '@shopify/cli-kit/node/error'
 import type {AlertCustomSection, Task, TokenItem} from '@shopify/cli-kit/node/ui'
@@ -327,7 +328,7 @@ async function outputCompletionMessage({
       body.push(
         '• Map extension IDs to other copies of your app by running',
         {
-          command: formatPackageManagerCommand(project.packageManager, 'shopify app deploy'),
+          command: formatProjectFollowUpCommand(project, 'shopify app deploy'),
         },
         'for: ',
         {
@@ -378,8 +379,8 @@ async function outputCompletionMessage({
       [
         'Run',
         {
-          command: formatPackageManagerCommand(
-            project.packageManager,
+          command: formatProjectFollowUpCommand(
+            project,
             'shopify app release',
             `--version=${uploadExtensionsBundleResult.versionTag}`,
           ),

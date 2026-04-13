@@ -6,6 +6,7 @@ import {
   ExtensionFlavorValue,
 } from './generate/extension.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {formatProjectFollowUpCommand} from '../utilities/project-command.js'
 import {AppInterface, AppLinkedInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import generateExtensionPrompts, {
@@ -16,12 +17,10 @@ import metadata from '../metadata.js'
 import {ExtensionTemplate} from '../models/app/template.js'
 import {ExtensionSpecification, RemoteAwareExtensionSpecification} from '../models/extensions/specification.js'
 import {OrganizationApp} from '../models/organization.js'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {isShopify} from '@shopify/cli-kit/node/context/local'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {RenderAlertOptions, renderSuccess} from '@shopify/cli-kit/node/ui'
 import {AbortError} from '@shopify/cli-kit/node/error'
-import {formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 
 interface GenerateOptions {
@@ -56,7 +55,7 @@ async function generate(options: GenerateOptions) {
   const generateExtensionOptions = buildGenerateOptions(promptAnswers, app, options, developerPlatformClient)
   const generatedExtension = await generateExtensionTemplate(generateExtensionOptions)
 
-  renderSuccessMessage(generatedExtension, options.project.packageManager)
+  renderSuccessMessage(generatedExtension, options.project)
 }
 
 async function buildPromptOptions(
@@ -128,11 +127,11 @@ function buildGenerateOptions(
   }
 }
 
-function renderSuccessMessage(extension: GeneratedExtension, packageManager: PackageManager) {
+function renderSuccessMessage(extension: GeneratedExtension, project: Project) {
   const formattedSuccessfulMessage = formatSuccessfulRunMessage(
     extension.extensionTemplate,
     extension.directory,
-    packageManager,
+    project,
   )
   renderSuccess(formattedSuccessfulMessage)
 }
@@ -153,7 +152,7 @@ function validateExtensionFlavor(extensionTemplate?: ExtensionTemplate, flavor?:
 function formatSuccessfulRunMessage(
   extensionTemplate: ExtensionTemplate,
   extensionDirectory: string,
-  depndencyManager: PackageManager,
+  project: Project,
 ): RenderAlertOptions {
   const options: RenderAlertOptions = {
     headline: ['Your extension was created in', {filePath: extensionDirectory}, {char: '.'}],
@@ -164,7 +163,7 @@ function formatSuccessfulRunMessage(
   if (extensionTemplate.type !== 'function') {
     options.nextSteps!.push([
       'To preview this extension along with the rest of the project, run',
-      {command: formatPackageManagerCommand(depndencyManager, 'shopify app dev')},
+      {command: formatProjectFollowUpCommand(project, 'shopify app dev')},
     ])
   }
 
