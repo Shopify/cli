@@ -71,7 +71,6 @@ jobs:
             > If the versions don't match, you might have multiple global instances installed.
 
             > Use `which shopify` to find out which one you are running and uninstall it."
-          comment_package_manager: 'npm'
           comment_command_flags: '--@shopify:registry=https://registry.npmjs.org'
           build_script: "node bin/update-cli-kit-version.js && pnpm nx run-many --target=bundle --all --skip-nx-cache --output-style=stream && pnpm refresh-manifests"
         env:

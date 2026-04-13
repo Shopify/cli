@@ -21,6 +21,7 @@ import {
 } from './binaries.js'
 import {testApp, testFunctionExtension} from '../../models/app/app.test-data.js'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {exec} from '@shopify/cli-kit/node/system'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
 import {inTemporaryDirectory, mkdir, readFileSync, writeFile, removeFile} from '@shopify/cli-kit/node/fs'
@@ -28,6 +29,13 @@ import {build as esBuild} from 'esbuild'
 
 vi.mock('@shopify/cli-kit/node/fs')
 vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/node-package-manager', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@shopify/cli-kit/node/node-package-manager')>()
+  return {
+    ...actual,
+    getPackageManager: vi.fn(),
+  }
+})
 
 vi.mock('./binaries.js', async (importOriginal) => {
   const actual: any = await importOriginal()
@@ -76,6 +84,7 @@ beforeEach(async () => {
   stderr = {write: vi.fn()}
   stdout = {write: vi.fn()}
   signal = vi.fn()
+  vi.mocked(getPackageManager).mockResolvedValue('npm')
 })
 
 describe('buildGraphqlTypes', () => {
@@ -89,6 +98,34 @@ describe('buildGraphqlTypes', () => {
     // Then
     await expect(got).resolves.toBeUndefined()
     expect(exec).toHaveBeenCalledWith('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+      cwd: ourFunction.directory,
+      stderr,
+      signal,
+    })
+  })
+
+  test('generate types uses pnpm exec when package manager is pnpm', {timeout: 20000}, async () => {
+    vi.mocked(getPackageManager).mockResolvedValueOnce('pnpm')
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith('pnpm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+      cwd: ourFunction.directory,
+      stderr,
+      signal,
+    })
+  })
+
+  test('generate types uses yarn without exec subcommand when package manager is yarn', {timeout: 20000}, async () => {
+    vi.mocked(getPackageManager).mockResolvedValueOnce('yarn')
+    const ourFunction = await testFunctionExtension({entryPath: 'src/index.js'})
+
+    const got = buildGraphqlTypes(ourFunction, {stdout, stderr, signal, app})
+
+    await expect(got).resolves.toBeUndefined()
+    expect(exec).toHaveBeenCalledWith('yarn', ['--', 'graphql-code-generator', '--config', 'package.json'], {
       cwd: ourFunction.directory,
       stderr,
       signal,

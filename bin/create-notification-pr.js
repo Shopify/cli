@@ -65,7 +65,7 @@ async function createPR() {
         '**Please update the release highlights before merging.**',
         '',
         '### How to test',
-        '- `npx http-server ~/src/github.com/Shopify/static-cdn-assets`',
+        '- `pnpx http-server ~/src/github.com/Shopify/static-cdn-assets`',
         '- `SHOPIFY_CLI_NOTIFICATIONS_URL=http://127.0.0.1:8080/static-24h/cli/notifications.json shopify version`',
         "- You may need to clear the CLI cache with `shopify cache clear` and run the command twice to see the notification (it's fetched in the background).",
         '',

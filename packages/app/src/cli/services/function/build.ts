@@ -24,6 +24,7 @@ import {renderTasks} from '@shopify/cli-kit/node/ui'
 import {pickBy} from '@shopify/cli-kit/common/object'
 import {runWithTimer} from '@shopify/cli-kit/node/metadata'
 import {AbortError} from '@shopify/cli-kit/node/error'
+import {getPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {Writable} from 'stream'
 
 export const PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION = '2'
@@ -144,7 +145,12 @@ export async function buildGraphqlTypes(
   }
 
   return runWithTimer('cmd_all_timing_network_ms')(async () => {
-    return exec('npm', ['exec', '--', 'graphql-code-generator', '--config', 'package.json'], {
+    const packageManager = await getPackageManager(fun.directory)
+    const execArgs = ['--', 'graphql-code-generator', '--config', 'package.json']
+    if (packageManager !== 'yarn') {
+      execArgs.unshift('exec')
+    }
+    return exec(packageManager, execArgs, {
       cwd: fun.directory,
       stderr: options.stderr,
       signal: options.signal,

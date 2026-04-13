@@ -29,7 +29,7 @@ export async function createApp(ctx: {
   const name = ctx.name ?? 'e2e-test-app'
   const template = ctx.template ?? 'reactRouter'
   const packageManager =
-    ctx.packageManager ?? (process.env.E2E_PACKAGE_MANAGER as 'npm' | 'yarn' | 'pnpm' | 'bun') ?? 'npm'
+    ctx.packageManager ?? (process.env.E2E_PACKAGE_MANAGER as 'npm' | 'yarn' | 'pnpm' | 'bun') ?? 'pnpm'
 
   const args = [
     '--name',
