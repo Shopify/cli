@@ -3,9 +3,7 @@ import {outputContent, outputDebug} from '@shopify/cli-kit/node/output'
 import type {StoreTokenResponse} from './token-client.js'
 
 export function parseStoreAuthScopes(input: string): string[] {
-  const scopes = input
-    .split(/[ ,]+/)
-    .filter(Boolean)
+  const scopes = input.split(/[ ,]+/).filter(Boolean)
 
   if (scopes.length === 0) {
     throw new AbortError('At least one scope is required.', 'Pass --scopes as a comma-separated list.')
