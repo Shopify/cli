@@ -17,6 +17,15 @@ import {chromium} from '@playwright/test'
 import * as path from 'path'
 import * as fs from 'fs'
 
+function isAccountsShopifyUrl(rawUrl: string): boolean {
+  try {
+    return new URL(rawUrl).hostname === 'accounts.shopify.com'
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch {
+    return false
+  }
+}
+
 export default async function globalSetup() {
   const email = process.env.E2E_ACCOUNT_EMAIL
   const password = process.env.E2E_ACCOUNT_PASSWORD
@@ -105,7 +114,7 @@ export default async function globalSetup() {
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
     // Handle account picker if shown
-    if (page.url().includes('accounts.shopify.com')) {
+    if (isAccountsShopifyUrl(page.url())) {
       const accountButton = page.locator(`text=${email}`).first()
       if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
         await accountButton.click()
@@ -117,7 +126,7 @@ export default async function globalSetup() {
     await page.goto(`https://dev.shopify.com/dashboard/${orgId}/apps`, {waitUntil: 'domcontentloaded'})
     await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
-    if (page.url().includes('accounts.shopify.com')) {
+    if (isAccountsShopifyUrl(page.url())) {
       const accountButton = page.locator(`text=${email}`).first()
       if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
         await accountButton.click()
