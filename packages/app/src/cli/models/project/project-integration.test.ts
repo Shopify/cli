@@ -6,7 +6,7 @@ import {loadLocalExtensionsSpecifications} from '../extensions/load-specificatio
 import {handleWatcherEvents} from '../../services/dev/app-events/app-event-watcher-handler.js'
 import {EventType} from '../../services/dev/app-events/app-event-watcher.js'
 import {describe, expect, test} from 'vitest'
-import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, writeFile, mkdir, removeFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {AbortController} from '@shopify/cli-kit/node/abort'
 
@@ -194,6 +194,19 @@ describe('Project integration', () => {
       const project = await Project.load(dir)
 
       expect(project.packageManager).toBe('npm')
+      expect(project.nodeDependencies).toStrictEqual({})
+      expect(project.usesWorkspaces).toBe(false)
+    })
+  })
+
+  test('Project uses unknown package manager metadata when the app root has no package.json', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      await removeFile(joinPath(dir, 'package.json'))
+
+      const project = await Project.load(dir)
+
+      expect(project.packageManager).toBe('unknown')
       expect(project.nodeDependencies).toStrictEqual({})
       expect(project.usesWorkspaces).toBe(false)
     })
