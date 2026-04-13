@@ -82,7 +82,7 @@ import {Project} from '../project/project.js'
 import {Session} from '@shopify/cli-kit/node/session'
 import {vi} from 'vitest'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
+import {ProjectPackageManager} from '@shopify/cli-kit/node/node-package-manager'
 
 export const DEFAULT_CONFIG = {
   application_url: 'https://myapp.com',
@@ -154,7 +154,7 @@ export function testAppWithConfig(options?: TestAppWithConfigOptions): AppLinked
 
 interface TestProjectOptions {
   directory?: string
-  packageManager?: PackageManager
+  packageManager?: ProjectPackageManager | 'unknown'
   nodeDependencies?: Record<string, string>
   usesWorkspaces?: boolean
 }

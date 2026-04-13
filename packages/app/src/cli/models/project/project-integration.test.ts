@@ -1,5 +1,6 @@
 import {Project} from './project.js'
 import {resolveDotEnv, resolveHiddenConfig, extensionFilesForConfig, webFilesForConfig} from './config-selection.js'
+import {requireProjectPackageManagerForOperations} from '../../utilities/project-package-manager.js'
 import {loadApp, reloadApp} from '../app/loader.js'
 import {AppLinkedInterface} from '../app/app.js'
 import {loadLocalExtensionsSpecifications} from '../extensions/load-specifications.js'
@@ -209,6 +210,19 @@ describe('Project integration', () => {
       expect(project.packageManager).toBe('unknown')
       expect(project.nodeDependencies).toStrictEqual({})
       expect(project.usesWorkspaces).toBe(false)
+    })
+  })
+
+  test('requireProjectPackageManagerForOperations errors when the app root has no package.json', async () => {
+    await inTemporaryDirectory(async (dir) => {
+      await setupRealApp(dir)
+      await removeFile(joinPath(dir, 'package.json'))
+
+      const project = await Project.load(dir)
+
+      expect(() => requireProjectPackageManagerForOperations(project)).toThrow(
+        /Could not determine the project package manager/,
+      )
     })
   })
 

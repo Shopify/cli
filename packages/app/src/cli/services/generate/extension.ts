@@ -5,6 +5,7 @@ import {buildGraphqlTypes, PREFERRED_FUNCTION_NPM_PACKAGE_MAJOR_VERSION} from '.
 import {GenerateExtensionContentOutput} from '../../prompts/generate/extension.js'
 import {ExtensionFlavor, ExtensionTemplate} from '../../models/app/template.js'
 import {ensureDownloadedExtensionFlavorExists, ensureExtensionDirectoryExists} from '../extensions/common.js'
+import {requireProjectPackageManagerForOperations} from '../../utilities/project-package-manager.js'
 import {DeveloperPlatformClient} from '../../utilities/developer-platform-client.js'
 import {reloadApp} from '../../models/app/loader.js'
 import {
@@ -190,14 +191,16 @@ async function functionExtensionInit({
     taskList.push({
       title: 'Installing additional dependencies',
       task: async () => {
+        const packageManager = requireProjectPackageManagerForOperations(project)
+
         // We need to run install once to setup the workspace correctly
         if (project.usesWorkspaces) {
-          await installNodeModules({packageManager: project.packageManager, directory: project.directory})
+          await installNodeModules({packageManager, directory: project.directory})
         }
 
         const requiredDependencies = getFunctionRuntimeDependencies(templateLanguage)
         await addNPMDependenciesIfNeeded(requiredDependencies, {
-          packageManager: project.packageManager,
+          packageManager,
           type: 'prod',
           directory: project.usesWorkspaces ? directory : project.directory,
         })
@@ -258,7 +261,7 @@ async function uiExtensionInit({
     {
       title: 'Installing dependencies',
       task: async () => {
-        const packageManager = project.packageManager
+        const packageManager = requireProjectPackageManagerForOperations(project)
         if (project.usesWorkspaces) {
           // Only install dependencies if the extension is javascript
           if (getTemplateLanguage(extensionFlavor?.value) === 'javascript') {

@@ -1,4 +1,5 @@
 import {Project} from '../models/project/project.js'
+import {requireProjectPackageManagerForOperations} from '../utilities/project-package-manager.js'
 import {installNPMDependenciesRecursively} from '@shopify/cli-kit/node/node-package-manager'
 import {renderTasks} from '@shopify/cli-kit/node/ui'
 
@@ -14,7 +15,7 @@ export async function installAppDependencies(project: Project) {
       title: 'Installing dependencies',
       task: async () => {
         await installNPMDependenciesRecursively({
-          packageManager: project.packageManager,
+          packageManager: requireProjectPackageManagerForOperations(project),
           directory: project.directory,
           deep: 3,
         })
