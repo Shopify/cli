@@ -1,7 +1,7 @@
 import {AbortError, BugError} from './error.js'
 import {AbortController, AbortSignal} from './abort.js'
 import {exec} from './system.js'
-import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
+import {fileExists, readFile, writeFile, findPathUp, glob, fileExistsSync} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
 import {inferPackageManagerForGlobalCLI} from './is-global.js'
@@ -111,21 +111,29 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
 
 /**
  * Returns the dependency manager used in a directory.
+ * Walks upward from `fromDirectory` so workspace packages (e.g. `extensions/my-fn/package.json`)
+ * still resolve to the repo root lockfile (`pnpm-lock.yaml`).
+ * If no lockfile is found, it falls back to the package manager from the user agent.
+ * If the package manager from the user agent is unknown, it returns 'npm'.
  * @param fromDirectory - The starting directory
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
-  const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
-  if (!packageJsonPath) {
-    return packageManagerFromUserAgent()
+  let current = fromDirectory
+  outputDebug(outputContent`Looking for a lockfile in ${outputToken.path(current)}...`)
+  while (true) {
+    if (fileExistsSync(joinPath(current, yarnLockfile))) return 'yarn'
+    if (fileExistsSync(joinPath(current, pnpmLockfile))) return 'pnpm'
+    if (fileExistsSync(joinPath(current, bunLockfile))) return 'bun'
+    if (fileExistsSync(joinPath(current, npmLockfile))) return 'npm'
+    const parent = dirname(current)
+    if (parent === current) break
+    current = parent
   }
 
-  const directory = dirname(packageJsonPath)
-  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
+  const pm: PackageManager = packageManagerFromUserAgent()
+  if (pm !== 'unknown') return pm
 
-  if (await fileExists(joinPath(directory, yarnLockfile))) return 'yarn'
-  if (await fileExists(joinPath(directory, pnpmLockfile))) return 'pnpm'
-  if (await fileExists(joinPath(directory, bunLockfile))) return 'bun'
   return 'npm'
 }
 

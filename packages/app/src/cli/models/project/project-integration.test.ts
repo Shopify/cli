@@ -79,6 +79,8 @@ dev = "npm run dev"
 
   // package.json (needed by the loader)
   await writeFile(joinPath(dir, 'package.json'), JSON.stringify({name: 'test-app', dependencies: {}}))
+  // Pin npm: getPackageManager walks up to ancestors if no lockfile is found
+  await writeFile(joinPath(dir, 'package-lock.json'), '')
 }
 
 // Load specifications once — this is expensive (loads all extension specs from disk)

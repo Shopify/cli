@@ -20,6 +20,7 @@ import {
   checkForCachedNewVersion,
   inferPackageManager,
   PackageManager,
+  npmLockfile,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -845,8 +846,9 @@ describe('writePackageJSON', () => {
 describe('getPackageManager', () => {
   test('finds if npm is being used', async () => {
     await inTemporaryDirectory(async (tmpDir) => {
-      // Given
+      // Given — pin NPM in the temp project
       await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, npmLockfile), '')
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
@@ -874,6 +876,19 @@ describe('getPackageManager', () => {
 
       // Then
       const packageManager = await getPackageManager(tmpDir)
+      expect(packageManager).toEqual('pnpm')
+    })
+  })
+
+  test('finds pnpm from a nested workspace package when the lockfile is only at the repo root', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'root'})
+      await writeFile(joinPath(tmpDir, 'pnpm-lock.yaml'), '')
+      const nested = joinPath(tmpDir, 'extensions', 'cart-transformer')
+      await mkdir(nested)
+      await writePackageJSON(nested, {name: 'cart-transformer'})
+
+      const packageManager = await getPackageManager(nested)
       expect(packageManager).toEqual('pnpm')
     })
   })
