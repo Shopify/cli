@@ -12,14 +12,25 @@ import {
   SchemaForConfig,
   AppLinkedInterface,
 } from './app.js'
-import {parseStructuredErrors} from './error-parsing.js'
+import {
+  ConfigurationError,
+  AppErrors,
+  parseConfigurationFile,
+  parseConfigurationObject,
+  parseConfigurationObjectAgainstSpecification,
+  formatConfigurationError,
+} from './loader/config-parsing.js'
+import {
+  ConfigurationLoadResultMetadata,
+  logMetadataForLoadedApp,
+  logMetadataFromAppLoadingProcess,
+} from './loader/metadata.js'
 import {
   getAppConfigurationFileName,
   getAppConfigurationShorthand,
   type AppConfigurationFileName,
 } from './config-file-naming.js'
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
-import metadata from '../../metadata.js'
 import {ExtensionInstance} from '../extensions/extension-instance.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
@@ -42,7 +53,6 @@ import {TomlFile, TomlFileError} from '@shopify/cli-kit/node/toml/toml-file'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {PackageManager} from '@shopify/cli-kit/node/node-package-manager'
 import {resolveFramework} from '@shopify/cli-kit/node/framework'
-import {hashString} from '@shopify/cli-kit/node/crypto'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 import {joinPath, dirname, basename, relativePath, relativizePath} from '@shopify/cli-kit/node/path'
 import {AbortError} from '@shopify/cli-kit/node/error'
@@ -52,6 +62,10 @@ import {getArrayRejectingUndefined} from '@shopify/cli-kit/common/array'
 import {showNotificationsIfNeeded} from '@shopify/cli-kit/node/notifications-system'
 import ignore from 'ignore'
 import type {ActiveConfig} from '../project/active-config.js'
+
+// Re-export from sub-modules for backward compatibility
+export {ConfigurationError, AppErrors, formatConfigurationError, parseConfigurationFile, parseConfigurationObject, parseConfigurationObjectAgainstSpecification} from './loader/config-parsing.js'
+export type {ConfigurationLoadResultMetadata} from './loader/metadata.js'
 
 /**
  * Narrow runtime state carried forward across app reloads.
@@ -66,112 +80,9 @@ interface ReloadState {
   previousDevURLs?: ApplicationURLs
 }
 
-export interface ConfigurationError {
-  file: string
-  message: string
-  path?: (string | number)[]
-  code?: string
-}
-
-export function formatConfigurationError(error: ConfigurationError): string {
-  if (error.path?.length) {
-    return `[${error.path.join('.')}]: ${error.message}`
-  }
-  return error.message
-}
-
-type ConfigurationResult<T> = {data: T; errors?: never} | {data?: never; errors: ConfigurationError[]}
-
-/**
- * Loads a configuration file, validates it against a schema, and returns a result.
- */
-export async function parseConfigurationFile<TSchema extends zod.ZodType>(
-  schema: TSchema,
-  filepath: string,
-  preloadedContent?: JsonMapType,
-): Promise<ConfigurationResult<zod.TypeOf<TSchema>>> {
-  let content = preloadedContent
-  if (!content) {
-    try {
-      const file = await TomlFile.read(filepath)
-      content = file.content
-    } catch (err) {
-      if (err instanceof TomlFileError) {
-        return {errors: [{file: filepath, message: err.message}]}
-      }
-      throw err
-    }
-  }
-  return parseConfigurationObject(schema, filepath, content)
-}
-
-/**
- * Parses a configuration object using a schema, and returns a result.
- */
-export function parseConfigurationObject<TSchema extends zod.ZodType>(
-  schema: TSchema,
-  filepath: string,
-  configurationObject: unknown,
-): ConfigurationResult<zod.TypeOf<TSchema>> {
-  const parseResult = schema.safeParse(configurationObject)
-  if (!parseResult.success) {
-    return {
-      errors: parseStructuredErrors(parseResult.error.issues).map((issue) => ({
-        file: filepath,
-        message: issue.message,
-        path: issue.path,
-        code: issue.code,
-      })),
-    }
-  }
-  return {data: parseResult.data}
-}
-
-/**
- * Parses a configuration object using a specification's schema, and returns a result.
- */
-export function parseConfigurationObjectAgainstSpecification<TSchema extends zod.ZodType>(
-  spec: ExtensionSpecification,
-  filepath: string,
-  configurationObject: object,
-): ConfigurationResult<zod.TypeOf<TSchema>> {
-  const parsed = spec.parseConfigurationObject(configurationObject)
-  switch (parsed.state) {
-    case 'ok': {
-      return {data: parsed.data}
-    }
-    case 'error': {
-      return {
-        errors: parsed.errors.map((err) => ({
-          file: filepath,
-          message: err.message ?? 'Unknown error',
-          path: err.path,
-        })),
-      }
-    }
-  }
-}
-
-export class AppErrors {
-  private readonly errors: ConfigurationError[] = []
-
-  addError(error: ConfigurationError): void {
-    this.errors.push(error)
-  }
-
-  addErrors(errors: ConfigurationError[]): void {
-    this.errors.push(...errors)
-  }
-
-  getErrors(file?: string): ConfigurationError[] {
-    if (file) return this.errors.filter((err) => err.file === file)
-    return [...this.errors]
-  }
-
-  isEmpty(): boolean {
-    return this.errors.length === 0
-  }
-}
+// ConfigurationError, AppErrors, formatConfigurationError, parseConfigurationFile,
+// parseConfigurationObject, parseConfigurationObjectAgainstSpecification
+// are now defined in ./loader/config-parsing.ts and re-exported above.
 
 interface AppLoaderConstructorArgs<
   TConfig extends CurrentAppConfiguration,
@@ -862,28 +773,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   }
 }
 
-type LinkedConfigurationSource =
-  // Config file was passed via a flag to a command
-  | 'flag'
-  // Config file came from the cache (i.e. app use)
-  | 'cached'
-  // No flag or cache — fell through to the default (shopify.app.toml)
-  | 'default'
-
-type ConfigurationLoadResultMetadata = {
-  allClientIdsByConfigName: {[key: string]: string}
-} & (
-  | {
-      usesLinkedConfig: false
-    }
-  | {
-      usesLinkedConfig: true
-      name: string
-      gitTracked: boolean
-      source: LinkedConfigurationSource
-      usesCliManagedUrls?: boolean
-    }
-)
+// ConfigurationLoadResultMetadata is now defined in ./loader/metadata.ts and re-exported above.
 
 type ConfigurationLoaderResult<
   TConfig extends CurrentAppConfiguration,
@@ -958,147 +848,12 @@ function getAllLinkedConfigClientIds(
   return Object.fromEntries(entries)
 }
 
-async function getProjectType(webs: Web[]): Promise<'node' | 'php' | 'ruby' | 'frontend' | undefined> {
-  const backendWebs = webs.filter((web) => isWebType(web, WebType.Backend))
-  const frontendWebs = webs.filter((web) => isWebType(web, WebType.Frontend))
-  if (backendWebs.length > 1) {
-    outputDebug('Unable to decide project type as multiple web backends')
-    return
-  } else if (backendWebs.length === 0 && frontendWebs.length > 0) {
-    return 'frontend'
-  } else if (!backendWebs[0]) {
-    outputDebug('Unable to decide project type as no web backend')
-    return
-  }
-
-  const {directory} = backendWebs[0]
-
-  const nodeConfigFile = joinPath(directory, 'package.json')
-  const rubyConfigFile = joinPath(directory, 'Gemfile')
-  const phpConfigFile = joinPath(directory, 'composer.json')
-
-  if (await fileExists(nodeConfigFile)) {
-    return 'node'
-  } else if (await fileExists(rubyConfigFile)) {
-    return 'ruby'
-  } else if (await fileExists(phpConfigFile)) {
-    return 'php'
-  }
-  return undefined
-}
-
 export function isWebType(web: Web, type: WebType): boolean {
   return web.configuration.roles.includes(type)
 }
 
-async function logMetadataForLoadedApp(
-  app: AppInterface,
-  usesWorkspaces: boolean,
-  loadingStrategy: {
-    usedCustomLayoutForWeb: boolean
-    usedCustomLayoutForExtensions: boolean
-  },
-) {
-  const webs = app.webs
-  const extensionsToAddToMetrics = app.allExtensions.filter((ext) => ext.isSentToMetrics())
-
-  const appName = app.name
-  const appDirectory = app.directory
-  const sortedAppScopes = getAppScopesArray(app.configuration).sort()
-
-  await logMetadataForLoadedAppUsingRawValues(
-    webs,
-    extensionsToAddToMetrics,
-    loadingStrategy,
-    appName,
-    appDirectory,
-    sortedAppScopes,
-    usesWorkspaces,
-  )
-}
-
-async function logMetadataForLoadedAppUsingRawValues(
-  webs: Web[],
-  extensionsToAddToMetrics: ExtensionInstance[],
-  loadingStrategy: {usedCustomLayoutForWeb: boolean; usedCustomLayoutForExtensions: boolean},
-  appName: string,
-  appDirectory: string,
-  sortedAppScopes: string[],
-  appUsesWorkspaces: boolean,
-) {
-  await metadata.addPublicMetadata(async () => {
-    const projectType = await getProjectType(webs)
-
-    const extensionFunctionCount = extensionsToAddToMetrics.filter((extension) => extension.isFunctionExtension).length
-    const extensionUICount = extensionsToAddToMetrics.filter((extension) => extension.isESBuildExtension).length
-    const extensionThemeCount = extensionsToAddToMetrics.filter((extension) => extension.isThemeExtension).length
-
-    const extensionTotalCount = extensionsToAddToMetrics.length
-
-    const webBackendCount = webs.filter((web) => isWebType(web, WebType.Backend)).length
-    const webBackendFramework =
-      webBackendCount === 1 ? webs.filter((web) => isWebType(web, WebType.Backend))[0]?.framework : undefined
-    const webFrontendCount = webs.filter((web) => isWebType(web, WebType.Frontend)).length
-
-    const extensionsBreakdownMapping: {[key: string]: number} = {}
-    for (const extension of extensionsToAddToMetrics) {
-      if (extensionsBreakdownMapping[extension.type] === undefined) {
-        extensionsBreakdownMapping[extension.type] = 1
-      } else {
-        extensionsBreakdownMapping[extension.type]!++
-      }
-    }
-
-    return {
-      project_type: projectType,
-      app_extensions_any: extensionTotalCount > 0,
-      app_extensions_breakdown: JSON.stringify(extensionsBreakdownMapping),
-      app_extensions_count: extensionTotalCount,
-      app_extensions_custom_layout: loadingStrategy.usedCustomLayoutForExtensions,
-      app_extensions_function_any: extensionFunctionCount > 0,
-      app_extensions_function_count: extensionFunctionCount,
-      app_extensions_theme_any: extensionThemeCount > 0,
-      app_extensions_theme_count: extensionThemeCount,
-      app_extensions_ui_any: extensionUICount > 0,
-      app_extensions_ui_count: extensionUICount,
-      app_name_hash: hashString(appName),
-      app_path_hash: hashString(appDirectory),
-      app_scopes: JSON.stringify(sortedAppScopes),
-      app_web_backend_any: webBackendCount > 0,
-      app_web_backend_count: webBackendCount,
-      app_web_custom_layout: loadingStrategy.usedCustomLayoutForWeb,
-      app_web_framework: webBackendFramework,
-      app_web_frontend_any: webFrontendCount > 0,
-      app_web_frontend_count: webFrontendCount,
-      env_package_manager_workspaces: appUsesWorkspaces,
-    }
-  })
-
-  await metadata.addSensitiveMetadata(async () => {
-    return {
-      app_name: appName,
-    }
-  })
-}
-
-async function logMetadataFromAppLoadingProcess(loadMetadata: ConfigurationLoadResultMetadata) {
-  await metadata.addPublicMetadata(async () => {
-    return {
-      // Generic config as code instrumentation
-      cmd_app_all_configs_any: Object.keys(loadMetadata.allClientIdsByConfigName).length > 0,
-      cmd_app_all_configs_clients: JSON.stringify(loadMetadata.allClientIdsByConfigName),
-      cmd_app_linked_config_used: loadMetadata.usesLinkedConfig,
-      ...(loadMetadata.usesLinkedConfig
-        ? {
-            cmd_app_linked_config_name: loadMetadata.name,
-            cmd_app_linked_config_git_tracked: loadMetadata.gitTracked,
-            cmd_app_linked_config_source: loadMetadata.source,
-            cmd_app_linked_config_uses_cli_managed_urls: loadMetadata.usesCliManagedUrls,
-          }
-        : {}),
-    }
-  })
-}
+// logMetadataForLoadedApp, logMetadataForLoadedAppUsingRawValues, logMetadataFromAppLoadingProcess,
+// getProjectType are now defined in ./loader/metadata.ts.
 
 // Re-export config file naming utilities from their leaf module.
 // These were moved to break the circular dependency: loader ↔ active-config ↔ use ↔ loader.
