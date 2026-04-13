@@ -14,7 +14,7 @@ import {loadApp, reloadApp} from '../../../models/app/loader.js'
 import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
-import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, test, vi, type MockInstance} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -74,6 +74,35 @@ const testAppConfiguration: CurrentAppConfiguration = {
   name: 'my-app',
   application_url: 'https://example.com',
   embedded: true,
+}
+
+/**
+ * Waits for the watcher to emit a given event by polling the emit spy.
+ * This replaces fragile fixed-timeout waits (setTimeout(10)) that cause flaky tests when the async
+ * event processing chain takes longer than expected.
+ */
+type EmitSpy = MockInstance<(eventName: string | symbol, ...args: unknown[]) => boolean>
+
+async function waitForWatcherEmit(emitSpy: EmitSpy, event: string, timeoutMs = 3000): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    const startTime = Date.now()
+    const poll = () => {
+      const emitted = emitSpy.mock.calls.some((call) => call[0] === event)
+      if (emitted) {
+        resolve()
+      } else if (Date.now() - startTime < timeoutMs) {
+        setTimeout(poll, 10)
+      } else {
+        reject(new Error(`Timeout waiting for watcher to emit "${event}" event`))
+      }
+    }
+    poll()
+  })
+}
+
+/** Waits until successful change handling finishes (`emit('all', ...)`). */
+async function waitForWatcherEvent(emitSpy: EmitSpy, timeoutMs = 3000): Promise<void> {
+  await waitForWatcherEmit(emitSpy, 'all', timeoutMs)
 }
 
 /**
@@ -407,13 +436,11 @@ describe('app-event-watcher', () => {
         const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then
         expect(generateTypesSpy).toHaveBeenCalled()
@@ -444,13 +471,11 @@ describe('app-event-watcher', () => {
         const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then - not called in watcher because it was already called during reloadApp
         expect(generateTypesSpy).not.toHaveBeenCalled()
@@ -481,13 +506,11 @@ describe('app-event-watcher', () => {
         const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then - not called in watcher because it was already called during reloadApp
         expect(generateTypesSpy).not.toHaveBeenCalled()
@@ -515,13 +538,11 @@ describe('app-event-watcher', () => {
         const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
 
         // When
         await watcher.start({stdout, stderr, signal: abortController.signal})
-        await flushPromises()
-
-        // Wait for event processing
-        await new Promise((resolve) => setTimeout(resolve, 10))
+        await waitForWatcherEvent(emitSpy)
 
         // Then - generateExtensionTypes should still be called when extensions are deleted
         // to clean up type definitions for the removed extension
@@ -563,11 +584,12 @@ describe('app-event-watcher', () => {
 
         // When
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
         const stderr = {write: vi.fn()} as unknown as Writable
         const stdout = {write: vi.fn()} as unknown as Writable
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
-        await flushPromises()
+        await waitForWatcherEvent(emitSpy)
 
         // Then
         expect(stderr.write).toHaveBeenCalledWith(
@@ -608,12 +630,13 @@ describe('app-event-watcher', () => {
         const mockManager = new MockESBuildContextManager()
         const mockFileWatcher = new MockFileWatcher(app, outputOptions, [fileWatchEvent])
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
         const stderr = {write: vi.fn()} as unknown as Writable
         const stdout = {write: vi.fn()} as unknown as Writable
 
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
-        await flushPromises()
+        await waitForWatcherEvent(emitSpy)
 
         // Then
         expect(stderr.write).toHaveBeenCalledWith(`Build failed`)
@@ -645,6 +668,7 @@ describe('app-event-watcher', () => {
         mockManager.updateContexts = vi.fn().mockRejectedValueOnce(uncaughtError)
 
         const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockManager, mockFileWatcher)
+        const emitSpy = vi.spyOn(watcher, 'emit')
         const stderr = {write: vi.fn()} as unknown as Writable
         const stdout = {write: vi.fn()} as unknown as Writable
         const errorHandler = vi.fn()
@@ -652,10 +676,7 @@ describe('app-event-watcher', () => {
 
         await watcher.start({stdout, stderr, signal: abortController.signal})
 
-        await flushPromises()
-        // Wait for the async setTimeout in MockFileWatcher
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        await flushPromises()
+        await waitForWatcherEmit(emitSpy, 'error')
 
         // Then
         expect(errorHandler).toHaveBeenCalledWith(uncaughtError)
