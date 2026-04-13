@@ -310,6 +310,9 @@ async function loadConfigurationFileName(
   const currentToml = existingTomls[remoteApp.apiKey]
   if (currentToml) return currentToml
 
+  // If no TOML files exist at all, use the default filename without prompting
+  if (Object.keys(existingTomls).length === 0) return 'shopify.app.toml'
+
   return selectConfigName(localAppInfo.appDirectory ?? options.directory, remoteApp.title)
 }
 

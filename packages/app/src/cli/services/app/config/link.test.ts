@@ -453,6 +453,9 @@ url = "https://api-client-config.com/preferences"
           },
         } as CurrentAppConfiguration,
       }
+      // Write actual TOML file so getTomls() finds it and reuses existing config
+      const filePath = joinPath(tmp, 'shopify.app.development.toml')
+      writeFileSync(filePath, 'client_id = "12345"\nname = "my app"')
       await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
@@ -460,7 +463,6 @@ url = "https://api-client-config.com/preferences"
           developerPlatformClient,
         }),
       )
-      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
         name: 'my app',
@@ -472,8 +474,9 @@ url = "https://api-client-config.com/preferences"
       // When
       const {configuration} = await link(options)
 
-      // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      // Then - since client_id matches and file exists, reuse shopify.app.development.toml
+      expect(selectConfigName).not.toHaveBeenCalled()
+      const content = await readFile(joinPath(tmp, 'shopify.app.development.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
@@ -501,14 +504,14 @@ embedded = false
 `
 
       expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
-        configFileName: 'shopify.app.staging.toml',
+        configFileName: 'shopify.app.development.toml',
         directory: tmp,
       })
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
-        body: 'Using shopify.app.staging.toml as your default config.',
+        headline: 'shopify.app.development.toml is now linked to "my app" on Shopify',
+        body: 'Using shopify.app.development.toml as your default config.',
         nextSteps: [
-          [`Make updates to shopify.app.staging.toml in your local project`],
+          [`Make updates to shopify.app.development.toml in your local project`],
           ['To upload your config, run', {command: 'yarn shopify app deploy'}],
         ],
         reference: [
@@ -569,6 +572,9 @@ embedded = false
           },
         },
       }
+      // Write actual TOML file so getTomls() finds it (needed for selectConfigName logic)
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      writeFileSync(filePath, 'client_id = "12345"\nname = "my app"')
       await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
@@ -981,6 +987,30 @@ embedded = false
         },
       })
       expect(content).toEqual(expectedContent)
+      // Should use default filename without prompting when no TOMLs exist
+      expect(selectConfigName).not.toHaveBeenCalled()
+    })
+  })
+
+  test('uses default shopify.app.toml without prompting when no config files exist and client-id is provided', async () => {
+    await inTemporaryDirectory(async (tmp) => {
+      // Given - no TOML files in directory, but client-id is provided
+      // This simulates: shopify app config link --client-id=12345
+      const developerPlatformClient = buildDeveloperPlatformClient()
+      const options: LinkOptions = {
+        directory: tmp,
+        apiKey: '12345',
+        developerPlatformClient,
+      }
+      mockLoadOpaqueAppWithError()
+      vi.mocked(appFromIdentifiers).mockResolvedValue(mockRemoteApp({developerPlatformClient}))
+
+      // When
+      const {configFileName} = await link(options)
+
+      // Then - should use default filename without prompting
+      expect(configFileName).toBe('shopify.app.toml')
+      expect(selectConfigName).not.toHaveBeenCalled()
     })
   })
 
@@ -1323,6 +1353,9 @@ embedded = false
           embedded: true,
         },
       }
+      // Write actual TOML file so getTomls() finds it and reuses the existing config
+      const filePath = joinPath(tmp, 'shopify.app.toml')
+      writeFileSync(filePath, 'client_id = "12345"\nname = "my app"')
       await mockLoadOpaqueAppWithApp(tmp, localApp, [], 'current')
       vi.mocked(fetchOrCreateOrganizationApp).mockResolvedValue(
         testOrganizationApp({
@@ -1330,7 +1363,6 @@ embedded = false
           developerPlatformClient,
         }),
       )
-      vi.mocked(selectConfigName).mockResolvedValue('shopify.app.staging.toml')
       const remoteConfiguration = {
         ...DEFAULT_REMOTE_CONFIGURATION,
         name: 'my app',
@@ -1347,8 +1379,9 @@ embedded = false
       // When
       await link(options)
 
-      // Then
-      const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
+      // Then - since client_id matches, the existing shopify.app.toml is reused (no prompt)
+      expect(selectConfigName).not.toHaveBeenCalled()
+      const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
       const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "12345"
@@ -1375,10 +1408,10 @@ embedded = true
 `
       expect(content).toEqual(expectedContent)
       expect(renderSuccess).toHaveBeenCalledWith({
-        headline: 'shopify.app.staging.toml is now linked to "my app" on Shopify',
-        body: 'Using shopify.app.staging.toml as your default config.',
+        headline: 'shopify.app.toml is now linked to "my app" on Shopify',
+        body: 'Using shopify.app.toml as your default config.',
         nextSteps: [
-          [`Make updates to shopify.app.staging.toml in your local project`],
+          [`Make updates to shopify.app.toml in your local project`],
           ['To upload your config, run', {command: 'yarn shopify app deploy'}],
         ],
         reference: [
