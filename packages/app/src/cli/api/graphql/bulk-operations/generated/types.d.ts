@@ -182,7 +182,7 @@ export type BulkOperationStatus =
    * [BulkOperation.errorCode](https://shopify.dev/api/admin-graphql/latest/enums/bulkoperationerrorcode).
    */
   | 'FAILED'
-  /** The bulk operation is running. */
+  /** The bulk operation is runnning. */
   | 'RUNNING';
 
 /** The valid values for the bulk operation's type. */
