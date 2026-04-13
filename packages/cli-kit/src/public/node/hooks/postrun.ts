@@ -69,7 +69,7 @@ export async function autoUpgradeIfNeeded(): Promise<void> {
 
 async function performAutoUpgrade(newerVersion: string): Promise<void> {
   if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
-    return outputWarn(getOutputUpdateCLIReminder(newerVersion))
+    return outputWarn(getOutputUpdateCLIReminder(newerVersion, true))
   }
 
   try {
