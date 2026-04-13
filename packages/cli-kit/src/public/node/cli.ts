@@ -102,8 +102,7 @@ async function addInitToArgvWhenRunningCreateCLI(
   const {moduleDirectory} = await import('./path.js')
 
   const packageJson = await findUpAndReadPackageJson(moduleDirectory(options.moduleURL))
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const packageName = (packageJson.content as any).name as string
+  const packageName = packageJson.content.name ?? ''
   const name = packageName.replace('@shopify/create-', '')
   const initIndex = argv.findIndex((arg) => arg.includes('init'))
   if (initIndex === -1) {

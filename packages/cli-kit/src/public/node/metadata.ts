@@ -151,17 +151,15 @@ export function createRuntimeMetadataContainer<
             durationStack[durationStack.length - 1] = (durationStack[durationStack.length - 1] ?? 0) + wallClockDuration
           }
 
-          // Log it -- we include it in the metadata, but also log via the standard performance API. The TS types for this library are not quite right, so we have to cast to `any` here.
+          // Log it -- we include it in the metadata, but also log via the standard performance API.
           performance.measure(`${field}#measurable`, {
             start,
             duration,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any)
+          } as PerformanceMeasureOptions)
           performance.measure(`${field}#wall`, {
             start,
             end,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } as any)
+          } as PerformanceMeasureOptions)
 
           // There might not be a value set, yet
           let currentValue = (raw.public[field] || 0) as number
