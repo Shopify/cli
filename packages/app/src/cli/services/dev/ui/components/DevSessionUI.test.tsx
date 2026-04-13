@@ -40,6 +40,7 @@ const initialStatus: DevSessionStatus = {
   isReady: true,
   previewURL: 'https://shopify.com',
   graphiqlURL: 'https://graphiql.shopify.com',
+  appEmbedded: false,
 }
 
 const onAbort = vi.fn()
