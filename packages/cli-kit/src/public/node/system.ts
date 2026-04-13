@@ -348,14 +348,19 @@ export async function sleep(seconds: number): Promise<void> {
 }
 
 /**
- * Check if the standard input and output streams support prompting.
+ * Check if the terminal supports OSC 8 hyperlinks.
  *
- * @returns True if the standard input and output streams support prompting.
+ * @returns True if the terminal supports hyperlinks.
  */
 export function terminalSupportsHyperlinks(): boolean {
   return supportsHyperlinks.stdout
 }
 
+/**
+ * Check if the standard input and output streams support prompting.
+ *
+ * @returns True if the standard input and output streams support prompting.
+ */
 export function terminalSupportsPrompting(): boolean {
   if (isTruthy(process.env.CI)) {
     return false

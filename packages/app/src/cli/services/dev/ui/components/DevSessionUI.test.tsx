@@ -56,6 +56,8 @@ const onAbort = vi.fn()
 
 describe('DevSessionUI', () => {
   beforeEach(() => {
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
     devSessionStatusManager = new DevSessionStatusManager()
     devSessionStatusManager.reset()
     devSessionStatusManager.updateStatus(initialStatus)
@@ -568,15 +570,16 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Then - shortcuts should be present but URL list should be hidden
+    // Then - shortcuts with label text should be present but URL list should be hidden
     const output = unstyled(renderInstance.lastFrame()!)
-    expect(output).toContain('(p)')
-    expect(output).toContain('(g)')
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
     expect(output).not.toContain('Preview URL:')
+    expect(output).not.toContain('Dev Console URL:')
     expect(output).not.toContain('GraphiQL URL:')
 
     renderInstance.unmount()
-    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
   })
 
   test('shows URL list when terminal does not support hyperlinks', async () => {
@@ -595,11 +598,13 @@ describe('DevSessionUI', () => {
 
     await waitForInputsToBeReady()
 
-    // Then - both shortcuts and URL list should be present
+    // Then - both shortcuts with label text and URL list should be present
     const output = unstyled(renderInstance.lastFrame()!)
-    expect(output).toContain('(p)')
-    expect(output).toContain('(g)')
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
     expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
@@ -631,8 +636,5 @@ describe('DevSessionUI', () => {
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
-
-    // Restore original mock for other tests
-    mocks.useStdin.mockReturnValue({isRawModeSupported: true})
   })
 })
