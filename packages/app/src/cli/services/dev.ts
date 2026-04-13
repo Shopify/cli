@@ -28,6 +28,7 @@ import {DevSessionStatusManager} from './dev/processes/dev-session/dev-session-s
 import {TunnelMode} from './dev/tunnel-mode.js'
 import {PortDetail, renderPortWarnings} from './dev/port-warnings.js'
 import {DeveloperPlatformClient} from '../utilities/developer-platform-client.js'
+import {formatProjectFollowUpCommand} from '../utilities/project-command.js'
 import {Web, getAppScopesArray, AppLinkedInterface} from '../models/app/app.js'
 import {Project} from '../models/project/project.js'
 import {Organization, OrganizationApp, OrganizationStore} from '../models/organization.js'
@@ -47,7 +48,7 @@ import {getBackendPort} from '@shopify/cli-kit/node/environment'
 import {basename} from '@shopify/cli-kit/node/path'
 import {renderWarning} from '@shopify/cli-kit/node/ui'
 import {reportAnalyticsEvent} from '@shopify/cli-kit/node/analytics'
-import {OutputProcess, formatPackageManagerCommand} from '@shopify/cli-kit/node/output'
+import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {hashString} from '@shopify/cli-kit/node/crypto'
 import {AbortError} from '@shopify/cli-kit/node/error'
 
@@ -221,7 +222,7 @@ export async function warnIfScopesDifferBeforeDev({
     const nextSteps = [
       [
         'Run',
-        {command: formatPackageManagerCommand(commandOptions.project.packageManager, 'shopify app deploy')},
+        {command: formatProjectFollowUpCommand(commandOptions.project, 'shopify app deploy')},
         'to push your scopes to the Partner Dashboard',
       ],
     ]
