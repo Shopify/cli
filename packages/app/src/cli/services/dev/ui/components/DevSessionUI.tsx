@@ -152,6 +152,9 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           key: 'c',
           condition: () => Boolean(!status.appEmbedded && status.isReady),
           action: async () => {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_preview_url_opened: true,
+            }))
             await openURL(buildDevConsoleURL(shopFqdn))
           },
         },
