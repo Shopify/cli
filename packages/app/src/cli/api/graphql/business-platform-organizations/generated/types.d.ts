@@ -80,13 +80,16 @@ export type Scalars = {
   URL: { input: string; output: string; }
 };
 
-/** Operators for user filter queries. */
+/** Operators for filter queries. */
 export type Operator =
   /** Between operator. */
   | 'BETWEEN'
   /** Equals operator. */
   | 'EQUALS'
-  /** In operator. */
+  /**
+   * In operator. Accepts a comma-separated string of values (e.g.
+   * "value1,value2,value3"). Not supported for all filter fields.
+   */
   | 'IN';
 
 export type OrganizationUserProvisionShopAccessInput = {
@@ -115,17 +118,23 @@ export type ShopFilterField =
    * `inactive`, `cancelled`, `client_transfer`, `plus_client_transfer`,
    * `development_legacy`, `custom`, `fraudulent`, `staff`, `trial`,
    * `plus_development`, `retail`, `shop_pay_commerce_components`, `non_profit`.
+   * With the `In` operator, use raw plan names (e.g. "professional,shopify_plus").
    */
   | 'SHOP_PLAN'
   /** The active/inactive status of the shop. Values: `active`, `inactive`. */
   | 'STORE_STATUS'
   /**
-   * The type of the shop. Values: `development`, `production`, `app_development`,
-   * `development_superset`, `client_transfer`, `collaborator`.
+   * The type of the shop. Does not support the `In` operator. Values:
+   * `development`, `production`, `app_development`, `development_superset`,
+   * `client_transfer`, `collaborator`.
    */
   | 'STORE_TYPE';
 
-/** Represents a single filter option for shop queries. */
+/**
+ * Represents a single filter option for shop queries. When using the `In`
+ * operator, pass a comma-separated string of values (e.g. "value1,value2").
+ * Maximum 20 values.
+ */
 export type ShopFilterInput = {
   field: ShopFilterField;
   operator: Operator;
