@@ -126,7 +126,7 @@ export async function setupDevProcesses({
     : undefined
 
   const appEmbedded = reloadedApp.configuration.embedded
-  const hasExtensions = reloadedApp.allExtensions.length > 0
+  const hasExtensions = reloadedApp.nonConfigExtensions.length > 0
   const devSessionStatusManager = new DevSessionStatusManager({
     isReady: false,
     previewURL,
