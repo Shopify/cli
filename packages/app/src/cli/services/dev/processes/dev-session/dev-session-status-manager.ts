@@ -17,6 +17,8 @@ export interface DevSessionStatus {
   isReady: boolean
   previewURL?: string
   graphiqlURL?: string
+  appEmbedded?: boolean
+  hasExtensions?: boolean
   statusMessage?: {message: string; type: DevSessionStatusMessageType}
 }
 

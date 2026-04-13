@@ -7,6 +7,7 @@ import {
   DevSessionStatusMessageType,
 } from '../../processes/dev-session/dev-session-status-manager.js'
 import {MAX_EXTENSION_HANDLE_LENGTH} from '../../../../models/extensions/schemas.js'
+import {buildDevConsoleURL} from '../../../../utilities/app/app-url.js'
 import {OutputProcess} from '@shopify/cli-kit/node/output'
 import {Alert, ConcurrentOutput, Link, TabularData} from '@shopify/cli-kit/node/ui/components'
 import {useAbortSignal} from '@shopify/cli-kit/node/ui/hooks'
@@ -147,6 +148,16 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
             }
           },
         },
+        {
+          key: 'c',
+          condition: () => Boolean(status.isReady && !status.appEmbedded && status.hasExtensions),
+          action: async () => {
+            await metadata.addPublicMetadata(() => ({
+              cmd_dev_preview_url_opened: true,
+            }))
+            await openURL(buildDevConsoleURL(shopFqdn))
+          },
+        },
       ],
       content: (
         <>
@@ -157,14 +168,19 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
           )}
           {canUseShortcuts && (
             <Box marginTop={1} flexDirection="column">
-              {status.graphiqlURL && status.isReady ? (
-                <Text>
-                  {figures.pointerSmall} <Text bold>(g)</Text> Open GraphiQL (Admin API) in your browser
-                </Text>
-              ) : null}
               {status.isReady ? (
                 <Text>
-                  {figures.pointerSmall} <Text bold>(p)</Text> Preview in your browser
+                  {figures.pointerSmall} <Text bold>(p)</Text> Open app preview
+                </Text>
+              ) : null}
+              {status.isReady && !status.appEmbedded && status.hasExtensions ? (
+                <Text>
+                  {figures.pointerSmall} <Text bold>(c)</Text> Open Dev Console for extension previews
+                </Text>
+              ) : null}
+              {status.graphiqlURL && status.isReady ? (
+                <Text>
+                  {figures.pointerSmall} <Text bold>(g)</Text> Open GraphiQL (Admin API)
                 </Text>
               ) : null}
             </Box>
@@ -179,6 +195,11 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
                     {status.previewURL ? (
                       <Text>
                         Preview URL: <Link url={status.previewURL} />
+                      </Text>
+                    ) : null}
+                    {status.appEmbedded === false && status.hasExtensions ? (
+                      <Text>
+                        Dev Console URL: <Link url={buildDevConsoleURL(shopFqdn)} />
                       </Text>
                     ) : null}
                     {status.graphiqlURL ? (

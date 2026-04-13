@@ -367,6 +367,7 @@ export class AppManagementClient implements DeveloperPlatformClient {
       organizationId: String(numberFromGid(app.organizationId)),
       grantedScopes: app.activeRoot.grantedShopifyApprovalScopes,
       applicationUrl: appHomeModule?.config?.app_url as string | undefined,
+      embedded: appHomeModule?.config?.embedded as boolean | undefined,
       flags: [],
       developerPlatformClient: this,
     }
