@@ -69,11 +69,6 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
     return
   }
 
-  const packageManager = inferPackageManagerForGlobalCLI()
-  await metadata.addPublicMetadata(() => ({
-    env_auto_upgrade_package_manager: packageManager,
-  }))
-
   try {
     await runCLIUpgrade()
     await metadata.addPublicMetadata(() => ({env_auto_upgrade_success: true}))
