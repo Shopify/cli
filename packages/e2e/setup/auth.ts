@@ -51,7 +51,7 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
       }
 
       // Fallback: run auth login directly (single-worker / no global setup)
-      log.log(env, ' authenticating automatically')
+      log.log(env, 'authenticating automatically')
 
       await execa('node', [executables.cli, 'auth', 'logout'], {
         env: env.processEnv,
