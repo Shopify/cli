@@ -194,7 +194,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
                         Preview URL: <Link url={status.previewURL} />
                       </Text>
                     ) : null}
-                    {!status.appEmbedded ? (
+                    {status.appEmbedded === false ? (
                       <Text>
                         Dev Console URL: <Link url={buildDevConsoleURL(shopFqdn)} />
                       </Text>
