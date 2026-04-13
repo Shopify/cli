@@ -205,7 +205,7 @@ const DevSessionUI: FunctionComponent<DevSesionUIProps> = ({
               <Text>{isShuttingDownMessage}</Text>
             ) : (
               <>
-                {status.isReady && !terminalSupportsHyperlinks() && (
+                {status.isReady && !(canUseShortcuts && terminalSupportsHyperlinks()) && (
                   <>
                     {status.previewURL ? (
                       <Text>
