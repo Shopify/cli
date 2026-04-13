@@ -5807,13 +5807,14 @@
       ],
       "args": {
       },
-      "description": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store instead.",
-      "descriptionWithMarkdown": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store instead.",
+      "description": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store, or `--for-client` to create a client transfer store under a Partner organization.",
+      "descriptionWithMarkdown": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store, or `--for-client` to create a client transfer store under a Partner organization.",
       "enableJsonFlag": false,
       "examples": [
         "<%= config.bin %> <%= command.id %>",
         "<%= config.bin %> <%= command.id %> --name \"My Store\" --country US",
         "<%= config.bin %> <%= command.id %> --name \"My Dev Store\" --dev",
+        "<%= config.bin %> <%= command.id %> --name \"Client Store\" --for-client --org 12345",
         "<%= config.bin %> <%= command.id %> --name \"My Store\" --json"
       ],
       "flags": {
@@ -5832,6 +5833,13 @@
           "description": "Create a development store instead of a trial store.",
           "env": "SHOPIFY_FLAG_STORE_DEV",
           "name": "dev",
+          "type": "boolean"
+        },
+        "for-client": {
+          "allowNo": false,
+          "description": "Create a client transfer store under a Partner organization.",
+          "env": "SHOPIFY_FLAG_STORE_FOR_CLIENT",
+          "name": "for-client",
           "type": "boolean"
         },
         "json": {
@@ -5859,6 +5867,14 @@
           "hidden": false,
           "name": "no-color",
           "type": "boolean"
+        },
+        "org": {
+          "description": "The Partner organization ID to create the store under. Required with --for-client.",
+          "env": "SHOPIFY_FLAG_STORE_ORG",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "name": "org",
+          "type": "option"
         },
         "subdomain": {
           "description": "The custom myshopify.com subdomain for the store.",

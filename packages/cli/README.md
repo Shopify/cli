@@ -2088,7 +2088,8 @@ Create a new Shopify store.
 
 ```
 USAGE
-  $ shopify store create [-c <value>] [--dev] [-j] [-n <value>] [--no-color] [--subdomain <value>] [--verbose]
+  $ shopify store create [-c <value>] [--dev] [--for-client] [-j] [-n <value>] [--no-color] [--org <value>]
+    [--subdomain <value>] [--verbose]
 
 FLAGS
   -c, --country=<value>    [default: US, env: SHOPIFY_FLAG_STORE_COUNTRY] The country code for the store (e.g., US, CA,
@@ -2096,7 +2097,11 @@ FLAGS
   -j, --json               [env: SHOPIFY_FLAG_JSON] Output the result as JSON. Automatically disables color output.
   -n, --name=<value>       [env: SHOPIFY_FLAG_STORE_NAME] The name of the store.
       --dev                [env: SHOPIFY_FLAG_STORE_DEV] Create a development store instead of a trial store.
+      --for-client         [env: SHOPIFY_FLAG_STORE_FOR_CLIENT] Create a client transfer store under a Partner
+                           organization.
       --no-color           [env: SHOPIFY_FLAG_NO_COLOR] Disable color output.
+      --org=<value>        [env: SHOPIFY_FLAG_STORE_ORG] The Partner organization ID to create the store under. Required
+                           with --for-client.
       --subdomain=<value>  [env: SHOPIFY_FLAG_STORE_SUBDOMAIN] The custom myshopify.com subdomain for the store.
       --verbose            [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 
@@ -2105,7 +2110,8 @@ DESCRIPTION
 
   Creates a new Shopify store associated with your account.
 
-  By default, creates a trial store. Use `--dev` to create a development store instead.
+  By default, creates a trial store. Use `--dev` to create a development store, or `--for-client` to create a client
+  transfer store under a Partner organization.
 
 EXAMPLES
   $ shopify store create
@@ -2113,6 +2119,8 @@ EXAMPLES
   $ shopify store create --name "My Store" --country US
 
   $ shopify store create --name "My Dev Store" --dev
+
+  $ shopify store create --name "Client Store" --for-client --org 12345
 
   $ shopify store create --name "My Store" --json
 ```

@@ -10,7 +10,7 @@ export default class StoreCreate extends Command {
 
   static descriptionWithMarkdown = `Creates a new Shopify store associated with your account.
 
-By default, creates a trial store. Use \`--dev\` to create a development store instead.`
+By default, creates a trial store. Use \`--dev\` to create a development store, or \`--for-client\` to create a client transfer store under a Partner organization.`
 
   static description = this.descriptionWithoutMarkdown()
 
@@ -18,6 +18,7 @@ By default, creates a trial store. Use \`--dev\` to create a development store i
     '<%= config.bin %> <%= command.id %>',
     '<%= config.bin %> <%= command.id %> --name "My Store" --country US',
     '<%= config.bin %> <%= command.id %> --name "My Dev Store" --dev',
+    '<%= config.bin %> <%= command.id %> --name "Client Store" --for-client --org 12345',
     '<%= config.bin %> <%= command.id %> --name "My Store" --json',
   ]
 
@@ -44,6 +45,15 @@ By default, creates a trial store. Use \`--dev\` to create a development store i
       env: 'SHOPIFY_FLAG_STORE_DEV',
       default: false,
     }),
+    'for-client': Flags.boolean({
+      description: 'Create a client transfer store under a Partner organization.',
+      env: 'SHOPIFY_FLAG_STORE_FOR_CLIENT',
+      default: false,
+    }),
+    org: Flags.string({
+      description: 'The Partner organization ID to create the store under. Required with --for-client.',
+      env: 'SHOPIFY_FLAG_STORE_ORG',
+    }),
   }
 
   async run(): Promise<void> {
@@ -54,6 +64,8 @@ By default, creates a trial store. Use \`--dev\` to create a development store i
       subdomain: flags.subdomain,
       country: flags.country,
       dev: flags.dev,
+      forClient: flags['for-client'],
+      org: flags.org,
     })
 
     if (flags.json) {

@@ -5916,7 +5916,7 @@
   },
   {
     "name": "store create",
-    "description": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store instead.",
+    "description": "Creates a new Shopify store associated with your account.\n\nBy default, creates a trial store. Use `--dev` to create a development store, or `--for-client` to create a client transfer store under a Partner organization.",
     "overviewPreviewDescription": "Create a new Shopify store.",
     "type": "command",
     "isVisualComponent": false,
@@ -5941,13 +5941,14 @@
           "storecreate": {
             "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
             "name": "storecreate",
-            "description": "",
+            "description": "The following flags are available for the `store create` command:",
+            "isPublicDocs": true,
             "members": [
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--dev",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Create a development store instead of a trial store.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_STORE_DEV"
@@ -5955,11 +5956,29 @@
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
                 "syntaxKind": "PropertySignature",
+                "name": "--for-client",
+                "value": "''",
+                "description": "Create a client transfer store under a Partner organization.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_FOR_CLIENT"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
                 "name": "--no-color",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Disable color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_NO_COLOR"
+              },
+              {
+                "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
+                "syntaxKind": "PropertySignature",
+                "name": "--org <value>",
+                "value": "string",
+                "description": "The Partner organization ID to create the store under. Required with --for-client.",
+                "isOptional": true,
+                "environmentValue": "SHOPIFY_FLAG_STORE_ORG"
               },
               {
                 "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
@@ -5974,7 +5993,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "--verbose",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Increase the verbosity of the output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_VERBOSE"
@@ -5992,7 +6011,7 @@
                 "filePath": "docs-shopify.dev/commands/interfaces/store-create.interface.ts",
                 "syntaxKind": "PropertySignature",
                 "name": "-j, --json",
-                "value": "\"\"",
+                "value": "''",
                 "description": "Output the result as JSON. Automatically disables color output.",
                 "isOptional": true,
                 "environmentValue": "SHOPIFY_FLAG_JSON"
@@ -6007,7 +6026,7 @@
                 "environmentValue": "SHOPIFY_FLAG_STORE_NAME"
               }
             ],
-            "value": "export interface storecreate {\n  /**\n   * The country code for the store (e.g., US, CA, GB).\n   * @environment SHOPIFY_FLAG_STORE_COUNTRY\n   */\n  '-c, --country <value>'?: string\n\n  /**\n   * Create a development store instead of a trial store.\n   * @environment SHOPIFY_FLAG_STORE_DEV\n   */\n  '--dev'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The name of the store.\n   * @environment SHOPIFY_FLAG_STORE_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The custom myshopify.com subdomain for the store.\n   * @environment SHOPIFY_FLAG_STORE_SUBDOMAIN\n   */\n  '--subdomain <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
+            "value": "export interface storecreate {\n  /**\n   * The country code for the store (e.g., US, CA, GB).\n   * @environment SHOPIFY_FLAG_STORE_COUNTRY\n   */\n  '-c, --country <value>'?: string\n\n  /**\n   * Create a development store instead of a trial store.\n   * @environment SHOPIFY_FLAG_STORE_DEV\n   */\n  '--dev'?: ''\n\n  /**\n   * Create a client transfer store under a Partner organization.\n   * @environment SHOPIFY_FLAG_STORE_FOR_CLIENT\n   */\n  '--for-client'?: ''\n\n  /**\n   * Output the result as JSON. Automatically disables color output.\n   * @environment SHOPIFY_FLAG_JSON\n   */\n  '-j, --json'?: ''\n\n  /**\n   * The name of the store.\n   * @environment SHOPIFY_FLAG_STORE_NAME\n   */\n  '-n, --name <value>'?: string\n\n  /**\n   * Disable color output.\n   * @environment SHOPIFY_FLAG_NO_COLOR\n   */\n  '--no-color'?: ''\n\n  /**\n   * The Partner organization ID to create the store under. Required with --for-client.\n   * @environment SHOPIFY_FLAG_STORE_ORG\n   */\n  '--org <value>'?: string\n\n  /**\n   * The custom myshopify.com subdomain for the store.\n   * @environment SHOPIFY_FLAG_STORE_SUBDOMAIN\n   */\n  '--subdomain <value>'?: string\n\n  /**\n   * Increase the verbosity of the output.\n   * @environment SHOPIFY_FLAG_VERBOSE\n   */\n  '--verbose'?: ''\n}"
           }
         }
       }

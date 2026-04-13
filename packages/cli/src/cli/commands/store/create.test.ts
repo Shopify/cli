@@ -23,6 +23,8 @@ describe('store create command', () => {
       subdomain: undefined,
       country: 'US',
       dev: false,
+      forClient: false,
+      org: undefined,
     })
   })
 
@@ -33,13 +35,34 @@ describe('store create command', () => {
       shopLoginUrl: null,
     })
 
-    await StoreCreate.run(['--name', 'Custom Store', '--subdomain', 'custom', '--country', 'CA', '--dev'])
+    await StoreCreate.run(['--name', 'Custom Store', '--subdomain', 'custom', '--country', 'CA'])
 
     expect(createStore).toHaveBeenCalledWith({
       name: 'Custom Store',
       subdomain: 'custom',
       country: 'CA',
-      dev: true,
+      dev: false,
+      forClient: false,
+      org: undefined,
+    })
+  })
+
+  test('passes --for-client and --org flags through to the create service', async () => {
+    vi.mocked(createStore).mockResolvedValue({
+      shopPermanentDomain: 'client-store.myshopify.com',
+      polling: false,
+      shopLoginUrl: null,
+    })
+
+    await StoreCreate.run(['--name', 'Client Store', '--for-client', '--org', '12345'])
+
+    expect(createStore).toHaveBeenCalledWith({
+      name: 'Client Store',
+      subdomain: undefined,
+      country: 'US',
+      dev: false,
+      forClient: true,
+      org: '12345',
     })
   })
 
@@ -90,6 +113,8 @@ describe('store create command', () => {
     expect(StoreCreate.flags.subdomain).toBeDefined()
     expect(StoreCreate.flags.country).toBeDefined()
     expect(StoreCreate.flags.dev).toBeDefined()
+    expect(StoreCreate.flags['for-client']).toBeDefined()
+    expect(StoreCreate.flags.org).toBeDefined()
     expect(StoreCreate.flags.json).toBeDefined()
   })
 })

@@ -1,14 +1,24 @@
 import {createStore} from './index.js'
 import {signupsRequest} from '@shopify/cli-kit/node/api/signups'
-import {ensureAuthenticatedSignups} from '@shopify/cli-kit/node/session'
+import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  ensureAuthenticatedSignups,
+  ensureAuthenticatedAppManagementAndBusinessPlatform,
+} from '@shopify/cli-kit/node/session'
 import {beforeEach, describe, expect, test, vi} from 'vitest'
 
 vi.mock('@shopify/cli-kit/node/api/signups')
+vi.mock('@shopify/cli-kit/node/api/business-platform')
 vi.mock('@shopify/cli-kit/node/session')
 
 describe('createStore', () => {
   beforeEach(() => {
     vi.mocked(ensureAuthenticatedSignups).mockResolvedValue({token: 'test-token', userId: 'user-1'})
+    vi.mocked(ensureAuthenticatedAppManagementAndBusinessPlatform).mockResolvedValue({
+      appManagementToken: 'app-token',
+      businessPlatformToken: 'bp-token',
+      userId: 'user-1',
+    })
   })
 
   describe('trial store (dev: false)', () => {
@@ -22,7 +32,7 @@ describe('createStore', () => {
         },
       })
 
-      const result = await createStore({country: 'US', dev: false})
+      const result = await createStore({country: 'US', dev: false, forClient: false})
 
       expect(signupsRequest).toHaveBeenCalledWith(expect.stringContaining('StoreCreate'), 'test-token', {
         signup: {country: 'US'},
@@ -44,7 +54,13 @@ describe('createStore', () => {
         },
       })
 
-      const result = await createStore({name: 'My Custom Store', subdomain: 'my-custom', country: 'CA', dev: false})
+      const result = await createStore({
+        name: 'My Custom Store',
+        subdomain: 'my-custom',
+        country: 'CA',
+        dev: false,
+        forClient: false,
+      })
 
       expect(signupsRequest).toHaveBeenCalledWith(expect.stringContaining('StoreCreate'), 'test-token', {
         signup: {shopName: 'My Custom Store', subdomain: 'my-custom', country: 'CA'},
@@ -62,7 +78,7 @@ describe('createStore', () => {
         },
       })
 
-      const result = await createStore({country: 'US', dev: false})
+      const result = await createStore({country: 'US', dev: false, forClient: false})
 
       expect(result.polling).toBe(true)
     })
@@ -77,7 +93,7 @@ describe('createStore', () => {
         },
       })
 
-      const result = await createStore({country: 'US', dev: false})
+      const result = await createStore({country: 'US', dev: false, forClient: false})
 
       expect(result.polling).toBe(false)
     })
@@ -92,7 +108,7 @@ describe('createStore', () => {
         },
       })
 
-      await expect(createStore({subdomain: 'taken', country: 'US', dev: false})).rejects.toThrow(
+      await expect(createStore({subdomain: 'taken', country: 'US', dev: false, forClient: false})).rejects.toThrow(
         'signup.subdomain: Subdomain is already taken',
       )
     })
@@ -110,7 +126,7 @@ describe('createStore', () => {
         },
       })
 
-      await expect(createStore({country: 'US', dev: false})).rejects.toThrow(
+      await expect(createStore({country: 'US', dev: false, forClient: false})).rejects.toThrow(
         'signup.subdomain: Subdomain is already taken\nAccount limit reached',
       )
     })
@@ -120,13 +136,15 @@ describe('createStore', () => {
         storeCreate: {shopPermanentDomain: null, polling: null, shopLoginUrl: null, userErrors: []},
       })
 
-      await expect(createStore({country: 'US', dev: false})).rejects.toThrow('no domain returned')
+      await expect(createStore({country: 'US', dev: false, forClient: false})).rejects.toThrow('no domain returned')
     })
 
     test('throws an AbortError when storeCreate response is null', async () => {
       vi.mocked(signupsRequest).mockResolvedValue({storeCreate: null})
 
-      await expect(createStore({country: 'US', dev: false})).rejects.toThrow('Unexpected response from Signups API')
+      await expect(createStore({country: 'US', dev: false, forClient: false})).rejects.toThrow(
+        'Unexpected response from Signups API',
+      )
     })
   })
 
@@ -141,7 +159,7 @@ describe('createStore', () => {
         },
       })
 
-      const result = await createStore({name: 'Dev Store', country: 'US', dev: true})
+      const result = await createStore({name: 'Dev Store', country: 'US', dev: true, forClient: false})
 
       expect(signupsRequest).toHaveBeenCalledWith(expect.stringContaining('AppDevelopmentStoreCreate'), 'test-token', {
         shopInformation: {
@@ -169,22 +187,17 @@ describe('createStore', () => {
         },
       })
 
-      await expect(createStore({country: 'XX', dev: true})).rejects.toThrow(
+      await expect(createStore({country: 'XX', dev: true, forClient: false})).rejects.toThrow(
         'shop_information.country: Invalid country code',
       )
     })
 
     test('throws an AbortError when no domain is returned for dev store', async () => {
       vi.mocked(signupsRequest).mockResolvedValue({
-        appDevelopmentStoreCreate: {
-          permanentDomain: null,
-          loginUrl: null,
-          shopId: null,
-          userErrors: [],
-        },
+        appDevelopmentStoreCreate: {permanentDomain: null, loginUrl: null, shopId: null, userErrors: []},
       })
 
-      await expect(createStore({country: 'US', dev: true})).rejects.toThrow(
+      await expect(createStore({country: 'US', dev: true, forClient: false})).rejects.toThrow(
         'Development store creation failed: no domain returned',
       )
     })
@@ -199,7 +212,7 @@ describe('createStore', () => {
         },
       })
 
-      await createStore({country: 'US', dev: true})
+      await createStore({country: 'US', dev: true, forClient: false})
 
       expect(signupsRequest).toHaveBeenCalledWith(
         expect.stringContaining('AppDevelopmentStoreCreate'),
@@ -211,20 +224,126 @@ describe('createStore', () => {
     test('throws an AbortError when appDevelopmentStoreCreate response is null', async () => {
       vi.mocked(signupsRequest).mockResolvedValue({appDevelopmentStoreCreate: null})
 
-      await expect(createStore({country: 'US', dev: true})).rejects.toThrow('Unexpected response from Signups API')
+      await expect(createStore({country: 'US', dev: true, forClient: false})).rejects.toThrow(
+        'Unexpected response from Signups API',
+      )
     })
   })
 
-  test('throws an AbortError when --subdomain is used with --dev', async () => {
-    await expect(createStore({subdomain: 'my-store', country: 'US', dev: true})).rejects.toThrow(
-      'The --subdomain flag is not supported when creating a development store.',
-    )
-    expect(ensureAuthenticatedSignups).not.toHaveBeenCalled()
+  describe('client transfer store (forClient: true)', () => {
+    test('calls Organizations API CreateClientDevelopmentShop with correct variables', async () => {
+      vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue({
+        createClientDevelopmentShop: {
+          shopDomain: 'client-store.myshopify.com',
+          shopAdminUrl: 'https://admin.shopify.com/store/client-store',
+          userErrors: [],
+        },
+      })
+
+      const result = await createStore({
+        name: 'Client Store',
+        country: 'CA',
+        dev: false,
+        forClient: true,
+        org: '12345',
+      })
+
+      expect(businessPlatformOrganizationsRequest).toHaveBeenCalledWith({
+        query: expect.stringContaining('CreateClientDevelopmentShop'),
+        token: 'bp-token',
+        organizationId: '12345',
+        unauthorizedHandler: expect.any(Object),
+      })
+      expect(result).toEqual({
+        shopPermanentDomain: 'client-store.myshopify.com',
+        polling: false,
+        shopLoginUrl: 'https://admin.shopify.com/store/client-store',
+      })
+    })
+
+    test('defaults shopName to "Client Store" when no name is provided', async () => {
+      vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue({
+        createClientDevelopmentShop: {
+          shopDomain: 'client-store.myshopify.com',
+          shopAdminUrl: null,
+          userErrors: [],
+        },
+      })
+
+      await createStore({country: 'US', dev: false, forClient: true, org: '12345'})
+
+      expect(businessPlatformOrganizationsRequest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          query: expect.stringContaining('shopName: "Client Store"').valueOf()
+            ? expect.stringContaining('CreateClientDevelopmentShop')
+            : expect.anything(),
+        }),
+      )
+    })
+
+    test('throws an AbortError when the API returns user errors', async () => {
+      vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue({
+        createClientDevelopmentShop: {
+          shopDomain: null,
+          shopAdminUrl: null,
+          userErrors: [{field: null, message: 'Only Partner organizations can create client development shops'}],
+        },
+      })
+
+      await expect(createStore({country: 'US', dev: false, forClient: true, org: '12345'})).rejects.toThrow(
+        'Only Partner organizations can create client development shops',
+      )
+    })
+
+    test('throws an AbortError when no domain is returned', async () => {
+      vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue({
+        createClientDevelopmentShop: {shopDomain: null, shopAdminUrl: null, userErrors: []},
+      })
+
+      await expect(createStore({country: 'US', dev: false, forClient: true, org: '12345'})).rejects.toThrow(
+        'Client transfer store creation failed: no domain returned',
+      )
+    })
+
+    test('throws an AbortError when createClientDevelopmentShop response is null', async () => {
+      vi.mocked(businessPlatformOrganizationsRequest).mockResolvedValue({createClientDevelopmentShop: null})
+
+      await expect(createStore({country: 'US', dev: false, forClient: true, org: '12345'})).rejects.toThrow(
+        'Unexpected response from Organizations API',
+      )
+    })
+  })
+
+  describe('flag validation', () => {
+    test('throws when --subdomain is used with --dev', async () => {
+      await expect(createStore({subdomain: 'my-store', country: 'US', dev: true, forClient: false})).rejects.toThrow(
+        'The --subdomain flag is not supported when creating a development store.',
+      )
+      expect(ensureAuthenticatedSignups).not.toHaveBeenCalled()
+    })
+
+    test('throws when --subdomain is used with --for-client', async () => {
+      await expect(
+        createStore({subdomain: 'my-store', country: 'US', dev: false, forClient: true, org: '12345'}),
+      ).rejects.toThrow('The --subdomain flag is not supported when creating a client transfer store.')
+    })
+
+    test('throws when --for-client is used without --org', async () => {
+      await expect(createStore({country: 'US', dev: false, forClient: true})).rejects.toThrow(
+        'The --org flag is required when creating a client transfer store.',
+      )
+    })
+
+    test('throws when --for-client and --dev are used together', async () => {
+      await expect(createStore({country: 'US', dev: true, forClient: true, org: '12345'})).rejects.toThrow(
+        "The --for-client and --dev flags can't be used together.",
+      )
+    })
   })
 
   test('propagates authentication failures from ensureAuthenticatedSignups', async () => {
     vi.mocked(ensureAuthenticatedSignups).mockRejectedValue(new Error('Authentication required'))
 
-    await expect(createStore({country: 'US', dev: false})).rejects.toThrow('Authentication required')
+    await expect(createStore({country: 'US', dev: false, forClient: false})).rejects.toThrow('Authentication required')
   })
 })

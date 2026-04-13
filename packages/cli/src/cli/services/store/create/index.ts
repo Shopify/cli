@@ -1,5 +1,9 @@
 import {signupsRequest} from '@shopify/cli-kit/node/api/signups'
-import {ensureAuthenticatedSignups} from '@shopify/cli-kit/node/session'
+import {businessPlatformOrganizationsRequest} from '@shopify/cli-kit/node/api/business-platform'
+import {
+  ensureAuthenticatedSignups,
+  ensureAuthenticatedAppManagementAndBusinessPlatform,
+} from '@shopify/cli-kit/node/session'
 import {AbortError} from '@shopify/cli-kit/node/error'
 import {outputContent, outputDebug, outputToken} from '@shopify/cli-kit/node/output'
 import {networkInterfaces} from 'os'
@@ -28,11 +32,24 @@ const AppDevelopmentStoreCreateMutation = `
   }
 `
 
+// eslint-disable-next-line @shopify/cli/no-inline-graphql
+const CreateClientDevelopmentShopMutation = `
+  mutation CreateClientDevelopmentShop($shopName: String!, $countryCode: String!) {
+    createClientDevelopmentShop(shopName: $shopName, countryCode: $countryCode) {
+      shopDomain
+      shopAdminUrl
+      userErrors { message field }
+    }
+  }
+`
+
 export interface StoreCreateInput {
   name?: string
   subdomain?: string
   country: string
   dev: boolean
+  forClient: boolean
+  org?: string
 }
 
 export interface StoreCreateResult {
@@ -47,11 +64,26 @@ interface StoreCreateUserError {
 }
 
 export async function createStore(input: StoreCreateInput): Promise<StoreCreateResult> {
-  if (input.dev && input.subdomain) {
+  if (input.forClient && input.dev) {
+    throw new AbortError("The --for-client and --dev flags can't be used together.", 'Use one or the other.')
+  }
+
+  if (input.forClient && !input.org) {
     throw new AbortError(
-      'The --subdomain flag is not supported when creating a development store.',
-      'Remove --subdomain or remove --dev.',
+      'The --org flag is required when creating a client transfer store.',
+      'Provide your Partner organization ID with --org.',
     )
+  }
+
+  if ((input.dev || input.forClient) && input.subdomain) {
+    throw new AbortError(
+      `The --subdomain flag is not supported when creating a ${input.dev ? 'development' : 'client transfer'} store.`,
+      `Remove --subdomain or remove --${input.dev ? 'dev' : 'for-client'}.`,
+    )
+  }
+
+  if (input.forClient) {
+    return createClientTransferStore(input)
   }
 
   const {token} = await ensureAuthenticatedSignups()
@@ -144,6 +176,48 @@ ${outputToken.json(variables)}
   }
 }
 
+async function createClientTransferStore(input: StoreCreateInput): Promise<StoreCreateResult> {
+  const {businessPlatformToken} = await ensureAuthenticatedAppManagementAndBusinessPlatform()
+
+  const variables = {
+    shopName: input.name ?? 'Client Store',
+    countryCode: input.country,
+  }
+
+  outputDebug(outputContent`Calling Organizations API CreateClientDevelopmentShop with variables:
+${outputToken.json(variables)}
+`)
+
+  const result = await businessPlatformOrganizationsRequest<{
+    createClientDevelopmentShop: ClientDevShopCreateMutationResult | null
+  }>({
+    query: CreateClientDevelopmentShopMutation,
+    token: businessPlatformToken,
+    organizationId: input.org!,
+    unauthorizedHandler: {type: 'token_refresh', handler: async () => ({token: undefined})},
+  })
+
+  if (!result.createClientDevelopmentShop) {
+    throw new AbortError('Unexpected response from Organizations API: createClientDevelopmentShop was null.')
+  }
+
+  throwOnUserErrors(result.createClientDevelopmentShop.userErrors ?? [])
+
+  if (!result.createClientDevelopmentShop.shopDomain) {
+    throw new AbortError('Client transfer store creation failed: no domain returned.')
+  }
+
+  outputDebug(
+    outputContent`CreateClientDevelopmentShop response: domain=${outputToken.raw(result.createClientDevelopmentShop.shopDomain)}`,
+  )
+
+  return {
+    shopPermanentDomain: result.createClientDevelopmentShop.shopDomain,
+    polling: false,
+    shopLoginUrl: result.createClientDevelopmentShop.shopAdminUrl,
+  }
+}
+
 function throwOnUserErrors(userErrors: StoreCreateUserError[]): void {
   if (userErrors.length === 0) return
   const messages = userErrors
@@ -177,4 +251,10 @@ interface AppDevStoreCreateMutationResult {
   loginUrl: string | null
   shopId: string | null
   userErrors: StoreCreateUserError[]
+}
+
+interface ClientDevShopCreateMutationResult {
+  shopDomain: string | null
+  shopAdminUrl: string | null
+  userErrors: StoreCreateUserError[] | null
 }

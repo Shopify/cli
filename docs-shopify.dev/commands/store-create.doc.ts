@@ -5,7 +5,7 @@ const data: ReferenceEntityTemplateSchema = {
   name: 'store create',
   description: `Creates a new Shopify store associated with your account.
 
-By default, creates a trial store. Use \`--dev\` to create a development store instead.`,
+By default, creates a trial store. Use \`--dev\` to create a development store, or \`--for-client\` to create a client transfer store under a Partner organization.`,
   overviewPreviewDescription: `Create a new Shopify store.`,
   type: 'command',
   isVisualComponent: false,
