@@ -113,7 +113,7 @@ describe('autoUpgradeIfNeeded', () => {
     expect(outputMock.warn()).toMatch(installReminder)
   })
 
-  test('records triggered metric for minor/patch upgrade', async () => {
+  test('records package_manager metric for minor/patch upgrade', async () => {
     vi.mocked(versionToAutoUpgrade).mockReturnValue('3.100.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(false)
     vi.mocked(inferPackageManagerForGlobalCLI).mockReturnValue('npm')
@@ -125,13 +125,12 @@ describe('autoUpgradeIfNeeded', () => {
     const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
     expect(calls).toContainEqual(
       expect.objectContaining({
-        env_auto_upgrade_triggered: true,
         env_auto_upgrade_package_manager: 'npm',
       }),
     )
   })
 
-  test('records triggered metric with major_version skipped_reason for major bump', async () => {
+  test('records skipped_reason for major version bump', async () => {
     vi.mocked(versionToAutoUpgrade).mockReturnValue('4.0.0')
     vi.mocked(isMajorVersionChange).mockReturnValue(true)
     vi.mocked(getOutputUpdateCLIReminder).mockReturnValue('upgrade reminder')
@@ -141,7 +140,6 @@ describe('autoUpgradeIfNeeded', () => {
     const calls = vi.mocked(addPublicMetadata).mock.calls.map((call) => call[0]())
     expect(calls).toContainEqual(
       expect.objectContaining({
-        env_auto_upgrade_triggered: true,
         env_auto_upgrade_skipped_reason: 'major_version',
       }),
     )

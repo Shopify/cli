@@ -66,7 +66,6 @@ export interface Schemas {
       // Auto-upgrade
       env_auto_upgrade_enabled?: Optional<boolean>
       env_auto_upgrade_accepted?: Optional<boolean>
-      env_auto_upgrade_triggered?: Optional<boolean>
       env_auto_upgrade_package_manager?: Optional<string>
       env_auto_upgrade_skipped_reason?: Optional<string>
       env_auto_upgrade_success?: Optional<boolean>

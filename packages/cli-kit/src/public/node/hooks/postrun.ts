@@ -64,7 +64,6 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
   if (isMajorVersionChange(CLI_KIT_VERSION, newerVersion)) {
     outputWarn(getOutputUpdateCLIReminder(newerVersion, true))
     await metadata.addPublicMetadata(() => ({
-      env_auto_upgrade_triggered: true,
       env_auto_upgrade_skipped_reason: 'major_version',
     }))
     return
@@ -72,7 +71,6 @@ async function performAutoUpgrade(newerVersion: string): Promise<void> {
 
   const packageManager = inferPackageManagerForGlobalCLI()
   await metadata.addPublicMetadata(() => ({
-    env_auto_upgrade_triggered: true,
     env_auto_upgrade_package_manager: packageManager,
   }))
 
