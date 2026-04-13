@@ -14,7 +14,14 @@ import {unstyled} from '@shopify/cli-kit/node/output'
 import {openURL} from '@shopify/cli-kit/node/system'
 import {Writable} from 'stream'
 
-vi.mock('@shopify/cli-kit/node/system')
+vi.mock('@shopify/cli-kit/node/system', async () => {
+  const actual: any = await vi.importActual('@shopify/cli-kit/node/system')
+  return {
+    ...actual,
+    openURL: vi.fn(),
+    terminalSupportsHyperlinks: mocks.terminalSupportsHyperlinks,
+  }
+})
 vi.mock('@shopify/cli-kit/node/context/local')
 vi.mock('@shopify/cli-kit/node/tree-kill')
 
@@ -23,6 +30,7 @@ const mocks = vi.hoisted(() => {
     useStdin: vi.fn(() => {
       return {isRawModeSupported: true}
     }),
+    terminalSupportsHyperlinks: vi.fn(() => false),
   }
 })
 
@@ -540,6 +548,59 @@ describe('DevSessionUI', () => {
     expect(output).toContain('My Test App')
     expect(output).toContain('https://my-app.ngrok.io')
     expect(output).not.toContain('mystore.myshopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('hides URL list when terminal supports hyperlinks', async () => {
+    // Given
+    mocks.terminalSupportsHyperlinks.mockReturnValue(true)
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - shortcuts should be present but URL list should be hidden
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(p)')
+    expect(output).toContain('(g)')
+    expect(output).not.toContain('Preview URL:')
+    expect(output).not.toContain('GraphiQL URL:')
+
+    renderInstance.unmount()
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+  })
+
+  test('shows URL list when terminal does not support hyperlinks', async () => {
+    // Given
+    mocks.terminalSupportsHyperlinks.mockReturnValue(false)
+
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then - both shortcuts and URL list should be present
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).toContain('(p)')
+    expect(output).toContain('(g)')
+    expect(output).toContain('Preview URL: https://shopify.com')
+    expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
 
     renderInstance.unmount()
   })

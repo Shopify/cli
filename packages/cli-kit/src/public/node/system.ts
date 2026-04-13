@@ -7,6 +7,7 @@ import {renderWarning} from './ui.js'
 import {platformAndArch} from './os.js'
 import {shouldDisplayColors, outputDebug} from './output.js'
 import {execa, execaCommand, ExecaChildProcess} from 'execa'
+import supportsHyperlinks from 'supports-hyperlinks'
 import which from 'which'
 import {delimiter} from 'pathe'
 
@@ -351,6 +352,10 @@ export async function sleep(seconds: number): Promise<void> {
  *
  * @returns True if the standard input and output streams support prompting.
  */
+export function terminalSupportsHyperlinks(): boolean {
+  return supportsHyperlinks.stdout
+}
+
 export function terminalSupportsPrompting(): boolean {
   if (isTruthy(process.env.CI)) {
     return false
