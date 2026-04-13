@@ -116,7 +116,7 @@ export class ESBuildContextManager {
   }
 
   async deleteContexts(extensions: ExtensionInstance[]) {
-    const promises = extensions.map((ext) => this.contexts[ext.uid]?.map((context) => context.dispose())).flat()
+    const promises = extensions.flatMap((ext) => this.contexts[ext.uid]?.map((context) => context.dispose()) ?? [])
     await Promise.all(promises)
     extensions.forEach((ext) => {
       const {[ext.uid]: _, ...rest} = this.contexts

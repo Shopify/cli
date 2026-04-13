@@ -282,4 +282,34 @@ describe('reduceWebhooks', () => {
       },
     ])
   })
+
+  test('with property set, merges compliance_topics for subscriptions with the same uri', () => {
+    // Given
+    const subscriptions = [
+      {uri: 'https://example.com', compliance_topics: ['customers/redact']},
+      {uri: 'https://example.com', compliance_topics: ['customers/data_request']},
+    ]
+
+    // When
+    const result = reduceWebhooks(subscriptions, 'compliance_topics')
+
+    // Then
+    expect(result).toEqual([
+      {uri: 'https://example.com', compliance_topics: ['customers/redact', 'customers/data_request']},
+    ])
+  })
+
+  test('with property set, initializes the property array when existing subscription has none', () => {
+    // Given
+    const subscriptions = [
+      {uri: 'https://example.com'},
+      {uri: 'https://example.com', compliance_topics: ['customers/redact']},
+    ]
+
+    // When
+    const result = reduceWebhooks(subscriptions, 'compliance_topics')
+
+    // Then
+    expect(result).toEqual([{uri: 'https://example.com', compliance_topics: ['customers/redact']}])
+  })
 })

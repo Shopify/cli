@@ -80,15 +80,15 @@ export function reduceWebhooks(
   return subscriptions.reduce<WebhookSubscription[]>((accumulator, subscription) => {
     const existingSubscription = findSubscription(accumulator, subscription)
     if (existingSubscription) {
-      if (property && subscription?.[property]?.length) {
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-        existingSubscription[property]?.push(...subscription[property]!)
+      if (property && Array.isArray(subscription?.[property]) && subscription[property].length) {
+        existingSubscription[property] ??= []
+        existingSubscription[property].push(...subscription[property])
       } else {
-        if (subscription.topics) {
+        if (Array.isArray(subscription.topics)) {
           existingSubscription.topics ??= []
           existingSubscription.topics.push(...subscription.topics)
         }
-        if (subscription.compliance_topics) {
+        if (Array.isArray(subscription.compliance_topics)) {
           existingSubscription.compliance_topics ??= []
           existingSubscription.compliance_topics.push(...subscription.compliance_topics)
         }

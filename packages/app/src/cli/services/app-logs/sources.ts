@@ -15,7 +15,8 @@ export function sources(app: AppInterface) {
         sourcesByNamespace.set(sourceNamespace, [])
       }
 
-      sourcesByNamespace.set(sourceNamespace, [...sourcesByNamespace.get(sourceNamespace)!, source])
+      const existing = sourcesByNamespace.get(sourceNamespace) ?? []
+      sourcesByNamespace.set(sourceNamespace, [...existing, source])
     }
   })
 
