@@ -114,6 +114,7 @@ import {
 import {CreateAssetUrl} from '../../api/graphql/app-management/generated/create-asset-url.js'
 import {AppVersionById} from '../../api/graphql/app-management/generated/app-version-by-id.js'
 import {AppVersions} from '../../api/graphql/app-management/generated/app-versions.js'
+import {AppInstallCount} from '../../api/graphql/app-management/generated/app-install-count.js'
 import {CreateApp, CreateAppMutationVariables} from '../../api/graphql/app-management/generated/create-app.js'
 import {FetchSpecifications} from '../../api/graphql/app-management/generated/specifications.js'
 import {ListApps} from '../../api/graphql/app-management/generated/apps.js'
@@ -642,6 +643,13 @@ export class AppManagementClient implements DeveloperPlatformClient {
         },
       },
     }
+  }
+
+  async appInstallCount({id}: MinimalAppIdentifiers): Promise<number> {
+    const query = AppInstallCount
+    const variables = {appId: id}
+    const result = await this.appManagementRequest({query, variables})
+    return result.app.installCount ?? 0
   }
 
   async appVersionByTag(
