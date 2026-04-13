@@ -134,3 +134,26 @@ export function isEmpty(object: object): boolean {
 export function compact(object: object): object {
   return Object.fromEntries(Object.entries(object).filter(([_, value]) => value != null))
 }
+
+/**
+ * Recursively removes properties with `undefined` values from an object.
+ * Arrays are traversed but not filtered. Non-object values are returned as-is.
+ *
+ * @param value - The value to strip undefined fields from.
+ * @returns A deep copy of the value with all undefined-valued keys removed.
+ */
+export function deepStripUndefined<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map(deepStripUndefined) as T
+  }
+  if (value !== null && typeof value === 'object') {
+    const result: Record<string, unknown> = {}
+    for (const [key, val] of Object.entries(value)) {
+      if (val !== undefined) {
+        result[key] = deepStripUndefined(val)
+      }
+    }
+    return result as T
+  }
+  return value
+}

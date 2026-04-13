@@ -1,4 +1,5 @@
 import {alwaysLogAnalytics, alwaysLogMetrics, analyticsDisabled, isShopify} from './context/local.js'
+import {deepStripUndefined} from '../common/object.js'
 import * as metadata from './metadata.js'
 import {publishMonorailEvent, MONORAIL_COMMAND_TOPIC} from './monorail.js'
 import {fanoutHooks} from './plugins.js'
@@ -193,7 +194,7 @@ async function buildPayload({config, errorMessage, exitMode}: ReportAnalyticsEve
   })
 
   // strip undefined fields -- they make up the majority of payloads due to wide metadata structure.
-  payload = JSON.parse(JSON.stringify(payload))
+  payload = deepStripUndefined(payload)
 
   return sanitizePayload(payload)
 }

@@ -3,6 +3,7 @@ import {
   deepCompare,
   deepDifference,
   deepMergeObjects,
+  deepStripUndefined,
   getPathValue,
   mapValues,
   pickBy,
@@ -438,5 +439,43 @@ describe('unsetPathValue', () => {
     // Then
     expect(result).toBeTruthy()
     expect(obj).toEqual({regular: 'value2'})
+  })
+})
+
+describe('deepStripUndefined', () => {
+  test('removes top-level undefined fields', () => {
+    const obj = {a: 1, b: undefined, c: 'hello'}
+    expect(deepStripUndefined(obj)).toEqual({a: 1, c: 'hello'})
+  })
+
+  test('removes nested undefined fields', () => {
+    const obj = {outer: {a: 1, b: undefined}, c: 'hello'}
+    expect(deepStripUndefined(obj)).toEqual({outer: {a: 1}, c: 'hello'})
+  })
+
+  test('preserves arrays and recurses into them', () => {
+    const obj = {list: [{a: 1, b: undefined}, {c: undefined, d: 2}]}
+    expect(deepStripUndefined(obj)).toEqual({list: [{a: 1}, {d: 2}]})
+  })
+
+  test('returns primitives as-is', () => {
+    expect(deepStripUndefined('hello')).toBe('hello')
+    expect(deepStripUndefined(42)).toBe(42)
+    expect(deepStripUndefined(null)).toBe(null)
+    expect(deepStripUndefined(true)).toBe(true)
+  })
+
+  test('preserves null values (only strips undefined)', () => {
+    const obj = {a: null, b: undefined, c: 0, d: false, e: ''}
+    expect(deepStripUndefined(obj)).toEqual({a: null, c: 0, d: false, e: ''})
+  })
+
+  test('handles empty objects', () => {
+    expect(deepStripUndefined({})).toEqual({})
+  })
+
+  test('handles objects where all values are undefined', () => {
+    const obj = {a: undefined, b: undefined}
+    expect(deepStripUndefined(obj)).toEqual({})
   })
 })
