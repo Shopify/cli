@@ -1,6 +1,6 @@
 import {AbortError, BugError} from './error.js'
 import {AbortController, AbortSignal} from './abort.js'
-import {captureOutput, exec} from './system.js'
+import {exec} from './system.js'
 import {fileExists, readFile, writeFile, findPathUp, glob} from './fs.js'
 import {dirname, joinPath} from './path.js'
 import {runWithTimer} from './metadata.js'
@@ -115,32 +115,18 @@ export function packageManagerFromUserAgent(env = process.env): PackageManager {
  * @returns The dependency manager
  */
 export async function getPackageManager(fromDirectory: string): Promise<PackageManager> {
-  let directory: string | undefined
-  let packageJson: string | undefined
-  try {
-    directory = await captureOutput('npm', ['prefix'], {cwd: fromDirectory})
-    outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
-    packageJson = joinPath(directory, 'package.json')
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch {
-    // if problems locating directoy/package file, we use user agent instead
-  }
-
-  if (!directory || !packageJson || !(await fileExists(packageJson))) {
+  const packageJsonPath = await findPathUp('package.json', {cwd: fromDirectory, type: 'file'})
+  if (!packageJsonPath) {
     return packageManagerFromUserAgent()
   }
-  const yarnLockPath = joinPath(directory, yarnLockfile)
-  const pnpmLockPath = joinPath(directory, pnpmLockfile)
-  const bunLockPath = joinPath(directory, bunLockfile)
-  if (await fileExists(yarnLockPath)) {
-    return 'yarn'
-  } else if (await fileExists(pnpmLockPath)) {
-    return 'pnpm'
-  } else if (await fileExists(bunLockPath)) {
-    return 'bun'
-  } else {
-    return 'npm'
-  }
+
+  const directory = dirname(packageJsonPath)
+  outputDebug(outputContent`Obtaining the dependency manager in directory ${outputToken.path(directory)}...`)
+
+  if (await fileExists(joinPath(directory, yarnLockfile))) return 'yarn'
+  if (await fileExists(joinPath(directory, pnpmLockfile))) return 'pnpm'
+  if (await fileExists(joinPath(directory, bunLockfile))) return 'bun'
+  return 'npm'
 }
 
 interface InstallNPMDependenciesRecursivelyOptions {
