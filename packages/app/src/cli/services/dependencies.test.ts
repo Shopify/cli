@@ -28,4 +28,16 @@ describe('installAppDependencies', () => {
       deep: 3,
     })
   })
+
+  test('errors before install when the project package manager is unknown', async () => {
+    const project = testProject({packageManager: 'unknown', directory: '/tmp/project'})
+
+    await installAppDependencies(project)
+
+    const tasks = vi.mocked(renderTasks).mock.calls[0]![0] as any
+    const task = tasks[0]
+
+    await expect(task.task()).rejects.toThrow(/Could not determine the project package manager/)
+    expect(installNPMDependenciesRecursively).not.toHaveBeenCalled()
+  })
 })

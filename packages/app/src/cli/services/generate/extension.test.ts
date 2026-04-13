@@ -11,6 +11,7 @@ import * as functionBuild from '../function/build.js'
 import {
   checkoutUITemplate,
   testDeveloperPlatformClient,
+  testProject,
   testRemoteExtensionTemplates,
 } from '../../models/app/app.test-data.js'
 import {ExtensionTemplate} from '../../models/app/template.js'
@@ -88,6 +89,29 @@ describe('initialize a extension', async () => {
 
       expect(extensionDir).toEqual(joinPath(tmpDir, 'extensions', name))
       expect(generatedExtension.configuration.name).toBe(name)
+    })
+  })
+
+  test('errors before installing extension dependencies when the project package manager is unknown', async () => {
+    await withTemporaryApp(async (tmpDir) => {
+      const app = (await loadApp({
+        directory: tmpDir,
+        specifications,
+        userProvidedConfigName: undefined,
+      })) as AppLinkedInterface
+
+      const result = generateExtensionTemplate({
+        extensionTemplate: checkoutUITemplate,
+        app,
+        project: testProject({directory: tmpDir, packageManager: 'unknown'}),
+        extensionChoices: {name: 'extension-name', flavor: 'vanilla-js'},
+        developerPlatformClient: testDeveloperPlatformClient(),
+        onGetTemplateRepository,
+      })
+
+      await expect(result).rejects.toThrow(/Could not determine the project package manager/)
+      expect(vi.mocked(installNodeModules)).not.toHaveBeenCalled()
+      expect(vi.mocked(addNPMDependenciesIfNeeded)).not.toHaveBeenCalled()
     })
   })
 
