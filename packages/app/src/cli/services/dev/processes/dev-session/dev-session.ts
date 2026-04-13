@@ -162,10 +162,14 @@ export class DevSession {
     const errors = this.parseBuildErrors(event)
     if (errors.length) {
       await this.logger.logMultipleErrors(errors)
-      throw new AbortError('Dev preview aborted, build errors detected in extensions')
+      await setImmediate(() => {
+        const affected = errors.map((err) => err.prefix)
+        throw new AbortError(`Dev preview aborted, build errors detected in extensions: ${affected}`)
+      })
+    } else {
+      const result = await this.bundleExtensionsAndUpload(event)
+      await this.handleDevSessionResult(result, event)
     }
-    const result = await this.bundleExtensionsAndUpload(event)
-    await this.handleDevSessionResult(result, event)
   }
 
   /**

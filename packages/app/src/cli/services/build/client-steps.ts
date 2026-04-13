@@ -109,6 +109,7 @@ export async function executeStep(step: LifecycleStep, context: BuildContext): P
       }
     }
 
-    throw new Error(`Build step "${step.name}" failed: ${stepError.message}`)
+    stepError.message = `Build step "${step.name}" failed: ${stepError.message}`
+    throw stepError
   }
 }

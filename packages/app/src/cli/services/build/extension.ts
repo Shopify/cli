@@ -68,6 +68,7 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
 
   const {main, assets} = extension.getBundleExtensionStdinContent()
 
+  const startTime = performance.now()
   try {
     await bundleExtension({
       minify: true,
@@ -102,17 +103,25 @@ export async function buildUIExtension(extension: ExtensionInstance, options: Ex
         }),
       )
     }
-  } catch (extensionBundlingError) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } catch (extensionBundlingError: any) {
     // this fails if the app's own source code is broken; wrap such that this isn't flagged as a CLI bug
-    throw new AbortError(
+    // Preserve esbuild errors array so the dev watcher can format actionable error messages
+    const errorMessage = (extensionBundlingError as Error).message ?? 'Unknown error occurred'
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const newError: any = new AbortError(
       `Failed to bundle extension ${extension.localIdentifier}. Please check the extension source code for errors.`,
+      errorMessage,
     )
+    newError.errors = extensionBundlingError.errors
+    throw newError
   }
 
   await extension.buildValidation()
 
+  const duration = Math.round(performance.now() - startTime)
   const sizeInfo = await formatBundleSize(extension.outputPath)
-  options.stdout.write(`${extension.localIdentifier} successfully built${sizeInfo}`)
+  options.stdout.write(`${extension.localIdentifier} successfully built in ${duration}ms${sizeInfo}`)
 }
 
 type BuildFunctionExtensionOptions = ExtensionBuildOptions

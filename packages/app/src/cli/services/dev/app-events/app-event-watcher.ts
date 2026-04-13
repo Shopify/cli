@@ -1,11 +1,9 @@
 /* eslint-disable tsdoc/syntax */
 import {FileWatcher, OutputContextOptions} from './file-watcher.js'
-import {ESBuildContextManager} from './app-watcher-esbuild.js'
 import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
-import {formatBundleSize} from '../../build/bundle-size.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
 import {joinPath} from '@shopify/cli-kit/node/path'
@@ -95,33 +93,18 @@ export class AppEventWatcher extends EventEmitter {
   private app: AppLinkedInterface
   private options: OutputContextOptions
   private readonly appURL?: string
-  private readonly esbuildManager: ESBuildContextManager
   private started = false
   private ready = false
   private initialEvents: ExtensionEvent[] = []
   private fileWatcher?: FileWatcher
 
-  constructor(
-    app: AppLinkedInterface,
-    appURL?: string,
-    buildOutputPath?: string,
-    esbuildManager?: ESBuildContextManager,
-    fileWatcher?: FileWatcher,
-  ) {
+  constructor(app: AppLinkedInterface, appURL?: string, buildOutputPath?: string, fileWatcher?: FileWatcher) {
     super()
     this.app = app
     this.appURL = appURL
     this.buildOutputPath = buildOutputPath ?? joinPath(app.directory, '.shopify', 'dev-bundle')
     // Default options, to be overwritten by the start method
     this.options = {stdout: process.stdout, stderr: process.stderr, signal: new AbortSignal()}
-    this.esbuildManager =
-      esbuildManager ??
-      new ESBuildContextManager({
-        outputPath: this.buildOutputPath,
-        dotEnvVariables: this.app.dotenv?.variables ?? {},
-        url: this.appURL ?? '',
-        ...this.options,
-      })
     this.fileWatcher = fileWatcher
   }
 
@@ -130,14 +113,10 @@ export class AppEventWatcher extends EventEmitter {
     this.started = true
 
     this.options = options ?? this.options
-    this.esbuildManager.setAbortSignal(this.options.signal)
 
     // If there is a previous build folder, delete it
     if (await fileExists(this.buildOutputPath)) await rmdir(this.buildOutputPath, {force: true})
     await mkdir(this.buildOutputPath)
-
-    // Start the esbuild bundler for extensions that require it
-    await this.esbuildManager.createContexts(this.app.realExtensions.filter((ext) => ext.isESBuildExtension))
 
     // Initial build of all extensions
     if (buildExtensionsFirst) {
@@ -154,8 +133,6 @@ export class AppEventWatcher extends EventEmitter {
 
           this.app = appEvent.app
           if (appEvent.appWasReloaded) this.fileWatcher?.updateApp(this.app)
-          await this.esbuildManager.updateContexts(appEvent)
-
           await this.rescanImports(appEvent)
 
           // Find affected created/updated extensions and build them
@@ -237,9 +214,7 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   /**
-   * Builds all given extensions.
-   * ESBuild extensions will be built using their own ESBuild context, other extensions will be built using the default
-   * buildForBundle method.
+   * Builds all given extensions using the default buildForBundle method.
    */
   private async buildExtensions(extensionEvents: ExtensionEvent[]) {
     // Group events by extension to handle multiple events for the same extension
@@ -258,13 +233,7 @@ export class AppEventWatcher extends EventEmitter {
     const promises = groupedExtensionEvents.map(async ({extension: ext, events}) => {
       return useConcurrentOutputContext({outputPrefix: ext.handle, stripAnsi: false}, async () => {
         try {
-          if (this.esbuildManager.contexts?.[ext.uid]?.length) {
-            await this.esbuildManager.rebuildContext(ext)
-            const sizeInfo = await formatBundleSize(ext.outputPath)
-            this.options.stdout.write(`Build successful${sizeInfo}`)
-          } else {
-            await this.buildExtension(ext)
-          }
+          await this.buildExtension(ext)
           // Update all events for this extension with success result
           const buildResult = {status: 'ok' as const, uid: ext.uid}
           events.forEach((event) => {
@@ -309,7 +278,7 @@ export class AppEventWatcher extends EventEmitter {
   }
 
   /**
-   * Build a single non-esbuild extension using the default buildForBundle method.
+   * Build a single extension using the default buildForBundle method.
    * @param extension - The extension to build
    */
   private async buildExtension(extension: ExtensionInstance): Promise<void> {
