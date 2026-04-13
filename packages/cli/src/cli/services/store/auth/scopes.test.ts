@@ -17,6 +17,26 @@ describe('store auth scope helpers', () => {
     expect(mergeRequestedAndStoredScopes(['read_products'], ['read_orders'])).toEqual(['read_orders', 'read_products'])
   })
 
+  test('parseStoreAuthScopes splits space-separated scopes (PowerShell transforms commas to spaces)', () => {
+    expect(parseStoreAuthScopes('read_products read_inventory')).toEqual(['read_products', 'read_inventory'])
+  })
+
+  test('parseStoreAuthScopes splits mixed comma-and-space delimiters', () => {
+    expect(parseStoreAuthScopes('read_products, read_inventory')).toEqual(['read_products', 'read_inventory'])
+  })
+
+  test('resolveGrantedScopes succeeds when requested scopes were space-separated (PowerShell bug scenario)', () => {
+    expect(
+      resolveGrantedScopes(
+        {
+          access_token: 'token',
+          scope: 'read_products,read_inventory',
+        },
+        ['read_products', 'read_inventory'],
+      ),
+    ).toEqual(['read_products', 'read_inventory'])
+  })
+
   test('resolveGrantedScopes accepts compressed write scopes that imply requested reads', () => {
     expect(
       resolveGrantedScopes(
