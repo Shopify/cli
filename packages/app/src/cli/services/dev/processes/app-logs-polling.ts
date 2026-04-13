@@ -120,6 +120,8 @@ export const subscribeAndStartPolling: DevProcessFunction<SubscribeAndStartPolli
     }
 
     appWatcher.onStart(startPollingIfNeeded).onEvent(startPollingIfNeeded)
-    // eslint-disable-next-line no-catch-all/no-catch-all,no-empty
-  } catch (error) {}
+    // eslint-disable-next-line no-catch-all/no-catch-all
+  } catch (error) {
+    outputDebug(`Failed to set up app logs polling: ${error}`, _stderr)
+  }
 }
