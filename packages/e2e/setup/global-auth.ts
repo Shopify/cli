@@ -6,8 +6,8 @@
  * into its own isolated XDG dirs.
  */
 
-/* eslint-disable no-restricted-imports, @shopify/cli/no-process-cwd */
-import {createIsolatedEnv, executables, globalLog} from './env.js'
+/* eslint-disable no-restricted-imports */
+import {createIsolatedEnv, directories, executables, globalLog} from './env.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
 import {waitForText} from '../helpers/wait-for-text.js'
@@ -36,7 +36,7 @@ export default async function globalSetup() {
   globalLog('auth', 'global setup starting')
 
   // Create a temp dir for the auth session
-  const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(process.cwd(), '.e2e-tmp')
+  const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(directories.root, '.e2e-tmp')
   fs.mkdirSync(tmpBase, {recursive: true})
   const {xdgEnv} = createIsolatedEnv(tmpBase)
 

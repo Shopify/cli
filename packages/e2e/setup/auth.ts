@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-imports */
 import {browserFixture} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {globalLog, executables} from './env.js'
@@ -10,7 +9,6 @@ import * as fs from 'fs'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const log = {log: (_ctx: any, msg: string) => globalLog('auth', msg)}
-
 
 /**
  * Worker-scoped fixture that provides an authenticated CLI session.
