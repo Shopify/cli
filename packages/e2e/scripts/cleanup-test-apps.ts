@@ -1,6 +1,6 @@
 /**
  * Deletes all test apps from the dev dashboard via browser automation.
- * Run: npx tsx packages/e2e/scripts/cleanup-test-apps.ts
+ * Run: pnpx tsx packages/e2e/scripts/cleanup-test-apps.ts
  *
  * Pass --dry-run to list apps without deleting.
  * Pass --filter <pattern> to only delete apps matching the pattern.
@@ -128,7 +128,7 @@ async function main() {
     await page.waitForTimeout(2000)
 
     // Check for 500 error and retry
-    const pageText = await page.textContent('body') ?? ''
+    const pageText = (await page.textContent('body')) ?? ''
     if (pageText.includes('500') || pageText.includes('Internal Server Error')) {
       console.log('Got 500 error, retrying...')
       await page.reload({waitUntil: 'domcontentloaded'})
@@ -136,7 +136,10 @@ async function main() {
     }
 
     // Check for org selection page
-    const orgLink = page.locator('a, button').filter({hasText: /core-build|cli-e2e/i}).first()
+    const orgLink = page
+      .locator('a, button')
+      .filter({hasText: /core-build|cli-e2e/i})
+      .first()
     if (await orgLink.isVisible({timeout: 3000}).catch(() => false)) {
       console.log('Org selection detected, clicking...')
       await orgLink.click()
