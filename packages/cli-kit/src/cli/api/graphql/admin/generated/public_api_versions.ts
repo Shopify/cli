@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -7,7 +7,7 @@ export type PublicApiVersionsQueryVariables = Types.Exact<{[key: string]: never}
 
 export type PublicApiVersionsQuery = {publicApiVersions: {handle: string; supported: boolean}[]}
 
-export const PublicApiVersions = {
+export const PublicApiVersionsDocument = {
   kind: 'Document',
   definitions: [
     {

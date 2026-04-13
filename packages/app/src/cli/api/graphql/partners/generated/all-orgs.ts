@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -7,7 +7,7 @@ export type AllOrgsQueryVariables = Types.Exact<{[key: string]: never}>
 
 export type AllOrgsQuery = {organizations: {nodes?: ({id: string; businessName: string} | null)[] | null}}
 
-export const AllOrgs = {
+export const AllOrgsDocument = {
   kind: 'Document',
   definitions: [
     {

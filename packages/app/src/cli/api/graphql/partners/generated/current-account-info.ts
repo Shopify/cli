@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -9,7 +9,7 @@ export type CurrentAccountInfoQuery = {
   currentAccountInfo: {__typename: 'ServiceAccount'; orgName: string} | {__typename: 'UserAccount'; email: string}
 }
 
-export const CurrentAccountInfo = {
+export const CurrentAccountInfoDocument = {
   kind: 'Document',
   definitions: [
     {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -27,7 +27,7 @@ export type GetThemeFileBodiesQuery = {
   } | null
 }
 
-export const GetThemeFileBodies = {
+export const GetThemeFileBodiesDocument = {
   kind: 'Document',
   definitions: [
     {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -21,7 +21,7 @@ export type GetBulkOperationByIdQuery = {
   } | null
 }
 
-export const GetBulkOperationById = {
+export const GetBulkOperationByIdDocument = {
   kind: 'Document',
   definitions: [
     {

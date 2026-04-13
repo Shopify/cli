@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 import {JsonMapType} from '@shopify/cli-kit/node/toml'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
@@ -16,7 +16,7 @@ export type CreateAppMutation = {
   }
 }
 
-export const CreateApp = {
+export const CreateAppDocument = {
   kind: 'Document',
   definitions: [
     {

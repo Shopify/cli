@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -10,7 +10,7 @@ export type OrganizationExpFlagsQueryVariables = Types.Exact<{
 
 export type OrganizationExpFlagsQuery = {organization?: {id: string; enabledFlags: boolean[]} | null}
 
-export const OrganizationExpFlags = {
+export const OrganizationExpFlagsDocument = {
   kind: 'Document',
   definitions: [
     {

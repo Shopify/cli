@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -9,7 +9,7 @@ export type UserInfoQuery = {
   currentUserAccount?: {uuid: string; email: string; organizations: {nodes: {name: string}[]}} | null
 }
 
-export const UserInfo = {
+export const UserInfoDocument = {
   kind: 'Document',
   definitions: [
     {

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -10,7 +10,7 @@ export type SchemaDefinitionByApiTypeQueryVariables = Types.Exact<{
 
 export type SchemaDefinitionByApiTypeQuery = {api?: {schema?: {definition: string} | null} | null}
 
-export const SchemaDefinitionByApiType = {
+export const SchemaDefinitionByApiTypeDocument = {
   kind: 'Document',
   definitions: [
     {

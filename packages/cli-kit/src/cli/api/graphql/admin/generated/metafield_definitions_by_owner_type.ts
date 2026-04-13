@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -19,7 +19,7 @@ export type MetafieldDefinitionsByOwnerTypeQuery = {
   }
 }
 
-export const MetafieldDefinitionsByOwnerType = {
+export const MetafieldDefinitionsByOwnerTypeDocument = {
   kind: 'Document',
   definitions: [
     {

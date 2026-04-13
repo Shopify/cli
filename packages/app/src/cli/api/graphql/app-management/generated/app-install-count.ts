@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -9,7 +9,7 @@ export type AppInstallCountQueryVariables = Types.Exact<{
 
 export type AppInstallCountQuery = {app: {installCount?: number | null}}
 
-export const AppInstallCount = {
+export const AppInstallCountDocument = {
   kind: 'Document',
   definitions: [
     {

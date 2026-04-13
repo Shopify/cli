@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -7,7 +7,7 @@ export type OnlineStorePasswordProtectionQueryVariables = Types.Exact<{[key: str
 
 export type OnlineStorePasswordProtectionQuery = {onlineStore: {passwordProtection: {enabled: boolean}}}
 
-export const OnlineStorePasswordProtection = {
+export const OnlineStorePasswordProtectionDocument = {
   kind: 'Document',
   definitions: [
     {

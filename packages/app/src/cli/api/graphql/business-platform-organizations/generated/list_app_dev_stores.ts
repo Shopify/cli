@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
-import * as Types from './types.js'
+import * as Types from './types'
 
 import {TypedDocumentNode as DocumentNode} from '@graphql-typed-document-node/core'
 
@@ -29,7 +29,7 @@ export type ListAppDevStoresQuery = {
   } | null
 }
 
-export const ListAppDevStores = {
+export const ListAppDevStoresDocument = {
   kind: 'Document',
   definitions: [
     {
