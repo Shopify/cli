@@ -1,4 +1,5 @@
 import {appTestFixture as test, createApp, deployApp, versionsList, teardownApp} from '../setup/app.js'
+import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
 import * as fs from 'fs'
@@ -6,7 +7,7 @@ import * as path from 'path' // eslint-disable-line no-restricted-imports
 
 test.describe('App deploy', () => {
   test('deploy and verify version exists', async ({cli, env, browserPage}) => {
-    test.setTimeout(10 * 60 * 1000)
+    test.setTimeout(TEST_TIMEOUT.long)
     requireEnv(env, 'orgId')
 
     const parentDir = fs.mkdtempSync(path.join(env.tempDir, 'app-'))

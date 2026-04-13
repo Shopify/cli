@@ -1,3 +1,4 @@
+import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {browserFixture} from './browser.js'
 import {executables} from './env.js'
 import {stripAnsi} from '../helpers/strip-ansi.js'
@@ -56,7 +57,7 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
         if (process.env.DEBUG === '1') process.stdout.write(data)
       })
 
-      await waitForText(() => output, 'Open this link to start the auth process', 30_000)
+      await waitForText(() => output, 'Open this link to start the auth process', CLI_TIMEOUT.short)
 
       const stripped = stripAnsi(output)
       const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
@@ -66,7 +67,7 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
 
       await completeLogin(browserPage, urlMatch[0], email, password)
 
-      await waitForText(() => output, 'Logged in', 60_000)
+      await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
       try {
         ptyProcess.kill()
         // eslint-disable-next-line no-catch-all/no-catch-all

@@ -1,4 +1,5 @@
 /* eslint-disable line-comment-position */
+import {TEST_TIMEOUT} from './setup/constants.js'
 import {config} from 'dotenv'
 import {defineConfig} from '@playwright/test'
 
@@ -14,8 +15,8 @@ export default defineConfig({
   workers: 1,
   maxFailures: isCI ? 3 : 0, // Stop early in CI after 3 failures
   reporter: isCI ? [['html', {open: 'never'}], ['list']] : [['list']],
-  timeout: 3 * 60 * 1000, // 3 minutes per test
-  globalTimeout: 15 * 60 * 1000, // 15 minutes total
+  timeout: TEST_TIMEOUT.default, // Heavy tests override via test.setTimeout()
+  globalTimeout: 20 * 60 * 1000,
 
   use: {
     trace: isCI ? 'on' : 'off',

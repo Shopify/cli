@@ -1,16 +1,13 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
 import {authFixture} from './auth.js'
 import {navigateToDashboard} from './browser.js'
+import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
+import {updateTomlValues} from '@shopify/toml-patch'
+import * as toml from '@iarna/toml'
 import * as path from 'path'
 import * as fs from 'fs'
 import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
 import type {BrowserContext} from './browser.js'
-
-// Env override applied to all CLI helpers — strips CLIENT_ID so commands use the app's own toml.
-// NOTE: Do NOT add SHOPIFY_CLI_PARTNERS_TOKEN here. The partners token overrides OAuth in the
-// CLI's auth priority, and the App Management API token it exchanges to lacks permissions to
-// create apps (403). OAuth provides the full set of required permissions.
-const FRESH_APP_ENV = {SHOPIFY_FLAG_CLIENT_ID: undefined}
 
 // ---------------------------------------------------------------------------
 // CLI helpers — thin wrappers around cli.exec()
@@ -46,9 +43,8 @@ export async function createApp(ctx: {
   if (ctx.flavor) args.push('--flavor', ctx.flavor)
 
   const result = await cli.execCreateApp(args, {
-    // Strip CLIENT_ID so the CLI creates a new app instead of linking to a pre-existing one
-    env: {FORCE_COLOR: '0', ...FRESH_APP_ENV},
-    timeout: 5 * 60 * 1000,
+    env: {FORCE_COLOR: '0'},
+    timeout: CLI_TIMEOUT.long,
   })
 
   let appDir = ''
@@ -82,6 +78,37 @@ export async function createApp(ctx: {
   return {...result, appDir}
 }
 
+// ---------------------------------------------------------------------------
+// Fixture helpers — TOML manipulation for test setup
+// ---------------------------------------------------------------------------
+
+/**
+ * Read the client_id from a shopify.app.toml file.
+ */
+export function extractClientId(appDir: string): string {
+  const tomlPath = path.join(appDir, 'shopify.app.toml')
+  const parsed = toml.parse(fs.readFileSync(tomlPath, 'utf8'))
+  const clientId = parsed.client_id as string | undefined
+  if (!clientId) {
+    throw new Error(`Could not find client_id in ${tomlPath}`)
+  }
+  return clientId
+}
+
+/**
+ * Overwrite a created app's shopify.app.toml with a fixture TOML template.
+ * Uses toml-patch to surgically set client_id and name while
+ * preserving comments and formatting in the fixture file.
+ */
+export function injectFixtureToml(appDir: string, fixtureTomlContent: string, name: string): void {
+  const clientId = extractClientId(appDir)
+  const patched = updateTomlValues(fixtureTomlContent, [
+    [['client_id'], clientId],
+    [['name'], name],
+  ])
+  fs.writeFileSync(path.join(appDir, 'shopify.app.toml'), patched)
+}
+
 export async function generateExtension(
   ctx: CLIContext & {
     name: string
@@ -91,11 +118,11 @@ export async function generateExtension(
 ): Promise<ExecResult> {
   const args = ['app', 'generate', 'extension', '--name', ctx.name, '--path', ctx.appDir, '--template', ctx.template]
   if (ctx.flavor) args.push('--flavor', ctx.flavor)
-  return ctx.cli.exec(args, {env: FRESH_APP_ENV, timeout: 5 * 60 * 1000})
+  return ctx.cli.exec(args, {timeout: CLI_TIMEOUT.long})
 }
 
 export async function buildApp(ctx: CLIContext): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'build', '--path', ctx.appDir], {env: FRESH_APP_ENV, timeout: 5 * 60 * 1000})
+  return ctx.cli.exec(['app', 'build', '--path', ctx.appDir], {timeout: CLI_TIMEOUT.long})
 }
 
 export async function deployApp(
@@ -113,7 +140,7 @@ export async function deployApp(
   if (ctx.version) args.push('--version', ctx.version)
   if (ctx.message) args.push('--message', ctx.message)
   if (ctx.config) args.push('--config', ctx.config)
-  return ctx.cli.exec(args, {env: FRESH_APP_ENV, timeout: 5 * 60 * 1000})
+  return ctx.cli.exec(args, {timeout: CLI_TIMEOUT.long})
 }
 
 export async function appInfo(ctx: CLIContext): Promise<{
@@ -125,7 +152,7 @@ export async function appInfo(ctx: CLIContext): Promise<{
     entrySourceFilePath: string
   }[]
 }> {
-  const result = await ctx.cli.exec(['app', 'info', '--path', ctx.appDir, '--json'], {env: FRESH_APP_ENV})
+  const result = await ctx.cli.exec(['app', 'info', '--path', ctx.appDir, '--json'])
   if (result.exitCode !== 0) {
     throw new Error(`app info failed (exit ${result.exitCode}):\nstdout: ${result.stdout}\nstderr: ${result.stderr}`)
   }
@@ -133,7 +160,7 @@ export async function appInfo(ctx: CLIContext): Promise<{
 }
 
 export async function functionBuild(ctx: CLIContext): Promise<ExecResult> {
-  return ctx.cli.exec(['app', 'function', 'build', '--path', ctx.appDir], {env: FRESH_APP_ENV, timeout: 3 * 60 * 1000})
+  return ctx.cli.exec(['app', 'function', 'build', '--path', ctx.appDir], {timeout: CLI_TIMEOUT.medium})
 }
 
 export async function functionRun(
@@ -142,15 +169,13 @@ export async function functionRun(
   },
 ): Promise<ExecResult> {
   return ctx.cli.exec(['app', 'function', 'run', '--path', ctx.appDir, '--input', ctx.inputPath], {
-    env: FRESH_APP_ENV,
-    timeout: 60 * 1000,
+    timeout: CLI_TIMEOUT.short,
   })
 }
 
 export async function versionsList(ctx: CLIContext): Promise<ExecResult> {
   return ctx.cli.exec(['app', 'versions', 'list', '--path', ctx.appDir, '--json'], {
-    env: FRESH_APP_ENV,
-    timeout: 60 * 1000,
+    timeout: CLI_TIMEOUT.short,
   })
 }
 
@@ -160,8 +185,7 @@ export async function configLink(
   },
 ): Promise<ExecResult> {
   return ctx.cli.exec(['app', 'config', 'link', '--path', ctx.appDir, '--client-id', ctx.clientId], {
-    env: FRESH_APP_ENV,
-    timeout: 2 * 60 * 1000,
+    timeout: CLI_TIMEOUT.medium,
   })
 }
 
@@ -206,7 +230,7 @@ export async function uninstallApp(
   const orgId = ctx.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
 
   await browserPage.goto(`${appUrl}/installs`, {waitUntil: 'domcontentloaded'})
-  await browserPage.waitForTimeout(3000)
+  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   const rows = await browserPage.locator('table tbody tr').all()
   const storeNames: string[] = []
@@ -228,20 +252,20 @@ export async function uninstallApp(
       let navigated = false
       for (let attempt = 1; attempt <= 3; attempt++) {
         await browserPage.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
-        await browserPage.waitForTimeout(3000)
+        await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
         const pageText = (await browserPage.textContent('body')) ?? ''
         if (pageText.includes('500') || pageText.includes('Internal Server Error')) continue
 
         const orgButton = browserPage.locator('header button').last()
-        if (!(await orgButton.isVisible({timeout: 5000}).catch(() => false))) continue
+        if (!(await orgButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) continue
         await orgButton.click()
-        await browserPage.waitForTimeout(1000)
+        await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
 
         const storeLink = browserPage.locator('a, button').filter({hasText: storeName}).first()
-        if (!(await storeLink.isVisible({timeout: 5000}).catch(() => false))) continue
+        if (!(await storeLink.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) continue
         await storeLink.click()
-        await browserPage.waitForTimeout(3000)
+        await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
         navigated = true
         break
       }
@@ -254,18 +278,18 @@ export async function uninstallApp(
       // Navigate to store's apps settings page
       const storeAdminUrl = browserPage.url()
       await browserPage.goto(`${storeAdminUrl.replace(/\/$/, '')}/settings/apps`, {waitUntil: 'domcontentloaded'})
-      await browserPage.waitForTimeout(5000)
+      await browserPage.waitForTimeout(BROWSER_TIMEOUT.long)
 
       // Dismiss any Dev Console dialog
       const cancelButton = browserPage.locator('button:has-text("Cancel")')
-      if (await cancelButton.isVisible({timeout: 2000}).catch(() => false)) {
+      if (await cancelButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
         await cancelButton.click()
-        await browserPage.waitForTimeout(1000)
+        await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
       }
 
       // Find the app in the installed list (plain span, not Dev Console's Polaris text)
       const appSpan = browserPage.locator(`span:has-text("${appName}"):not([class*="Polaris"])`).first()
-      if (!(await appSpan.isVisible({timeout: 5000}).catch(() => false))) {
+      if (!(await appSpan.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) {
         allUninstalled = false
         continue
       }
@@ -273,22 +297,22 @@ export async function uninstallApp(
       // Click the ⋯ menu button next to the app name
       const menuButton = appSpan.locator('xpath=./following::button[1]')
       await menuButton.click()
-      await browserPage.waitForTimeout(1000)
+      await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
 
       // Click "Uninstall" in the dropdown menu
       const uninstallOption = browserPage.locator('text=Uninstall').last()
-      if (!(await uninstallOption.isVisible({timeout: 3000}).catch(() => false))) {
+      if (!(await uninstallOption.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) {
         allUninstalled = false
         continue
       }
       await uninstallOption.click()
-      await browserPage.waitForTimeout(2000)
+      await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
       // Handle confirmation dialog
       const confirmButton = browserPage.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
-      if (await confirmButton.isVisible({timeout: 3000}).catch(() => false)) {
+      if (await confirmButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
         await confirmButton.click()
-        await browserPage.waitForTimeout(3000)
+        await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
       }
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_err) {
@@ -308,7 +332,7 @@ export async function deleteApp(
   const {browserPage, appUrl} = ctx
 
   await browserPage.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await browserPage.waitForTimeout(3000)
+  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Retry if delete button is disabled (uninstall propagation delay)
   const deleteButton = browserPage.locator('button:has-text("Delete app")').first()
@@ -316,24 +340,24 @@ export async function deleteApp(
     await deleteButton.scrollIntoViewIfNeeded()
     const isDisabled = await deleteButton.getAttribute('disabled')
     if (!isDisabled) break
-    await browserPage.waitForTimeout(5000)
+    await browserPage.waitForTimeout(BROWSER_TIMEOUT.long)
     await browserPage.reload({waitUntil: 'domcontentloaded'})
-    await browserPage.waitForTimeout(3000)
+    await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
-  await deleteButton.click({timeout: 10_000})
-  await browserPage.waitForTimeout(2000)
+  await deleteButton.click({timeout: BROWSER_TIMEOUT.long})
+  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 
   // Handle confirmation dialog — may need to type "DELETE"
   const confirmInput = browserPage.locator('input[type="text"]').last()
-  if (await confirmInput.isVisible({timeout: 3000}).catch(() => false)) {
+  if (await confirmInput.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
     await confirmInput.fill('DELETE')
-    await browserPage.waitForTimeout(500)
+    await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
   }
 
   const confirmButton = browserPage.locator('button:has-text("Delete app")').last()
   await confirmButton.click()
-  await browserPage.waitForTimeout(3000)
+  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
 }
 
 /** Best-effort teardown: find app on dashboard by name, uninstall from all stores, delete. */
@@ -375,13 +399,9 @@ export async function teardownApp(
 // ---------------------------------------------------------------------------
 
 export const appTestFixture = authFixture.extend<{authReady: void}>({
-  // Auto-trigger authLogin and strip CLIENT_ID so tests create their own apps
+  // Auto-trigger authLogin so the OAuth session is available for all app tests
   authReady: [
-    async (
-      {authLogin: _authLogin, env}: {authLogin: void; env: import('./env.js').E2EEnv},
-      use: () => Promise<void>,
-    ) => {
-      delete env.processEnv.SHOPIFY_FLAG_CLIENT_ID
+    async ({authLogin: _authLogin}: {authLogin: void}, use: () => Promise<void>) => {
       await use()
     },
     {auto: true},

@@ -8,14 +8,8 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export interface E2EEnv {
-  /** Partners token for API auth (empty string if not set) */
-  partnersToken: string
-  /** Primary test app client ID (empty string if not set) */
-  clientId: string
   /** Dev store FQDN (e.g. cli-e2e-test.myshopify.com) */
   storeFqdn: string
-  /** Secondary app client ID for config link tests */
-  secondaryClientId: string
   /** Dedicated e2e org ID for fresh-app tests (empty string if not set) */
   orgId: string
   /** Environment variables to pass to CLI processes */
@@ -64,19 +58,13 @@ export function createIsolatedEnv(baseDir: string): {tempDir: string; xdgEnv: {[
 
 /**
  * Asserts that a required environment variable is set.
- * Call this at the top of tests that need auth.
+ * Call this at the top of tests that need specific env vars.
  */
-export function requireEnv(
-  env: E2EEnv,
-  ...keys: (keyof Pick<E2EEnv, 'partnersToken' | 'clientId' | 'storeFqdn' | 'secondaryClientId' | 'orgId'>)[]
-): void {
+export function requireEnv(env: E2EEnv, ...keys: (keyof Pick<E2EEnv, 'storeFqdn' | 'orgId'>)[]): void {
   for (const key of keys) {
     if (!env[key]) {
       const envVarNames: {[key: string]: string} = {
-        partnersToken: 'SHOPIFY_CLI_PARTNERS_TOKEN',
-        clientId: 'SHOPIFY_FLAG_CLIENT_ID',
         storeFqdn: 'E2E_STORE_FQDN',
-        secondaryClientId: 'E2E_SECONDARY_CLIENT_ID',
         orgId: 'E2E_ORG_ID',
       }
       throw new Error(`${envVarNames[key]} environment variable is required for this test`)
@@ -85,17 +73,14 @@ export function requireEnv(
 }
 
 /**
- * Worker-scoped fixture providing auth tokens and environment configuration.
- * Auth tokens are optional — tests that need them should call requireEnv().
+ * Worker-scoped fixture providing environment configuration.
+ * Env vars are optional — tests that need them should call requireEnv().
  */
 export const envFixture = base.extend<{}, {env: E2EEnv}>({
   env: [
     // eslint-disable-next-line no-empty-pattern
     async ({}, use) => {
-      const partnersToken = process.env.SHOPIFY_CLI_PARTNERS_TOKEN ?? ''
-      const clientId = process.env.SHOPIFY_FLAG_CLIENT_ID ?? ''
       const storeFqdn = process.env.E2E_STORE_FQDN ?? ''
-      const secondaryClientId = process.env.E2E_SECONDARY_CLIENT_ID ?? ''
       const orgId = process.env.E2E_ORG_ID ?? ''
 
       const tmpBase = process.env.E2E_TEMP_DIR ?? path.join(directories.root, '.e2e-tmp')
@@ -110,23 +95,15 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
         NODE_OPTIONS: '',
         CI: '1',
         SHOPIFY_CLI_1P_DEV: undefined,
+        SHOPIFY_FLAG_CLIENT_ID: undefined,
       }
 
-      if (partnersToken) {
-        processEnv.SHOPIFY_CLI_PARTNERS_TOKEN = partnersToken
-      }
-      if (clientId) {
-        processEnv.SHOPIFY_FLAG_CLIENT_ID = clientId
-      }
       if (storeFqdn) {
         processEnv.SHOPIFY_FLAG_STORE = storeFqdn
       }
 
       const env: E2EEnv = {
-        partnersToken,
-        clientId,
         storeFqdn,
-        secondaryClientId,
         orgId,
         processEnv,
         tempDir,

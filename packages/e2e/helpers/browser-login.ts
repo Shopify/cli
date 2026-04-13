@@ -1,3 +1,4 @@
+import {BROWSER_TIMEOUT} from '../setup/constants.js'
 import type {Page} from '@playwright/test'
 
 /**
@@ -23,24 +24,50 @@ async function fillSensitive(page: Page, selector: string, value: string): Promi
  * Completes the Shopify OAuth login flow on a Playwright page.
  */
 export async function completeLogin(page: Page, loginUrl: string, email: string, password: string): Promise<void> {
+  // Disable WebAuthn so passkey/security key system dialogs never appear when headed
+  const cdp = await page.context().newCDPSession(page)
+  await cdp.send('WebAuthn.enable', {enableUI: false})
+
   await page.goto(loginUrl)
 
   try {
     // Fill in email
-    await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: 60_000})
+    await page.waitForSelector('input[name="account[email]"], input[type="email"]', {timeout: BROWSER_TIMEOUT.max})
     await fillSensitive(page, 'input[name="account[email]"], input[type="email"]', email)
     await page.locator('button[type="submit"]').first().click()
 
+    // Handle passkey prompt — navigate to password login if needed
+    const passwordInput = page.locator('input[name="account[password]"], input[type="password"]')
+    const differentMethodBtn = page.locator('text=Log in using a different method')
+
+    // Wait for either password field or passkey page
+    await Promise.race([
+      passwordInput.waitFor({timeout: BROWSER_TIMEOUT.max}),
+      differentMethodBtn.waitFor({timeout: BROWSER_TIMEOUT.max}),
+    ]).catch(() => {})
+
+    // If passkey page shown, navigate to password login
+    if (await differentMethodBtn.isVisible({timeout: BROWSER_TIMEOUT.short}).catch(() => false)) {
+      await differentMethodBtn.click()
+      await page.waitForTimeout(BROWSER_TIMEOUT.short)
+
+      const continueWithPassword = page.locator('text=Continue with password')
+      if (await continueWithPassword.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
+        await continueWithPassword.click()
+        await page.waitForTimeout(BROWSER_TIMEOUT.short)
+      }
+    }
+
     // Fill in password
-    await page.waitForSelector('input[name="account[password]"], input[type="password"]', {timeout: 60_000})
+    await passwordInput.waitFor({timeout: BROWSER_TIMEOUT.max})
     await fillSensitive(page, 'input[name="account[password]"], input[type="password"]', password)
     await page.locator('button[type="submit"]').first().click()
 
     // Handle any confirmation/approval page
-    await page.waitForTimeout(3000)
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
     try {
       const btn = page.locator('button[type="submit"]').first()
-      if (await btn.isVisible({timeout: 5000})) await btn.click()
+      if (await btn.isVisible({timeout: BROWSER_TIMEOUT.long})) await btn.click()
       // eslint-disable-next-line no-catch-all/no-catch-all
     } catch (_error) {
       // No confirmation page — expected

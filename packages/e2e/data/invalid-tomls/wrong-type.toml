@@ -1,5 +1,5 @@
 # Invalid TOML: wrong types for known fields
-client_id = "__E2E_CLIENT_ID__"
+client_id = "1234567890"
 name = "Wrong Type App"
 application_url = "https://example.com"
 embedded = "not-a-boolean"
