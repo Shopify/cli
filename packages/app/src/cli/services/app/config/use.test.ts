@@ -45,6 +45,7 @@ describe('use', () => {
       }
       writeFileSync(joinPath(tmp, 'package.json'), '{}')
       writeFileSync(joinPath(tmp, 'shopify.app.toml'), '')
+      writeFileSync(joinPath(tmp, 'package-lock.json'), '')
 
       // When
       await use(options)
