@@ -29,12 +29,12 @@ describe('store auth scope helpers', () => {
     ])
   })
 
-  test('resolveGrantedScopes succeeds when requested scopes were space-separated', () => {
+  test('resolveGrantedScopes succeeds when granted scopes are space-separated', () => {
     expect(
       resolveGrantedScopes(
         {
           access_token: 'token',
-          scope: 'read_products,read_inventory',
+          scope: 'read_products read_inventory',
         },
         ['read_products', 'read_inventory'],
       ),

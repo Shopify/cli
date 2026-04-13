@@ -4,8 +4,7 @@ import type {StoreTokenResponse} from './token-client.js'
 
 export function parseStoreAuthScopes(input: string): string[] {
   const scopes = input
-    .split(/[\s,]+/)
-    .map((scope) => scope.trim())
+    .split(/[ ,]+/)
     .filter(Boolean)
 
   if (scopes.length === 0) {
