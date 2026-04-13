@@ -306,6 +306,42 @@ describe('store auth service', () => {
     expect(setStoredStoreAppSession).not.toHaveBeenCalled()
   })
 
+  test('authenticateStoreWithApp succeeds when scopes input is space-separated', async () => {
+    const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
+      await options.onListening?.()
+      return 'abc123'
+    })
+
+    const result = await authenticateStoreWithApp(
+      {
+        store: 'shop.myshopify.com',
+        scopes: 'read_products read_inventory',
+      },
+      {
+        openURL: vi.fn().mockResolvedValue(true),
+        waitForStoreAuthCode: waitForStoreAuthCodeMock,
+        exchangeStoreAuthCodeForToken: vi.fn().mockResolvedValue({
+          access_token: 'token',
+          scope: 'read_products,read_inventory',
+          expires_in: 86400,
+          associated_user: {id: 42, email: 'test@example.com'},
+        }),
+        presenter: {
+          openingBrowser: vi.fn(),
+          manualAuthUrl: vi.fn(),
+          success: vi.fn(),
+        },
+      },
+    )
+
+    expect(result.scopes).toEqual(['read_products', 'read_inventory'])
+    expect(setStoredStoreAppSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scopes: ['read_products', 'read_inventory'],
+      }),
+    )
+  })
+
   test('authenticateStoreWithApp accepts compressed write scopes that imply requested read scopes', async () => {
     const waitForStoreAuthCodeMock = vi.fn().mockImplementation(async (options) => {
       await options.onListening?.()
