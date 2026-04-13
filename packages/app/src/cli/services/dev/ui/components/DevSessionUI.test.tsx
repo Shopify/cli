@@ -121,10 +121,12 @@ describe('DevSessionUI', () => {
     expect(output).toContain('(q) Quit')
 
     // Shortcuts and URLs should be visible
-    expect(output).toContain('(g) Open GraphiQL')
-    expect(output).toContain('(p) Preview in your browser')
+    expect(output).toContain('(g) Open GraphiQL (Admin API)')
+    expect(output).toContain('(p) Open app preview')
+    expect(output).toContain('(c) Open Dev Console for extension previews')
     expect(output).toContain('Preview URL: https://shopify.com')
     expect(output).toContain('GraphiQL URL: https://graphiql.shopify.com')
+    expect(output).toContain('Dev Console URL: https://mystore.myshopify.com/admin?dev-console=show')
 
     renderInstance.unmount()
   })
@@ -167,6 +169,55 @@ describe('DevSessionUI', () => {
 
     // Then
     expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://graphiql.shopify.com')
+
+    renderInstance.unmount()
+  })
+
+  test('opens the dev console URL when c is pressed for non-embedded apps', async () => {
+    // Given
+    devSessionStatusManager.updateStatus({appEmbedded: false})
+
+    // When
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+    await sendInputAndWait(renderInstance, 10, 'c')
+
+    // Then
+    expect(vi.mocked(openURL)).toHaveBeenNthCalledWith(1, 'https://mystore.myshopify.com/admin?dev-console=show')
+
+    renderInstance.unmount()
+  })
+
+  test('does not show dev console shortcut when app is embedded', async () => {
+    // Given
+    devSessionStatusManager.updateStatus({appEmbedded: true})
+
+    // When
+    const renderInstance = render(
+      <DevSessionUI
+        processes={[]}
+        abortController={new AbortController()}
+        devSessionStatusManager={devSessionStatusManager}
+        shopFqdn="mystore.myshopify.com"
+        onAbort={onAbort}
+      />,
+    )
+
+    await waitForInputsToBeReady()
+
+    // Then
+    const output = unstyled(renderInstance.lastFrame()!)
+    expect(output).not.toContain('(c) Open Dev Console')
+    expect(output).not.toContain('Dev Console URL')
 
     renderInstance.unmount()
   })
@@ -356,7 +407,7 @@ describe('DevSessionUI', () => {
     await waitForInputsToBeReady()
 
     // Initial state
-    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('preview in your browser')
+    expect(unstyled(renderInstance.lastFrame()!)).not.toContain('Open app preview')
 
     // When status updates
     devSessionStatusManager.updateStatus({
@@ -365,7 +416,7 @@ describe('DevSessionUI', () => {
       graphiqlURL: 'https://new-graphiql.shopify.com',
     })
 
-    await waitForContent(renderInstance, 'Preview in your browser')
+    await waitForContent(renderInstance, 'Open app preview')
 
     // Then
     expect(unstyled(renderInstance.lastFrame()!)).toContain('Preview URL: https://new-preview-url.shopify.com')
