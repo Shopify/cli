@@ -1,8 +1,7 @@
 import {AppConfigurationFileName, isValidFormatAppConfigurationFileName} from '../../../models/app/loader.js'
-import {isDirectory} from '@shopify/cli-kit/node/fs'
+import {isDirectory, readdir} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {TomlFile} from '@shopify/cli-kit/node/toml/toml-file'
-import {readdirSync} from 'fs'
 
 export async function getTomls(appDirectory?: string): Promise<{[clientId: string]: AppConfigurationFileName}> {
   if (!appDirectory || !(await isDirectory(appDirectory))) {
@@ -11,7 +10,7 @@ export async function getTomls(appDirectory?: string): Promise<{[clientId: strin
 
   const clientIds: {[key: string]: AppConfigurationFileName} = {}
 
-  const files = readdirSync(appDirectory)
+  const files = await readdir(appDirectory)
   await Promise.all(
     files.map(async (file) => {
       if (isValidFormatAppConfigurationFileName(file)) {
