@@ -1,13 +1,13 @@
 /* eslint-disable no-restricted-imports, no-await-in-loop */
 import {authFixture} from './auth.js'
-import {navigateToDashboard} from './browser.js'
+import {navigateToDashboard, refreshIfPageError} from './browser.js'
 import {CLI_TIMEOUT, BROWSER_TIMEOUT} from './constants.js'
 import {updateTomlValues} from '@shopify/toml-patch'
 import * as toml from '@iarna/toml'
 import * as path from 'path'
 import * as fs from 'fs'
 import type {CLIContext, CLIProcess, ExecResult} from './cli.js'
-import type {BrowserContext} from './browser.js'
+import type {Page} from '@playwright/test'
 
 // ---------------------------------------------------------------------------
 // CLI helpers — thin wrappers around cli.exec()
@@ -190,208 +190,105 @@ export async function configLink(
 }
 
 // ---------------------------------------------------------------------------
-// Browser helpers — app-specific dashboard automation
+// Dev dashboard browser actions — find and delete apps
 // ---------------------------------------------------------------------------
 
-/** Find apps matching a name pattern on the dashboard. Call navigateToDashboard first. */
-export async function findAppsOnDashboard(
-  ctx: BrowserContext & {
-    namePattern: string
-  },
-): Promise<{name: string; url: string}[]> {
-  const appCards = await ctx.browserPage.locator('a[href*="/apps/"]').all()
-  const apps: {name: string; url: string}[] = []
+/** Search dev dashboard for an app by name. Returns the app URL or null. */
+export async function findAppOnDevDashboard(page: Page, appName: string, orgId?: string): Promise<string | null> {
+  const org = orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
+  const email = process.env.E2E_ACCOUNT_EMAIL
 
-  for (const card of appCards) {
-    const href = await card.getAttribute('href')
-    const text = await card.textContent()
-    if (!href || !text || !href.match(/\/apps\/\d+/)) continue
+  await navigateToDashboard({browserPage: page, email, orgId: org})
 
-    const name = text.split(/\d+\s+install/i)[0]?.trim() ?? text.split('\n')[0]?.trim() ?? text.trim()
-    if (!name || name.length > 200) continue
-    if (!name.includes(ctx.namePattern)) continue
-
-    const url = href.startsWith('http') ? href : `https://dev.shopify.com${href}`
-    apps.push({name, url})
-  }
-
-  return apps
-}
-
-/** Uninstall an app from all stores it's installed on. Returns true if fully uninstalled. */
-export async function uninstallApp(
-  ctx: BrowserContext & {
-    appUrl: string
-    appName: string
-    orgId?: string
-  },
-): Promise<boolean> {
-  const {browserPage, appUrl, appName} = ctx
-  const orgId = ctx.orgId ?? (process.env.E2E_ORG_ID ?? '').trim()
-
-  await browserPage.goto(`${appUrl}/installs`, {waitUntil: 'domcontentloaded'})
-  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-  const rows = await browserPage.locator('table tbody tr').all()
-  const storeNames: string[] = []
-  for (const row of rows) {
-    const firstCell = row.locator('td').first()
-    const text = (await firstCell.textContent())?.trim()
-    if (text && !text.toLowerCase().includes('no installed')) storeNames.push(text)
-  }
-
-  if (storeNames.length === 0) return true
-
-  let allUninstalled = true
-  for (const storeName of storeNames) {
-    try {
-      // Navigate to store admin via the dev dashboard dropdown
-      const dashboardUrl = orgId
-        ? `https://dev.shopify.com/dashboard/${orgId}/apps`
-        : 'https://dev.shopify.com/dashboard'
-      let navigated = false
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        await browserPage.goto(dashboardUrl, {waitUntil: 'domcontentloaded'})
-        await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-        const pageText = (await browserPage.textContent('body')) ?? ''
-        if (pageText.includes('500') || pageText.includes('Internal Server Error')) continue
-
-        const orgButton = browserPage.locator('header button').last()
-        if (!(await orgButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) continue
-        await orgButton.click()
-        await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
-
-        const storeLink = browserPage.locator('a, button').filter({hasText: storeName}).first()
-        if (!(await storeLink.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) continue
-        await storeLink.click()
-        await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-        navigated = true
-        break
+  // Scan current page + pagination for the app
+  while (true) {
+    const allLinks = await page.locator('a[href*="/apps/"]').all()
+    for (const link of allLinks) {
+      const text = (await link.textContent()) ?? ''
+      if (text.includes(appName)) {
+        const href = await link.getAttribute('href')
+        if (href) return href.startsWith('http') ? href : `https://dev.shopify.com${href}`
       }
-
-      if (!navigated) {
-        allUninstalled = false
-        continue
-      }
-
-      // Navigate to store's apps settings page
-      const storeAdminUrl = browserPage.url()
-      await browserPage.goto(`${storeAdminUrl.replace(/\/$/, '')}/settings/apps`, {waitUntil: 'domcontentloaded'})
-      await browserPage.waitForTimeout(BROWSER_TIMEOUT.long)
-
-      // Dismiss any Dev Console dialog
-      const cancelButton = browserPage.locator('button:has-text("Cancel")')
-      if (await cancelButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
-        await cancelButton.click()
-        await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
-      }
-
-      // Find the app in the installed list (plain span, not Dev Console's Polaris text)
-      const appSpan = browserPage.locator(`span:has-text("${appName}"):not([class*="Polaris"])`).first()
-      if (!(await appSpan.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) {
-        allUninstalled = false
-        continue
-      }
-
-      // Click the ⋯ menu button next to the app name
-      const menuButton = appSpan.locator('xpath=./following::button[1]')
-      await menuButton.click()
-      await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
-
-      // Click "Uninstall" in the dropdown menu
-      const uninstallOption = browserPage.locator('text=Uninstall').last()
-      if (!(await uninstallOption.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) {
-        allUninstalled = false
-        continue
-      }
-      await uninstallOption.click()
-      await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-      // Handle confirmation dialog
-      const confirmButton = browserPage.locator('button:has-text("Uninstall"), button:has-text("Confirm")').last()
-      if (await confirmButton.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
-        await confirmButton.click()
-        await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-      }
-      // eslint-disable-next-line no-catch-all/no-catch-all
-    } catch (_err) {
-      allUninstalled = false
     }
+
+    // Check for next page
+    const nextLink = page.locator('a[href*="next_cursor"]').first()
+    if (!(await nextLink.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false))) break
+    const nextHref = await nextLink.getAttribute('href')
+    if (!nextHref) break
+    const nextUrl = nextHref.startsWith('http') ? nextHref : `https://dev.shopify.com${nextHref}`
+    await page.goto(nextUrl, {waitUntil: 'domcontentloaded'})
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+    await refreshIfPageError(page)
   }
 
-  return allUninstalled
+  return null
 }
 
-/** Delete an app from the partner dashboard. Should be uninstalled first. */
-export async function deleteApp(
-  ctx: BrowserContext & {
-    appUrl: string
-  },
-): Promise<void> {
-  const {browserPage, appUrl} = ctx
+/** Delete an app from its dev dashboard settings page. Returns true if deleted, false if not. */
+export async function deleteAppFromDevDashboard(page: Page, appUrl: string): Promise<boolean> {
+  // Step 1: Navigate to settings page
+  await page.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+  await refreshIfPageError(page)
 
-  await browserPage.goto(`${appUrl}/settings`, {waitUntil: 'domcontentloaded'})
-  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-  // Retry if delete button is disabled (uninstall propagation delay)
-  const deleteButton = browserPage.locator('button:has-text("Delete app")').first()
-  for (let attempt = 1; attempt <= 5; attempt++) {
-    await deleteButton.scrollIntoViewIfNeeded()
-    const isDisabled = await deleteButton.getAttribute('disabled')
+  // Step 2: Wait for "Delete app" button to be enabled, then click (retry with error check)
+  const deleteAppBtn = page.locator('button:has-text("Delete app")').first()
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (await refreshIfPageError(page)) continue
+    const isDisabled = await deleteAppBtn.getAttribute('disabled').catch(() => 'true')
     if (!isDisabled) break
-    await browserPage.waitForTimeout(BROWSER_TIMEOUT.long)
-    await browserPage.reload({waitUntil: 'domcontentloaded'})
-    await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
+    await page.reload({waitUntil: 'domcontentloaded'})
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
-  await deleteButton.click({timeout: BROWSER_TIMEOUT.long})
-  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
+  // Click the delete button — if it's not found, the page didn't load properly
+  const deleteClicked = await deleteAppBtn
+    .click({timeout: BROWSER_TIMEOUT.long})
+    .then(() => true)
+    .catch(() => false)
+  if (!deleteClicked) return false
+  await page.waitForTimeout(BROWSER_TIMEOUT.medium)
 
-  // Handle confirmation dialog — may need to type "DELETE"
-  const confirmInput = browserPage.locator('input[type="text"]').last()
-  if (await confirmInput.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) {
-    await confirmInput.fill('DELETE')
-    await browserPage.waitForTimeout(BROWSER_TIMEOUT.short)
+  // Step 3: Click confirm "Delete" in the modal (retry step 2+3 if not visible)
+  // The dev dashboard modal has a submit button with class "critical" inside a form
+  const confirmAppBtn = page.locator('button.critical[type="submit"]')
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    if (await confirmAppBtn.isVisible({timeout: BROWSER_TIMEOUT.medium}).catch(() => false)) break
+    if (attempt === 3) return false
+    // Retry: re-click the delete button to reopen modal
+    await page.keyboard.press('Escape')
+    await page.waitForTimeout(BROWSER_TIMEOUT.short)
+    const retryClicked = await deleteAppBtn
+      .click({timeout: BROWSER_TIMEOUT.long})
+      .then(() => true)
+      .catch(() => false)
+    if (!retryClicked) return false
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
 
-  const confirmButton = browserPage.locator('button:has-text("Delete app")').last()
-  await confirmButton.click()
-  await browserPage.waitForTimeout(BROWSER_TIMEOUT.medium)
-}
+  const urlBefore = page.url()
+  const confirmClicked = await confirmAppBtn
+    .click({timeout: BROWSER_TIMEOUT.long})
+    .then(() => true)
+    .catch(() => false)
+  if (!confirmClicked) return false
 
-/** Best-effort teardown: find app on dashboard by name, uninstall from all stores, delete. */
-export async function teardownApp(
-  ctx: BrowserContext & {
-    appName: string
-    email?: string
-    orgId?: string
-  },
-): Promise<void> {
+  // Wait for page to navigate away after deletion
   try {
-    await navigateToDashboard(ctx)
-    const apps = await findAppsOnDashboard({browserPage: ctx.browserPage, namePattern: ctx.appName})
-    for (const app of apps) {
-      try {
-        await uninstallApp({browserPage: ctx.browserPage, appUrl: app.url, appName: app.name, orgId: ctx.orgId})
-        await deleteApp({browserPage: ctx.browserPage, appUrl: app.url})
-        // eslint-disable-next-line no-catch-all/no-catch-all
-      } catch (err) {
-        // Best-effort per app — continue teardown of remaining apps
-        if (process.env.DEBUG === '1') {
-          const msg = err instanceof Error ? err.message : String(err)
-          process.stderr.write(`[e2e] Teardown failed for app ${app.name}: ${msg}\n`)
-        }
-      }
-    }
+    await page.waitForURL((url) => url.toString() !== urlBefore, {timeout: BROWSER_TIMEOUT.max})
     // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (err) {
-    // Best-effort — don't fail the test if teardown fails
-    if (process.env.DEBUG === '1') {
-      const msg = err instanceof Error ? err.message : String(err)
-      process.stderr.write(`[e2e] Teardown failed for ${ctx.appName}: ${msg}\n`)
+  } catch (_err) {
+    // URL didn't change — check if page error occurred during redirect
+    if (await refreshIfPageError(page)) {
+      // After refresh, 404 means the app was deleted (settings page no longer exists)
+      const bodyText = (await page.textContent('body')) ?? ''
+      if (bodyText.includes('404: Not Found')) return true
+      return false
     }
+    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
   }
+  return page.url() !== urlBefore
 }
 
 // ---------------------------------------------------------------------------

@@ -16,6 +16,50 @@ export interface E2EEnv {
   processEnv: NodeJS.ProcessEnv
   /** Temporary directory root for this worker */
   tempDir: string
+  /** Playwright worker index (0-based) for debug logging */
+  workerIndex: number
+}
+
+/** Worker context for logging */
+interface LogCtx {
+  workerIndex: number
+}
+
+/**
+ * Create a tagged logger for a module.
+ * Usage: `const log = createLogger('browser')` → `[e2e][w0][browser] message`
+ */
+export function createLogger(tag: string) {
+  return {
+    log(ctx: LogCtx, msg: string): void {
+      if (process.env.DEBUG === '1') {
+        process.stdout.write(`[e2e][w${ctx.workerIndex}][${tag}] ${msg}\n`)
+      }
+    },
+    error(ctx: LogCtx, msg: string): void {
+      if (process.env.DEBUG === '1') {
+        process.stderr.write(`[e2e][w${ctx.workerIndex}][${tag}] ${msg}\n`)
+      }
+    },
+  }
+}
+
+/**
+ * Log a section header: `[e2e][w0] ----- Setup: store e2e-w0-123 -----`
+ */
+export function e2eSection(ctx: LogCtx, msg: string): void {
+  if (process.env.DEBUG === '1') {
+    process.stdout.write(`\n[e2e][w${ctx.workerIndex}] ----- ${msg} ----- \n`)
+  }
+}
+
+/**
+ * Log without worker context (for global setup before workers start).
+ */
+export function globalLog(tag: string, msg: string): void {
+  if (process.env.DEBUG === '1') {
+    process.stdout.write(`[e2e][${tag}] ${msg}\n`)
+  }
 }
 
 export const directories = {
@@ -72,21 +116,22 @@ export function requireEnv(env: E2EEnv, ...keys: (keyof Pick<E2EEnv, 'storeFqdn'
   }
 }
 
-/** Log a message during global setup (before workers start). Only prints when DEBUG=1. */
-export function globalLog(tag: string, msg: string): void {
-  if (process.env.DEBUG === '1') {
-    process.stdout.write(`[e2e][${tag}] ${msg}\n`)
-  }
-}
-
 /**
  * Worker-scoped fixture providing environment configuration.
  * Env vars are optional — tests that need them should call requireEnv().
  */
-export const envFixture = base.extend<{}, {env: E2EEnv}>({
+export const envFixture = base.extend<{testSection: void}, {env: E2EEnv}>({
+  // Auto-log TEST section header for every test
+  testSection: [
+    async ({env}, use, testInfo) => {
+      e2eSection(env, `TEST: ${testInfo.title}`)
+      await use()
+    },
+    {auto: true},
+  ],
   env: [
     // eslint-disable-next-line no-empty-pattern
-    async ({}, use) => {
+    async ({}, use, workerInfo) => {
       const storeFqdn = process.env.E2E_STORE_FQDN ?? ''
       const orgId = process.env.E2E_ORG_ID ?? ''
 
@@ -114,6 +159,7 @@ export const envFixture = base.extend<{}, {env: E2EEnv}>({
         orgId,
         processEnv,
         tempDir,
+        workerIndex: workerInfo.parallelIndex,
       }
 
       await use(env)

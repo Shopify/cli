@@ -1,5 +1,6 @@
 /* eslint-disable no-restricted-imports */
-import {appTestFixture as test, createApp, buildApp, generateExtension, teardownApp} from '../setup/app.js'
+import {appTestFixture as test, createApp, buildApp, generateExtension} from '../setup/app.js'
+import {teardownAll} from '../setup/teardown.js'
 import {TEST_TIMEOUT} from '../setup/constants.js'
 import {requireEnv} from '../setup/env.js'
 import {expect} from '@playwright/test'
@@ -44,8 +45,16 @@ test.describe('App scaffold', () => {
         `buildApp failed:\nstdout: ${buildResult.stdout}\nstderr: ${buildResult.stderr}`,
       ).toBe(0)
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 
@@ -71,8 +80,16 @@ test.describe('App scaffold', () => {
       expect(fs.existsSync(initResult.appDir)).toBe(true)
       expect(fs.existsSync(path.join(initResult.appDir, 'shopify.app.toml'))).toBe(true)
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 
@@ -121,8 +138,16 @@ test.describe('App scaffold', () => {
         `buildApp failed:\nstdout: ${buildResult.stdout}\nstderr: ${buildResult.stderr}`,
       ).toBe(0)
     } finally {
-      fs.rmSync(parentDir, {recursive: true, force: true})
-      await teardownApp({browserPage, appName, email: process.env.E2E_ACCOUNT_EMAIL, orgId: env.orgId})
+      // E2E_SKIP_CLEANUP=1 skips cleanup for debugging. Run `pnpm test:e2e-cleanup` afterward.
+      if (!process.env.E2E_SKIP_CLEANUP) {
+        fs.rmSync(parentDir, {recursive: true, force: true})
+        await teardownAll({
+          browserPage,
+          appName,
+          orgId: env.orgId,
+          workerIndex: env.workerIndex,
+        })
+      }
     }
   })
 })
