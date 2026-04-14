@@ -5,7 +5,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a \"theme app extension\" (https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
       "descriptionWithMarkdown": "This command executes the build script specified in the element's TOML file. You can specify a custom script in the file. To learn about configuration files in Shopify apps, refer to [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration).\n\n  If you're building a [theme app extension](https://shopify.dev/docs/apps/online-store/theme-app-extensions), then running the `build` command runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) against your extension to ensure that it's valid.",
       "flags": {
@@ -80,9 +79,16 @@
       "hiddenAliases": [
       ],
       "id": "app:build",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "build.js"
+      ],
       "strict": true,
       "summary": "Build the app, including extensions."
     },
@@ -91,7 +97,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Cancels a running bulk operation by ID.",
       "flags": {
         "client-id": {
@@ -175,9 +180,17 @@
       "hiddenAliases": [
       ],
       "id": "app:bulk:cancel",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "bulk",
+        "cancel.js"
+      ],
       "strict": true,
       "summary": "Cancel a bulk operation."
     },
@@ -186,7 +199,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk status`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store, as a bulk operation. Mutations are only allowed on dev stores.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk status`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-status) to check the status of your bulk operations.",
       "flags": {
@@ -329,9 +341,17 @@
       "hiddenAliases": [
       ],
       "id": "app:bulk:execute",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "bulk",
+        "execute.js"
+      ],
       "strict": true,
       "summary": "Execute bulk operations."
     },
@@ -340,7 +360,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about \"bulk query operations\" (https://shopify.dev/docs/api/usage/bulk-operations/queries) and \"bulk mutation operations\" (https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
       "descriptionWithMarkdown": "Check the status of a specific bulk operation by ID, or list all bulk operations belonging to this app on this store in the last 7 days.\n\n  Bulk operations allow you to process large amounts of data asynchronously. Learn more about [bulk query operations](https://shopify.dev/docs/api/usage/bulk-operations/queries) and [bulk mutation operations](https://shopify.dev/docs/api/usage/bulk-operations/imports).\n\n  Use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.",
       "flags": {
@@ -424,9 +443,17 @@
       "hiddenAliases": [
       ],
       "id": "app:bulk:status",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "bulk",
+        "status.js"
+      ],
       "strict": true,
       "summary": "Check the status of bulk operations."
     },
@@ -435,7 +462,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the \"App configuration\" (https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
       "descriptionWithMarkdown": "Pulls app configuration from the Developer Dashboard and creates or overwrites a configuration file. You can create a new app with this command to start with a default configuration file.\n\n  For more information on the format of the created TOML configuration file, refer to the [App configuration](https://shopify.dev/docs/apps/tools/cli/configuration) page.\n  ",
       "flags": {
@@ -502,9 +528,17 @@
       "hiddenAliases": [
       ],
       "id": "app:config:link",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "config",
+        "link.js"
+      ],
       "strict": true,
       "summary": "Fetch your app configuration from the Developer Dashboard."
     },
@@ -513,7 +547,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
       "descriptionWithMarkdown": "Pulls the latest configuration from the already-linked Shopify app and updates the selected configuration file.\n\nThis command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to target a specific configuration file, or omit it to use the default one.",
       "flags": {
@@ -580,9 +613,17 @@
       "hiddenAliases": [
       ],
       "id": "app:config:pull",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "config",
+        "pull.js"
+      ],
       "strict": true,
       "summary": "Refresh an already-linked app configuration without prompts."
     },
@@ -595,7 +636,6 @@
           "name": "config"
         }
       },
-      "customPluginName": "@shopify/app",
       "description": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "descriptionWithMarkdown": "Sets default configuration when you run app-related CLI commands. If you omit the `config-name` parameter, then you'll be prompted to choose from the configuration files in your project.",
       "flags": {
@@ -652,9 +692,17 @@
       "hiddenAliases": [
       ],
       "id": "app:config:use",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "config",
+        "use.js"
+      ],
       "strict": true,
       "summary": "Activate an app configuration.",
       "usage": "app config use [config] [flags]"
@@ -664,7 +712,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
       "descriptionWithMarkdown": "Validates the selected app configuration file and all extension configurations against their schemas and reports any errors found.",
       "flags": {
@@ -740,9 +787,17 @@
       "hiddenAliases": [
       ],
       "id": "app:config:validate",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "config",
+        "validate.js"
+      ],
       "strict": true,
       "summary": "Validate your app configuration and extensions."
     },
@@ -751,7 +806,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "\"Builds the app\" (https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your \"web app\" (https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to \"deploy your web app\" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.\n  ",
       "descriptionWithMarkdown": "[Builds the app](https://shopify.dev/docs/api/shopify-cli/app/app-build), then deploys your app configuration and extensions.\n\n  This command creates an app version, which is a snapshot of your app configuration and all extensions. This version is then released to users.\n\n  This command doesn't deploy your [web app](https://shopify.dev/docs/apps/tools/cli/structure#web-components). You need to [deploy your web app](https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.\n  ",
       "flags": {
@@ -889,9 +943,16 @@
       "hiddenAliases": [
       ],
       "id": "app:deploy",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "deploy.js"
+      ],
       "strict": true,
       "summary": "Deploy your Shopify app."
     },
@@ -900,7 +961,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Builds and previews your app on a dev store, and watches for changes. \"Read more about testing apps locally\" (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "descriptionWithMarkdown": "Builds and previews your app on a dev store, and watches for changes. [Read more about testing apps locally](https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).",
       "flags": {
@@ -1078,9 +1138,16 @@
       "hiddenAliases": [
       ],
       "id": "app:dev",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "dev.js"
+      ],
       "strict": true,
       "summary": "Run the app."
     },
@@ -1089,7 +1156,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "descriptionWithMarkdown": "Stop the dev preview that was started with `shopify app dev`.\n\n  It restores the app's active version to the selected development store.\n  ",
       "flags": {
@@ -1166,9 +1232,17 @@
       "hiddenAliases": [
       ],
       "id": "app:dev:clean",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "dev",
+        "clean.js"
+      ],
       "strict": true,
       "summary": "Cleans up the dev preview from the selected store."
     },
@@ -1177,7 +1251,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "descriptionWithMarkdown": "Creates or updates an `.env` files that contains app and app extension environment variables.\n\n  When an existing `.env` file is updated, changes to the variables are displayed in the terminal output. Existing variables and commented variables are preserved.",
       "flags": {
@@ -1253,9 +1326,17 @@
       "hiddenAliases": [
       ],
       "id": "app:env:pull",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "env",
+        "pull.js"
+      ],
       "strict": true,
       "summary": "Pull app and extensions environment variables."
     },
@@ -1264,7 +1345,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Displays environment variables that can be used to deploy apps and app extensions.",
       "descriptionWithMarkdown": "Displays environment variables that can be used to deploy apps and app extensions.",
       "flags": {
@@ -1331,9 +1411,17 @@
       "hiddenAliases": [
       ],
       "id": "app:env:show",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "env",
+        "show.js"
+      ],
       "strict": true,
       "summary": "Display app and extensions environment variables."
     },
@@ -1342,7 +1430,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use \"`bulk execute`\" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.",
       "descriptionWithMarkdown": "Executes an Admin API GraphQL query or mutation on the specified store. Mutations are only allowed on dev stores.\n\n  For operations that process large amounts of data, use [`bulk execute`](https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.",
       "flags": {
@@ -1475,9 +1562,16 @@
       "hiddenAliases": [
       ],
       "id": "app:execute",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "execute.js"
+      ],
       "strict": true,
       "summary": "Execute GraphQL queries and mutations."
     },
@@ -1486,7 +1580,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "descriptionWithMarkdown": "Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.",
       "flags": {
@@ -1554,9 +1647,17 @@
       "hiddenAliases": [
       ],
       "id": "app:function:build",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "function",
+        "build.js"
+      ],
       "strict": true,
       "summary": "Compile a function to wasm."
     },
@@ -1565,7 +1666,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
       "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The function handle\n  - The function name\n  - The function API version\n  - The targeting configuration\n  - The schema path\n  - The WASM path\n  - The function runner path",
       "flags": {
@@ -1642,9 +1742,17 @@
       "hiddenAliases": [
       ],
       "id": "app:function:info",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "function",
+        "info.js"
+      ],
       "strict": true,
       "summary": "Print basic information about your function."
     },
@@ -1653,7 +1761,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
@@ -1748,9 +1855,17 @@
       "hiddenAliases": [
       ],
       "id": "app:function:replay",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "function",
+        "replay.js"
+      ],
       "strict": true,
       "summary": "Replays a function run from an app log."
     },
@@ -1759,7 +1874,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Runs the function from your current directory for \"testing purposes\" (https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to \"Shopify Functions error handling\" (https://shopify.dev/docs/api/functions/errors).",
       "descriptionWithMarkdown": "Runs the function from your current directory for [testing purposes](https://shopify.dev/docs/apps/functions/testing-and-debugging). To learn how you can monitor and debug functions when errors occur, refer to [Shopify Functions error handling](https://shopify.dev/docs/api/functions/errors).",
       "flags": {
@@ -1855,9 +1969,17 @@
       "hiddenAliases": [
       ],
       "id": "app:function:run",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "function",
+        "run.js"
+      ],
       "strict": true,
       "summary": "Run a function locally for testing."
     },
@@ -1866,7 +1988,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Generates the latest \"GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "flags": {
@@ -1942,9 +2063,17 @@
       "hiddenAliases": [
       ],
       "id": "app:function:schema",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "function",
+        "schema.js"
+      ],
       "strict": true,
       "summary": "Fetch the latest GraphQL schema for a function."
     },
@@ -1953,7 +2082,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Creates GraphQL types based on your \"input query\" (https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
       "descriptionWithMarkdown": "Creates GraphQL types based on your [input query](https://shopify.dev/docs/apps/functions/input-output#input) for a function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.",
       "flags": {
@@ -2021,9 +2149,17 @@
       "hiddenAliases": [
       ],
       "id": "app:function:typegen",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "function",
+        "typegen.js"
+      ],
       "strict": true,
       "summary": "Generate GraphQL types for a function."
     },
@@ -2032,7 +2168,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Generates a new \"app extension\" (https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to \"Supported extensions\" (https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to \"App structure\" (https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  ",
       "descriptionWithMarkdown": "Generates a new [app extension](https://shopify.dev/docs/apps/build/app-extensions). For a list of app extensions that you can generate using this command, refer to [Supported extensions](https://shopify.dev/docs/apps/build/app-extensions/list-of-app-extensions).\n\n  Each new app extension is created in a folder under `extensions/`. To learn more about the extensions file structure, refer to [App structure](https://shopify.dev/docs/apps/build/cli-for-apps/app-structure) and the documentation for your extension.\n  ",
       "flags": {
@@ -2156,9 +2291,17 @@
       "hiddenAliases": [
       ],
       "id": "app:generate:extension",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "generate",
+        "extension.js"
+      ],
       "strict": true,
       "summary": "Generate a new app Extension."
     },
@@ -2167,7 +2310,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "\"DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema\" (https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "descriptionWithMarkdown": "[DEPRECATED, use `app function schema`] Generates the latest [GraphQL schema](https://shopify.dev/docs/apps/functions/input-output#graphql-schema) for a function in your app. Run this command from the function directory.\n\n  This command uses the API type and version of your function, as defined in your extension TOML file, to generate the latest GraphQL schema. The schema is written to the `schema.graphql` file.",
       "flags": {
@@ -2244,9 +2386,17 @@
       "hiddenAliases": [
       ],
       "id": "app:generate:schema",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "generate",
+        "schema.js"
+      ],
       "summary": "Fetch the latest GraphQL schema for a function."
     },
     "app:import-custom-data-definitions": {
@@ -2254,7 +2404,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Import metafield and metaobject definitions from your development store. \"Read more about declarative custom data definitions\" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "descriptionWithMarkdown": "Import metafield and metaobject definitions from your development store. [Read more about declarative custom data definitions](https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).",
       "flags": {
@@ -2337,9 +2486,16 @@
       "hiddenAliases": [
       ],
       "id": "app:import-custom-data-definitions",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "import-custom-data-definitions.js"
+      ],
       "strict": true,
       "summary": "Import metafield and metaobject definitions."
     },
@@ -2348,7 +2504,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Import dashboard-managed extensions into your app.",
       "flags": {
         "client-id": {
@@ -2414,9 +2569,16 @@
       "hiddenAliases": [
       ],
       "id": "app:import-extensions",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "import-extensions.js"
+      ],
       "strict": true
     },
     "app:info": {
@@ -2424,7 +2586,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the \"dev\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using \"`dev --reset`\" (https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The \"structure\" (https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The \"access scopes\" (https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "descriptionWithMarkdown": "The information returned includes the following:\n\n  - The app and dev store that's used when you run the [dev](https://shopify.dev/docs/api/shopify-cli/app/app-dev) command. You can reset these configurations using [`dev --reset`](https://shopify.dev/docs/api/shopify-cli/app/app-dev#flags-propertydetail-reset).\n  - The [structure](https://shopify.dev/docs/apps/tools/cli/structure) of your app project.\n  - The [access scopes](https://shopify.dev/docs/api/usage) your app has requested.\n  - System information, including the package manager and version of Shopify CLI used in the project.",
       "flags": {
@@ -2508,9 +2669,16 @@
       "hiddenAliases": [
       ],
       "id": "app:info",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "info.js"
+      ],
       "strict": true,
       "summary": "Print basic information about your app and extensions."
     },
@@ -2519,7 +2687,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app. Use this to automatically link your new project to an existing app. Using this flag avoids the app selection prompt.",
@@ -2625,9 +2792,16 @@
       "hiddenAliases": [
       ],
       "id": "app:init",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "init.js"
+      ],
       "strict": true,
       "summary": "Create a new app project"
     },
@@ -2636,7 +2810,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "descriptionWithMarkdown": "\n  Opens a real-time stream of detailed app logs from the selected app and store.\n  Use the `--source` argument to limit output to a particular log source, such as a specific Shopify Function handle. Use the `shopify app logs sources` command to view a list of sources.\n  Use the `--status` argument to filter on status, either `success` or `failure`.\n  ```\n  shopify app logs --status=success --source=extension.discount-function\n  ```\n  ",
       "flags": {
@@ -2741,9 +2914,16 @@
       "hiddenAliases": [
       ],
       "id": "app:logs",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "logs.js"
+      ],
       "strict": true,
       "summary": "Stream detailed logs for your Shopify app."
     },
@@ -2752,7 +2932,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "descriptionWithMarkdown": "The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently only function extensions are supported as sources.",
       "flags": {
@@ -2819,9 +2998,17 @@
       "hiddenAliases": [
       ],
       "id": "app:logs:sources",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "logs",
+        "sources.js"
+      ],
       "strict": true,
       "summary": "Print out a list of sources that may be used with the logs command."
     },
@@ -2830,7 +3017,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "descriptionWithMarkdown": "Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.",
       "flags": {
@@ -2932,9 +3118,16 @@
       "hiddenAliases": [
       ],
       "id": "app:release",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "release.js"
+      ],
       "strict": true,
       "summary": "Release an app version.",
       "usage": "app release --version <version>"
@@ -2944,7 +3137,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "descriptionWithMarkdown": "Lists the deployed app versions. An app version is a snapshot of your app extensions.",
       "flags": {
@@ -3020,9 +3212,17 @@
       "hiddenAliases": [
       ],
       "id": "app:versions:list",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "versions",
+        "list.js"
+      ],
       "strict": true,
       "summary": "List deployed versions of your app."
     },
@@ -3031,7 +3231,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "flags": {
@@ -3156,9 +3355,17 @@
       "hiddenAliases": [
       ],
       "id": "app:webhook:trigger",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "app",
+        "webhook",
+        "trigger.js"
+      ],
       "strict": true,
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     },
@@ -3183,9 +3390,16 @@
       "hiddenAliases": [
       ],
       "id": "auth:login",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "auth",
+        "login.js"
+      ],
       "strict": true
     },
     "auth:logout": {
@@ -3201,9 +3415,16 @@
       "hiddenAliases": [
       ],
       "id": "auth:logout",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "auth",
+        "logout.js"
+      ],
       "strict": true
     },
     "cache:clear": {
@@ -3220,9 +3441,16 @@
       "hiddenAliases": [
       ],
       "id": "cache:clear",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "cache",
+        "clear.js"
+      ],
       "strict": true
     },
     "commands": {
@@ -3230,7 +3458,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@oclif/plugin-commands",
       "description": "List all <%= config.bin %> commands.",
       "enableJsonFlag": true,
       "flags": {
@@ -3318,9 +3545,15 @@
       "hiddenAliases": [
       ],
       "id": "commands",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "commands.js"
+      ],
       "strict": true
     },
     "config:autocorrect:off": {
@@ -3328,7 +3561,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/plugin-did-you-mean",
       "description": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "descriptionWithMarkdown": "Disable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
@@ -3338,9 +3570,17 @@
       "hiddenAliases": [
       ],
       "id": "config:autocorrect:off",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "off.js"
+      ],
       "strict": true,
       "summary": "Disable autocorrect. Off by default."
     },
@@ -3349,7 +3589,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/plugin-did-you-mean",
       "description": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "descriptionWithMarkdown": "Enable autocorrect. Off by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
@@ -3359,9 +3598,17 @@
       "hiddenAliases": [
       ],
       "id": "config:autocorrect:on",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "on.js"
+      ],
       "strict": true,
       "summary": "Enable autocorrect. Off by default."
     },
@@ -3370,7 +3617,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/plugin-did-you-mean",
       "description": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "descriptionWithMarkdown": "Check whether autocorrect is enabled or disabled. On by default.\n\n  When autocorrection is enabled, Shopify CLI automatically runs a corrected version of your command if a correction is available.\n\n  When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.\n",
       "enableJsonFlag": false,
@@ -3380,9 +3626,17 @@
       "hiddenAliases": [
       ],
       "id": "config:autocorrect:status",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "config",
+        "autocorrect",
+        "status.js"
+      ],
       "strict": true,
       "summary": "Check whether autocorrect is enabled or disabled. On by default."
     },
@@ -3407,9 +3661,16 @@
       "hiddenAliases": [
       ],
       "id": "debug:command-flags",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "debug",
+        "command-flags.js"
+      ],
       "strict": true
     },
     "demo:watcher": {
@@ -3417,7 +3678,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "flags": {
         "client-id": {
           "description": "The Client ID of your app.",
@@ -3483,9 +3743,16 @@
       "hiddenAliases": [
       ],
       "id": "demo:watcher",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "demo",
+        "watcher.js"
+      ],
       "strict": true,
       "summary": "Watch and prints out changes to an app."
     },
@@ -3503,9 +3770,16 @@
       "hiddenAliases": [
       ],
       "id": "docs:generate",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "docs",
+        "generate.js"
+      ],
       "strict": true
     },
     "doctor-release": {
@@ -3522,9 +3796,16 @@
       "hiddenAliases": [
       ],
       "id": "doctor-release",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "doctor-release",
+        "index.js"
+      ],
       "strict": true
     },
     "doctor-release:theme": {
@@ -3594,9 +3875,17 @@
       "hiddenAliases": [
       ],
       "id": "doctor-release:theme",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "doctor-release",
+        "theme",
+        "index.js"
+      ],
       "strict": true
     },
     "help": {
@@ -3625,9 +3914,15 @@
       "hiddenAliases": [
       ],
       "id": "help",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "help.js"
+      ],
       "strict": false,
       "usage": "help [command] [flags]"
     },
@@ -3636,7 +3931,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Builds a Hydrogen storefront for production.",
       "descriptionWithMarkdown": "Builds a Hydrogen storefront for production. The client and app worker files are compiled to a `/dist` folder in your Hydrogen project directory.",
       "enableJsonFlag": false,
@@ -3721,9 +4015,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:build",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "build.js"
+      ],
       "strict": true
     },
     "hydrogen:check": {
@@ -3739,7 +4040,6 @@
           "required": true
         }
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Returns diagnostic information about a Hydrogen storefront.",
       "descriptionWithMarkdown": "Checks whether your Hydrogen app includes a set of standard Shopify routes.",
       "enableJsonFlag": false,
@@ -3757,9 +4057,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:check",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "check.js"
+      ],
       "strict": true
     },
     "hydrogen:codegen": {
@@ -3767,7 +4074,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Generate types for the Storefront API queries found in your project.",
       "descriptionWithMarkdown": "Automatically generates GraphQL types for your project’s Storefront API queries.",
       "enableJsonFlag": false,
@@ -3808,9 +4114,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:codegen",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "codegen.js"
+      ],
       "strict": true
     },
     "hydrogen:customer-account-push": {
@@ -3818,7 +4131,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Push project configuration to admin",
       "enableJsonFlag": false,
       "flags": {
@@ -3864,9 +4176,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:customer-account-push",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "customer-account-push.js"
+      ],
       "strict": true
     },
     "hydrogen:debug:cpu": {
@@ -3874,7 +4193,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Builds and profiles the server startup time the app.",
       "descriptionWithMarkdown": "Builds the app and runs the resulting code to profile the server startup time, watching for changes. This command can be used to [debug slow app startup times](https://shopify.dev/docs/custom-storefronts/hydrogen/debugging/cpu-startup) that cause failed deployments in Oxygen.\n\n  The profiling results are written to a `.cpuprofile` file that can be viewed with certain tools such as [Flame Chart Visualizer for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=ms-vscode.vscode-js-profile-flame).",
       "enableJsonFlag": false,
@@ -3909,9 +4227,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:debug:cpu",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "debug",
+        "cpu.js"
+      ],
       "strict": true
     },
     "hydrogen:deploy": {
@@ -3919,7 +4245,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Builds and deploys a Hydrogen storefront to Oxygen.",
       "descriptionWithMarkdown": "Builds and deploys your Hydrogen storefront to Oxygen. Requires an Oxygen deployment token to be set with the `--token` flag or an environment variable (`SHOPIFY_HYDROGEN_DEPLOYMENT_TOKEN`). If the storefront is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) then the Oxygen deployment token for the linked storefront will be used automatically.",
       "enableJsonFlag": false,
@@ -4102,9 +4427,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:deploy",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "deploy.js"
+      ],
       "strict": true
     },
     "hydrogen:dev": {
@@ -4112,7 +4444,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Runs Hydrogen storefront in an Oxygen worker for development.",
       "descriptionWithMarkdown": "Runs a Hydrogen storefront in a local runtime that emulates an Oxygen worker for development.\n\n  If your project is [linked](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-link) to a Hydrogen storefront, then its environment variables will be loaded with the runtime.",
       "enableJsonFlag": false,
@@ -4255,9 +4586,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:dev",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "dev.js"
+      ],
       "strict": true
     },
     "hydrogen:env:list": {
@@ -4265,7 +4603,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "List the environments on your linked Hydrogen storefront.",
       "descriptionWithMarkdown": "Lists all environments available on the linked Hydrogen storefront.",
       "enableJsonFlag": false,
@@ -4283,9 +4620,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:env:list",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "env",
+        "list.js"
+      ],
       "strict": true
     },
     "hydrogen:env:pull": {
@@ -4293,7 +4638,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Populate your .env with variables from your Hydrogen storefront.",
       "descriptionWithMarkdown": "Pulls environment variables from the linked Hydrogen storefront and writes them to an `.env` file.",
       "enableJsonFlag": false,
@@ -4350,9 +4694,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:env:pull",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "env",
+        "pull.js"
+      ],
       "strict": true
     },
     "hydrogen:env:push": {
@@ -4360,7 +4712,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Push environment variables from the local .env file to your linked Hydrogen storefront.",
       "enableJsonFlag": false,
       "flags": {
@@ -4396,9 +4747,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:env:push",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "env",
+        "push.js"
+      ],
       "strict": true
     },
     "hydrogen:g": {
@@ -4406,7 +4765,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Shortcut for `hydrogen generate`. See `hydrogen generate --help` for more information.",
       "enableJsonFlag": false,
       "flags": {
@@ -4416,9 +4774,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:g",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "g.js"
+      ],
       "strict": false
     },
     "hydrogen:generate:route": {
@@ -4446,7 +4811,6 @@
           "required": true
         }
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Generates a standard Shopify route.",
       "descriptionWithMarkdown": "Generates a set of default routes from the starter template.",
       "enableJsonFlag": false,
@@ -4495,9 +4859,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:generate:route",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "generate",
+        "route.js"
+      ],
       "strict": true
     },
     "hydrogen:generate:routes": {
@@ -4505,7 +4877,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Generates all supported standard shopify routes.",
       "enableJsonFlag": false,
       "flags": {
@@ -4553,9 +4924,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:generate:routes",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "generate",
+        "routes.js"
+      ],
       "strict": true
     },
     "hydrogen:init": {
@@ -4563,7 +4942,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Creates a new Hydrogen storefront.",
       "descriptionWithMarkdown": "Creates a new Hydrogen storefront.",
       "enableJsonFlag": false,
@@ -4670,9 +5048,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:init",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "init.js"
+      ],
       "strict": true
     },
     "hydrogen:link": {
@@ -4680,7 +5065,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Link a local project to one of your shop's Hydrogen storefronts.",
       "descriptionWithMarkdown": "Links your local development environment to a remote Hydrogen storefront. You can link an unlimited number of development environments to a single Hydrogen storefront.\n\n  Linking to a Hydrogen storefront enables you to run [dev](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-dev) and automatically inject your linked Hydrogen storefront's environment variables directly into the server runtime.\n\n  After you run the `link` command, you can access the [env list](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-list), [env pull](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-env-pull), and [unlink](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-unlink) commands.",
       "enableJsonFlag": false,
@@ -4714,9 +5098,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:link",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "link.js"
+      ],
       "strict": true
     },
     "hydrogen:list": {
@@ -4724,7 +5115,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Returns a list of Hydrogen storefronts available on a given shop.",
       "descriptionWithMarkdown": "Lists all remote Hydrogen storefronts available to link to your local development environment.",
       "enableJsonFlag": false,
@@ -4742,9 +5132,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:list",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "list.js"
+      ],
       "strict": true
     },
     "hydrogen:login": {
@@ -4752,7 +5149,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Login to your Shopify account.",
       "descriptionWithMarkdown": "Logs in to the specified shop and saves the shop domain to the project.",
       "enableJsonFlag": false,
@@ -4779,9 +5175,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:login",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "login.js"
+      ],
       "strict": true
     },
     "hydrogen:logout": {
@@ -4789,7 +5192,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Logout of your local session.",
       "descriptionWithMarkdown": "Log out from the current shop.",
       "enableJsonFlag": false,
@@ -4807,9 +5209,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:logout",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "logout.js"
+      ],
       "strict": true
     },
     "hydrogen:preview": {
@@ -4817,7 +5226,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Runs a Hydrogen storefront in an Oxygen worker for production.",
       "descriptionWithMarkdown": "Runs a server in your local development environment that serves your Hydrogen app's production build. Requires running the [build](https://shopify.dev/docs/api/shopify-cli/hydrogen/hydrogen-build) command first.",
       "enableJsonFlag": false,
@@ -4944,9 +5352,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:preview",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "preview.js"
+      ],
       "strict": true
     },
     "hydrogen:setup": {
@@ -4954,7 +5369,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Scaffold routes and core functionality.",
       "enableJsonFlag": false,
       "flags": {
@@ -5001,9 +5415,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:setup",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "setup.js"
+      ],
       "strict": true
     },
     "hydrogen:setup:css": {
@@ -5021,7 +5442,6 @@
           ]
         }
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Setup CSS strategies for your project.",
       "descriptionWithMarkdown": "Adds support for certain CSS strategies to your project.",
       "enableJsonFlag": false,
@@ -5054,9 +5474,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:setup:css",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "setup",
+        "css.js"
+      ],
       "strict": true
     },
     "hydrogen:setup:markets": {
@@ -5073,7 +5501,6 @@
           ]
         }
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Setup support for multiple markets in your project.",
       "descriptionWithMarkdown": "Adds support for multiple [markets](https://shopify.dev/docs/custom-storefronts/hydrogen/markets) to your project by using the URL structure.",
       "enableJsonFlag": false,
@@ -5091,9 +5518,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:setup:markets",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "setup",
+        "markets.js"
+      ],
       "strict": true
     },
     "hydrogen:setup:vite": {
@@ -5101,7 +5536,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "EXPERIMENTAL: Upgrades the project to use Vite.",
       "enableJsonFlag": false,
       "flags": {
@@ -5118,9 +5552,17 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:setup:vite",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "setup",
+        "vite.js"
+      ],
       "strict": true
     },
     "hydrogen:shortcut": {
@@ -5128,7 +5570,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Creates a global `h2` shortcut for the Hydrogen CLI",
       "descriptionWithMarkdown": "Creates a global h2 shortcut for Shopify CLI using shell aliases.\n\n  The following shells are supported:\n\n  - Bash (using `~/.bashrc`)\n  - ZSH (using `~/.zshrc`)\n  - Fish (using `~/.config/fish/functions`)\n  - PowerShell (added to `$PROFILE`)\n\n  After the alias is created, you can call Shopify CLI from anywhere in your project using `h2 <command>`.",
       "enableJsonFlag": false,
@@ -5138,9 +5579,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:shortcut",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "shortcut.js"
+      ],
       "strict": true
     },
     "hydrogen:unlink": {
@@ -5148,7 +5596,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Unlink a local project from a Hydrogen storefront.",
       "descriptionWithMarkdown": "Unlinks your local development environment from a remote Hydrogen storefront.",
       "enableJsonFlag": false,
@@ -5166,9 +5613,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:unlink",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "unlink.js"
+      ],
       "strict": true
     },
     "hydrogen:upgrade": {
@@ -5176,7 +5630,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/cli-hydrogen",
       "description": "Upgrade Remix and Hydrogen npm dependencies.",
       "descriptionWithMarkdown": "Upgrade Hydrogen project dependencies, preview features, fixes and breaking changes. The command also generates an instruction file for each upgrade.",
       "enableJsonFlag": false,
@@ -5211,9 +5664,16 @@
       "hiddenAliases": [
       ],
       "id": "hydrogen:upgrade",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "hydrogen",
+        "upgrade.js"
+      ],
       "strict": true
     },
     "kitchen-sink": {
@@ -5231,9 +5691,16 @@
         "kitchen-sink all"
       ],
       "id": "kitchen-sink",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "kitchen-sink",
+        "index.js"
+      ],
       "strict": true
     },
     "kitchen-sink:async": {
@@ -5250,9 +5717,16 @@
       "hiddenAliases": [
       ],
       "id": "kitchen-sink:async",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "kitchen-sink",
+        "async.js"
+      ],
       "strict": true
     },
     "kitchen-sink:prompts": {
@@ -5269,9 +5743,16 @@
       "hiddenAliases": [
       ],
       "id": "kitchen-sink:prompts",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "kitchen-sink",
+        "prompts.js"
+      ],
       "strict": true
     },
     "kitchen-sink:static": {
@@ -5288,9 +5769,16 @@
       "hiddenAliases": [
       ],
       "id": "kitchen-sink:static",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "kitchen-sink",
+        "static.js"
+      ],
       "strict": true
     },
     "notifications:generate": {
@@ -5307,9 +5795,16 @@
       "hiddenAliases": [
       ],
       "id": "notifications:generate",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "notifications",
+        "generate.js"
+      ],
       "strict": true
     },
     "notifications:list": {
@@ -5334,9 +5829,16 @@
       "hiddenAliases": [
       ],
       "id": "notifications:list",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "notifications",
+        "list.js"
+      ],
       "strict": true
     },
     "organization:list": {
@@ -5344,7 +5846,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
       "descriptionWithMarkdown": "Lists the Shopify organizations that you have access to, along with their organization IDs.",
       "enableJsonFlag": false,
@@ -5379,9 +5880,16 @@
       "hiddenAliases": [
       ],
       "id": "organization:list",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "organization",
+        "list.js"
+      ],
       "strict": true,
       "summary": "List Shopify organizations you have access to."
     },
@@ -5390,7 +5898,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "description": "List installed plugins.",
       "enableJsonFlag": true,
       "examples": [
@@ -5416,9 +5923,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "index.js"
+      ],
       "strict": true
     },
     "plugins:inspect": {
@@ -5432,7 +5946,6 @@
           "required": true
         }
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "description": "Displays installation properties of a plugin.",
       "enableJsonFlag": true,
       "examples": [
@@ -5464,9 +5977,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins:inspect",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "inspect.js"
+      ],
       "strict": false,
       "usage": "plugins:inspect PLUGIN..."
     },
@@ -5481,7 +6001,6 @@
           "required": true
         }
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "description": "",
       "enableJsonFlag": true,
       "examples": [
@@ -5551,9 +6070,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins:install",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "install.js"
+      ],
       "strict": false,
       "summary": "Installs a plugin into <%= config.bin %>."
     },
@@ -5568,7 +6094,6 @@
           "required": true
         }
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "description": "Installation of a linked plugin will override a user-installed or core plugin.\n\ne.g. If you have a user-installed or core plugin that has a 'hello' command, installing a linked plugin with a 'hello' command will override the user-installed or core plugin implementation. This is useful for development work.\n",
       "enableJsonFlag": false,
       "examples": [
@@ -5599,9 +6124,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins:link",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "link.js"
+      ],
       "strict": true,
       "summary": "Links a plugin into the CLI for development."
     },
@@ -5610,7 +6142,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "enableJsonFlag": false,
       "flags": {
         "hard": {
@@ -5630,9 +6161,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins:reset",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "reset.js"
+      ],
       "strict": true,
       "summary": "Remove all user-installed and linked plugins."
     },
@@ -5647,7 +6185,6 @@
           "name": "plugin"
         }
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "description": "Removes a plugin from the CLI.",
       "enableJsonFlag": false,
       "examples": [
@@ -5672,9 +6209,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins:uninstall",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "uninstall.js"
+      ],
       "strict": false
     },
     "plugins:update": {
@@ -5682,7 +6226,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@oclif/plugin-plugins",
       "description": "Update installed plugins.",
       "enableJsonFlag": false,
       "flags": {
@@ -5704,9 +6247,16 @@
       "hiddenAliases": [
       ],
       "id": "plugins:update",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "plugins",
+        "update.js"
+      ],
       "strict": true
     },
     "search": {
@@ -5728,9 +6278,15 @@
       "hiddenAliases": [
       ],
       "id": "search",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "search.js"
+      ],
       "strict": true,
       "usage": "search [query]"
     },
@@ -5739,7 +6295,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Calls and runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. \"Learn more about the checks that Theme Check runs.\" (https://shopify.dev/docs/themes/tools/theme-check/checks)",
       "descriptionWithMarkdown": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
       "flags": {
@@ -5867,12 +6422,19 @@
       "hiddenAliases": [
       ],
       "id": "theme:check",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "path"
       ],
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "check.js"
+      ],
       "strict": true,
       "summary": "Validate the theme."
     },
@@ -5881,7 +6443,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
       "flags": {
@@ -5958,10 +6519,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:console",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "console.js"
+      ],
       "strict": true,
       "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
       "usage": [
@@ -5974,7 +6542,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
       "descriptionWithMarkdown": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
       "flags": {
@@ -6067,6 +6634,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:delete",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password",
@@ -6078,6 +6646,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "delete.js"
+      ],
       "strict": true,
       "summary": "Delete remote themes from the connected store. This command can't be undone."
     },
@@ -6086,7 +6660,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
@@ -6287,10 +6860,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:dev",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "dev.js"
+      ],
       "strict": true,
       "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time."
     },
@@ -6299,7 +6879,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
       "descriptionWithMarkdown": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
       "flags": {
@@ -6385,9 +6964,16 @@
       "hiddenAliases": [
       ],
       "id": "theme:duplicate",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "duplicate.js"
+      ],
       "strict": true,
       "summary": "Duplicates a theme from your theme library.",
       "usage": [
@@ -6400,7 +6986,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
       "flags": {
         "development": {
@@ -6485,6 +7070,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:info",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password"
@@ -6492,6 +7078,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "info.js"
+      ],
       "strict": true
     },
     "theme:init": {
@@ -6504,7 +7096,6 @@
           "required": false
         }
       },
-      "customPluginName": "@shopify/theme",
       "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
       "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
       "flags": {
@@ -6556,10 +7147,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:init",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "init.js"
+      ],
       "strict": true,
       "summary": "Clones a Git repository to use as a starting point for building a new theme.",
       "usage": "theme init [name] [flags]"
@@ -6569,7 +7167,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Starts the \"Language Server\" (https://shopify.dev/docs/themes/tools/cli/language-server).",
       "descriptionWithMarkdown": "Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).",
       "flags": {
@@ -6594,10 +7191,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:language-server",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "language-server.js"
+      ],
       "strict": true,
       "summary": "Start a Language Server Protocol server."
     },
@@ -6606,7 +7210,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Lists the themes in your store, along with their IDs and statuses.",
       "flags": {
         "environment": {
@@ -6703,6 +7306,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:list",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password"
@@ -6710,6 +7314,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "list.js"
+      ],
       "strict": true
     },
     "theme:metafields:pull": {
@@ -6717,7 +7327,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
       "descriptionWithMarkdown": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
       "flags": {
@@ -6786,10 +7395,18 @@
       "hiddenAliases": [
       ],
       "id": "theme:metafields:pull",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "metafields",
+        "pull.js"
+      ],
       "strict": true,
       "summary": "Download metafields definitions from your shop into a local file."
     },
@@ -6798,7 +7415,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "descriptionWithMarkdown": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
       "flags": {
@@ -6891,10 +7507,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:open",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "open.js"
+      ],
       "strict": true,
       "summary": "Opens the preview of your remote theme."
     },
@@ -6903,7 +7526,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per \"Theme Store requirements\" (https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
       "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per [Theme Store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
       "flags": {
@@ -6937,10 +7559,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:package",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "package.js"
+      ],
       "strict": true,
       "summary": "Package your theme into a .zip file, ready to upload to the Online Store."
     },
@@ -6949,7 +7578,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
       "descriptionWithMarkdown": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
       "flags": {
@@ -7043,10 +7671,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:preview",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "preview.js"
+      ],
       "strict": true,
       "summary": "Applies JSON overrides to a theme and returns a preview URL."
     },
@@ -7055,7 +7690,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
       "flags": {
@@ -7150,10 +7784,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:profile",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "profile.js"
+      ],
       "strict": true,
       "summary": "Profile the Liquid rendering of a theme page.",
       "usage": [
@@ -7166,7 +7807,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "descriptionWithMarkdown": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
       "flags": {
@@ -7243,6 +7883,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:publish",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password",
@@ -7251,6 +7892,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "publish.js"
+      ],
       "strict": true,
       "summary": "Set a remote theme as the live theme."
     },
@@ -7259,7 +7906,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
       "flags": {
@@ -7379,6 +8025,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:pull",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password",
@@ -7392,6 +8039,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "pull.js"
+      ],
       "strict": true,
       "summary": "Download your remote theme files locally."
     },
@@ -7400,7 +8053,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
       "flags": {
@@ -7583,6 +8235,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:push",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password",
@@ -7596,6 +8249,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "push.js"
+      ],
       "strict": true,
       "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
       "usage": [
@@ -7608,7 +8267,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "descriptionWithMarkdown": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
       "flags": {
@@ -7703,6 +8361,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:rename",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password",
@@ -7716,6 +8375,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "rename.js"
+      ],
       "strict": true,
       "summary": "Renames an existing theme."
     },
@@ -7724,7 +8389,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
       "flags": {
@@ -7926,10 +8590,17 @@
       "hiddenAliases": [
       ],
       "id": "theme:serve",
+      "isESM": true,
       "multiEnvironmentsFlags": null,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "serve.js"
+      ],
       "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time."
     },
     "theme:share": {
@@ -7937,7 +8608,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/theme",
       "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
       "flags": {
@@ -8014,6 +8684,7 @@
       "hiddenAliases": [
       ],
       "id": "theme:share",
+      "isESM": true,
       "multiEnvironmentsFlags": [
         "store",
         "password",
@@ -8022,6 +8693,12 @@
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "share.js"
+      ],
       "strict": true,
       "summary": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name."
     },
@@ -8039,9 +8716,15 @@
       "hiddenAliases": [
       ],
       "id": "upgrade",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "upgrade.js"
+      ],
       "strict": true,
       "summary": "Shows details on how to upgrade Shopify CLI."
     },
@@ -8058,9 +8741,15 @@
       "hiddenAliases": [
       ],
       "id": "version",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "version.js"
+      ],
       "strict": true
     },
     "webhook:trigger": {
@@ -8068,7 +8757,6 @@
       ],
       "args": {
       },
-      "customPluginName": "@shopify/app",
       "description": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to \"Webhooks overview\" (https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the \"Partner API rate limit\" (https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "descriptionWithMarkdown": "\n  Triggers the delivery of a sample Admin API event topic payload to a designated address.\n\n  You should use this command to experiment with webhooks, to initially test your webhook configuration, or for unit testing. However, to test your webhook configuration from end to end, you should always trigger webhooks by performing the related action in Shopify.\n\n  Because most webhook deliveries use remote endpoints, you can trigger the command from any directory where you can use Shopify CLI, and send the webhook to any of the supported endpoint types. For example, you can run the command from your app's local directory, but send the webhook to a staging environment endpoint.\n\n  To learn more about using webhooks in a Shopify app, refer to [Webhooks overview](https://shopify.dev/docs/apps/webhooks).\n\n  ### Limitations\n\n  - Webhooks triggered using this method always have the same payload, so they can't be used to test scenarios that differ based on the payload contents.\n  - Webhooks triggered using this method aren't retried when they fail.\n  - Trigger requests are rate-limited using the [Partner API rate limit](https://shopify.dev/docs/api/partner#rate_limits).\n  - You can't use this method to validate your API webhook subscriptions.\n  ",
       "flags": {
@@ -8194,9 +8882,16 @@
       "hiddenAliases": [
       ],
       "id": "webhook:trigger",
+      "isESM": true,
       "pluginAlias": "@shopify/cli",
       "pluginName": "@shopify/cli",
       "pluginType": "core",
+      "relativePath": [
+        "dist",
+        "commands",
+        "webhook",
+        "trigger.js"
+      ],
       "summary": "Trigger delivery of a sample webhook topic payload to a designated address."
     }
   },

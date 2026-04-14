@@ -1,0 +1,3 @@
+import {commands} from '@shopify/app'
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default commands['app:generate:schema'] as any

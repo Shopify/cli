@@ -126,6 +126,8 @@ DESCRIPTION
   extension to ensure that it's valid.
 ```
 
+_See code: [dist/commands/app/build.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/build.js)_
+
 ## `shopify app bulk cancel`
 
 Cancel a bulk operation.
@@ -150,6 +152,8 @@ DESCRIPTION
 
   Cancels a running bulk operation by ID.
 ```
+
+_See code: [dist/commands/app/bulk/cancel.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/bulk/cancel.js)_
 
 ## `shopify app bulk execute`
 
@@ -197,6 +201,8 @@ DESCRIPTION
   operations.
 ```
 
+_See code: [dist/commands/app/bulk/execute.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/bulk/execute.js)_
+
 ## `shopify app bulk status`
 
 Check the status of bulk operations.
@@ -230,6 +236,8 @@ DESCRIPTION
   Use "`bulk execute`" (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) to start a new bulk operation.
 ```
 
+_See code: [dist/commands/app/bulk/status.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/bulk/status.js)_
+
 ## `shopify app config link`
 
 Fetch your app configuration from the Developer Dashboard.
@@ -256,6 +264,8 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/tools/cli/configuration) page.
 ```
 
+_See code: [dist/commands/app/config/link.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/config/link.js)_
+
 ## `shopify app config pull`
 
 Refresh an already-linked app configuration without prompts.
@@ -280,6 +290,8 @@ DESCRIPTION
   This command reuses the existing linked app and organization and skips all interactive prompts. Use `--config` to
   target a specific configuration file, or omit it to use the default one.
 ```
+
+_See code: [dist/commands/app/config/pull.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/config/pull.js)_
 
 ## `shopify app config use [config] [flags]`
 
@@ -306,6 +318,8 @@ DESCRIPTION
   be prompted to choose from the configuration files in your project.
 ```
 
+_See code: [dist/commands/app/config/use.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/config/use.js)_
+
 ## `shopify app config validate`
 
 Validate your app configuration and extensions.
@@ -330,6 +344,8 @@ DESCRIPTION
   Validates the selected app configuration file and all extension configurations against their schemas and reports any
   errors found.
 ```
+
+_See code: [dist/commands/app/config/validate.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/config/validate.js)_
 
 ## `shopify app deploy`
 
@@ -382,6 +398,8 @@ DESCRIPTION
   need to "deploy your web app" (https://shopify.dev/docs/apps/deployment/web) to your own hosting solution.
 ```
 
+_See code: [dist/commands/app/deploy.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/deploy.js)_
+
 ## `shopify app dev`
 
 Run the app.
@@ -431,6 +449,8 @@ DESCRIPTION
   (https://shopify.dev/docs/apps/build/cli-for-apps/test-apps-locally).
 ```
 
+_See code: [dist/commands/app/dev.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/dev.js)_
+
 ## `shopify app dev clean`
 
 Cleans up the dev preview from the selected store.
@@ -456,6 +476,8 @@ DESCRIPTION
 
   It restores the app's active version to the selected development store.
 ```
+
+_See code: [dist/commands/app/dev/clean.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/dev/clean.js)_
 
 ## `shopify app env pull`
 
@@ -484,6 +506,8 @@ DESCRIPTION
   variables and commented variables are preserved.
 ```
 
+_See code: [dist/commands/app/env/pull.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/env/pull.js)_
+
 ## `shopify app env show`
 
 Display app and extensions environment variables.
@@ -505,6 +529,8 @@ DESCRIPTION
 
   Displays environment variables that can be used to deploy apps and app extensions.
 ```
+
+_See code: [dist/commands/app/env/show.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/env/show.js)_
 
 ## `shopify app execute`
 
@@ -547,6 +573,8 @@ DESCRIPTION
   (https://shopify.dev/docs/api/shopify-cli/app/app-bulk-execute) instead.
 ```
 
+_See code: [dist/commands/app/execute.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/execute.js)_
+
 ## `shopify app function build`
 
 Compile a function to wasm.
@@ -568,6 +596,8 @@ DESCRIPTION
 
   Compiles the function in your current directory to WebAssembly (Wasm) for testing purposes.
 ```
+
+_See code: [dist/commands/app/function/build.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/function/build.js)_
 
 ## `shopify app function info`
 
@@ -601,6 +631,8 @@ DESCRIPTION
   - The function runner path
 ```
 
+_See code: [dist/commands/app/function/info.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/function/info.js)_
+
 ## `shopify app function replay`
 
 Replays a function run from an app log.
@@ -631,6 +663,8 @@ DESCRIPTION
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 ```
 
+_See code: [dist/commands/app/function/replay.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/function/replay.js)_
+
 ## `shopify app function run`
 
 Run a function locally for testing.
@@ -660,6 +694,8 @@ DESCRIPTION
   errors occur, refer to "Shopify Functions error handling" (https://shopify.dev/docs/api/functions/errors).
 ```
 
+_See code: [dist/commands/app/function/run.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/function/run.js)_
+
 ## `shopify app function schema`
 
 Fetch the latest GraphQL schema for a function.
@@ -688,6 +724,8 @@ DESCRIPTION
   latest GraphQL schema. The schema is written to the `schema.graphql` file.
 ```
 
+_See code: [dist/commands/app/function/schema.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/function/schema.js)_
+
 ## `shopify app function typegen`
 
 Generate GraphQL types for a function.
@@ -711,6 +749,8 @@ DESCRIPTION
   Creates GraphQL types based on your "input query" (https://shopify.dev/docs/apps/functions/input-output#input) for a
   function. Supports JavaScript functions out of the box, or any language via the `build.typegen_command` configuration.
 ```
+
+_See code: [dist/commands/app/function/typegen.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/function/typegen.js)_
 
 ## `shopify app generate extension`
 
@@ -747,6 +787,8 @@ DESCRIPTION
   your extension.
 ```
 
+_See code: [dist/commands/app/generate/extension.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/generate/extension.js)_
+
 ## `shopify app import-custom-data-definitions`
 
 Import metafield and metaobject definitions.
@@ -774,6 +816,8 @@ DESCRIPTION
   definitions" (https://shopify.dev/docs/apps/build/custom-data/declarative-custom-data-definitions).
 ```
 
+_See code: [dist/commands/app/import-custom-data-definitions.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/import-custom-data-definitions.js)_
+
 ## `shopify app import-extensions`
 
 Import dashboard-managed extensions into your app.
@@ -794,6 +838,8 @@ FLAGS
 DESCRIPTION
   Import dashboard-managed extensions into your app.
 ```
+
+_See code: [dist/commands/app/import-extensions.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/import-extensions.js)_
 
 ## `shopify app info`
 
@@ -828,6 +874,8 @@ DESCRIPTION
   - System information, including the package manager and version of Shopify CLI used in the project.
 ```
 
+_See code: [dist/commands/app/info.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/info.js)_
+
 ## `shopify app init`
 
 Create a new app project
@@ -856,6 +904,8 @@ FLAGS
                                   https://github.com/Shopify/<repository>/[subpath]#[branch]
       --verbose                   [env: SHOPIFY_FLAG_VERBOSE] Increase the verbosity of the output.
 ```
+
+_See code: [dist/commands/app/init.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/init.js)_
 
 ## `shopify app logs`
 
@@ -893,6 +943,8 @@ DESCRIPTION
   ```
 ```
 
+_See code: [dist/commands/app/logs.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/logs.js)_
+
 ## `shopify app logs sources`
 
 Print out a list of sources that may be used with the logs command.
@@ -915,6 +967,8 @@ DESCRIPTION
   The output source names can be used with the `--source` argument of `shopify app logs` to filter log output. Currently
   only function extensions are supported as sources.
 ```
+
+_See code: [dist/commands/app/logs/sources.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/logs/sources.js)_
 
 ## `shopify app release --version <version>`
 
@@ -945,6 +999,8 @@ DESCRIPTION
   Releases an existing app version. Pass the name of the version that you want to release using the `--version` flag.
 ```
 
+_See code: [dist/commands/app/release.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/release.js)_
+
 ## `shopify app versions list`
 
 List deployed versions of your app.
@@ -968,6 +1024,8 @@ DESCRIPTION
 
   Lists the deployed app versions. An app version is a snapshot of your app extensions.
 ```
+
+_See code: [dist/commands/app/versions/list.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/versions/list.js)_
 
 ## `shopify app webhook trigger`
 
@@ -1049,6 +1107,8 @@ DESCRIPTION
   - You can't use this method to validate your API webhook subscriptions.
 ```
 
+_See code: [dist/commands/app/webhook/trigger.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/app/webhook/trigger.js)_
+
 ## `shopify auth login`
 
 Logs you in to your Shopify account.
@@ -1064,6 +1124,8 @@ DESCRIPTION
   Logs you in to your Shopify account.
 ```
 
+_See code: [dist/commands/auth/login.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/auth/login.js)_
+
 ## `shopify auth logout`
 
 Logs you out of the Shopify account or Partner account and store.
@@ -1075,6 +1137,8 @@ USAGE
 DESCRIPTION
   Logs you out of the Shopify account or Partner account and store.
 ```
+
+_See code: [dist/commands/auth/logout.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/auth/logout.js)_
 
 ## `shopify commands`
 
@@ -1103,6 +1167,8 @@ DESCRIPTION
   List all shopify commands.
 ```
 
+_See code: [dist/commands/commands.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/commands.js)_
+
 ## `shopify config autocorrect off`
 
 Disable autocorrect. Off by default.
@@ -1121,6 +1187,8 @@ DESCRIPTION
 
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
+
+_See code: [dist/commands/config/autocorrect/off.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/config/autocorrect/off.js)_
 
 ## `shopify config autocorrect on`
 
@@ -1141,6 +1209,8 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
+_See code: [dist/commands/config/autocorrect/on.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/config/autocorrect/on.js)_
+
 ## `shopify config autocorrect status`
 
 Check whether autocorrect is enabled or disabled. On by default.
@@ -1160,6 +1230,8 @@ DESCRIPTION
   When autocorrection is disabled, you need to confirm that you want to run corrections for mistyped commands.
 ```
 
+_See code: [dist/commands/config/autocorrect/status.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/config/autocorrect/status.js)_
+
 ## `shopify help [command] [flags]`
 
 Display help for Shopify CLI
@@ -1177,6 +1249,8 @@ FLAGS
 DESCRIPTION
   Display help for Shopify CLI
 ```
+
+_See code: [dist/commands/help.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/help.js)_
 
 ## `shopify hydrogen build`
 
@@ -1212,6 +1286,8 @@ DESCRIPTION
   Builds a Hydrogen storefront for production.
 ```
 
+_See code: [dist/commands/hydrogen/build.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/build.js)_
+
 ## `shopify hydrogen check RESOURCE`
 
 Returns diagnostic information about a Hydrogen storefront.
@@ -1231,6 +1307,8 @@ DESCRIPTION
   Returns diagnostic information about a Hydrogen storefront.
 ```
 
+_See code: [dist/commands/hydrogen/check.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/check.js)_
+
 ## `shopify hydrogen codegen`
 
 Generate types for the Storefront API queries found in your project.
@@ -1249,6 +1327,8 @@ FLAGS
 DESCRIPTION
   Generate types for the Storefront API queries found in your project.
 ```
+
+_See code: [dist/commands/hydrogen/codegen.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/codegen.js)_
 
 ## `shopify hydrogen customer-account-push`
 
@@ -1274,6 +1354,8 @@ DESCRIPTION
   Push project configuration to admin
 ```
 
+_See code: [dist/commands/hydrogen/customer-account-push.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/customer-account-push.js)_
+
 ## `shopify hydrogen debug cpu`
 
 Builds and profiles the server startup time the app.
@@ -1292,6 +1374,8 @@ FLAGS
 DESCRIPTION
   Builds and profiles the server startup time the app.
 ```
+
+_See code: [dist/commands/hydrogen/debug/cpu.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/debug/cpu.js)_
 
 ## `shopify hydrogen deploy`
 
@@ -1348,6 +1432,8 @@ DESCRIPTION
   Builds and deploys a Hydrogen storefront to Oxygen.
 ```
 
+_See code: [dist/commands/hydrogen/deploy.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/deploy.js)_
+
 ## `shopify hydrogen dev`
 
 Runs Hydrogen storefront in an Oxygen worker for development.
@@ -1393,6 +1479,8 @@ DESCRIPTION
   Runs Hydrogen storefront in an Oxygen worker for development.
 ```
 
+_See code: [dist/commands/hydrogen/dev.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/dev.js)_
+
 ## `shopify hydrogen env list`
 
 List the environments on your linked Hydrogen storefront.
@@ -1408,6 +1496,8 @@ FLAGS
 DESCRIPTION
   List the environments on your linked Hydrogen storefront.
 ```
+
+_See code: [dist/commands/hydrogen/env/list.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/env/list.js)_
 
 ## `shopify hydrogen env pull`
 
@@ -1433,6 +1523,8 @@ DESCRIPTION
   Populate your .env with variables from your Hydrogen storefront.
 ```
 
+_See code: [dist/commands/hydrogen/env/pull.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/env/pull.js)_
+
 ## `shopify hydrogen env push`
 
 Push environment variables from the local .env file to your linked Hydrogen storefront.
@@ -1452,6 +1544,8 @@ FLAGS
 DESCRIPTION
   Push environment variables from the local .env file to your linked Hydrogen storefront.
 ```
+
+_See code: [dist/commands/hydrogen/env/push.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/env/push.js)_
 
 ## `shopify hydrogen generate route ROUTENAME`
 
@@ -1482,6 +1576,8 @@ DESCRIPTION
   Generates a standard Shopify route.
 ```
 
+_See code: [dist/commands/hydrogen/generate/route.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/generate/route.js)_
+
 ## `shopify hydrogen generate routes`
 
 Generates all supported standard shopify routes.
@@ -1504,6 +1600,8 @@ FLAGS
 DESCRIPTION
   Generates all supported standard shopify routes.
 ```
+
+_See code: [dist/commands/hydrogen/generate/routes.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/generate/routes.js)_
 
 ## `shopify hydrogen init`
 
@@ -1539,6 +1637,8 @@ DESCRIPTION
   Creates a new Hydrogen storefront.
 ```
 
+_See code: [dist/commands/hydrogen/init.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/init.js)_
+
 ## `shopify hydrogen link`
 
 Link a local project to one of your shop's Hydrogen storefronts.
@@ -1558,6 +1658,8 @@ DESCRIPTION
   Link a local project to one of your shop's Hydrogen storefronts.
 ```
 
+_See code: [dist/commands/hydrogen/link.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/link.js)_
+
 ## `shopify hydrogen list`
 
 Returns a list of Hydrogen storefronts available on a given shop.
@@ -1573,6 +1675,8 @@ FLAGS
 DESCRIPTION
   Returns a list of Hydrogen storefronts available on a given shop.
 ```
+
+_See code: [dist/commands/hydrogen/list.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/list.js)_
 
 ## `shopify hydrogen login`
 
@@ -1592,6 +1696,8 @@ DESCRIPTION
   Login to your Shopify account.
 ```
 
+_See code: [dist/commands/hydrogen/login.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/login.js)_
+
 ## `shopify hydrogen logout`
 
 Logout of your local session.
@@ -1607,6 +1713,8 @@ FLAGS
 DESCRIPTION
   Logout of your local session.
 ```
+
+_See code: [dist/commands/hydrogen/logout.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/logout.js)_
 
 ## `shopify hydrogen preview`
 
@@ -1645,6 +1753,8 @@ DESCRIPTION
   Runs a Hydrogen storefront in an Oxygen worker for production.
 ```
 
+_See code: [dist/commands/hydrogen/preview.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/preview.js)_
+
 ## `shopify hydrogen setup`
 
 Scaffold routes and core functionality.
@@ -1668,6 +1778,8 @@ FLAGS
 DESCRIPTION
   Scaffold routes and core functionality.
 ```
+
+_See code: [dist/commands/hydrogen/setup.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/setup.js)_
 
 ## `shopify hydrogen setup css [STRATEGY]`
 
@@ -1693,6 +1805,8 @@ DESCRIPTION
   Setup CSS strategies for your project.
 ```
 
+_See code: [dist/commands/hydrogen/setup/css.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/setup/css.js)_
+
 ## `shopify hydrogen setup markets [STRATEGY]`
 
 Setup support for multiple markets in your project.
@@ -1713,6 +1827,8 @@ DESCRIPTION
   Setup support for multiple markets in your project.
 ```
 
+_See code: [dist/commands/hydrogen/setup/markets.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/setup/markets.js)_
+
 ## `shopify hydrogen setup vite`
 
 EXPERIMENTAL: Upgrades the project to use Vite.
@@ -1729,6 +1845,8 @@ DESCRIPTION
   EXPERIMENTAL: Upgrades the project to use Vite.
 ```
 
+_See code: [dist/commands/hydrogen/setup/vite.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/setup/vite.js)_
+
 ## `shopify hydrogen shortcut`
 
 Creates a global `h2` shortcut for the Hydrogen CLI
@@ -1740,6 +1858,8 @@ USAGE
 DESCRIPTION
   Creates a global `h2` shortcut for the Hydrogen CLI
 ```
+
+_See code: [dist/commands/hydrogen/shortcut.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/shortcut.js)_
 
 ## `shopify hydrogen unlink`
 
@@ -1756,6 +1876,8 @@ FLAGS
 DESCRIPTION
   Unlink a local project from a Hydrogen storefront.
 ```
+
+_See code: [dist/commands/hydrogen/unlink.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/unlink.js)_
 
 ## `shopify hydrogen upgrade`
 
@@ -1775,6 +1897,8 @@ DESCRIPTION
   Upgrade Remix and Hydrogen npm dependencies.
 ```
 
+_See code: [dist/commands/hydrogen/upgrade.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/hydrogen/upgrade.js)_
+
 ## `shopify organization list`
 
 List Shopify organizations you have access to.
@@ -1793,6 +1917,8 @@ DESCRIPTION
 
   Lists the Shopify organizations that you have access to, along with their organization IDs.
 ```
+
+_See code: [dist/commands/organization/list.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/organization/list.js)_
 
 ## `shopify plugins add PLUGIN`
 
@@ -1856,6 +1982,8 @@ EXAMPLES
   $ shopify plugins inspect myplugin
 ```
 
+_See code: [dist/commands/plugins/inspect.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/plugins/inspect.js)_
+
 ## `shopify plugins install PLUGIN`
 
 Installs a plugin into shopify.
@@ -1893,6 +2021,8 @@ EXAMPLES
     $ shopify plugins install someuser/someplugin
 ```
 
+_See code: [dist/commands/plugins/install.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/plugins/install.js)_
+
 ## `shopify plugins link PATH`
 
 Links a plugin into the CLI for development.
@@ -1921,6 +2051,8 @@ DESCRIPTION
 EXAMPLES
   $ shopify plugins link myplugin
 ```
+
+_See code: [dist/commands/plugins/link.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/plugins/link.js)_
 
 ## `shopify plugins remove [PLUGIN]`
 
@@ -1961,6 +2093,8 @@ FLAGS
   --reinstall  Reinstall all plugins after uninstalling.
 ```
 
+_See code: [dist/commands/plugins/reset.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/plugins/reset.js)_
+
 ## `shopify plugins uninstall [PLUGIN]`
 
 Removes a plugin from the CLI.
@@ -1986,6 +2120,8 @@ ALIASES
 EXAMPLES
   $ shopify plugins uninstall myplugin
 ```
+
+_See code: [dist/commands/plugins/uninstall.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/plugins/uninstall.js)_
 
 ## `shopify plugins unlink [PLUGIN]`
 
@@ -2029,6 +2165,8 @@ DESCRIPTION
   Update installed plugins.
 ```
 
+_See code: [dist/commands/plugins/update.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/plugins/update.js)_
+
 ## `shopify search [query]`
 
 Starts a search on shopify.dev.
@@ -2048,6 +2186,8 @@ EXAMPLES
       # search for a phrase on Shopify.dev
       shopify search "<a search query separated by spaces>"
 ```
+
+_See code: [dist/commands/search.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/search.js)_
 
 ## `shopify theme check`
 
@@ -2088,6 +2228,8 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/theme-check/checks)
 ```
 
+_See code: [dist/commands/theme/check.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/check.js)_
+
 ## `shopify theme console`
 
 Shopify Liquid REPL (read-eval-print loop) tool
@@ -2119,6 +2261,8 @@ DESCRIPTION
 
   You can also provide context to the console using a URL, as some Liquid objects are context-specific
 ```
+
+_See code: [dist/commands/theme/console.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/console.js)_
 
 ## `shopify theme delete`
 
@@ -2155,6 +2299,8 @@ DESCRIPTION
   You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this
   confirmation using the `--force` flag.
 ```
+
+_See code: [dist/commands/theme/delete.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/delete.js)_
 
 ## `shopify theme dev`
 
@@ -2278,6 +2424,8 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/tools/cli#directory-structure).
 ```
 
+_See code: [dist/commands/theme/dev.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/dev.js)_
+
 ## `shopify theme duplicate`
 
 Duplicates a theme from your theme library.
@@ -2339,6 +2487,8 @@ DESCRIPTION
   ```
 ```
 
+_See code: [dist/commands/theme/duplicate.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/duplicate.js)_
+
 ## `shopify theme info`
 
 Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.
@@ -2366,6 +2516,8 @@ DESCRIPTION
   Displays information about your theme environment, including your current store. Can also retrieve information about a
   specific theme.
 ```
+
+_See code: [dist/commands/theme/info.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/info.js)_
 
 ## `shopify theme init [name] [flags]`
 
@@ -2401,6 +2553,8 @@ DESCRIPTION
   (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.
 ```
 
+_See code: [dist/commands/theme/init.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/init.js)_
+
 ## `shopify theme language-server`
 
 Start a Language Server Protocol server.
@@ -2418,6 +2572,8 @@ DESCRIPTION
 
   Starts the "Language Server" (https://shopify.dev/docs/themes/tools/cli/language-server).
 ```
+
+_See code: [dist/commands/theme/language-server.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/language-server.js)_
 
 ## `shopify theme list`
 
@@ -2448,6 +2604,8 @@ DESCRIPTION
   Lists the themes in your store, along with their IDs and statuses.
 ```
 
+_See code: [dist/commands/theme/list.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/list.js)_
+
 ## `shopify theme metafields pull`
 
 Download metafields definitions from your shop into a local file.
@@ -2475,6 +2633,8 @@ DESCRIPTION
 
   If the metafields file already exists, it will be overwritten.
 ```
+
+_See code: [dist/commands/theme/metafields/pull.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/metafields/pull.js)_
 
 ## `shopify theme open`
 
@@ -2514,6 +2674,8 @@ DESCRIPTION
   store.
 ```
 
+_See code: [dist/commands/theme/open.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/open.js)_
+
 ## `shopify theme package`
 
 Package your theme into a .zip file, ready to upload to the Online Store.
@@ -2543,6 +2705,8 @@ DESCRIPTION
   The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your "settings_schema.json"
   (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.
 ```
+
+_See code: [dist/commands/theme/package.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/package.js)_
 
 ## `shopify theme preview`
 
@@ -2579,6 +2743,8 @@ DESCRIPTION
   to update an existing preview instead of creating a new one.
 ```
 
+_See code: [dist/commands/theme/preview.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/preview.js)_
+
 ## `shopify theme profile`
 
 Profile the Liquid rendering of a theme page.
@@ -2612,6 +2778,8 @@ DESCRIPTION
   This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given
   page.
 ```
+
+_See code: [dist/commands/theme/profile.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/profile.js)_
 
 ## `shopify theme publish`
 
@@ -2650,6 +2818,8 @@ DESCRIPTION
   you want to publish the specified theme. You can skip this confirmation using the `--force` flag.
 ```
 
+_See code: [dist/commands/theme/publish.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/publish.js)_
+
 ## `shopify theme pull`
 
 Download your remote theme files locally.
@@ -2685,6 +2855,8 @@ DESCRIPTION
 
   If no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.
 ```
+
+_See code: [dist/commands/theme/pull.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/pull.js)_
 
 ## `shopify theme push`
 
@@ -2765,6 +2937,8 @@ DESCRIPTION
   ```
 ```
 
+_See code: [dist/commands/theme/push.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/push.js)_
+
 ## `shopify theme rename`
 
 Renames an existing theme.
@@ -2798,6 +2972,8 @@ DESCRIPTION
   your store.
 ```
 
+_See code: [dist/commands/theme/rename.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/rename.js)_
+
 ## `shopify theme share`
 
 Creates a shareable, unpublished, and new theme on your theme library with a randomized name.
@@ -2830,6 +3006,8 @@ DESCRIPTION
   share with others.
 ```
 
+_See code: [dist/commands/theme/share.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/theme/share.js)_
+
 ## `shopify upgrade`
 
 Shows details on how to upgrade Shopify CLI.
@@ -2844,6 +3022,8 @@ DESCRIPTION
   Shows details on how to upgrade Shopify CLI.
 ```
 
+_See code: [dist/commands/upgrade.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/upgrade.js)_
+
 ## `shopify version`
 
 Shopify CLI version currently installed.
@@ -2855,4 +3035,6 @@ USAGE
 DESCRIPTION
   Shopify CLI version currently installed.
 ```
+
+_See code: [dist/commands/version.js](https://github.com/Shopify/cli/blob/v3.92.0/dist/commands/version.js)_
 <!-- commandsstop -->
