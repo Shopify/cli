@@ -150,7 +150,7 @@ export class FileWatcher {
   private getAllWatchedFiles(): string[] {
     this.extensionWatchedFiles.clear()
 
-    const extensionResults = this.app.nonConfigExtensions.map((extension) => ({
+    const extensionResults = this.app.realExtensions.map((extension) => ({
       extension,
       watchedFiles: extension.watchedFiles(),
     }))

@@ -351,6 +351,12 @@ export class DevSession {
       .filter((event) => event.type !== 'deleted')
       .map((event) => event.extension.uid)
 
+    // WORKAROUND. This is a temporary fix because `admin` is not compatible with inheritedUids in Core.
+    // It needs to be included in the manifest always if present in the app.
+    if (appEvent.app.allExtensions.some((ext) => ext.type === 'admin') && !updatedUids.includes('admin')) {
+      updatedUids.push('admin')
+    }
+
     const nonUpdatedUids = appEvent.app.allExtensions
       .filter((ext) => !updatedUids.includes(ext.uid))
       .map((ext) => ext.uid)

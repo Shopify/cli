@@ -35,7 +35,8 @@ export interface ExtensionDevOptions {
   buildDirectory?: string
 
   /**
-   * The extension to be built.
+   * All real extensions in the app, including non-previewable ones (e.g., admin config).
+   * Previewable extensions are filtered internally for the UI payload.
    */
   extensions: ExtensionInstance[]
 
@@ -126,14 +127,20 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
   const bundlePath = payloadOptions.appWatcher.buildOutputPath
   const payloadStoreRawPayload = await getExtensionsPayloadStoreRawPayload(payloadOptions, bundlePath)
   const payloadStore = new ExtensionsPayloadStore(payloadStoreRawPayload, payloadOptions)
-  let extensions = payloadOptions.extensions
+  let extensions = payloadOptions.extensions.filter((ext) => ext.isPreviewable)
 
   const getExtensions = () => {
     return extensions
   }
 
   outputDebug(`Setting up the UI extensions HTTP server...`, payloadOptions.stdout)
-  const httpServer = setupHTTPServer({devOptions: payloadOptions, payloadStore, getExtensions})
+  const getAppAssets = () => payloadStore.getAppAssets()
+  const httpServer = setupHTTPServer({
+    devOptions: payloadOptions,
+    payloadStore,
+    getExtensions,
+    getAppAssets,
+  })
 
   outputDebug(`Setting up the UI extensions Websocket server...`, payloadOptions.stdout)
   const websocketConnection = setupWebsocketConnection({...payloadOptions, httpServer, payloadStore})
@@ -143,6 +150,11 @@ export async function devUIExtensions(options: ExtensionDevOptions): Promise<voi
     if (appWasReloaded) {
       extensions = app.allExtensions.filter((ext) => ext.isPreviewable)
     }
+
+    // Exception for AdminConfig: it's a extension that needs its config extracted at the app level
+    // for the payloed. No other exceptions should be added, if this pattern is needed again we should
+    // generalize it.
+    payloadStore.updateAdminConfigFromExtensionEvents(extensionEvents)
 
     for (const event of extensionEvents) {
       if (!event.extension.isPreviewable) continue

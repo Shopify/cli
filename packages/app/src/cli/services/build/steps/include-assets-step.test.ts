@@ -1044,7 +1044,7 @@ describe('executeIncludeAssetsStep', () => {
       )
     })
 
-    test('throws when manifest.json already exists in the output directory', async () => {
+    test('overwrites manifest.json when it already exists in the output directory', async () => {
       // Given — a prior inclusion already copied a manifest.json to the output dir
       const contextWithConfig = {
         ...mockContext,
@@ -1056,8 +1056,7 @@ describe('executeIncludeAssetsStep', () => {
         } as unknown as ExtensionInstance,
       }
 
-      // Source files exist; output manifest.json already exists (simulating conflict);
-      // candidate output paths for tools.json are free so copyConfigKeyEntry succeeds.
+      // Source files exist; output manifest.json already exists
       vi.mocked(fs.fileExists).mockImplementation(async (path) => {
         const pathStr = String(path)
         return pathStr === '/test/output/manifest.json' || pathStr.startsWith('/test/extension/')
@@ -1081,10 +1080,9 @@ describe('executeIncludeAssetsStep', () => {
         },
       }
 
-      // When / Then — throws rather than silently overwriting
-      await expect(executeIncludeAssetsStep(step, contextWithConfig)).rejects.toThrow(
-        `Can't write manifest.json: a file already exists at '/test/output/manifest.json'`,
-      )
+      // When / Then — overwrites existing manifest.json
+      await expect(executeIncludeAssetsStep(step, contextWithConfig)).resolves.not.toThrow()
+      expect(fs.writeFile).toHaveBeenCalledWith('/test/output/manifest.json', expect.any(String))
     })
 
     test('writes an empty manifest when anchor resolves to a non-array value', async () => {

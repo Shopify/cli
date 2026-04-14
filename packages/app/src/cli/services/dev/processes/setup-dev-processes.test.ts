@@ -220,7 +220,7 @@ describe('setup-dev-processes', () => {
       prefix: 'extensions',
       options: {
         apiKey: 'api-key',
-        previewableExtensions: [previewable],
+        allExtensions: expect.arrayContaining([previewable]),
         storeFqdn,
         proxyUrl: 'https://example.com/proxy',
         port: expect.any(Number),
