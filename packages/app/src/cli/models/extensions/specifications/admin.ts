@@ -50,6 +50,17 @@ const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
       lifecycle: 'deploy',
       steps: [
         {
+          id: 'wait_for_index_html',
+          name: 'Wait for index.html',
+          type: 'wait_for_file',
+          config: {
+            configKey: 'admin.static_root',
+            filename: 'index.html',
+            timeoutMs: 60000,
+            intervalMs: 500,
+          },
+        },
+        {
           id: 'hosted_app_copy_files',
           name: 'Hosted App Copy Files',
           type: 'include_assets',

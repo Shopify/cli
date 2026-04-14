@@ -5,6 +5,7 @@ import {executeBundleUIStep} from './bundle-ui-step.js'
 import {executeCopyStaticAssetsStep} from './copy-static-assets-step.js'
 import {executeBuildFunctionStep} from './build-function-step.js'
 import {executeCreateTaxStubStep} from './create-tax-stub-step.js'
+import {executeWaitForFileStep, WaitForFileStep} from './wait-for-file-step.js'
 import type {LifecycleStep, BuildContext} from '../client-steps.js'
 
 /**
@@ -20,6 +21,9 @@ export async function executeStepByType(step: LifecycleStep, context: BuildConte
   switch (step.type) {
     case 'include_assets':
       return executeIncludeAssetsStep(step, context)
+
+    case 'wait_for_file':
+      return executeWaitForFileStep(step as WaitForFileStep, context)
 
     case 'build_theme':
       return executeBuildThemeStep(step, context)

@@ -1,5 +1,6 @@
 import {executeStepByType} from './steps/index.js'
 import type {IncludeAssetsConfig} from './steps/include-assets-step.js'
+import type {WaitForFileConfig} from './steps/wait-for-file-step.js'
 import type {ExtensionInstance} from '../../models/extensions/extension-instance.js'
 import type {ExtensionBuildOptions} from './extension.js'
 
@@ -21,6 +22,12 @@ interface IncludeAssetsStep extends BaseStep {
   readonly config: IncludeAssetsConfig
 }
 
+/** Step with typed config specific to wait_for_file. */
+interface WaitForFileStep extends BaseStep {
+  readonly type: 'wait_for_file'
+  readonly config: WaitForFileConfig
+}
+
 /** Steps that don't require any config yet. */
 interface NoConfigStep extends BaseStep {
   readonly type:
@@ -40,7 +47,7 @@ interface NoConfigStep extends BaseStep {
  * This is a discriminated union on `type`: each step type carries its own
  * typed `config`, so TypeScript catches config typos at compile time.
  */
-export type LifecycleStep = IncludeAssetsStep | NoConfigStep
+export type LifecycleStep = IncludeAssetsStep | WaitForFileStep | NoConfigStep
 
 /**
  * A group of steps scoped to a specific lifecycle phase.
