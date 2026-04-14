@@ -138,11 +138,11 @@ export async function handler(error: unknown): Promise<unknown> {
     fatal.stack = error.stack
   } else {
     // errors can come in all shapes and sizes...
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const maybeError = error as any
-    fatal = new BugError(maybeError?.message ?? 'Unknown error')
-    if (maybeError?.stack) {
-      fatal.stack = maybeError?.stack
+    const maybeError = error as Record<string, unknown>
+    const message = typeof maybeError?.message === 'string' ? maybeError.message : 'Unknown error'
+    fatal = new BugError(message)
+    if (typeof maybeError?.stack === 'string') {
+      fatal.stack = maybeError.stack
     }
   }
 

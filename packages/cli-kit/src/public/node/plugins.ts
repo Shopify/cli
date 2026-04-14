@@ -25,8 +25,9 @@ export async function fanoutHooks<TPluginMap extends HookReturnsPerPlugin, TEven
   timeout?: number,
 ): Promise<Partial<TPluginMap[typeof event]['pluginReturns']>> {
   const res = await config.runHook(event, options, timeout)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return Object.fromEntries(res.successes.map(({result, plugin}) => [plugin.name, result])) as any
+  return Object.fromEntries(
+    res.successes.map(({result, plugin}) => [plugin.name, result]),
+  ) as Partial<TPluginMap[typeof event]['pluginReturns']>
 }
 
 type AppSpecificMonorailFields = PickByPrefix<
