@@ -21,6 +21,10 @@ import {
   inferPackageManager,
   PackageManager,
   npmLockfile,
+  pnpmLockfile,
+  yarnLockfile,
+  bunLockfile,
+  packageManagerBinaryCommandForDirectory,
 } from './node-package-manager.js'
 import {captureOutput, exec} from './system.js'
 import {inTemporaryDirectory, mkdir, touchFile, writeFile} from './fs.js'
@@ -913,6 +917,87 @@ describe('getPackageManager', () => {
       const packageManager = await getPackageManager(tmpDir)
       // pnpm is used locally and in CI
       expect(packageManager).toEqual('pnpm')
+    })
+  })
+})
+
+describe('packageManagerBinaryCommandForDirectory', () => {
+  test('returns npm exec arguments for npm projects', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, npmLockfile), '')
+
+      const command = await packageManagerBinaryCommandForDirectory(
+        tmpDir,
+        'graphql-code-generator',
+        '--config',
+        'package.json',
+      )
+
+      expect(command).toEqual({
+        command: 'npm',
+        args: ['exec', '--', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('returns pnpm exec arguments for nested pnpm workspace packages', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'root'})
+      await writeFile(joinPath(tmpDir, pnpmLockfile), '')
+      const nested = joinPath(tmpDir, 'extensions', 'cart-transformer')
+      await mkdir(nested)
+      await writePackageJSON(nested, {name: 'cart-transformer'})
+
+      const command = await packageManagerBinaryCommandForDirectory(
+        nested,
+        'graphql-code-generator',
+        '--config',
+        'package.json',
+      )
+
+      expect(command).toEqual({
+        command: 'pnpm',
+        args: ['exec', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('returns yarn run arguments for yarn projects', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, yarnLockfile), '')
+
+      const command = await packageManagerBinaryCommandForDirectory(
+        tmpDir,
+        'graphql-code-generator',
+        '--config',
+        'package.json',
+      )
+
+      expect(command).toEqual({
+        command: 'yarn',
+        args: ['run', 'graphql-code-generator', '--config', 'package.json'],
+      })
+    })
+  })
+
+  test('returns bun x arguments for bun projects', async () => {
+    await inTemporaryDirectory(async (tmpDir) => {
+      await writePackageJSON(tmpDir, {name: 'mock name'})
+      await writeFile(joinPath(tmpDir, bunLockfile), '')
+
+      const command = await packageManagerBinaryCommandForDirectory(
+        tmpDir,
+        'graphql-code-generator',
+        '--config',
+        'package.json',
+      )
+
+      expect(command).toEqual({
+        command: 'bun',
+        args: ['x', 'graphql-code-generator', '--config', 'package.json'],
+      })
     })
   })
 })

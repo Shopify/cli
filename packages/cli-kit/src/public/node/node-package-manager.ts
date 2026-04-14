@@ -137,6 +137,28 @@ export async function getPackageManager(fromDirectory: string): Promise<PackageM
   return 'npm'
 }
 
+export async function packageManagerBinaryCommandForDirectory(
+  directory: string,
+  binary: string,
+  ...args: string[]
+): Promise<{command: string; args: string[]}> {
+  const packageManager = await getPackageManager(directory)
+
+  switch (packageManager) {
+    case 'npm':
+      return {command: 'npm', args: ['exec', '--', binary, ...args]}
+    case 'pnpm':
+      return {command: 'pnpm', args: ['exec', binary, ...args]}
+    case 'yarn':
+      return {command: 'yarn', args: ['run', binary, ...args]}
+    case 'bun':
+      return {command: 'bun', args: ['x', binary, ...args]}
+    case 'homebrew':
+    case 'unknown':
+      throw new UnknownPackageManagerError()
+  }
+}
+
 interface InstallNPMDependenciesRecursivelyOptions {
   /**
    * The dependency manager to use to install the dependencies.
