@@ -1,0 +1,27 @@
+{
+  "name": "@shopify/plugin-app",
+  "version": "3.92.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "/dist",
+    "!/dist/**/*.map",
+    "/oclif.manifest.json"
+  ],
+  "dependencies": {
+    "@shopify/app": "3.92.0",
+    "@oclif/core": "4.5.3"
+  },
+  "oclif": {
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    },
+    "hooks": {
+      "init": "./dist/hooks/init.js",
+      "sensitive_command_metadata": "./dist/hooks/sensitive-metadata.js",
+      "public_command_metadata": "./dist/hooks/public-metadata.js"
+    }
+  }
+}

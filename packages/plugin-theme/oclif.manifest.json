@@ -1,0 +1,2358 @@
+{
+  "commands": {
+    "theme:check": {
+      "aliases": [],
+      "args": {},
+      "description": "Calls and runs \"Theme Check\" (https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. \"Learn more about the checks that Theme Check runs.\" (https://shopify.dev/docs/themes/tools/theme-check/checks)",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "auto-correct": {
+          "char": "a",
+          "description": "Automatically fix offenses",
+          "env": "SHOPIFY_FLAG_AUTO_CORRECT",
+          "name": "auto-correct",
+          "required": false,
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "config": {
+          "char": "C",
+          "description": "Use the config provided, overriding .theme-check.yml if present\n      Supports all theme-check: config values, e.g., theme-check:theme-app-extension,\n      theme-check:recommended, theme-check:all\n      For backwards compatibility, :theme_app_extension is also supported ",
+          "env": "SHOPIFY_FLAG_CONFIG",
+          "name": "config",
+          "required": false,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "fail-level": {
+          "description": "Minimum severity for exit with error code",
+          "env": "SHOPIFY_FLAG_FAIL_LEVEL",
+          "name": "fail-level",
+          "required": false,
+          "default": "error",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "crash",
+            "error",
+            "suggestion",
+            "style",
+            "warning",
+            "info"
+          ],
+          "type": "option"
+        },
+        "init": {
+          "description": "Generate a .theme-check.yml file",
+          "env": "SHOPIFY_FLAG_INIT",
+          "name": "init",
+          "required": false,
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "list": {
+          "description": "List enabled checks",
+          "env": "SHOPIFY_FLAG_LIST",
+          "name": "list",
+          "required": false,
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "output": {
+          "char": "o",
+          "description": "The output format to use",
+          "env": "SHOPIFY_FLAG_OUTPUT",
+          "name": "output",
+          "required": false,
+          "default": "text",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "text",
+            "json"
+          ],
+          "type": "option"
+        },
+        "print": {
+          "description": "Output active config to STDOUT",
+          "env": "SHOPIFY_FLAG_PRINT",
+          "name": "print",
+          "required": false,
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "version": {
+          "char": "v",
+          "description": "Print Theme Check version",
+          "env": "SHOPIFY_FLAG_VERSION",
+          "name": "version",
+          "required": false,
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:check",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Validate the theme.",
+      "descriptionWithMarkdown": "Calls and runs [Theme Check](https://shopify.dev/docs/themes/tools/theme-check) to analyze your theme code for errors and to ensure that it follows theme and Liquid best practices. [Learn more about the checks that Theme Check runs.](https://shopify.dev/docs/themes/tools/theme-check/checks)",
+      "multiEnvironmentsFlags": [
+        "path"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "check.js"
+      ]
+    },
+    "theme:console": {
+      "aliases": [],
+      "args": {},
+      "description": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "url": {
+          "description": "The url to be used as context",
+          "env": "SHOPIFY_FLAG_URL",
+          "name": "url",
+          "default": "/",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "name": "store-password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:console",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Shopify Liquid REPL (read-eval-print loop) tool",
+      "usage": [
+        "theme console",
+        "theme console --url /products/classic-leather-jacket"
+      ],
+      "descriptionWithMarkdown": "Starts the Shopify Liquid REPL (read-eval-print loop) tool. This tool provides an interactive terminal interface for evaluating Liquid code and exploring Liquid objects, filters, and tags using real store data.\n\n  You can also provide context to the console using a URL, as some Liquid objects are context-specific",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "console.js"
+      ]
+    },
+    "theme:delete": {
+      "aliases": [],
+      "args": {},
+      "description": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "development": {
+          "char": "d",
+          "description": "Delete your development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "show-all": {
+          "char": "a",
+          "description": "Include others development themes in theme list.",
+          "env": "SHOPIFY_FLAG_SHOW_ALL",
+          "name": "show-all",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "force": {
+          "char": "f",
+          "description": "Skip confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:delete",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Delete remote themes from the connected store. This command can't be undone.",
+      "descriptionWithMarkdown": "Deletes a theme from your store.\n\n  You can specify multiple themes by ID. If no theme is specified, then you're prompted to select the theme that you want to delete from the list of themes in your store.\n\n  You're asked to confirm that you want to delete the specified themes before they are deleted. You can skip this confirmation using the `--force` flag.",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        [
+          "development",
+          "theme"
+        ]
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "delete.js"
+      ]
+    },
+    "theme:dev": {
+      "aliases": [],
+      "args": {},
+      "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "host": {
+          "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
+          "env": "SHOPIFY_FLAG_HOST",
+          "name": "host",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "live-reload": {
+          "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
+          "env": "SHOPIFY_FLAG_LIVE_RELOAD",
+          "name": "live-reload",
+          "default": "hot-reload",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "hot-reload",
+            "full-page",
+            "off"
+          ],
+          "type": "option"
+        },
+        "error-overlay": {
+          "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      ",
+          "env": "SHOPIFY_FLAG_ERROR_OVERLAY",
+          "name": "error-overlay",
+          "default": "default",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "silent",
+            "default"
+          ],
+          "type": "option"
+        },
+        "poll": {
+          "description": "Force polling to detect file changes.",
+          "env": "SHOPIFY_FLAG_POLL",
+          "hidden": true,
+          "name": "poll",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme-editor-sync": {
+          "description": "Synchronize Theme Editor updates in the local theme files.",
+          "env": "SHOPIFY_FLAG_THEME_EDITOR_SYNC",
+          "name": "theme-editor-sync",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "port": {
+          "description": "Local port to serve theme preview from.",
+          "env": "SHOPIFY_FLAG_PORT",
+          "name": "port",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "listing": {
+          "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "name": "listing",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "nodelete": {
+          "char": "n",
+          "description": "Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.",
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "only": {
+          "char": "o",
+          "description": "Hot reload only files that match the specified pattern.",
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "ignore": {
+          "char": "x",
+          "description": "Skip hot reloading any files that match the specified pattern.",
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "force": {
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "notify": {
+          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+          "env": "SHOPIFY_FLAG_NOTIFY",
+          "name": "notify",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "open": {
+          "description": "Automatically launch the theme preview in your default web browser.",
+          "env": "SHOPIFY_FLAG_OPEN",
+          "name": "open",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "name": "store-password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "allow-live": {
+          "char": "a",
+          "description": "Allow development on a live theme.",
+          "env": "SHOPIFY_FLAG_ALLOW_LIVE",
+          "name": "allow-live",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:dev",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
+      "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "dev.js"
+      ]
+    },
+    "theme:duplicate": {
+      "aliases": [],
+      "args": {},
+      "description": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "name": {
+          "char": "n",
+          "description": "Name of the newly duplicated theme.",
+          "env": "SHOPIFY_FLAG_NAME",
+          "name": "name",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "force": {
+          "char": "f",
+          "description": "Force the duplicate operation to run without prompts or confirmations.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:duplicate",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Duplicates a theme from your theme library.",
+      "usage": [
+        "theme duplicate",
+        "theme duplicate --theme 10 --name 'New Theme'"
+      ],
+      "descriptionWithMarkdown": "If you want to duplicate your local theme, you need to run `shopify theme push` first.\n\nIf no theme ID is specified, you're prompted to select the theme that you want to duplicate from the list of themes in your store. You're asked to confirm that you want to duplicate the specified theme.\n\nPrompts and confirmations are not shown when duplicate is run in a CI environment or the `--force` flag is used, therefore you must specify a theme ID using the `--theme` flag.\n\nYou can optionally name the duplicated theme using the `--name` flag.\n\nIf you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\nSample JSON output:\n\n```json\n{\n  \"theme\": {\n    \"id\": 108267175958,\n    \"name\": \"A Duplicated Theme\",\n    \"role\": \"unpublished\",\n    \"shop\": \"mystore.myshopify.com\"\n  }\n}\n```\n\n```json\n{\n  \"message\": \"The theme 'Summer Edition' could not be duplicated due to errors\",\n  \"errors\": [\"Maximum number of themes reached\"],\n  \"requestId\": \"12345-abcde-67890\"\n}\n```",
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "duplicate.js"
+      ]
+    },
+    "theme:info": {
+      "aliases": [],
+      "args": {},
+      "description": "Displays information about your theme environment, including your current store. Can also retrieve information about a specific theme.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "development": {
+          "char": "d",
+          "description": "Retrieve info from your development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:info",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "multiEnvironmentsFlags": [
+        "store",
+        "password"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "info.js"
+      ]
+    },
+    "theme:init": {
+      "aliases": [],
+      "args": {
+        "name": {
+          "description": "Name of the new theme",
+          "name": "name",
+          "required": false
+        }
+      },
+      "description": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's \"Skeleton theme\" (https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be \"substantively different from existing themes\" (https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "clone-url": {
+          "char": "u",
+          "description": "The Git URL to clone from. Defaults to Shopify's Skeleton theme.",
+          "env": "SHOPIFY_FLAG_CLONE_URL",
+          "name": "clone-url",
+          "default": "https://github.com/Shopify/skeleton-theme.git",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "latest": {
+          "char": "l",
+          "description": "Downloads the latest release of the `clone-url`",
+          "env": "SHOPIFY_FLAG_LATEST",
+          "name": "latest",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:init",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Clones a Git repository to use as a starting point for building a new theme.",
+      "usage": "theme init [name] [flags]",
+      "descriptionWithMarkdown": "Clones a Git repository to your local machine to use as the starting point for building a theme.\n\n  If no Git repository is specified, then this command creates a copy of Shopify's [Skeleton theme](https://github.com/Shopify/skeleton-theme.git), with the specified name in the current folder. If no name is provided, then you're prompted to enter one.\n\n  > Caution: If you're building a theme for the Shopify Theme Store, then you can use our example theme as a starting point. However, the theme that you submit needs to be [substantively different from existing themes](https://shopify.dev/docs/themes/store/requirements#uniqueness) so that it provides added value for users.\n  ",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "init.js"
+      ]
+    },
+    "theme:language-server": {
+      "aliases": [],
+      "args": {},
+      "description": "Starts the \"Language Server\" (https://shopify.dev/docs/themes/tools/cli/language-server).",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:language-server",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Start a Language Server Protocol server.",
+      "descriptionWithMarkdown": "Starts the [Language Server](https://shopify.dev/docs/themes/tools/cli/language-server).",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "language-server.js"
+      ]
+    },
+    "theme:list": {
+      "aliases": [],
+      "args": {},
+      "description": "Lists the themes in your store, along with their IDs and statuses.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "role": {
+          "description": "Only list themes with the given role.",
+          "env": "SHOPIFY_FLAG_ROLE",
+          "name": "role",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "live",
+            "unpublished",
+            "development"
+          ],
+          "type": "option"
+        },
+        "name": {
+          "description": "Only list themes that contain the given name.",
+          "env": "SHOPIFY_FLAG_NAME",
+          "name": "name",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "id": {
+          "description": "Only list theme with the given ID.",
+          "env": "SHOPIFY_FLAG_ID",
+          "name": "id",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:list",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "multiEnvironmentsFlags": [
+        "store",
+        "password"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "list.js"
+      ]
+    },
+    "theme:open": {
+      "aliases": [],
+      "args": {},
+      "description": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "development": {
+          "char": "d",
+          "description": "Open your development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "editor": {
+          "char": "E",
+          "description": "Open the theme editor for the specified theme in the browser.",
+          "env": "SHOPIFY_FLAG_EDITOR",
+          "name": "editor",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "live": {
+          "char": "l",
+          "description": "Open your live (published) theme.",
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:open",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Opens the preview of your remote theme.",
+      "descriptionWithMarkdown": "Returns links that let you preview the specified theme. The following links are returned:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\n  If you don't specify a theme, then you're prompted to select the theme to open from the list of the themes in your store.",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "open.js"
+      ]
+    },
+    "theme:package": {
+      "aliases": [],
+      "args": {},
+      "description": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the \"default Shopify theme folder structure\" (https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per \"Theme Store requirements\" (https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your \"settings_schema.json\" (https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:package",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Package your theme into a .zip file, ready to upload to the Online Store.",
+      "descriptionWithMarkdown": "Packages your local theme files into a ZIP file that can be uploaded to Shopify.\n\n  Only folders that match the [default Shopify theme folder structure](https://shopify.dev/docs/storefronts/themes/tools/cli#directory-structure) are included in the package.\n\n  The package includes the `listings` directory if present (required for multi-preset themes per [Theme Store requirements](https://shopify.dev/docs/storefronts/themes/store/requirements#adding-presets-to-your-theme-zip-submission)).\n\n  The ZIP file uses the name `theme_name-theme_version.zip`, based on parameters in your [settings_schema.json](https://shopify.dev/docs/storefronts/themes/architecture/config/settings-schema-json) file.",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "package.js"
+      ]
+    },
+    "theme:preview": {
+      "aliases": [],
+      "args": {},
+      "description": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "overrides": {
+          "description": "Path to a JSON overrides file.",
+          "env": "SHOPIFY_FLAG_OVERRIDES",
+          "name": "overrides",
+          "required": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "preview-id": {
+          "description": "An existing preview identifier to update instead of creating a new preview.",
+          "env": "SHOPIFY_FLAG_PREVIEW_ID",
+          "name": "preview-id",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "open": {
+          "description": "Automatically launch the theme preview in your default web browser.",
+          "env": "SHOPIFY_FLAG_OPEN",
+          "name": "open",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:preview",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Applies JSON overrides to a theme and returns a preview URL.",
+      "descriptionWithMarkdown": "Applies a JSON overrides file to a theme and creates or updates a preview. This lets you quickly preview changes.\n\n  The command returns a preview URL and a preview identifier. You can reuse the preview identifier with `--preview-id` to update an existing preview instead of creating a new one.",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "preview.js"
+      ]
+    },
+    "theme:profile": {
+      "aliases": [],
+      "args": {},
+      "description": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "url": {
+          "description": "The url to be used as context",
+          "env": "SHOPIFY_FLAG_URL",
+          "name": "url",
+          "default": "/",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "name": "store-password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:profile",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Profile the Liquid rendering of a theme page.",
+      "usage": [
+        "theme profile",
+        "theme profile --url /products/classic-leather-jacket"
+      ],
+      "descriptionWithMarkdown": "Profile the Shopify Liquid on a given page.\n\n  This command will open a web page with the Speedscope profiler detailing the time spent executing Liquid on the given page.",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "profile.js"
+      ]
+    },
+    "theme:publish": {
+      "aliases": [],
+      "args": {},
+      "description": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "force": {
+          "char": "f",
+          "description": "Skip confirmation.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:publish",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Set a remote theme as the live theme.",
+      "descriptionWithMarkdown": "Publishes an unpublished theme from your theme library.\n\nIf no theme ID is specified, then you're prompted to select the theme that you want to publish from the list of themes in your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\nIf you want to publish your local theme, then you need to run `shopify theme push` first. You're asked to confirm that you want to publish the specified theme. You can skip this confirmation using the `--force` flag.",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "theme"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "publish.js"
+      ]
+    },
+    "theme:pull": {
+      "aliases": [],
+      "args": {},
+      "description": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "only": {
+          "char": "o",
+          "description": "Download only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "ignore": {
+          "char": "x",
+          "description": "Skip downloading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "development": {
+          "char": "d",
+          "description": "Pull theme files from your remote development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "live": {
+          "char": "l",
+          "description": "Pull theme files from your remote live theme.",
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "nodelete": {
+          "char": "n",
+          "description": "Prevent deleting local files that don't exist remotely.",
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "force": {
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:pull",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Download your remote theme files locally.",
+      "descriptionWithMarkdown": "Retrieves theme files from Shopify.\n\nIf no theme is specified, then you're prompted to select the theme to pull from the list of the themes in your store.",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "path",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "pull.js"
+      ]
+    },
+    "theme:push": {
+      "aliases": [],
+      "args": {},
+      "description": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "only": {
+          "char": "o",
+          "description": "Upload only the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "ignore": {
+          "char": "x",
+          "description": "Skip uploading the specified files (Multiple flags allowed). Wrap the value in double quotes if you're using wildcards.",
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "json": {
+          "char": "j",
+          "description": "Output the result as JSON. Automatically disables color output.",
+          "env": "SHOPIFY_FLAG_JSON",
+          "hidden": false,
+          "name": "json",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "development": {
+          "char": "d",
+          "description": "Push theme files from your remote development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "development-context": {
+          "char": "c",
+          "dependsOn": [
+            "development"
+          ],
+          "description": "Unique identifier for a development theme context (e.g., PR number, branch name). Reuses an existing development theme with this context name, or creates one if none exists.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT_CONTEXT",
+          "exclusive": [
+            "theme"
+          ],
+          "name": "development-context",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "live": {
+          "char": "l",
+          "description": "Push theme files from your remote live theme.",
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "unpublished": {
+          "char": "u",
+          "description": "Create a new unpublished theme and push to it.",
+          "env": "SHOPIFY_FLAG_UNPUBLISHED",
+          "name": "unpublished",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "nodelete": {
+          "char": "n",
+          "description": "Prevent deleting remote files that don't exist locally.",
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "allow-live": {
+          "char": "a",
+          "description": "Allow push to a live theme.",
+          "env": "SHOPIFY_FLAG_ALLOW_LIVE",
+          "name": "allow-live",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "publish": {
+          "char": "p",
+          "description": "Publish as the live theme after uploading.",
+          "env": "SHOPIFY_FLAG_PUBLISH",
+          "name": "publish",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "force": {
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "strict": {
+          "description": "Require theme check to pass without errors before pushing. Warnings are allowed.",
+          "env": "SHOPIFY_FLAG_STRICT_PUSH",
+          "name": "strict",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "listing": {
+          "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "name": "listing",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:push",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Uploads your local theme files to the connected store, overwriting the remote version if specified.",
+      "usage": [
+        "theme push",
+        "theme push --unpublished --json"
+      ],
+      "descriptionWithMarkdown": "Uploads your local theme files to Shopify, overwriting the remote version if specified.\n\n  If no theme is specified, then you're prompted to select the theme to overwrite from the list of the themes in your store.\n\n  You can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).\n\n  This command returns the following information:\n\n  - A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n  - A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.\n\n  If you use the `--json` flag, then theme information is returned in JSON format, which can be used as a machine-readable input for scripts or continuous integration.\n\n  Sample output:\n\n  ```json\n  {\n    \"theme\": {\n      \"id\": 108267175958,\n      \"name\": \"MyTheme\",\n      \"role\": \"unpublished\",\n      \"shop\": \"mystore.myshopify.com\",\n      \"editor_url\": \"https://mystore.myshopify.com/admin/themes/108267175958/editor\",\n      \"preview_url\": \"https://mystore.myshopify.com/?preview_theme_id=108267175958\"\n    }\n  }\n  ```\n    ",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "path",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "push.js"
+      ]
+    },
+    "theme:rename": {
+      "aliases": [],
+      "args": {},
+      "description": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "name": {
+          "char": "n",
+          "description": "The new name for the theme.",
+          "env": "SHOPIFY_FLAG_NEW_NAME",
+          "name": "name",
+          "required": false,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "development": {
+          "char": "d",
+          "description": "Rename your development theme.",
+          "env": "SHOPIFY_FLAG_DEVELOPMENT",
+          "name": "development",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "live": {
+          "char": "l",
+          "description": "Rename your remote live theme.",
+          "env": "SHOPIFY_FLAG_LIVE",
+          "name": "live",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:rename",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Renames an existing theme.",
+      "descriptionWithMarkdown": "Renames a theme in your store.\n\n  If no theme is specified, then you're prompted to select the theme that you want to rename from the list of themes in your store.\n  ",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "name",
+        [
+          "live",
+          "development",
+          "theme"
+        ]
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "rename.js"
+      ]
+    },
+    "theme:serve": {
+      "aliases": [],
+      "args": {},
+      "description": "\n  Uploads the current theme as the specified theme, or a \"development theme\" (https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the \"editor\" (https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should \"share\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or \"push\" (https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the \"default Shopify theme folder structure\" (https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "host": {
+          "description": "Set which network interface the web server listens on. The default value is 127.0.0.1.",
+          "env": "SHOPIFY_FLAG_HOST",
+          "name": "host",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "live-reload": {
+          "description": "The live reload mode switches the server behavior when a file is modified:\n- hot-reload Hot reloads local changes to CSS and sections (default)\n- full-page  Always refreshes the entire page\n- off        Deactivate live reload",
+          "env": "SHOPIFY_FLAG_LIVE_RELOAD",
+          "name": "live-reload",
+          "default": "hot-reload",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "hot-reload",
+            "full-page",
+            "off"
+          ],
+          "type": "option"
+        },
+        "error-overlay": {
+          "description": "Controls the visibility of the error overlay when an theme asset upload fails:\n- silent Prevents the error overlay from appearing.\n- default Displays the error overlay.\n      ",
+          "env": "SHOPIFY_FLAG_ERROR_OVERLAY",
+          "name": "error-overlay",
+          "default": "default",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "options": [
+            "silent",
+            "default"
+          ],
+          "type": "option"
+        },
+        "poll": {
+          "description": "Force polling to detect file changes.",
+          "env": "SHOPIFY_FLAG_POLL",
+          "hidden": true,
+          "name": "poll",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "theme-editor-sync": {
+          "description": "Synchronize Theme Editor updates in the local theme files.",
+          "env": "SHOPIFY_FLAG_THEME_EDITOR_SYNC",
+          "name": "theme-editor-sync",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "port": {
+          "description": "Local port to serve theme preview from.",
+          "env": "SHOPIFY_FLAG_PORT",
+          "name": "port",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "theme": {
+          "char": "t",
+          "description": "Theme ID or name of the remote theme.",
+          "env": "SHOPIFY_FLAG_THEME_ID",
+          "name": "theme",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "listing": {
+          "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "name": "listing",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "nodelete": {
+          "char": "n",
+          "description": "Prevents files from being deleted in the remote theme when a file has been deleted locally. This applies to files that are deleted while the command is running, and files that have been deleted locally before the command is run.",
+          "env": "SHOPIFY_FLAG_NODELETE",
+          "name": "nodelete",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "only": {
+          "char": "o",
+          "description": "Hot reload only files that match the specified pattern.",
+          "env": "SHOPIFY_FLAG_ONLY",
+          "name": "only",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "ignore": {
+          "char": "x",
+          "description": "Skip hot reloading any files that match the specified pattern.",
+          "env": "SHOPIFY_FLAG_IGNORE",
+          "name": "ignore",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "force": {
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "notify": {
+          "description": "The file path or URL. The file path is to a file that you want updated on idle. The URL path is where you want a webhook posted to report on file changes.",
+          "env": "SHOPIFY_FLAG_NOTIFY",
+          "name": "notify",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "open": {
+          "description": "Automatically launch the theme preview in your default web browser.",
+          "env": "SHOPIFY_FLAG_OPEN",
+          "name": "open",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "store-password": {
+          "description": "The password for storefronts with password protection.",
+          "env": "SHOPIFY_FLAG_STORE_PASSWORD",
+          "name": "store-password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "allow-live": {
+          "char": "a",
+          "description": "Allow development on a live theme.",
+          "env": "SHOPIFY_FLAG_ALLOW_LIVE",
+          "name": "allow-live",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hidden": true,
+      "hiddenAliases": [],
+      "id": "theme:serve",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "summary": "Uploads the current theme as a development theme to the connected store, then prints theme editor and preview URLs to your terminal. While running, changes will push to the store in real time.",
+      "descriptionWithMarkdown": "\n  Uploads the current theme as the specified theme, or a [development theme](https://shopify.dev/docs/themes/tools/cli#development-themes), to a store so you can preview it.\n\nThis command returns the following information:\n\n- A link to your development theme at http://127.0.0.1:9292. This URL can hot reload local changes to CSS and sections, or refresh the entire page when a file changes, enabling you to preview changes in real time using the store's data.\n\n  You can specify a different network interface and port using `--host` and `--port`.\n\n- A link to the [editor](https://shopify.dev/docs/themes/tools/online-editor) for the theme in the Shopify admin.\n\n- A [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with other developers.\n\nIf you already have a development theme for your current environment, then this command replaces the development theme with your local theme. You can override this using the `--theme-editor-sync` flag.\n\n> Note: You can't preview checkout customizations using http://127.0.0.1:9292.\n\nDevelopment themes are deleted when you run `shopify auth logout`. If you need a preview link that can be used after you log out, then you should [share](https://shopify.dev/docs/api/shopify-cli/theme/theme-share) your theme or [push](https://shopify.dev/docs/api/shopify-cli/theme/theme-push) to an unpublished theme on your store.\n\nYou can run this command only in a directory that matches the [default Shopify theme folder structure](https://shopify.dev/docs/themes/tools/cli#directory-structure).",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "serve.js"
+      ]
+    },
+    "theme:share": {
+      "aliases": [],
+      "args": {},
+      "description": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a \"preview link\" (https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "force": {
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "listing": {
+          "description": "The listing preset to use for multi-preset themes. Applies preset files from listings/[preset-name] directory.",
+          "env": "SHOPIFY_FLAG_LISTING",
+          "name": "listing",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:share",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Creates a shareable, unpublished, and new theme on your theme library with a randomized name.",
+      "descriptionWithMarkdown": "Uploads your theme as a new, unpublished theme in your theme library. The theme is given a randomized name.\n\n  This command returns a [preview link](https://help.shopify.com/manual/online-store/themes/adding-themes#share-a-theme-preview-with-others) that you can share with others.",
+      "multiEnvironmentsFlags": [
+        "store",
+        "password",
+        "path"
+      ],
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "share.js"
+      ]
+    },
+    "theme:metafields:pull": {
+      "aliases": [],
+      "args": {},
+      "description": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
+      "flags": {
+        "no-color": {
+          "description": "Disable color output.",
+          "env": "SHOPIFY_FLAG_NO_COLOR",
+          "hidden": false,
+          "name": "no-color",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "verbose": {
+          "description": "Increase the verbosity of the output.",
+          "env": "SHOPIFY_FLAG_VERBOSE",
+          "hidden": false,
+          "name": "verbose",
+          "allowNo": false,
+          "type": "boolean"
+        },
+        "path": {
+          "description": "The path where you want to run the command. Defaults to the current working directory.",
+          "env": "SHOPIFY_FLAG_PATH",
+          "name": "path",
+          "noCacheDefault": true,
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "password": {
+          "description": "Password generated from the Theme Access app or an Admin API token.",
+          "env": "SHOPIFY_CLI_THEME_TOKEN",
+          "name": "password",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "store": {
+          "char": "s",
+          "description": "Store URL. It can be the store prefix (example) or the full myshopify.com URL (example.myshopify.com, https://example.myshopify.com).",
+          "env": "SHOPIFY_FLAG_STORE",
+          "name": "store",
+          "hasDynamicHelp": false,
+          "multiple": false,
+          "type": "option"
+        },
+        "environment": {
+          "char": "e",
+          "description": "The environment to apply to the current command.",
+          "env": "SHOPIFY_FLAG_ENVIRONMENT",
+          "name": "environment",
+          "hasDynamicHelp": false,
+          "multiple": true,
+          "type": "option"
+        },
+        "force": {
+          "char": "f",
+          "description": "Proceed without confirmation, if current directory does not seem to be theme directory.",
+          "env": "SHOPIFY_FLAG_FORCE",
+          "hidden": true,
+          "name": "force",
+          "allowNo": false,
+          "type": "boolean"
+        }
+      },
+      "hasDynamicHelp": false,
+      "hiddenAliases": [],
+      "id": "theme:metafields:pull",
+      "pluginAlias": "@shopify/plugin-theme",
+      "pluginName": "@shopify/plugin-theme",
+      "pluginType": "core",
+      "strict": true,
+      "summary": "Download metafields definitions from your shop into a local file.",
+      "descriptionWithMarkdown": "Retrieves metafields from Shopify Admin.\n\nIf the metafields file already exists, it will be overwritten.",
+      "multiEnvironmentsFlags": null,
+      "isESM": true,
+      "relativePath": [
+        "dist",
+        "commands",
+        "theme",
+        "metafields",
+        "pull.js"
+      ]
+    }
+  },
+  "version": "3.92.0"
+}

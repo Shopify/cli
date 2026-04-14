@@ -1,0 +1,46 @@
+{
+  "name": "plugin-theme",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/plugin-theme/src",
+  "projectType": "library",
+  "tags": ["scope:plugin"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/plugin-theme"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "cwd": "packages/plugin-theme"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint \"src/**/*.ts\"",
+        "cwd": "packages/plugin-theme"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "cwd": "packages/plugin-theme"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc --noEmit",
+        "cwd": "packages/plugin-theme"
+      }
+    }
+  }
+}

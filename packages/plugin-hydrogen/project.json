@@ -1,0 +1,46 @@
+{
+  "name": "plugin-hydrogen",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/plugin-hydrogen/src",
+  "projectType": "library",
+  "tags": ["scope:plugin"],
+  "targets": {
+    "clean": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm rimraf dist/",
+        "cwd": "packages/plugin-hydrogen"
+      }
+    },
+    "build": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist"],
+      "inputs": ["{projectRoot}/src/**/*", "{projectRoot}/package.json"],
+      "options": {
+        "command": "pnpm tsc -b ./tsconfig.build.json",
+        "cwd": "packages/plugin-hydrogen"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint \"src/**/*.ts\"",
+        "cwd": "packages/plugin-hydrogen"
+      }
+    },
+    "lint:fix": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm eslint 'src/**/*.ts' --fix",
+        "cwd": "packages/plugin-hydrogen"
+      }
+    },
+    "type-check": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm tsc --noEmit",
+        "cwd": "packages/plugin-hydrogen"
+      }
+    }
+  }
+}

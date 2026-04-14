@@ -254,6 +254,24 @@ importers:
       '@ast-grep/napi':
         specifier: 0.33.0
         version: 0.33.0
+      '@oclif/plugin-commands':
+        specifier: 4.1.33
+        version: 4.1.33
+      '@oclif/plugin-plugins':
+        specifier: 5.4.47
+        version: 5.4.47
+      '@shopify/plugin-app':
+        specifier: 3.92.0
+        version: link:../plugin-app
+      '@shopify/plugin-did-you-mean':
+        specifier: 3.92.0
+        version: link:../plugin-did-you-mean
+      '@shopify/plugin-hydrogen':
+        specifier: 3.92.0
+        version: link:../plugin-hydrogen
+      '@shopify/plugin-theme':
+        specifier: 3.92.0
+        version: link:../plugin-theme
       esbuild:
         specifier: 0.27.4
         version: 0.27.4
@@ -264,30 +282,12 @@ importers:
       '@oclif/core':
         specifier: 4.5.3
         version: 4.5.3
-      '@oclif/plugin-commands':
-        specifier: 4.1.33
-        version: 4.1.33
-      '@oclif/plugin-plugins':
-        specifier: 5.4.47
-        version: 5.4.47
-      '@shopify/app':
-        specifier: 3.92.0
-        version: link:../app
-      '@shopify/cli-hydrogen':
-        specifier: 11.1.10
-        version: 11.1.10(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.15)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.1(@types/node@22.19.15)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.3))
       '@shopify/cli-kit':
         specifier: 3.92.0
         version: link:../cli-kit
       '@shopify/plugin-cloudflare':
         specifier: 3.92.0
         version: link:../plugin-cloudflare
-      '@shopify/plugin-did-you-mean':
-        specifier: 3.92.0
-        version: link:../plugin-did-you-mean
-      '@shopify/theme':
-        specifier: 3.92.0
-        version: link:../theme
       '@types/global-agent':
         specifier: 3.0.0
         version: 3.0.0
@@ -628,6 +628,15 @@ importers:
         specifier: 3.8.1
         version: 3.8.1
 
+  packages/plugin-app:
+    dependencies:
+      '@oclif/core':
+        specifier: 4.5.3
+        version: 4.5.3
+      '@shopify/app':
+        specifier: 3.92.0
+        version: link:../app
+
   packages/plugin-cloudflare:
     dependencies:
       '@oclif/core':
@@ -656,6 +665,24 @@ importers:
       '@vitest/coverage-istanbul':
         specifier: ^3.1.4
         version: 3.2.4(vitest@3.2.4(@types/node@22.19.15)(jiti@2.6.1)(jsdom@28.1.0)(msw@2.12.10(@types/node@22.19.15)(typescript@5.9.3))(sass@1.97.3)(yaml@2.8.3))
+
+  packages/plugin-hydrogen:
+    dependencies:
+      '@oclif/core':
+        specifier: 4.5.3
+        version: 4.5.3
+      '@shopify/cli-hydrogen':
+        specifier: 11.1.10
+        version: 11.1.10(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.15)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@6.4.1(@types/node@22.19.15)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.3))
+
+  packages/plugin-theme:
+    dependencies:
+      '@oclif/core':
+        specifier: 4.5.3
+        version: 4.5.3
+      '@shopify/theme':
+        specifier: 3.92.0
+        version: link:../theme
 
   packages/theme:
     dependencies:
@@ -4691,10 +4718,6 @@ packages:
     resolution: {integrity: sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w==}
     engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
 
-  chalk@5.6.2:
-    resolution: {integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==}
-    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
-
   change-case-all@1.0.15:
     resolution: {integrity: sha512-3+GIFhk3sNuvFAJKU46o26OdzudQlPNBCu1ZQi3cMeMHhty1bhDxu2WrEilVNYaGvqUtR1VSigFcJOiS13dRhQ==}
 
@@ -7103,8 +7126,8 @@ packages:
     resolution: {integrity: sha512-ppwTtiJZq0O/ai0z7yfudtBpWIoxM8yE6nHi1X47eFR2EWORqfbu6CnPlNsjeN683eT0qG6H/Pyf9fCcvjnnnQ==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  npm@10.9.4:
-    resolution: {integrity: sha512-OnUG836FwboQIbqtefDNlyR0gTHzIfwRfE3DuiNewBvnMnWEpB0VEXwBlFVgqpNzIgYo/MHh3d2Hel/pszapAA==}
+  npm@10.9.8:
+    resolution: {integrity: sha512-fYwb6ODSmHkqrJQQaCxY3M2lPf/mpgC7ik0HSzzIwG5CGtabRp4bNqikatvCoT42b5INQSqudVH0R7yVmC9hVg==}
     engines: {node: ^18.17.0 || >=20.5.0}
     hasBin: true
     bundledDependencies:
@@ -8200,10 +8223,6 @@ packages:
 
   strip-ansi@7.1.0:
     resolution: {integrity: sha512-iq6eVVI64nQQTRYq2KtEg2d2uU7LElhTJwsH4YzIHZshxlgZms/wIc4VoDQTlG/IvVIrBKG06CrZnp0qv7hkcQ==}
-    engines: {node: '>=12'}
-
-  strip-ansi@7.1.2:
-    resolution: {integrity: sha512-gmBGslpoQJtgnMAvOVqGZpEz9dyoKTCzy2nfz/n8aIFhN/jCE/rCmcxabB6jOOHV+0WNnylOxaxBQPSvcWklhA==}
     engines: {node: '>=12'}
 
   strip-ansi@7.2.0:
@@ -11679,7 +11698,7 @@ snapshots:
     dependencies:
       string-width: 5.1.2
       string-width-cjs: string-width@4.2.3
-      strip-ansi: 7.2.0
+      strip-ansi: 7.1.0
       strip-ansi-cjs: strip-ansi@6.0.1
       wrap-ansi: 8.1.0
       wrap-ansi-cjs: wrap-ansi@7.0.0
@@ -11968,7 +11987,7 @@ snapshots:
       clean-stack: 3.0.1
       cli-progress: 3.12.0
       color: 4.2.3
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       ejs: 3.1.10
       get-package-type: 0.1.0
       globby: 11.1.0
@@ -11976,7 +11995,7 @@ snapshots:
       indent-string: 4.0.0
       is-wsl: 2.2.0
       js-yaml: 3.14.2
-      minimatch: 9.0.9
+      minimatch: 9.0.8
       natural-orderby: 2.0.3
       object-treeify: 1.1.33
       password-prompt: 1.1.3
@@ -12065,7 +12084,7 @@ snapshots:
 
   '@oclif/plugin-help@6.2.40':
     dependencies:
-      '@oclif/core': 4.9.0
+      '@oclif/core': 4.5.3
 
   '@oclif/plugin-not-found@3.2.77(@types/node@18.19.70)':
     dependencies:
@@ -12081,7 +12100,7 @@ snapshots:
       '@oclif/core': 4.5.3
       ansis: 3.17.0
       debug: 4.4.0(supports-color@8.1.1)
-      npm: 10.9.4
+      npm: 10.9.8
       npm-package-arg: 11.0.3
       npm-run-path: 5.3.0
       object-treeify: 4.0.1
@@ -12094,7 +12113,7 @@ snapshots:
 
   '@oclif/plugin-warn-if-update-available@3.1.57':
     dependencies:
-      '@oclif/core': 4.9.0
+      '@oclif/core': 4.5.3
       ansis: 3.17.0
       debug: 4.4.3(supports-color@8.1.1)
       http-call: 5.3.0
@@ -12112,7 +12131,7 @@ snapshots:
       natural-orderby: 3.0.2
       object-hash: 3.0.0
       react: 18.3.1
-      strip-ansi: 7.1.2
+      strip-ansi: 7.2.0
       wrap-ansi: 9.0.2
     transitivePeerDependencies:
       - bufferutil
@@ -12588,7 +12607,7 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@shopify/cli-hydrogen@11.1.10(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.15)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@19.2.4(react@18.3.1))(react@18.3.1)(vite@6.4.1(@types/node@22.19.15)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.3))':
+  '@shopify/cli-hydrogen@11.1.10(@graphql-codegen/cli@6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql-config@5.1.5(@types/node@22.19.15)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3))(graphql@16.10.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(vite@6.4.1(@types/node@22.19.15)(jiti@2.6.1)(sass@1.97.3)(yaml@2.8.3))':
     dependencies:
       '@ast-grep/napi': 0.34.1
       '@oclif/core': 3.26.5
@@ -12610,7 +12629,7 @@ snapshots:
       tar-fs: 2.1.4
       tempy: 3.0.0
       ts-morph: 20.0.0
-      use-resize-observer: 9.1.0(react-dom@19.2.4(react@18.3.1))(react@18.3.1)
+      use-resize-observer: 9.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
     optionalDependencies:
       '@graphql-codegen/cli': 6.0.1(@parcel/watcher@2.5.6)(@types/node@18.19.70)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3)
       graphql-config: 5.1.5(@types/node@22.19.15)(crossws@0.3.5)(graphql@16.10.0)(typescript@5.9.3)
@@ -14151,8 +14170,6 @@ snapshots:
 
   chalk@5.4.1: {}
 
-  chalk@5.6.2: {}
-
   change-case-all@1.0.15:
     dependencies:
       change-case: 4.1.2
@@ -14636,7 +14653,7 @@ snapshots:
   detect-port@1.6.1:
     dependencies:
       address: 1.2.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -14929,7 +14946,7 @@ snapshots:
   eslint-compat-utils@0.5.1(eslint@9.39.3(jiti@2.6.1)):
     dependencies:
       eslint: 9.39.3(jiti@2.6.1)
-      semver: 7.7.4
+      semver: 7.6.3
 
   eslint-config-prettier@10.1.5(eslint@9.39.3(jiti@2.6.1)):
     dependencies:
@@ -15798,7 +15815,7 @@ snapshots:
   http-call@5.3.0:
     dependencies:
       content-type: 1.0.5
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       is-retry-allowed: 1.2.0
       is-stream: 2.0.1
       parse-json: 4.0.0
@@ -15887,7 +15904,7 @@ snapshots:
       ansi-escapes: 7.3.0
       ansi-styles: 6.2.3
       auto-bind: 5.0.1
-      chalk: 5.6.2
+      chalk: 5.4.1
       cli-boxes: 3.0.0
       cli-cursor: 4.0.0
       cli-truncate: 4.0.0
@@ -16838,7 +16855,7 @@ snapshots:
     dependencies:
       hosted-git-info: 7.0.2
       proc-log: 4.2.0
-      semver: 7.7.4
+      semver: 7.6.3
       validate-npm-package-name: 5.0.1
 
   npm-run-path@4.0.1:
@@ -16849,7 +16866,7 @@ snapshots:
     dependencies:
       path-key: 4.0.0
 
-  npm@10.9.4: {}
+  npm@10.9.8: {}
 
   nullthrows@1.1.1: {}
 
@@ -17439,11 +17456,6 @@ snapshots:
       loose-envify: 1.4.0
       react: 18.3.1
       scheduler: 0.23.2
-
-  react-dom@19.2.4(react@18.3.1):
-    dependencies:
-      react: 18.3.1
-      scheduler: 0.27.0
 
   react-dom@19.2.4(react@19.2.4):
     dependencies:
@@ -18041,7 +18053,7 @@ snapshots:
     dependencies:
       eastasianwidth: 0.2.0
       emoji-regex: 9.2.2
-      strip-ansi: 7.2.0
+      strip-ansi: 7.1.0
 
   string-width@7.2.0:
     dependencies:
@@ -18117,10 +18129,6 @@ snapshots:
       ansi-regex: 5.0.1
 
   strip-ansi@7.1.0:
-    dependencies:
-      ansi-regex: 6.2.2
-
-  strip-ansi@7.1.2:
     dependencies:
       ansi-regex: 6.2.2
 
@@ -18589,11 +18597,11 @@ snapshots:
 
   urlpattern-polyfill@10.1.0: {}
 
-  use-resize-observer@9.1.0(react-dom@19.2.4(react@18.3.1))(react@18.3.1):
+  use-resize-observer@9.1.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@juggle/resize-observer': 3.4.0
-      react: 18.3.1
-      react-dom: 19.2.4(react@18.3.1)
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   util-deprecate@1.0.2: {}
 
@@ -18916,7 +18924,7 @@ snapshots:
     dependencies:
       ansi-styles: 6.2.3
       string-width: 5.1.2
-      strip-ansi: 7.2.0
+      strip-ansi: 7.1.0
 
   wrap-ansi@9.0.2:
     dependencies:

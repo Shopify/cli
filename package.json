@@ -209,11 +209,13 @@
         "entry": [
           "**/{commands,hooks}/**/*.ts!",
           "**/bin/*.js!",
-          "**/index.ts!"
+          "**/index.ts!",
+          "**/bootstrap.ts!"
         ],
         "project": "**/*.ts!",
         "ignoreDependencies": [
           "@ast-grep/napi",
+          "@shopify/cli-hydrogen",
           "@shopify/theme-check-docs-updater",
           "@shopify/theme-check-node"
         ],
@@ -296,6 +298,36 @@
             "vite.config.ts"
           ]
         }
+      },
+      "packages/plugin-app": {
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/src/*.ts!"
+        ],
+        "project": "**/*.ts!",
+        "ignoreDependencies": [
+          "@oclif/core"
+        ]
+      },
+      "packages/plugin-theme": {
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/src/*.ts!"
+        ],
+        "project": "**/*.ts!",
+        "ignoreDependencies": [
+          "@oclif/core"
+        ]
+      },
+      "packages/plugin-hydrogen": {
+        "entry": [
+          "**/{commands,hooks}/**/*.ts!",
+          "**/src/*.ts!"
+        ],
+        "project": "**/*.ts!",
+        "ignoreDependencies": [
+          "@oclif/core"
+        ]
       },
       "packages/ui-extensions-dev-console": {
         "entry": [

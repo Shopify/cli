@@ -1,0 +1,25 @@
+{
+  "name": "@shopify/plugin-hydrogen",
+  "version": "3.92.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "/dist",
+    "!/dist/**/*.map",
+    "/oclif.manifest.json"
+  ],
+  "dependencies": {
+    "@shopify/cli-hydrogen": "11.1.10",
+    "@oclif/core": "4.5.3"
+  },
+  "oclif": {
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    },
+    "hooks": {
+      "init": "./dist/hooks/init.js"
+    }
+  }
+}
