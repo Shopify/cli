@@ -21,6 +21,8 @@ import {
 import {configurationFileNames, dotEnvFileNames} from '../../constants.js'
 import metadata from '../../metadata.js'
 import {ExtensionInstance, SpecificationBackedExtension} from '../extensions/extension-instance.js'
+import {ModuleRegistry} from '../extensions/module-registry.js'
+import {loadModuleRegistry} from '../extensions/load-specifications.js'
 import {ExtensionsArraySchema, UnifiedSchema} from '../extensions/schemas.js'
 import {ExtensionSpecification, isAppConfigSpecification} from '../extensions/specification.js'
 import {CreateAppOptions, Flag} from '../../utilities/developer-platform-client.js'
@@ -332,6 +334,23 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
     usesCliManagedUrls: configuration.build?.automatically_update_urls_on_dev,
   }
 
+  // Build the module registry and merge remote spec values into it so
+  // descriptors have up-to-date identity data from the platform API.
+  const moduleRegistry = loadModuleRegistry()
+  const remoteSpecsForMerge = specifications.map((spec) => ({
+    name: spec.externalName,
+    externalName: spec.externalName,
+    identifier: spec.identifier,
+    gated: false,
+    externalIdentifier: spec.externalIdentifier,
+    experience: spec.experience as 'extension' | 'configuration' | 'deprecated',
+    managementExperience: 'cli' as const,
+    registrationLimit: spec.registrationLimit,
+    uidStrategy: spec.uidStrategy,
+    surface: spec.surface,
+  }))
+  moduleRegistry.mergeRemoteSpecs(remoteSpecsForMerge)
+
   const loadedConfiguration: ConfigurationLoaderResult<CurrentAppConfiguration, TModuleSpec> = {
     directory: project.directory,
     configPath: configurationPath,
@@ -340,6 +359,7 @@ export async function loadAppFromContext<TModuleSpec extends ExtensionSpecificat
     configSchema,
     specifications,
     remoteFlags,
+    moduleRegistry,
   }
 
   const loader = new AppLoader<CurrentAppConfiguration, TModuleSpec>({
@@ -476,6 +496,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
   private readonly loadedConfiguration: ConfigurationLoaderResult<TConfig, TModuleSpec>
   private readonly reloadState: ReloadState | undefined
   private readonly project: Project
+  private readonly moduleRegistry: ModuleRegistry
 
   constructor({
     ignoreUnknownExtensions,
@@ -489,6 +510,7 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     this.loadedConfiguration = loadedConfiguration
     this.reloadState = reloadState
     this.project = project
+    this.moduleRegistry = loadedConfiguration.moduleRegistry ?? new ModuleRegistry()
   }
 
   private get activeConfigFile(): TomlFile | undefined {
@@ -604,6 +626,14 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     configurationPath: string,
     directory: string,
   ): Promise<ExtensionInstance | undefined> {
+    // Check the module registry first (new subclass-based path).
+    // If a descriptor is found, use its factory to create the right subclass.
+    const descriptor = this.moduleRegistry.findForType(type)
+    if (descriptor) {
+      return this.createModuleFromDescriptor(descriptor, configurationObject, configurationPath, directory)
+    }
+
+    // Fall back to legacy ExtensionSpecification path.
     const specification = this.findSpecificationForType(type)
     let entryPath
     let usedKnownSpecification = false
@@ -657,6 +687,62 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
       }
     }
     return extensionInstance
+  }
+
+  private async createModuleFromDescriptor(
+    descriptor: ReturnType<ModuleRegistry['findForType']> & {},
+    configurationObject: object,
+    configurationPath: string,
+    directory: string,
+  ): Promise<ExtensionInstance | undefined> {
+    const parseResult = descriptor.parseConfigurationObject(configurationObject)
+    if (parseResult.state === 'error') {
+      if (parseResult.errors) {
+        for (const error of parseResult.errors) {
+          this.errors.addError({
+            file: configurationPath,
+            message: error.message ?? `Validation error at ${error.path.join('.')}`,
+          })
+        }
+      }
+      return undefined
+    }
+
+    const configuration = parseResult.data
+    const entryPath = await this.findEntryPath(directory, descriptor)
+
+    const moduleInstance = descriptor.createModule({
+      configuration,
+      configurationPath,
+      entryPath,
+      directory,
+      remoteSpec: {
+        name: descriptor.externalName,
+        externalName: descriptor.externalName,
+        identifier: descriptor.identifier,
+        gated: false,
+        externalIdentifier: descriptor.externalIdentifier,
+        experience: descriptor.experience,
+        managementExperience: 'cli',
+        registrationLimit: descriptor.registrationLimit,
+        uidStrategy: descriptor.uidStrategy,
+        surface: descriptor.surface,
+      },
+    })
+
+    if (this.reloadState && configuration.handle) {
+      const previousDevUUID = this.reloadState.extensionDevUUIDs.get(configuration.handle)
+      if (previousDevUUID) {
+        moduleInstance.devUUID = previousDevUUID
+      }
+    }
+
+    const validateResult = await moduleInstance.validate()
+    if (validateResult.isErr()) {
+      this.errors.addError({file: configurationPath, message: stringifyMessage(validateResult.error).trim()})
+    }
+
+    return moduleInstance
   }
 
   private async loadExtensions(appDirectory: string, appConfiguration: TConfig): Promise<ExtensionInstance[]> {
@@ -837,9 +923,12 @@ class AppLoader<TConfig extends CurrentAppConfiguration, TModuleSpec extends Ext
     return configContent ? extensionInstance : undefined
   }
 
-  private async findEntryPath(directory: string, specification: ExtensionSpecification) {
+  private async findEntryPath(
+    directory: string,
+    specification: {identifier: string; appModuleFeatures?: (...args: unknown[]) => string[]},
+  ) {
     let entryPath
-    if (specification.appModuleFeatures().includes('single_js_entry_path')) {
+    if (specification.appModuleFeatures?.().includes('single_js_entry_path')) {
       entryPath = (
         await Promise.all(
           ['index']
@@ -907,6 +996,7 @@ type ConfigurationLoaderResult<
   TModuleSpec extends ExtensionSpecification,
 > = AppConfigurationInterface<TConfig, TModuleSpec> & {
   configurationLoadResultMetadata: ConfigurationLoadResultMetadata
+  moduleRegistry?: ModuleRegistry
 }
 
 /**
