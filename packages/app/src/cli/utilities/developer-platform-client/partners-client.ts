@@ -170,30 +170,18 @@ import {CLI_KIT_VERSION} from '@shopify/cli-kit/common/version'
 const MAGIC_URL = 'https://shopify.dev/apps/default-app-home'
 const MAGIC_REDIRECT_URL = 'https://shopify.dev/apps/default-app-home/api/auth'
 
-function getAppVars(
-  org: Organization,
-  name: string,
-  isLaunchable = true,
-  scopesArray?: string[],
-): CreateAppQueryVariables {
-  if (isLaunchable) {
-    return {
-      org: parseInt(org.id, 10),
-      title: name,
-      appUrl: 'https://example.com',
-      redir: ['https://example.com/api/auth'],
-      requestedAccessScopes: scopesArray ?? [],
-      type: 'undecided',
-    }
-  } else {
-    return {
-      org: parseInt(org.id, 10),
-      title: name,
-      appUrl: MAGIC_URL,
-      redir: [MAGIC_REDIRECT_URL],
-      requestedAccessScopes: scopesArray ?? [],
-      type: 'undecided',
-    }
+function getAppVars(org: Organization, options: CreateAppOptions): CreateAppQueryVariables {
+  const {name, isLaunchable = true, scopesArray} = options
+  const defaultAppUrl = isLaunchable ? 'https://example.com' : MAGIC_URL
+  const defaultRedirectUrl = isLaunchable ? 'https://example.com/api/auth' : MAGIC_REDIRECT_URL
+
+  return {
+    org: parseInt(org.id, 10),
+    title: name,
+    appUrl: options.applicationUrl ?? defaultAppUrl,
+    redir: options.redirectUrls ?? [defaultRedirectUrl],
+    requestedAccessScopes: scopesArray ?? [],
+    type: 'undecided',
   }
 }
 
@@ -395,7 +383,7 @@ export class PartnersClient implements DeveloperPlatformClient {
   }
 
   async createApp(org: Organization, options: CreateAppOptions): Promise<OrganizationApp> {
-    const variables: CreateAppQueryVariables = getAppVars(org, options.name, options.isLaunchable, options.scopesArray)
+    const variables: CreateAppQueryVariables = getAppVars(org, options)
     const result: CreateAppQuerySchema = await this.request(CreateAppQuery, variables)
     if (result.appCreate.userErrors.length > 0) {
       const errors = result.appCreate.userErrors.map((error) => error.message).join(', ')

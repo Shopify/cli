@@ -120,6 +120,9 @@ export interface CreateAppOptions {
   scopesArray?: string[]
   directory?: string
   isEmbedded?: boolean
+  applicationUrl?: string
+  redirectUrls?: string[]
+  staticRoot?: string
 }
 
 interface AppModuleVersionSpecification {

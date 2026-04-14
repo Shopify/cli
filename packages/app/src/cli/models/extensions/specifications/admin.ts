@@ -3,6 +3,8 @@ import {BaseConfigType, ZodSchemaType} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
 
+export const AdminSpecIdentifier = 'admin'
+
 const AdminSchema = zod.object({
   admin: zod
     .object({
