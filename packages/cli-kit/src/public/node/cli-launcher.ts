@@ -17,15 +17,17 @@ export async function launchCLI(options: Options): Promise<void> {
   type OclifCore = typeof import('@oclif/core')
   const oclifModule = await import('@oclif/core')
   // esbuild wraps CJS dynamic imports under .default when bundling as ESM with code splitting
-  const {Config, run, flush, Errors, settings}: OclifCore =
+  const {run, flush, Errors, settings}: OclifCore =
     (oclifModule as OclifCore & {default?: OclifCore}).default ?? oclifModule
+
+  const {ShopifyConfig} = await import('./custom-oclif-loader.js')
 
   if (isDevelopment()) {
     settings.debug = true
   }
 
   try {
-    const config = new Config({root: fileURLToPath(options.moduleURL)})
+    const config = new ShopifyConfig({root: fileURLToPath(options.moduleURL)})
     await config.load()
 
     await run(options.argv, config)

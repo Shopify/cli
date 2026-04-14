@@ -62,6 +62,9 @@ async function runShopifyCLI({development}: RunShopifyCLIOptions) {
     moduleURL: import.meta.url,
     development,
   })
+  // Force exit after command completes. Background hooks (init, prerun analytics,
+  // postrun) are best-effort and shouldn't delay the user.
+  process.exit(0)
 }
 
 export default runShopifyCLI

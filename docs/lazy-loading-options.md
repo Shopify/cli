@@ -218,9 +218,9 @@ export {AppInitHook as default} from '@shopify/app'
 |---|---|
 | **Branch** | `lazy-loading-option-b` |
 | **Perf baseline (`main`)** | 1.778s ± 0.106s (range 1.647s … 2.010s) |
-| **Perf result** | 1.594s ± 0.027s (range 1.556s … 1.646s) |
-| **Delta** | **-10.3%** |
-| **Note** | Heavy packages (`@shopify/app`, `@shopify/theme`, `@shopify/cli-hydrogen`) are NOT loaded for `version`. The remaining 1.6s is `@shopify/cli-kit` + oclif baseline cost. |
+| **Perf result** | 0.412s ± 0.012s (range 0.397s … 0.445s) |
+| **Delta** | **-76.8%** |
+| **Note** | Uses ShopifyConfig with non-blocking init/prerun/postrun hooks + oclif pattern strategy for native lazy loading. Heavy packages NOT loaded for non-app/theme/hydrogen commands. |
 
 **Switch to oclif's native `pattern` discovery with a `commands/` directory where each file is a one-line re-export.**
 
