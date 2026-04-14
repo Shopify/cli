@@ -84,7 +84,7 @@ async function sendSample(options: WebhookTriggerOptions) {
     const result = await triggerLocalWebhook(options.address, sample.samplePayload, sample.headers)
 
     if (result) {
-      outputSuccess('Localhost delivery sucessful')
+      outputSuccess('Localhost delivery successful')
       return
     }
 

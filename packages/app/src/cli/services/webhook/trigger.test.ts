@@ -213,7 +213,7 @@ describe('webhookTriggerService', () => {
         anOrganizationId,
       )
       expect(triggerLocalWebhook).toHaveBeenCalledWith(aFullLocalAddress, samplePayload, sampleHeaders)
-      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery sucessful')
+      expect(outputSuccess).toHaveBeenCalledWith('Localhost delivery successful')
     })
 
     test('shows an error if localhost is not ready', async () => {

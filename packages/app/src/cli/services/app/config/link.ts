@@ -351,7 +351,7 @@ export async function overwriteLocalConfigFileWithRemoteAppConfiguration(options
       },
       replaceLocalArrayStrategy,
     ),
-    // Always use our prefered build options
+    // Always use our preferred build options
     build: buildOptionsForGeneratedConfigFile({
       existingBuildOptions: localAppOptions.existingBuildOptions,
       linkedAppAndClientIdFromFileAreInSync: localAppOptions.localAppIdMatchedRemote,

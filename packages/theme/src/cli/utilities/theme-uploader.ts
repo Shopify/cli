@@ -282,7 +282,7 @@ function buildUploadJob(
     Promise.resolve(),
   )
 
-  // Dependant and independant files are uploaded concurrently
+  // Dependent and independent files are uploaded concurrently
   const independentFilesUploadPromise = Promise.resolve().then(() => uploadFileBatches(independentFiles.flat()))
 
   const promise = Promise.all([dependentFilesUploadPromise, independentFilesUploadPromise]).then(() => {
