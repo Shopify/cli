@@ -1,24 +1,32 @@
 import {BaseConfigType} from './schemas.js'
 import {ApplicationModule, ExtensionDeployConfigOptions} from './application-module.js'
-import {joinPath} from '@shopify/cli-kit/node/path'
 import {ExtensionFeature, ExtensionSpecification, DevSessionWatchConfig} from './specification.js'
 import {Flag} from '../../utilities/developer-platform-client.js'
 import {AppConfiguration} from '../app/app.js'
 import {ApplicationURLs} from '../../services/dev/urls.js'
+import {joinPath} from '@shopify/cli-kit/node/path'
 import {ok, Result} from '@shopify/cli-kit/node/result'
 
+// Re-export ApplicationModule as ExtensionInstance for backward compatibility.
+// All 76+ files that import ExtensionInstance continue to work as a type.
+
+export type ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> =
+  ApplicationModule<TConfiguration>
+
 /**
- * Backward-compatible class that bridges the old ExtensionSpecification-based
+ * Backward-compatible subclass that bridges the old ExtensionSpecification-based
  * composition pattern with the new ApplicationModule inheritance model.
  *
  * This class extends ApplicationModule and delegates identity/behavior to the
- * existing ExtensionSpecification object, preserving the current API surface
- * for all 76+ consuming files.
+ * existing ExtensionSpecification object, preserving the current creation flow
+ * in the loader and test helpers.
  *
  * Once all specs are migrated to ApplicationModule subclasses, this class
- * will be removed and consumers will use ApplicationModule directly.
+ * will be removed.
  */
-export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfigType> extends ApplicationModule<TConfiguration> {
+export class SpecificationBackedExtension<
+  TConfiguration extends BaseConfigType = BaseConfigType,
+> extends ApplicationModule<TConfiguration> {
   specification: ExtensionSpecification
 
   constructor(options: {
@@ -116,7 +124,12 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
     apiKey,
     appConfiguration,
   }: ExtensionDeployConfigOptions): Promise<{[key: string]: unknown} | undefined> {
-    const deployConfigResult = await this.specification.deployConfig?.(this.configuration, this.directory, apiKey, undefined)
+    const deployConfigResult = await this.specification.deployConfig?.(
+      this.configuration,
+      this.directory,
+      apiKey,
+      undefined,
+    )
     const transformedConfig = this.specification.transformLocalToRemote?.(this.configuration, appConfiguration) as
       | {[key: string]: unknown}
       | undefined

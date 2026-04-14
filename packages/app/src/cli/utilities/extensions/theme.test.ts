@@ -1,5 +1,5 @@
 import {themeExtensionFiles, parseIgnoreFile} from './theme.js'
-import {ExtensionInstance} from '../../models/extensions/extension-instance.js'
+import {SpecificationBackedExtension} from '../../models/extensions/extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../../models/extensions/load-specifications.js'
 import {inTemporaryDirectory, writeFile, mkdir} from '@shopify/cli-kit/node/fs'
 import {dirname, joinPath} from '@shopify/cli-kit/node/path'
@@ -11,7 +11,7 @@ describe('themeExtensionConfig', () => {
       // Given
       const allSpecs = await loadLocalExtensionsSpecifications()
       const specification = allSpecs.find((spec) => spec.identifier === 'theme')!
-      const themeExtension = new ExtensionInstance({
+      const themeExtension = new SpecificationBackedExtension({
         configuration: {
           name: 'theme extension name',
           type: 'theme' as const,

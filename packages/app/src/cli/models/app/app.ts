@@ -329,9 +329,7 @@ export class App<
   }
 
   get draftableExtensions() {
-    return this.realExtensions.filter(
-      (ext) => ext.isUUIDStrategyExtension || ext.specification.identifier === AppAccessSpecIdentifier,
-    )
+    return this.realExtensions.filter((ext) => ext.isUUIDStrategyExtension || ext.type === AppAccessSpecIdentifier)
   }
 
   setDevApplicationURLs(devApplicationURLs: ApplicationURLs) {
@@ -563,11 +561,11 @@ export function validateExtensionsHandlesInCollection(
         errors.push(
           `[${collection.handle}] editor extension collection: Add extension with handle '${extension.handle}' to local app. Local app must include extension with handle '${extension.handle}'.`,
         )
-      } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.specification.identifier)) {
+      } else if (!allowableTypesForExtensionInCollection.includes(matchingExtension.type)) {
         errors.push(
-          `[${collection.handle}] editor extension collection: Remove extension of type '${matchingExtension.specification.identifier}' from this collection. This extension type is not supported in collections.`,
+          `[${collection.handle}] editor extension collection: Remove extension of type '${matchingExtension.type}' from this collection. This extension type is not supported in collections.`,
         )
-      } else if (matchingExtension.specification.identifier === 'ui_extension') {
+      } else if (matchingExtension.type === 'ui_extension') {
         const uiExtension = matchingExtension as ExtensionInstance<UIExtensionType>
         uiExtension.configuration.extension_points.forEach((extensionPoint) => {
           if (extensionPoint.target.startsWith('admin.')) {

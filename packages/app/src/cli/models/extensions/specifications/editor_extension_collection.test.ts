@@ -1,5 +1,5 @@
 import * as loadLocales from '../../../utilities/extensions/locales-configuration.js'
-import {ExtensionInstance} from '../extension-instance.js'
+import {SpecificationBackedExtension} from '../extension-instance.js'
 import {loadLocalExtensionsSpecifications} from '../load-specifications.js'
 import {placeholderAppConfiguration} from '../../app/app.test-data.js'
 import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
@@ -32,7 +32,7 @@ describe('editor_extension_collection', async () => {
 
     const config = parsed.data
 
-    return new ExtensionInstance({
+    return new SpecificationBackedExtension({
       configuration: config,
       directory,
       specification,
