@@ -1,6 +1,7 @@
 import {cliFixture} from './cli.js'
 import {BROWSER_TIMEOUT} from './constants.js'
 import {chromium, type Page} from '@playwright/test'
+import * as fs from 'fs'
 
 // ---------------------------------------------------------------------------
 // Shared browser context type
@@ -29,11 +30,12 @@ export const browserFixture = cliFixture.extend<{}, {browserPage: Page}>({
     async ({}, use) => {
       const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
       const storageStatePath = process.env.E2E_BROWSER_STATE_PATH
+      const hasValidStorageState = storageStatePath && fs.existsSync(storageStatePath)
       const context = await browser.newContext({
         extraHTTPHeaders: {
           'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
         },
-        ...(storageStatePath ? {storageState: storageStatePath} : {}),
+        ...(hasValidStorageState ? {storageState: storageStatePath} : {}),
       })
       context.setDefaultTimeout(BROWSER_TIMEOUT.max)
       context.setDefaultNavigationTimeout(BROWSER_TIMEOUT.max)

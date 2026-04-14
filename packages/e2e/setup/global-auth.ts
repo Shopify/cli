@@ -78,70 +78,76 @@ export default async function globalSetup() {
     if (debug) process.stdout.write(data)
   })
 
-  await waitForText(() => output, 'Open this link to start the auth process', CLI_TIMEOUT.short)
-
-  const stripped = stripAnsi(output)
-  const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
-  if (!urlMatch) {
-    throw new Error(`[e2e] global-auth: could not find login URL in output:\n${stripped}`)
-  }
-
-  // Complete login in a headless browser
-  const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
-  const context = await browser.newContext({
-    extraHTTPHeaders: {
-      'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
-    },
-  })
-  const page = await context.newPage()
-
-  await completeLogin(page, urlMatch[0], email, password)
-
-  await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
-  try {
-    ptyProcess.kill()
-    // eslint-disable-next-line no-catch-all/no-catch-all
-  } catch (_error) {
-    // Process may already be dead
-  }
-
-  // Visit admin.shopify.com and dev.shopify.com to establish session cookies
-  // (completeLogin only authenticates on accounts.shopify.com)
-  const orgId = (process.env.E2E_ORG_ID ?? '').trim()
-  if (orgId) {
-    // Establish admin.shopify.com cookies
-    await page.goto('https://admin.shopify.com/', {waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-    // Handle account picker if shown
-    if (isAccountsShopifyUrl(page.url())) {
-      const accountButton = page.locator(`text=${email}`).first()
-      if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
-        await accountButton.click()
-        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-      }
-    }
-
-    // Establish dev.shopify.com cookies
-    await page.goto(`https://dev.shopify.com/dashboard/${orgId}/apps`, {waitUntil: 'domcontentloaded'})
-    await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-
-    if (isAccountsShopifyUrl(page.url())) {
-      const accountButton = page.locator(`text=${email}`).first()
-      if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
-        await accountButton.click()
-        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
-      }
-    }
-
-    globalLog('auth', 'browser sessions established for admin + dev dashboard')
-  }
-
-  // Save browser cookies/storage so workers can reuse the session
-  // Now includes cookies for both accounts.shopify.com AND admin.shopify.com
   const storageStatePath = path.join(tmpBase, 'browser-storage-state.json')
-  await context.storageState({path: storageStatePath})
-  await browser.close()
+
+  try {
+    await waitForText(() => output, 'Open this link to start the auth process', CLI_TIMEOUT.short)
+
+    const stripped = stripAnsi(output)
+    const urlMatch = stripped.match(/https:\/\/accounts\.shopify\.com\S+/)
+    if (!urlMatch) {
+      throw new Error(`[e2e] global-auth: could not find login URL in output:\n${stripped}`)
+    }
+
+    // Complete login in a headless browser
+    const browser = await chromium.launch({headless: !process.env.E2E_HEADED})
+    try {
+      const context = await browser.newContext({
+        extraHTTPHeaders: {
+          'X-Shopify-Loadtest-Bf8d22e7-120e-4b5b-906c-39ca9d5499a9': 'true',
+        },
+      })
+      const page = await context.newPage()
+
+      await completeLogin(page, urlMatch[0], email, password)
+
+      await waitForText(() => output, 'Logged in', BROWSER_TIMEOUT.max)
+
+      // Visit admin.shopify.com and dev.shopify.com to establish session cookies
+      // (completeLogin only authenticates on accounts.shopify.com)
+      const orgId = (process.env.E2E_ORG_ID ?? '').trim()
+      if (orgId) {
+        // Establish admin.shopify.com cookies
+        await page.goto('https://admin.shopify.com/', {waitUntil: 'domcontentloaded'})
+        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+
+        // Handle account picker if shown
+        if (isAccountsShopifyUrl(page.url())) {
+          const accountButton = page.locator(`text=${email}`).first()
+          if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
+            await accountButton.click()
+            await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+          }
+        }
+
+        // Establish dev.shopify.com cookies
+        await page.goto(`https://dev.shopify.com/dashboard/${orgId}/apps`, {waitUntil: 'domcontentloaded'})
+        await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+
+        if (isAccountsShopifyUrl(page.url())) {
+          const accountButton = page.locator(`text=${email}`).first()
+          if (await accountButton.isVisible({timeout: BROWSER_TIMEOUT.long}).catch(() => false)) {
+            await accountButton.click()
+            await page.waitForTimeout(BROWSER_TIMEOUT.medium)
+          }
+        }
+
+        globalLog('auth', 'browser sessions established for admin + dev dashboard')
+      }
+
+      // Save browser cookies/storage so workers can reuse the session
+      await context.storageState({path: storageStatePath})
+    } finally {
+      await browser.close()
+    }
+  } finally {
+    try {
+      ptyProcess.kill()
+      // eslint-disable-next-line no-catch-all/no-catch-all
+    } catch (_error) {
+      // Process may already be dead
+    }
+  }
 
   // Store paths so workers can copy CLI auth + load browser state
   /* eslint-disable require-atomic-updates */

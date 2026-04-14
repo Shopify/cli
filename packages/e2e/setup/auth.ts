@@ -39,6 +39,15 @@ export const authFixture = browserFixture.extend<{}, {authLogin: void}>({
         // Copy pre-authenticated session from global setup
         log.log(env, 'copying session from global setup')
 
+        if (
+          !fs.existsSync(authConfigDir) ||
+          !fs.existsSync(authDataDir) ||
+          !fs.existsSync(authStateDir) ||
+          !fs.existsSync(authCacheDir)
+        ) {
+          throw new Error('Global auth dirs missing — global setup may not have completed successfully')
+        }
+
         fs.cpSync(authConfigDir, env.processEnv.XDG_CONFIG_HOME!, {recursive: true})
         fs.cpSync(authDataDir, env.processEnv.XDG_DATA_HOME!, {recursive: true})
         fs.cpSync(authStateDir, env.processEnv.XDG_STATE_HOME!, {recursive: true})
