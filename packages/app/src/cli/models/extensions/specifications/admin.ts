@@ -2,6 +2,8 @@ import {createExtensionSpecification} from '../specification.js'
 import {BaseConfigType, ZodSchemaType} from '../schemas.js'
 import {zod} from '@shopify/cli-kit/node/schema'
 import {joinPath} from '@shopify/cli-kit/node/path'
+import {fileExists} from '@shopify/cli-kit/node/fs'
+import {AbortError} from '@shopify/cli-kit/node/error'
 
 export const AdminSpecIdentifier = 'admin'
 
@@ -30,6 +32,20 @@ const adminSpecificationSpec = createExtensionSpecification<AdminConfigType>({
 
     const path = joinPath(extension.directory, staticRoot, '**/*')
     return {paths: [path], ignore: []}
+  },
+  buildValidation: async (extension) => {
+    const staticRoot = extension.configuration.admin?.static_root
+    if (!staticRoot) return
+
+    const indexHtmlPath = joinPath(extension.directory, staticRoot, 'index.html')
+    const indexExists = await fileExists(indexHtmlPath)
+
+    if (!indexExists) {
+      throw new AbortError(
+        `The admin extension requires an index.html file in the static_root directory (${staticRoot}), but it was not found.`,
+        `This usually means the build step has not completed yet. Make sure your app runs a build command (e.g., via a predev hook in your web configuration) before starting the dev server.`,
+      )
+    }
   },
   transformRemoteToLocal: (remoteContent) => {
     return {
