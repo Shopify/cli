@@ -311,7 +311,7 @@ async function loadConfigurationFileName(
   if (currentToml) return currentToml
 
   // If no TOML files exist at all, use the default filename without prompting
-  if (Object.keys(existingTomls).length === 0) return 'shopify.app.toml'
+  if (isEmpty(existingTomls)) return 'shopify.app.toml'
 
   return selectConfigName(localAppInfo.appDirectory ?? options.directory, remoteApp.title)
 }
