@@ -111,6 +111,8 @@ export type ShopFilterField =
   | 'COLLABORATOR_RELATIONSHIP_STATUS'
   /** The GID of the counterpart organization. Requires `store_type=client_transfer` or `store_type=collaborator`. */
   | 'COUNTERPART_ORGANIZATION_ID'
+  /** The GID of the owning organization of the shop. */
+  | 'OWNER_ORGANIZATION_ID'
   /**
    * The plan of the shop. Values: `basic`, `grow`, `plus`, `frozen`, `advanced`,
    * `inactive`, `cancelled`, `client_transfer`, `plus_client_transfer`,
