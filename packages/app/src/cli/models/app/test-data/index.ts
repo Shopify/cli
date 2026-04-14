@@ -1,12 +1,5 @@
-/**
- * Re-exports all test data from domain-specific sub-modules.
- *
- * For new code, prefer importing directly from the specific sub-module:
- *   - `./test-data/fixtures.js` — App, organization, session fixtures
- *   - `./test-data/extensions.js` — Extension factory functions
- *   - `./test-data/templates.js` — Remote specs and extension templates
- *   - `./test-data/clients.js` — DeveloperPlatformClient mock and GraphQL responses
- */
+// Barrel re-export for backward compatibility.
+// New code should import directly from the specific sub-module.
 export {
   DEFAULT_CONFIG,
   testApp,
@@ -22,7 +15,7 @@ export {
   testPartnersServiceSession,
   buildVersionedAppSchema,
   configurationSpecifications,
-} from './test-data/fixtures.js'
+} from './fixtures.js'
 
 export {
   testUIExtension,
@@ -39,8 +32,8 @@ export {
   testFunctionExtension,
   testEditorExtensionCollection,
   testPaymentsAppExtension,
-} from './test-data/extensions.js'
+} from './extensions.js'
 
-export {testRemoteSpecifications, checkoutUITemplate, testRemoteExtensionTemplates} from './test-data/templates.js'
+export {testRemoteSpecifications, checkoutUITemplate, testRemoteExtensionTemplates} from './templates.js'
 
-export {extensionCreateResponse, testDeveloperPlatformClient} from './test-data/clients.js'
+export {extensionCreateResponse, testDeveloperPlatformClient} from './clients.js'
