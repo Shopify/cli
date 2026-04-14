@@ -7,7 +7,7 @@ Supporting the three OSs has implications in how the code is written and tested.
 
 ### Use `@shopify/cli-kit` modules
 
-Unlike programming languages like Rust or Go, whose standard library work more consistently across OS, that's not the case with the Node runtime in which the CLI runs. Consequently, packages like [cross-zip](https://www.npmjs.com/package/cross-zip), [execa](https://www.npmjs.com/package/execa), or [pathe](https://www.npmjs.com/package/pathe) in the NPM ecosystem provide a cross-OS-compatible version of the Node APIs. `@shopify/cli-kit` exports modules like system or file that abstract away the usage of those packages, and **thus CLI features must use those modules over the ones provided by Node**. Using `@shopify/cli-kit` modules also eases rolling out fixes, improvements, and optimizations because all features go through the same set of APIs we control.
+Unlike programming languages like Rust or Go, whose standard library works more consistently across OS, that's not the case with the Node runtime in which the CLI runs. Consequently, packages like [cross-zip](https://www.npmjs.com/package/cross-zip), [execa](https://www.npmjs.com/package/execa), or [pathe](https://www.npmjs.com/package/pathe) in the NPM ecosystem provide a cross-OS-compatible version of the Node APIs. `@shopify/cli-kit` exports modules like system or file that abstract away the usage of those packages, and **thus CLI features must use those modules over the ones provided by Node**. Using `@shopify/cli-kit` modules also eases rolling out fixes, improvements, and optimizations because all features go through the same set of APIs we control.
 
 ## Testing
 
@@ -25,7 +25,7 @@ Please don't assume that a successful working workflow in the OS in which it was
 After installing Ubuntu 22 then run:
 
 - `sudo apt-get update && sudo apt-get -y upgrade`
-- `curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -`
+- `curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -`
 - `sudo apt-get install -y git nodejs`
 - `curl -fsSL https://get.pnpm.io/install.sh | sh -`
 

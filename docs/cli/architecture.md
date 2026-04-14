@@ -4,8 +4,8 @@ The Shopify CLI is written in [Typescript](https://www.typescriptlang.org/) and 
 We settled on a **Javascript-based** stack because it aligns with the programming language used to build for the platform,
 and allows having a strongly-typed contract with web tooling that's necessary to compile and optimize projects for deployment.
 It's designed following a **modular** architecture where the bottom-most layer represents the foundation that all the features build upon,
-and the top-most layer represents an horizontally-distributed set of features that users can opt into based on their needs.
-Modularization also encourages clearly defined boundaries that leads to a better structure that's easier to maintain long-term.
+and the top-most layer represents a horizontally-distributed set of features that users can opt into based on their needs.
+Modularization also encourages clearly defined boundaries that lead to a better structure that's easier to maintain long-term.
 
 ## Modules (packages)
 
