@@ -1,6 +1,6 @@
 /**
  * Creates test apps in the authenticated org and prints their client IDs.
- * Run: npx tsx packages/e2e/scripts/create-test-apps.ts
+ * Run: pnpx tsx packages/e2e/scripts/create-test-apps.ts
  */
 
 import * as fs from 'fs'
@@ -39,7 +39,7 @@ if (!email || !password) {
 }
 
 const baseEnv: Record<string, string> = {
-  ...process.env as Record<string, string>,
+  ...(process.env as Record<string, string>),
   NODE_OPTIONS: '',
   SHOPIFY_RUN_AS_USER: '0',
   FORCE_COLOR: '0',
@@ -86,16 +86,16 @@ async function createAppInteractive(tmpDir: string, appName: string): Promise<st
   fs.mkdirSync(appDir)
 
   const nodePty = await import('node-pty')
-  const pty = nodePty.spawn('node', [
-    createAppPath,
-    '--name', appName,
-    '--path', appDir,
-    '--template', 'none',
-    '--package-manager', 'npm',
-    '--local',
-  ], {
-    name: 'xterm-color', cols: 120, rows: 30, env: baseEnv,
-  })
+  const pty = nodePty.spawn(
+    'node',
+    [createAppPath, '--name', appName, '--path', appDir, '--template', 'none', '--package-manager', 'pnpm', '--local'],
+    {
+      name: 'xterm-color',
+      cols: 120,
+      rows: 30,
+      env: baseEnv,
+    },
+  )
 
   let output = ''
   pty.onData((data: string) => {
@@ -104,11 +104,7 @@ async function createAppInteractive(tmpDir: string, appName: string): Promise<st
   })
 
   // Answer each interactive prompt as it appears
-  const prompts = [
-    'Which organization',
-    'Create this project as a new app',
-    'App name',
-  ]
+  const prompts = ['Which organization', 'Create this project as a new app', 'App name']
   for (const prompt of prompts) {
     try {
       await waitForText(() => output, prompt, 60_000)
@@ -130,9 +126,7 @@ async function createAppInteractive(tmpDir: string, appName: string): Promise<st
 
   // Find the app dir and extract client_id
   const entries = fs.readdirSync(appDir, {withFileTypes: true})
-  const created = entries.find(
-    (e) => e.isDirectory() && fs.existsSync(path.join(appDir, e.name, 'shopify.app.toml')),
-  )
+  const created = entries.find((e) => e.isDirectory() && fs.existsSync(path.join(appDir, e.name, 'shopify.app.toml')))
   if (!created) throw new Error(`No app directory found in ${appDir}`)
 
   const tomlPath = path.join(appDir, created.name, 'shopify.app.toml')
@@ -147,11 +141,16 @@ async function oauthLogin() {
   const nodePty = await import('node-pty')
   const spawnEnv = {...baseEnv, BROWSER: 'none'}
   const pty = nodePty.spawn('node', [cliPath, 'auth', 'login'], {
-    name: 'xterm-color', cols: 120, rows: 30, env: spawnEnv,
+    name: 'xterm-color',
+    cols: 120,
+    rows: 30,
+    env: spawnEnv,
   })
 
   let output = ''
-  pty.onData((data: string) => { output += data })
+  pty.onData((data: string) => {
+    output += data
+  })
 
   await waitForText(() => output, 'Press any key to open the login page', 30_000)
   pty.write(' ')
@@ -169,7 +168,9 @@ async function oauthLogin() {
   await completeLogin(page, urlMatch[0], email!, password!)
 
   await waitForText(() => output, 'Logged in', 60_000)
-  try { pty.kill() } catch {}
+  try {
+    pty.kill()
+  } catch {}
   await browser.close()
 }
 

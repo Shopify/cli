@@ -10,7 +10,7 @@
     "bundle-for-release": "nx run-many --target=bundle --all --skip-nx-cache",
     "changeset-manifests": "changeset version && pnpm install --no-frozen-lockfile && pnpm refresh-manifests && pnpm refresh-readme && pnpm refresh-code-documentation && bin/update-cli-kit-version.js",
     "clean": "nx run-many --target=clean --all --skip-nx-cache && nx reset",
-    "create-app": "nx build create-app && node packages/create-app/bin/dev.js --package-manager npm",
+    "create-app": "nx build create-app && node packages/create-app/bin/dev.js --package-manager pnpm",
     "deploy-experimental": "node bin/deploy-experimental.js",
     "graph": "nx graph",
     "graphql-codegen:get-graphql-schemas": "bin/get-graphql-schemas.js",
