@@ -1,7 +1,6 @@
 import {joinPath, basename} from '@shopify/cli-kit/node/path'
-import {glob} from '@shopify/cli-kit/node/fs'
+import {glob, fileSize, readFile} from '@shopify/cli-kit/node/fs'
 import {AbortError, BugError} from '@shopify/cli-kit/node/error'
-import fs from 'fs'
 
 export async function loadLocalesConfig(extensionPath: string, extensionIdentifier: string) {
   const localesPaths = await glob(joinPath(extensionPath, 'locales/*.json'))
@@ -24,13 +23,13 @@ export async function loadLocalesConfig(extensionPath: string, extensionIdentifi
 
   // Locale validations
   for (const locale of localesPaths) {
-    const size = fs.statSync(locale).size
+    const size = await fileSize(locale)
     if (size === 0) throw new AbortError(`Error loading ${extensionIdentifier}`, `Locale file ${locale} can't be empty`)
   }
 
   return {
     default_locale: defaultLanguageCode[0],
-    translations: getAllLocales(localesPaths),
+    translations: await getAllLocales(localesPaths),
   }
 }
 
@@ -39,12 +38,12 @@ function findDefaultLocale(filePaths: string[]) {
   return defaultLocale.map((locale) => basename(locale).split('.')[0])
 }
 
-function getAllLocales(localesPath: string[]) {
+async function getAllLocales(localesPath: string[]) {
   const all: {[key: string]: string} = {}
   for (const localePath of localesPath) {
     const localeCode = failIfUnset(basename(localePath).split('.')[0], 'Locale code is unset')
-    const locale = fs.readFileSync(localePath, 'base64')
-    all[localeCode] = locale
+    const content = await readFile(localePath)
+    all[localeCode] = Buffer.from(content).toString('base64')
   }
   return all
 }
