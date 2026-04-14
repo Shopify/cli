@@ -497,6 +497,7 @@ export async function renderTasks<TContext>(
       noProgressBar={noProgressBar}
     />,
     {
+      stdout: process.stderr as unknown as NodeJS.WriteStream,
       ...renderOptions,
       exitOnCtrlC: false,
     },
@@ -539,6 +540,7 @@ export async function renderSingleTask<T>({
       onAbort={onAbort}
     />,
     {
+      stdout: process.stderr as unknown as NodeJS.WriteStream,
       ...renderOptions,
       exitOnCtrlC: false,
     },

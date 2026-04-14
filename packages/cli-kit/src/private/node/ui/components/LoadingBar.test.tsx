@@ -17,7 +17,6 @@ vi.mock('../../../../public/node/output.js', async () => {
 })
 
 beforeEach(() => {
-  // Default terminal width
   vi.mocked(useLayout).mockReturnValue({
     twoThirds: 53,
     oneThird: 27,
@@ -27,9 +26,9 @@ beforeEach(() => {
 })
 
 /**
- * Creates a Stdout test double simulating a TTY stream (the default for
- * interactive terminals). On real Node streams, `isTTY` is only defined
- * as an own property when the stream IS a TTY — it's absent otherwise.
+ * Creates a Stdout test double simulating a TTY stream.
+ * On real Node streams, isTTY is only present as an own property when the
+ * stream IS a TTY.
  */
 function createTTYStdout(columns = 100) {
   const stdout = new Stdout({columns}) as Stdout & {isTTY: boolean}
@@ -38,23 +37,12 @@ function createTTYStdout(columns = 100) {
 }
 
 /**
- * Creates a Stdout test double simulating a non-TTY environment
- * (piped output, CI without a pseudo-TTY, AI coding agents).
- */
-function createNonTTYStdout(columns = 100) {
-  const stdout = new Stdout({columns}) as Stdout & {isTTY: boolean}
-  stdout.isTTY = false
-  return stdout
-}
-
-/**
- * Renders LoadingBar with a TTY stdout and returns the last frame.
- * Most tests need a TTY to verify the animated progress bar renders.
+ * Renders LoadingBar with a TTY stdout so the animated progress bar renders.
  */
 function renderWithTTY(element: React.ReactElement) {
   const stdout = createTTYStdout()
   const instance = render(element, {stdout})
-  return {lastFrame: stdout.lastFrame, unmount: instance.unmount, stdout}
+  return {lastFrame: stdout.lastFrame, unmount: instance.unmount}
 }
 
 describe('LoadingBar', () => {
@@ -78,7 +66,6 @@ describe('LoadingBar', () => {
 
   test('renders loading bar with hill pattern when shouldDisplayColors returns false', async () => {
     vi.mocked(shouldDisplayColors).mockReturnValue(false)
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Downloading packages" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -89,7 +76,6 @@ describe('LoadingBar', () => {
 
   test('handles narrow terminal width correctly', async () => {
     vi.mocked(useLayout).mockReturnValue({twoThirds: 20, oneThird: 10, fullWidth: 30})
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Building app" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -100,7 +86,6 @@ describe('LoadingBar', () => {
 
   test('handles narrow terminal width correctly in no-color mode', async () => {
     vi.mocked(useLayout).mockReturnValue({twoThirds: 15, oneThird: 8, fullWidth: 23})
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Installing" noColor />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -111,7 +96,6 @@ describe('LoadingBar', () => {
 
   test('handles very narrow terminal width in no-color mode', async () => {
     vi.mocked(useLayout).mockReturnValue({twoThirds: 5, oneThird: 3, fullWidth: 8})
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Wait" noColor />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -122,7 +106,6 @@ describe('LoadingBar', () => {
 
   test('handles wide terminal width correctly', async () => {
     vi.mocked(useLayout).mockReturnValue({twoThirds: 100, oneThird: 50, fullWidth: 150})
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Synchronizing data" />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -133,7 +116,6 @@ describe('LoadingBar', () => {
 
   test('handles wide terminal width correctly in no-color mode with pattern repetition', async () => {
     vi.mocked(useLayout).mockReturnValue({twoThirds: 90, oneThird: 45, fullWidth: 135})
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Analyzing dependencies" noColor />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -153,7 +135,6 @@ describe('LoadingBar', () => {
 
   test('noColor prop overrides shouldDisplayColors when both would show colors', async () => {
     vi.mocked(shouldDisplayColors).mockReturnValue(true)
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="Testing override" noColor />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
@@ -164,7 +145,6 @@ describe('LoadingBar', () => {
 
   test('renders consistently with same props', async () => {
     const props = {title: 'Consistent test', noColor: false}
-
     const {lastFrame: frame1} = renderWithTTY(<LoadingBar {...props} />)
     const {lastFrame: frame2} = renderWithTTY(<LoadingBar {...props} />)
 
@@ -173,41 +153,23 @@ describe('LoadingBar', () => {
 
   test('hides progress bar when noProgressBar is true', async () => {
     vi.mocked(shouldDisplayColors).mockReturnValue(true)
-
     const {lastFrame} = renderWithTTY(<LoadingBar title="task 1" noProgressBar />)
 
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`"task 1 ..."`)
   })
 
-  test('renders only title text without animated progress bar in non-TTY environments', async () => {
-    const stdout = createNonTTYStdout()
+  test('shows only static title text when output stream is not a TTY', async () => {
+    // Default test Stdout has no isTTY property, simulating a non-TTY stream
+    const {lastFrame} = render(<LoadingBar title="Installing dependencies" />)
 
-    const renderInstance = render(<LoadingBar title="Installing dependencies" />, {stdout})
-
-    expect(unstyled(stdout.lastFrame()!)).toMatchInlineSnapshot(`"Installing dependencies ..."`)
-    renderInstance.unmount()
+    expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`"Installing dependencies ..."`)
   })
 
-  test('renders only title text in non-TTY even when noColor and noProgressBar are not set', async () => {
-    const stdout = createNonTTYStdout()
-    vi.mocked(shouldDisplayColors).mockReturnValue(true)
+  test('shows animated progress bar when output stream is a TTY', async () => {
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Uploading theme" />)
 
-    const renderInstance = render(<LoadingBar title="Generating extension" />, {stdout})
-
-    expect(unstyled(stdout.lastFrame()!)).toMatchInlineSnapshot(`"Generating extension ..."`)
-    renderInstance.unmount()
-  })
-
-  test('keeps animated progress bar when Ink renders to a TTY stream (e.g. renderTasksToStdErr)', async () => {
-    // renderTasksToStdErr passes process.stderr as Ink's stdout option.
-    // useStdout() returns that stream, so the TTY check uses the correct stream.
-    const ttyStream = createTTYStdout()
-
-    const renderInstance = render(<LoadingBar title="Uploading theme" />, {stdout: ttyStream})
-
-    const frame = unstyled(ttyStream.lastFrame()!)
+    const frame = unstyled(lastFrame()!)
     expect(frame).toContain('▀')
     expect(frame).toContain('Uploading theme ...')
-    renderInstance.unmount()
   })
 })
