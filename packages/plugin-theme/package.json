@@ -1,0 +1,22 @@
+{
+  "name": "@shopify/plugin-theme",
+  "version": "3.92.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "files": [
+    "/dist",
+    "!/dist/**/*.map",
+    "/oclif.manifest.json"
+  ],
+  "dependencies": {
+    "@shopify/theme": "3.92.0",
+    "@oclif/core": "4.5.3"
+  },
+  "oclif": {
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    }
+  }
+}
