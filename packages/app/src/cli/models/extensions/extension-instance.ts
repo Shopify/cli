@@ -324,10 +324,6 @@ export class ExtensionInstance<TConfiguration extends BaseConfigType = BaseConfi
       // eslint-disable-next-line no-await-in-loop
       const result = await executeStep(step, context)
       context.stepResults.set(step.id, result)
-
-      if (!result.success && !step.continueOnError) {
-        throw new Error(`Build step "${step.name}" failed: ${result.error?.message}`)
-      }
     }
   }
 

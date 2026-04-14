@@ -139,7 +139,7 @@ function onResult(result: EsbuildResult | null, options: BundleOptions) {
   }
 }
 
-export function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
+function getESBuildOptions(options: BundleOptions, processEnv = process.env): Parameters<typeof esContext>[0] {
   const validEnvs = pickBy(processEnv, (value, key) => EsbuildEnvVarRegex.test(key) && value)
 
   const env: {[variable: string]: string | undefined} = {...options.env, ...validEnvs}
@@ -150,6 +150,7 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
     }),
     {'process.env.NODE_ENV': JSON.stringify(options.environment)},
   )
+
   const esbuildOptions: Parameters<typeof esContext>[0] = {
     outfile: options.outputPath,
     stdin: options.stdin,
@@ -174,6 +175,11 @@ export function getESBuildOptions(options: BundleOptions, processEnv = process.e
   }
   if (options.environment === 'production') {
     esbuildOptions.metafile = true
+  }
+  if (options.environment === 'development') {
+    const disableMinificationOnDev = env[environmentVariableNames.disableMinificationOnDev]
+    esbuildOptions.minify = !isTruthy(disableMinificationOnDev)
+    esbuildOptions.logLevel = 'silent'
   }
   return esbuildOptions
 }
