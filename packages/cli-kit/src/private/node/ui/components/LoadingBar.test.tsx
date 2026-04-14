@@ -1,4 +1,5 @@
 import {LoadingBar} from './LoadingBar.js'
+import {Stdout} from '../../ui.js'
 import {render} from '../../testing/ui.js'
 import {shouldDisplayColors, unstyled} from '../../../../public/node/output.js'
 import useLayout from '../hooks/use-layout.js'
@@ -25,15 +26,41 @@ beforeEach(() => {
   vi.mocked(shouldDisplayColors).mockReturnValue(true)
 })
 
+/**
+ * Creates a Stdout test double simulating a TTY stream (the default for
+ * interactive terminals). On real Node streams, `isTTY` is only defined
+ * as an own property when the stream IS a TTY — it's absent otherwise.
+ */
+function createTTYStdout(columns = 100) {
+  const stdout = new Stdout({columns}) as Stdout & {isTTY: boolean}
+  stdout.isTTY = true
+  return stdout
+}
+
+/**
+ * Creates a Stdout test double simulating a non-TTY environment
+ * (piped output, CI without a pseudo-TTY, AI coding agents).
+ */
+function createNonTTYStdout(columns = 100) {
+  const stdout = new Stdout({columns}) as Stdout & {isTTY: boolean}
+  stdout.isTTY = false
+  return stdout
+}
+
+/**
+ * Renders LoadingBar with a TTY stdout and returns the last frame.
+ * Most tests need a TTY to verify the animated progress bar renders.
+ */
+function renderWithTTY(element: React.ReactElement) {
+  const stdout = createTTYStdout()
+  const instance = render(element, {stdout})
+  return {lastFrame: stdout.lastFrame, unmount: instance.unmount, stdout}
+}
+
 describe('LoadingBar', () => {
   test('renders loading bar with default colored characters', async () => {
-    // Given
-    const title = 'Loading content'
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Loading content" />)
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} />)
-
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       Loading content ..."
@@ -41,13 +68,8 @@ describe('LoadingBar', () => {
   })
 
   test('renders loading bar with hill pattern when noColor prop is true', async () => {
-    // Given
-    const title = 'Processing files'
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Processing files" noColor />)
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} noColor />)
-
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅
       Processing files ..."
@@ -55,14 +77,10 @@ describe('LoadingBar', () => {
   })
 
   test('renders loading bar with hill pattern when shouldDisplayColors returns false', async () => {
-    // Given
     vi.mocked(shouldDisplayColors).mockReturnValue(false)
-    const title = 'Downloading packages'
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Downloading packages" />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅
       Downloading packages ..."
@@ -70,18 +88,10 @@ describe('LoadingBar', () => {
   })
 
   test('handles narrow terminal width correctly', async () => {
-    // Given
-    vi.mocked(useLayout).mockReturnValue({
-      twoThirds: 20,
-      oneThird: 10,
-      fullWidth: 30,
-    })
-    const title = 'Building app'
+    vi.mocked(useLayout).mockReturnValue({twoThirds: 20, oneThird: 10, fullWidth: 30})
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Building app" />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       Building app ..."
@@ -89,18 +99,10 @@ describe('LoadingBar', () => {
   })
 
   test('handles narrow terminal width correctly in no-color mode', async () => {
-    // Given
-    vi.mocked(useLayout).mockReturnValue({
-      twoThirds: 15,
-      oneThird: 8,
-      fullWidth: 23,
-    })
-    const title = 'Installing'
+    vi.mocked(useLayout).mockReturnValue({twoThirds: 15, oneThird: 8, fullWidth: 23})
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} noColor />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Installing" noColor />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇
       Installing ..."
@@ -108,18 +110,10 @@ describe('LoadingBar', () => {
   })
 
   test('handles very narrow terminal width in no-color mode', async () => {
-    // Given
-    vi.mocked(useLayout).mockReturnValue({
-      twoThirds: 5,
-      oneThird: 3,
-      fullWidth: 8,
-    })
-    const title = 'Wait'
+    vi.mocked(useLayout).mockReturnValue({twoThirds: 5, oneThird: 3, fullWidth: 8})
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} noColor />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Wait" noColor />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▁▁▁▂▂
       Wait ..."
@@ -127,18 +121,10 @@ describe('LoadingBar', () => {
   })
 
   test('handles wide terminal width correctly', async () => {
-    // Given
-    vi.mocked(useLayout).mockReturnValue({
-      twoThirds: 100,
-      oneThird: 50,
-      fullWidth: 150,
-    })
-    const title = 'Synchronizing data'
+    vi.mocked(useLayout).mockReturnValue({twoThirds: 100, oneThird: 50, fullWidth: 150})
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Synchronizing data" />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
       Synchronizing data ..."
@@ -146,18 +132,10 @@ describe('LoadingBar', () => {
   })
 
   test('handles wide terminal width correctly in no-color mode with pattern repetition', async () => {
-    // Given
-    vi.mocked(useLayout).mockReturnValue({
-      twoThirds: 90,
-      oneThird: 45,
-      fullWidth: 135,
-    })
-    const title = 'Analyzing dependencies'
+    vi.mocked(useLayout).mockReturnValue({twoThirds: 90, oneThird: 45, fullWidth: 135})
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} noColor />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Analyzing dependencies" noColor />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁
       Analyzing dependencies ..."
@@ -165,13 +143,8 @@ describe('LoadingBar', () => {
   })
 
   test('renders correctly with empty title', async () => {
-    // Given
-    const title = ''
+    const {lastFrame} = renderWithTTY(<LoadingBar title="" />)
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} />)
-
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀
        ..."
@@ -179,14 +152,10 @@ describe('LoadingBar', () => {
   })
 
   test('noColor prop overrides shouldDisplayColors when both would show colors', async () => {
-    // Given
     vi.mocked(shouldDisplayColors).mockReturnValue(true)
-    const title = 'Testing override'
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} noColor />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="Testing override" noColor />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`
       "▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅▄▄▃▃▂▂▁▁▁▁▂▂▃▃▄▄▅▅▆▆▇▇██▇▇▆▆▅▅
       Testing override ..."
@@ -194,27 +163,51 @@ describe('LoadingBar', () => {
   })
 
   test('renders consistently with same props', async () => {
-    // Given
-    const title = 'Consistent test'
-    const props = {title, noColor: false}
+    const props = {title: 'Consistent test', noColor: false}
 
-    // When
-    const {lastFrame: frame1} = render(<LoadingBar {...props} />)
-    const {lastFrame: frame2} = render(<LoadingBar {...props} />)
+    const {lastFrame: frame1} = renderWithTTY(<LoadingBar {...props} />)
+    const {lastFrame: frame2} = renderWithTTY(<LoadingBar {...props} />)
 
-    // Then
     expect(frame1()).toBe(frame2())
   })
 
   test('hides progress bar when noProgressBar is true', async () => {
-    // Given
     vi.mocked(shouldDisplayColors).mockReturnValue(true)
-    const title = 'task 1'
 
-    // When
-    const {lastFrame} = render(<LoadingBar title={title} noProgressBar />)
+    const {lastFrame} = renderWithTTY(<LoadingBar title="task 1" noProgressBar />)
 
-    // Then
     expect(unstyled(lastFrame()!)).toMatchInlineSnapshot(`"task 1 ..."`)
+  })
+
+  test('renders only title text without animated progress bar in non-TTY environments', async () => {
+    const stdout = createNonTTYStdout()
+
+    const renderInstance = render(<LoadingBar title="Installing dependencies" />, {stdout})
+
+    expect(unstyled(stdout.lastFrame()!)).toMatchInlineSnapshot(`"Installing dependencies ..."`)
+    renderInstance.unmount()
+  })
+
+  test('renders only title text in non-TTY even when noColor and noProgressBar are not set', async () => {
+    const stdout = createNonTTYStdout()
+    vi.mocked(shouldDisplayColors).mockReturnValue(true)
+
+    const renderInstance = render(<LoadingBar title="Generating extension" />, {stdout})
+
+    expect(unstyled(stdout.lastFrame()!)).toMatchInlineSnapshot(`"Generating extension ..."`)
+    renderInstance.unmount()
+  })
+
+  test('keeps animated progress bar when Ink renders to a TTY stream (e.g. renderTasksToStdErr)', async () => {
+    // renderTasksToStdErr passes process.stderr as Ink's stdout option.
+    // useStdout() returns that stream, so the TTY check uses the correct stream.
+    const ttyStream = createTTYStdout()
+
+    const renderInstance = render(<LoadingBar title="Uploading theme" />, {stdout: ttyStream})
+
+    const frame = unstyled(ttyStream.lastFrame()!)
+    expect(frame).toContain('▀')
+    expect(frame).toContain('Uploading theme ...')
+    renderInstance.unmount()
   })
 })
