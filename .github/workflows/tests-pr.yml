@@ -219,7 +219,7 @@ jobs:
     name: 'E2E tests'
     if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     continue-on-error: true
     steps:
       - uses: actions/checkout@v3
