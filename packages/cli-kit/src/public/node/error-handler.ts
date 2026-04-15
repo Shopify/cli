@@ -78,7 +78,7 @@ export async function sendErrorToBugsnag(
 
     if (exitMode === 'expected_error') {
       outputDebug(`Skipping Bugsnag report for expected error`)
-      return {reported: false, error, unhandled: false}
+      return {reported: false, error, unhandled: undefined}
     }
 
     // If the error was unexpected, we flag it as "unhandled" in Bugsnag. This is a helpful distinction.
