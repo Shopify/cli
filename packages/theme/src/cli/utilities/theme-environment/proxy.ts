@@ -326,10 +326,7 @@ export function proxyStorefrontRequest(event: H3Event, ctx: DevServerContext): P
     Cookie: buildCookies(ctx.session, {headers}),
   }
 
-  // Only include Authorization for theme dev, not theme-extensions
-  if (ctx.type === 'theme') {
-    baseHeaders.Authorization = `Bearer ${ctx.session.storefrontToken}`
-  }
+  baseHeaders.Authorization = `Bearer ${ctx.session.storefrontToken}`
 
   const finalHeaders = cleanHeader(baseHeaders)
 
