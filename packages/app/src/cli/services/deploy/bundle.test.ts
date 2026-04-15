@@ -256,15 +256,26 @@ describe('bundleAndBuildExtensions', () => {
     })
   })
 
-  test('runs web build command concurrently with extensions when build command is defined', async () => {
+  test('runs web build before extensions when build command is defined', async () => {
     await file.inTemporaryDirectory(async (tmpDir: string) => {
       // Given
       const bundlePath = joinPath(tmpDir, 'bundle.zip')
       const mockBuildWeb = vi.mocked(webService.default)
 
+      // Track ordering: web build must finish before extension build starts
+      const callOrder: string[] = []
+      mockBuildWeb.mockImplementation(async () => {
+        callOrder.push('web-build-start')
+        // Simulate async work
+        await new Promise((resolve) => setTimeout(resolve, 10))
+        callOrder.push('web-build-end')
+      })
+
       const functionExtension = await testFunctionExtension()
       const extensionBuildMock = vi.fn().mockImplementation(async (options, bundleDirectory) => {
+        callOrder.push('extension-build-start')
         file.writeFileSync(joinPath(bundleDirectory, 'index.wasm'), '')
+        callOrder.push('extension-build-end')
       })
       functionExtension.buildForBundle = extensionBuildMock
 
@@ -300,8 +311,9 @@ describe('bundleAndBuildExtensions', () => {
         isDevDashboardApp: false,
       })
 
-      // Then
+      // Then — web build must complete before any extension build starts
       expect(mockBuildWeb).toHaveBeenCalledWith('build', expect.objectContaining({web: app.webs[0]}))
+      expect(callOrder).toEqual(['web-build-start', 'web-build-end', 'extension-build-start', 'extension-build-end'])
     })
   })
 

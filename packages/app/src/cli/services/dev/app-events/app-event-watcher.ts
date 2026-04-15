@@ -4,15 +4,44 @@ import {handleWatcherEvents} from './app-event-watcher-handler.js'
 import {AppLinkedInterface} from '../../../models/app/app.js'
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {ExtensionBuildOptions} from '../../build/extension.js'
+import {AdminSpecIdentifier, type AdminConfigType} from '../../../models/extensions/specifications/admin.js'
 import {outputDebug} from '@shopify/cli-kit/node/output'
 import {AbortSignal} from '@shopify/cli-kit/node/abort'
+import {sleep} from '@shopify/cli-kit/node/system'
 import {joinPath} from '@shopify/cli-kit/node/path'
-import {fileExists, mkdir, rmdir} from '@shopify/cli-kit/node/fs'
+import {fileExists, mkdir, rmdir, readdir} from '@shopify/cli-kit/node/fs'
 import {useConcurrentOutputContext} from '@shopify/cli-kit/node/ui/components'
 import {groupBy} from '@shopify/cli-kit/common/collection'
 import {formatMessagesSync, Message} from 'esbuild'
 import {isUnitTest} from '@shopify/cli-kit/node/context/local'
 import EventEmitter from 'events'
+import {Writable} from 'stream'
+
+const POLL_TIMEOUT_MS = 30_000
+const POLL_INTERVAL_S = 0.2
+
+/**
+ * Polls until a directory exists and contains at least one file.
+ * Resolves once files are found or the timeout expires (no error on timeout —
+ * the subsequent include_assets step will log a warning for the missing path).
+ */
+/* eslint-disable no-await-in-loop */
+async function pollForDirectory(dirPath: string, label: string, stdout: Writable): Promise<void> {
+  outputDebug(`Waiting for '${label}' to be populated by web dev process...\n`, stdout)
+
+  const deadline = Date.now() + POLL_TIMEOUT_MS
+  while (Date.now() < deadline) {
+    if (await fileExists(dirPath)) {
+      const files = await readdir(dirPath)
+      if (files.length > 0) {
+        outputDebug(`Found files in '${label}'\n`, stdout)
+        return
+      }
+    }
+    await sleep(POLL_INTERVAL_S)
+  }
+}
+/* eslint-enable no-await-in-loop */
 
 /**
 This is the entry point to start watching events in an app. This process has 3 steps:
@@ -120,6 +149,12 @@ export class AppEventWatcher extends EventEmitter {
 
     // Initial build of all extensions
     if (buildExtensionsFirst) {
+      // Wait for web dev processes to produce output that extensions need.
+      // Extensions like admin copy from web output (e.g. dist/) via include_assets.
+      // The web dev process runs concurrently and creates these files, so we
+      // must wait for them before building extensions that depend on them.
+      await this.waitForStaticRoots()
+
       this.initialEvents = this.app.realExtensions.map((ext) => ({type: EventType.Updated, extension: ext}))
       await this.buildExtensions(this.initialEvents)
     }
@@ -275,6 +310,29 @@ export class AppEventWatcher extends EventEmitter {
       })
     })
     return Promise.all(promises)
+  }
+
+  /**
+   * Waits for static_root directories referenced by admin extensions to be
+   * populated. The web dev process (commands.dev) runs as a sibling concurrent
+   * process and produces these files (e.g. dist/index.html). We cannot run
+   * commands.build ourselves because it races with the concurrent dev process
+   * on the same output directory.
+   *
+   * Polls until the directory exists and contains at least one file, or until
+   * the timeout expires. No-op when no admin extension references a static_root.
+   */
+  private async waitForStaticRoots(): Promise<void> {
+    const waits = this.app.realExtensions
+      .filter((ext): ext is ExtensionInstance<AdminConfigType> => ext.specification.identifier === AdminSpecIdentifier)
+      .filter((ext) => ext.configuration.admin?.static_root !== undefined)
+      .map((ext) => {
+        const staticRoot = ext.configuration.admin!.static_root!
+        const fullPath = joinPath(ext.directory, staticRoot)
+        return pollForDirectory(fullPath, staticRoot, this.options.stdout)
+      })
+
+    await Promise.all(waits)
   }
 
   /**

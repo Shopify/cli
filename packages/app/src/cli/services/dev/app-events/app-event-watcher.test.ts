@@ -11,12 +11,13 @@ import {
 import {ExtensionInstance} from '../../../models/extensions/extension-instance.js'
 import {loadApp, reloadApp} from '../../../models/app/loader.js'
 import {AppLinkedInterface, CurrentAppConfiguration} from '../../../models/app/app.js'
+import {loadLocalExtensionsSpecifications} from '../../../models/extensions/load-specifications.js'
 import {AppAccessSpecIdentifier} from '../../../models/extensions/specifications/app_config_app_access.js'
 import {PosSpecIdentifier} from '../../../models/extensions/specifications/app_config_point_of_sale.js'
 import {afterEach, beforeEach, describe, expect, test, vi, type MockInstance} from 'vitest'
 import {AbortSignal, AbortController} from '@shopify/cli-kit/node/abort'
 import {flushPromises} from '@shopify/cli-kit/node/promises'
-import {inTemporaryDirectory} from '@shopify/cli-kit/node/fs'
+import {inTemporaryDirectory, mkdir, touchFile} from '@shopify/cli-kit/node/fs'
 import {joinPath} from '@shopify/cli-kit/node/path'
 import {Writable} from 'stream'
 
@@ -427,6 +428,105 @@ describe('app-event-watcher', () => {
         })
       },
     )
+  })
+
+  describe('waitForStaticRoots', () => {
+    test('waits for static_root directory to be populated before building extensions', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+
+        // Create an admin extension with static_root pointing to ./dist
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const adminSpec = allSpecs.find((spec) => spec.identifier === 'admin')!
+        const adminExtension = new ExtensionInstance({
+          configuration: {admin: {static_root: './dist'}} as any,
+          configurationPath: joinPath(tmpDir, 'shopify.app.toml'),
+          directory: tmpDir,
+          specification: adminSpec,
+        })
+        vi.spyOn(adminExtension, 'buildForBundle').mockResolvedValue()
+
+        const app = testAppLinked({
+          allExtensions: [adminExtension],
+          configuration: testAppConfiguration,
+        })
+
+        // Simulate the web dev process creating dist/ after a delay
+        setTimeout(() => {
+          const distDir = joinPath(tmpDir, 'dist')
+          mkdir(distDir)
+            .then(() => touchFile(joinPath(distDir, 'index.html')))
+            .catch(() => {})
+        }, 300)
+
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+
+        // Extension should have been built (after waiting for dist/)
+        expect(adminExtension.buildForBundle).toHaveBeenCalled()
+      })
+    })
+
+    test('proceeds immediately when static_root already has files', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+
+        // Pre-create dist/ with files
+        const distDir = joinPath(tmpDir, 'dist')
+        await mkdir(distDir)
+        await touchFile(joinPath(distDir, 'index.html'))
+
+        const allSpecs = await loadLocalExtensionsSpecifications()
+        const adminSpec = allSpecs.find((spec) => spec.identifier === 'admin')!
+        const adminExtension = new ExtensionInstance({
+          configuration: {admin: {static_root: './dist'}} as any,
+          configurationPath: joinPath(tmpDir, 'shopify.app.toml'),
+          directory: tmpDir,
+          specification: adminSpec,
+        })
+        vi.spyOn(adminExtension, 'buildForBundle').mockResolvedValue()
+
+        const app = testAppLinked({
+          allExtensions: [adminExtension],
+          configuration: testAppConfiguration,
+        })
+
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+
+        const startTime = Date.now()
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+        const elapsed = Date.now() - startTime
+
+        // Should not have waited — proceeds immediately
+        expect(elapsed).toBeLessThan(1000)
+        expect(adminExtension.buildForBundle).toHaveBeenCalled()
+      })
+    })
+
+    test('skips waiting when no admin extension has static_root', async () => {
+      await inTemporaryDirectory(async (tmpDir) => {
+        const buildOutputPath = joinPath(tmpDir, '.shopify', 'bundle')
+
+        // extension1 is a UI extension, no static_root
+        const app = testAppLinked({
+          allExtensions: [extension1],
+          configuration: testAppConfiguration,
+        })
+
+        const mockFileWatcher = new MockFileWatcher(app, outputOptions, [])
+        const watcher = new AppEventWatcher(app, 'url', buildOutputPath, mockFileWatcher)
+
+        const startTime = Date.now()
+        await watcher.start({stdout, stderr, signal: abortController.signal})
+        const elapsed = Date.now() - startTime
+
+        // Should not have waited at all
+        expect(elapsed).toBeLessThan(1000)
+        expect(extension1.buildForBundle).toHaveBeenCalled()
+      })
+    })
   })
 
   describe('generateExtensionTypes', () => {
