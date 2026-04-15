@@ -88,16 +88,16 @@ describe('Config pipeline snapshots', () => {
     // This test documents the current behavior as a snapshot.
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write
-      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, schema, filePath)
+      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, filePath)
 
       // Read back through the full parse pipeline (which fires Zod transforms)
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
 
       // Second write from the parsed (transformed) config
-      await writeAppConfigurationFile(parsedConfig, schema, filePath)
+      await writeAppConfigurationFile(parsedConfig, filePath)
       const secondWrite = await readFile(filePath)
 
       // Snapshot the round-tripped output — it differs from the first write
@@ -111,17 +111,17 @@ describe('Config pipeline snapshots', () => {
     // round-trips should be stable (idempotent).
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       // First write + read + second write (reordering happens here)
-      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, schema, filePath)
+      await writeAppConfigurationFile(REALISTIC_CONFIG as CurrentAppConfiguration, filePath)
       const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsed1, schema, filePath)
+      await writeAppConfigurationFile(parsed1, filePath)
       const secondWrite = await readFile(filePath)
 
       // Third write from re-read — should be identical to second
       const parsed2 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsed2, schema, filePath)
+      await writeAppConfigurationFile(parsed2, filePath)
       const thirdWrite = await readFile(filePath)
 
       expect(thirdWrite).toEqual(secondWrite)
@@ -131,7 +131,7 @@ describe('Config pipeline snapshots', () => {
   test('webhook subscriptions with mixed topics and compliance topics produce stable output', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       const config = {
         ...REALISTIC_CONFIG,
@@ -160,22 +160,25 @@ describe('Config pipeline snapshots', () => {
       }
 
       // Snapshot the first write
-      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
       expect(firstWrite).toMatchSnapshot()
 
       // Round-trip to verify reordering behavior on the most complex fixture
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema, filePath)
+      await writeAppConfigurationFile(parsedConfig, filePath)
       const secondWrite = await readFile(filePath)
       expect(secondWrite).toMatchSnapshot()
     })
   })
 
-  test('config with relative webhook URIs normalizes correctly through round-trip', async () => {
+  // First write uses JS object insertion order (no schema-driven rewriting).
+  // A Zod parse round-trip reorders keys to schema order, so the first round-trip may differ.
+  // Stability is guaranteed from the second write onward.
+  test('config with relative webhook URIs stabilizes after round-trip', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       const config = {
         ...REALISTIC_CONFIG,
@@ -190,22 +193,24 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      // Write, read, write
-      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
-      const firstWrite = await readFile(filePath)
-
-      const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema, filePath)
+      // Write, read, write (first round-trip may reorder)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
+      const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsed1, filePath)
       const secondWrite = await readFile(filePath)
 
-      expect(secondWrite).toEqual(firstWrite)
+      // Third write should be stable
+      const parsed2 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsed2, filePath)
+      const thirdWrite = await readFile(filePath)
+
+      expect(thirdWrite).toEqual(secondWrite)
     })
   })
 
   test('minimal config without webhooks produces stable output', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema} = await buildVersionedAppSchema()
 
       const config = {
         client_id: '12345',
@@ -220,16 +225,19 @@ describe('Config pipeline snapshots', () => {
         },
       } satisfies CurrentAppConfiguration
 
-      await writeAppConfigurationFile(config, schema, filePath)
+      await writeAppConfigurationFile(config, filePath)
       const content = await readFile(filePath)
       expect(content).toMatchSnapshot()
     })
   })
 
+  // First write uses JS object insertion order (no schema-driven rewriting).
+  // A Zod parse round-trip reorders keys to schema order, so the first round-trip may differ.
+  // Stability is guaranteed from the second write onward.
   test('subscriptions with same URI but different filters stay separate through round-trip', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       const config = {
         ...REALISTIC_CONFIG,
@@ -242,22 +250,30 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
+      expect(firstWrite).toMatchSnapshot()
 
-      const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema, filePath)
+      // Round-trip: write → read → write → read → write (stabilizes after first round-trip)
+      const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsed1, filePath)
       const secondWrite = await readFile(filePath)
 
-      expect(firstWrite).toMatchSnapshot()
-      expect(secondWrite).toEqual(firstWrite)
+      const parsed2 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsed2, filePath)
+      const thirdWrite = await readFile(filePath)
+
+      expect(thirdWrite).toEqual(secondWrite)
     })
   })
 
+  // First write uses JS object insertion order (no schema-driven rewriting).
+  // A Zod parse round-trip reorders keys to schema order, so the first round-trip may differ.
+  // Stability is guaranteed from the second write onward.
   test('subscriptions with same URI but different include_fields stay separate through round-trip', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       const config = {
         ...REALISTIC_CONFIG,
@@ -270,22 +286,27 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
+      expect(firstWrite).toMatchSnapshot()
 
-      const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema, filePath)
+      // Round-trip: stabilizes after first round-trip
+      const parsed1 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsed1, filePath)
       const secondWrite = await readFile(filePath)
 
-      expect(firstWrite).toMatchSnapshot()
-      expect(secondWrite).toEqual(firstWrite)
+      const parsed2 = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
+      await writeAppConfigurationFile(parsed2, filePath)
+      const thirdWrite = await readFile(filePath)
+
+      expect(thirdWrite).toEqual(secondWrite)
     })
   })
 
   test('subscription with both topics and compliance_topics on same URI splits after round-trip', async () => {
     await inTemporaryDirectory(async (tmp) => {
       const filePath = joinPath(tmp, 'shopify.app.toml')
-      const {schema, configSpecifications: specs} = await buildVersionedAppSchema()
+      const {configSpecifications: specs} = await buildVersionedAppSchema()
 
       const config = {
         ...REALISTIC_CONFIG,
@@ -301,11 +322,11 @@ describe('Config pipeline snapshots', () => {
         },
       }
 
-      await writeAppConfigurationFile(config as CurrentAppConfiguration, schema, filePath)
+      await writeAppConfigurationFile(config as CurrentAppConfiguration, filePath)
       const firstWrite = await readFile(filePath)
 
       const parsedConfig = await parseConfigAsCurrentApp(getAppVersionedSchema(specs), filePath)
-      await writeAppConfigurationFile(parsedConfig, schema, filePath)
+      await writeAppConfigurationFile(parsedConfig, filePath)
       const secondWrite = await readFile(filePath)
 
       // After round-trip, compliance and regular topics should be split into separate subscriptions

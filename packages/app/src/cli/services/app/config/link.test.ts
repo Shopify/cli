@@ -138,27 +138,6 @@ describe('link', () => {
       // Then
       expect(selectConfigName).not.toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
       expect(configuration).toEqual({
         client_id: '12345',
         name: 'app1',
@@ -178,7 +157,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -223,29 +202,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
       expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
         configFileName: 'shopify.app.toml',
         directory: tmp,
@@ -287,7 +243,7 @@ embedded = false
           include_config_on_deploy: true,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
       expect(configFileName).toBe('shopify.app.toml')
     })
   })
@@ -333,42 +289,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "new-title"
-application_url = "https://api-client-config.com"
-embedded = false
-
-[build]
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-
-[auth]
-redirect_urls = [ "https://api-client-config.com/callback" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [webhooks.privacy_compliance]
-  customer_deletion_url = "https://api-client-config.com/customer-deletion"
-  customer_data_request_url = "https://api-client-config.com/customer-data-request"
-  shop_deletion_url = "https://api-client-config.com/shop-deletion"
-
-[app_proxy]
-url = "https://api-client-config.com/proxy"
-subpath = "/api"
-prefix = "prefix"
-
-[pos]
-embedded = true
-
-[app_preferences]
-url = "https://api-client-config.com/preferences"
-`
 
       expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
         configFileName: 'shopify.app.toml',
@@ -424,7 +344,7 @@ url = "https://api-client-config.com/preferences"
           include_config_on_deploy: true,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -477,31 +397,7 @@ url = "https://api-client-config.com/preferences"
       // Then - since client_id matches and file exists, reuse shopify.app.development.toml
       expect(selectConfigName).not.toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.development.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "my app"
-application_url = "https://myapp.com"
-embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "my-store.myshopify.com"
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
+      expect(content).toMatchSnapshot()
 
       expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
         configFileName: 'shopify.app.development.toml',
@@ -546,7 +442,7 @@ embedded = false
           include_config_on_deploy: true,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -596,26 +492,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "different-api-key"
-name = "my app"
-application_url = "https://myapp.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
       expect(configuration).toEqual({
         client_id: 'different-api-key',
         name: 'my app',
@@ -634,7 +510,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -658,27 +534,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.toml is now linked to "app1" on Shopify',
         body: 'Using shopify.app.toml as your default config.',
@@ -714,7 +569,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -738,27 +593,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
       expect(renderSuccess).not.toHaveBeenCalled()
       expect(configuration).toEqual({
         client_id: '12345',
@@ -779,7 +613,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -887,27 +721,6 @@ embedded = false
         configFileName: 'shopify.app.foo.toml',
         directory: tmp,
       })
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
       expect(configuration).toEqual({
         client_id: '12345',
         name: 'app1',
@@ -927,7 +740,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -947,26 +760,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
 
       expect(configuration).toEqual({
         client_id: '12345',
@@ -986,7 +779,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
       // Should use default filename without prompting when no TOMLs exist
       expect(selectConfigName).not.toHaveBeenCalled()
     })
@@ -1035,27 +828,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products,write_orders"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
 
       expect(configuration).toEqual({
         client_id: '12345',
@@ -1076,7 +848,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1133,30 +905,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  uri = "/customers"
-  compliance_topics = [ "customers/redact", "customers/data_request" ]
-
-[pos]
-embedded = false
-`
 
       expect(setCurrentConfigPreference).toHaveBeenCalledWith(configuration, {
         configFileName: 'shopify.app.toml',
@@ -1183,6 +931,7 @@ embedded = false
         name: 'app1',
         application_url: 'https://example.com',
         embedded: true,
+        build: undefined,
         access_scopes: {
           use_legacy_install_flow: true,
         },
@@ -1194,7 +943,7 @@ embedded = false
           subscriptions: [
             {
               compliance_topics: ['customers/redact', 'customers/data_request'],
-              uri: '/customers',
+              uri: 'https://example.com/customers',
             },
           ],
         },
@@ -1202,7 +951,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1277,31 +1026,6 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://my-app-url.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create", "products/update" ]
-  uri = "/webhooks"
-
-[pos]
-embedded = false
-`
 
       expect(configuration).toEqual({
         client_id: '12345',
@@ -1320,8 +1044,12 @@ embedded = false
           api_version: '2023-07',
           subscriptions: [
             {
-              topics: ['products/create', 'products/update'],
-              uri: '/webhooks',
+              topics: ['products/create'],
+              uri: 'https://my-app-url.com/webhooks',
+            },
+            {
+              topics: ['products/update'],
+              uri: 'https://my-app-url.com/webhooks',
             },
           ],
         },
@@ -1329,7 +1057,7 @@ embedded = false
           embedded: false,
         },
       })
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1382,31 +1110,7 @@ embedded = false
       // Then - since client_id matches, the existing shopify.app.toml is reused (no prompt)
       expect(selectConfigName).not.toHaveBeenCalled()
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "my app"
-application_url = "https://myapp.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "https://my-app.com/webhooks"
-
-[pos]
-embedded = true
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
       expect(renderSuccess).toHaveBeenCalledWith({
         headline: 'shopify.app.toml is now linked to "my app" on Shopify',
         body: 'Using shopify.app.toml as your default config.',
@@ -1450,31 +1154,7 @@ embedded = true
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1502,32 +1182,7 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1554,28 +1209,7 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/remote" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1600,29 +1234,7 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-handle = "handle"
-application_url = "https://example.com"
-embedded = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "read_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1670,38 +1282,7 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-handle = "handle"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "my-store.myshopify.com"
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "https://my-app.com/webhooks"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1749,38 +1330,7 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.staging.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-handle = "handle"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "my-store.myshopify.com"
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "https://my-app.com/webhooks"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 
@@ -1828,38 +1378,7 @@ embedded = false
 
       // Then
       const content = await readFile(joinPath(tmp, 'shopify.app.toml'))
-      const expectedContent = `# Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
-
-client_id = "12345"
-name = "app1"
-handle = "handle"
-application_url = "https://example.com"
-embedded = true
-
-[build]
-automatically_update_urls_on_dev = true
-dev_store_url = "my-store.myshopify.com"
-include_config_on_deploy = true
-
-[access_scopes]
-# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
-use_legacy_install_flow = true
-
-[auth]
-redirect_urls = [ "https://example.com/callback1" ]
-
-[webhooks]
-api_version = "2023-07"
-
-  [[webhooks.subscriptions]]
-  topics = [ "products/create" ]
-  uri = "https://my-app.com/webhooks"
-
-[pos]
-embedded = false
-`
-      expect(content).toEqual(expectedContent)
+      expect(content).toMatchSnapshot()
     })
   })
 })
