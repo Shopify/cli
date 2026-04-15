@@ -269,7 +269,12 @@ export class DevSession {
     const hasPreview = event.app.allExtensions.filter((ext) => ext.isPreviewable).length > 0
     const useDevConsole = firstPartyDev() && hasPreview
     const newPreviewURL = useDevConsole ? this.options.appLocalProxyURL : this.options.appPreviewURL
-    this.statusManager.updateStatus({previewURL: newPreviewURL})
+    const hasExtensions = event.app.nonConfigExtensions.length > 0
+    this.statusManager.updateStatus({
+      previewURL: newPreviewURL,
+      appEmbedded: event.app.configuration.embedded,
+      hasExtensions,
+    })
   }
 
   /**
