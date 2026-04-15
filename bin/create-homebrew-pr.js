@@ -45,11 +45,10 @@ program
       switch (templateVersion) {
         case "stable":
           files["shopify-cli.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli.rb"))).toString()
-          // Only keep the @3 versioned formula up to date while we are on major version 3.
-          // Once we move to v4+, shopify-cli@3.rb stays frozen at the last 3.x release.
-          if (majorVersion === 3) {
-            files["shopify-cli@3.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli@3.rb"))).toString()
-          }
+          // Always keep the versioned formula for the current major up to date.
+          // When we bump to the next major, the previous major's formula naturally
+          // freezes at its last release since we stop updating it.
+          files[`shopify-cli@${majorVersion}.rb`] = await renderVersionedFormula(majorVersion, homebrewVariables)
           break
         case "pre":
           files["shopify-cli-pre.rb"] = (await readFile(path.join(outputDirectory, "shopify-cli-pre.rb"))).toString()
@@ -113,6 +112,13 @@ function getTemplateVersion(version) {
   if (version.includes("nightly")) return "nightly"
   if (version.match(/^\d+\.\d+\.\d+$/)) return "stable"
   throw `Unrecognized version string ${version}`
+}
+
+async function renderVersionedFormula(majorVersion, variables) {
+  const engine = new Liquid({root: packagingDirectory})
+  const templatePath = path.join(packagingDirectory, "stable/src/shopify-cli.rb.liquid")
+  const content = (await readFile(templatePath)).toString()
+  return engine.render(engine.parse(content), {...variables, formulaVersion: String(majorVersion)})
 }
 
 async function getHomebrewVariables(cliVersion) {
