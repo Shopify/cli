@@ -200,11 +200,11 @@ describe('sends errors to Bugsnag', () => {
     expect(onNotify).toHaveBeenCalledWith(res.error)
   })
 
-  test('processes AbortErrors as handled', async () => {
+  test('skips reporting for expected errors', async () => {
     const res = await sendErrorToBugsnag(new error.AbortError('In test'), 'expected_error')
-    expect(res.reported).toEqual(true)
+    expect(res.reported).toEqual(false)
     expect(res.unhandled).toEqual(false)
-    expect(onNotify).toHaveBeenCalledWith(res.error)
+    expect(onNotify).not.toHaveBeenCalled()
   })
 
   test.each([null, undefined, {}, {message: 'nope'}])('deals with strange things to throw %s', async (throwable) => {
